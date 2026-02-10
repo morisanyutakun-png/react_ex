@@ -3,7 +3,7 @@
  * Next.js の rewrites で /api/* → localhost:8000 にプロキシされる
  */
 
-const BASE = '';  // same-origin (proxy via next.config.js rewrites)
+const BASE = process.env.NEXT_PUBLIC_API_BASE || '';  // same-origin (proxy via next.config.js rewrites)
 
 /**
  * Generic fetch wrapper with JSON handling

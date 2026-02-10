@@ -58,6 +58,28 @@ curl -I http://localhost:8000/api/templates
 - `next.config.js` で `/api/*` を `http://localhost:8000/api/*` にリライトしています。バックエンドが起動している必要があります。
 - フロントはプロンプト生成が主目的です。生成したプロンプトを外部の LLM（例: ChatGPT）に手動で与えてください。
 
+## Vercel デプロイ（フロントエンド）
+
+このリポジトリはモノレポ構成のため、Vercel ではフロントエンド（Next.js）をデプロイし、バックエンド（FastAPI）は別ホスティングに配置する構成を推奨します。
+
+### 1) Vercel プロジェクト設定
+- **Root Directory**: `apps/web`
+- **Framework**: Next.js
+
+### 2) 環境変数
+Vercel の Environment Variables に以下を設定してください。
+
+- `API_BASE_URL`: バックエンドのベース URL（例: `https://your-backend.example.com`）
+
+これにより、Next.js の rewrites が `/api/*` をバックエンドへプロキシします。
+
+必要に応じてブラウザから直接バックエンドを叩く場合は `NEXT_PUBLIC_API_BASE` を使えますが、その場合はバックエンド側で CORS 設定が必要です。
+
+### 3) バックエンドの配置
+バックエンドは Vercel 以外（例: Render, Fly.io, Railway, ECS など）でホストし、公開 URL を `API_BASE_URL` に設定してください。
+
+> 注意: FastAPI は長時間プロセスやファイル I/O を含むため、Vercel の Serverless では運用が難しいケースがあります。
+
 ## トラブルシュート
 - バックエンドが起動しない場合は仮想環境が有効か、`requirements.txt` のインストールに成功しているか、ポート 8000 が空いているか確認してください。
 - フロントが動かない場合は Node/npm のバージョン確認と `npm install` の再実行を試してください。
