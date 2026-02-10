@@ -1,0 +1,20 @@
+# local sqlite DBs
+/data/*.db
+
+# local env
+.env
+node_modules/
+venv/
+__pycache__/
+dist/
+.env
+.venv/
+venv/
+**/.venv*/
+**/.venv.backup*/
+.venv/
+venv/
+backend/.venv*/
+backend/.venv.backup*/
+**/.venv*/
+**/.venv.backup*/

@@ -1,0 +1,1745 @@
+import React, { useState, useEffect } from 'react'
+
+export default function App() {
+  // keep state minimal and relevant for this UI
+  const [docId, setDocId] = useState('')
+  const [status, setStatus] = useState('')
+  const [docEntries, setDocEntries] = useState([])
+  const [fullText, setFullText] = useState('')
+  const [ragInjectEnabled, setRagInjectEnabled] = useState(true)
+  const [renderContext, setRenderContext] = useState(null)
+  const [templates, setTemplates] = useState([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState('')
+  const [subjects, setSubjects] = useState(['数学','物理','英語','化学','生物'])
+  const [difficulties, setDifficulties] = useState(['易','普通','難'])
+  const [selectedSubject, setSelectedSubject] = useState('数学')
+  const [selectedDifficulty, setSelectedDifficulty] = useState('普通')
+  // map difficulty labels to numeric hints for RAG re-ranking
+  const DIFFICULTY_MAP = { '易': 0.2, '普通': 0.5, '難': 0.8 }
+  // userDifficultyNumeric is used by assemblePromptWithRag; keep it in sync when difficulty label changes
+  useEffect(() => {
+    const v = DIFFICULTY_MAP[selectedDifficulty]
+    setUserDifficultyNumeric(v !== undefined ? String(v) : '')
+  }, [selectedDifficulty])
+  const [generatedPrompt, setGeneratedPrompt] = useState('')
+  const [llmOutput, setLlmOutput] = useState('')
+  const [expectedOutput, setExpectedOutput] = useState('')
+  const [tuningScore, setTuningScore] = useState('')
+  const [tuningNotes, setTuningNotes] = useState('')
+  const [tuningPromptFull, setTuningPromptFull] = useState('')
+  const [customFields, setCustomFields] = useState([]) // array of {key, value}
+  // new-template form state (dev-mode) — simplified: subject + field only
+  const [showNewTemplateForm, setShowNewTemplateForm] = useState(false)
+  const [newTplSubject, setNewTplSubject] = useState('')
+  const [newTplField, setNewTplField] = useState('')  // e.g. 微分積分, 力学, etc.
+  const [newTplSaving, setNewTplSaving] = useState(false)
+  
+  const [mode, setMode] = useState('user')
+  // tuning profile controls
+  const [tuningProfile, setTuningProfile] = useState('json_only')
+  const [tuningIncludeRefs, setTuningIncludeRefs] = useState(true)
+  // NOTE: removed the upload LaTeX checkbox — we always send pasted output as `latex`
+  const [numQuestions, setNumQuestions] = useState(1)
+  // Generation controls for user-mode 'infinite generator'
+  const [genNum, setGenNum] = useState(5)
+  const [genMinDifficulty, setGenMinDifficulty] = useState('')
+  const [genMaxDifficulty, setGenMaxDifficulty] = useState('')
+  const [generationStyle, setGenerationStyle] = useState('short_problem_statement')
+  const [prohibitedTags, setProhibitedTags] = useState('')
+  const [includeExplanations, setIncludeExplanations] = useState(false)
+  const [generatedItems, setGeneratedItems] = useState([])
+  const [autoInsertGenerated, setAutoInsertGenerated] = useState(false)
+  // simple paste-to-pdf UI state
+  const [rawLatex, setRawLatex] = useState('')
+  const [pdfWorking, setPdfWorking] = useState(false)
+  const [lastPdfUrl, setLastPdfUrl] = useState('')
+  const [retrievedChunks, setRetrievedChunks] = useState([])
+  const [expandedChunks, setExpandedChunks] = useState({})
+  const [difficultyMatchWeight, setDifficultyMatchWeight] = useState(0.6)
+  const [trickinessWeight, setTrickinessWeight] = useState(0.0)
+  const [textWeight, setTextWeight] = useState(0.5)
+  const [topK, setTopK] = useState(5)
+  const [autoPrependGuidance, setAutoPrependGuidance] = useState(true)
+  // simplified: advanced options are replaced by a compact inline form below
+  const [showRetrievedPanel, setShowRetrievedPanel] = useState(false)
+  const [showDifficultyDetails, setShowDifficultyDetails] = useState(false)
+  const [showDocItems, setShowDocItems] = useState(false)
+  const [showRagSummary, setShowRagSummary] = useState(false)
+  const [previewRendered, setPreviewRendered] = useState(null)
+  const [previewContext, setPreviewContext] = useState(null)
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false)
+  const [userDifficultyNumeric, setUserDifficultyNumeric] = useState('')
+  const [userTrickinessNumeric, setUserTrickinessNumeric] = useState('')
+  // UI compacting toggles
+  const [showPromptHint, setShowPromptHint] = useState(false)
+  const [showWorkflowSteps, setShowWorkflowSteps] = useState(false)
+  const [userOutputFormat, setUserOutputFormat] = useState('latex')
+
+  // fetch templates on mount
+  const refreshTemplates = async ()=>{
+    try{
+      const res = await fetch('/api/templates')
+      const j = await res.json()
+      if(res.ok){
+        const tpls = j.templates || []
+        setTemplates(tpls)
+        if(!selectedTemplateId && tpls.length>0){ setSelectedTemplateId(tpls[0].id) }
+        return tpls
+      }
+    }catch(e){ console.warn('templates fetch failed', e) }
+    return []
+  }
+
+  // convenience: call refreshTemplates and select the first template if none selected
+  const reloadTemplatesAndSelect = async () => {
+    await refreshTemplates()
+    if(!selectedTemplateId){
+      // pick the first template if any
+      const tpls = (templates && templates.length) ? templates : []
+      if(tpls.length > 0){ setSelectedTemplateId(tpls[0].id) }
+    }
+  }
+
+  useEffect(()=>{
+    let mounted = true
+    refreshTemplates()
+    return ()=>{ mounted = false }
+  }, [])
+
+  // helper: save a new template via backend dev API — auto-generates everything from subject+field
+  const saveNewTemplate = async (subject, field) => {
+    const s = String(subject || '').trim()
+    if(!s){ setStatus('教科を選択してください'); return }
+    const f = String(field || '').trim()
+
+    // build all fields automatically
+    const label = f ? `${s}（${f}）` : s
+    const name = `${label} テンプレート`
+    const id = (f ? `${s}_${f}` : s).toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\u3040-\u9fff\-]/g,'') || ('tpl_' + Date.now())
+    const desc = `${label} の問題を生成するテンプレート（自動生成）`
+    const fieldLine = f ? `分野: ${f}\n` : ''
+    const prompt = [
+      `科目: {subject}`,
+      f ? `分野: ${f}` : null,
+      `難易度: {difficulty}`,
+      `出題数: {num_questions}`,
+      ``,
+      `指示:`,
+      `以下の条件で${label}の問題を出題してください。`,
+      f ? `特に「${f}」の範囲を重点的に扱ってください。` : null,
+      ``,
+      `- 出力形式: LaTeX（\\documentclass から \\end{document} まで完全な文書）`,
+      `- 問題と解答・解説を必ず含めること`,
+      `- 問題数は {num_questions} 問とする`,
+      `- 難易度は「{difficulty}」レベルに合わせること`,
+      ``,
+      `## 問題`,
+      `\\begin{enumerate}`,
+      `  \\item （ここに問題文）`,
+      `\\end{enumerate}`,
+      ``,
+      `## 解答・解説`,
+      `\\begin{enumerate}`,
+      `  \\item \\textbf{解答}: ...  \\textbf{解説}: ...`,
+      `\\end{enumerate}`,
+    ].filter(l => l !== null).join('\n')
+
+    const body = {
+      id,
+      name,
+      description: desc,
+      prompt,
+      metadata: { subject: s, field: f || null, auto_generated: true },
+    }
+
+    setNewTplSaving(true)
+    setStatus(`テンプレート「${label}」を保存中...`)
+    try {
+      const res = await fetch('/api/template', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const j = await res.json().catch(()=>null)
+      if(!res.ok){ setStatus('テンプレート保存失敗: ' + (j && (j.detail||j.error) ? (j.detail||j.error) : res.statusText)); setNewTplSaving(false); return }
+      setStatus(`✅ テンプレート「${label}」を作成しました`)
+      await refreshTemplates()
+      setSelectedTemplateId(id)
+      setNewTplSubject('')
+      setNewTplField('')
+      setShowNewTemplateForm(false)
+    } catch(e) { setStatus('テンプレート保存中にエラー: '+e.message) }
+    setNewTplSaving(false)
+  }
+
+  const generatePromptFromTemplate = async () => {
+    if(!selectedTemplateId){ setStatus('テンプレートを選択してください'); return }
+    setStatus('テンプレートをレンダリングしています...')
+    try{
+      // Build base body
+  const body = { template_id: selectedTemplateId, subject: selectedSubject, difficulty: selectedDifficulty, num_questions: numQuestions, rag_inject: ragInjectEnabled, difficulty_match_weight: Number(difficultyMatchWeight), trickiness_weight: Number(trickinessWeight), top_k: Number(topK) }
+      // attach user numeric hints when present
+      if(userDifficultyNumeric !== ''){
+        const v = Number(userDifficultyNumeric)
+        if(!Number.isNaN(v)) body.user_difficulty = v
+      }
+      if(userTrickinessNumeric !== ''){
+        const v2 = Number(userTrickinessNumeric)
+        if(!Number.isNaN(v2)) body.user_trickiness = v2
+      }
+      let tempDocId = null
+      // If RAG is enabled but no docId is set, ask server to create a recent-sample index and use it
+      if(ragInjectEnabled && !docId){
+        setStatus('DB からサンプルを取得して RAG 用インデックスを作成しています...')
+        try{
+          const rr = await fetch('/api/reindex_recent', { method: 'POST' })
+          const rj = await rr.json()
+          if(rr.ok && rj.doc_id){
+            tempDocId = rj.doc_id
+            body.doc_id = tempDocId
+          } else {
+            // no recent sample available; leave body without doc_id and let server attempt sampling
+          }
+        }catch(e){
+          console.warn('reindex_recent failed', e)
+        }
+      } else if(ragInjectEnabled && docId){
+        body.doc_id = docId
+      }
+
+      const res = await fetch('/api/template_render', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const j = await res.json()
+      if(!res.ok){ setStatus('テンプレートレンダリングエラー: '+(j.detail||res.statusText)); return }
+      // backend returns 'rendered_prompt' (older frontends used 'rendered')
+      const rendered = j.rendered_prompt || j.rendered || ''
+      const ctx = j.context || null
+      setRenderContext(ctx)
+      // 自動挿入が有効な場合は、返却された renderContext を元にガイダンスを先頭に挿入する
+  const sanitizedRendered = sanitizeTemplateText(rendered)
+  if(autoPrependGuidance && ctx){
+        try{
+          const lines = []
+          lines.push('【統合ガイダンス（要約）】')
+          if(ctx.user_difficulty !== undefined && ctx.user_difficulty !== null && ctx.user_difficulty !== ''){
+            lines.push(`- ユーザー指定難易度: ${ctx.user_difficulty}`)
+          }
+          if(ctx.difficulty_numeric !== undefined && ctx.difficulty_numeric !== null && ctx.difficulty_numeric !== ''){
+            lines.push(`- DB 推定難易度: ${ctx.difficulty_numeric}`)
+          }
+          if(ctx.user_trickiness !== undefined && ctx.user_trickiness !== null && ctx.user_trickiness !== ''){
+            lines.push(`- ユーザー指定ひっかけ度: ${ctx.user_trickiness}`)
+          }
+          if(ctx.trickiness !== undefined && ctx.trickiness !== null && ctx.trickiness !== ''){
+            lines.push(`- DB 推定ひっかけ度: ${ctx.trickiness}`)
+          }
+          lines.push('\n指示: ユーザー指定があれば優先し、DB 推定は誤答パターンや出題スタイルの参考にしてください。')
+          const g = lines.join('\n')
+          setGeneratedPrompt(g + '\n\n' + sanitizedRendered)
+        }catch(e){
+          // 何らかの理由で組み立てに失敗したら通常のレンダリング文字列だけを使う
+          setGeneratedPrompt(rendered)
+        }
+      } else {
+        setGeneratedPrompt(sanitizedRendered)
+      }
+      setStatus('プロンプト生成完了')
+      return sanitizedRendered
+    }catch(e){ setStatus('テンプレート生成エラー: '+e.message) }
+  }
+
+  const copyToClipboard = async (text) => {
+    try{ await navigator.clipboard.writeText(text); setStatus('クリップボードにコピーしました') }catch(e){ setStatus('コピーに失敗しました: '+e.message) }
+  }
+
+  const assemblePromptWithRag = async () => {
+    const question = generatedPrompt || ''
+    if(!question) return setStatus('プロンプト/質問を先に生成してください')
+    setStatus('RAG を取得中...')
+    try{
+  // include target difficulty/trickiness so server-side retrieval can re-rank by attributes
+  const body = { question, top_k: Number(topK), use_vector: ragInjectEnabled }
+
+  // prefer explicit user numeric hints; otherwise fall back to server-rendered context estimates
+  const maybeUserDiff = (userDifficultyNumeric !== '') ? Number(userDifficultyNumeric) : null
+  const maybeUserTrick = (userTrickinessNumeric !== '') ? Number(userTrickinessNumeric) : null
+  const ctxDiff = renderContext && (renderContext.difficulty_numeric !== undefined) ? Number(renderContext.difficulty_numeric) : null
+  const ctxTrick = renderContext && (renderContext.trickiness_numeric !== undefined) ? Number(renderContext.trickiness_numeric) : null
+
+  if(maybeUserDiff !== null && !Number.isNaN(maybeUserDiff)){
+    body.target_difficulty = maybeUserDiff
+  } else if(ctxDiff !== null && !Number.isNaN(ctxDiff)){
+    body.target_difficulty = ctxDiff
+  }
+
+  if(maybeUserTrick !== null && !Number.isNaN(maybeUserTrick)){
+    body.target_trickiness = maybeUserTrick
+  } else if(ctxTrick !== null && !Number.isNaN(ctxTrick)){
+    body.target_trickiness = ctxTrick
+  }
+
+  // include rerank weights if specified
+  body.difficulty_match_weight = Number(difficultyMatchWeight)
+  body.trickiness_weight = Number(trickinessWeight)
+  body.text_weight = Number(textWeight)
+  if(docId) body.doc_id = docId
+      const res = await fetch('/api/assemble_prompt', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const j = await res.json()
+      if(!res.ok){ setStatus('RAG 組み込み失敗: '+(j.detail||res.statusText)); return }
+      // prefer summarized prompt for readability
+  const p = sanitizeTemplateText(j.prompt_summarized || j.prompt || '')
+      if(p){
+        // 自動挿入が有効なら既存の renderContext を元にガイダンスを先頭に挿入
+        // update renderContext from server if provided
+        if(j.context) setRenderContext(j.context)
+        if(autoPrependGuidance && (j.context || renderContext)){
+          try{
+            const ctx = j.context || renderContext
+            const lines = []
+            lines.push('【統合ガイダンス（要約）】')
+            if(ctx.user_difficulty !== undefined && ctx.user_difficulty !== null && ctx.user_difficulty !== ''){
+              lines.push(`- ユーザー指定難易度: ${ctx.user_difficulty}`)
+            }
+            if(ctx.difficulty_numeric !== undefined && ctx.difficulty_numeric !== null && ctx.difficulty_numeric !== ''){
+              lines.push(`- DB 推定難易度: ${ctx.difficulty_numeric}`)
+            }
+            if(ctx.user_trickiness !== undefined && ctx.user_trickiness !== null && ctx.user_trickiness !== ''){
+              lines.push(`- ユーザー指定ひっかけ度: ${ctx.user_trickiness}`)
+            }
+            if(ctx.trickiness !== undefined && ctx.trickiness !== null && ctx.trickiness !== ''){
+              lines.push(`- DB 推定ひっかけ度: ${ctx.trickiness}`)
+            }
+            lines.push('\n指示: ユーザー指定があれば優先し、DB 推定は誤答パターンや出題スタイルの参考にしてください。')
+            const g = lines.join('\n')
+            setGeneratedPrompt(g + '\n\n' + p)
+          }catch(e){ setGeneratedPrompt(p) }
+        } else {
+          setGeneratedPrompt(p)
+        }
+        setRetrievedChunks(j.retrieved || [])
+        setStatus('RAG 注入済みのプロンプトを取得しました')
+      } else {
+        setStatus('RAG 応答にプロンプトが含まれていません')
+      }
+    }catch(e){ setStatus('RAG 組み込み中にエラー: '+e.message) }
+  }
+
+  const toggleChunk = (i) => {
+    setExpandedChunks(prev => ({...prev, [i]: !prev[i]}))
+  }
+
+  const expandAll = () => {
+    const m = {}
+    retrievedChunks.forEach((_, i)=> m[i]=true)
+    setExpandedChunks(m)
+  }
+
+  const collapseAll = () => { setExpandedChunks({}) }
+
+  const scoreColor = (score) => {
+    // map score (assumed roughly 0..1) to green->yellow->red
+    if(score === null || score === undefined || Number.isNaN(Number(score))) return '#eee'
+    let s = Number(score)
+    // clamp
+    if(s < -1) s = -1
+    if(s > 1) s = 1
+    // normalize  -1..1 -> 0..1
+    const t = (s + 1) / 2
+    const r = Math.round(255 * (1 - t))
+    const g = Math.round(200 * t + 55 * (1 - t))
+    const b = 80
+    return `rgb(${r},${g},${b})`
+  }
+
+  // human-friendly label for difficulty numeric (0..1)
+  const difficultyLabel = (v) => {
+    if(v === null || v === undefined || v === '') return '—'
+    const n = Number(v)
+    if(Number.isNaN(n)) return String(v)
+    if(n < 0.18) return '非常に易い (1)'
+    if(n < 0.36) return '易い (2)'
+    if(n < 0.55) return '普通 (3)'
+    if(n < 0.75) return '難しい (4)'
+    return '非常に難しい (5)'
+  }
+
+  const buildGuidanceTextFromContext = (ctx) => {
+    if(!ctx) return ''
+    const lines = []
+    lines.push('【統合ガイダンス（要約）】')
+    if(ctx.user_difficulty !== undefined && ctx.user_difficulty !== null && ctx.user_difficulty !== ''){
+      lines.push(`- ユーザー指定難易度: ${ctx.user_difficulty} (${difficultyLabel(ctx.user_difficulty)})`)
+    }
+    if(ctx.difficulty_numeric !== undefined && ctx.difficulty_numeric !== null && ctx.difficulty_numeric !== ''){
+      lines.push(`- DB 推定難易度: ${ctx.difficulty_numeric} (${difficultyLabel(ctx.difficulty_numeric)})`)
+    }
+    if(ctx.user_trickiness !== undefined && ctx.user_trickiness !== null && ctx.user_trickiness !== ''){
+      lines.push(`- ユーザー指定ひっかけ度: ${ctx.user_trickiness}`)
+    }
+    if(ctx.trickiness !== undefined && ctx.trickiness !== null && ctx.trickiness !== ''){
+      lines.push(`- DB 推定ひっかけ度: ${ctx.trickiness}`)
+    }
+    // short actionable rule
+    lines.push('\n指示: ユーザー指定があれば優先し、DB 推定は誤答パターンや出題スタイルの参考にしてください。難易度が高い場合は多段階の推論を要求し、ひっかけ度が高い場合は典型的な誤答を誘う選択肢を含めるが、必ず解説で落とし穴を明示する。')
+    return lines.join('\n')
+  }
+
+  const prependGuidanceToPrompt = () => {
+    if(!renderContext) return setStatus('renderContext がありません')
+    const g = buildGuidanceTextFromContext(renderContext)
+    if(!g) return setStatus('ガイダンスを生成できません')
+    setGeneratedPrompt(prev => (g + '\n\n' + (prev || '')))
+    setStatus('生成プロンプトの先頭にガイダンスを挿入しました')
+  }
+
+  const insertChunkToPrompt = (i) => {
+    const c = retrievedChunks[i]
+    if(!c) return setStatus('該当チャンクがありません')
+    const text = (c.text || '').trim()
+    setGeneratedPrompt(prev => (prev ? prev + '\n\n' + text : text))
+    setStatus(`チャンク ${i+1} をプロンプトに追加しました`)
+  }
+
+  const appendRetrievedToPrompt = () => {
+    if(!retrievedChunks || retrievedChunks.length===0) return setStatus('参照候補がありません')
+    const texts = retrievedChunks.map(c=> (c.text||'').trim()).filter(Boolean).join('\n\n---\n\n')
+    if(!texts) return setStatus('挿入可能なテキストがありません')
+    setGeneratedPrompt(prev => (prev ? prev + '\n\n' + texts : texts))
+    setStatus('取得済みの参照をプロンプトに追加しました')
+  }
+
+  // プレースホルダのクリック挿入機能は廃止しました。
+  // テンプレートはサーバ側でレンダリングされ、RAG 注入は下のチェックボックスで制御します。
+
+  // selected template preview
+  const selectedTemplate = templates.find(t => t.id === selectedTemplateId) || null
+
+  const fetchTemplatePreview = async () => {
+    if(!selectedTemplateId) return setStatus('テンプレートを選択してください')
+    setStatus('プレビューを取得しています...')
+    try{
+      const body = { template_id: selectedTemplateId, subject: selectedSubject, difficulty: selectedDifficulty, num_questions: numQuestions, rag_inject: false, difficulty_match_weight: Number(difficultyMatchWeight), trickiness_weight: Number(trickinessWeight), top_k: Number(topK) }
+      if(userDifficultyNumeric !== ''){ const v = Number(userDifficultyNumeric); if(!Number.isNaN(v)) body.user_difficulty = v }
+      if(userTrickinessNumeric !== ''){ const v2 = Number(userTrickinessNumeric); if(!Number.isNaN(v2)) body.user_trickiness = v2 }
+      // include doc_id if present to allow server-side placeholder filling from DB
+      if(docId) body.doc_id = docId
+      const res = await fetch('/api/template_render', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const j = await res.json()
+      if(!res.ok){ setStatus('プレビュー取得エラー: '+(j.detail||res.statusText)); return }
+      // prefer 'rendered_prompt' but accept older 'rendered'
+      setPreviewRendered(sanitizeTemplateText(j.rendered_prompt || j.rendered || null))
+      setPreviewContext(j.context || null)
+      setStatus('プレビュー更新完了')
+    }catch(e){ setStatus('プレビュー取得失敗: '+e.message) }
+  }
+
+  const sanitizeTemplateText = (text) => {
+    if(!text) return text
+    try{
+      // Remove sections that start with '##項目' or '##指示' (and following lines until next '##' header or end)
+      let out = String(text).replace(/##\s*項目[\s\S]*?(?=(\n##\s)|$)/g, '').replace(/##\s*指示[\s\S]*?(?=(\n##\s)|$)/g, '').trim()
+
+      // If user requested LaTeX output, strip any strict JSON enforcement blocks commonly used in dev templates.
+      if(userOutputFormat === 'latex'){
+        // Remove blocks that begin with '必須出力ルール' up to the following '注意:' or '有効な出力例' or end.
+        out = out.replace(/必須出力ルール[\s\S]*?(?=(\n注意:|\n有効な出力例|$))/g, '')
+        // Also remove explicit '有効な出力例' blocks that show JSON examples
+        out = out.replace(/有効な出力例[\s\S]*?(?=(\n注意:|$))/g, '')
+        // remove leftover multiple blank lines
+        out = out.replace(/\n{3,}/g, '\n\n').trim()
+
+        // Insert a clear LaTeX output instruction so that users see the intended format
+        // ── 最強 LaTeX 出力プロンプト ──
+        // 実際に観測された LLM の出力ミスをすべて網羅し、具体的な NG/OK 例を示す。
+        const latexInstruction = [
+          '',
+          '═══════════════════════════════════════════════',
+          '出力形式: LaTeX（コンパイル保証版・xelatex 対応）',
+          '═══════════════════════════════════════════════',
+          '',
+          '【絶対ルール — 1つでも違反すると PDF 生成が失敗します】',
+          '',
+          '■ 出力形式',
+          '- 生の LaTeX コードだけを返すこと。JSON / Markdown / コードフェンス (```) / 説明文は一切不可。',
+          '- 必ず完全な文書として出力すること（\\documentclass から \\end{document} まで）。断片は不可。',
+          '',
+          '■ 文書構成（この順序を厳守・省略不可）',
+          '  1. preamble（\\documentclass 〜 \\begin{document}）',
+          '  2. \\section*{問題}',
+          '  3. \\begin{enumerate} ... \\end{enumerate}',
+          '  4. \\clearpage',
+          '  5. \\section*{解答・解説}',
+          '  6. \\begin{enumerate} ... \\end{enumerate}',
+          '  7. \\end{document}',
+          '- 上記以外の \\section / \\subsection / 見出し / コメント行(%) を追加しないこと。',
+          '- 問題の \\item 数と解答の \\item 数は必ず一致させること。',
+          '- 解答側の各 \\item には \\textbf{解答}: と \\textbf{解説}: を必ず含めること。',
+          '',
+          '■ preamble テンプレート（このまま使うこと）',
+          '\\documentclass[a4paper,11pt]{article}',
+          '\\usepackage[margin=18mm]{geometry}',
+          '\\usepackage{amsmath,amssymb}',
+          '\\usepackage{enumitem}',
+          '\\usepackage{fontspec}',
+          '\\usepackage{xeCJK}',
+          '\\IfFontExistsTF{Hiragino Sans}{%',
+          '  \\setCJKmainfont{Hiragino Sans}',
+          '  \\setCJKsansfont{Hiragino Sans}',
+          '  \\setCJKmonofont{Hiragino Sans}',
+          '}{\\IfFontExistsTF{Noto Sans CJK JP}{%',
+          '  \\setCJKmainfont{Noto Sans CJK JP}',
+          '  \\setCJKsansfont{Noto Sans CJK JP}',
+          '  \\setCJKmonofont{Noto Sans CJK JP}',
+          '}{}}',
+          '\\setlength{\\parindent}{0pt}',
+          '\\setlist[enumerate]{itemsep=10pt}',
+          '',
+          '■ 数式ルール（最重要 — ここが最大のエラー原因）',
+          '',
+          '  ● インライン数式: 必ず $...$ で囲む',
+          '    NG: f(x)=x^2-1      ← コンパイルエラー (Missing $ inserted)',
+          '    OK: $f(x)=x^2-1$',
+          '',
+          '  ● ディスプレイ数式: 必ず \\[ ... \\] で囲む',
+          '    NG: [  f(x) = x^2 ]         ← 角括弧だけでは数式モードにならない！',
+          '    NG: \\begin{aligned}...      ← aligned を数式モード外で使うとエラー',
+          '    OK: \\[ f(x) = x^2 \\]',
+          '    OK: \\[ \\begin{aligned} ... \\end{aligned} \\]',
+          '',
+          '  ● 複数行の式変形: \\[ \\begin{aligned} ... \\end{aligned} \\] を使う',
+          '    OK例:',
+          '    \\[',
+          '    \\begin{aligned}',
+          '    f(x) &= x^2 - 8x + 7 \\\\',
+          '          &= (x-4)^2 - 9',
+          '    \\end{aligned}',
+          '    \\]',
+          '    - 行末の改行は必ず \\\\ (バックスラッシュ2つ)。\\ 1つだけは絶対NG。',
+          '    - aligned 環境の最終行には \\\\ を付けない（付けると空行エラー）。',
+          '',
+          '  ● 絶対に裸の角括弧 [ ... ] を display math の代わりに使わないこと。',
+          '    角括弧は LaTeX では「オプション引数」を意味するため、数式として解釈されない。',
+          '',
+          '■ 改行ルール',
+          '  - 文中で改行したい場合: \\\\ (バックスラッシュ2つ) または \\par。',
+          '  - \\ 1つだけ + 改行 は「壊れたコマンド」になる。絶対に使わない。',
+          '    NG: そのとき $x=4$。\\',
+          '        \\textbf{解説}  ← \\ と \\textbf が結合して未定義コマンドになる',
+          '    OK: そのとき $x=4$。\\\\',
+          '        \\textbf{解説}',
+          '',
+          '■ 環境・中括弧の対応',
+          '  - すべての \\begin{X} に対応する \\end{X} を書くこと。',
+          '  - 数式環境内の { と } の数は完全に一致させること。',
+          '    NG: \\frac{x+1{2}   ← } が1つ足りない',
+          '    OK: \\frac{x+1}{2}',
+          '',
+          '■ \\left / \\right とデリミタ（超重要）',
+          '  - \\left と \\right の直後には必ずデリミタ記号を置くこと。',
+          '  - 中括弧をデリミタとして使う場合は \\left\\{ ... \\right\\} と書く。',
+          '    NG: \\left{ ... \\right}     ← Missing delimiter エラーになる！',
+          '    OK: \\left\\{ ... \\right\\}',
+          '    OK: \\left( ... \\right)',
+          '  - \\left と \\right は必ずペアにすること。片方だけは不可。',
+          '',
+          '■ フォント指定',
+          '  - 上記 preamble テンプレートのフォント指定をそのまま使うこと。',
+          '  - \\setCJKmainfont 等を直接（\\IfFontExistsTF なしで）書かないこと。',
+          '    フォントが存在しない環境でコンパイルが即死する。',
+          '',
+          '■ その他の禁止事項',
+          '  - TAB文字を使わない（スペースのみ使用）。',
+          '  - \\write18 / \\input / \\include / \\catcode 等の低レベル命令は使用不可。',
+          '  - \\newcommand で独自コマンドを定義しない（テンプレート外の命令を増やさない）。',
+          '',
+          '■ セルフチェックリスト（出力前に必ず確認）',
+          '  □ \\documentclass で始まり \\end{document} で終わっているか？',
+          '  □ すべての数式が $...$ か \\[...\\] か数式環境内にあるか？',
+          '  □ 裸の角括弧 [ ] を display math に使っていないか？',
+          '  □ \\\\ は2つセットか？（\\ 1つだけで終わる行がないか？）',
+          '  □ \\begin と \\end が1対1で対応しているか？',
+          '  □ { と } の数が一致しているか？',
+          '  □ \\setCJKmainfont 等が \\IfFontExistsTF 内にあるか？',
+          '  □ 問題数と解答数が一致しているか？',
+          '',
+          '═══════════════════════════════════════════════',
+          '',
+        ].join('\n')
+        // Prepend the instruction so it's visible at the top of the prompt area
+        // Also inject the user-selected number of problems so the LLM must follow it exactly.
+        const problemCountLine = (typeof numQuestions === 'number' && Number.isFinite(numQuestions) && numQuestions > 0)
+          ? `- 要求: 出力は必ず ${numQuestions} 問とする（問題数を厳密に合わせてください）。`
+          : '- 要求: 出力する問題数が指定されていれば、その数に厳密に従ってください。'
+        out = problemCountLine + '\n' + latexInstruction + out
+      }
+
+      return out
+    }catch(e){ return text }
+  }
+
+  // デバッグ用: API の生レスポンスを新しいウィンドウに表示する
+  const showRawApiResponse = async () => {
+    if(!docId) return setStatus('doc_id がありません')
+    // 同期的にウィンドウを開く
+    const w = window.open('', '_blank', 'width=700,height=500')
+    if(!w){ setStatus('ポップアップがブロックされています'); return }
+  try{ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>生 API レスポンス</title></head><body><pre>読み込み中...</pre></body></html>'); w.document.close() }catch(e){}
+    setStatus('API を取得中...')
+    try{
+      const res = await fetch(`/api/doc/${docId}/entries`)
+      const j = await res.json()
+      const pretty = JSON.stringify(j, null, 2)
+      try{ w.document.open(); w.document.write(`<pre style="white-space:pre-wrap;">${pretty}</pre>`); w.document.close() }catch(e){ }
+      setStatus('API レスポンスを表示しました')
+    }catch(e){ setStatus('API取得エラー: '+e.message); try{ w.document.open(); w.document.write(`<p>エラー: ${String(e.message)}</p>`); w.document.close() }catch(_){ } }
+  }
+
+  // --- Simple paste-and-generate PDF (user-mode) ---
+  const compileRawLatex = async () => {
+    if(!rawLatex || rawLatex.trim()==='') return setStatus('LaTeX を貼り付けてください')
+    setPdfWorking(true)
+    setStatus('PDF を生成中...')
+    // Open a provisional window synchronously to avoid popup blockers.
+    const win = window.open('', '_blank', 'width=900,height=700')
+    if(!win){
+      setStatus('ポップアップがブロックされています。ブラウザでポップアップを許可してください。')
+    } else {
+      // show an immediate loading message so the user doesn't see a blank page
+      try{
+        win.document.open();
+        win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>PDF を生成中</title></head><body><p>PDF を生成しています。しばらくお待ちください...</p></body></html>');
+        win.document.close();
+      }catch(e){ /* ignore if cross-window write fails */ }
+    }
+    try{
+      const body = { latex: rawLatex, title: (selectedTemplate && selectedTemplate.title) ? selectedTemplate.title : 'Pasted LaTeX', return_url: true }
+      const res = await fetch('/api/generate_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      if(res.ok){
+        const contentType = res.headers.get('content-type') || ''
+        if(contentType.includes('application/json')){
+          const j = await res.json()
+          if(j.pdf_url){
+            // expose URL for manual opening
+            setLastPdfUrl(j.pdf_url)
+            console.log('PDF url returned:', j.pdf_url)
+            // navigate provisional window to the pdf url if allowed
+            try{
+              if(win){
+                win.location.href = j.pdf_url
+                setStatus('PDF を新しいタブで開きました')
+              } else {
+                // if no provisional window (blocked), try to open new tab; may be blocked
+                const n = window.open(j.pdf_url, '_blank')
+                if(n) setStatus('PDF を新しいタブで開きました')
+                else setStatus('PDF を開くポップアップがブロックされました。下のリンクを使って手動で開いてください。')
+              }
+            }catch(e){
+              console.warn('navigation to pdf_url failed', e)
+              // best-effort: try to embed the PDF in the provisional window using an iframe
+              const embedPdfInWin = async () => {
+                if(!win) return
+                try{
+                  // quick check that the PDF URL is accessible
+                  const ok = await fetch(j.pdf_url, { method: 'HEAD' }).catch(()=>null)
+                  let useBlob = false
+                  if(!ok || !(ok.status && ok.status >=200 && ok.status < 400)){
+                    // fallback to blob fetch if HEAD failed
+                    useBlob = true
+                  } else {
+                    const cd = ok.headers.get('content-disposition') || ''
+                    // if server suggests attachment, prefer blob workaround to force preview
+                    if(cd.toLowerCase().includes('attachment')){
+                      useBlob = true
+                    }
+                  }
+
+                  let src = j.pdf_url
+                  if(useBlob){
+                    try{
+                      const bres = await fetch(j.pdf_url).catch(()=>null)
+                      if(bres && bres.ok){
+                        const blob = await bres.blob()
+                        src = URL.createObjectURL(blob)
+                      } else {
+                        // leave src as original URL
+                      }
+                    }catch(err){
+                      // ignore, fall back to direct URL
+                    }
+                  }
+
+                  const html = `<!doctype html><html><head><meta charset="utf-8"><title>PDF を生成しました</title><style>body,html{height:100%;margin:0}iframe{width:100%;height:100%;border:none}</style></head><body>` +
+                    `<iframe src="${src}"></iframe>` +
+                    `</body></html>`
+                  win.document.open(); win.document.write(html); win.document.close();
+                  setStatus('PDF が生成されました（ウィンドウ内に表示されない場合は表示リンクをクリックしてください）')
+                }catch(err){
+                  console.warn('failed to embed PDF in window', err)
+                  try{ win.document.open(); win.document.write(`<p>PDF を生成しました。<a href="${j.pdf_url}" target="_blank">こちらを開く</a></p>`); win.document.close() }catch(_){ }
+                  setStatus('PDF を生成しました（手動でリンクを開いてください）')
+                }
+              }
+              embedPdfInWin()
+             }
+           } else {
+            setStatus('PDF の URL が返されませんでした')
+            if(win) { try{ win.close() }catch(_){} }
+          }
+        } else {
+          // fallback: stream pdf blob
+          const blob = await res.blob()
+          const url = URL.createObjectURL(blob)
+          try{
+            if(win){
+              // navigate the provisional window to the blob URL
+              win.location.href = url
+            } else {
+              window.open(url, '_blank')
+            }
+          }catch(e){ window.open(url, '_blank') }
+          setStatus('PDF を新しいタブで開きました')
+        }
+      } else {
+        // try to parse JSON error (includes stdout/stderr on compile failures)
+        let j = null
+        try{ j = await res.json() }catch(_){ }
+        if(j){
+          const detail = j.error || j.detail || JSON.stringify(j)
+          let extra = ''
+          if(j.stdout) extra += '\nSTDOUT:\n' + j.stdout
+          if(j.stderr) extra += '\nSTDERR:\n' + j.stderr
+          setStatus('PDF 生成失敗: ' + detail)
+          // open a debug window with full info
+          const w = win || window.open('', '_blank', 'width=900,height=600')
+          if(w){
+            try{ w.document.open(); w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>PDF 生成エラー</title></head><body><h3>PDF 生成失敗</h3><pre>'+ (detail + extra).replace(/</g,'&lt;') +'</pre></body></html>'); w.document.close() }catch(e){}
+          }
+        } else {
+          setStatus('PDF 生成に失敗しました: ' + res.statusText)
+        }
+      }
+    }catch(e){ setStatus('PDF 生成エラー: '+e.message) }
+    setPdfWorking(false)
+  }
+
+  const fetchFullTextById = async (id) => {
+    if (!id) return
+    setStatus('全文取得中...')
+    try {
+      const res = await fetch(`/api/doc/${id}`)
+      if (!res.ok) { setStatus('全文取得失敗'); return }
+      const j = await res.json()
+      // 保存して UI に表示できるようにする
+      setFullText(j.text || '')
+      setStatus('全文取得完了')
+    } catch (e) { setStatus('全文取得中にエラー: '+e.message) }
+  }
+
+  const onUploadPastedOutput = async () => {
+    if(!llmOutput) return setStatus('まず LLM の出力を貼り付けてください')
+    setStatus('アップロード中...')
+    try{
+      // Always send as `latex` so the server can apply its LaTeX->plain_text fallback
+      // and we avoid client-side gating that caused upload failures.
+      const body = { latex: llmOutput }
+      const res = await fetch('/api/upload_json', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const j = await res.json()
+      if(!res.ok){ setStatus('アップロード失敗: '+(j.detail||res.statusText)); return }
+      setDocId(j.doc_id)
+      setStatus('アップロード成功: doc_id=' + j.doc_id + ' chunks=' + j.chunks)
+      if(j.doc_id){
+        await fetchFullTextById(j.doc_id)
+        // 自動で DB 挿入パイプラインを実行する（チャンクがある場合のみ）
+        if(j.chunks && j.chunks > 0){
+          setStatus('チャンクあり、自動でパイプラインを実行します...')
+          await runPipeline()
+        }else{
+          setStatus('チャンクがありません。LaTeX→plain 変換結果を確認してください。')
+        }
+      }
+    }catch(e){ setStatus('アップロード中にエラー: '+e.message) }
+  }
+
+  const submitTuningLog = async () => {
+    if(!llmOutput) return setStatus('まず LLM の出力を貼り付けてください')
+    // include generatedPrompt if present, otherwise use full tuning prompt or preview
+    const promptToSend = generatedPrompt || tuningPromptFull || previewRendered || ''
+    setStatus('チューニングログを送信しています...')
+    try{
+      // build metadata: include doc/template/subject plus any user-provided custom fields
+      const metadata = {
+        doc_id: docId || null,
+        template_id: selectedTemplateId || null,
+        subject: selectedSubject || null,
+      }
+      if(Array.isArray(customFields)){
+        customFields.forEach(cf => {
+          if(cf && cf.key){
+            // avoid overwriting core keys unintentionally
+            if(['doc_id','template_id','subject'].includes(cf.key)) return
+            metadata[cf.key] = cf.value
+          }
+        })
+      }
+
+      const body = {
+        prompt: promptToSend,
+        model_output: llmOutput,
+        expected_output: expectedOutput || undefined,
+        score: tuningScore !== '' ? Number(tuningScore) : undefined,
+        notes: tuningNotes || undefined,
+        metadata
+      }
+      const res = await fetch('/api/tuning/log', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const j = await res.json()
+      if(!res.ok){ setStatus('送信失敗: '+(j.detail||res.statusText)); return }
+      setStatus('チューニングログを保存しました id=' + (j.id||j))
+      // optionally clear expected/score/notes but keep llmOutput for further edits
+      setExpectedOutput('')
+      setTuningScore('')
+      setTuningNotes('')
+    }catch(e){ setStatus('送信中にエラー: '+e.message) }
+  }
+
+  const fetchTuningPrompt = async () => {
+    // Always fetch full tuning prompt. If no generatedPrompt exists but a template is selected,
+    // render the template first so users can just click this button.
+    let question = generatedPrompt || previewRendered || ''
+    if(!question && selectedTemplateId){
+      const rendered = await generatePromptFromTemplate()
+      question = rendered || previewRendered || ''
+    }
+    if(!question) return setStatus('まず生成プロンプトまたはテンプレートを生成してください')
+    setStatus('チューニング用（フル）プロンプトを取得しています...')
+    try{
+  // build metadata to send (include custom fields)
+  const metadataForRequest = {
+    doc_id: docId || null,
+    template_id: selectedTemplateId || null,
+    subject: selectedSubject || null,
+  }
+  if(Array.isArray(customFields)){
+    customFields.forEach(cf => { if(cf && cf.key){ if(['doc_id','template_id','subject'].includes(cf.key)) return; metadataForRequest[cf.key] = cf.value } })
+  }
+
+  // target difficulty/trickiness preference: prefer explicit user numeric hints then renderContext estimates
+  const maybeUserDiff = (userDifficultyNumeric !== '') ? Number(userDifficultyNumeric) : null
+  const maybeUserTrick = (userTrickinessNumeric !== '') ? Number(userTrickinessNumeric) : null
+  const ctxDiff = renderContext && (renderContext.difficulty_numeric !== undefined) ? Number(renderContext.difficulty_numeric) : null
+  const ctxTrick = renderContext && (renderContext.trickiness_numeric !== undefined) ? Number(renderContext.trickiness_numeric) : null
+
+  const body = { 
+    question, 
+    top_k: Number(topK), 
+    use_vector: true, 
+    tuning_mode: true, 
+    tuning_profile: tuningProfile, 
+    tuning_include_refs: tuningIncludeRefs, 
+    expected_output: expectedOutput || undefined,
+    metadata: metadataForRequest,
+    difficulty_match_weight: Number(difficultyMatchWeight),
+    trickiness_weight: Number(trickinessWeight),
+  }
+  if(maybeUserDiff !== null && !Number.isNaN(maybeUserDiff)) body.target_difficulty = maybeUserDiff
+  else if(ctxDiff !== null && !Number.isNaN(ctxDiff)) body.target_difficulty = ctxDiff
+  if(maybeUserTrick !== null && !Number.isNaN(maybeUserTrick)) body.target_trickiness = maybeUserTrick
+  else if(ctxTrick !== null && !Number.isNaN(ctxTrick)) body.target_trickiness = ctxTrick
+  if(docId) body.doc_id = docId
+      const res = await fetch('/api/assemble_prompt', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const j = await res.json()
+      if(!res.ok){ setStatus('チューニングプロンプト取得失敗: '+(j.detail||res.statusText)); return }
+      const p = j.prompt_tuning || j.prompt_tuning_summarized || ''
+      setTuningPromptFull(p)
+      setStatus('チューニング用（フル）プロンプトを取得しました')
+    }catch(e){ setStatus('チューニングプロンプト取得中にエラー: '+e.message) }
+  }
+
+  // Auto-refresh tuning prompt when relevant inputs change (so changing profile is reflected immediately).
+  // Debounced short delay to avoid spamming the backend when the user is still interacting.
+  useEffect(() => {
+    // Only auto-refresh when there's an existing generated prompt or a preview to base the tuning prompt on
+    if(!(generatedPrompt || previewRendered)) return
+    let mounted = true
+    const id = setTimeout(() => {
+      if(!mounted) return
+      try{ fetchTuningPrompt() }catch(e){ /* ignore */ }
+    }, 350)
+    return () => { mounted = false; clearTimeout(id) }
+  }, [tuningProfile, tuningIncludeRefs, expectedOutput, difficultyMatchWeight, trickinessWeight, userDifficultyNumeric, userTrickinessNumeric, JSON.stringify(customFields || [])])
+
+  // Developer helper removed: use the tuning-section "チューニングプロンプト生成（フル）" button instead.
+
+  const fetchDocEntries = async ()=>{
+    if(!docId) return setStatus('doc_id がありません')
+    setStatus('DB を取得中...')
+    try{
+      const res = await fetch(`/api/doc/${docId}/entries`)
+      const j = await res.json()
+      if(!res.ok){ setStatus('DB取得エラー: '+(j.detail||j.error||res.statusText)); return [] }
+      setDocEntries(j.rows || [])
+      setStatus('DB取得完了')
+      return j.rows || []
+    }catch(e){ setStatus('DB取得中にエラー: '+e.message); return [] }
+  }
+
+  const runPipeline = async () => {
+    if(!docId) return setStatus('doc_id がありません')
+    setStatus('パイプラインを起動しています...')
+    try{
+      const res = await fetch(`/api/doc/${docId}/pipeline`, { method: 'POST' })
+      const j = await res.json()
+      if(!res.ok){ setStatus('パイプラインエラー: '+(j.detail||j.error||res.statusText)); console.error('pipeline start error', j); return }
+
+      // If server performed synchronous insertion it may return completed/inserted info directly
+      if(j.status === 'completed' || j.inserted || (j.ids && j.ids.length>0)){
+        const insertedCount = j.inserted || (j.ids && j.ids.length) || 0
+        setStatus(`同期挿入完了: ${insertedCount} 行`)
+        await fetchDocEntries()
+        return
+      }
+
+      // Otherwise the server queued a background job. Try to extract job id and poll it.
+      const job_id = j.job_id || j.jobId || j.id || (j.job && j.job.id)
+      if(!job_id){
+        setStatus('パイプライン開始（ジョブIDなし）。サーバ応答をコンソールで確認してください。')
+        console.log('pipeline response', j)
+        // still try to fetch entries once
+        await fetchDocEntries()
+        return
+      }
+
+      setStatus('パイプラインがキューされました: job_id=' + job_id)
+
+      // Poll the admin job endpoint for detailed status (longer timeout here)
+      for(let i=0;i<30;i++){
+        await new Promise(r=>setTimeout(r, 1000))
+        try{
+          const pj = await fetch(`/api/pipeline/${job_id}`)
+          const pjjson = await pj.json()
+          if(pj.ok && pjjson.job){
+            const st = pjjson.job.status
+            if(st === 'completed'){
+              setStatus('バックグラウンドジョブ完了')
+              await fetchDocEntries()
+              return
+            }
+            if(st === 'failed'){
+              setStatus('ジョブ失敗: ' + (pjjson.job.message || pjjson.job.result || '詳細はコンソール'))
+              console.error('pipeline job failed', pjjson)
+              return
+            }
+            // update UI with intermediate status
+            setStatus(`ジョブ状態: ${st} (経過 ${i+1}s)`) 
+            continue
+          }
+
+          // Fallback: check doc status for inserted_ids if admin job endpoint not available
+          const sres = await fetch(`/api/doc/${docId}/status`)
+          const sj = await sres.json()
+          if(sres.ok && sj.inserted_ids && sj.inserted_ids.length>0){
+            setStatus(`挿入完了: ${sj.inserted_ids.length} 行`)
+            await fetchDocEntries()
+            return
+          }
+        }catch(e){
+          console.warn('job poll error', e)
+        }
+      }
+
+      // timed out polling
+      await fetchDocEntries()
+      setStatus('パイプライン完了を待機しました（タイムアウト） - DB を確認してください')
+
+    }catch(e){ setStatus('パイプライン起動中にエラー: '+e.message); console.error(e) }
+  }
+
+  const openDocEntriesWindow = async ()=>{
+    if(!docId) return setStatus('doc_id がありません')
+
+    // 同期的にウィンドウを開く（非同期 fetch の前に）
+    const w = window.open('', '_blank', 'width=900,height=700')
+    if(!w){ setStatus('ポップアップがブロックされています'); return }
+
+  try{ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>DB エントリ</title></head><body><p>読み込み中...</p></body></html>'); w.document.close() }catch(e){}
+
+    setStatus('DB を取得中...')
+    try{
+      // 常に最新を取得
+      const res = await fetch(`/api/doc/${docId}/entries`)
+      const j = await res.json()
+      if(!res.ok){
+        setStatus('DB取得エラー: '+(j.detail||j.error||res.statusText))
+        try{ w.document.open(); w.document.write(`<p>DB取得エラー: ${String(j.detail||j.error||res.statusText||'Unknown')}</p>`); w.document.close() }catch(_){ }
+        return
+      }
+
+      const rows = j.rows || []
+      setDocEntries(rows)
+
+      const escapeHtml = (unsafe) => {
+        if(unsafe === null || unsafe === undefined) return ''
+        return String(unsafe).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c] })
+      }
+
+      let rowsHtml = ''
+      if(rows.length === 0){
+        rowsHtml = `<tr><td colspan="7" style="text-align:center;color:#666">(エントリなし)</td></tr>`
+      }else{
+        rowsHtml = rows.map(r=> `<tr><td>${escapeHtml(r.id)}</td><td>${escapeHtml(r.source)}</td><td>${escapeHtml(r.page)}</td><td><pre style="white-space:pre-wrap;max-width:600px">${escapeHtml(r.snippet||'')}</pre></td><td><pre style="white-space:pre-wrap;max-width:600px">${escapeHtml(r.solution||'')}</pre></td><td>${escapeHtml(r.difficulty||'')}</td><td>${escapeHtml(r.trickiness||'')}</td></tr>`).join('')
+      }
+
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>DB エントリ</title><style>body{font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;padding:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:6px;text-align:left}pre{margin:0}</style></head><body><h2>doc ${escapeHtml(docId)} のエントリ</h2><table><thead><tr><th>ID</th><th>ソース</th><th>ページ</th><th>問題</th><th>解答</th><th>難易度</th><th>ひっかけ度</th></tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`
+
+      try{ w.document.open(); w.document.write(html); w.document.close() }catch(e){ }
+      setStatus('新しいウィンドウで表示しました')
+    }catch(e){
+      setStatus('DB取得中にエラー: '+e.message)
+      try{ w.document.open(); w.document.write(`<p>エラー: ${String(e.message)}</p>`); w.document.close() }catch(_){ }
+    }
+  }
+
+  // Custom fields helpers for supervised tuning labels
+  const addCustomField = () => {
+    setCustomFields(prev => ([...(prev || []), { key: '', value: '' }]))
+  }
+  const updateCustomField = (idx, field, val) => {
+    setCustomFields(prev => {
+      const a = (prev || []).slice()
+      a[idx] = { ...(a[idx] || {}), [field]: val }
+      return a
+    })
+  }
+  const removeCustomField = (idx) => {
+    setCustomFields(prev => (prev || []).filter((_, i) => i !== idx))
+  }
+
+  const [evalCases, setEvalCases] = useState([])
+  const [evalAdminToken, setEvalAdminToken] = useState('')
+  const [evalLoading, setEvalLoading] = useState(false)
+
+  const fetchEvalCases = async () => {
+    setEvalLoading(true)
+    try{
+      const res = await fetch('/api/eval_candidates')
+      const j = await res.json()
+      if(!res.ok){ setStatus('評価候補取得失敗: '+(j.detail||res.statusText)); setEvalLoading(false); return }
+      setEvalCases(j.cases || [])
+      setStatus('評価候補を読み込みました (' + (j.cases? j.cases.length : 0) + ')')
+    }catch(e){ setStatus('評価候補取得エラー: '+e.message) }
+    setEvalLoading(false)
+  }
+
+  const toggleRelevant = (caseIdx, candidateId) => {
+    setEvalCases(prev => {
+      const copy = JSON.parse(JSON.stringify(prev || []))
+      const c = copy[caseIdx]
+      if(!c) return prev
+      c.relevant_ids = c.relevant_ids || []
+      const i = c.relevant_ids.indexOf(candidateId)
+      if(i >= 0) c.relevant_ids.splice(i, 1)
+      else c.relevant_ids.push(candidateId)
+      return copy
+    })
+  }
+
+  const autofillRelevant = (caseIdx) => {
+    setEvalCases(prev => {
+      const copy = JSON.parse(JSON.stringify(prev || []))
+      const c = copy[caseIdx]
+      if(!c) return prev
+      c.relevant_ids = [c.source_id]
+      return copy
+    })
+  }
+
+  const clearRelevant = (caseIdx) => {
+    setEvalCases(prev => {
+      const copy = JSON.parse(JSON.stringify(prev || []))
+      const c = copy[caseIdx]
+      if(!c) return prev
+      c.relevant_ids = []
+      return copy
+    })
+  }
+
+  const saveEvalCases = async () => {
+    setEvalLoading(true)
+    try{
+      const res = await fetch('/api/eval_candidates', { method: 'POST', headers: {'Content-Type':'application/json', 'x-admin-token': evalAdminToken }, body: JSON.stringify(evalCases) })
+      const j = await res.json()
+      if(!res.ok){ setStatus('保存失敗: '+(j.detail||res.statusText)); setEvalLoading(false); return }
+      setStatus('評価候補を保存しました (' + (j.count||0) + ')')
+    }catch(e){ setStatus('保存エラー: '+e.message) }
+    setEvalLoading(false)
+  }
+
+  const generateEvalCandidates = async (n=200, topk=10) => {
+    setEvalLoading(true)
+    try{
+      const res = await fetch(`/api/eval_candidates/generate?n=${n}&topk=${topk}&autofill=1`, { method: 'POST', headers: {'x-admin-token': evalAdminToken || ''} })
+      const j = await res.json()
+      if(!res.ok){ setStatus('生成失敗: '+(j.detail||res.statusText)); setEvalLoading(false); return }
+      setStatus('生成完了: cases=' + (j.cases||0))
+      await fetchEvalCases()
+    }catch(e){ setStatus('生成エラー: '+e.message) }
+    setEvalLoading(false)
+  }
+
+  const [llmRunResult, setLlmRunResult] = useState(null)
+  const [autoInsertOnRun, setAutoInsertOnRun] = useState(false)
+
+  const runLLM = async () => {
+    const p = tuningPromptFull || generatedPrompt || previewRendered || ''
+    if(!p) return setStatus('まずプロンプトを生成してください')
+    setStatus('LLM を実行して検証しています...')
+    try{
+      const body = { prompt: p, model_name: null, auto_insert: autoInsertOnRun }
+      const res = await fetch('/api/tuning/run', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      const j = await res.json()
+      if(!res.ok){ setStatus('LLM 実行失敗: '+(j.detail||res.statusText)); return }
+      setLlmRunResult(j)
+      setStatus('LLM 実行完了')
+    }catch(e){ setStatus('LLM 実行中にエラー: '+e.message) }
+  }
+
+  const generatePdfFromOutput = async () => {
+    // prefer generatedItems (array of {latex,...}), else use llmOutput as single latex item
+    let items = []
+    if(Array.isArray(generatedItems) && generatedItems.length){
+      // ensure each has latex
+      items = generatedItems.map(it => ({ latex: it.latex || it.stem || '', stem: it.stem || undefined, explanation: it.explanation || undefined }))
+    } else if(llmOutput && llmOutput.trim()){
+      items = [{ latex: llmOutput }]
+    } else {
+      return setStatus('PDF生成する LaTeX 出力がありません')
+    }
+    setStatus('PDF を生成中...')
+    try{
+      const body = { generated: items, title: 'Generated Problems' }
+      const res = await fetch('/api/generate_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+      if(!res.ok){
+        const j = await res.json().catch(()=>null)
+        const err = j && (j.error || j.detail) ? (j.error || j.detail) : res.statusText
+        setStatus('PDF 生成失敗: '+err)
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      // open in new tab/window
+      const w = window.open(url, '_blank')
+      if(!w){
+        // fallback: create iframe
+        const iframe = document.createElement('iframe')
+        iframe.style.width = '100%'
+        iframe.style.height = '100vh'
+        iframe.src = url
+        document.body.appendChild(iframe)
+      }
+      setStatus('PDF を表示しました')
+      // revoke object URL after some time
+      setTimeout(()=> URL.revokeObjectURL(url), 60000)
+    }catch(e){
+      setStatus('PDF 生成エラー: '+e.message)
+    }
+  }
+
+  return (
+    <div className="app">
+      <h1>RAG テンプレート & DB 確認</h1>
+      {/* ステータス表示 */}
+      <div style={{marginBottom:10, color:'#0a58ca'}}>{status}</div>
+
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
+        <div style={{display:'flex', gap:8}}>
+          <button onClick={()=>setMode('user')} style={{padding:'6px 10px', background: mode==='user' ? '#0a58ca' : '#f0f0f0', color: mode==='user' ? '#fff' : '#000', borderRadius:6, border:'none'}}>ユーザモード</button>
+          <button onClick={()=>setMode('dev')} style={{padding:'6px 10px', background: mode==='dev' ? '#0a58ca' : '#f0f0f0', color: mode==='dev' ? '#fff' : '#000', borderRadius:6, border:'none'}}>開発モード</button>
+        </div>
+        <div style={{background:'#f0f8ff', padding:12, borderRadius:6}}>
+          <strong>{mode === 'user' ? 'ワークフロー（簡易）' : '開発ワークフロー'}</strong>
+        </div>
+      </div>
+      <div style={{marginBottom:12}}>
+        {mode === 'user' ? (
+          <ol style={{margin: '8px 0 0 18px'}}>
+            <li>テンプレートを選択し、科目・難易度を指定してプロンプトを生成</li>
+            <li>外部の ChatGPT 等に貼り付けて実行、出力を本画面に貼り付ける</li>
+            <li>出力を <em>貼り付けた出力をアップロード</em> で教材として登録（開発モードは別画面）</li>
+          </ol>
+        ) : (
+          <ol style={{margin: '8px 0 0 18px'}}>
+            <li>テンプレートレンダリング、RAG、チューニングログの管理など開発向けツールを表示します</li>
+            <li>DB の詳細確認やパイプライン起動、raw API 表示などは開発モード内で操作してください</li>
+          </ol>
+        )}
+      </div>
+
+      {/* --- テンプレート / モード別 UI --- */}
+      {mode === 'user' && (
+        <section>
+          <h3>（ユーザ向け）テンプレートからプロンプトを生成</h3>
+          <div style={{marginBottom:8}}>
+            <label style={{fontWeight:600}}>テンプレート</label>
+            <div style={{display:'flex', gap:8, alignItems:'center', marginTop:6}}>
+              <select value={selectedTemplateId} onChange={(e)=>{ setSelectedTemplateId(e.target.value); }} style={{minWidth:240}}>
+                <option value="">-- テンプレートを選択 --</option>
+                {templates.map(t=> (<option key={t.id} value={t.id}>{t.name || t.id}</option>))}
+              </select>
+              <button onClick={generatePromptFromTemplate} disabled={!selectedTemplateId}>プロンプトを生成</button>
+              <button onClick={async()=>{ setStatus('テンプレート再読み込み中...'); const tpls = await refreshTemplates(); if(tpls && tpls.length>0){ setStatus('テンプレートを更新しました'); if(!selectedTemplateId) setSelectedTemplateId(tpls[0].id) } else { setStatus('テンプレートが見つかりませんでした') } }} className="small-btn">再読み込み</button>
+              {templates.length === 0 && (<span style={{color:'#666', marginLeft:10}}>テンプレートが見つかりません。サーバーの templates.json を確認してください。</span>)}
+            </div>
+          </div>
+
+          <div style={{marginTop:8}}>
+            <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:8}}>
+              <label style={{display:'flex', alignItems:'center', gap:6}}>科目:
+                <select value={selectedSubject} onChange={(e)=>setSelectedSubject(e.target.value)} style={{marginLeft:6}}>
+                  {subjects.map(s=> (<option key={s} value={s}>{s}</option>))}
+                </select>
+              </label>
+              <label style={{display:'flex', alignItems:'center', gap:6}}>難易度:
+                <select value={selectedDifficulty} onChange={(e)=>setSelectedDifficulty(e.target.value)} style={{marginLeft:6}}>
+                  {difficulties.map(d=> (<option key={d} value={d}>{d}</option>))}
+                </select>
+              </label>
+              <label style={{display:'flex', alignItems:'center', gap:6}}>出題数:
+                <input type="number" value={numQuestions} onChange={(e)=>setNumQuestions(Number(e.target.value))} style={{width:80}} min={1} />
+              </label>
+              <label style={{display:'flex', alignItems:'center', gap:6}}>出力形式:
+                <select value={userOutputFormat} onChange={(e)=>setUserOutputFormat(e.target.value)} style={{marginLeft:6}}>
+                  <option value="latex">LaTeX（ユーザ向け）</option>
+                  <option value="json">JSON（開発者向け）</option>
+                </select>
+              </label>
+            </div>
+
+            <label>生成されたプロンプト</label>
+            <textarea className="prompt-textarea" value={generatedPrompt} onChange={(e)=>setGeneratedPrompt(e.target.value)} rows={8} />
+            <div style={{display:'flex', gap:8, marginTop:8}}>
+              <button onClick={()=>copyToClipboard(generatedPrompt)} className="small-btn" disabled={!generatedPrompt}>コピー</button>
+              <button onClick={assemblePromptWithRag} className="small-btn">RAG を注入</button>
+            </div>
+          </div>
+
+          <div style={{marginTop:12}}>
+            <label style={{display:'block', fontWeight:600}}>LLM の出力（ChatGPT 等からコピーした LaTeX / テキストをここに貼り付けてください）</label>
+            <textarea
+              placeholder={"例: \\begin{enumerate}\\item x^2-5x+6=0\\begin{answer}x=2,3\\end{answer}\\end{enumerate}\\n貼り付けたら「アップロード」で DB に保存できます。"}
+              value={llmOutput}
+              onChange={(e)=>{ setLlmOutput(e.target.value); }}
+              rows={6}
+              style={{width:'100%', fontFamily: 'monospace'}}
+            />
+
+            <div style={{marginTop:8, display:'flex', gap:8, alignItems:'center'}}>
+              <button style={{marginLeft:8}} onClick={async ()=>{ if(llmOutput && llmOutput.trim()) { setRawLatex(llmOutput); } await compileRawLatex() }} className="small-btn" disabled={!(llmOutput && llmOutput.trim()) && !(Array.isArray(generatedItems) && generatedItems.length)}>PDF を生成して表示</button>
+              {/* 生成プロンプトを貼り付け欄へ挿入 ボタンを廃止（UI を簡素化） */}
+            </div>
+
+            <div style={{marginTop:8, color:'#666', fontSize:13}}>
+              ヒント: ChatGPT 等からコピーした LaTeX をここに貼り付けて「PDF を生成して表示」を押すと、サーバでコンパイルして PDF を表示します（開発向けの DB 保存は省略しています）。
+            </div>
+          </div>
+        </section>
+      )}
+
+      {mode === 'dev' && (
+        <>
+
+
+          {/* --- プロンプト生成（開発） --- */}
+          <div style={{marginTop:12, padding:12, border:'1px solid #eee', borderRadius:6, background:'#fff'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+              <strong>プロンプト生成（開発）</strong>
+              <div style={{color:'#666', fontSize:12}}>テンプレートを選択してすぐ生成できます</div>
+            </div>
+            <div style={{display:'flex', gap:12, alignItems:'center', marginTop:8}}>
+              <select value={selectedTemplateId} onChange={(e)=>{ setSelectedTemplateId(e.target.value); }} style={{minWidth:280}}>
+                <option value="">-- テンプレートを選択 --</option>
+                {templates.map(t=> (<option key={t.id} value={t.id}>{t.name || t.id}</option>))}
+              </select>
+
+              <label style={{display:'flex', alignItems:'center', gap:6}}>科目:
+                <select value={selectedSubject} onChange={(e)=>setSelectedSubject(e.target.value)}>
+                  {subjects.map(s=> (<option key={s} value={s}>{s}</option>))}
+                </select>
+              </label>
+
+              <label style={{display:'flex', alignItems:'center', gap:6}}>難易度:
+                <select value={selectedDifficulty} onChange={(e)=>setSelectedDifficulty(e.target.value)}>
+                  {difficulties.map(d=> (<option key={d} value={d}>{d}</option>))}
+                </select>
+              </label>
+
+              <label style={{display:'flex', alignItems:'center', gap:6}}>数:
+                <input type="number" value={numQuestions} onChange={(e)=>setNumQuestions(Number(e.target.value))} style={{width:60}} min={1} />
+              </label>
+
+              {/* 生成ボタンはチューニングセクションの「チューニングプロンプト生成（フル）」を使ってください */}
+
+              {/* 新規テンプレート作成トグル */}
+              <div style={{marginLeft:8}}>
+                <button className="small-btn" style={{background: showNewTemplateForm ? '#dc3545' : '#198754', color:'#fff', border:'none'}} onClick={()=>setShowNewTemplateForm(s=>!s)}>{showNewTemplateForm ? '✕ 閉じる' : '＋ テンプレート追加'}</button>
+              </div>
+            </div>
+
+            {/* 新規テンプレート作成フォーム — 教科＋分野だけ。他は全自動。 */}
+            {showNewTemplateForm ? (
+              <div style={{marginTop:10, padding:14, border:'2px solid #198754', borderRadius:8, background:'#f0faf4'}}>
+                <div style={{fontWeight:700, fontSize:15, marginBottom:10, color:'#198754'}}>📝 テンプレート追加（教科を選ぶだけ！）</div>
+                <div style={{display:'flex', gap:12, alignItems:'flex-end', flexWrap:'wrap'}}>
+
+                  {/* 教科セレクト */}
+                  <div style={{display:'flex', flexDirection:'column'}}>
+                    <label style={{fontSize:13, fontWeight:600, marginBottom:4}}>教科 *</label>
+                    <select
+                      value={newTplSubject}
+                      onChange={(e)=>setNewTplSubject(e.target.value)}
+                      style={{padding:'6px 10px', borderRadius:4, border:'1px solid #ccc', minWidth:160, fontSize:14}}
+                    >
+                      <option value="">-- 選択 --</option>
+                      {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                      <option value="__custom">その他（自由入力）</option>
+                    </select>
+                  </div>
+
+                  {/* 自由入力の教科（「その他」選択時のみ） */}
+                  {newTplSubject === '__custom' && (
+                    <div style={{display:'flex', flexDirection:'column'}}>
+                      <label style={{fontSize:13, fontWeight:600, marginBottom:4}}>教科名を入力</label>
+                      <input
+                        id="newTplCustomSubject"
+                        style={{padding:'6px 10px', borderRadius:4, border:'1px solid #ccc', width:180, fontSize:14}}
+                        placeholder="例: 情報科学"
+                      />
+                    </div>
+                  )}
+
+                  {/* 分野（任意） */}
+                  <div style={{display:'flex', flexDirection:'column'}}>
+                    <label style={{fontSize:13, fontWeight:600, marginBottom:4}}>分野（任意）</label>
+                    <input
+                      value={newTplField}
+                      onChange={(e)=>setNewTplField(e.target.value)}
+                      style={{padding:'6px 10px', borderRadius:4, border:'1px solid #ccc', width:200, fontSize:14}}
+                      placeholder="例: 微分積分, 力学, 文法"
+                    />
+                  </div>
+
+                  {/* 作成ボタン */}
+                  <button
+                    style={{padding:'8px 20px', borderRadius:6, border:'none', background:'#198754', color:'#fff', fontWeight:700, fontSize:14, cursor: newTplSaving ? 'wait' : 'pointer', opacity: newTplSaving ? 0.6 : 1}}
+                    disabled={newTplSaving || (!newTplSubject)}
+                    onClick={()=>{
+                      const subj = newTplSubject === '__custom'
+                        ? (document.getElementById('newTplCustomSubject')?.value || '').trim()
+                        : newTplSubject
+                      if(!subj){ setStatus('教科を入力してください'); return }
+                      saveNewTemplate(subj, newTplField)
+                    }}
+                  >
+                    {newTplSaving ? '保存中...' : '作成'}
+                  </button>
+                </div>
+
+                <div style={{marginTop:10, color:'#555', fontSize:12}}>
+                  教科を選んで「作成」を押すだけ。テンプレート名・ID・本文は自動生成されます。分野を指定するとその範囲に特化したテンプレートになります。
+                </div>
+              </div>
+            ) : null}
+
+            <div style={{marginTop:8, display:'flex', alignItems:'center', gap:8}}>
+              <button className="info-toggle small-btn" onClick={()=>setShowPromptHint(p=>!p)}>{showPromptHint ? 'ヒントを閉じる' : 'ヒント'}</button>
+              {showPromptHint ? (
+                <div className="hint-box muted" style={{flex:1}}>
+                  テンプレートはサーバ側の <code>backend/templates.json</code> または管理 API <code>/api/template</code> で管理します。編集はローカルで即時反映されます。
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* --- 簡易チューニングワークフロー（簡潔で迷わない UI） --- */}
+          <div style={{marginTop:12, padding:12, border:'1px solid #e6eef8', borderRadius:6, background:'#fbfdff'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+              <strong>簡易チューニングワークフロー ✅</strong>
+            </div>
+            <div style={{marginTop:8, display:'flex', alignItems:'center', gap:8}}>
+              <div className="muted">ワークフロー: プロンプト生成 → チューニングプロンプト取得 → モデル出力を保存</div>
+              <button className="info-toggle small-btn" onClick={()=>setShowWorkflowSteps(s=>!s)}>{showWorkflowSteps ? '手順を閉じる' : '手順を見る'}</button>
+            </div>
+            {showWorkflowSteps ? (
+              <ol style={{margin:'8px 0 0 18px'}}>
+                <li>テンプレートや RAG でプロンプトを生成する</li>
+                <li>「チューニングプロンプト生成（要約/フル）」で目的に応じたプロンプトを作る</li>
+                <li>モデル出力を貼り付けて「保存（JSONL + DB）」で記録する</li>
+              </ol>
+            ) : null}
+
+            <div style={{display:'flex', gap:8, marginTop:10, alignItems:'center'}}>
+              <label style={{display:'flex', alignItems:'center', gap:8}}>プロファイル:
+                <select value={tuningProfile} onChange={(e)=>setTuningProfile(e.target.value)} style={{marginLeft:6}}>
+                  <option value="json_only">Strict JSON（機械判定向け）</option>
+                  <option value="explain_then_json">解説＋JSON（説明付き）</option>
+                  <option value="short_answer">短い回答（人間向け）</option>
+                </select>
+              </label>
+              <label style={{display:'flex', alignItems:'center', gap:6}}><input type="checkbox" checked={tuningIncludeRefs} onChange={(e)=>setTuningIncludeRefs(e.target.checked)} /> 参照を含める</label>
+              <button onClick={fetchTuningPrompt} className="small-btn">チューニングプロンプト生成（フル）</button>
+              <label style={{display:'flex', alignItems:'center', gap:8}}><input type="checkbox" checked={autoInsertOnRun} onChange={(e)=>setAutoInsertOnRun(e.target.checked)} /> 自動保存</label>
+              <button onClick={runLLM} className="small-btn">LLM 実行（検証）</button>
+                 {/* フルチューニングを貼り付けボタンは削除（チューニングボタン単独で処理します） */}
+              <button onClick={async ()=>{ try{ await navigator.clipboard.writeText(tuningPromptFull||generatedPrompt||previewRendered||''); setStatus('プロンプトをコピーしました') }catch(e){ setStatus('コピー失敗') } }} className="small-btn" disabled={!(tuningPromptFull||generatedPrompt||previewRendered)}>プロンプトをコピー</button>
+              <button onClick={submitTuningLog} className="small-btn" disabled={!llmOutput}>出力を貼り付けて保存（JSONL + DB）</button>
+            </div>
+
+            <div style={{display:'flex', gap:12, marginTop:8}}>
+              <div style={{display:'flex', flexDirection:'column', gap:6}}>
+                <label style={{fontSize:13}}>再ランキング重み（即時反映）</label>
+                <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                  <div style={{width:140}}>テキスト: <strong>{textWeight.toFixed(1)}</strong></div>
+                  <input type="range" min="0" max="2" step="0.1" value={textWeight} onChange={(e)=>setTextWeight(Number(e.target.value))} />
+                </div>
+                <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                  <div style={{width:140}}>難易度: <strong>{difficultyMatchWeight.toFixed(1)}</strong></div>
+                  <input type="range" min="0" max="2" step="0.1" value={difficultyMatchWeight} onChange={(e)=>setDifficultyMatchWeight(Number(e.target.value))} />
+                </div>
+                <div style={{display:'flex', gap:8, alignItems:'center'}}>
+                  <div style={{width:140}}>ひっかけ度: <strong>{trickinessWeight.toFixed(1)}</strong></div>
+                  <input type="range" min="0" max="2" step="0.1" value={trickinessWeight} onChange={(e)=>setTrickinessWeight(Number(e.target.value))} />
+                </div>
+                <div style={{display:'flex', gap:8, marginTop:6}}>
+                  <button onClick={assemblePromptWithRag} className="small-btn">再ランキングを適用</button>
+                  <button onClick={()=>{ setTextWeight(0.5); setDifficultyMatchWeight(0.5); setTrickinessWeight(0.5); setStatus('重みをデフォルトに戻しました') }} className="small-btn">デフォルトに戻す</button>
+                </div>
+              </div>
+
+                 <div style={{flex:1}}>
+                   <textarea value={tuningPromptFull||generatedPrompt||previewRendered||''} readOnly rows={8} className="prompt-textarea" />
+
+                   {/* Compact structured advanced inputs (always visible, simpler than previous freeform block) */}
+                   <div style={{marginTop:10, padding:8, borderTop:'1px dashed #d5e6f5'}}>
+
+                     {/* Paste model output for tuning here (shared state with user-mode) */}
+                     <div style={{marginBottom:8}}>
+                       <label style={{fontSize:13, fontWeight:600}}>モデル出力（ここに貼り付けてください）</label>
+                       <textarea placeholder="モデルの出力をここに貼り付け（JSON / プレーンテキスト / LaTeX 等）" value={llmOutput} onChange={(e)=>setLlmOutput(e.target.value)} rows={6} style={{width:'100%', fontFamily:'monospace', marginTop:6}} />
+                       <div style={{display:'flex', gap:8, alignItems:'center', marginTop:6}}>
+                         <button onClick={onUploadPastedOutput} className="small-btn" disabled={!llmOutput}>アップロード（DB 保存）</button>
+                         <button onClick={async ()=>{ try{ await navigator.clipboard.writeText(llmOutput||''); setStatus('モデル出力をコピーしました') }catch(e){ setStatus('コピー失敗') } }} className="small-btn" disabled={!llmOutput}>出力をコピー</button>
+                       </div>
+                     </div>
+
+                     <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:8}}>
+                       <div style={{display:'flex', flexDirection:'column', minWidth:200}}>
+                         <label style={{fontSize:13}}>期待出力（短文）</label>
+                         <input value={expectedOutput} onChange={(e)=>setExpectedOutput(e.target.value)} placeholder="例: JSON with keys answer_brief,explanation" />
+                       </div>
+                       <div style={{display:'flex', flexDirection:'column', minWidth:120}}>
+                         <label style={{fontSize:13}}>スコア</label>
+                         <input type="number" step="0.1" min="0" max="1" value={tuningScore} onChange={(e)=>setTuningScore(e.target.value)} style={{width:100}} placeholder="0.0-1.0" />
+                       </div>
+                       <div style={{flex:1, minWidth:220}}>
+                         <label style={{fontSize:13}}>メモ</label>
+                         <input value={tuningNotes} onChange={(e)=>setTuningNotes(e.target.value)} placeholder="短いメモ（任意）" />
+                       </div>
+                       <div style={{display:'flex', gap:8}}>
+                         <button onClick={async ()=>{ try{ await navigator.clipboard.writeText(tuningPromptFull||generatedPrompt||previewRendered||''); setStatus('プロンプトをコピーしました'); }catch(e){ setStatus('コピー失敗') } }} className="small-btn" disabled={!(tuningPromptFull||generatedPrompt||previewRendered)}>プロンプトをコピー</button>
+                         <button onClick={submitTuningLog} className="small-btn" disabled={!llmOutput}>出力を貼り付けて保存</button>
+                         <button onClick={addCustomField} className="small-btn">カスタムラベルを追加</button>
+                       </div>
+                     </div>
+
+                     {/* Custom fields editor (key/value pairs) */}
+                     <div style={{display:'flex', flexDirection:'column', gap:6}}>
+                       { (customFields || []).map((cf, idx) => (
+                         <div key={idx} style={{display:'flex', gap:6, alignItems:'center'}}>
+                           <input placeholder="key" value={cf.key || ''} onChange={(e)=>updateCustomField(idx, 'key', e.target.value)} style={{width:140}} />
+                           <input placeholder="value" value={cf.value || ''} onChange={(e)=>updateCustomField(idx, 'value', e.target.value)} style={{flex:1}} />
+                           <button onClick={()=>removeCustomField(idx)} className="small-btn">削除</button>
+                         </div>
+                       )) }
+                       { (customFields || []).length === 0 ? <div style={{color:'#666', fontSize:12}}>カスタムラベルがありません。必要なら「カスタムラベルを追加」を押してください。</div> : null }
+                     </div>
+
+                   </div>
+                 </div>
+
+                 <div className="side-panel card" style={{width:320}}>
+                   <div style={{marginBottom:10}}>
+                     <strong className="section-title">プロファイル説明</strong>
+                     <div style={{marginTop:6, color:'#333'}}>
+                       {tuningProfile === 'json_only' && (
+                         <div>厳格な JSON 出力を期待します。スキーマ: <code>{`{solution_outline, stem_latex, metadata}`}</code></div>
+                       )}
+                       {tuningProfile === 'explain_then_json' && (
+                         <div>まず簡潔な解説を日本語で出力し、続けて機械判定可能な JSON を返す構成を期待します。</div>
+                       )}
+                       {tuningProfile === 'short_answer' && (
+                         <div>短い回答（人間向け）を優先します。JSON を期待しないプロファイルです。</div>
+                       )}
+                     </div>
+                   </div>
+
+                   <div style={{marginBottom:10}}>
+                     <strong className="section-title">期待スキーマ（例）</strong>
+                     <pre style={{whiteSpace:'pre-wrap', marginTop:6, fontSize:12}}>
+{tuningProfile === 'json_only' ? '{\n  "solution_outline": "...",\n  "stem_latex": "... (or null)",\n  "metadata": { "references": [{"id": 123, "snippet":"..."}], "confidence": 0.9 }\n}' : tuningProfile === 'explain_then_json' ? '答え（1-2文）\n解説（短め）\n\nJSON:\n{"solution_outline":"...","stem_latex":null,"metadata":{"confidence":0.9}}' : '短い日本語の回答（1-2文）'}
+                     </pre>
+                   </div>
+
+                 </div>
+               </div>
+
+               {/* 詳細（オプション）は簡略化済み（上のコンパクトフォームを使用） */}
+
+             </div>
+
+             <hr />
+
+             {/* --- DB 確認セクション --- */}
+             <section>
+               <h3>DB 確認</h3>
+               <div style={{marginBottom:8}}>現在の doc_id: <code>{docId || '（未登録）'}</code></div>
+               <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:8}}>
+                 <button onClick={fetchDocEntries} disabled={!docId}>DB 行を取得</button>
+                 <button onClick={openDocEntriesWindow} disabled={!docId}>新しいウィンドウで開く</button>
+                 <button onClick={runPipeline} disabled={!docId}>パイプライン実行（DB 挿入）</button>
+                 <button onClick={showRawApiResponse} disabled={!docId}>生 API を表示</button>
+               </div>
+
+               {docEntries && docEntries.length>0 ? (
+                 <div style={{background:'#f7f7f7', padding:8, border:'1px solid #eee'}}>
+                   <h5>挿入された行</h5>
+                   <table style={{width:'100%'}}>
+                     <thead><tr><th>ID</th><th>ソース</th><th>ページ</th><th>スニペット</th><th>解答</th><th>難易度</th><th>引っ掛け度</th></tr></thead>
+                     <tbody>
+                       {docEntries.map(r=> (
+                         <tr key={r.id}><td><code>{r.id}</code></td><td>{r.source}</td><td>{r.page}</td><td style={{maxWidth:400}}><pre style={{whiteSpace:'pre-wrap'}}>{r.snippet}</pre></td><td style={{maxWidth:400}}><pre style={{whiteSpace:'pre-wrap'}}>{r.solution}</pre></td><td>{r.difficulty}</td><td>{r.trickiness}</td></tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               ) : (
+                 <div style={{color:'#666'}}>まだ挿入された行はありません。教材を登録するとここに表示されます。</div>
+               )}
+
+               {/* Retrieved candidates panel */}
+               {retrievedChunks && retrievedChunks.length>0 ? (
+                 <div style={{marginTop:12, padding:12, border:'1px solid #eee', borderRadius:6, background:'#fff'}}>
+                   <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                     <strong>取得された参照候補（{retrievedChunks.length}件）</strong>
+                     <div style={{display:'flex', gap:8}}>
+                       <button onClick={expandAll} className="small-btn">展開</button>
+                       <button onClick={collapseAll} className="small-btn">折りたたむ</button>
+                       <button onClick={appendRetrievedToPrompt} className="small-btn">全てをプロンプトに追加</button>
+                     </div>
+                   </div>
+                   <div style={{marginTop:8, display:'grid', gridTemplateColumns:'1fr', gap:8}}>
+                     {retrievedChunks.map((c, i) => (
+                       <div key={i} style={{border:'1px solid #f0f0f0', padding:8, borderRadius:6, display:'flex', gap:8, alignItems:'flex-start'}}>
+                         <div style={{width:56, textAlign:'center'}}>
+                           <div style={{fontSize:12, color:'#555'}}>id</div>
+                           <div style={{fontWeight:600}}><code>{c.id}</code></div>
+                           <div style={{fontSize:12, color:'#666', marginTop:6}}>score {typeof c.final_score !== 'undefined' ? (Number(c.final_score).toFixed(2)) : (typeof c.score !== 'undefined' ? Number(c.score).toFixed(2) : '')}</div>
+                         </div>
+                         <div style={{flex:1}}>
+                           <div style={{display:'flex', justifyContent:'space-between', gap:8}}>
+                             <div style={{fontSize:14, fontWeight:600}}>{(c.text || '').slice(0, 220).replace(/\n/g,' ')}</div>
+                             <div style={{textAlign:'right'}}>
+                               <div style={{fontSize:12}}>{c.difficulty ? `難度: ${difficultyLabel(c.difficulty)}` : ''}</div>
+                               <div style={{fontSize:12}}>引っ掛け度: {typeof c.trickiness !== 'undefined' && c.trickiness !== null ? c.trickiness : '—'}</div>
+                             </div>
+                           </div>
+                           {expandedChunks[i] ? (
+                             <div style={{marginTop:8}}>
+                               <pre style={{whiteSpace:'pre-wrap'}}>{c.text}</pre>
+                               <div style={{display:'flex', gap:8, marginTop:6}}>
+                                 <button onClick={()=>insertChunkToPrompt(i)} className="small-btn">挿入</button>
+                                 <button onClick={async ()=>{ try{ await navigator.clipboard.writeText(c.text||''); setStatus('コピーしました') }catch(e){ setStatus('コピーできません') } }} className="small-btn">コピー</button>
+                                 <button onClick={()=>setPreviewRendered(c.text||'')} className="small-btn">プレビュー</button>
+                               </div>
+                             </div>
+                           ) : null}
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
+               ) : null}
+             </section>
+
+          <hr />
+
+          <section>
+            <h3>評価セット（編集）</h3>
+            <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:8}}>
+              <button onClick={fetchEvalCases} className="small-btn">読み込み</button>
+              <button onClick={()=>generateEvalCandidates(200,10)} className="small-btn">自動生成 (200)</button>
+              <button onClick={saveEvalCases} className="small-btn" disabled={evalLoading}>保存</button>
+              <div style={{marginLeft:12}}>
+                <label style={{fontSize:12}}>管理トークン: <input value={evalAdminToken} onChange={(e)=>setEvalAdminToken(e.target.value)} placeholder="x-admin-token" style={{width:240}} /></label>
+              </div>
+            </div>
+
+            { evalCases && evalCases.length>0 ? (
+              <div style={{marginTop:6}}>
+                <div style={{fontSize:13, color:'#666', marginBottom:8}}>案件数: {evalCases.length}</div>
+                <div style={{display:'grid', gap:8}}>
+                  {evalCases.map((c, idx)=> (
+                    <div key={idx} style={{border:'1px solid #eee', padding:8, borderRadius:6}}>
+                      <div style={{display:'flex', justifyContent:'space-between'}}>
+                        <div><strong>Q#{idx+1}</strong> <span style={{color:'#666'}}>{(c.query || '').slice(0,140)}</span></div>
+                        <div style={{display:'flex', gap:8}}>
+                          <button onClick={()=>autofillRelevant(idx)} className="small-btn">auto-fill</button>
+                          <button onClick={()=>clearRelevant(idx)} className="small-btn">clear</button>
+                        </div>
+                      </div>
+                      <div style={{marginTop:8}}>
+                        <div style={{fontSize:12, color:'#444'}}>candidates:</div>
+                        <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:6}}>
+                          { (c.candidates || []).map((cid)=> (
+                            <label key={cid} style={{display:'flex', alignItems:'center', gap:6, padding:6, border:'1px solid #f0f0f0', borderRadius:4}}>
+                              <input type="checkbox" checked={(c.relevant_ids||[]).includes(cid)} onChange={()=>toggleRelevant(idx, cid)} />
+                              <span style={{fontSize:13}}>{cid}</span>
+                            </label>
+                          )) }
+                        </div>
+                      </div>
+                    </div>
+                  )) }
+                </div>
+              </div>
+            ) : (
+              <div style={{color:'#666'}}>評価候補がありません。読み込むか自動生成してください。</div>
+            ) }
+
+          </section>
+
+          {/* --- 生成された問題の一括挿入機能 --- */}
+          <div style={{marginTop:12, padding:12, border:'1px solid #e6f7d4', borderRadius:6, background:'#f9fff9'}}>
+            <strong>生成された問題の一括挿入</strong>
+            <div style={{marginTop:8, color:'#333'}}>
+              生成された問題をまとめてデータベースに挿入します。<br />
+              （注意）すでに存在する問題と重複する可能性があります。<br />
+              挿入後は、<strong>必ず DB 確認</strong> セクションで結果を確認してください。
+            </div>
+
+            <div style={{marginTop:10, display:'flex', gap:8, alignItems:'center'}}>
+              <button onClick={async ()=>{
+                setStatus('生成された問題を一括挿入中...')
+                try{
+                  // 一時的に表示件数を増やす（パフォーマンス改善のため）
+                  const savedGenNum = genNum
+                  setGenNum(200)
+                  // 一括挿入リクエストを送信
+                  const body = { items: generatedItems.map(g => ({ stem: g.stem, stem_latex: g.latex, difficulty: g.difficulty, metadata: { generated_from: generatedPrompt } })) }
+                  const res = await fetch('/api/tuning/save_problems', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+                  const j = await res.json()
+                  if(!res.ok){ setStatus('一括挿入失敗: '+(j.detail||res.statusText)); return }
+                  setStatus('一括挿入成功: ' + (j.inserted_count || 0) + ' 件挿入')
+                  // 再取得
+                  await fetchDocEntries()
+                  // 元に戻す
+                  setGenNum(savedGenNum)
+                }catch(e){ setStatus('一括挿入中にエラー: '+e.message) }
+              }} className="small-btn" disabled={generatedItems.length===0}>
+                一括挿入
+              </button>
+
+              <div style={{flex:1, color:'#666', fontSize:13}}>
+                {generatedItems.length} 件の問題が生成されています。
+              </div>
+            </div>
+          </div>
+
+          <div style={{marginTop:12}}>
+              { generatedItems && generatedItems.length > 0 ? (
+                <div style={{border:'1px solid #eef', padding:8, borderRadius:6, marginTop:8}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                    <strong>生成された問題（{generatedItems.length}件）</strong>
+                    <div style={{display:'flex', gap:8}}>
+                      <button className="small-btn" onClick={async ()=>{
+                        // bulk PDF download
+                        setStatus('PDF を生成中...')
+                        try{
+                          const res = await fetch('/api/generate_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ generated: generatedItems, title: '生成問題' }) })
+                          if(!res.ok){ const j = await res.json(); setStatus('PDF生成失敗: '+(j.detail||j.error||res.statusText)); return }
+                          const blob = await res.blob()
+                          const url = window.URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = 'generated.pdf'
+                          document.body.appendChild(a)
+                          a.click()
+                          a.remove()
+                          window.URL.revokeObjectURL(url)
+                          setStatus('PDF ダウンロード開始')
+                        }catch(e){ setStatus('PDF生成中にエラー: '+e.message) }
+                      }}>生成をPDFでダウンロード</button>
+                      <button className="small-btn" onClick={()=>{
+                        const w = window.open('', '_blank')
+                        const html = `<!doctype html><html><head><meta charset="utf-8"><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><h3>生成プレビュー</h3>${generatedItems.map(it=>`<div style="margin-bottom:12px"><div>${it.stem ? `<div><strong>${it.stem}</strong></div>` : ''}<div>\\[${it.latex ? it.latex : ''}\\]</div>${it.explanation ? `<div><em>${it.explanation}</em></div>` : ''}</div>`).join('')}</body></html>`
+                        w.document.write(html)
+                        w.document.close()
+                      }}>プレビュー</button>
+                    </div>
+                  </div>
+
+                  <div style={{marginTop:8, display:'grid', gap:6}}>
+                    {generatedItems.map((it, idx)=> (
+                      <div key={idx} style={{display:'flex', justifyContent:'space-between', gap:8, alignItems:'center'}}>
+                        <div style={{flex:1}}><code style={{whiteSpace:'pre-wrap'}}>{it.latex ? (it.latex.length>240 ? it.latex.slice(0,240)+'...' : it.latex) : (it.stem || '')}</code></div>
+                        <div style={{display:'flex', gap:8}}>
+                          <button className="small-btn" onClick={()=>{
+                            const w = window.open('', '_blank')
+                            const html = `<!doctype html><html><head><meta charset="utf-8"><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><div>\\[${it.latex ? it.latex : ''}\\]</div></body></html>`
+                            w.document.write(html)
+                            w.document.close()
+                          }}>プレビュー</button>
+                          <button className="small-btn" onClick={async ()=>{
+                            setStatus('挿入中...')
+                            try{
+                              const body = { parsed_output: { problem: { stem: it.stem || null, stem_latex: it.latex || null }, final_answer: null, checks: [] } }
+                              const res = await fetch('/api/tuning/save_problem', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
+                              const j = await res.json()
+                              if(!res.ok){ setStatus('挿入失敗: '+(j.detail||j.error||res.statusText)); return }
+                              setStatus('挿入成功 id=' + (j.inserted_id || j.inserted_id))
+                            }catch(e){ setStatus('挿入中にエラー: '+e.message) }
+                          }}>挿入</button>
+                          <button className="small-btn" onClick={async ()=>{
+                            setStatus('PDF を生成中...')
+                            try{
+                              const res = await fetch('/api/generate_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ generated: [it], title: '生成問題' }) })
+                              if(!res.ok){ const j = await res.json(); setStatus('PDF生成失敗: '+(j.detail||j.error||res.statusText)); return }
+                              const blob = await res.blob()
+                              const url = window.URL.createObjectURL(blob)
+                              const a = document.createElement('a')
+                              a.href = url
+                              a.download = `generated_${idx+1}.pdf`
+                              document.body.appendChild(a)
+                              a.click()
+                              a.remove()
+                              window.URL.revokeObjectURL(url)
+                              setStatus('PDF ダウンロード開始')
+                            }catch(e){ setStatus('PDF生成中にエラー: '+e.message) }
+                          }}>PDF</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null }
+            </div>
+          </>
+      )}
+
+      {/* 最後に生成した PDF のリンク（ポップアップブロック時の補助） */}
+      {lastPdfUrl ? (
+        <div style={{marginTop:12, padding:12, border:'1px solid #d1e7dd', borderRadius:6, background:'#f8f9fa'}}>
+          <div style={{color:'#0f5132', fontWeight:600}}>PDF 生成完了</div>
+          <div style={{marginTop:6, color:'#333'}}>
+            生成された PDF を以下のリンクからダウンロードできます（ポップアップブロック時の補助）:
+            <div style={{marginTop:4}}>
+              <a href={lastPdfUrl} target="_blank" rel="noreferrer" style={{color:'#0d6efd', textDecoration:'underline'}}>{lastPdfUrl}</a>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  )
+}

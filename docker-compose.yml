@@ -1,0 +1,36 @@
+services:
+  db:
+    build: ./db
+    env_file: .env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./backend/db/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-examgen}"]
+      interval: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    env_file: .env
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./apps/web
+    env_file: .env
+    volumes:
+      - ./apps/web:/app:ro
+    ports:
+      - "5173:80"
+
+volumes:
+  db_data:

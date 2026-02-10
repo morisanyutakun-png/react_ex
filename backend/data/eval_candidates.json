@@ -1,0 +1,411 @@
+[
+  {
+    "query": "数列: 階乗 n! の定義を説明せよ",
+    "source_id": 68,
+    "candidates": [
+      68,
+      58,
+      67,
+      59,
+      55,
+      64,
+      65,
+      66,
+      60,
+      57
+    ],
+    "relevant_ids": [
+      68
+    ]
+  },
+  {
+    "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>fca<NUM>e<NUM>b-<NUM>e<NUM>a-<NUM>c<NUM>f-<NUM>ed<NUM>-<NUM>d<NUM>b<NUM>cfb<NUM>b<NUM>a\",\"solution_outline\": \"与えられた二次関数は f(x)=x^<NUM>-<NUM>x+<NUM>。平方完成する:平方の項(x-<NUM>)^<NUM> は常に <NUM> 以上なので、最小は(x-<NUM>)^<NUM>=<NUM> のときに起こる。したがって x=<NUM> のとき最小値は f(<NUM>)=(<NUM>-<NUM>)^<NUM>-<NUM>=-<NUM>。\",\"latex_source\": \"f(x)=x^<NUM>-<NUM>x+<NUM>=(x-<NUM>)^<NUM>-<NUM>\\ \\ f(x)=-<NUM>\\(x=<NUM>)\",\"final_answer\": -<NUM>,\"checks\":[\"desc\": \"頂点公式による確認:a=<NUM>,b=-<NUM>より頂点のx座標は -b/(<NUM>a)=<NUM>/<NUM>=<NUM>。\",\"ok\": true,\"value\": \"x_vertex=<NUM>\",\"desc\": \"代入検算:x=<NUM> を元の式に代入して f(<NUM>)=<NUM>^<NUM>-<NUM>+<NUM>=<NUM>-<NUM>+<NUM>=-<NUM>。\",\"ok\": true,\"value\": \"f(<NUM>)=-<NUM>\",\"desc\": \"周辺値比較:x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM>、x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM> となり、-<NUM> より大きいので x=<NUM> が最小である。\",\"ok\": true,\"value\": \"f(<NUM>)=<NUM>,f(<NUM>)=<NUM>\"],\"metadata\": \"references\":[\"id\": <NUM>,\"snippet\": \"二次関数 f(x)=x^<NUM>-<NUM>x+<NUM> の最小値とそのときの x を求めよ。\",\"i",
+    "source_id": 51,
+    "candidates": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      55,
+      59,
+      60,
+      53,
+      54
+    ],
+    "relevant_ids": [
+      51
+    ]
+  },
+  {
+    "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>fca<NUM>e<NUM>b-<NUM>e<NUM>a-<NUM>c<NUM>f-<NUM>ed<NUM>-<NUM>d<NUM>b<NUM>cfb<NUM>b<NUM>a\",\"solution_outline\": \"与えられた二次関数は f(x)=x^<NUM>-<NUM>x+<NUM>。平方完成する:平方の項(x-<NUM>)^<NUM> は常に <NUM> 以上なので、最小は(x-<NUM>)^<NUM>=<NUM> のときに起こる。したがって x=<NUM> のとき最小値は f(<NUM>)=(<NUM>-<NUM>)^<NUM>-<NUM>=-<NUM>。\",\"latex_source\": \"f(x)=x^<NUM>-<NUM>x+<NUM>=(x-<NUM>)^<NUM>-<NUM>\\ \\ f(x)=-<NUM>\\(x=<NUM>)\",\"final_answer\": -<NUM>,\"checks\":[\"desc\": \"頂点公式による確認:a=<NUM>,b=-<NUM>より頂点のx座標は -b/(<NUM>a)=<NUM>/<NUM>=<NUM>。\",\"ok\": true,\"value\": \"x_vertex=<NUM>\",\"desc\": \"代入検算:x=<NUM> を元の式に代入して f(<NUM>)=<NUM>^<NUM>-<NUM>+<NUM>=<NUM>-<NUM>+<NUM>=-<NUM>。\",\"ok\": true,\"value\": \"f(<NUM>)=-<NUM>\",\"desc\": \"周辺値比較:x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM>、x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM> となり、-<NUM> より大きいので x=<NUM> が最小である。\",\"ok\": true,\"value\": \"f(<NUM>)=<NUM>,f(<NUM>)=<NUM>\"],\"metadata\": \"references\":[\"id\": <NUM>,\"snippet\": \"二次関数 f(x)=x^<NUM>-<NUM>x+<NUM> の最小値とそのときの x を求めよ。\",\"i",
+    "source_id": 48,
+    "candidates": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      55,
+      59,
+      60,
+      53,
+      54
+    ],
+    "relevant_ids": [
+      48
+    ]
+  },
+  {
+    "query": "一次方程式 3x+5=20 を解け",
+    "source_id": 56,
+    "candidates": [
+      56,
+      61,
+      66,
+      58,
+      55,
+      60,
+      67,
+      69,
+      63,
+      65
+    ],
+    "relevant_ids": [
+      56
+    ]
+  },
+  {
+    "query": "二次関数 f(x)=x^2-4x+3 の最小値を求めよ",
+    "source_id": 55,
+    "candidates": [
+      55,
+      60,
+      59,
+      58,
+      66,
+      57,
+      64,
+      61,
+      48,
+      51
+    ],
+    "relevant_ids": [
+      55
+    ]
+  },
+  {
+    "query": "図形問題: 半径 r の円に内接する正方形の面積を r を使って表せ",
+    "source_id": 65,
+    "candidates": [
+      65,
+      53,
+      54,
+      67,
+      69,
+      63,
+      68,
+      58,
+      64,
+      56
+    ],
+    "relevant_ids": [
+      65
+    ]
+  },
+  {
+    "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>f<NUM>e<NUM>a<NUM>c-<NUM>f<NUM>c-<NUM>c<NUM>e-a<NUM>e<NUM>-<NUM>c<NUM>b<NUM>c<NUM>e<NUM>d<NUM>a\",\"solution_outline\": \"与えられた二次関数は f(x)=x^<NUM>-<NUM>x+<NUM>。平方完成する: f(x)=x^<NUM>-<NUM>x+<NUM>=(x^<NUM>-<NUM>x+<NUM>)-<NUM>=(x-<NUM>)^<NUM>-<NUM>。平方の項(x-<NUM>)^<NUM> は常に <NUM> 以上なので、最小は(x-<NUM>)^<NUM>=<NUM> のとき。よって x=<NUM> のとき最小値は f(<NUM>)=-<NUM>。(答:最小値 -<NUM>、そのとき x=<NUM>)\",\"latex_source\": \"f(x)=x^<NUM>-<NUM>x+<NUM>=(x-<NUM>)^<NUM>-<NUM>,\\ f(x)=-<NUM>\\(x=<NUM>)\",\"final_answer\": -<NUM>,\"checks\":[\"desc\": \"頂点のx座標の検算:a=<NUM>,b=-<NUM>より x=-b/(<NUM>a)=<NUM>/<NUM>=<NUM>。\",\"ok\": true,\"value\": \"x=<NUM>\",\"desc\": \"代入検算:x=<NUM> を元の式に代入して f(<NUM>)=<NUM>^<NUM>-<NUM>+<NUM>=<NUM>-<NUM>+<NUM>=-<NUM>。\",\"ok\": true,\"value\": \"f(<NUM>)=-<NUM>\",\"desc\": \"周辺値比較:x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM>、x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM>。いずれも -<NUM> より大きいので最小は x=<NUM>。\",\"ok\": true,\"value\": \"f(<NUM>)=<NUM>,f(<NUM>)=<NUM>\"],\"metadata\": \"references\":[\"id\": <NUM>,",
+    "source_id": 52,
+    "candidates": [
+      52,
+      48,
+      49,
+      50,
+      51,
+      55,
+      59,
+      60,
+      53,
+      54
+    ],
+    "relevant_ids": [
+      52
+    ]
+  },
+  {
+    "query": "関数 f(x)=\\sin x の導関数を求めよ",
+    "source_id": 59,
+    "candidates": [
+      59,
+      66,
+      55,
+      60,
+      63,
+      62,
+      58,
+      64,
+      57,
+      48
+    ],
+    "relevant_ids": [
+      59
+    ]
+  },
+  {
+    "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>fca<NUM>e<NUM>b-<NUM>e<NUM>a-<NUM>c<NUM>f-<NUM>ed<NUM>-<NUM>d<NUM>b<NUM>cfb<NUM>b<NUM>a\",\"solution_outline\": \"与えられた二次関数は f(x)=x^<NUM>-<NUM>x+<NUM>。平方完成する:平方の項(x-<NUM>)^<NUM> は常に <NUM> 以上なので、最小は(x-<NUM>)^<NUM>=<NUM> のときに起こる。したがって x=<NUM> のとき最小値は f(<NUM>)=(<NUM>-<NUM>)^<NUM>-<NUM>=-<NUM>。\",\"latex_source\": \"f(x)=x^<NUM>-<NUM>x+<NUM>=(x-<NUM>)^<NUM>-<NUM>\\ \\ f(x)=-<NUM>\\(x=<NUM>)\",\"final_answer\": -<NUM>,\"checks\":[\"desc\": \"頂点公式による確認:a=<NUM>,b=-<NUM>より頂点のx座標は -b/(<NUM>a)=<NUM>/<NUM>=<NUM>。\",\"ok\": true,\"value\": \"x_vertex=<NUM>\",\"desc\": \"代入検算:x=<NUM> を元の式に代入して f(<NUM>)=<NUM>^<NUM>-<NUM>+<NUM>=<NUM>-<NUM>+<NUM>=-<NUM>。\",\"ok\": true,\"value\": \"f(<NUM>)=-<NUM>\",\"desc\": \"周辺値比較:x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM>、x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM> となり、-<NUM> より大きいので x=<NUM> が最小である。\",\"ok\": true,\"value\": \"f(<NUM>)=<NUM>,f(<NUM>)=<NUM>\"],\"metadata\": \"references\":[\"id\": <NUM>,\"snippet\": \"二次関数 f(x)=x^<NUM>-<NUM>x+<NUM> の最小値とそのときの x を求めよ。\",\"i",
+    "source_id": 49,
+    "candidates": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      55,
+      59,
+      60,
+      53,
+      54
+    ],
+    "relevant_ids": [
+      49
+    ]
+  },
+  {
+    "query": "等差数列の1項が2、公差が3のとき、5項目の値を求めよ",
+    "source_id": 58,
+    "candidates": [
+      58,
+      57,
+      60,
+      55,
+      66,
+      59,
+      64,
+      62,
+      69,
+      65
+    ],
+    "relevant_ids": [
+      58
+    ]
+  },
+  {
+    "query": "行列 A=\begin{pmatrix}1&2\\3&4\\end{pmatrix} の行列式を求めよ",
+    "source_id": 62,
+    "candidates": [
+      62,
+      53,
+      54,
+      59,
+      66,
+      58,
+      69,
+      55,
+      64,
+      60
+    ],
+    "relevant_ids": [
+      62
+    ]
+  },
+  {
+    "query": "三角比: 角 30 度の sin 値を求めよ",
+    "source_id": 66,
+    "candidates": [
+      66,
+      59,
+      55,
+      63,
+      60,
+      58,
+      64,
+      57,
+      56,
+      62
+    ],
+    "relevant_ids": [
+      66
+    ]
+  },
+  {
+    "query": "次の微分方程式 dy/dx=3x^2 を解け（初期条件 y(0)=1）",
+    "source_id": 61,
+    "candidates": [
+      61,
+      56,
+      63,
+      55,
+      67,
+      60,
+      57,
+      58,
+      54,
+      59
+    ],
+    "relevant_ids": [
+      61
+    ]
+  },
+  {
+    "query": "テスト問題 2",
+    "source_id": 54,
+    "candidates": [
+      54,
+      53,
+      67,
+      63,
+      65,
+      57,
+      61
+    ],
+    "relevant_ids": [
+      54
+    ]
+  },
+  {
+    "query": "複素数問題: (1+i)^2 を計算せよ",
+    "source_id": 67,
+    "candidates": [
+      67,
+      63,
+      68,
+      65,
+      54,
+      57,
+      61,
+      69,
+      55,
+      60
+    ],
+    "relevant_ids": [
+      67
+    ]
+  },
+  {
+    "query": "確率論: サイコロを2回振って和が7になる確率を求めよ",
+    "source_id": 64,
+    "candidates": [
+      64,
+      59,
+      58,
+      55,
+      60,
+      66,
+      62,
+      65,
+      57,
+      68
+    ],
+    "relevant_ids": [
+      64
+    ]
+  },
+  {
+    "query": "二次関数 f(x)=x^2-2x+k が極小値をとるときの k の値を求めよ",
+    "source_id": 60,
+    "candidates": [
+      60,
+      55,
+      59,
+      58,
+      66,
+      57,
+      64,
+      61,
+      48,
+      51
+    ],
+    "relevant_ids": [
+      60
+    ]
+  },
+  {
+    "query": "直角三角形において、斜辺が5、他の辺が3のとき、残りの辺の長さを求めよ",
+    "source_id": 57,
+    "candidates": [
+      57,
+      58,
+      59,
+      55,
+      66,
+      64,
+      60,
+      62,
+      69,
+      65
+    ],
+    "relevant_ids": [
+      57
+    ]
+  },
+  {
+    "query": "単位円上の点で \\sin^2\theta+\\cos^2\theta=1 を示せ",
+    "source_id": 63,
+    "candidates": [
+      63,
+      66,
+      69,
+      59,
+      67,
+      61,
+      57,
+      54,
+      55,
+      53
+    ],
+    "relevant_ids": [
+      63
+    ]
+  },
+  {
+    "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>fca<NUM>e<NUM>b-<NUM>e<NUM>a-<NUM>c<NUM>f-<NUM>ed<NUM>-<NUM>d<NUM>b<NUM>cfb<NUM>b<NUM>a\",\"solution_outline\": \"与えられた二次関数は f(x)=x^<NUM>-<NUM>x+<NUM>。平方完成する:平方の項(x-<NUM>)^<NUM> は常に <NUM> 以上なので、最小は(x-<NUM>)^<NUM>=<NUM> のときに起こる。したがって x=<NUM> のとき最小値は f(<NUM>)=(<NUM>-<NUM>)^<NUM>-<NUM>=-<NUM>。\",\"latex_source\": \"f(x)=x^<NUM>-<NUM>x+<NUM>=(x-<NUM>)^<NUM>-<NUM>\\ \\ f(x)=-<NUM>\\(x=<NUM>)\",\"final_answer\": -<NUM>,\"checks\":[\"desc\": \"頂点公式による確認:a=<NUM>,b=-<NUM>より頂点のx座標は -b/(<NUM>a)=<NUM>/<NUM>=<NUM>。\",\"ok\": true,\"value\": \"x_vertex=<NUM>\",\"desc\": \"代入検算:x=<NUM> を元の式に代入して f(<NUM>)=<NUM>^<NUM>-<NUM>+<NUM>=<NUM>-<NUM>+<NUM>=-<NUM>。\",\"ok\": true,\"value\": \"f(<NUM>)=-<NUM>\",\"desc\": \"周辺値比較:x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM>、x=<NUM>で f(<NUM>)=<NUM>-<NUM>+<NUM>=<NUM> となり、-<NUM> より大きいので x=<NUM> が最小である。\",\"ok\": true,\"value\": \"f(<NUM>)=<NUM>,f(<NUM>)=<NUM>\"],\"metadata\": \"references\":[\"id\": <NUM>,\"snippet\": \"二次関数 f(x)=x^<NUM>-<NUM>x+<NUM> の最小値とそのときの x を求めよ。\",\"i",
+    "source_id": 50,
+    "candidates": [
+      48,
+      49,
+      50,
+      51,
+      52,
+      55,
+      59,
+      60,
+      53,
+      54
+    ],
+    "relevant_ids": [
+      50
+    ]
+  },
+  {
+    "query": "テスト問題",
+    "source_id": 53,
+    "candidates": [
+      53,
+      54,
+      67,
+      65
+    ],
+    "relevant_ids": [
+      53
+    ]
+  },
+  {
+    "query": "不等式: 0<x<1 のとき 1+x\\le e^x を示せ",
+    "source_id": 69,
+    "candidates": [
+      69,
+      63,
+      58,
+      57,
+      62,
+      67,
+      59,
+      61,
+      65,
+      53
+    ],
+    "relevant_ids": [
+      69
+    ]
+  }
+]

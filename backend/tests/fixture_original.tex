@@ -1,0 +1,56 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[margin=18mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+
+\IfFontExistsTF{Noto Sans CJK JP}{
+\setCJKmainfont{Noto Sans CJK JP}
+\setCJKsansfont{Noto Sans CJK JP}
+\setCJKmonofont{Noto Sans Mono CJK JP}
+}{
+\IfFontExistsTF{Hiragino Sans}{
+\setCJKmainfont{Hiragino Sans}
+\setCJKsansfont{Hiragino Sans}
+\setCJKmonofont{Hiragino Sans}
+}{
+\setCJKmainfont{IPAexGothic}
+\setCJKsansfont{IPAexGothic}
+\setCJKmonofont{IPAexGothic}
+}
+}
+
+\setlength{\parindent}{0pt}
+\setlist[enumerate]{itemsep=10pt}
+
+\begin{document}
+
+\section*{問題}
+\begin{enumerate}
+\item 二次関数 $f(x)=x^2-8x+7$ の最小値と，そのときの $x$ の値を求めよ。
+\end{enumerate}
+
+\clearpage
+
+\section*{解答・解説}
+\begin{enumerate}
+\item \textbf{解答}: 最小値は $-9$，そのとき $x=4$。\
+\textbf{解説}: 平方完成を用いる。
+[
+\begin{aligned}
+f(x)
+&=x^2-8x+7 \
+&=\left(x^2-8x+16\right)+7-16 \
+&=(x-4)^2-9
+\end{aligned}
+]
+ここで $(x-4)^2\ge 0$ より，$(x-4)^2$ の最小値は $0$ である。したがって
+[
+f(x)=(x-4)^2-9 \ge 0-9=-9
+]
+よって最小値は $-9$。等号は $(x-4)^2=0$，すなわち $x=4$ のとき成り立つ。\
+平方完成では，$x^2-8x$ に対して $+16$ を足した分を，必ず $-16$ として調整し，式全体が元と等しくなるようにする。
+\end{enumerate}
+
+\end{document}

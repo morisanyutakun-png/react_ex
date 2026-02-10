@@ -1,0 +1,22 @@
+{
+  "gen_short_answer": {
+    "name": "短答問題（数理／短文）",
+    "description": "指定科目・難易度で短い問題（解答は1〜3行）を生成。出力は LaTeX 形式で問題番号と解答を含める。",
+    "prompt": "あなたは教育用の問題作成エキスパートです。{subject} {difficulty}。1問の問題文と短い解答をLaTeXで出力してください。出力のみ返してください。",
+    "metadata": {"type": "short", "latex": true}
+  },
+
+  "gen_multiple_choice": {
+    "name": "四択問題（選択式）",
+    "description": "科目・難易度に合わせた複数選択肢（A-D）を持つ問題を生成。正答を明記。LaTeX 形式で出力。",
+    "prompt": "科目: {subject}、難易度: {difficulty}。A,B,C,D の選択肢を持つ問題を1問LaTeXで出力し、正答を示してください。",
+    "metadata": {"type": "mcq", "latex": true}
+  },
+
+  "gen_quadratic_ia": {
+    "name": "二次関数（数学IA）",
+    "description": "数学IAの二次関数分野の問題を1問生成し、解答と解説を付けるテンプレート。",
+    "prompt": "あなたは高校数学（数学IA）の教材作成エキスパートです。テーマ: 二次関数。難易度: {difficulty}。\n\n必須出力ルール（絶対遵守）:\n1) 出力は \"厳密な1つの JSON オブジェクト\" のみとし、それ以外のプレーンテキスト、説明、注釈、コードフェンス、あるいは追加メッセージを一切出力してはいけません。\n2) JSON では必ずダブルクオートを使用してください（シングルクオートは無効です）。\n3) トップレベルに必ず次のキーを含めてください（存在しない値は null にすること）: \"explanation\"(string), \"answer_brief\"(string|null), \"confidence\"(number 0.0-1.0), \"references\"(array of objects), \"problem\"(object|null)。\n4) \"problem\" が object の場合、内部フィールド名はデータベースのカラム名と厳密に一致させてください: \"source\", \"page\", \"stem\", \"normalized_text\", \"solution_outline\", \"stem_latex\", \"difficulty\", \"difficulty_level\", \"trickiness\", \"metadata\"。\n5) \"metadata\" は object で少なくとも \"topic\"(string), \"type\"(string), \"expected_mistakes\"(array of strings), \"tags\"(array of strings) を持たせてください（該当しない場合は空配列 / 空オブジェクトで）。\n6) \"references\" の各要素は object で最低 \"snippet\"(string) を持ち、可能なら \"id\"(integer|null) を入れてください。\n7) \"answer_brief\" に LaTeX を含める場合は、同じ LaTeX を \"problem.stem_latex\" にも必ず入れてください。\n8) 出力できない、あるいは不確かな場合の明確フォールバック: \n   出力は必ず有効な JSON を返すこと。もし完全な解答が作れない場合は、必ず次の形式で返してください（追加テキストは禁止）:\n   {\"answer_brief\": null, \"explanation\": \"理由を日本語で簡潔に記述\", \"confidence\": 0.0, \"references\": [], \"problem\": null}\n\n有効な出力例（必ずダブルクオートで記述）:\n{\n  \"answer_brief\": \"\\\\begin{answer}...\\\\end{answer}\",\n  \"explanation\": \"日本語で段階的な解説\",\n  \"confidence\": 0.93,\n  \"references\": [{\"id\": null, \"snippet\": \"この問題は平方完成を利用\"}],\n  \"problem\": {\n    \"source\": \"generated\",\n    \"page\": null,\n    \"stem\": \"日本語の問題文\",\n    \"normalized_text\": \"<NUM 置換済みの問題文>\",\n    \"solution_outline\": \"手順1; 手順2; ...\",\n    \"stem_latex\": \"\\\\begin{enumerate}...\\\\end{enumerate}\",\n    \"difficulty\": 0.5,\n    \"difficulty_level\": 3,\n    \"trickiness\": 0.2,\n    \"metadata\": {\"topic\": \"二次関数\", \"type\": \"平方完成\", \"expected_mistakes\": [], \"tags\": []}\n  }\n}\n\n注意: 出力が上記スキーマに従わない場合は必ず再実行し、もし複数回失敗する場合は回答を保存しないでください。",
+    "metadata": {"type": "quadratic", "subject": "数学IA", "latex": true, "tags": ["二次関数", "数学IA"]}
+  }
+}

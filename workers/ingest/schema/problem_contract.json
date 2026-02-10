@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProblemGenerationContract",
+  "type": "object",
+  "oneOf": [
+    {
+      "required": ["schema_version", "request_id", "problem"],
+      "properties": {
+        "schema_version": {"type": "string", "const": "1.0"},
+        "request_id": {"type": "string", "minLength": 1},
+        "problem": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "stem": {"type": "string"},
+            "normalized_text": {"type": ["string", "null"]},
+            "page": {"type": ["integer", "null"]},
+            "metadata": {"type": "object"},
+            "solution_outline": {"type": ["string", "null"]},
+            "stem_latex": {"type": ["string", "null"]},
+            "difficulty": {"type": ["number", "null"]},
+            "difficulty_level": {"type": ["integer", "null"]},
+            "trickiness": {"type": ["number", "null"]},
+            "explanation": {"type": ["string", "null"]},
+            "final_answer": {"type": ["string", "number", "null"]},
+            "checks": {
+              "type": ["array", "null"],
+              "items": {
+                "type": "object",
+                "properties": {
+                  "desc": {"type": "string"},
+                  "ok": {"type": ["boolean", "null"]},
+                  "value": {}
+                }
+              }
+            },
+            "assumptions": {"type": ["array", "null"], "items": {"type": "string"}},
+            "solvable": {"type": ["boolean", "null"]},
+            "selected_reference": {
+              "type": ["object", "null"],
+              "properties": {
+                "index": {"type": "integer"},
+                "id": {"type": "string"},
+                "snippet": {"type": "string"}
+              }
+            },
+            "answer_brief": {"type": ["string", "null"]},
+            "references": {"type": ["array", "object", "null"]},
+            "confidence": {"type": ["number", "null"]},
+            "expected_mistakes": {"type": ["array", "null"]},
+            "source": {"type": ["string", "null"]}
+          },
+          "required": ["stem", "metadata"]
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "required": ["schema_version", "request_id", "problems"],
+      "properties": {
+        "schema_version": {"type": "string", "const": "1.0"},
+        "request_id": {"type": "string", "minLength": 1},
+        "problems": {
+          "type": "array",
+          "items": {"type": "object"}
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}

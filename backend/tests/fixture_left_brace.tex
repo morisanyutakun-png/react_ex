@@ -1,0 +1,99 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[margin=18mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\IfFontExistsTF{Hiragino Sans}{%
+\setCJKmainfont{Hiragino Sans}
+\setCJKsansfont{Hiragino Sans}
+\setCJKmonofont{Hiragino Sans}
+}{\IfFontExistsTF{Noto Sans CJK JP}{%
+\setCJKmainfont{Noto Sans CJK JP}
+\setCJKsansfont{Noto Sans CJK JP}
+\setCJKmonofont{Noto Sans CJK JP}
+}{}}
+\setlength{\parindent}{0pt}
+\setlist[enumerate]{itemsep=10pt}
+
+\begin{document}
+
+\section*{問題}
+\begin{enumerate}
+\item 二次関数 $f(x)=x^2-4x+3$ の最小値と，そのときの $x$ の値を求めよ。
+\item 二次関数 $f(x)=x^2-6x+10$ の最小値と，そのときの $x$ の値を求めよ。
+\item 二次関数 $f(x)=x^2+2x-5$ の最小値と，そのときの $x$ の値を求めよ。
+\item 二次関数 $f(x)=2x^2-8x+1$ の最小値と，そのときの $x$ の値を求めよ。
+\item 二次関数 $f(x)=-(x^2-4x+1)$ の最大値と，そのときの $x$ の値を求めよ。
+\end{enumerate}
+
+\clearpage
+
+\section*{解答・解説}
+\begin{enumerate}
+\item \textbf{解答}: 最小値は $-1$，そのときの $x$ は $2$。\
+\textbf{解説}: 平方完成を行う。
+[
+\begin{aligned}
+f(x) &= x^2-4x+3 \
+&= \left(x^2-4x+4\right)+3-4 \
+&= (x-2)^2-1
+\end{aligned}
+]
+ここで $(x-2)^2\ge 0$ より $f(x)\ge -1$。等号は $x=2$ のとき成り立つ。\
+平方完成で $+4$ を足した分は，必ず $-4$ をして調整し，元の式と等しくなるようにする。
+
+\item \textbf{解答}: 最小値は $1$，そのときの $x$ は $3$。\
+\textbf{解説}: 平方完成を行う。
+[
+\begin{aligned}
+f(x) &= x^2-6x+10 \
+&= \left(x^2-6x+9\right)+10-9 \
+&= (x-3)^2+1
+\end{aligned}
+]
+ここで $(x-3)^2\ge 0$ より $f(x)\ge 1$。等号は $x=3$ のとき成り立つ。\
+$+9$ を足したなら $-9$ で調整して，式全体が元と等しいことを保つ。
+
+\item \textbf{解答}: 最小値は $-6$，そのときの $x$ は $-1$。\
+\textbf{解説}: 平方完成を行う。
+[
+\begin{aligned}
+f(x) &= x^2+2x-5 \
+&= \left(x^2+2x+1\right)-5-1 \
+&= (x+1)^2-6
+\end{aligned}
+]
+ここで $(x+1)^2\ge 0$ より $f(x)\ge -6$。等号は $x=-1$ のとき成り立つ。\
+平方完成で $+1$ を加えた分は，必ず $-1$ をして調整する。
+
+\item \textbf{解答}: 最小値は $-7$，そのときの $x$ は $2$。\
+\textbf{解説}: 係数をくくって平方完成を行う。
+[
+\begin{aligned}
+f(x) &= 2x^2-8x+1 \
+&= 2\left(x^2-4x\right)+1 \
+&= 2\left{\left(x^2-4x+4\right)-4\right}+1 \
+&= 2(x-2)^2-8+1 \
+&= 2(x-2)^2-7
+\end{aligned}
+]
+ここで $2(x-2)^2\ge 0$ より $f(x)\ge -7$。等号は $x=2$ のとき成り立つ。\
+まず $2$ をくくり，その中で $+4$ を足した分を $-4$ で調整することに注意する。
+
+\item \textbf{解答}: 最大値は $3$，そのときの $x$ は $2$。\
+\textbf{解説}: まず中身を平方完成してから符号に注意して整理する。
+[
+\begin{aligned}
+f(x) &= -(x^2-4x+1) \
+&= -\left{\left(x^2-4x+4\right)+1-4\right} \
+&= -\left{(x-2)^2-3\right} \
+&= -(x-2)^2+3
+\end{aligned}
+]
+ここで $(x-2)^2\ge 0$ より $-(x-2)^2\le 0$。したがって $f(x)\le 3$。\
+等号は $(x-2)^2=0$，すなわち $x=2$ のとき成り立つ。\
+$-(\ \ )$ が付くと大小関係が逆向きになる点に注意する。
+\end{enumerate}
+
+\end{document}

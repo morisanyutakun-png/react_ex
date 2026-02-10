@@ -1,0 +1,397 @@
+{
+  "agg": {
+    "precision": 0.10000000000000003,
+    "mrr": 0.9128787878787878,
+    "ndcg": 0.9604968069805208,
+    "n": 22
+  },
+  "details": [
+    {
+      "query": "数列: 階乗 n! の定義を説明せよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        68,
+        58,
+        67,
+        59,
+        55,
+        64,
+        65,
+        66,
+        60,
+        57
+      ]
+    },
+    {
+      "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>fca<NUM>e<NUM>b-<NUM>e<NUM>a-<NUM>c<NUM>f-<NUM>ed<NUM>-<NUM>d<NUM>b<",
+      "precision": 0.1,
+      "mrr": 0.25,
+      "ndcg": 0.5,
+      "retrieved": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        55,
+        59,
+        60,
+        53,
+        54
+      ]
+    },
+    {
+      "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>fca<NUM>e<NUM>b-<NUM>e<NUM>a-<NUM>c<NUM>f-<NUM>ed<NUM>-<NUM>d<NUM>b<",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        55,
+        59,
+        60,
+        53,
+        54
+      ]
+    },
+    {
+      "query": "一次方程式 3x+5=20 を解け",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        56,
+        61,
+        66,
+        58,
+        55,
+        60,
+        67,
+        69,
+        63,
+        65
+      ]
+    },
+    {
+      "query": "二次関数 f(x)=x^2-4x+3 の最小値を求めよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        55,
+        60,
+        59,
+        58,
+        66,
+        57,
+        64,
+        61,
+        48,
+        51
+      ]
+    },
+    {
+      "query": "図形問題: 半径 r の円に内接する正方形の面積を r を使って表せ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        65,
+        53,
+        54,
+        67,
+        69,
+        63,
+        68,
+        58,
+        64,
+        56
+      ]
+    },
+    {
+      "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>f<NUM>e<NUM>a<NUM>c-<NUM>f<NUM>c-<NUM>c<NUM>e-a<NUM>e<NUM>-<NUM>c<NU",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        52,
+        48,
+        49,
+        50,
+        51,
+        55,
+        59,
+        60,
+        53,
+        54
+      ]
+    },
+    {
+      "query": "関数 f(x)=\\sin x の導関数を求めよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        59,
+        66,
+        55,
+        60,
+        63,
+        62,
+        58,
+        64,
+        57,
+        48
+      ]
+    },
+    {
+      "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>fca<NUM>e<NUM>b-<NUM>e<NUM>a-<NUM>c<NUM>f-<NUM>ed<NUM>-<NUM>d<NUM>b<",
+      "precision": 0.1,
+      "mrr": 0.5,
+      "ndcg": 1.0,
+      "retrieved": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        55,
+        59,
+        60,
+        53,
+        54
+      ]
+    },
+    {
+      "query": "等差数列の1項が2、公差が3のとき、5項目の値を求めよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        58,
+        57,
+        60,
+        55,
+        66,
+        59,
+        64,
+        62,
+        69,
+        65
+      ]
+    },
+    {
+      "query": "行列 A=\begin{pmatrix}1&2\\3&4\\end{pmatrix} の行列式を求めよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        62,
+        53,
+        54,
+        59,
+        66,
+        58,
+        69,
+        55,
+        64,
+        60
+      ]
+    },
+    {
+      "query": "三角比: 角 30 度の sin 値を求めよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        66,
+        59,
+        55,
+        63,
+        60,
+        58,
+        64,
+        57,
+        56,
+        62
+      ]
+    },
+    {
+      "query": "次の微分方程式 dy/dx=3x^2 を解け（初期条件 y(0)=1）",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        61,
+        56,
+        63,
+        55,
+        67,
+        60,
+        57,
+        58,
+        54,
+        59
+      ]
+    },
+    {
+      "query": "テスト問題 2",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        54,
+        53,
+        67,
+        63,
+        65,
+        57,
+        61
+      ]
+    },
+    {
+      "query": "複素数問題: (1+i)^2 を計算せよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        67,
+        63,
+        68,
+        65,
+        54,
+        57,
+        61,
+        69,
+        55,
+        60
+      ]
+    },
+    {
+      "query": "確率論: サイコロを2回振って和が7になる確率を求めよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        64,
+        59,
+        58,
+        55,
+        60,
+        66,
+        62,
+        65,
+        57,
+        68
+      ]
+    },
+    {
+      "query": "二次関数 f(x)=x^2-2x+k が極小値をとるときの k の値を求めよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        60,
+        55,
+        59,
+        58,
+        66,
+        57,
+        64,
+        61,
+        48,
+        51
+      ]
+    },
+    {
+      "query": "直角三角形において、斜辺が5、他の辺が3のとき、残りの辺の長さを求めよ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        57,
+        58,
+        59,
+        55,
+        66,
+        64,
+        60,
+        62,
+        69,
+        65
+      ]
+    },
+    {
+      "query": "単位円上の点で \\sin^2\theta+\\cos^2\theta=1 を示せ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        63,
+        66,
+        69,
+        59,
+        67,
+        61,
+        57,
+        54,
+        55,
+        53
+      ]
+    },
+    {
+      "query": "\"schema_version\": \"<NUM>.<NUM>\",\"request_id\": \"<NUM>fca<NUM>e<NUM>b-<NUM>e<NUM>a-<NUM>c<NUM>f-<NUM>ed<NUM>-<NUM>d<NUM>b<",
+      "precision": 0.1,
+      "mrr": 0.3333333333333333,
+      "ndcg": 0.6309297535714575,
+      "retrieved": [
+        48,
+        49,
+        50,
+        51,
+        52,
+        55,
+        59,
+        60,
+        53,
+        54
+      ]
+    },
+    {
+      "query": "テスト問題",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        53,
+        54,
+        67,
+        65
+      ]
+    },
+    {
+      "query": "不等式: 0<x<1 のとき 1+x\\le e^x を示せ",
+      "precision": 0.1,
+      "mrr": 1.0,
+      "ndcg": 1.0,
+      "retrieved": [
+        69,
+        63,
+        58,
+        57,
+        62,
+        67,
+        59,
+        61,
+        65,
+        53
+      ]
+    }
+  ]
+}

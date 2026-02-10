@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pypdf
+scikit-learn
+numpy
+requests
+psycopg2-binary
+sentence-transformers
+jsonschema
+httpx
+pytest
+
+
