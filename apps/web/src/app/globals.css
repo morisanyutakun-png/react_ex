@@ -1,9 +1,150 @@
-html,body,#root{height:100%}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.container{display:flex;gap:16px}
-.left{flex:1}
-.right{width:520px}
-.textarea{width:100%;height:60vh;font-family:monospace;white-space:pre-wrap}
-.btn{padding:8px 12px;margin-top:8px}
-.toast{padding:8px;background:#e6ffed;border:1px solid #b7f0c8;margin-top:8px}
+/* ============================
+   CSS Custom Properties
+   ============================ */
+
+:root {
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-text: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+  --shadow-card: 0 1px 3px 0 rgba(0,0,0,.04), 0 1px 2px -1px rgba(0,0,0,.06);
+  --shadow-elevated: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.05);
+  --shadow-glow: 0 0 0 3px rgba(99,102,241,.15);
+}
+
+/* ============================
+   Base Styles
+   ============================ */
+
+body {
+  @apply text-slate-900 antialiased;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdfa 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* ============================
+   Smooth Transitions
+   ============================ */
+
+.transition-base {
+  @apply transition-all duration-200 ease-out;
+}
+
+/* ============================
+   Glass Card Effect
+   ============================ */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* ============================
+   Gradient Text
+   ============================ */
+
+.gradient-text {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+}
+
+/* ============================
+   Hover Card Lift
+   ============================ */
+
+.hover-lift {
+  @apply transition-all duration-300;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* ============================
+   Badge Styles
+   ============================ */
+
+.badge {
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+}
+.badge-primary { @apply bg-indigo-50 text-indigo-700; }
+.badge-success { @apply bg-emerald-50 text-emerald-700; }
+.badge-warning { @apply bg-amber-50 text-amber-700; }
+.badge-danger  { @apply bg-rose-50 text-rose-700; }
+.badge-neutral { @apply bg-slate-100 text-slate-600; }
+
+/* ============================
+   Input Focus Ring
+   ============================ */
+
+.input-ring {
+  @apply transition-all duration-200;
+}
+.input-ring:focus {
+  @apply ring-2 ring-indigo-500/30 border-indigo-400 outline-none;
+}
+
+/* ============================
+   Scrollbar
+   ============================ */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300;
+}
+
+/* ============================
+   Pulse Dot Animation
+   ============================ */
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* ============================
+   Skeleton Loader
+   ============================ */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  @apply rounded-md;
+}

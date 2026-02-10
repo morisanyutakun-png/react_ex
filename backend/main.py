@@ -2446,9 +2446,15 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 prefix = blob[:m.start()]
                 if re.search(r"\\[A-Za-z]+\*?\s*$", prefix):
                     return m.group(0)
+                # Also skip option brackets after closing braces (e.g. \begin{enumerate}[...])
+                if re.search(r"\}\s*$", prefix):
+                    return m.group(0)
                 # Skip empty brackets or very short content that looks like list labels
                 stripped = inner.strip()
                 if len(stripped) < 2:
+                    return m.group(0)
+                # Skip enumitem / list option arguments (label=, ref=, start=, etc.)
+                if re.search(r'label\s*=|ref\s*=|start\s*=|\\arabic|\\roman|\\alph|\\Roman|\\Alph', stripped):
                     return m.group(0)
 
                 # Detect math-like content: environments (aligned, cases, etc.),
@@ -2675,19 +2681,33 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 if tex == prev:
                     break
 
-            # 4) Ensure fontspec and xeCJK are present (add if missing)
+            # 4) Extract and remove ALL \setmainfont / \setCJKmainfont / \setmainjfont
+            #    lines from their current positions. We will re-insert them in
+            #    the correct position (after fontspec/xeCJK, before \begin{document}).
+            tex = re.sub(r'\\setmainfont\{[^}]*\}\s*\n?', '', tex)
+            tex = re.sub(r'\\setCJKmainfont\{[^}]*\}\s*\n?', '', tex)
+            tex = re.sub(r'\\setmainjfont\{[^}]*\}\s*\n?', '', tex)
+            tex = re.sub(r'\\setsansfont\{[^}]*\}\s*\n?', '', tex)
+
+            # 5) Ensure fontspec and xeCJK are present (add if missing)
             if '\\usepackage{fontspec}' not in tex and '\\begin{document}' in tex:
                 tex = tex.replace('\\begin{document}', '\\usepackage{fontspec}\n\\begin{document}')
             if '\\usepackage{xeCJK}' not in tex and '\\begin{document}' in tex:
                 tex = tex.replace('\\usepackage{fontspec}', '\\usepackage{fontspec}\n\\usepackage{xeCJK}')
 
-            # 5) Ensure \setCJKmainfont is present; fix bad font choices
-            bad_cjk_fonts = ['Noto Sans CJK JP', 'Hiragino Sans', 'Hiragino Kaku Gothic']
-            for bad in bad_cjk_fonts:
-                tex = tex.replace(f'\\setCJKmainfont{{{bad}}}', '\\setCJKmainfont{IPAexMincho}')
-                tex = tex.replace(f'\\setmainjfont{{{bad}}}', '\\setCJKmainfont{IPAexMincho}')
+            # 6) Insert safe CJK font declaration right before \begin{document}
+            #    Use \IfFontExistsTF so it works on any OS.
+            safe_font_block = (
+                '\\IfFontExistsTF{Hiragino Mincho ProN}'
+                '{\\setCJKmainfont{Hiragino Mincho ProN}}'
+                '{\\IfFontExistsTF{IPAexMincho}'
+                '{\\setCJKmainfont{IPAexMincho}}'
+                '{\\IfFontExistsTF{Noto Serif CJK JP}'
+                '{\\setCJKmainfont{Noto Serif CJK JP}}'
+                '{}}}\n'
+            )
             if '\\setCJKmainfont' not in tex and '\\begin{document}' in tex:
-                tex = tex.replace('\\begin{document}', '\\setCJKmainfont{IPAexMincho}\n\\begin{document}')
+                tex = tex.replace('\\begin{document}', safe_font_block + '\\begin{document}')
 
             # 6) Convert bare bracket display math [ ... ] → \[ ... \]
             #    This is the most common and critical LLM mistake.
@@ -2701,8 +2721,16 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 stripped = line.strip()
 
                 # Skip lines inside \begin{...} ... \end{...} preamble or option args
-                # Check if this is an option arg line (preceded by a command)
-                if i > 0 and stripped.startswith('[') and re.search(r'\\[A-Za-z]+\*?\s*$', result_lines[-1] if result_lines else ''):
+                # Check if this is an option arg line (preceded by a command or closing brace)
+                if i > 0 and stripped.startswith('['):
+                    prev = (result_lines[-1] if result_lines else '').rstrip()
+                    if re.search(r'\\[A-Za-z]+\*?\s*$', prev) or prev.endswith('}'):
+                        result_lines.append(line)
+                        continue
+
+                # Skip lines that contain option args on the same line as a command
+                # e.g. \begin{enumerate}[label=\arabic*.]
+                if re.search(r'\\[A-Za-z]+\*?(\{[^}]*\})?\[', stripped):
                     result_lines.append(line)
                     continue
 
@@ -2725,6 +2753,10 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     if m:
                         indent = m.group(1)
                         inner = m.group(2)
+                        # Skip enumitem/list option patterns
+                        if re.search(r'label\s*=|ref\s*=|start\s*=|\\arabic|\\roman|\\alph|\\Roman|\\Alph', inner):
+                            result_lines.append(line)
+                            continue
                         # Check it looks like math (has =, ^, _, \, digits with operators)
                         if re.search(r'[=^_\\]|\d.*[+\-*/]', inner):
                             result_lines.append(f'{indent}\\[ {inner} \\]')

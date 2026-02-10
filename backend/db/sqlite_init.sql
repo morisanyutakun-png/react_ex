@@ -1,7 +1,13 @@
--- Minimal SQLite schema for local development (adapted from Postgres DDL)
+-- SQLite schema for local development (adapted from Postgres DDL)
+-- Covers: problems, embeddings (text), rag_runs, generation_runs,
+--         generation_evals, annotations, tuning_logs
 
 PRAGMA foreign_keys = ON;
+PRAGMA journal_mode = WAL;
 
+-- ─────────────────────────────────────────────
+-- problems
+-- ─────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS problems (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   subject TEXT NOT NULL DEFAULT 'general',
@@ -67,3 +73,99 @@ CREATE INDEX IF NOT EXISTS idx_problems_difficulty ON problems(difficulty_level,
 CREATE INDEX IF NOT EXISTS idx_problems_subject_topic ON problems(subject, topic);
 CREATE INDEX IF NOT EXISTS idx_problems_origin_parent ON problems(origin, parent_problem_id);
 CREATE INDEX IF NOT EXISTS idx_problems_trap ON problems(trap_type);
+
+-- ─────────────────────────────────────────────
+-- embeddings (text blob for SQLite; no vector type)
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS embeddings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  problem_id INTEGER NOT NULL REFERENCES problems(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  embedding_version TEXT NOT NULL,
+  vector TEXT,
+  metadata TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(problem_id, kind, embedding_version)
+);
+CREATE INDEX IF NOT EXISTS idx_embeddings_kind ON embeddings(kind);
+
+-- ─────────────────────────────────────────────
+-- rag_runs
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS rag_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  profile TEXT,
+  query_text TEXT,
+  filters TEXT,
+  topk_candidates TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ─────────────────────────────────────────────
+-- generation_runs
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS generation_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  rag_run_id INTEGER REFERENCES rag_runs(id),
+  input_params TEXT DEFAULT '{}',
+  retrieved_segment_ids TEXT,
+  output_text TEXT,
+  model_name TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ─────────────────────────────────────────────
+-- generation_evals
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS generation_evals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_id INTEGER NOT NULL REFERENCES generation_runs(id) ON DELETE CASCADE,
+  axes TEXT DEFAULT '{}',
+  overall INTEGER,
+  notes TEXT,
+  is_usable INTEGER,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ─────────────────────────────────────────────
+-- annotations
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS annotations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  segment_id INTEGER NOT NULL REFERENCES problems(id) ON DELETE CASCADE,
+  revision INTEGER NOT NULL,
+  payload TEXT DEFAULT '{}',
+  schema_version TEXT NOT NULL,
+  created_by TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  is_latest INTEGER DEFAULT 1
+);
+
+-- ─────────────────────────────────────────────
+-- tuning_logs
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS tuning_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  prompt TEXT,
+  model_name TEXT,
+  model_output TEXT,
+  expected_output TEXT,
+  score REAL,
+  notes TEXT,
+  metadata TEXT DEFAULT '{}',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ─────────────────────────────────────────────
+-- admin_jobs (background task tracking)
+-- ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS admin_jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  job_type TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  payload TEXT DEFAULT '{}',
+  result TEXT,
+  error TEXT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);

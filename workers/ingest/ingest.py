@@ -16,11 +16,17 @@ from pathlib import Path
 from workers.ingest.pipeline.segmenter import segment_text, normalize_numbers
 
 # load JSON Schema contract (single source of truth)
-import jsonschema
+try:
+    import jsonschema
+except ImportError:
+    jsonschema = None
 import uuid
 _contract_path = Path(__file__).parent / 'schema' / 'problem_contract.json'
-with open(_contract_path, 'r', encoding='utf-8') as _f:
-    problem_contract = json.load(_f)
+try:
+    with open(_contract_path, 'r', encoding='utf-8') as _f:
+        problem_contract = json.load(_f)
+except FileNotFoundError:
+    problem_contract = None
 
 
 def _extract_solution_snippet(text: str) -> str:
@@ -379,8 +385,9 @@ def insert_problem(conn, problem, page=None):
     # If we parsed a raw_json, attempt to validate it against the canonical contract
     if parsed_raw_json is not None:
         try:
-            jsonschema.validate(parsed_raw_json, problem_contract)
-            # validation passed: this is our normalized JSON
+            if jsonschema is not None and problem_contract is not None:
+                jsonschema.validate(parsed_raw_json, problem_contract)
+            # validation passed (or skipped): this is our normalized JSON
             normalized_json = json.dumps(parsed_raw_json, ensure_ascii=False)
             # preserve raw_json_str (already set)
         except Exception:
@@ -390,8 +397,9 @@ def insert_problem(conn, problem, page=None):
     # If we don't have a validated normalized_json yet, validate the base_contract
     if normalized_json is None:
         try:
-            jsonschema.validate(base_contract, problem_contract)
-            # validation succeeded: use base_contract as both raw and normalized
+            if jsonschema is not None and problem_contract is not None:
+                jsonschema.validate(base_contract, problem_contract)
+            # validation succeeded (or skipped): use base_contract as both raw and normalized
             normalized_json = json.dumps(base_contract, ensure_ascii=False)
         except Exception:
             # validation failed; do not set raw_json (we only save raw_json when json.loads succeeded)

@@ -340,6 +340,22 @@ def save_parsed_problem(payload: SaveProblemRequest = Body(...)):
     if not merged.get('stem'):
         return JSONResponse({'error': 'missing_stem'}, status_code=400)
 
+    # ── pre-validation normalization ──
+    # Ensure final_answer is str (LLMs sometimes return complex strings)
+    fa = merged.get('final_answer')
+    if fa is not None and not isinstance(fa, (int, float, str)):
+        merged['final_answer'] = str(fa)
+    elif fa is not None and not isinstance(fa, str):
+        pass  # keep numeric
+
+    # Ensure checks is a list
+    ch = merged.get('checks')
+    if isinstance(ch, str):
+        try:
+            merged['checks'] = json.loads(ch)
+        except Exception:
+            merged['checks'] = None
+
     # require final_answer and checks for tuning-sourced saves
     try:
         from backend.llm_helpers import validate_insertable

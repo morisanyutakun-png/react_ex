@@ -2,7 +2,7 @@
   "gen_short_answer": {
     "name": "短答問題（数理／短文）",
     "description": "指定科目・難易度で短い問題（解答は1〜3行）を生成。出力は LaTeX 形式で問題番号と解答を含める。",
-    "prompt": "あなたは教育用の問題作成エキスパートです。科目: {subject}、難易度: {difficulty}。以下の条件で問題を出力してください。\\n\\n条件:...",
+    "prompt": "あなたは教育用の問題作成エキスパートです。科目: {subject}、難易度: {difficulty}。以下の条件で問題を出力してください。\n\n条件:\n- 出題数: {num_questions} 問\n- 解答は1〜3行の短答形式\n- 問題文と解答・解説を必ず含めること\n\n--- 出力形式（厳守）---\n必ず以下の JSON 形式のみで回答してください。JSON 以外のテキストは一切出力しないでください。\n\n```json\n{\n  \"stem\": \"問題文（プレーンテキスト。LaTeX数式は$...$で囲む）\",\n  \"stem_latex\": \"LaTeX形式の問題文\",\n  \"solution_outline\": \"解法の手順・方針を簡潔に記述\",\n  \"explanation\": \"詳しい解説（途中式や考え方を含む）\",\n  \"answer_brief\": \"答えの要約（1〜2文）\",\n  \"final_answer\": \"最終回答（数値・式・文字列）\",\n  \"checks\": [\n    {\"desc\": \"検算・確認事項1\", \"ok\": true},\n    {\"desc\": \"検算・確認事項2\", \"ok\": true}\n  ],\n  \"difficulty\": 0.5,\n  \"confidence\": 0.9\n}\n```",
     "metadata": {
       "type": "short",
       "latex": true
@@ -11,7 +11,7 @@
   "gen_multiple_choice": {
     "name": "四択問題（選択式）",
     "description": "科目・難易度に合わせた複数選択肢（A-D）を持つ問題を生成。正答を明記。LaTeX 形式で出力。",
-    "prompt": "あなたは教育コンテンツ作成者です。科目: {subject}、難易度: {difficulty}。...",
+    "prompt": "あなたは教育コンテンツ作成者です。科目: {subject}、難易度: {difficulty}。\n\n条件:\n- 出題数: {num_questions} 問\n- 四択問題（A-D）で正答を明記\n- 問題文と解答・解説を必ず含めること\n\n--- 出力形式（厳守）---\n必ず以下の JSON 形式のみで回答してください。JSON 以外のテキストは一切出力しないでください。\n\n```json\n{\n  \"stem\": \"問題文（選択肢含む）\",\n  \"stem_latex\": \"LaTeX形式の問題文\",\n  \"solution_outline\": \"解法の手順\",\n  \"explanation\": \"詳しい解説\",\n  \"answer_brief\": \"正答: A\",\n  \"final_answer\": \"A\",\n  \"checks\": [\n    {\"desc\": \"検算1\", \"ok\": true},\n    {\"desc\": \"検算2\", \"ok\": true}\n  ],\n  \"difficulty\": 0.5,\n  \"confidence\": 0.9\n}\n```",
     "metadata": {
       "type": "mcq",
       "latex": true
@@ -20,7 +20,7 @@
   "gen_quadratic_ia": {
     "name": "二次関数（数学IA）",
     "description": "数学IAの二次関数分野に特化した問題・解答・解説テンプレート。グラフ、頂点、軸、因数分解、判別式、解の公式などを扱う。",
-    "prompt": "あなたは高校数学（数学IA）の教材作成エキスパートです。テーマ: 二次関数。難易度: {difficulty}。以下の条件で1問を出力してください。\\n\\n条件:...",
+    "prompt": "あなたは高校数学（数学IA）の教材作成エキスパートです。テーマ: 二次関数。難易度: {difficulty}。以下の条件で1問を出力してください。\n\n条件:\n- グラフ、頂点、軸、因数分解、判別式、解の公式などを扱う\n- 問題文と解答・解説を必ず含めること\n\n--- 出力形式（厳守）---\n必ず以下の JSON 形式のみで回答してください。JSON 以外のテキストは一切出力しないでください。\n\n```json\n{\n  \"stem\": \"問題文（プレーンテキスト）\",\n  \"stem_latex\": \"LaTeX形式の問題文\",\n  \"solution_outline\": \"解法の手順\",\n  \"explanation\": \"詳しい解説\",\n  \"answer_brief\": \"答えの要約\",\n  \"final_answer\": \"最終回答\",\n  \"checks\": [\n    {\"desc\": \"検算1\", \"ok\": true},\n    {\"desc\": \"検算2\", \"ok\": true}\n  ],\n  \"difficulty\": 0.5,\n  \"confidence\": 0.9\n}\n```",
     "metadata": {
       "type": "quadratic",
       "subject": "数学IA",
@@ -34,7 +34,7 @@
   "数学_微分積分発展": {
     "name": "数学（微分積分（発展）） テンプレート",
     "description": "数学（微分積分（発展）） の問題を生成するテンプレート（自動生成）",
-    "prompt": "科目: {subject}\n分野: 微分積分（発展）\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で数学（微分積分（発展））の問題を出題してください。\n特に「微分積分（発展）」の範囲を重点的に扱ってください。\n\n- 出力形式: LaTeX（\\documentclass から \\end{document} まで完全な文書）\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問とする\n- 難易度は「{difficulty}」レベルに合わせること\n\n## 問題\n\\begin{enumerate}\n  \\item （ここに問題文）\n\\end{enumerate}\n\n## 解答・解説\n\\begin{enumerate}\n  \\item \\textbf{解答}: ...  \\textbf{解説}: ...\n\\end{enumerate}",
+    "prompt": "科目: {subject}\n分野: 微分積分（発展）\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で数学（微分積分（発展））の問題を出題してください。\n特に「微分積分（発展）」の範囲を重点的に扱ってください。\n\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問とする\n- 難易度は「{difficulty}」レベルに合わせること",
     "metadata": {
       "subject": "数学",
       "field": "微分積分（発展）",
@@ -44,7 +44,7 @@
   "情報_javascript": {
     "name": "情報（JavaScript） テンプレート",
     "description": "情報（JavaScript） の問題を生成するテンプレート（自動生成）",
-    "prompt": "科目: {subject}\n分野: JavaScript\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で情報（JavaScript）の問題を出題してください。\n特に「JavaScript」の範囲を重点的に扱ってください。\n\n- 出力形式: LaTeX（\\documentclass から \\end{document} まで完全な文書）\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問とする\n- 難易度は「{difficulty}」レベルに合わせること\n\n## 問題\n\\begin{enumerate}\n  \\item （ここに問題文）\n\\end{enumerate}\n\n## 解答・解説\n\\begin{enumerate}\n  \\item \\textbf{解答}: ...  \\textbf{解説}: ...\n\\end{enumerate}",
+    "prompt": "科目: {subject}\n分野: JavaScript\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で情報（JavaScript）の問題を出題してください。\n特に「JavaScript」の範囲を重点的に扱ってください。\n\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問とする\n- 難易度は「{difficulty}」レベルに合わせること",
     "metadata": {
       "subject": "情報",
       "field": "JavaScript",
