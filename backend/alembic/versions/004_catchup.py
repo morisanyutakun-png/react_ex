@@ -20,7 +20,9 @@ def _run_sql_file(filename):
         sql = f.read()
     conn = op.get_bind()
     for stmt in sql.split(';'):
-        st = stmt.strip()
+        # Remove comment-only lines before checking if the statement is empty
+        lines = [l for l in stmt.splitlines() if not l.strip().startswith('--')]
+        st = '\n'.join(lines).strip()
         if not st:
             continue
         conn.execute(text(st))
