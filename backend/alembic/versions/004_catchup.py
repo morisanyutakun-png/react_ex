@@ -14,72 +14,69 @@ branch_labels = None
 depends_on = None
 
 
-def _run_sql_file(filename):
-    path = os.path.join(os.path.dirname(__file__), '..', '..', 'db', 'migrations', filename)
-    with open(path, 'r', encoding='utf-8') as f:
-        sql = f.read()
-    conn = op.get_bind()
-    for stmt in sql.split(';'):
-        # Remove comment-only lines before checking if the statement is empty
-        lines = [l for l in stmt.splitlines() if not l.strip().startswith('--')]
-        st = '\n'.join(lines).strip()
-        if not st:
-            continue
-        conn.execute(text(st))
+# All ALTER TABLE statements inlined to avoid SQL comment/semicolon parsing issues
+_PG_STATEMENTS = [
+    # 004 — add problem columns
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS explanation TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS answer_brief TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS references_json TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS confidence DOUBLE PRECISION",
+    # 005 — add expected_mistakes
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS expected_mistakes JSONB",
+    # 006 — add raw_json
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS raw_text TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS raw_json JSONB",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS normalized_json JSONB",
+    # 007 — add final_answer / checks
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS final_answer_text TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS final_answer_numeric DOUBLE PRECISION",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS checks_json TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS assumptions_json TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS selected_reference_json TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS solvable BOOLEAN",
+    # extra columns used by insert_problem / ingest
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS normalized_text TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS schema_version TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS request_id TEXT",
+    "ALTER TABLE problems ADD COLUMN IF NOT EXISTS page INTEGER",
+]
+
+_SQLITE_COLUMNS = [
+    ('explanation', 'TEXT'),
+    ('answer_brief', 'TEXT'),
+    ('references_json', 'TEXT'),
+    ('confidence', 'REAL'),
+    ('expected_mistakes', 'TEXT'),
+    ('raw_text', 'TEXT'),
+    ('raw_json', 'TEXT'),
+    ('normalized_json', 'TEXT'),
+    ('normalized_text', 'TEXT'),
+    ('final_answer_text', 'TEXT'),
+    ('final_answer_numeric', 'REAL'),
+    ('checks_json', 'TEXT'),
+    ('assumptions_json', 'TEXT'),
+    ('selected_reference_json', 'TEXT'),
+    ('solvable', 'INTEGER'),
+    ('schema_version', 'TEXT'),
+    ('request_id', 'TEXT'),
+    ('page', 'INTEGER'),
+]
 
 
 def upgrade():
     bind = op.get_bind()
     dialect = bind.dialect.name
     if dialect == 'sqlite':
-        # SQLite has limited ALTER TABLE; add columns one by one, ignoring errors
-        columns = [
-            ('explanation', 'TEXT'),
-            ('answer_brief', 'TEXT'),
-            ('references_json', 'TEXT'),
-            ('confidence', 'REAL'),
-            ('expected_mistakes', 'TEXT'),
-            ('raw_text', 'TEXT'),
-            ('raw_json', 'TEXT'),
-            ('normalized_json', 'TEXT'),
-            ('normalized_text', 'TEXT'),
-            ('final_answer_text', 'TEXT'),
-            ('final_answer_numeric', 'REAL'),
-            ('checks_json', 'TEXT'),
-            ('assumptions_json', 'TEXT'),
-            ('selected_reference_json', 'TEXT'),
-            ('solvable', 'INTEGER'),
-            ('schema_version', 'TEXT'),
-            ('request_id', 'TEXT'),
-            ('page', 'INTEGER'),
-        ]
         conn = op.get_bind()
-        for col_name, col_type in columns:
+        for col_name, col_type in _SQLITE_COLUMNS:
             try:
                 conn.execute(text(f'ALTER TABLE problems ADD COLUMN {col_name} {col_type}'))
             except Exception:
                 pass  # column already exists
     else:
-        # Postgres: run SQL files 004-007
-        for f in ['004_add_problem_columns.sql',
-                   '005_add_expected_mistakes.sql',
-                   '006_add_raw_json.sql',
-                   '007_add_final_answer_checks.sql']:
-            _run_sql_file(f)
-
-        # Also add missing columns not in the SQL files
-        extra_cols = [
-            ('normalized_text', 'TEXT'),
-            ('schema_version', 'TEXT'),
-            ('request_id', 'TEXT'),
-            ('page', 'INTEGER'),
-        ]
         conn = op.get_bind()
-        for col_name, col_type in extra_cols:
-            try:
-                conn.execute(text(f'ALTER TABLE problems ADD COLUMN IF NOT EXISTS {col_name} {col_type}'))
-            except Exception:
-                pass
+        for stmt in _PG_STATEMENTS:
+            conn.execute(text(stmt))
 
 
 def downgrade():
