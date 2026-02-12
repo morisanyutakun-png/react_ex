@@ -8,7 +8,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: alembic -c ../alembic.ini upgrade head && gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+    startCommand: alembic upgrade head && gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
