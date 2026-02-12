@@ -410,12 +410,13 @@ def insert_problem(conn, problem, page=None):
     cur = conn.cursor()
     is_sqlite = getattr(conn, '_is_sqlite', False)
 
+    # ── Compute subject/topic/subtopic/language for both SQLite and Postgres ──
+    subject = metadata.get('subject') if isinstance(metadata, dict) and metadata.get('subject') else (metadata.get('topic') if isinstance(metadata, dict) else None) or 'general'
+    topic = metadata.get('topic') if isinstance(metadata, dict) else None
+    subtopic = metadata.get('subtopic') if isinstance(metadata, dict) else None
+    language = metadata.get('language') if isinstance(metadata, dict) and metadata.get('language') else 'ja'
+
     if is_sqlite:
-        # Map current ingest fields into the canonical sqlite problems DDL.
-        subject = metadata.get('subject') if isinstance(metadata, dict) and metadata.get('subject') else (metadata.get('topic') if isinstance(metadata, dict) else None) or 'general'
-        topic = metadata.get('topic') if isinstance(metadata, dict) else None
-        subtopic = metadata.get('subtopic') if isinstance(metadata, dict) else None
-        language = metadata.get('language') if isinstance(metadata, dict) and metadata.get('language') else 'ja'
         # stem already computed above (variable `stem_latex` comes from above)
         choices_json = None
         answer_json = None
@@ -442,14 +443,19 @@ def insert_problem(conn, problem, page=None):
         cur.execute(
             """
             INSERT INTO problems (
+                subject, topic, subtopic, language,
                 source, page, stem, normalized_text, solution_outline, stem_latex,
                 difficulty, difficulty_level, trickiness, metadata, explanation, answer_brief,
                 references_json, expected_mistakes, confidence, raw_text, raw_json, normalized_json,
                 final_answer_text, final_answer_numeric, checks_json, assumptions_json, selected_reference_json, solvable,
                 schema_version, request_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
+                subject,
+                topic,
+                subtopic,
+                language,
                 source_tag,
                 page,
                 stem,
@@ -482,11 +488,15 @@ def insert_problem(conn, problem, page=None):
         # keep existing Postgres-compatible insert for backwards compatibility
         cur.execute(
              """
-             INSERT INTO problems (source, page, stem, normalized_text, solution_outline, stem_latex, difficulty, difficulty_level, trickiness, metadata_json, explanation, answer_brief, references_json, expected_mistakes, confidence, raw_text, raw_json, normalized_json, final_answer_text, final_answer_numeric, checks_json, assumptions_json, selected_reference_json, solvable)
-             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+             INSERT INTO problems (subject, topic, subtopic, language, source, page, stem, normalized_text, solution_outline, stem_latex, difficulty, difficulty_level, trickiness, metadata_json, explanation, answer_brief, references_json, expected_mistakes, confidence, raw_text, raw_json, normalized_json, final_answer_text, final_answer_numeric, checks_json, assumptions_json, selected_reference_json, solvable)
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
              RETURNING id
              """,
              (
+                 subject,
+                 topic,
+                 subtopic,
+                 language,
                  source_tag,
                  page,
                  stem,
