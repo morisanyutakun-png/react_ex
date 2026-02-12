@@ -10,6 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     poppler-utils \
     texlive-latex-recommended \
+    texlive-xetex \
+    texlive-fonts-recommended \
+    texlive-latex-extra \
+    texlive-lang-japanese \
+    fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/requirements.txt

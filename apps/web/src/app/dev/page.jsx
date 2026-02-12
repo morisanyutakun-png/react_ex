@@ -258,6 +258,10 @@ export default function DevModePage() {
         setPdfUrl(data.pdf_url);
         window.open(data.pdf_url, '_blank');
         setStatus('PDF を開きました');
+      } else if (data?.error) {
+        setStatus(`PDF 生成失敗: ${data.error} — ${data.detail || data.stderr || ''}`);
+      } else {
+        setStatus('PDF 生成失敗: サーバーに LaTeX エンジンがインストールされていません');
       }
     } catch (e) { setStatus(`PDF 生成失敗: ${e.message}`); }
     setPdfWorking(false);
