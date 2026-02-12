@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 
 # TF-IDF index cache
 _tfidf_cache = {
-    'count_sum': None,    # (count, sum_ids) tuple to detect changes
+    'fingerprint': None,  # (count, sum_ids, max_id) tuple for robust invalidation
     'ids': None,
     'vectorizer': None,
     'mat': None,
@@ -56,20 +56,24 @@ _tfidf_cache = {
 
 
 def _build_or_get_tfidf_index(conn, force_refresh: bool = False):
-    """Build or return cached TF-IDF index. Cache invalidation checks count and sum(id).
+    """Build or return cached TF-IDF index.
+
+    Cache invalidation uses (count, sum(id), max(id)) to detect inserts, deletes,
+    and ID reassignments reliably. For updates to stem content that don't change IDs,
+    use force_refresh=True.
 
     Returns (ids, vectorizer, mat)
     """
     cur = conn.cursor()
-    cur.execute("SELECT count(*), coalesce(sum(id), 0) FROM problems")
+    cur.execute("SELECT count(*), coalesce(sum(id), 0), coalesce(max(id), 0) FROM problems")
     stats = cur.fetchone()
     # fetch stem and stem_latex (if present) and optionally normalized_text
     cur.execute("SELECT id, stem, stem_latex FROM problems ORDER BY id")
     rows = cur.fetchall()
     cur.close()
 
-    count_sum = (int(stats[0]), int(stats[1]))
-    if (not force_refresh) and _tfidf_cache['count_sum'] == count_sum and _tfidf_cache['ids'] is not None:
+    fingerprint = (int(stats[0]), int(stats[1]), int(stats[2]))
+    if (not force_refresh) and _tfidf_cache['fingerprint'] == fingerprint and _tfidf_cache['ids'] is not None:
         return _tfidf_cache['ids'], _tfidf_cache['vectorizer'], _tfidf_cache['mat']
 
     ids = [r[0] for r in rows]
@@ -88,7 +92,7 @@ def _build_or_get_tfidf_index(conn, force_refresh: bool = False):
             raise RuntimeError('scikit-learn not installed: install with `pip install scikit-learn` to use TF-IDF retriever')
         vec = TfidfVectorizer()
         mat = vec.fit_transform(['']).toarray()
-        _tfidf_cache.update({'count_sum': count_sum, 'ids': ids, 'vectorizer': vec, 'mat': mat})
+        _tfidf_cache.update({'fingerprint': fingerprint, 'ids': ids, 'vectorizer': vec, 'mat': mat})
         return ids, vec, mat
 
     if TfidfVectorizer is None:
@@ -100,7 +104,7 @@ def _build_or_get_tfidf_index(conn, force_refresh: bool = False):
     else:
         vectorizer = TfidfVectorizer()
     mat = vectorizer.fit_transform(texts).toarray()
-    _tfidf_cache.update({'count_sum': count_sum, 'ids': ids, 'vectorizer': vectorizer, 'mat': mat})
+    _tfidf_cache.update({'fingerprint': fingerprint, 'ids': ids, 'vectorizer': vectorizer, 'mat': mat})
     return ids, vectorizer, mat
 
 
@@ -191,13 +195,21 @@ def _pgvector_search(conn, query_vec_lit: str, top_k: int = 100, shards: int = 1
 
 
 def _zscore(arr):
+    """Standardize an array. Uses z-score when variance is sufficient,
+    falls back to min-max normalization for small or constant sets."""
     import numpy as _np
     if not arr:
         return []
     a = _np.array(arr, dtype=float)
+    if len(a) < 3:
+        # Too few samples for meaningful z-score; use min-max [0,1]
+        mn, mx = a.min(), a.max()
+        if mx - mn < 1e-12:
+            return [0.0 for _ in a]
+        return ((a - mn) / (mx - mn)).tolist()
     mean = a.mean()
     std = a.std()
-    if std == 0 or _np.isnan(std):
+    if std < 1e-12 or _np.isnan(std):
         return [0.0 for _ in a]
     return ((a - mean) / std).tolist()
 
@@ -212,6 +224,8 @@ def retrieve_with_profile(
     alpha_text: float = 0.5,
     beta_difficulty: float = 0.5,
     gamma_trickiness: float = 0.5,
+    overlap_boost: float = 0.5,
+    overlap_threshold: float = 0.4,
     use_vector: bool = True,
     model = None,
     tfidf_force_refresh: bool = False,
@@ -316,8 +330,8 @@ def retrieve_with_profile(
             else:
                 overlap = len(q_tokens & txt_tokens) / float(len(q_tokens))
             # if high overlap or query is substring, boost final score
-            if overlap > 0.4 or qnorm.lower() in txt.lower():
-                final_score += 0.5 * overlap
+            if overlap > overlap_threshold or qnorm.lower() in txt.lower():
+                final_score += overlap_boost * overlap
         except Exception:
             pass
         ranked.append(
@@ -398,22 +412,30 @@ if __name__ == '__main__':
 
 
 def _normalize_latex_text(s: str) -> str:
-    """Very small LaTeX / math normalization to improve token matching.
+    """LaTeX / math normalization to improve token matching.
 
-    - remove curly braces
-    - replace backslash commands like \frac -> frac
-    - remove dollar signs
-    - collapse multiple spaces
+    - Preserve math-significant tokens (frac, int, sum, sqrt, etc.) as keywords
+    - Remove curly braces and dollar signs
+    - Replace backslash commands like \\frac -> frac
+    - Normalize common math operators and Greek letters
+    - Collapse multiple spaces
     """
     if not s:
         return ''
     import re
     t = s
+    # normalize display math delimiters
+    t = re.sub(r'\\\[', ' ', t)
+    t = re.sub(r'\\\]', ' ', t)
     t = t.replace('{', ' ').replace('}', ' ')
     t = t.replace('$$', ' ')
     t = t.replace('$', ' ')
-    # convert \command to command
+    # convert \command to command  (keeps math keywords like frac, int, sum, sqrt, lim, etc.)
     t = re.sub(r'\\([A-Za-z]+)', r' \1 ', t)
+    # normalize common subscript/superscript noise
+    t = t.replace('^', ' ').replace('_', ' ')
+    # keep digits and operators meaningful
+    t = re.sub(r'[\\&~]', ' ', t)
     # remove multiple spaces
     t = re.sub(r'\s+', ' ', t)
     return t.strip()

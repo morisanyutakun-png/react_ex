@@ -18,3 +18,6 @@ backend/.venv*/
 backend/.venv.backup*/
 **/.venv*/
 **/.venv.backup*/
+
+# Next.js build output
+.next/

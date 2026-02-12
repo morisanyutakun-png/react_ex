@@ -2,9 +2,36 @@ import os
 import logging
 import json
 import sqlite3
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_database_url(url: str) -> str:
+    """Normalize DATABASE_URL for compatibility.
+
+    - Neon / Heroku often use 'postgres://' which SQLAlchemy / psycopg2 don't accept;
+      rewrite to 'postgresql://'.
+    - Ensure sslmode=require is present for remote Postgres (Neon requires SSL).
+    """
+    if not url:
+        return url
+    # scheme fix
+    if url.startswith('postgres://'):
+        url = 'postgresql://' + url[len('postgres://'):]
+    # add sslmode=require for remote PG when not already set
+    parsed = urlparse(url)
+    if parsed.scheme.startswith('postgresql'):
+        qs = parse_qs(parsed.query)
+        if 'sslmode' not in qs:
+            # Only add for non-localhost (Neon, Render Postgres, etc.)
+            host = parsed.hostname or ''
+            if host not in ('localhost', '127.0.0.1', '::1', 'db'):
+                qs['sslmode'] = ['require']
+                new_query = urlencode(qs, doseq=True)
+                parsed = parsed._replace(query=new_query)
+                url = urlunparse(parsed)
+    return url
 
 
 def _ensure_data_dir(path='data'):
@@ -108,6 +135,9 @@ def connect_db(db_url: str = None):
         _ensure_data_dir(data_dir)
         db = f"sqlite:///{os.path.join(data_dir, 'examgen.db')}"
         logger.info('No DATABASE_URL set; defaulting to sqlite DB at %s', db)
+
+    # Normalize for Neon / remote Postgres compatibility
+    db = _normalize_database_url(db)
 
     parsed = urlparse(db)
     scheme = parsed.scheme

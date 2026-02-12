@@ -1,88 +1,167 @@
-# ExamGen RAG — ローカル起動手順（Next.js + FastAPI）
+# ExamGen RAG — ローカル起動 & デプロイ手順
 
 このリポジトリは RAG（Retrieval-Augmented Generation）を用いて試験問題用のプロンプトを生成する開発向けツールです。
 
 重要: フロントエンドは「LLM に渡すプロンプト」を生成します。LLM の呼び出しは行いません。
 
+## アーキテクチャ
+
+| レイヤー | ローカル | 本番 |
+|---|---|---|
+| Frontend | Next.js (localhost:3000) | **Vercel** |
+| Backend | FastAPI (localhost:8000) | **Render** (Web Service) |
+| Database | SQLite (./data/examgen.db) | **Neon** (PostgreSQL) |
+
+---
+
 ## 前提
 - Python 3.11+（バックエンド）
 - Node.js 18/20（フロントエンド）
-- npm または pnpm
+- npm
 
-## 1) バックエンド (FastAPI)
+---
+
+## ローカル開発
+
+### 1) バックエンド (FastAPI)
 
 ```bash
-cd /Users/moriyuuta/react_ex/backend
-# 仮想環境を作る（まだなら）
+cd backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+# DB マイグレーション（SQLite）
+cd ..  # リポジトリルートへ
+alembic upgrade head
+
 # 開発サーバ起動
+cd backend
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## 2) フロントエンド (Next.js)
+### 2) フロントエンド (Next.js)
 
 ```bash
-cd /Users/moriyuuta/react_ex/apps/web
-# 依存を初回インストール（まだなら）
+cd apps/web
 npm install
-# 開発サーバ起動（http://localhost:3000）
 npm run dev
+# → http://localhost:3000
 ```
 
-## 本番ビルド / Docker（任意）
+`next.config.js` の rewrites で `/api/*` が `http://localhost:8000/api/*` にプロキシされます。
+
+### ローカル用 .env（任意）
+
+リポジトリルートに `.env` を作成（`.env.example` を参照）。
+`DATABASE_URL` を設定しなければ自動で `./data/examgen.db` (SQLite) が使われます。
+
+---
+
+## 本番デプロイ
+
+### Step 1: Neon (PostgreSQL) セットアップ
+
+1. [Neon Console](https://console.neon.tech/) でプロジェクトを作成
+2. 接続文字列を取得（形式: `postgresql://user:pass@ep-xxx.region.neon.tech/dbname?sslmode=require`）
+3. マイグレーション実行:
 
 ```bash
-cd /Users/moriyuuta/react_ex/apps/web
-npm run build
-npm start
+# ローカルから実行（DATABASE_URL に Neon の接続文字列を設定）
+DATABASE_URL="postgresql://..." alembic upgrade head
 ```
 
-Docker イメージを作る場合:
+### Step 2: Render (Backend) デプロイ
+
+1. [Render Dashboard](https://dashboard.render.com/) で **New Web Service** を作成
+2. リポジトリを接続し、以下を設定:
+
+| 設定項目 | 値 |
+|---|---|
+| **Root Directory** | `backend` |
+| **Build Command** | `pip install -r requirements.txt` |
+| **Start Command** | `alembic -c ../alembic.ini upgrade head && gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120` |
+| **Health Check Path** | `/health` |
+
+3. 環境変数を設定:
+
+| 変数名 | 値 |
+|---|---|
+| `DATABASE_URL` | Neon の接続文字列 |
+| `CORS_ALLOW_ORIGINS` | `https://your-app.vercel.app,http://localhost:3000` |
+| `PYTHON_VERSION` | `3.11.9` |
+
+> **Tips**: `render.yaml` (Blueprint) もリポジトリに含まれています。Render の Blueprint 機能でインポートすると上記設定が自動適用されます。
+
+### Step 3: Vercel (Frontend) デプロイ
+
+1. [Vercel Dashboard](https://vercel.com/) で **Import Project** → リポジトリを選択
+2. 以下を設定:
+
+| 設定項目 | 値 |
+|---|---|
+| **Root Directory** | `apps/web` |
+| **Framework** | Next.js (自動検出) |
+
+3. 環境変数を設定:
+
+| 変数名 | 値 |
+|---|---|
+| `API_BASE_URL` | Render の URL（例: `https://examgen-backend.onrender.com`） |
+
+これにより、Next.js の SSR rewrites が `/api/*` を Render のバックエンドへプロキシします。
+
+---
+
+## 環境変数一覧
+
+| 変数名 | 設置場所 | 説明 | デフォルト |
+|---|---|---|---|
+| `DATABASE_URL` | Render | Neon PostgreSQL 接続文字列 | SQLite (`./data/examgen.db`) |
+| `CORS_ALLOW_ORIGINS` | Render | カンマ区切りの許可オリジン | `*` |
+| `API_BASE_URL` | Vercel | Backend URL (SSR rewrites 用) | `http://localhost:8000` |
+| `NEXT_PUBLIC_API_BASE` | Vercel (任意) | ブラウザ直接呼出し用 | `''` (空 = rewrites 経由) |
+| `PYTHON_VERSION` | Render | Python バージョン | `3.11.9` |
+
+---
+
+## マイグレーション
 
 ```bash
-cd /Users/moriyuuta/react_ex/apps/web
-docker build -t examgen-web .
-docker run -p 3000:3000 examgen-web
+# 新しいマイグレーションを作成
+alembic revision --autogenerate -m "description"
+
+# マイグレーション適用
+alembic upgrade head
+
+# 状態確認
+alembic current
+alembic history
 ```
+
+Render デプロイ時は Start Command 内で `alembic upgrade head` が毎回実行されます（冪等）。
+
+---
 
 ## ヘルスチェック
 
 ```bash
-curl -I http://localhost:3000/
-curl -I http://localhost:8000/api/templates
+# Backend
+curl https://examgen-backend.onrender.com/health
+# → {"status":"ok"}
+
+# Frontend
+curl -I https://your-app.vercel.app/
 ```
 
-## 補足
-- `next.config.js` で `/api/*` を `http://localhost:8000/api/*` にリライトしています。バックエンドが起動している必要があります。
-- フロントはプロンプト生成が主目的です。生成したプロンプトを外部の LLM（例: ChatGPT）に手動で与えてください。
-
-## Vercel デプロイ（フロントエンド）
-
-このリポジトリはモノレポ構成のため、Vercel ではフロントエンド（Next.js）をデプロイし、バックエンド（FastAPI）は別ホスティングに配置する構成を推奨します。
-
-### 1) Vercel プロジェクト設定
-- **Root Directory**: `apps/web`
-- **Framework**: Next.js
-
-### 2) 環境変数
-Vercel の Environment Variables に以下を設定してください。
-
-- `API_BASE_URL`: バックエンドのベース URL（例: `https://your-backend.example.com`）
-
-これにより、Next.js の rewrites が `/api/*` をバックエンドへプロキシします。
-
-必要に応じてブラウザから直接バックエンドを叩く場合は `NEXT_PUBLIC_API_BASE` を使えますが、その場合はバックエンド側で CORS 設定が必要です。
-
-### 3) バックエンドの配置
-バックエンドは Vercel 以外（例: Render, Fly.io, Railway, ECS など）でホストし、公開 URL を `API_BASE_URL` に設定してください。
-
-> 注意: FastAPI は長時間プロセスやファイル I/O を含むため、Vercel の Serverless では運用が難しいケースがあります。
+---
 
 ## トラブルシュート
-- バックエンドが起動しない場合は仮想環境が有効か、`requirements.txt` のインストールに成功しているか、ポート 8000 が空いているか確認してください。
-- フロントが動かない場合は Node/npm のバージョン確認と `npm install` の再実行を試してください。
+
+- **Backend が起動しない**: `DATABASE_URL` の形式を確認（`postgres://` ではなく `postgresql://` を使用）。Neon は `?sslmode=require` が必要ですが、`db.py` が自動付与します。
+- **CORS エラー**: Render の `CORS_ALLOW_ORIGINS` に Vercel のドメインが含まれているか確認。
+- **マイグレーションエラー**: `alembic current` で現在の状態を確認し、`alembic upgrade head` を再実行。
+- **Frontend が API を呼べない**: Vercel の `API_BASE_URL` が正しい Render URL を指しているか確認。
 
 ---
-(この README は Next.js を前提とした起動手順の簡潔版です)
+

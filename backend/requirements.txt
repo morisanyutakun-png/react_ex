@@ -6,9 +6,13 @@ scikit-learn
 numpy
 requests
 psycopg2-binary
+psycopg[binary]
+sqlalchemy>=2.0
+alembic
 sentence-transformers
 jsonschema
 httpx
 pytest
+gunicorn
 
 

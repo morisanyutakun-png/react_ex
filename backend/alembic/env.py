@@ -1,8 +1,17 @@
 import os
+import sys
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 from alembic import context
+
+# Ensure project root is on sys.path so 'backend' package is importable
+_this_dir = os.path.dirname(os.path.abspath(__file__))
+_project_root = os.path.dirname(os.path.dirname(_this_dir))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
+from backend.db import _normalize_database_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -17,6 +26,9 @@ db_url = os.environ.get('DATABASE_URL')
 if not db_url:
     os.makedirs('data', exist_ok=True)
     db_url = 'sqlite:///./data/examgen.db'
+
+# Normalize for Neon / Heroku style 'postgres://' URLs
+db_url = _normalize_database_url(db_url)
 
 # set sqlalchemy.url programmatically so alembic cli uses env var
 config.set_main_option('sqlalchemy.url', db_url)

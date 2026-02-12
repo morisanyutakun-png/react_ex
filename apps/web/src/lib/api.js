@@ -117,4 +117,20 @@ export async function searchProblems(params) {
   return apiFetch(`/api/search?${query}`);
 }
 
+// ── Similar Problem Generation ─────────────────────
+
+export async function generateSimilarProblem(problemStem, options = {}) {
+  return apiFetch('/api/generate_similar', {
+    method: 'POST',
+    body: JSON.stringify({
+      question: problemStem,
+      top_k: options.top_k || 5,
+      num: options.num || 3,
+      use_vector: options.use_vector ?? true,
+      include_explanations: options.include_explanations ?? true,
+      ...options,
+    }),
+  });
+}
+
 

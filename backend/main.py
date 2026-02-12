@@ -45,6 +45,7 @@ except Exception:
         load_model = None
         vector_to_sql_literal = None
 
+from fastapi.middleware.cors import CORSMiddleware
 import requests
 import logging
 import traceback
@@ -56,9 +57,32 @@ MAX_FILE_BYTES = 10 * 1024 * 1024  # 10MB 制限
 
 app = FastAPI(title="RAG LaTeX/JSON MVP")
 
+# ── CORS ────────────────────────────────────────────
+# CORS_ALLOW_ORIGINS: comma-separated list of allowed origins.
+# Defaults to "*" for local dev.  Set to specific origins in production, e.g.
+#   CORS_ALLOW_ORIGINS=https://your-app.vercel.app,http://localhost:3000
+_cors_raw = os.environ.get('CORS_ALLOW_ORIGINS', '*')
+_cors_origins = [o.strip() for o in _cors_raw.split(',') if o.strip()] if _cors_raw != '*' else ['*']
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # In-memory store used by several endpoints (keeps session/sample docs in memory).
 # Initialize it to avoid NameError in dev/test environments where DB isn't used.
 STORE: Dict[str, Any] = {}
+
+
+# ── Health check ────────────────────────────────────
+@app.get('/health')
+def health_check():
+    """Minimal health-check endpoint for Render / monitoring."""
+    return {'status': 'ok'}
+
 
 # include routers
 try:
@@ -327,7 +351,7 @@ def _collapse_internal_newlines(latex: str) -> str:
         # \(...\)
         s = re.sub(r"\\\((.*?)\\\)", lambda m: '\\(' + m.group(1).replace('\n', ' ') + '\\)', s, flags=re.S)
         # \[...\]
-        s = re.sub(r"\\\\\[(.*?)\\\\\]", lambda m: '\\\\[' + m.group(1).replace('\n', ' ') + '\\\\]', s, flags=re.S)
+        s = re.sub(r"\\\[(.*?)\\\]", lambda m: '\\[' + m.group(1).replace('\n', ' ') + '\\]', s, flags=re.S)
     except Exception:
         pass
 
@@ -1730,13 +1754,17 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 # Instruction for the LLM
                 latex_instr = (
                     "【重要: 出力ルール（ユーザーモード専用）】\n"
-                    "以下を全て守ること。\n\n"
-                    "A) インライン数式は $...$ のみ。(...) や [...] で囲むな。\n"
-                    "B) ディスプレイ数式は \\\\[ ... \\\\] のみ。裸の [ ... ] や $$ は禁止。\n"
+                    "以下を全て守ること。違反するとコンパイルエラーになる。\n\n"
+                    "A) インライン数式は $...$ のみ。\\(...\\) や [...] で囲むな。\n"
+                    "B) ディスプレイ数式は必ず \\\\[ ... \\\\] を使え（バックスラッシュ付き）。\n"
+                    "   裸の [ ... ] は絶対に禁止（コンパイルエラーの原因になる）。$$ も禁止。\n"
+                    "   悪い例: [\n     f(x)=x^2\n   ]\n"
+                    "   良い例: \\\\[\n     f(x)=x^2\n   \\\\]\n"
                     "C) align* 等の行末は \\\\\\\\ のみ。\\\\\\\\[2mm] 等は禁止。\n"
                     "D) スケルトンのパッケージだけ使え。unicode-math, CJKutf8 等の追加禁止。\n"
                     "E) フォントは \\\\setCJKmainfont{IPAexMincho} 固定。IfFontExistsTF 禁止。\n"
                     "F) 出力は .tex ソースのみ。Markdown や説明文は含めるな。\n"
+                    "G) 区間表記は $[0,1)$ のようにインライン数式 $...$ 内に書くこと。\n"
                 )
 
                 # Reassemble the prompt: Skeleton first (as a target), then Instructions
@@ -2449,6 +2477,16 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 # Also skip option brackets after closing braces (e.g. \begin{enumerate}[...])
                 if re.search(r"\}\s*$", prefix):
                     return m.group(0)
+                # Skip [ inside inline math $...$: count unescaped $ in prefix.
+                # If odd, we are inside inline math and [ is a literal bracket
+                # (e.g. interval notation $[0,1)$), not display math.
+                dollar_count = len(re.findall(r'(?<!\\)\$', prefix))
+                if dollar_count % 2 == 1:
+                    return m.group(0)
+                # If the matched content contains $, the bracket spans across
+                # inline math boundaries — definitely not a display-math block.
+                if '$' in inner:
+                    return m.group(0)
                 # Skip empty brackets or very short content that looks like list labels
                 stripped = inner.strip()
                 if len(stripped) < 2:
@@ -2669,7 +2707,7 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             # 3) Remove \IfFontExistsTF blocks (replace with just the first choice)
             #    Pattern: \IfFontExistsTF{Font}{TrueBody}{FalseBody}
             def _simplify_iffont(m):
-                true_body = m.group(2)
+                true_body = m.group(1)
                 return true_body
             # Iteratively resolve nested \IfFontExistsTF (up to 5 levels)
             for _ in range(5):
@@ -2689,11 +2727,15 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             tex = re.sub(r'\\setmainjfont\{[^}]*\}\s*\n?', '', tex)
             tex = re.sub(r'\\setsansfont\{[^}]*\}\s*\n?', '', tex)
 
-            # 5) Ensure fontspec and xeCJK are present (add if missing)
-            if '\\usepackage{fontspec}' not in tex and '\\begin{document}' in tex:
-                tex = tex.replace('\\begin{document}', '\\usepackage{fontspec}\n\\begin{document}')
-            if '\\usepackage{xeCJK}' not in tex and '\\begin{document}' in tex:
-                tex = tex.replace('\\usepackage{fontspec}', '\\usepackage{fontspec}\n\\usepackage{xeCJK}')
+            # 5) Ensure fontspec and xeCJK are present (add if missing).
+            #    fontspec MUST be loaded before xeCJK. Remove any existing
+            #    fontspec/xeCJK declarations and re-insert them in the correct
+            #    order right before \begin{document}.
+            tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{fontspec\}\s*\n?', '', tex)
+            tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{xeCJK\}\s*\n?', '', tex)
+            if '\\begin{document}' in tex:
+                font_preamble = '\\usepackage{fontspec}\n\\usepackage{xeCJK}\n'
+                tex = tex.replace('\\begin{document}', font_preamble + '\\begin{document}')
 
             # 6) Insert safe CJK font declaration right before \begin{document}
             #    Use \IfFontExistsTF so it works on any OS.
@@ -2734,6 +2776,17 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     result_lines.append(line)
                     continue
 
+                # Skip [ that is inside inline math $...$
+                # Count unescaped $ before the first [ in the line;
+                # if odd, the [ is inside inline math (e.g. $[0,1)$)
+                if stripped.startswith('[') and not in_bare_math:
+                    # Check the cumulative $ parity from all previous lines
+                    preceding_text = '\n'.join(result_lines)
+                    dollar_count = len(re.findall(r'(?<!\\)\$', preceding_text))
+                    if dollar_count % 2 == 1:
+                        result_lines.append(line)
+                        continue
+
                 # Multi-line bare bracket math: line is just "["
                 if stripped == '[' and not in_bare_math:
                     in_bare_math = True
@@ -2755,6 +2808,10 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                         inner = m.group(2)
                         # Skip enumitem/list option patterns
                         if re.search(r'label\s*=|ref\s*=|start\s*=|\\arabic|\\roman|\\alph|\\Roman|\\Alph', inner):
+                            result_lines.append(line)
+                            continue
+                        # Skip if line contains $ (likely interval inside inline math)
+                        if '$' in line:
                             result_lines.append(line)
                             continue
                         # Check it looks like math (has =, ^, _, \, digits with operators)
@@ -2869,8 +2926,18 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         except subprocess.CalledProcessError as e:
             out = (e.stdout or b'').decode('utf-8', errors='ignore')
             err = (e.stderr or b'').decode('utf-8', errors='ignore')
+            # Log the last 30 lines of xelatex output for debugging
+            out_lines = out.strip().split('\n')
+            logger.error('LaTeX compilation failed (engine=%s). Last 30 lines of output:\n%s', engine_name, '\n'.join(out_lines[-30:]))
+            if err.strip():
+                logger.error('LaTeX stderr: %s', err.strip()[-500:])
+            # Also log the first error line for quick diagnosis
+            for line in out_lines:
+                if line.strip().startswith('!'):
+                    logger.error('LaTeX error: %s', line.strip())
+                    break
             shutil.rmtree(td, ignore_errors=True)
-            return JSONResponse({'error': 'latex_compile_failed', 'engine': engine_name, 'stdout': out, 'stderr': err}, status_code=500)
+            return JSONResponse({'error': 'latex_compile_failed', 'engine': engine_name, 'stdout': out[-3000:], 'stderr': err[-1000:]}, status_code=500)
         # verify pdf
         if not os.path.exists(pdf_path):
             # try alternative filename (document.pdf vs document.pdf may vary)

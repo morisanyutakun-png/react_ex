@@ -1,0 +1,19 @@
+# Render Blueprint — FastAPI backend
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: examgen-backend
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: alembic -c ../alembic.ini upgrade head && gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # set manually in Render dashboard (Neon connection string)
+      - key: CORS_ALLOW_ORIGINS
+        sync: false          # e.g. https://your-app.vercel.app,http://localhost:3000
+      - key: PYTHON_VERSION
+        value: "3.11.9"

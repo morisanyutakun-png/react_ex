@@ -25,6 +25,7 @@ if REPO_ROOT not in sys.path:
 from backend.eval.metrics import precision_at_k, mrr, ndcg_at_k
 from backend.db import connect_db
 from backend import retriever
+from backend.embeddings import load_model as _load_embedding_model
 
 
 def load_eval_file(path):
@@ -121,7 +122,7 @@ def main():
     model = None
     if args.use_vector:
         try:
-            m, _ = retriever.load_model()
+            m, _ = _load_embedding_model()
             model = m
         except Exception as e:
             print('Model load failed, falling back to TF-IDF:', e)
