@@ -2899,25 +2899,15 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             f.write(fixed_body)
 
         if engine is None:
-            # No LaTeX engine installed; as a fallback provide the raw .tex (zipped) for local compilation
-            zip_path = os.path.join(td, 'generated_tex.zip')
-            with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
-                zf.write(tex_path, arcname='document.tex')
-                # also include per-item simple tex files to allow quick inspection
-                for idx, it in enumerate(generated):
-                    item_tex = os.path.join(td, f'item_{idx+1}.tex')
-                    with open(item_tex, 'w', encoding='utf-8') as f:
-                        f.write('\n'.join([header, '\\begin{document}', it.get('latex',''), '\\end{document}']))
-                    zf.write(item_tex, arcname=f'item_{idx+1}.tex')
-            # schedule cleanup
-            def _cleanup_zip(p):
-                try:
-                    shutil.rmtree(p)
-                except Exception:
-                    pass
-            if background is not None:
-                background.add_task(_cleanup_zip, td)
-            return FileResponse(zip_path, media_type='application/zip', filename='generated_tex.zip')
+            # No LaTeX engine available – return a clear JSON error so the
+            # frontend can display a useful message instead of spinning forever.
+            logger.error('No LaTeX engine found (xelatex/lualatex/pdflatex). Cannot generate PDF.')
+            shutil.rmtree(td, ignore_errors=True)
+            return JSONResponse(
+                {'error': 'no_latex_engine',
+                 'detail': 'サーバーに LaTeX エンジン (xelatex/lualatex/pdflatex) がインストールされていません。Render の Build Command に texlive のインストールを追加してください。'},
+                status_code=500,
+            )
 
         try:
             logger.info('Running LaTeX engine: %s on %s', engine_name, tex_path)
