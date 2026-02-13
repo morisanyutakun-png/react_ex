@@ -6,16 +6,11 @@ ENV PYTHONPATH=/app
 
 WORKDIR /app
 
-# Install system deps: TeX engine + CJK fonts for PDF generation
+# Install system deps (no TeX — using cloud LaTeX via latex.ytotech.com to avoid OOM)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     poppler-utils \
-    texlive-xetex \
-    texlive-fonts-recommended \
-    texlive-latex-extra \
-    texlive-lang-japanese \
-    fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies (from backend/)
