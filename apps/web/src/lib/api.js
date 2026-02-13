@@ -1,9 +1,15 @@
 /**
  * FastAPI バックエンドへの API 呼び出しヘルパー
  * Next.js / Vercel の rewrites で /api/* → バックエンドにプロキシされる
+ *
+ * 重要: ブラウザからは常に same-origin (自サイト) の /api/* を呼ぶ。
+ * Vercel rewrites / next.config.js rewrites がサーバーサイドで
+ * バックエンドへプロキシするので、CORS 問題は発生しない。
+ * NEXT_PUBLIC_API_BASE は使わない（直接クロスオリジン fetch は Load failed になる）。
  */
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE || '';  // same-origin (proxy via rewrites)
+// Always use same-origin proxy — never call the backend directly from the browser.
+const BASE = '';
 
 /**
  * Generic fetch wrapper with JSON handling
@@ -25,11 +31,7 @@ export async function apiFetch(path, options = {}) {
     if (err.name === 'AbortError') {
       throw new Error(`リクエストがタイムアウトしました (${timeout / 1000}秒)`);
     }
-    // Provide actionable error message
-    const hint = typeof window !== 'undefined' && window.location?.origin
-      ? `（リクエスト先: ${url || path}）`
-      : '';
-    throw new Error(`バックエンドに接続できません ${hint}: ${err.message}`);
+    throw new Error(`バックエンドに接続できません: ${err.message}`);
   }
   clearTimeout(timer);
 
