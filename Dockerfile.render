@@ -6,11 +6,18 @@ ENV PYTHONPATH=/app
 
 WORKDIR /app
 
-# Install system deps (no TeX — using cloud LaTeX via latex.ytotech.com to avoid OOM)
+# Install system deps + LaTeX (xelatex) for local PDF compilation
+# texlive-xetex: ~200MB, needed for local PDF generation
+# If RAM is limited (e.g. Render free 512MB), set CLOUD_LATEX_ONLY=1 at runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     poppler-utils \
+    texlive-xetex \
+    texlive-fonts-recommended \
+    texlive-latex-extra \
+    texlive-lang-japanese \
+    fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies (from backend/)

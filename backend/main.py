@@ -78,7 +78,7 @@ STORE: Dict[str, Any] = {}
 
 
 # ── Health check ────────────────────────────────────
-_DEPLOY_VERSION = '2025-07-14-v2'  # bump this to verify Render deploys latest code
+_DEPLOY_VERSION = '2025-07-14-v3'  # bump this to verify Render deploys latest code
 
 @app.get('/health')
 def health_check():
@@ -2952,37 +2952,38 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 # cloud failed – return the error
                 shutil.rmtree(td, ignore_errors=True)
                 return cloud_result
-            # cloud succeeded – pdf_path is populated, fall through to serve it
+            # cloud succeeded – pdf_path is populated, skip local subprocess
+        else:
+            # ── Local LaTeX compilation ──
+            try:
+                logger.info('Running LaTeX engine: %s on %s', engine_name, tex_path)
+                subprocess.run([engine_name, '-interaction=nonstopmode', '-halt-on-error', '-output-directory', td, tex_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+                logger.info('LaTeX engine finished; checking PDF at %s', pdf_path)
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
+                out = getattr(e, 'stdout', b'') or b''
+                err = getattr(e, 'stderr', b'') or b''
+                if isinstance(out, bytes): out = out.decode('utf-8', errors='ignore')
+                if isinstance(err, bytes): err = err.decode('utf-8', errors='ignore')
+                # Log the last 30 lines of xelatex output for debugging
+                out_lines = out.strip().split('\n')
+                logger.error('LaTeX compilation failed (engine=%s). Last 30 lines of output:\n%s', engine_name, '\n'.join(out_lines[-30:]))
+                if err.strip():
+                    logger.error('LaTeX stderr: %s', err.strip()[-500:])
+                # Also log the first error line for quick diagnosis
+                for line in out_lines:
+                    if line.strip().startswith('!'):
+                        logger.error('LaTeX error: %s', line.strip())
+                        break
 
-        try:
-            logger.info('Running LaTeX engine: %s on %s', engine_name, tex_path)
-            subprocess.run([engine_name, '-interaction=nonstopmode', '-halt-on-error', '-output-directory', td, tex_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
-            logger.info('LaTeX engine finished; checking PDF at %s', pdf_path)
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
-            out = getattr(e, 'stdout', b'') or b''
-            err = getattr(e, 'stderr', b'') or b''
-            if isinstance(out, bytes): out = out.decode('utf-8', errors='ignore')
-            if isinstance(err, bytes): err = err.decode('utf-8', errors='ignore')
-            # Log the last 30 lines of xelatex output for debugging
-            out_lines = out.strip().split('\n')
-            logger.error('LaTeX compilation failed (engine=%s). Last 30 lines of output:\n%s', engine_name, '\n'.join(out_lines[-30:]))
-            if err.strip():
-                logger.error('LaTeX stderr: %s', err.strip()[-500:])
-            # Also log the first error line for quick diagnosis
-            for line in out_lines:
-                if line.strip().startswith('!'):
-                    logger.error('LaTeX error: %s', line.strip())
-                    break
-
-            # ── Fallback: try cloud compilation when local engine fails ──
-            logger.info('Local LaTeX engine failed; falling back to cloud compilation...')
-            cloud_result = _try_cloud_compilation(fixed_body)
-            if cloud_result is not None:
-                # cloud also failed – return the cloud error
-                shutil.rmtree(td, ignore_errors=True)
-                return cloud_result
-            # cloud succeeded – pdf_path is populated, continue to serve it
-            logger.info('Cloud fallback succeeded after local %s failure', engine_name)
+                # ── Fallback: try cloud compilation when local engine fails ──
+                logger.info('Local LaTeX engine failed; falling back to cloud compilation...')
+                cloud_result = _try_cloud_compilation(fixed_body)
+                if cloud_result is not None:
+                    # cloud also failed – return the cloud error
+                    shutil.rmtree(td, ignore_errors=True)
+                    return cloud_result
+                # cloud succeeded – pdf_path is populated, continue to serve it
+                logger.info('Cloud fallback succeeded after local %s failure', engine_name)
         # verify pdf
         if not os.path.exists(pdf_path):
             # try alternative filename (document.pdf vs document.pdf may vary)
