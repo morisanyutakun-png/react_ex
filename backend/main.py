@@ -2847,14 +2847,22 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         # Choose LaTeX engine early so we can adapt full-document user output
         # (which may include fontspec/xeCJK or \setCJKmainfont) to the
         # available engine. Prefer xelatex -> lualatex -> pdflatex.
+        #
+        # CLOUD_LATEX_ONLY=1: skip local engine entirely and use cloud
+        # compilation (latex.ytotech.com). Recommended for memory-constrained
+        # environments such as Render free tier (512 MB) where xelatex OOMs.
+        _cloud_only = os.environ.get('CLOUD_LATEX_ONLY', '').strip() in ('1', 'true', 'yes')
         engine = None
         engine_name = None
-        for cand in ('xelatex', 'lualatex', 'pdflatex'):
-            path = shutil.which(cand)
-            if path:
-                engine = path
-                engine_name = cand
-                break
+        if not _cloud_only:
+            for cand in ('xelatex', 'lualatex', 'pdflatex'):
+                path = shutil.which(cand)
+                if path:
+                    engine = path
+                    engine_name = cand
+                    break
+        else:
+            logger.info('CLOUD_LATEX_ONLY is set – skipping local engine detection')
 
         # If the user provided a full document that requests fontspec/xeCJK
         # but the runtime only has pdflatex, attempt a conservative downgrade
@@ -2900,51 +2908,44 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
         if engine is None:
             # No local LaTeX engine – try cloud compilation via latex.ytotech.com API
-            logger.info('No local LaTeX engine found. Attempting cloud compilation via latex.ytotech.com...')
+            logger.info('No local LaTeX engine found. Using cloud compilation...')
+            cloud_result = _try_cloud_compilation(fixed_body)
+            if cloud_result is not None:
+                # cloud failed – return the error
+                shutil.rmtree(td, ignore_errors=True)
+                return cloud_result
+            # cloud succeeded – pdf_path is populated, fall through to serve it
+
+        # ── Helper: cloud compilation via latex.ytotech.com ──
+        def _try_cloud_compilation(body_tex: str) -> 'Response | None':
+            """Attempt cloud LaTeX compilation. Returns a Response on success, None on failure."""
+            logger.info('Attempting cloud compilation via latex.ytotech.com...')
             try:
                 cloud_resp = requests.post(
                     'https://latex.ytotech.com/builds/sync',
                     json={
                         'compiler': 'xelatex',
-                        'resources': [{'main': True, 'content': fixed_body}],
+                        'resources': [{'main': True, 'content': body_tex}],
                     },
                     timeout=60,
                 )
-                if cloud_resp.status_code == 200 and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
-                    # Save the PDF from cloud response
+                if cloud_resp.status_code in (200, 201) and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
                     with open(pdf_path, 'wb') as pf:
                         pf.write(cloud_resp.content)
                     logger.info('Cloud LaTeX compilation succeeded (%d bytes)', len(cloud_resp.content))
-                    if payload.get('return_url'):
-                        token = uuid.uuid4().hex
-                        GENERATED_PDFS[token] = {'path': pdf_path, 'dir': td}
-                        if background is not None:
-                            background.add_task(_expire_pdf_after, token, td, PDF_TTL_SECONDS)
-                        return JSONResponse({'pdf_url': f'/api/generated_pdf/{token}'})
-                    if background is not None:
-                        def _cleanup_cloud(d):
-                            try: shutil.rmtree(d)
-                            except Exception: pass
-                        background.add_task(_cleanup_cloud, td)
-                    headers = {
-                        'Content-Disposition': 'inline; filename="generated.pdf"',
-                        'Cache-Control': f'private, max-age={PDF_TTL_SECONDS}',
-                    }
-                    return FileResponse(pdf_path, media_type='application/pdf', headers=headers)
+                    return None  # signal success – pdf_path is now populated
                 else:
                     cloud_err = cloud_resp.text[:1000] if cloud_resp.text else 'empty response'
                     logger.error('Cloud LaTeX failed: status=%s body=%s', cloud_resp.status_code, cloud_err)
-                    shutil.rmtree(td, ignore_errors=True)
                     return JSONResponse(
                         {'error': 'cloud_latex_failed', 'detail': cloud_err},
                         status_code=500,
                     )
             except Exception as cloud_exc:
                 logger.exception('Cloud LaTeX request failed')
-                shutil.rmtree(td, ignore_errors=True)
                 return JSONResponse(
-                    {'error': 'no_latex_engine',
-                     'detail': f'ローカル LaTeX エンジンもクラウドコンパイルも利用できません: {cloud_exc}'},
+                    {'error': 'cloud_latex_failed',
+                     'detail': f'クラウドコンパイルに失敗しました: {cloud_exc}'},
                     status_code=500,
                 )
 
@@ -2952,9 +2953,11 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             logger.info('Running LaTeX engine: %s on %s', engine_name, tex_path)
             subprocess.run([engine_name, '-interaction=nonstopmode', '-halt-on-error', '-output-directory', td, tex_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
             logger.info('LaTeX engine finished; checking PDF at %s', pdf_path)
-        except subprocess.CalledProcessError as e:
-            out = (e.stdout or b'').decode('utf-8', errors='ignore')
-            err = (e.stderr or b'').decode('utf-8', errors='ignore')
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
+            out = getattr(e, 'stdout', b'') or b''
+            err = getattr(e, 'stderr', b'') or b''
+            if isinstance(out, bytes): out = out.decode('utf-8', errors='ignore')
+            if isinstance(err, bytes): err = err.decode('utf-8', errors='ignore')
             # Log the last 30 lines of xelatex output for debugging
             out_lines = out.strip().split('\n')
             logger.error('LaTeX compilation failed (engine=%s). Last 30 lines of output:\n%s', engine_name, '\n'.join(out_lines[-30:]))
@@ -2965,8 +2968,16 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 if line.strip().startswith('!'):
                     logger.error('LaTeX error: %s', line.strip())
                     break
-            shutil.rmtree(td, ignore_errors=True)
-            return JSONResponse({'error': 'latex_compile_failed', 'engine': engine_name, 'stdout': out[-3000:], 'stderr': err[-1000:]}, status_code=500)
+
+            # ── Fallback: try cloud compilation when local engine fails ──
+            logger.info('Local LaTeX engine failed; falling back to cloud compilation...')
+            cloud_result = _try_cloud_compilation(fixed_body)
+            if cloud_result is not None:
+                # cloud also failed – return the cloud error
+                shutil.rmtree(td, ignore_errors=True)
+                return cloud_result
+            # cloud succeeded – pdf_path is populated, continue to serve it
+            logger.info('Cloud fallback succeeded after local %s failure', engine_name)
         # verify pdf
         if not os.path.exists(pdf_path):
             # try alternative filename (document.pdf vs document.pdf may vary)
