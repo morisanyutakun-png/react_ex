@@ -10,10 +10,24 @@ const BASE = process.env.NEXT_PUBLIC_API_BASE || '';  // same-origin (proxy via 
  */
 export async function apiFetch(path, options = {}) {
   const url = `${BASE}${path}`;
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
-  });
+  const { timeout = 60000, ...fetchOpts } = options;
+  const controller = new AbortController();
+  const timer = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : null;
+  let res;
+  try {
+    res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json', ...fetchOpts.headers },
+      signal: controller.signal,
+      ...fetchOpts,
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') {
+      throw new Error(`リクエストがタイムアウトしました (${timeout / 1000}秒)`);
+    }
+    throw new Error(`バックエンドに接続できません: ${err.message}`);
+  }
+  clearTimeout(timer);
 
   let data;
   try {
@@ -107,6 +121,7 @@ export async function generatePdf(latex) {
   return apiFetch('/api/generate_pdf', {
     method: 'POST',
     body: JSON.stringify({ latex, title: 'Generated', return_url: true }),
+    timeout: 90000,
   });
 }
 
