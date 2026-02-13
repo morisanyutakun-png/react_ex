@@ -3,13 +3,11 @@
 services:
   - type: web
     name: examgen-backend
-    runtime: python
+    runtime: docker
     region: oregon
     plan: free
-    rootDir: backend
-    buildCommand: |
-      apt-get update && apt-get install -y --no-install-recommends texlive-xetex texlive-latex-extra texlive-lang-japanese fonts-noto-cjk && rm -rf /var/lib/apt/lists/* && pip install -r requirements.txt
-    startCommand: alembic upgrade head && gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL

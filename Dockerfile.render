@@ -1,0 +1,33 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+WORKDIR /app
+
+# Install system deps: TeX engine + CJK fonts for PDF generation
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    poppler-utils \
+    texlive-xetex \
+    texlive-fonts-recommended \
+    texlive-latex-extra \
+    texlive-lang-japanese \
+    fonts-noto-cjk \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies (from backend/)
+COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+
+# Copy backend + workers (both needed at runtime)
+COPY backend/ /app/backend/
+COPY workers/ /app/workers/
+
+EXPOSE 8000
+
+WORKDIR /app/backend
+
+CMD ["sh", "-c", "alembic upgrade head && gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120"]
