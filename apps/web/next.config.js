@@ -1,18 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // API プロキシは src/app/api/[...path]/route.js で処理。
+  // ローカル開発のフォールバックとして rewrites も残しておく。
   async rewrites() {
-    // On Vercel, proxy to the Render backend.
-    // Locally, proxy to the local backend on port 8000.
-    const defaultBase = process.env.VERCEL
-      ? 'https://examgen-backend.onrender.com'
-      : 'http://localhost:8000';
-    const base = (process.env.API_BASE_URL || defaultBase).replace(/\/$/, '');
-    const normalized = base.endsWith('/api') ? base.slice(0, -4) : base;
+    // Route Handler がすべての /api/* を処理するので
+    // ここの rewrites は Route Handler が存在しない場合のフォールバック。
+    if (process.env.VERCEL) return [];  // Vercel では Route Handler に任せる
     return [
       {
         source: '/api/:path*',
-        destination: `${normalized}/api/:path*`,
+        destination: 'http://localhost:8000/api/:path*',
       },
     ];
   },
