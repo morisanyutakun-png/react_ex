@@ -2899,15 +2899,54 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             f.write(fixed_body)
 
         if engine is None:
-            # No LaTeX engine available – return a clear JSON error so the
-            # frontend can display a useful message instead of spinning forever.
-            logger.error('No LaTeX engine found (xelatex/lualatex/pdflatex). Cannot generate PDF.')
-            shutil.rmtree(td, ignore_errors=True)
-            return JSONResponse(
-                {'error': 'no_latex_engine',
-                 'detail': 'サーバーに LaTeX エンジン (xelatex/lualatex/pdflatex) がインストールされていません。Render の Build Command に texlive のインストールを追加してください。'},
-                status_code=500,
-            )
+            # No local LaTeX engine – try cloud compilation via latex.ytotech.com API
+            logger.info('No local LaTeX engine found. Attempting cloud compilation via latex.ytotech.com...')
+            try:
+                cloud_resp = requests.post(
+                    'https://latex.ytotech.com/builds/sync',
+                    json={
+                        'compiler': 'xelatex',
+                        'resources': [{'main': True, 'content': fixed_body}],
+                    },
+                    timeout=60,
+                )
+                if cloud_resp.status_code == 200 and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
+                    # Save the PDF from cloud response
+                    with open(pdf_path, 'wb') as pf:
+                        pf.write(cloud_resp.content)
+                    logger.info('Cloud LaTeX compilation succeeded (%d bytes)', len(cloud_resp.content))
+                    if payload.get('return_url'):
+                        token = uuid.uuid4().hex
+                        GENERATED_PDFS[token] = {'path': pdf_path, 'dir': td}
+                        if background is not None:
+                            background.add_task(_expire_pdf_after, token, td, PDF_TTL_SECONDS)
+                        return JSONResponse({'pdf_url': f'/api/generated_pdf/{token}'})
+                    if background is not None:
+                        def _cleanup_cloud(d):
+                            try: shutil.rmtree(d)
+                            except Exception: pass
+                        background.add_task(_cleanup_cloud, td)
+                    headers = {
+                        'Content-Disposition': 'inline; filename="generated.pdf"',
+                        'Cache-Control': f'private, max-age={PDF_TTL_SECONDS}',
+                    }
+                    return FileResponse(pdf_path, media_type='application/pdf', headers=headers)
+                else:
+                    cloud_err = cloud_resp.text[:1000] if cloud_resp.text else 'empty response'
+                    logger.error('Cloud LaTeX failed: status=%s body=%s', cloud_resp.status_code, cloud_err)
+                    shutil.rmtree(td, ignore_errors=True)
+                    return JSONResponse(
+                        {'error': 'cloud_latex_failed', 'detail': cloud_err},
+                        status_code=500,
+                    )
+            except Exception as cloud_exc:
+                logger.exception('Cloud LaTeX request failed')
+                shutil.rmtree(td, ignore_errors=True)
+                return JSONResponse(
+                    {'error': 'no_latex_engine',
+                     'detail': f'ローカル LaTeX エンジンもクラウドコンパイルも利用できません: {cloud_exc}'},
+                    status_code=500,
+                )
 
         try:
             logger.info('Running LaTeX engine: %s on %s', engine_name, tex_path)
