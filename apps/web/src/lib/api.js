@@ -35,11 +35,26 @@ export async function apiFetch(path, options = {}) {
   }
   clearTimeout(timer);
 
+  // Content-Type を確認して JSON 以外のレスポンスも処理できるようにする
+  const contentType = res.headers.get('content-type') || '';
+
   let data;
-  try {
-    data = await res.json();
-  } catch {
-    data = null;
+  if (contentType.includes('application/json')) {
+    try {
+      const text = await res.text();
+      data = text ? JSON.parse(text) : null;
+    } catch (parseErr) {
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: レスポンスの解析に失敗しました`);
+      }
+      data = null;
+    }
+  } else {
+    // PDF 等の非 JSON レスポンス
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+    return res;
   }
 
   if (!res.ok) {
@@ -47,7 +62,7 @@ export async function apiFetch(path, options = {}) {
     throw new Error(msg);
   }
 
-  if (data === null) {
+  if (data === null || data === undefined) {
     throw new Error('サーバーから空のレスポンスが返りました');
   }
 

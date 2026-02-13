@@ -28,8 +28,9 @@ async function handler(request, context) {
   const url = `${BACKEND_URL}${backendPath}${qs ? '?' + qs : ''}`;
 
   // リクエストヘッダーを転送（hop-by-hop ヘッダーは除外）
+  // accept-encoding も除外: バックエンドに gzip を要求しない（生の JSON/PDF を受け取る）
   const headers = new Headers();
-  const skipHeaders = new Set(['host', 'connection', 'transfer-encoding', 'content-length']);
+  const skipHeaders = new Set(['host', 'connection', 'transfer-encoding', 'content-length', 'accept-encoding']);
   for (const [key, value] of request.headers.entries()) {
     if (!skipHeaders.has(key.toLowerCase())) {
       headers.set(key, value);
@@ -50,15 +51,20 @@ async function handler(request, context) {
   try {
     const upstream = await fetch(url, fetchInit);
 
+    // レスポンスを一旦 arrayBuffer で読み取り、圧縮/エンコーディング問題を回避
+    const body = await upstream.arrayBuffer();
+
     const resHeaders = new Headers();
-    const skipResHeaders = new Set(['transfer-encoding', 'connection', 'content-encoding']);
+    const skipResHeaders = new Set(['transfer-encoding', 'connection', 'content-encoding', 'content-length']);
     for (const [key, value] of upstream.headers.entries()) {
       if (!skipResHeaders.has(key.toLowerCase())) {
         resHeaders.set(key, value);
       }
     }
+    // 正しい content-length をセット
+    resHeaders.set('content-length', String(body.byteLength));
 
-    return new Response(upstream.body, {
+    return new Response(body, {
       status: upstream.status,
       statusText: upstream.statusText,
       headers: resHeaders,
