@@ -2848,10 +2848,13 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         # (which may include fontspec/xeCJK or \setCJKmainfont) to the
         # available engine. Prefer xelatex -> lualatex -> pdflatex.
         #
-        # CLOUD_LATEX_ONLY=1: skip local engine entirely and use cloud
-        # compilation (latex.ytotech.com). Recommended for memory-constrained
-        # environments such as Render free tier (512 MB) where xelatex OOMs.
-        _cloud_only = os.environ.get('CLOUD_LATEX_ONLY', '').strip() in ('1', 'true', 'yes')
+        # CLOUD_LATEX_ONLY=1 or running on Render (RENDER=true): skip local
+        # engine and use cloud compilation (latex.ytotech.com).
+        # Render free tier (512 MB) cannot run xelatex without OOM kill.
+        _cloud_only = (
+            os.environ.get('CLOUD_LATEX_ONLY', '').strip() in ('1', 'true', 'yes')
+            or os.environ.get('RENDER', '').strip().lower() in ('true', '1', 'yes')
+        )
         engine = None
         engine_name = None
         if not _cloud_only:
@@ -2862,7 +2865,7 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     engine_name = cand
                     break
         else:
-            logger.info('CLOUD_LATEX_ONLY is set – skipping local engine detection')
+            logger.info('Cloud-only mode (CLOUD_LATEX_ONLY or RENDER detected) – skipping local engine')
 
         # If the user provided a full document that requests fontspec/xeCJK
         # but the runtime only has pdflatex, attempt a conservative downgrade

@@ -2,22 +2,20 @@
  * Catch-all API proxy Route Handler.
  *
  * すべての /api/* リクエストを FastAPI バックエンドへ転送する。
- * vercel.json の rewrites は Next.js プロジェクトでは無視されるため、
- * Route Handler でサーバーサイドプロキシを行う。
  *
  * ブラウザ → /api/generate_pdf (same-origin, CORS 不要)
  *   → この Route Handler がサーバーで受け取る
  *   → https://examgen-backend.onrender.com/api/generate_pdf へ転送
  *   → レスポンスをそのまま返す
+ *
+ * 注意: Render 無料枠はコールドスタートに ~30秒かかるため、
+ *       fetch のタイムアウトを十分長く設定する。
  */
 
 const BACKEND_URL = (() => {
-  // 1. 明示的な環境変数があればそれを使う
   const explicit = process.env.API_BASE_URL;
   if (explicit) return explicit.replace(/\/+$/, '');
-  // 2. Vercel 上なら Render バックエンドを使う
   if (process.env.VERCEL) return 'https://examgen-backend.onrender.com';
-  // 3. ローカル開発なら localhost
   return 'http://localhost:8000';
 })();
 
@@ -25,7 +23,6 @@ async function handler(request, context) {
   const { path } = await context.params;
   const backendPath = `/api/${path.join('/')}`;
 
-  // クエリパラメータを保持
   const { searchParams } = new URL(request.url);
   const qs = searchParams.toString();
   const url = `${BACKEND_URL}${backendPath}${qs ? '?' + qs : ''}`;
@@ -42,9 +39,10 @@ async function handler(request, context) {
   const fetchInit = {
     method: request.method,
     headers,
+    // Render 無料枠のコールドスタート (~30s) + PDF 生成処理 (~30s) に対応
+    signal: AbortSignal.timeout(55000),
   };
 
-  // GET/HEAD 以外はボディを転送
   if (!['GET', 'HEAD'].includes(request.method)) {
     fetchInit.body = await request.text();
   }
@@ -52,9 +50,8 @@ async function handler(request, context) {
   try {
     const upstream = await fetch(url, fetchInit);
 
-    // レスポンスヘッダーを転送
     const resHeaders = new Headers();
-    const skipResHeaders = new Set(['transfer-encoding', 'connection', 'content-encoding', 'content-length']);
+    const skipResHeaders = new Set(['transfer-encoding', 'connection', 'content-encoding']);
     for (const [key, value] of upstream.headers.entries()) {
       if (!skipResHeaders.has(key.toLowerCase())) {
         resHeaders.set(key, value);
@@ -68,12 +65,18 @@ async function handler(request, context) {
     });
   } catch (err) {
     console.error(`[API Proxy] ${request.method} ${url} failed:`, err.message);
+    const isTimeout = err.name === 'TimeoutError' || err.name === 'AbortError';
     return new Response(
       JSON.stringify({
-        error: 'backend_unavailable',
-        detail: `バックエンドに接続できません (${BACKEND_URL}): ${err.message}`,
+        error: isTimeout ? 'backend_timeout' : 'backend_unavailable',
+        detail: isTimeout
+          ? 'バックエンドの応答がタイムアウトしました。Render 無料枠はスリープから復帰に時間がかかります。もう一度お試しください。'
+          : `バックエンドに接続できません: ${err.message}`,
       }),
-      { status: 502, headers: { 'Content-Type': 'application/json' } }
+      {
+        status: isTimeout ? 504 : 502,
+        headers: { 'Content-Type': 'application/json' },
+      }
     );
   }
 }
@@ -85,5 +88,5 @@ export const DELETE = handler;
 export const PATCH = handler;
 export const OPTIONS = handler;
 
-// PDF 生成などの長時間処理用（Vercel Hobby: max 60s, Pro: max 300s）
+// Vercel Hobby: max 60s。Render コールドスタート + PDF生成に必要。
 export const maxDuration = 60;

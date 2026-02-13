@@ -43,8 +43,12 @@ export async function apiFetch(path, options = {}) {
   }
 
   if (!res.ok) {
-    const msg = data?.detail || data?.error || res.statusText;
+    const msg = data?.detail || data?.error || res.statusText || `HTTP ${res.status}`;
     throw new Error(msg);
+  }
+
+  if (data === null) {
+    throw new Error('サーバーから空のレスポンスが返りました');
   }
 
   return data;
