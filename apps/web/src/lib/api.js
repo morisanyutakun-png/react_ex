@@ -1,72 +1,95 @@
 /**
  * FastAPI バックエンドへの API 呼び出しヘルパー
- * Next.js / Vercel の rewrites で /api/* → バックエンドにプロキシされる
+ * Next.js Route Handler で /api/* → バックエンドにプロキシされる
  *
  * 重要: ブラウザからは常に same-origin (自サイト) の /api/* を呼ぶ。
- * Vercel rewrites / next.config.js rewrites がサーバーサイドで
- * バックエンドへプロキシするので、CORS 問題は発生しない。
- * NEXT_PUBLIC_API_BASE は使わない（直接クロスオリジン fetch は Load failed になる）。
+ * Route Handler がサーバーサイドでバックエンドへプロキシするので、
+ * CORS 問題は発生しない。
  */
 
 // Always use same-origin proxy — never call the backend directly from the browser.
 const BASE = '';
 
 /**
- * Generic fetch wrapper with JSON handling
+ * Generic fetch wrapper with JSON handling and automatic retry for 502/504.
+ *
+ * Render 無料枠はコールドスタートに ~30秒かかるため、502/504 が返った場合は
+ * 自動的にリトライする。最大 2 回リトライ（合計 3 回試行）。
  */
 export async function apiFetch(path, options = {}) {
   const url = `${BASE}${path}`;
-  const { timeout = 60000, ...fetchOpts } = options;
-  const controller = new AbortController();
-  const timer = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : null;
-  let res;
-  try {
-    res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...fetchOpts.headers },
-      signal: controller.signal,
-      ...fetchOpts,
-    });
-  } catch (err) {
-    clearTimeout(timer);
-    if (err.name === 'AbortError') {
-      throw new Error(`リクエストがタイムアウトしました (${timeout / 1000}秒)`);
+  const { timeout = 60000, retries = 2, ...fetchOpts } = options;
+
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    // リトライ時は少し待つ（コールドスタート復帰を待つ）
+    if (attempt > 0) {
+      await new Promise(r => setTimeout(r, 3000 * attempt));
     }
-    throw new Error(`バックエンドに接続できません: ${err.message}`);
-  }
-  clearTimeout(timer);
 
-  // Content-Type を確認して JSON 以外のレスポンスも処理できるようにする
-  const contentType = res.headers.get('content-type') || '';
-
-  let data;
-  if (contentType.includes('application/json')) {
+    const controller = new AbortController();
+    const timer = timeout > 0 ? setTimeout(() => controller.abort(), timeout) : null;
+    let res;
     try {
-      const text = await res.text();
-      data = text ? JSON.parse(text) : null;
-    } catch (parseErr) {
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: レスポンスの解析に失敗しました`);
+      res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...fetchOpts.headers },
+        signal: controller.signal,
+        ...fetchOpts,
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      if (err.name === 'AbortError') {
+        lastError = new Error(`リクエストがタイムアウトしました (${timeout / 1000}秒)`);
+        continue; // retry on timeout
       }
-      data = null;
+      lastError = new Error(`バックエンドに接続できません: ${err.message}`);
+      continue; // retry on connection error
     }
-  } else {
-    // PDF 等の非 JSON レスポンス
+    clearTimeout(timer);
+
+    // 502/504 はサーバー復帰待ちの可能性が高いのでリトライ
+    if ((res.status === 502 || res.status === 504) && attempt < retries) {
+      lastError = new Error(`HTTP ${res.status}: バックエンドが一時的に利用できません（リトライ中...）`);
+      continue;
+    }
+
+    // Content-Type を確認して JSON 以外のレスポンスも処理できるようにする
+    const contentType = res.headers.get('content-type') || '';
+
+    let data;
+    if (contentType.includes('application/json')) {
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : null;
+      } catch (parseErr) {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: レスポンスの解析に失敗しました`);
+        }
+        data = null;
+      }
+    } else {
+      // PDF 等の非 JSON レスポンス
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      return res;
+    }
+
     if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      const msg = data?.detail || data?.error || res.statusText || `HTTP ${res.status}`;
+      throw new Error(msg);
     }
-    return res;
+
+    if (data === null || data === undefined) {
+      throw new Error('サーバーから空のレスポンスが返りました');
+    }
+
+    return data;
   }
 
-  if (!res.ok) {
-    const msg = data?.detail || data?.error || res.statusText || `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-
-  if (data === null || data === undefined) {
-    throw new Error('サーバーから空のレスポンスが返りました');
-  }
-
-  return data;
+  // All retries exhausted
+  throw lastError || new Error('バックエンドに接続できません');
 }
 
 // ── Templates ──────────────────────────────────────

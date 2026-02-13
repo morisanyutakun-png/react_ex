@@ -153,6 +153,8 @@ export default function DevModePage() {
       const msg = e.message || '';
       if (msg.includes('empty vocabulary') || msg.includes('retrieval failed')) {
         setStatus('RAGデータが未登録のためスキップ可能です。「RAG をスキップ」ボタンで次へ進めます。');
+      } else if (msg.includes('502') || msg.includes('504') || msg.includes('タイムアウト') || msg.includes('backend_timeout') || msg.includes('backend_unavailable')) {
+        setStatus('RAGエラー: バックエンドが一時的に利用できません。Render 無料枠はスリープから復帰に時間がかかります。数秒後にもう一度お試しください。');
       } else {
         setStatus(`RAGエラー: ${msg}`);
       }

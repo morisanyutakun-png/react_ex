@@ -1,0 +1,666 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[margin=22mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,shapes,calc,backgrounds}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{colortbl}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{pifont}% ding symbols
+
+% === カラーパレット ===
+\definecolor{primary}{HTML}{1A5276}     % 濃紺
+\definecolor{secondary}{HTML}{2E86C1}   % ブルー
+\definecolor{accent}{HTML}{E67E22}      % オレンジ
+\definecolor{success}{HTML}{27AE60}     % グリーン
+\definecolor{danger}{HTML}{C0392B}      % レッド
+\definecolor{lightbg}{HTML}{EBF5FB}     % 薄い水色
+\definecolor{lightaccent}{HTML}{FEF5E7} % 薄いオレンジ
+\definecolor{lightgray}{HTML}{F2F3F4}   % 薄グレー
+\definecolor{darktext}{HTML}{2C3E50}    % 本文テキスト
+\definecolor{tableheader}{HTML}{2E86C1} % 表ヘッダ
+\definecolor{tablestripe}{HTML}{EBF5FB} % 表ストライプ
+
+% === tcolorbox スタイル定義 ===
+\newtcolorbox{summarybox}[1][]{%
+  enhanced, breakable,
+  colback=lightbg, colframe=secondary,
+  fonttitle=\bfseries\sffamily,
+  boxrule=1pt, arc=3pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  #1
+}
+\newtcolorbox{accentbox}[1][]{%
+  enhanced, breakable,
+  colback=lightaccent, colframe=accent,
+  fonttitle=\bfseries\sffamily,
+  boxrule=1pt, arc=3pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  #1
+}
+\newtcolorbox{dangerbox}[1][]{%
+  enhanced, breakable,
+  colback=danger!5, colframe=danger,
+  fonttitle=\bfseries\sffamily,
+  boxrule=1pt, arc=3pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  #1
+}
+\newtcolorbox{successbox}[1][]{%
+  enhanced, breakable,
+  colback=success!5, colframe=success,
+  fonttitle=\bfseries\sffamily,
+  boxrule=1pt, arc=3pt,
+  left=8pt, right=8pt, top=6pt, bottom=6pt,
+  #1
+}
+\newtcolorbox{keypoint}[1][]{%
+  enhanced,
+  colback=primary!6, colframe=primary,
+  fonttitle=\bfseries\sffamily\color{white},
+  coltitle=white, colbacktitle=primary,
+  boxrule=0.6pt, arc=4pt,
+  attach boxed title to top left={yshift=-2mm, xshift=6mm},
+  boxed title style={arc=2pt, boxrule=0pt},
+  left=8pt, right=8pt, top=8pt, bottom=6pt,
+  #1
+}
+
+% --- xelatex向け日本語設定（macOS標準フォント） ---
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setmainfont{Times New Roman}
+\setsansfont{Helvetica}
+\setmonofont{Courier New}
+\setCJKmainfont{Hiragino Mincho ProN}
+\setCJKsansfont{Hiragino Sans}
+\setCJKmonofont{Hiragino Sans}
+% --- ここまで ---
+
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=secondary,
+  urlcolor=accent,
+  citecolor=secondary,
+  pdftitle={類題生成アプリ 事業計画書},
+  pdfauthor={作成者}
+}
+
+% === ヘッダー・フッター ===
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.8pt}
+\renewcommand{\headrule}{\hbox to\headwidth{%
+  \color{secondary}\leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrulewidth}{0.4pt}
+\renewcommand{\footrule}{\hbox to\headwidth{%
+  \color{lightgray!80!black}\leaders\hrule height \footrulewidth\hfill}}
+\lhead{\small\sffamily\color{primary}\textbf{類題生成アプリ} 事業計画書}
+\rhead{\small\sffamily\color{primary}\textbf{\thepage}}
+\lfoot{\small\sffamily\color{gray}Confidential}
+\rfoot{\small\sffamily\color{gray}\today}
+\setlength{\headheight}{22.1pt}
+\addtolength{\topmargin}{-6.1pt}
+
+% === セクション装飾 ===
+\titleformat{\section}
+  {\Large\bfseries\sffamily\color{primary}}
+  {\colorbox{primary}{\parbox{1.6em}{\centering\color{white}\thesection}}}
+  {0.7em}{}
+  [\vspace{0.2em}{\color{secondary}\titlerule[1.2pt]}]
+
+\titleformat{\subsection}
+  {\normalsize\bfseries\sffamily\color{secondary}}
+  {\textcolor{accent}{\thesubsection}}
+  {0.6em}{}
+
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\sffamily\color{darktext}}
+  {}
+  {0em}{}
+
+% === カスタム箇条書き ===
+\setlist[itemize,1]{label=\textcolor{secondary}{\textbullet}, leftmargin=1.6em, itemsep=2pt}
+\setlist[enumerate,1]{label=\textcolor{accent}{\arabic*.}, leftmargin=1.6em, itemsep=2pt, font=\bfseries}
+
+% === 本文テキスト色 ===
+\color{darktext}
+
+\title{}
+\author{}
+\date{}
+
+\begin{document}
+
+% ====== タイトルページ ======
+\begin{center}
+\vspace*{0.5em}
+\begin{tcolorbox}[
+  enhanced,
+  colback=primary,
+  colframe=primary,
+  arc=6pt,
+  boxrule=0pt,
+  width=\textwidth,
+  left=16pt, right=16pt, top=18pt, bottom=18pt,
+  shadow={2pt}{-2pt}{0pt}{black!30}
+]
+  {\fontsize{24}{30}\selectfont\bfseries\sffamily\color{white}類題生成アプリ}\\[6pt]
+  {\fontsize{14}{18}\selectfont\sffamily\color{white!85}事業計画書}\\[12pt]
+  {\color{white!60}\rule{0.6\textwidth}{0.5pt}}\\[10pt]
+  {\small\sffamily\color{white!80}%
+    \textbf{概要}：教育現場の「類題がほしい」に即座に応える\quad
+    |\quad テンプレート＋RAG＋LaTeX→PDF}
+\end{tcolorbox}
+
+\vspace{6pt}
+\begin{minipage}[t]{0.48\textwidth}
+  {\small\sffamily\color{gray}作成者：\underline{\hspace{4.5cm}}}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \raggedleft
+  {\small\sffamily\color{gray}作成日：\underline{\hspace{3.5cm}}}
+\end{minipage}
+\end{center}
+\vspace{0.8em}
+
+\section{エグゼクティブサマリー}
+\subsection{なぜ今やるのか（要点）}
+\begin{summarybox}[title=\textcolor{secondary}{\large\bfseries \ding{72} なぜ今やるのか}]
+学習領域では「理解したつもり」を「解ける」に変えるために、\textbf{適切な反復（類題演習）}が不可欠である。一方で現場では、
+\begin{enumerate}
+  \item 必要な形式・難易度の問題が足りない
+  \item 過去問の年度数に限りがあり反復演習ができない
+  \item 講師が作問に時間を取られ指導に集中できない
+\end{enumerate}
+という構造課題が積み重なっている。本サービスは、\textbf{既存の問題や過去問をもとに、体裁の整った類題セットを即座に生成しPDF出力}することで、教育現場の作問負担を劇的に軽減し、\textbf{教育の再現性}を高める。
+\end{summarybox}
+
+\subsection{一言でいう提供価値}
+\begin{center}
+\begin{tabular}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.16\linewidth}
+  >{\arraybackslash}p{0.75\linewidth}}
+\rowcolor{tableheader}\textcolor{white}{\textbf{対象}} & \textcolor{white}{\textbf{提供する価値}} \\
+\rowcolor{white}
+\textbf{\textcolor{primary}{指導者}} & 作問の工数を大幅に削減し、\textbf{指導そのものに集中できる} \\
+\rowcolor{tablestripe}
+\textbf{\textcolor{primary}{学習者}} & \textbf{「わかる」→「解ける」}を、欲しい形式の類題で繰り返せる \\
+\rowcolor{white}
+\textbf{\textcolor{primary}{組織}} & 講師の属人性を超え、\textbf{教育の再現性}を高める \\
+\end{tabular}
+\end{center}
+
+\subsection{対象（優先順位案）}
+\begin{center}
+\begin{tabular}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.06\linewidth}
+  >{\arraybackslash}p{0.22\linewidth}
+  >{\arraybackslash}p{0.58\linewidth}}
+\rowcolor{tableheader}
+\textcolor{white}{\textbf{\#}} & \textcolor{white}{\textbf{ターゲット}} & \textcolor{white}{\textbf{理由}} \\
+\rowcolor{white}
+\textbf{\textcolor{accent}{1}} & 個人塾・小規模塾\newline\footnotesize{(B2B)} & 作問リソースの不足が深刻で、導入効果が最も大きい \\
+\rowcolor{tablestripe}
+\textbf{\textcolor{accent}{2}} & 受験生・資格学習者\newline\footnotesize{(B2C)} & 「この形式の類題がほしい」という潜在需要が大きい \\
+\rowcolor{white}
+\textbf{\textcolor{accent}{3}} & 看護学校・中堅大学等\newline\footnotesize{(ニッチ)} & 市販教材が少なく、類題供給の価値が特に高い \\
+\end{tabular}
+\end{center}
+
+%% ================================================================
+\section{動機（Motivation）}
+%% ================================================================
+
+\subsection{原体験からの仮説}
+\begin{accentbox}[title=\textcolor{accent}{\bfseries \ding{46} 塾講師としての現場経験から得た気づき}]
+\begin{itemize}
+  \item 生徒から「\textbf{この形式の問題をもっとやりたい}」と言われることが非常に多い
+  \item 「この問題の\textbf{類題ないですか？}」「\textbf{似た問題を作ってもらえますか？}」という要望が日常的に発生する
+  \item 解説を読んで理解したはずなのに、類題を解くと同じ箇所でつまずく → \textbf{類題による反復}が理解の定着に不可欠
+  \item 講師側は「出したい問題がある」のに、\textbf{作問に割く時間がなく}応えられないことが常態化している
+\end{itemize}
+\end{accentbox}
+\vspace{0.3em}
+ここから、「\textbf{欲しい形式・難易度の類題を即座に生成しPDF出力できる}」ツールがあれば、教育現場の需要に直接応えられるという仮説を置く。
+
+\subsection{受験生の「同じ形式で繰り返したい」需要}
+受験勉強において、\textbf{同一形式・同一分野の類題を何度も解く}ことが最も効果的であることは、指導現場で広く認識されている。しかし、現実には以下の障壁がある。
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{赤本（過去問集）の限界}：志望校の過去問は年度数が限られ、同じ分野で十分な演習量を確保できない。特に難関大では1年度に1問しか出ない分野もあり、反復が構造的に不可能である。
+  \item \textbf{「赤本の拡張」としての類題生成}：過去問の出題傾向・難易度・形式を踏まえた類題を大量に生成できれば、赤本を\textbf{何倍にも拡張した演習環境}を提供できる。これは受験生にとって「志望校に最適化された問題集が無限に手に入る」体験となる。
+  \item \textbf{英語科目で特に深刻}：英作文・英文法の良問は市販教材でも限られ、大学別の過去問も少ない。「もっと同じ形式で練習したい」という需要に既存教材だけでは応えきれていない。
+  \item \textbf{個人塾・小規模塾の切実な課題}：大手と異なりオリジナル教材の制作リソースがなく、体裁の整った問題を一から作成するには\textbf{1セットあたり数時間}を要する。講師の貴重な時間が作問に奪われ、本来注力すべき個別指導や学習戦略設計に回せない。
+  \item \textbf{ニッチ領域の教材空白}：看護学校の入試対策、中堅大学の模試形式など、大手出版社がカバーしない領域では問題集自体が少なく、類題を手に入れる手段がほぼ存在しない。
+\end{itemize}
+
+\subsection{個人塾が抱えるデータ活用の課題}
+個人塾には長年の指導で蓄積された\textbf{膨大な問題データ（過去のプリント・テスト・手書きノート等）}が存在することが多い。しかし、以下の理由から活用しきれていない。
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{形式がバラバラ}：Word、手書きスキャン、PDF、テキストファイル等が混在し、検索・再利用が困難
+  \item \textbf{整理する時間がない}：日々の授業・事務に追われ、過去資産の体系化に手が回らない
+  \item \textbf{講師の退職で失われる}：属人的なノウハウ・問題ストックが引き継がれず消失する
+\end{itemize}
+本サービスは、こうしたバラバラな形式のデータを取り込み、\textbf{RAG（検索拡張生成）で既存問題を参照しながら新たな類題を生成}する仕組みを持つ。塾の資産を活かした類題生成が、低コストで実現できる。
+
+\subsection{社会的背景（教育の構造変化）}
+\begin{itemize}[leftmargin=1.6em]
+  \item 学習が多様化し、同じクラス内でも理解度差が拡大している
+  \item 受験・資格の競争は続き、演習量が勝敗を分けやすい
+  \item 指導現場は人手不足で、個別対応の工数が限界に近い
+  \item 生成AIの普及で「問題を作れる」こと自体は一般化したが、\textbf{体裁の整った教材品質}で出力できるツールはまだ少ない
+  \item 看護・医療系、工業系など\textbf{ニッチな試験分野}では、そもそも市販教材の選択肢が極端に少ない
+  \item 個人塾は大手塾のAI教材導入に対抗するため、\textbf{低コストで差別化できるツール}を切実に求めている
+\end{itemize}
+
+\subsection{市場タイミング：なぜ「今」やるべきか}
+\begin{keypoint}[title=4つの追い風]
+\begin{center}
+\begin{tabular}{>{\centering\arraybackslash}p{0.22\linewidth}>{\arraybackslash}p{0.70\linewidth}}
+\rowcolor{tableheader}\textcolor{white}{\textbf{追い風}} & \textcolor{white}{\textbf{内容}} \\
+\rowcolor{white}
+\textcolor{secondary}{\textbf{LLM品質の到達}} & 適切なプロンプト設計と検証パイプラインで教材品質が出せるようになった \\
+\rowcolor{tablestripe}
+\textcolor{secondary}{\textbf{教育現場のDX}} & GIGAスクール以降、端末普及率が上がりデジタル教材を受け入れる素地が整った \\
+\rowcolor{white}
+\textcolor{secondary}{\textbf{個人塾の生存競争}} & 大手のAI教材導入に対抗し、差別化ツールを外部調達する必要に迫られている \\
+\rowcolor{tablestripe}
+\textcolor{secondary}{\textbf{受験生の情報感度}} & 新ツールへの抵抗が低く、効果が見えれば自発的に拡散する \\
+\end{tabular}
+\end{center}
+\end{keypoint}
+
+%% ================================================================
+\section{課題（Problem）--- 構造で捉える}
+%% ================================================================
+
+\begin{dangerbox}[title=\textcolor{danger}{\bfseries \ding{55} 現場が直面する4つの課題}]
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash\columncolor{danger!8}}p{0.07\linewidth}
+  >{\bfseries\arraybackslash}p{0.28\linewidth}
+  >{\arraybackslash}X}
+\rowcolor{danger!70}
+\textcolor{white}{\textbf{\#}} & \textcolor{white}{\textbf{課題}} & \textcolor{white}{\textbf{概要}} \\
+\rowcolor{white}
+\textcolor{danger}{\textbf{1}} & 演習の量\,\&\,形式不足 & 欲しい形式・難易度の問題が手元にない \\
+\rowcolor{danger!5}
+\textcolor{danger}{\textbf{2}} & ニッチ教材の空白 & 大手がカバーしない領域は教材自体が存在しない \\
+\rowcolor{white}
+\textcolor{danger}{\textbf{3}} & データが活かされない & 蓄積されたデータが形式バラバラで再利用困難 \\
+\rowcolor{danger!5}
+\textcolor{danger}{\textbf{4}} & 作問の壁 & 1セット数時間、体裁調整だけで膨大な時間を消費 \\
+\end{tabularx}
+\end{center}
+\end{dangerbox}
+
+\subsection{課題1：演習の「量」と「形式の一致」が足りない}
+問題が世の中にないわけではない。しかし、\textbf{欲しい形式・難易度の問題が手元にない}。
+\begin{itemize}
+  \item 過去問：質は高いが年度数に限りがあり、同じ形式で\textbf{反復演習ができない}
+  \item 既存教材：範囲は広いが、特定の出題形式に特化した演習には使いづらい
+  \item 生徒の声：「\textbf{この形式の問題をもっとやりたい}」「\textbf{類題ないですか？}」が日常的に発生する
+\end{itemize}
+
+\subsection{課題2：ニッチ領域の教材が存在しない}
+大手出版社がカバーしない領域では、そもそも教材自体が不足している。
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{>{\bfseries\color{secondary}}p{0.28\linewidth} p{0.64\linewidth}}
+\toprule
+看護学校入試 & 専用の問題集が少なく、講師が手作りするしかない \\
+中堅大学の模試形式 & 志望校に合わせた形式の問題を集めるのが困難 \\
+資格試験（マイナー科目） & 過去問の入手すら難しい分野がある \\
+\bottomrule
+\end{tabular}
+\end{center}
+これらの領域では、類題を\textbf{柔軟に生成できること自体}が大きな価値になる。
+
+\subsection{課題3：個人塾のデータが活かされていない}
+個人塾には長年蓄積された問題・プリント・テスト等のデータがあるが、\textbf{形式がバラバラで再利用が困難}な状態にある。
+\begin{itemize}
+  \item Word、手書きスキャン、PDF等が混在し、検索・流用ができない
+  \item 講師の退職・異動で、個人に紐づいた教材資産が失われる
+  \item 整理・体系化したくても、日々の業務に追われて手が回らない
+\end{itemize}
+
+\subsection{課題4：指導現場の「作問の壁」}
+講師が指導に集中できない最大の原因は、\textbf{作問に時間を取られること}である。
+\begin{itemize}
+  \item 作問：単元別に適切な難易度の問題を体裁よく用意するには\textbf{1セット数時間}かかる
+  \item 体裁：Word等での手作業はレイアウト調整だけで多大な時間を消費する
+  \item 個別対応：生徒ごとに異なる要望（形式・難易度・分野）に応えるのが物理的に不可能
+\end{itemize}
+
+\subsection{課題5：科目別に見える演習不足の実態}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.16\linewidth} X}
+\rowcolor{tableheader}\textcolor{white}{\textbf{科目}} & \textcolor{white}{\textbf{不足の実態}} \\
+\rowcolor{white}
+\textcolor{primary}{\textbf{英作文}} & 模範解答のパターンが限られ、同形式で繰り返し練習できる教材がほぼ存在しない \\
+\rowcolor{tablestripe}
+\textcolor{primary}{\textbf{英文法}} & 四択問題は多いが、同一文法事項を異なる文脈で繰り返す教材が少なく「覚えたつもり」が定着しない \\
+\rowcolor{white}
+\textcolor{primary}{\textbf{大学別過去問}} & 赤本の年度数は有限で、特定分野の集中演習に応えられない。「対策不十分なまま本番」が頻発 \\
+\rowcolor{tablestripe}
+\textcolor{primary}{\textbf{数学}} & 場合の数・確率・整数等は出題パターンが多様で、1冊では網羅できない \\
+\rowcolor{white}
+\textcolor{primary}{\textbf{看護・医療系}} & 専門出題範囲の問題集が極めて少なく、講師の手作り教材に依存 \\
+\end{tabularx}
+\end{center}
+
+\subsection{背景補足：なぜ既存手段だけでは解き切れないか}
+\begin{itemize}[leftmargin=1.6em]
+  \item 良質な教材は多いが、\textbf{特定の形式・難易度に絞った類題}を必要な量だけ用意する手段がない
+  \item 講師の経験知は有効だが、属人化しやすく、クラス拡大時に\textbf{教育の再現性}が落ちる
+  \item 汎用AI（ChatGPT等）で問題は作れるが、\textbf{体裁の整ったPDF出力}や\textbf{既存問題を参照した品質管理}ができない
+  \item \textbf{個人塾では体裁の整った問題セットを作る余裕がなく}、Word等での手作業に膨大な時間がかかる。結果として「出したい問題があるのに出せない」状態が常態化している。
+\end{itemize}
+
+%% ================================================================
+\section{提案（Solution）--- 課題に対する設計原理}
+%% ================================================================
+\begin{successbox}[title=\textcolor{success}{\bfseries \ding{51} 5つの設計原理}]
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash}p{0.06\linewidth}
+  >{\bfseries\color{primary}\arraybackslash}p{0.30\linewidth}
+  >{\arraybackslash}X}
+\rowcolor{success!60}
+\textcolor{white}{\textbf{\#}} & \textcolor{white}{\textbf{原理}} & \textcolor{white}{\textbf{概要}} \\
+\rowcolor{white}
+\textcolor{success}{\textbf{1}} & 即座に生成→PDF出力 & 科目・単元・難易度を指定するだけで体裁の整った類題セットを即座にPDF出力 \\
+\rowcolor{success!6}
+\textcolor{success}{\textbf{2}} & 既存の問題資産を活かす & 蓄積データをRAG検索で参照し、品質の高い類題を生成 \\
+\rowcolor{white}
+\textcolor{success}{\textbf{3}} & 作問時間→指導時間 & 作問・レイアウト調整の工数を削減し、教育の再現性を実現 \\
+\rowcolor{success!6}
+\textcolor{success}{\textbf{4}} & 赤本の拡張 & 志望校の過去問傾向で類題セットをPDF出力。数クリックで配布 \\
+\rowcolor{white}
+\textcolor{success}{\textbf{5}} & ニッチ領域への対応 & 看護・中堅大・マイナー資格等、市販教材のない領域にも柔軟に拡張 \\
+\end{tabularx}
+\end{center}
+\end{successbox}
+
+\subsection{設計原理1：欲しい類題を「すぐ」生成しPDF出力}
+科目・単元・難易度・出題形式を指定するだけで、\textbf{体裁の整った類題セットを即座に生成}し、そのままPDFとして出力できる。
+\begin{itemize}
+  \item テンプレート＋RAG（検索拡張生成）により、既存の問題を参照しながら品質の高い類題を生成
+  \item LaTeX組版による\textbf{教材品質のPDF出力}：数式・図表を含む問題もプロ品質で出力
+  \item 数クリックで完結 → 講師は「作問したい」と思った瞬間に問題セットを手にできる
+\end{itemize}
+
+\subsection{設計原理2：既存の問題資産を活かす}
+塾が蓄積してきた過去問・テスト・プリント等のデータを取り込み、\textbf{RAG検索で参照しながら類題を生成}する。バラバラだったデータが、類題生成の品質を支える資産に変わる。
+
+\subsection{設計原理3：指導者の作問時間を「指導時間に変える」}
+作問・レイアウト調整にかかっていた時間を大幅に削減し、その分を面談・解説・戦略設計に振り向けられるようにする。\textbf{教育の再現性}を高め、講師が変わっても同品質の教材を供給できる体制を作る。
+
+\subsection{設計原理4：「赤本の拡張」としてのポジショニング}
+志望校の過去問傾向を入力すれば、同じ出題形式・難易度・分野で\textbf{体裁の整った類題セット}をPDF出力できる。個人塾の講師は、数クリックで「志望校対策プリント」を生徒に配布できるようになる。
+
+\subsection{設計原理5：ニッチ領域への柔軟な対応}
+看護学校入試、中堅大学の模試形式、資格試験のマイナー科目など、\textbf{市販教材が存在しない領域}にも対応できる。テンプレートとプロンプトの組み合わせで、対象領域を柔軟に拡張可能。
+
+%% ================================================================
+\section{提供価値（Value）を定量で語る}
+%% ================================================================
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.10\linewidth}
+  >{\bfseries\arraybackslash}p{0.23\linewidth}
+  >{\arraybackslash}X}
+\rowcolor{tableheader}
+\textcolor{white}{\textbf{対象}} & \textcolor{white}{\textbf{価値}} & \textcolor{white}{\textbf{詳細}} \\
+\rowcolor{white}
+\multirow{4}{*}{\rotatebox{90}{\textcolor{secondary}{\textbf{学習者}}}}
+  & 理解の定着 & 類題で\textbf{反復演習}し「わかる→解ける」を実現 \\ \rowcolor{white}
+  & 学習時間の効率化 & 欲しい形式がすぐ手に入り「狙った反復」へ \\ \rowcolor{white}
+  & 志望校対策の充実 & 過去問の数倍の演習量を同傾向・同形式で確保 \\ \rowcolor{white}
+  & ニッチ領域の支援 & 看護学校入試等、教材の少ない分野でも演習量確保 \\
+\midrule
+\rowcolor{tablestripe}
+\multirow{5}{*}{\rotatebox{90}{\textcolor{primary}{\textbf{指導者・組織}}}}
+  & 作問工数の大幅削減 & 小テスト・宿題が\textbf{数クリック・数分}で完結 \\ \rowcolor{tablestripe}
+  & PDF即配布 & 体裁の整ったプリントをそのまま印刷・配布 \\ \rowcolor{tablestripe}
+  & 教育の再現性 & 講師の属人性に依存せず\textbf{同品質の教材を安定供給} \\ \rowcolor{tablestripe}
+  & 個人塾の競争力 & 大手並みの教材品質を低コストで実現 \\ \rowcolor{tablestripe}
+  & 既存データの資産化 & 蓄積した問題をRAG検索で活用 \\
+\end{tabularx}
+\end{center}
+
+%% ================================================================
+\section{市場と顧客（Customer \& Market）}
+%% ================================================================
+\subsection{ターゲットと導入障壁}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.16\linewidth}
+  >{\arraybackslash}X
+  >{\arraybackslash}X}
+\rowcolor{tableheader}
+\textcolor{white}{\textbf{区分}} & \textcolor{white}{\textbf{欲しいもの}} & \textcolor{white}{\textbf{導入を阻むもの}} \\
+\rowcolor{white}
+\textbf{\textcolor{primary}{B2B 講師}} & 即座の作問、体裁の整ったPDF、形式指定 & 現場運用に合うか、品質への不安 \\
+\rowcolor{tablestripe}
+\textbf{\textcolor{primary}{B2B 経営者}} & 教材品質の均一化、工数削減、ROI & 導入コスト、既存フローとの整合 \\
+\rowcolor{white}
+\textbf{\textcolor{secondary}{B2C 受験生}} & 欲しい形式の類題、志望校対策 & 価格、品質への信頼、使い勝手 \\
+\rowcolor{tablestripe}
+\textbf{\textcolor{accent}{ニッチ}} & 看護・中堅大模試等の教材確保 & 専門分野での品質担保 \\
+\end{tabularx}
+\end{center}
+
+\subsection{競合の整理（仮説）}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.18\linewidth}
+  >{\arraybackslash}p{0.34\linewidth}
+  >{\arraybackslash}X}
+\rowcolor{tableheader}
+\textcolor{white}{\textbf{競合}} & \textcolor{white}{\textbf{強み}} & \textcolor{white}{\textbf{弱み}} \\
+\rowcolor{white}
+既存教材\newline{\footnotesize（赤本等）} & 質が高い & 年度数に上限、ニッチ未カバー、特定形式の反復不可 \\
+\rowcolor{tablestripe}
+汎用AI\newline{\footnotesize（ChatGPT等）} & 便利、汎用的 & \textcolor{danger}{PDF出力不可}、数式崩れ、品質ばらつき大 \\
+\rowcolor{white}
+学習アプリ & 機能が揃う & 科目・単元の自由度が限定的、ニッチ対応困難 \\
+\midrule
+\rowcolor{success!10}
+\textbf{\textcolor{success}{本サービス}} & \textbf{LaTeX→PDF}＋\textbf{RAG}＋\textbf{テンプレート拡張} & ー \\
+\end{tabularx}
+\end{center}
+
+%% ================================================================
+\section{検証計画（Validation Plan）}
+%% ================================================================
+\subsection{最初に潰すべき仮説（優先）}
+\begin{keypoint}[title=検証すべき4仮説]
+\begin{enumerate}
+  \item 個人塾の講師は「類題生成ツール」に対してお金を払うか（\textcolor{accent}{\textbf{支払い意思}}）
+  \item 生成される類題の品質は、講師が手作りする問題と遜色ないか（\textcolor{accent}{\textbf{品質検証}}）
+  \item PDF出力の体裁は、そのまま生徒に配布できるレベルか（\textcolor{accent}{\textbf{実用性}}）
+  \item 既存の問題データを取り込んでRAG活用する導線は機能するか（\textcolor{accent}{\textbf{データ活用}}）
+\end{enumerate}
+\end{keypoint}
+
+\subsection{MVPの現在の仕様}
+\begin{summarybox}[title=\textcolor{secondary}{\bfseries 実装済みのコア機能}]
+\begin{itemize}
+  \item 科目・単元・難易度を指定して類題セットを生成
+  \item テンプレート＋RAG検索による品質の高いプロンプト生成
+  \item LaTeX組版による\textbf{体裁の整ったPDF出力}（数式・図表対応）
+  \item 既存問題のJSON/LaTeX/テキスト取り込みとDB管理
+  \item 問題検索（キーワード・科目・難易度）からの類題生成
+\end{itemize}
+\end{summarybox}
+
+%% ================================================================
+\section{ビジネスモデル（収益化の考え方）}
+%% ================================================================
+\subsection{収益モデル案}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.12\linewidth}
+  >{\arraybackslash}p{0.78\linewidth}}
+\rowcolor{tableheader}
+\textcolor{white}{\textbf{モデル}} & \textcolor{white}{\textbf{内容}} \\
+\rowcolor{white}
+\textbf{\textcolor{primary}{B2B}} & 月額SaaS（生成回数・テンプレート数・データ取り込み容量で差）＋導入支援 \\
+\rowcolor{tablestripe}
+\textbf{\textcolor{secondary}{B2C}} & 月額＋上限（生成回数・科目数で差）、無料枠からの有料転換 \\
+\end{tabular}
+\end{center}
+
+\subsection{KPI（例）}
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.14\linewidth}
+  >{\arraybackslash}X}
+\rowcolor{tableheader}
+\textcolor{white}{\textbf{カテゴリ}} & \textcolor{white}{\textbf{指標}} \\
+\rowcolor{white}
+\textcolor{secondary}{\textbf{生成活用}} & 月間生成回数、PDF出力回数、テンプレート利用数 \\
+\rowcolor{tablestripe}
+\textcolor{secondary}{\textbf{継続}} & 翌月継続率、週間利用回数、新規テンプレート追加数 \\
+\rowcolor{white}
+\textcolor{secondary}{\textbf{収益}} & 有料転換率、ARPU、解約率 \\
+\rowcolor{tablestripe}
+\textcolor{secondary}{\textbf{B2B}} & 講師の作問工数削減時間、生徒一人あたりの演習量変化、継続率 \\
+\end{tabularx}
+\end{center}
+
+%% ================================================================
+\section{リスクと対策（Risks \& Mitigation）}
+%% ================================================================
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash}p{0.04\linewidth}
+  >{\bfseries\arraybackslash}p{0.16\linewidth}
+  >{\arraybackslash}p{0.33\linewidth}
+  >{\arraybackslash}X}
+\rowcolor{danger!70}
+\textcolor{white}{\textbf{}} & \textcolor{white}{\textbf{リスク}} & \textcolor{white}{\textbf{内容}} & \textcolor{white}{\textbf{対策}} \\
+\rowcolor{white}
+\textcolor{danger}{\ding{73}} & 品質への不信 & 誤り・矛盾・難易度ズレで離脱 & RAG参照、テンプレート品質管理、講師レビュー導線 \\
+\rowcolor{danger!5}
+\textcolor{danger}{\ding{73}} & 汎用AIとの差別化 & ChatGPT等で十分と思われる & PDF出力品質・RAG・テンプレート拡張性で差別化 \\
+\rowcolor{white}
+\textcolor{danger}{\ding{73}} & B2B運用不一致 & 現場フローに合わず使われない & 最短操作でPDF配布、PoC現場調整、既存フロー接続 \\
+\rowcolor{danger!5}
+\textcolor{danger}{\ding{73}} & ニッチ品質担保 & 看護等の専門分野で品質不十分 & 専門家監修、分野別テンプレート、検証ログの蓄積 \\
+\rowcolor{white}
+\textcolor{danger}{\ding{73}} & コスト増 & 生成回数増でLLM原価上昇 & テンプレ化、キャッシュ、プラン上限、軽量モデル活用 \\
+\end{tabularx}
+\end{center}
+
+%% ================================================================
+\section{技術（最小限）--- アーキテクチャ概略図}
+%% ================================================================
+\subsection{全体像}
+\vspace{0.4em}
+\begin{center}
+\begin{tikzpicture}[
+  font=\small,
+  node distance=10mm and 12mm,
+  box/.style={draw, rounded corners, align=center, inner sep=6pt},
+  arrow/.style={-Latex, thick}
+]
+\node[box] (user) {ユーザー\\（講師/学習者）};
+\node[box, right=of user] (web) {Web UI\\（生成・検索・管理）};
+\node[box, right=of web] (api) {APIサーバ\\（生成・RAG・PDF）};
+\node[box, below=of api] (worker) {生成ワーカー\\（LLM・LaTeX・検証）};
+\node[box, below=of web] (db) {DB\\（問題・テンプレート）};
+\node[box, right=of api] (store) {ストレージ\\（PDF・ログ）};
+
+\draw[arrow] (user) -- (web);
+\draw[arrow] (web) -- (api);
+\draw[arrow] (api) -- (worker);
+\draw[arrow] (api) -- (db);
+\draw[arrow] (worker) -- (store);
+\draw[arrow] (api) -- (store);
+
+\node[box, fit=(api)(worker), inner sep=10pt, label={[font=\small]above:バックエンド}] {};
+\node[box, fit=(web)(db), inner sep=10pt, label={[font=\small]above:プロダクト体験}] {};
+\end{tikzpicture}
+\end{center}
+\vspace{0.4em}
+
+%% ================================================================
+\section{実行計画（Milestones）}
+%% ================================================================
+\begin{center}
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\linewidth}{>{\centering\arraybackslash\columncolor{tableheader}}p{0.14\linewidth}
+  >{\arraybackslash}X}
+\rowcolor{tableheader}
+\textcolor{white}{\textbf{期間}} & \textcolor{white}{\textbf{重点}} \\
+\rowcolor{white}
+\textcolor{accent}{\textbf{0--1か月}} & 個人塾へのヒアリング、ニーズ検証、MVP品質改善 \\
+\rowcolor{tablestripe}
+\textcolor{accent}{\textbf{1--3か月}} & 個人塾での実証テスト、テンプレート拡充、PDF品質の磨き込み \\
+\rowcolor{white}
+\textcolor{accent}{\textbf{3--6か月}} & 有料化、科目/単元拡張、看護・中堅大等のニッチ対応開始 \\
+\rowcolor{tablestripe}
+\textcolor{accent}{\textbf{6--12か月}} & B2B本格展開、データ取り込み機能強化、テンプレートマーケット検討 \\
+\end{tabularx}
+\end{center}
+
+\subsection{実行背景の強化（運用定着に向けた前提）}
+\begin{itemize}[leftmargin=1.6em]
+  \item 初期は「個人塾の数学・英語」に絞って品質を担保し、\textbf{狭く深く}勝ち筋を作る
+  \item KPIは生成数よりも、\textbf{講師の作問工数削減}と\textbf{PDF配布の実用頻度}を重視する
+  \item B2Bでは現場負担を増やさないため、既存フロー（宿題配布・回収）への接続を優先する
+  \item ニッチ領域（看護・中堅大模試等）は早期にテンプレートを用意し、\textbf{市場のない場所で一番乗り}を目指す
+\end{itemize}
+
+%% ================================================================
+\section{付録：ヒアリング項目（最初に聞くこと）}
+%% ================================================================
+\subsubsection*{\textcolor{primary}{\ding{46} \textsf{個人塾の講師向け}}}
+\begin{itemize}
+  \item 作問にどれくらい時間をかけているか（1セットあたり何分？）
+  \item 生徒から「類題ないですか？」「この形式の問題がしたい」と言われることはあるか
+  \item 過去のプリント・テスト等のデータはどのような形式で保管しているか
+  \item 看護系・中堅大向けなど、ニッチな問題を作る機会はあるか
+  \item 体裁の整った問題セットを作るのに、何が一番大変か
+  \item 大手塾と比べて教材面で不利を感じる場面はあるか
+\end{itemize}
+
+\subsubsection*{\textcolor{secondary}{\ding{46} \textsf{受験生・学習者向け}}}
+\begin{itemize}
+  \item どの科目・単元で「もっと同じ形式の問題を解きたい」と思うか
+  \item 志望校の過去問だけで演習量は足りているか
+  \item 演習は何で回しているか（教材・過去問・塾プリント）
+  \item わからなかった問題の類題があれば、理解が深まると思うか
+  \item 英作文・英文法で「もっと練習したい」と感じる場面はあるか
+\end{itemize}
+
+\vspace{1em}
+\begin{center}
+\begin{tcolorbox}[
+  enhanced,
+  colback=lightgray,
+  colframe=gray!50,
+  arc=3pt,
+  boxrule=0.5pt,
+  width=0.92\textwidth,
+  left=10pt, right=10pt, top=6pt, bottom=6pt
+]
+{\small\sffamily\color{gray!80!black}\textbf{備考：}
+本書は、技術詳細よりも「なぜ必要か」「現場で何が求められているか」「どう検証するか」を中心に、仮説を更新しながら磨く前提で構成している。}
+\end{tcolorbox}
+\end{center}
+
+\end{document}
