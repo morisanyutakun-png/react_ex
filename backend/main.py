@@ -78,10 +78,12 @@ STORE: Dict[str, Any] = {}
 
 
 # ── Health check ────────────────────────────────────
+_DEPLOY_VERSION = '2025-07-14-v2'  # bump this to verify Render deploys latest code
+
 @app.get('/health')
 def health_check():
     """Minimal health-check endpoint for Render / monitoring."""
-    return {'status': 'ok'}
+    return {'status': 'ok', 'version': _DEPLOY_VERSION}
 
 
 # include routers
