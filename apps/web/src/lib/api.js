@@ -1,9 +1,9 @@
 /**
  * FastAPI バックエンドへの API 呼び出しヘルパー
- * Next.js の rewrites で /api/* → localhost:8000 にプロキシされる
+ * Next.js / Vercel の rewrites で /api/* → バックエンドにプロキシされる
  */
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE || '';  // same-origin (proxy via next.config.js rewrites)
+const BASE = process.env.NEXT_PUBLIC_API_BASE || '';  // same-origin (proxy via rewrites)
 
 /**
  * Generic fetch wrapper with JSON handling
@@ -25,7 +25,11 @@ export async function apiFetch(path, options = {}) {
     if (err.name === 'AbortError') {
       throw new Error(`リクエストがタイムアウトしました (${timeout / 1000}秒)`);
     }
-    throw new Error(`バックエンドに接続できません: ${err.message}`);
+    // Provide actionable error message
+    const hint = typeof window !== 'undefined' && window.location?.origin
+      ? `（リクエスト先: ${url || path}）`
+      : '';
+    throw new Error(`バックエンドに接続できません ${hint}: ${err.message}`);
   }
   clearTimeout(timer);
 
