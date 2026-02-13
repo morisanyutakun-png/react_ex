@@ -2909,16 +2909,6 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         with open(tex_path, 'w', encoding='utf-8') as f:
             f.write(fixed_body)
 
-        if engine is None:
-            # No local LaTeX engine – try cloud compilation via latex.ytotech.com API
-            logger.info('No local LaTeX engine found. Using cloud compilation...')
-            cloud_result = _try_cloud_compilation(fixed_body)
-            if cloud_result is not None:
-                # cloud failed – return the error
-                shutil.rmtree(td, ignore_errors=True)
-                return cloud_result
-            # cloud succeeded – pdf_path is populated, fall through to serve it
-
         # ── Helper: cloud compilation via latex.ytotech.com ──
         def _try_cloud_compilation(body_tex: str) -> 'Response | None':
             """Attempt cloud LaTeX compilation. Returns a Response on success, None on failure."""
@@ -2951,6 +2941,16 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                      'detail': f'クラウドコンパイルに失敗しました: {cloud_exc}'},
                     status_code=500,
                 )
+
+        if engine is None:
+            # No local LaTeX engine – try cloud compilation via latex.ytotech.com API
+            logger.info('No local LaTeX engine found. Using cloud compilation...')
+            cloud_result = _try_cloud_compilation(fixed_body)
+            if cloud_result is not None:
+                # cloud failed – return the error
+                shutil.rmtree(td, ignore_errors=True)
+                return cloud_result
+            # cloud succeeded – pdf_path is populated, fall through to serve it
 
         try:
             logger.info('Running LaTeX engine: %s on %s', engine_name, tex_path)
