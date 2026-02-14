@@ -361,8 +361,10 @@ def _collapse_internal_newlines(latex: str) -> str:
     s = re.sub(r"\^\s*\n\s*", "^", s)
     s = re.sub(r"\n\s*\^", "^", s)
 
-    # 3) Remove newlines between backslash and letters (\ \n text -> \text)
-    s = re.sub(r"\\\s*\n\s*([a-zA-Z@]+)", r"\\\1", s)
+    # 3) Remove newlines between a LONE backslash and letters (\ \n text -> \text)
+    #    Use negative lookbehind (?<!\\) so that LaTeX line-breaks (\\)
+    #    at end-of-line in align/aligned environments are NOT consumed.
+    s = re.sub(r"(?<!\\)\\\s*\n\s*([a-zA-Z@]+)", r"\\\1", s)
 
     # 4) Collapse accidental ")\n^" -> ")^" (already handled by caret rules but safe)
     s = s.replace(')\n^', ')^')
@@ -390,9 +392,15 @@ def _unescape_latex(latex: str) -> str:
     # real TAB characters in the final string are converted to a single space
     # below to avoid TeX receiving actual tab control characters (which show
     # up as ^^I in logs).
+    #
+    # CRITICAL: we must NOT replace \n when it is the start of a LaTeX
+    # command such as \newpage, \newtcolorbox, \noindent, \neq, \neg,
+    # \notag, \nonumber, etc.  Using a negative-lookahead (?![a-zA-Z])
+    # ensures we only convert standalone \n (JSON-escaped newlines) and
+    # leave LaTeX command prefixes intact.
     if '\\r\\n' in s or '\\n' in s:
-        s = s.replace('\\r\\n', '\n')
-        s = s.replace('\\n', '\n')
+        s = re.sub(r'\\r\\n(?![a-zA-Z])', '\n', s)
+        s = re.sub(r'\\n(?![a-zA-Z])', '\n', s)
     # collapse doubled backslashes before letters into single backslash
     # e.g. "\\\\textbf" -> "\\textbf"  (this handles JSON-escaped
     # backslashes that became doubled during transmission)
@@ -1916,28 +1924,27 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     "【重要: 出力ルール（ユーザーモード専用）】\n"
                     "以下を全て守ること。違反するとコンパイルエラーになる。\n\n"
                     "=== LaTeX構文ルール ===\n"
-                    "A) インライン数式は $...$ のみ。\\(...\\) や [...] で囲むな。\n"
-                    "B) ディスプレイ数式は必ず \\\\[ ... \\\\] を使え（バックスラッシュ付き）。\n"
-                    "   裸の [ ... ] は絶対に禁止（コンパイルエラーの原因になる）。$$ も禁止。\n"
-                    "   悪い例: [\n     f(x)=x^2\n   ]\n"
-                    "   良い例: \\\\[\n     f(x)=x^2\n   \\\\]\n"
-                    "C) align* 等の行末は \\\\\\\\ のみ。\\\\\\\\[2mm] 等は禁止。\n"
-                    "D) スケルトンのパッケージだけ使え。unicode-math, CJKutf8 等の追加禁止。\n"
-                    "E) フォントは \\\\setCJKmainfont{IPAexMincho} 固定。IfFontExistsTF 禁止。\n"
-                    "F) 出力は .tex ソースのみ。Markdown や説明文は含めるな。\n"
-                    "G) 区間表記は $[0,1)$ のようにインライン数式 $...$ 内に書くこと。\n\n"
+                    "A) インライン数式は $...$ のみ使用。\\(...\\) は禁止。\n"
+                    "B) ディスプレイ数式は \\[ ... \\] を使え。\n"
+                    "   裸の [ ... ] は絶対禁止（コンパイルエラー）。$$ ... $$ も禁止。\n"
+                    "C) align* 等の行末改行は \\\\ のみ。\\\\[2mm] 等の寸法付き改行は禁止。\n"
+                    "D) パッケージはスケルトンに含まれているものだけ使え。\n"
+                    "   unicode-math, CJKutf8 等の追加は禁止。\n"
+                    "E) フォント指定: \\setCJKmainfont{IPAexMincho} を使え。\n"
+                    "   IfFontExistsTF による分岐は禁止。\n"
+                    "F) 出力は .tex ソースコードのみ。Markdown記法や説明文は含めるな。\n"
+                    "G) 区間表記は必ずインライン数式内に書くこと。例: $[0,1)$, $[a,b]$\n\n"
                     "=== レイアウトルール（必須） ===\n"
-                    "H) 問題と解答・解説は必ず \\\\newpage で分離すること。\n"
-                    "   前半ページ: 問題のみ（\\\\section*{問題}）\n"
-                    "   後半ページ: 解答・解説のみ（\\\\section*{解答・解説}）\n"
-                    "I) 各問題は \\\\begin{problembox}[title=問題 N] ... \\\\end{problembox} で囲むこと。\n"
-                    "J) 各解答は \\\\begin{answerbox}[title=問題 N の解答] ... \\\\end{answerbox} で囲むこと。\n"
-                    "K) 問題番号は通し番号（問題 1, 問題 2, ...）を使うこと。\n"
-                    "L) 解説には途中式・考え方・ポイントを含め、学習者が理解しやすいように記述すること。\n\n"
+                    "H) 問題ページと解答ページは必ず \\newpage で分離。\n"
+                    "   前半: \\section*{問題}  後半: \\section*{解答・解説}\n"
+                    "I) 各問題は \\begin{problembox}[title=問題 N] ... \\end{problembox} で囲む。\n"
+                    "J) 各解答は \\begin{answerbox}[title=問題 N の解答] ... \\end{answerbox} で囲む。\n"
+                    "K) 通し番号（問題 1, 問題 2, ...）を使用。\n"
+                    "L) 解説には途中式・考え方・ポイントを含め、学習者にわかりやすく記述。\n\n"
                     "=== 品質ルール ===\n"
-                    "M) 問題は教材品質（塾のプリントとして配布可能なレベル）で作成すること。\n"
-                    "N) 数式は正確に記述し、検算を行うこと。\n"
-                    "O) 難易度の指示に正確に従い、適切なレベルの問題を作成すること。\n"
+                    "M) 塾の配布プリントとして使える教材品質で作成。\n"
+                    "N) 数式の正確性を検算で確認。\n"
+                    "O) 難易度の指示に正確に従うこと。\n"
                 )
 
                 # Reassemble the prompt: Skeleton first (as a target), then Instructions
@@ -1947,10 +1954,15 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
             logger.error(f"Error in user_mode prompt enhancement: {e}")
 
     # safe placeholder replacement: replace {key} with str(ctx[key])
+    # IMPORTANT: only replace keys that actually exist in the context dict.
+    # Unknown {word} patterns (like LaTeX \begin{document}, \usepackage{fontspec})
+    # must be preserved as-is to avoid destroying LaTeX commands in the prompt.
     def _replace_placeholders(s: str, context: dict) -> str:
         def repl(m):
             k = m.group(1)
-            return str(context.get(k, ''))
+            if k in context:
+                return str(context[k])
+            return m.group(0)  # preserve unknown {key} as-is
         return re.sub(r"\{([a-zA-Z0-9_]+)\}", repl, s)
 
     rendered = _replace_placeholders(prompt, ctx)
