@@ -1,87 +1,78 @@
+/* ============================
+   Global Reset & Base Styles
+   ============================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-  padding: 20px;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans JP', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2C3E50;
+  background: #EBF5FB;
 }
 
-.app {
-  max-width: 980px;
-  margin: 0 auto;
+/* Remove default outlines – replaced with custom focus styles */
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #2E86C1;
+  outline-offset: 1px;
 }
 
-.row {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
+/* Button hover effect */
+button:hover:not(:disabled) {
+  opacity: 0.88;
+}
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-input {
-  flex: 1;
-  padding: 8px;
+/* Select styling */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232C3E50' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  padding-right: 28px !important;
 }
 
-button {
-  padding: 8px 12px;
+/* Textarea resize handle */
+textarea {
+  box-sizing: border-box;
 }
 
-/* New theme classes */
-.status {
-  margin-bottom: 10px;
-  color: #0a58ca;
-  font-size: 14px;
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #D6DBDF;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.card {
-  background: #fff;
-  border: 1px solid #e6eef8;
-  padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+/* Details/summary */
+details > summary {
+  cursor: pointer;
+  user-select: none;
+}
+details > summary:hover {
+  opacity: 0.8;
 }
 
-.workflow-card {
-  background: #f0f8ff;
-  border-color: #dbeffb;
-  margin-bottom: 12px;
+/* Responsive */
+@media (max-width: 640px) {
+  main {
+    padding: 12px !important;
+  }
 }
-
-.template-row {
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-
-.controls {
-  margin-left: auto;
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-
-.side-panel {
-  width: 320px;
-  padding: 12px;
-}
-
-.main-column {
-  flex: 1;
-}
-
-.prompt-textarea {
-  width: 100%;
-  min-height: 200px;
-  font-size: 14px;
-  padding: 10px;
-  border: 1px solid #e6eef8;
-  border-radius: 6px;
-  background: #fff;
-}
-
-.muted { color: #666; font-size: 13px }
-.small-btn { padding:6px 10px; font-size:13px }
-.tag { background:#eef6ff; color:#0a58ca; padding:4px 8px; border-radius:999px; font-size:12px }
-
-/* Compact UI helpers */
-.section-title { font-size:16px; font-weight:700; color:#0a3750 }
-.info-toggle { background:#f8fafd; border:1px solid #d6eaf7; border-radius:6px }
-.hint-box { background:#fbfdff; border:1px solid #eef6fb; padding:8px; border-radius:6px; font-size:13px }
-.compact-select { padding:6px 8px; font-size:13px }

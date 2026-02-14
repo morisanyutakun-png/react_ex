@@ -434,6 +434,95 @@ def _extract_latex_if_json(blob: str) -> str:
     return blob
 
 
+# ── Text extraction from uploaded files (PDF, text, images) ──
+@app.post('/api/extract_text')
+async def extract_text_from_file(file: UploadFile = File(...)):
+    """Extract text content from an uploaded file (PDF, .txt, .tex, .md).
+
+    Returns the extracted text so the frontend can use it as source material
+    for generating similar problems. Supports:
+    - PDF: uses pdftotext (poppler) or falls back to reading raw text
+    - LaTeX (.tex): returned as-is
+    - Plain text (.txt, .md): returned as-is
+    """
+    if not file or not file.filename:
+        return JSONResponse({'error': 'no_file'}, status_code=400)
+
+    filename = file.filename.lower()
+    content_bytes = await file.read()
+
+    if len(content_bytes) > MAX_FILE_BYTES:
+        return JSONResponse({'error': 'file_too_large', 'detail': f'Max {MAX_FILE_BYTES // (1024*1024)}MB'}, status_code=400)
+
+    extracted = ''
+
+    try:
+        if filename.endswith('.pdf'):
+            # Try pdftotext (poppler-utils)
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+                tmp.write(content_bytes)
+                tmp_path = tmp.name
+            try:
+                pdftotext = shutil.which('pdftotext')
+                if pdftotext:
+                    result = subprocess.run(
+                        [pdftotext, '-layout', tmp_path, '-'],
+                        capture_output=True, text=True, timeout=30
+                    )
+                    if result.returncode == 0 and result.stdout.strip():
+                        extracted = result.stdout.strip()
+                    else:
+                        # fallback: try reading as text
+                        extracted = content_bytes.decode('utf-8', errors='ignore').strip()
+                else:
+                    # No pdftotext available: try raw decode
+                    extracted = content_bytes.decode('utf-8', errors='ignore').strip()
+            finally:
+                try:
+                    os.unlink(tmp_path)
+                except Exception:
+                    pass
+
+        elif filename.endswith(('.tex', '.latex')):
+            extracted = content_bytes.decode('utf-8', errors='ignore').strip()
+
+        elif filename.endswith(('.txt', '.md', '.markdown', '.text')):
+            extracted = content_bytes.decode('utf-8', errors='ignore').strip()
+
+        elif filename.endswith(('.json',)):
+            text = content_bytes.decode('utf-8', errors='ignore').strip()
+            try:
+                data = json.loads(text)
+                if isinstance(data, dict):
+                    # Extract problem-related fields
+                    parts = []
+                    for key in ('stem', 'problem', 'question', 'text', 'content', 'stem_latex'):
+                        if key in data and data[key]:
+                            parts.append(str(data[key]))
+                    extracted = '\n\n'.join(parts) if parts else text
+                else:
+                    extracted = text
+            except Exception:
+                extracted = text
+        else:
+            # Try to decode as text
+            extracted = content_bytes.decode('utf-8', errors='ignore').strip()
+
+    except Exception as e:
+        logger.exception('Failed to extract text from uploaded file')
+        return JSONResponse({'error': 'extraction_failed', 'detail': str(e)}, status_code=500)
+
+    if not extracted:
+        return JSONResponse({'error': 'empty_extraction', 'detail': 'ファイルからテキストを抽出できませんでした'}, status_code=400)
+
+    return JSONResponse({
+        'extracted_text': extracted[:10000],  # Limit to 10K chars
+        'filename': file.filename,
+        'char_count': len(extracted),
+        'truncated': len(extracted) > 10000,
+    })
+
+
 @app.post("/api/upload")
 def upload(file: UploadFile = File(...)):
     # PDF upload was disabled in favor of LaTeX/JSON ingestion.
@@ -1285,6 +1374,9 @@ class RenderTemplateRequest(BaseModel):
     subject_filter: Optional[str] = None
     # Field filter: when set, only retrieve problems whose metadata contains this field
     field_filter: Optional[str] = None
+    # Source text: user-provided problem text (extracted from PDF/image/text) to use as
+    # reference for generating similar problems. The LLM will analyze this and create variants.
+    source_text: Optional[str] = None
 
 
 @app.post('/api/render_template')
@@ -1733,30 +1825,97 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
             # Avoid duplicating if template already contains an explicit \documentclass
             if isinstance(prompt, str) and ('\\documentclass' not in prompt):
                 orig_prompt_body = prompt
-                
-                # Pre-define the skeleton with a clear placeholder
+
+                # If source_text was provided (extracted from user-uploaded PDF/text),
+                # prepend it as reference material for the LLM
+                source_text = getattr(req, 'source_text', None) or ''
+                source_block = ''
+                if source_text and isinstance(source_text, str) and source_text.strip():
+                    source_block = (
+                        "\n\n【参照元の問題（ユーザー提供）】\n"
+                        "以下はユーザーがアップロードした問題文です。この問題の内容・形式・難易度を分析し、\n"
+                        "同じ出題傾向・形式・難易度で類題を生成してください。\n"
+                        "元の問題をそのままコピーせず、数値や条件を変えた新しい問題を作成すること。\n\n"
+                        f"--- 参照元 ---\n{source_text.strip()}\n--- 参照元ここまで ---\n"
+                    )
+
+                # Enhanced LaTeX skeleton with professional layout
                 latex_skeleton = (
                     "\\documentclass[a4paper,11pt]{article}\n"
-                    "\\usepackage[margin=22mm]{geometry}\n"
-                    "\\usepackage{amsmath,amssymb}\n"
+                    "\\usepackage[top=20mm,bottom=25mm,left=22mm,right=22mm]{geometry}\n"
+                    "\\usepackage{amsmath,amssymb,mathtools}\n"
                     "\\usepackage{enumitem}\n"
                     "\\usepackage{parskip}\n"
+                    "\\usepackage{fancyhdr}\n"
+                    "\\usepackage{titlesec}\n"
+                    "\\usepackage{xcolor}\n"
+                    "\\usepackage{tcolorbox}\n"
+                    "\\tcbuselibrary{skins,breakable}\n"
                     "\\usepackage{fontspec}\n"
                     "\\usepackage{xeCJK}\n"
                     "\\setmainfont{TeX Gyre Termes}\n"
                     "\\setCJKmainfont{IPAexMincho}\n"
                     "\\usepackage{hyperref}\n"
+                    "\\hypersetup{colorlinks=true,linkcolor=blue!60!black}\n\n"
+                    "% --- ページ装飾 ---\n"
+                    "\\definecolor{mainblue}{HTML}{1A5276}\n"
+                    "\\definecolor{lightbg}{HTML}{EBF5FB}\n"
+                    "\\definecolor{accentorange}{HTML}{E67E22}\n"
+                    "\\pagestyle{fancy}\n"
+                    "\\fancyhf{}\n"
+                    "\\renewcommand{\\headrulewidth}{0.8pt}\n"
+                    "\\fancyhead[L]{\\small\\textsf{\\textcolor{mainblue}{\\textbf{類題演習}}}}\n"
+                    "\\fancyhead[R]{\\small\\textsf{\\textcolor{mainblue}{\\thepage}}}\n"
+                    "\\fancyfoot[C]{\\small\\textcolor{gray}{Generated by 類題生成アプリ}}\n"
+                    "\\setlength{\\headheight}{14pt}\n\n"
+                    "% --- セクションスタイル ---\n"
+                    "\\titleformat{\\section}{\\Large\\bfseries\\sffamily\\color{mainblue}}{\\thesection}{0.7em}{}\n"
+                    "\\titleformat{\\subsection}{\\large\\bfseries\\sffamily\\color{mainblue!80}}{\\thesubsection}{0.6em}{}\n\n"
+                    "% --- 問題ボックス ---\n"
+                    "\\newtcolorbox{problembox}[1][]{enhanced,breakable,\n"
+                    "  colback=white,colframe=mainblue,\n"
+                    "  fonttitle=\\bfseries\\sffamily,\n"
+                    "  boxrule=0.8pt,arc=3pt,\n"
+                    "  left=8pt,right=8pt,top=6pt,bottom=6pt,#1}\n\n"
+                    "% --- 解答ボックス ---\n"
+                    "\\newtcolorbox{answerbox}[1][]{enhanced,breakable,\n"
+                    "  colback=lightbg,colframe=mainblue!50,\n"
+                    "  fonttitle=\\bfseries\\sffamily,\n"
+                    "  boxrule=0.6pt,arc=3pt,\n"
+                    "  left=8pt,right=8pt,top=6pt,bottom=6pt,#1}\n\n"
                     "\\begin{document}\n\n"
-                    "% --- 問題と解答の生成開始 ---\n"
-                    "{{generated_body}}\n"
-                    "% --- 問題と解答の生成終了 ---\n\n"
+                    "% ========================================\n"
+                    "% 問題セクション\n"
+                    "% ========================================\n"
+                    "\\section*{問題}\n\n"
+                    "% 問題をここに生成（problembox環境を使用）\n"
+                    "% 例:\n"
+                    "% \\begin{problembox}[title=問題 1]\n"
+                    "%   問題文...\n"
+                    "% \\end{problembox}\n\n"
+                    "{{problems_section}}\n\n"
+                    "% ========================================\n"
+                    "% 改ページ（問題と解答を分離）\n"
+                    "% ========================================\n"
+                    "\\newpage\n\n"
+                    "% ========================================\n"
+                    "% 解答・解説セクション\n"
+                    "% ========================================\n"
+                    "\\section*{解答・解説}\n\n"
+                    "% 解答をここに生成（answerbox環境を使用）\n"
+                    "% 例:\n"
+                    "% \\begin{answerbox}[title=問題 1 の解答]\n"
+                    "%   解答と解説...\n"
+                    "% \\end{answerbox}\n\n"
+                    "{{answers_section}}\n\n"
                     "\\end{document}\n"
                 )
 
-                # Instruction for the LLM
+                # Comprehensive instruction for the LLM
                 latex_instr = (
                     "【重要: 出力ルール（ユーザーモード専用）】\n"
                     "以下を全て守ること。違反するとコンパイルエラーになる。\n\n"
+                    "=== LaTeX構文ルール ===\n"
                     "A) インライン数式は $...$ のみ。\\(...\\) や [...] で囲むな。\n"
                     "B) ディスプレイ数式は必ず \\\\[ ... \\\\] を使え（バックスラッシュ付き）。\n"
                     "   裸の [ ... ] は絶対に禁止（コンパイルエラーの原因になる）。$$ も禁止。\n"
@@ -1766,11 +1925,23 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     "D) スケルトンのパッケージだけ使え。unicode-math, CJKutf8 等の追加禁止。\n"
                     "E) フォントは \\\\setCJKmainfont{IPAexMincho} 固定。IfFontExistsTF 禁止。\n"
                     "F) 出力は .tex ソースのみ。Markdown や説明文は含めるな。\n"
-                    "G) 区間表記は $[0,1)$ のようにインライン数式 $...$ 内に書くこと。\n"
+                    "G) 区間表記は $[0,1)$ のようにインライン数式 $...$ 内に書くこと。\n\n"
+                    "=== レイアウトルール（必須） ===\n"
+                    "H) 問題と解答・解説は必ず \\\\newpage で分離すること。\n"
+                    "   前半ページ: 問題のみ（\\\\section*{問題}）\n"
+                    "   後半ページ: 解答・解説のみ（\\\\section*{解答・解説}）\n"
+                    "I) 各問題は \\\\begin{problembox}[title=問題 N] ... \\\\end{problembox} で囲むこと。\n"
+                    "J) 各解答は \\\\begin{answerbox}[title=問題 N の解答] ... \\\\end{answerbox} で囲むこと。\n"
+                    "K) 問題番号は通し番号（問題 1, 問題 2, ...）を使うこと。\n"
+                    "L) 解説には途中式・考え方・ポイントを含め、学習者が理解しやすいように記述すること。\n\n"
+                    "=== 品質ルール ===\n"
+                    "M) 問題は教材品質（塾のプリントとして配布可能なレベル）で作成すること。\n"
+                    "N) 数式は正確に記述し、検算を行うこと。\n"
+                    "O) 難易度の指示に正確に従い、適切なレベルの問題を作成すること。\n"
                 )
 
                 # Reassemble the prompt: Skeleton first (as a target), then Instructions
-                prompt = f"以下のLaTeXスケルトンを完成させてください:\n\n{latex_skeleton}\n\n{latex_instr}\n\n【指示内容】\n{orig_prompt_body}"
+                prompt = f"以下のLaTeXスケルトンを完成させてください:\n\n{latex_skeleton}\n\n{latex_instr}{source_block}\n\n【指示内容】\n{orig_prompt_body}"
     except Exception as e:
         if 'logger' in globals():
             logger.error(f"Error in user_mode prompt enhancement: {e}")
