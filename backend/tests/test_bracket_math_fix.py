@@ -6,17 +6,30 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 
 def _convert_bracket_math_blocks(blob: str) -> str:
-    """Copy of the fixed function for unit testing."""
+    """Copy of the fixed function for unit testing (with inline-math protection)."""
     if not isinstance(blob, str) or not blob.strip():
         return blob
 
+    # Phase 1: protect inline math $...$ with placeholders
+    _inline_stash = []
+    def _stash_inline(m):
+        _inline_stash.append(m.group(0))
+        return f"__ILMATH{len(_inline_stash)-1}__"
+    protected = re.sub(r'(?<!\\)\$([^\$\n]*?)(?<!\\)\$', _stash_inline, blob)
+
     def _repl(m):
         inner = m.group(1)
-        prefix = blob[:m.start()]
+        prefix = protected[:m.start()]
         if re.search(r"\\[A-Za-z]+\*?\s*$", prefix):
+            return m.group(0)
+        if re.search(r"\}\s*$", prefix):
             return m.group(0)
         stripped = inner.strip()
         if len(stripped) < 2:
+            return m.group(0)
+        if '__ILMATH' in inner:
+            return m.group(0)
+        if re.search(r'title\s*=', stripped):
             return m.group(0)
         math_indicators = (
             r'\\begin\{|\\end\{|'
@@ -34,7 +47,12 @@ def _convert_bracket_math_blocks(blob: str) -> str:
             return '\\[' + '\n' + stripped + '\n' + '\\]'
         return m.group(0)
 
-    return re.sub(r"(?<![\\A-Za-z])\[\s*([\s\S]*?)\s*\]", _repl, blob)
+    result = re.sub(r"(?<![\\A-Za-z])\[\s*([\s\S]*?)\s*\]", _repl, protected)
+
+    # Phase 3: restore inline math
+    for i, orig in enumerate(_inline_stash):
+        result = result.replace(f"__ILMATH{i}__", orig)
+    return result
 
 
 def test_bare_bracket_aligned():
@@ -95,6 +113,52 @@ def test_empty_bracket_preserved():
     assert out == inp
 
 
+def test_inline_math_interval_does_not_block_display_math():
+    """$[0,\\infty)$ followed by display-math [ ... ] must convert the display block.
+
+    Previously the regex matched from the [ inside $[0,\\infty)$ all the way
+    to the display-math ], and the inner $ caused it to be skipped entirely.
+    """
+    inp = (
+        "$[0,\\infty)$ での最大値を調べる。\n"
+        "[\n"
+        "f'(x)=\\frac{d}{dx}\\left(x^{2}e^{-x}\\right)=e^{-x}x(2-x)\n"
+        "]\n"
+        "よって $x=2$ で最大。\n"
+    )
+    out = _convert_bracket_math_blocks(inp)
+    # The $[0,\infty)$ must be preserved intact
+    assert "$[0,\\infty)$" in out, f"Inline math was corrupted: {out!r}"
+    # The display math must be converted
+    assert '\\[' in out, f"Display math was not converted: {out!r}"
+    assert '\\]' in out, f"Display math was not converted: {out!r}"
+
+
+def test_tcolorbox_title_option_preserved():
+    """\\begin{answerbox}[title=問題 1 の解答] must not be converted."""
+    inp = "\\begin{answerbox}[title=問題 1 の解答]\n"
+    out = _convert_bracket_math_blocks(inp)
+    assert out == inp, f"tcolorbox option was corrupted: {out!r}"
+
+
+def test_multiple_display_math_blocks_with_inline_intervals():
+    """Multiple display math blocks in a document with inline $[a,b]$ intervals."""
+    inp = (
+        "$[0,\\infty)$ で考える。\n"
+        "[\n"
+        "f(2)=4e^{-2}\n"
+        "]\n"
+        "接線は\n"
+        "[\n"
+        "y=4e^{-2}\n"
+        "]\n"
+    )
+    out = _convert_bracket_math_blocks(inp)
+    assert out.count('\\[') == 2, f"Expected 2 \\\\[ but got {out.count(chr(92)+'[')}: {out!r}"
+    assert out.count('\\]') == 2, f"Expected 2 \\\\] but got {out.count(chr(92)+']')}: {out!r}"
+    assert "$[0,\\infty)$" in out
+
+
 if __name__ == '__main__':
     test_bare_bracket_aligned()
     test_bare_bracket_simple_eq()
@@ -102,4 +166,7 @@ if __name__ == '__main__':
     test_usepackage_option_preserved()
     test_setlist_option_preserved()
     test_empty_bracket_preserved()
+    test_inline_math_interval_does_not_block_display_math()
+    test_tcolorbox_title_option_preserved()
+    test_multiple_display_math_blocks_with_inline_intervals()
     print("All tests passed!")

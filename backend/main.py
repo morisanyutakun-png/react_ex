@@ -2636,36 +2636,48 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             We are aggressive here because bare brackets containing math or
             \\begin{aligned} are almost certainly intended as display math.
             We still skip option-argument brackets like \\documentclass[...].
+
+            Key fix: we first protect inline-math spans ($...$) with
+            placeholders so that constructs like ``$[0,\\infty)$`` don't
+            interfere with our bracket-matching regex (previously the ``[``
+            inside ``$[0,\\infty)$`` would match all the way to a display-math
+            ``]``, and the inner ``$`` would cause the block to be skipped).
             """
             if not isinstance(blob, str) or not blob.strip():
                 return blob
 
+            # --- Phase 1: protect inline math $...$ with placeholders ---
+            _inline_stash = []
+            def _stash_inline(m):
+                _inline_stash.append(m.group(0))
+                return f"__ILMATH{len(_inline_stash)-1}__"
+            # Match non-greedy $...$ (no embedded newlines to avoid matching
+            # across paragraphs; ignore escaped \$).
+            protected = re.sub(r'(?<!\\)\$([^\$\n]*?)(?<!\\)\$', _stash_inline, blob)
+
+            # --- Phase 2: convert bare bracket display math ---
             def _repl(m):
                 inner = m.group(1)
                 # Skip option brackets attached to LaTeX commands:
                 # e.g. \documentclass[...], \usepackage[...], \setlist[...]
-                prefix = blob[:m.start()]
+                prefix = protected[:m.start()]
                 if re.search(r"\\[A-Za-z]+\*?\s*$", prefix):
                     return m.group(0)
                 # Also skip option brackets after closing braces (e.g. \begin{enumerate}[...])
                 if re.search(r"\}\s*$", prefix):
                     return m.group(0)
-                # Skip [ inside inline math $...$: count unescaped $ in prefix.
-                # If odd, we are inside inline math and [ is a literal bracket
-                # (e.g. interval notation $[0,1)$), not display math.
-                dollar_count = len(re.findall(r'(?<!\\)\$', prefix))
-                if dollar_count % 2 == 1:
-                    return m.group(0)
-                # If the matched content contains $, the bracket spans across
-                # inline math boundaries — definitely not a display-math block.
-                if '$' in inner:
-                    return m.group(0)
                 # Skip empty brackets or very short content that looks like list labels
                 stripped = inner.strip()
                 if len(stripped) < 2:
                     return m.group(0)
+                # Skip if content contains a placeholder (bracket spans inline math boundary)
+                if '__ILMATH' in inner:
+                    return m.group(0)
                 # Skip enumitem / list option arguments (label=, ref=, start=, etc.)
                 if re.search(r'label\s*=|ref\s*=|start\s*=|\\arabic|\\roman|\\alph|\\Roman|\\Alph', stripped):
+                    return m.group(0)
+                # Skip title=... option arguments for tcolorbox etc.
+                if re.search(r'title\s*=', stripped):
                     return m.group(0)
 
                 # Detect math-like content: environments (aligned, cases, etc.),
@@ -2683,14 +2695,18 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     r'&'                             # alignment char (align/aligned)
                 )
                 if re.search(math_indicators, stripped):
-                    # Preserve internal newlines for multi-line math (aligned env)
-                    # but collapse leading/trailing whitespace
                     return '\\[' + '\n' + stripped + '\n' + '\\]'
                 return m.group(0)
 
             # Match [ ... ] blocks that span one or more lines.
             # Use a non-greedy match but allow newlines.
-            return re.sub(r"(?<![\\A-Za-z])\[\s*([\s\S]*?)\s*\]", _repl, blob)
+            result = re.sub(r"(?<![\\A-Za-z])\[\s*([\s\S]*?)\s*\]", _repl, protected)
+
+            # --- Phase 3: restore inline math placeholders ---
+            for i, orig in enumerate(_inline_stash):
+                result = result.replace(f"__ILMATH{i}__", orig)
+
+            return result
 
         # create a temp dir for compilation artifacts
         td = tempfile.mkdtemp(prefix='generated_pdf_')
