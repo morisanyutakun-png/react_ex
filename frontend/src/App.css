@@ -484,6 +484,112 @@ textarea.input {
   margin-bottom: 20px;
 }
 
+/* ==========================================
+   Flow Overview Banner
+   ========================================== */
+.flow-overview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--c-border-light);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--c-text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+.flow-arrow {
+  color: var(--c-text-muted);
+  font-size: 10px;
+}
+.flow-external {
+  color: var(--c-accent);
+  font-weight: 700;
+  border: 1.5px dashed var(--c-accent);
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  background: var(--c-accent-soft);
+}
+@media (max-width: 479px) {
+  .flow-overview { font-size: 10px; gap: 4px; padding: 8px 10px; }
+}
+
+/* ==========================================
+   Progress Sub-label
+   ========================================== */
+.progress-sub {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--c-accent);
+  white-space: nowrap;
+}
+@media (min-width: 480px) {
+  .progress-sub { font-size: 10px; }
+}
+
+/* ==========================================
+   Instruction Steps (Step 2)
+   ========================================== */
+.instruction-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 14px;
+  background: #F8FAFC;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--c-border);
+}
+.instruction-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--c-text);
+  line-height: 1.5;
+}
+.instruction-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--c-secondary);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==========================================
+   AI Link Buttons
+   ========================================== */
+.ai-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-primary);
+  background: #EBF5FB;
+  border: 1px solid #AED6F1;
+  text-decoration: none;
+  transition: all 0.2s var(--ease);
+}
+.ai-link:hover {
+  background: #D6EAF8;
+  border-color: var(--c-secondary);
+}
+
 /* Safe area for mobile */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .app-shell { padding-bottom: env(safe-area-inset-bottom); }

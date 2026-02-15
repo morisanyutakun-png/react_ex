@@ -180,10 +180,10 @@ export default function App() {
      STEP Names for progress bar
      ════════════════════════════════════════ */
   const STEPS = [
-    { n: 1, label: '設定' },
-    { n: 2, label: 'コピー' },
-    { n: 3, label: '貼付' },
-    { n: 4, label: '完了' },
+    { n: 1, label: '問題設定' },
+    { n: 2, label: 'AIに依頼', sub: '外部AI使用' },
+    { n: 3, label: '結果を入力' },
+    { n: 4, label: 'PDF完成' },
   ]
 
   /* ════════════════════════════════════════
@@ -215,6 +215,19 @@ export default function App() {
 
         {mode === 'user' ? (
           <>
+            {/* ── FLOW OVERVIEW ── */}
+            <div className="flow-overview">
+              <span>条件設定</span>
+              <span className="flow-arrow">→</span>
+              <span>プロンプトコピー</span>
+              <span className="flow-arrow">→</span>
+              <span className="flow-external">★ ChatGPT / Claude に貼付（外部）</span>
+              <span className="flow-arrow">→</span>
+              <span>結果貼り付け</span>
+              <span className="flow-arrow">→</span>
+              <span>PDF完成</span>
+            </div>
+
             {/* ── PROGRESS BAR ── */}
             <div className="progress-bar">
               {STEPS.map((s, i) => (
@@ -227,6 +240,7 @@ export default function App() {
                       {step > s.n ? <Ico.Check s={14} /> : s.n}
                     </div>
                     <div className="progress-name">{s.label}</div>
+                    {s.sub && <div className="progress-sub">{s.sub}</div>}
                   </div>
                   {i < STEPS.length - 1 && (
                     <div className={`progress-line ${step > s.n ? 'filled' : ''}`} />
@@ -243,7 +257,7 @@ export default function App() {
                 <div className="card-header">
                   <span className="card-emoji">📝</span>
                   <div className="card-title">問題の条件を設定</div>
-                  <div className="card-desc">テンプレート・科目・難易度を選んでプロンプトを作成します</div>
+                  <div className="card-desc">AIへ送るプロンプトを作成します</div>
                 </div>
 
                 <div className="tip">
@@ -321,13 +335,23 @@ export default function App() {
               <div className="card anim-fade-up">
                 <div className="card-header">
                   <span className="card-emoji">📋</span>
-                  <div className="card-title">プロンプトをコピー</div>
-                  <div className="card-desc">下のプロンプトをコピーして、ChatGPT・Claude 等のLLMに貼り付けてください</div>
+                  <div className="card-title">プロンプトをコピーしてAIに依頼</div>
+                  <div className="card-desc">外部のAI（ChatGPT・Claude等）を使ってLaTeXコードを生成します</div>
                 </div>
 
-                <div className="tip">
-                  <span className="tip-icon">👇</span>
-                  <div>「コピーして次へ」ボタンを押すと自動でコピーされます。<br />あとは ChatGPT 等に貼り付けるだけ！</div>
+                <div className="instruction-steps">
+                  <div className="instruction-step">
+                    <span className="instruction-num">1</span>
+                    <div>下の<strong>「プロンプトをコピー」</strong>ボタンでコピー</div>
+                  </div>
+                  <div className="instruction-step">
+                    <span className="instruction-num">2</span>
+                    <div>外部AIを開いて貼り付け、実行する</div>
+                  </div>
+                  <div className="instruction-step">
+                    <span className="instruction-num">3</span>
+                    <div>AIの出力（LaTeXコード）をコピーしておく</div>
+                  </div>
                 </div>
 
                 <div className="prompt-preview">{prompt}</div>
@@ -338,12 +362,27 @@ export default function App() {
                   </div>
                 )}
 
+                <div style={{marginBottom:16}}>
+                  <button className="btn btn-primary btn-block" onClick={copyPrompt}>
+                    <Ico.Copy /> プロンプトをコピー
+                  </button>
+                </div>
+
+                <div style={{display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap', marginBottom:20}}>
+                  <a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="ai-link">
+                    <Ico.ExternalLink /> ChatGPT を開く
+                  </a>
+                  <a href="https://claude.ai/" target="_blank" rel="noreferrer" className="ai-link">
+                    <Ico.ExternalLink /> Claude を開く
+                  </a>
+                </div>
+
                 <div className="btn-row btn-row-2">
                   <button className="btn btn-outline" onClick={() => setStep(1)}>
                     <Ico.ArrowLeft /> 戻る
                   </button>
-                  <button className="btn btn-primary" onClick={() => { copyPrompt(); setTimeout(() => setStep(3), 300) }}>
-                    <Ico.Copy /> コピーして次へ
+                  <button className="btn btn-success" onClick={() => setStep(3)}>
+                    AIの出力を受け取った → 次へ <Ico.ArrowRight />
                   </button>
                 </div>
               </div>
@@ -362,11 +401,11 @@ export default function App() {
 
                 <div className="tip">
                   <span className="tip-icon">📌</span>
-                  <div>ChatGPT/Claude の出力をまるごとコピーして、下のテキストエリアに貼り付けてください。<br /><code>\documentclass</code> から <code>\end{'{document}'}</code> まで全体を含めてOKです。</div>
+                  <div>ChatGPT/Claude の出力をまるごとコピーして、下のテキストエリアに貼り付けてください。<br /><code>\documentclass</code> から <code>\end{'{document}'}</code> まで全体を含めてOKです。<br />※ コードブロック記号（<code>```</code>）は不要です。LaTeXコードのみ貼り付けてください。</div>
                 </div>
 
                 <div className="field">
-                  <label className="field-label">LaTeX コード</label>
+                  <label className="field-label">LaTeX コード（AIの出力）</label>
                   <textarea
                     className="input"
                     style={{ height: 280, fontFamily: "'SF Mono','Fira Code','Consolas',monospace", fontSize: 12 }}
