@@ -230,6 +230,8 @@ def retrieve_with_profile(
     model = None,
     tfidf_force_refresh: bool = False,
     pgvector_shards: int = 1,
+    field_filter: Optional[int] = None,
+    subject_filter: Optional[str] = None,
 ) -> List[Dict]:
     """Retrieve top candidates using a profile that weights text and attribute proximity.
 
@@ -269,17 +271,33 @@ def retrieve_with_profile(
         return []
 
     cids = [c[0] for c in candidates]
-    # fetch attributes
+    # fetch attributes with optional field/subject filtering
     cur = conn.cursor()
+    extra_where = []
+    extra_params = []
+    if field_filter is not None and not getattr(conn, '_is_sqlite', False):
+        extra_where.append("field_id = %s")
+        extra_params.append(field_filter)
+    if subject_filter and subject_filter.strip():
+        extra_where.append("subject = %s")
+        extra_params.append(subject_filter.strip())
+
+    extra_sql = (" AND " + " AND ".join(extra_where)) if extra_where else ""
+
     if getattr(conn, '_is_sqlite', False):
         placeholders = ','.join(['%s'] * len(cids))
-        q = f"SELECT id, difficulty, trickiness, stem FROM problems WHERE id IN ({placeholders})"
-        cur.execute(q, cids)
+        q = f"SELECT id, difficulty, trickiness, stem FROM problems WHERE id IN ({placeholders}){extra_sql}"
+        cur.execute(q, cids + extra_params)
     else:
-        q = "SELECT id, difficulty, trickiness, stem FROM problems WHERE id = ANY(%s)"
-        cur.execute(q, (cids,))
+        q = f"SELECT id, difficulty, trickiness, stem FROM problems WHERE id = ANY(%s){extra_sql}"
+        cur.execute(q, (cids, *extra_params))
     rows = cur.fetchall()
     prob_map = {r[0]: {'difficulty': r[1], 'trickiness': r[2], 'text': r[3]} for r in rows}
+
+    # Filter candidates to only those that passed the field/subject filter
+    candidates = [(pid, score) for pid, score in candidates if pid in prob_map]
+    if not candidates:
+        return []
 
     # Build a map of text_score
     score_map = {pid: score for pid, score in candidates}

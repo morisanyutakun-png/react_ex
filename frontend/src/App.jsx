@@ -14,6 +14,7 @@ const Ico = {
   ExternalLink: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
   RotateCcw: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>,
   Star: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  Help: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
 }
 
 /* ────────────────────────────────────────────
@@ -56,12 +57,14 @@ export default function App() {
   const [templates, setTemplates] = useState([])
   const [subjects] = useState(['数学', '物理', '英語', '化学', '生物', '情報'])
   const [difficulties] = useState(['易', '普通', '難'])
+  const [latexPresets, setLatexPresets] = useState([])
+  const [fields, setFields] = useState([])
 
   // Wizard state
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
     templateId: '', subject: '数学', difficulty: '普通', numQuestions: 3,
-    sourceText: '', fileName: '',
+    sourceText: '', fileName: '', latexPreset: 'exam', fieldFilter: '',
   })
   const [prompt, setPrompt] = useState('')
   const [ragCtx, setRagCtx] = useState(null)
@@ -70,6 +73,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [dragOver, setDragOver] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
   const fileRef = useRef(null)
 
   const notify = (msg, type = 'info') => setToast({ msg, type })
@@ -86,7 +90,34 @@ export default function App() {
       }
     } catch (e) { console.error(e) }
   }, [])
-  useEffect(() => { fetchTemplates() }, [])
+
+  /* ── Fetch LaTeX presets ── */
+  const fetchPresets = useCallback(async () => {
+    try {
+      const r = await fetch('/api/latex_presets')
+      const d = await r.json()
+      if (r.ok && d.presets?.length) {
+        setLatexPresets(d.presets)
+      }
+    } catch (e) { console.error(e) }
+  }, [])
+
+  /* ── Fetch fields ── */
+  const fetchFields = useCallback(async () => {
+    try {
+      const r = await fetch('/api/fields')
+      const d = await r.json()
+      if (r.ok && d.fields?.length) {
+        setFields(d.fields)
+      }
+    } catch (e) { console.error(e) }
+  }, [])
+
+  useEffect(() => {
+    fetchTemplates()
+    fetchPresets()
+    fetchFields()
+  }, [])
 
   /* ── Step 1 → 2 : Generate prompt ── */
   const generatePrompt = async () => {
@@ -101,6 +132,8 @@ export default function App() {
         rag_inject: true,
         source_text: form.sourceText || undefined,
         user_mode: true,
+        latex_preset: form.latexPreset || 'exam',
+        field_filter: form.fieldFilter || undefined,
       }
       const r = await fetch('/api/template_render', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -154,7 +187,12 @@ export default function App() {
     try {
       const r = await fetch('/api/generate_pdf', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ latex: llmOutput, title: 'Generated Problem', return_url: true }),
+        body: JSON.stringify({
+          latex: llmOutput,
+          title: 'Generated Problem',
+          return_url: true,
+          latex_preset: form.latexPreset || 'exam',
+        }),
       })
       if (r.ok) {
         const d = await r.json().catch(() => null)
@@ -175,6 +213,12 @@ export default function App() {
     setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl('')
     setForm(p => ({ ...p, sourceText: '', fileName: '' }))
   }
+
+  /* ── Filtered fields by selected subject ── */
+  const filteredFields = fields.filter(f => !form.subject || f.subject === form.subject)
+
+  /* ── Current preset info ── */
+  const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
 
   /* ════════════════════════════════════════
      STEP Names for progress bar
@@ -215,13 +259,36 @@ export default function App() {
 
         {mode === 'user' ? (
           <>
+            {/* ── HOW IT WORKS (collapsible, beginner-friendly) ── */}
+            <details className="how-it-works">
+              <summary className="how-summary">
+                初めての方へ：このシステムの使い方
+              </summary>
+              <div className="how-content">
+                <h3>このシステムでできること</h3>
+                <p>過去問や類似問題のデータベースをもとに、AIが新しい問題を自動生成し、PDFとしてダウンロードできます。</p>
+
+                <h3>4つのステップ</h3>
+                <ol>
+                  <li><strong>条件設定</strong> - 科目・分野・難易度・出力形式を選びます。</li>
+                  <li><strong>プロンプト生成</strong> - システムが類似問題を検索し、AIへの指示文を自動作成します。</li>
+                  <li><strong>外部AIで生成</strong> - ChatGPTやClaudeにプロンプトを貼り付け、LaTeXコードを生成してもらいます。</li>
+                  <li><strong>PDF化</strong> - 生成されたLaTeXコードを貼り付けると、きれいなPDFに変換されます。</li>
+                </ol>
+
+                <h3>なぜ外部AIを使うの？</h3>
+                <p>このシステムは「問題データベース（RAG）」と「PDF生成エンジン」を提供します。
+                   AI生成は外部の高性能AIサービスに任せることで、常に最新・最高品質の問題生成が可能です。</p>
+              </div>
+            </details>
+
             {/* ── FLOW OVERVIEW ── */}
             <div className="flow-overview">
               <span>条件設定</span>
               <span className="flow-arrow">→</span>
               <span>プロンプトコピー</span>
               <span className="flow-arrow">→</span>
-              <span className="flow-external">★ ChatGPT / Claude に貼付（外部）</span>
+              <span className="flow-external">ChatGPT / Claude に貼付</span>
               <span className="flow-arrow">→</span>
               <span>結果貼り付け</span>
               <span className="flow-arrow">→</span>
@@ -248,6 +315,9 @@ export default function App() {
                 </React.Fragment>
               ))}
             </div>
+            <div className="progress-percentage">
+              ステップ {step} / {STEPS.length}
+            </div>
 
             {/* ══════════════════════════════════
                 STEP 1 — 問題設定
@@ -257,45 +327,94 @@ export default function App() {
                 <div className="card-header">
                   <span className="card-emoji">📝</span>
                   <div className="card-title">問題の条件を設定</div>
-                  <div className="card-desc">AIへ送るプロンプトを作成します</div>
+                  <div className="card-desc">AIへ送るプロンプトを自動作成します。下の項目を選択してください。</div>
                 </div>
 
                 <div className="tip">
                   <span className="tip-icon">💡</span>
-                  <div>初めての方：下の項目を選んで<strong>「プロンプト生成」</strong>を押すだけ！<br />ファイルアップロードは任意です。</div>
+                  <div>初めての方：下の項目を選んで<strong>「プロンプトを生成」</strong>ボタンを押すだけ！<br />分野やファイルアップロードは任意です。</div>
                 </div>
 
+                {/* Row 1: テンプレート + 科目 */}
                 <div className="form-row form-row-2" style={{marginBottom:16}}>
                   <div className="field">
-                    <label className="field-label">テンプレート</label>
+                    <label className="field-label">
+                      テンプレート
+                      <span className="tooltip-icon" title="問題の出題形式やスタイルを決めるテンプレートです。過去の出題傾向が含まれています。">?</span>
+                    </label>
                     <select className="select" value={form.templateId} onChange={e => upd('templateId', e.target.value)}>
                       {templates.map(t => <option key={t.id} value={t.id}>{t.name || t.id}</option>)}
                     </select>
                   </div>
                   <div className="field">
-                    <label className="field-label">科目</label>
-                    <select className="select" value={form.subject} onChange={e => upd('subject', e.target.value)}>
+                    <label className="field-label">
+                      科目
+                      <span className="tooltip-icon" title="問題を生成する科目を選択してください">?</span>
+                    </label>
+                    <select className="select" value={form.subject} onChange={e => { upd('subject', e.target.value); upd('fieldFilter', '') }}>
                       {subjects.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                   </div>
                 </div>
 
-                <div className="form-row form-row-2" style={{marginBottom:20}}>
+                {/* Row 2: 分野 + 難易度 */}
+                <div className="form-row form-row-2" style={{marginBottom:16}}>
                   <div className="field">
-                    <label className="field-label">難易度</label>
+                    <label className="field-label">
+                      分野（任意）
+                      <span className="tooltip-icon" title="特定の分野に絞ると、その分野の類似問題を重点的に検索します">?</span>
+                    </label>
+                    <select className="select" value={form.fieldFilter} onChange={e => upd('fieldFilter', e.target.value)}>
+                      <option value="">全ての分野</option>
+                      {filteredFields.map(f => (
+                        <option key={f.code || f.id} value={f.code || f.name}>
+                          {f.name}{f.problem_count > 0 ? ` (${f.problem_count}問)` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="field-hint">分野を選ぶとRAG検索の精度が上がります</div>
+                  </div>
+                  <div className="field">
+                    <label className="field-label">
+                      難易度
+                      <span className="tooltip-icon" title="易: 基礎〜標準 / 普通: 標準〜やや応用 / 難: 応用〜発展">?</span>
+                    </label>
                     <select className="select" value={form.difficulty} onChange={e => upd('difficulty', e.target.value)}>
                       {difficulties.map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
+                    <div className="field-hint"><strong>易</strong>: 基本 | <strong>普通</strong>: 標準 | <strong>難</strong>: 応用</div>
                   </div>
+                </div>
+
+                {/* Row 3: 問題数 + 出力形式 */}
+                <div className="form-row form-row-2" style={{marginBottom:20}}>
                   <div className="field">
                     <label className="field-label">問題数</label>
                     <input className="input" type="number" min={1} max={10} value={form.numQuestions}
                       onChange={e => upd('numQuestions', Number(e.target.value))} />
                   </div>
+                  <div className="field">
+                    <label className="field-label">
+                      出力形式
+                      <span className="tooltip-icon" title="生成されるPDFのレイアウト形式を選択します">?</span>
+                    </label>
+                    <select className="select" value={form.latexPreset} onChange={e => upd('latexPreset', e.target.value)}>
+                      {latexPresets.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                    {currentPreset && (
+                      <div className="field-hint">{currentPreset.description}</div>
+                    )}
+                  </div>
                 </div>
 
+                {/* File upload */}
                 <div className="field">
-                  <label className="field-label">参照ファイル（任意）</label>
+                  <label className="field-label">
+                    参照ファイル（任意）
+                    <span className="tooltip-icon" title="似た形式の問題を作りたい場合、元の問題ファイルをアップロードすると精度が上がります">?</span>
+                  </label>
                   <div
                     className={`upload-area ${form.fileName ? 'has-file' : ''} ${dragOver ? 'drag-over' : ''}`}
                     onClick={() => fileRef.current?.click()}
@@ -319,7 +438,6 @@ export default function App() {
                       </>
                     )}
                   </div>
-                  <div className="field-hint">似た形式の問題を作りたい場合、元の問題ファイルをアップロードすると精度が上がります</div>
                 </div>
 
                 <button className="btn btn-primary btn-block" style={{marginTop:8}} onClick={generatePrompt} disabled={loading || !form.templateId}>
@@ -336,31 +454,50 @@ export default function App() {
                 <div className="card-header">
                   <span className="card-emoji">📋</span>
                   <div className="card-title">プロンプトをコピーしてAIに依頼</div>
-                  <div className="card-desc">外部のAI（ChatGPT・Claude等）を使ってLaTeXコードを生成します</div>
+                  <div className="card-desc">外部のAI（ChatGPT・Claude等）にプロンプトを渡してLaTeXコードを生成してもらいます</div>
                 </div>
 
                 <div className="instruction-steps">
                   <div className="instruction-step">
                     <span className="instruction-num">1</span>
-                    <div>下の<strong>「プロンプトをコピー」</strong>ボタンでコピー</div>
+                    <div>
+                      <strong>「プロンプトをコピー」ボタンを押す</strong>
+                      <div className="step-detail">指示文がクリップボードにコピーされます</div>
+                    </div>
                   </div>
                   <div className="instruction-step">
                     <span className="instruction-num">2</span>
-                    <div>外部AIを開いて貼り付け、実行する</div>
+                    <div>
+                      <strong>外部AI（ChatGPT / Claude）を開く</strong>
+                      <div className="step-detail">下のリンクから開けます。無料プランでも利用可能です。</div>
+                    </div>
                   </div>
                   <div className="instruction-step">
                     <span className="instruction-num">3</span>
-                    <div>AIの出力（LaTeXコード）をコピーしておく</div>
+                    <div>
+                      <strong>コピーしたプロンプトを貼り付けて送信</strong>
+                      <div className="step-detail">AIが数秒〜数十秒でLaTeXコードを生成します</div>
+                    </div>
+                  </div>
+                  <div className="instruction-step">
+                    <span className="instruction-num">4</span>
+                    <div>
+                      <strong>AIの出力（LaTeXコード全体）をコピー</strong>
+                      <div className="step-detail"><code>\documentclass</code> から <code>{`\\end{document}`}</code> まで全てコピーしてください</div>
+                    </div>
                   </div>
                 </div>
 
                 <div className="prompt-preview">{prompt}</div>
 
-                {ragCtx?.chunk_count > 0 && (
-                  <div style={{textAlign:'center', marginBottom:16}}>
-                    <span className="rag-badge">📚 {ragCtx.chunk_count}件の類似問題を参照しています</span>
-                  </div>
-                )}
+                <div style={{display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap', marginBottom:16}}>
+                  {ragCtx?.chunk_count > 0 && (
+                    <span className="rag-badge">📚 {ragCtx.chunk_count}件の類似問題を参照</span>
+                  )}
+                  {currentPreset && (
+                    <span className="rag-badge">📄 形式: {currentPreset.name}</span>
+                  )}
+                </div>
 
                 <div style={{marginBottom:16}}>
                   <button className="btn btn-primary btn-block" onClick={copyPrompt}>
@@ -395,16 +532,41 @@ export default function App() {
               <div className="card anim-fade-up">
                 <div className="card-header">
                   <span className="card-emoji">✨</span>
-                  <div className="card-title">LLMの出力を貼り付け</div>
-                  <div className="card-desc">LLMが生成したLaTeXコードをそのまま貼り付けてPDFを作成します</div>
+                  <div className="card-title">AIの出力を貼り付けてPDF生成</div>
+                  <div className="card-desc">ChatGPT/Claude が生成したLaTeXコードを貼り付けてPDFに変換します</div>
                 </div>
 
-                <div className="tip">
-                  <span className="tip-icon">📌</span>
-                  <div>ChatGPT/Claude の出力をまるごとコピーして、下のテキストエリアに貼り付けてください。<br /><code>\documentclass</code> から <code>\end{'{document}'}</code> まで全体を含めてOKです。<br />※ コードブロック記号（<code>```</code>）は不要です。LaTeXコードのみ貼り付けてください。</div>
+                <div className="tip tip-warning">
+                  <span className="tip-icon">⚠️</span>
+                  <div>
+                    <strong>貼り付けるもの：</strong>AIが出力したLaTeXコード全体<br />
+                    <strong>含めるもの：</strong><code>{`\\documentclass{article}`}</code> から <code>{`\\end{document}`}</code> まで<br />
+                    <strong>含めないもの：</strong>コードブロック記号（<code>```latex</code> や <code>```</code>）は削除してください
+                  </div>
                 </div>
 
-                <div className="field">
+                <details className="examples-section">
+                  <summary>正しい貼り付け例を見る</summary>
+                  <div className="example-code">
+                    <div className="example-label good">正しい例</div>
+                    <pre>{`\\documentclass{article}
+\\usepackage{amsmath}
+\\begin{document}
+\\section{問題}
+問1: ...
+\\end{document}`}</pre>
+                  </div>
+                  <div className="example-code">
+                    <div className="example-label bad">間違った例（コードブロック記号付き）</div>
+                    <pre>{`\`\`\`latex
+\\documentclass{article}
+...
+\\end{document}
+\`\`\``}</pre>
+                  </div>
+                </details>
+
+                <div className="field" style={{marginTop:16}}>
                   <label className="field-label">LaTeX コード（AIの出力）</label>
                   <textarea
                     className="input"
@@ -437,7 +599,7 @@ export default function App() {
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                   </div>
-                  <div className="card-title" style={{fontSize:22, marginBottom:8}}>PDF作成完了！🎉</div>
+                  <div className="card-title" style={{fontSize:22, marginBottom:8}}>PDF作成完了！</div>
                   <div className="card-desc" style={{marginBottom:32}}>
                     問題PDFが正常に生成されました。<br />
                     下のボタンからダウンロード・閲覧できます。
@@ -472,6 +634,61 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* ── Floating Help Button ── */}
+      <button className="help-floating" onClick={() => setShowHelp(true)} title="ヘルプ">
+        <Ico.Help />
+      </button>
+
+      {/* ── Help Modal ── */}
+      {showHelp && (
+        <div className="help-modal-overlay" onClick={() => setShowHelp(false)}>
+          <div className="help-modal" onClick={e => e.stopPropagation()}>
+            <div className="help-header">
+              <h2>ヘルプ・よくある質問</h2>
+              <button onClick={() => setShowHelp(false)}>×</button>
+            </div>
+            <div className="help-content">
+              <dl>
+                <dt>Q: 外部AIは必須ですか？</dt>
+                <dd>はい。このシステムは「問題データベース検索」と「PDF生成」を担当します。
+                    問題の生成はChatGPTやClaude等の外部AIサービスが行います。</dd>
+
+                <dt>Q: ChatGPTやClaudeは無料で使えますか？</dt>
+                <dd>はい、無料プランがあります。ただし利用回数に制限がある場合があります。</dd>
+
+                <dt>Q: PDFがうまく生成されません</dt>
+                <dd>以下を確認してください：
+                    (1) コードブロック記号（```）を削除したか
+                    (2) <code>\documentclass</code> から <code>{`\\end{document}`}</code> まで含まれているか
+                    (3) LaTeX構文にエラーがないか</dd>
+
+                <dt>Q: テンプレートとは何ですか？</dt>
+                <dd>テンプレートは問題生成の「型」です。科目・分野ごとに最適化された出題指示が含まれており、
+                    AIがより的確な問題を生成できるようになります。</dd>
+
+                <dt>Q: 「出力形式」は何を選べばいいですか？</dt>
+                <dd>
+                  <strong>試験問題</strong> - 定期テスト風のフォーマット（配点付き）<br/>
+                  <strong>学習プリント</strong> - 演習用ワークシート（名前欄付き）<br/>
+                  <strong>一問一答カード</strong> - 暗記用フラッシュカード<br/>
+                  <strong>模試</strong> - 制限時間付きの模擬試験<br/>
+                  <strong>レポート・解説</strong> - 解説重視のレポート<br/>
+                  <strong>シンプル</strong> - 最小限の装飾
+                </dd>
+
+                <dt>Q: 分野フィルタは何のためですか？</dt>
+                <dd>分野を指定すると、データベースからその分野の類似問題だけを検索します。
+                    これにより、より的確な参考問題がプロンプトに含まれ、生成品質が向上します。</dd>
+
+                <dt>Q: ファイルアップロードは必須ですか？</dt>
+                <dd>いいえ、任意です。似た形式の問題を作りたい場合にアップロードすると、
+                    そのスタイルを参考にした問題が生成されます。</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

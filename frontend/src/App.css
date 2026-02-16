@@ -590,6 +590,266 @@ textarea.input {
   border-color: var(--c-secondary);
 }
 
+/* ==========================================
+   How It Works (collapsible)
+   ========================================== */
+.how-it-works {
+  margin: 0 0 16px;
+  background: #EBF5FB;
+  border-radius: var(--radius-md);
+  border: 1px solid #AED6F1;
+  overflow: hidden;
+}
+.how-summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--c-primary);
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.how-summary::before {
+  content: '▸';
+  transition: transform 0.2s;
+  font-size: 12px;
+}
+details[open] > .how-summary::before {
+  transform: rotate(90deg);
+}
+.how-summary::-webkit-details-marker { display: none; }
+.how-summary:hover { background: rgba(46,134,193,0.06); }
+.how-content {
+  padding: 0 16px 16px;
+  line-height: 1.7;
+  font-size: 14px;
+  color: var(--c-text);
+}
+.how-content h3 {
+  margin-top: 14px;
+  margin-bottom: 4px;
+  color: var(--c-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+.how-content ol {
+  margin-left: 20px;
+  margin-top: 4px;
+}
+.how-content ol li { margin-bottom: 6px; }
+.how-content p { margin-top: 4px; }
+
+/* ==========================================
+   Tooltip Icon
+   ========================================== */
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  background: var(--c-text-muted);
+  border-radius: 50%;
+  cursor: help;
+  vertical-align: middle;
+  transition: background 0.2s;
+}
+.tooltip-icon:hover {
+  background: var(--c-secondary);
+}
+
+/* ==========================================
+   Step Detail (sub-text in instructions)
+   ========================================== */
+.step-detail {
+  font-size: 13px;
+  color: var(--c-text-muted);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* ==========================================
+   Tip Variants
+   ========================================== */
+.tip-warning {
+  background: #FFF8E1;
+  border-color: #FFD54F;
+  color: #8B6914;
+}
+
+/* ==========================================
+   Examples Section (collapsible)
+   ========================================== */
+.examples-section {
+  margin-top: 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.examples-section > summary {
+  padding: 10px 14px;
+  background: #F8FAFC;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--c-text-secondary);
+  user-select: none;
+  list-style: none;
+}
+.examples-section > summary::-webkit-details-marker { display: none; }
+.examples-section > summary:hover { background: #F1F5F9; }
+
+.example-code {
+  margin: 12px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--c-border-light);
+}
+.example-label {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.example-label.good {
+  background: var(--c-success-soft);
+  color: #15803D;
+}
+.example-label.bad {
+  background: var(--c-danger-soft);
+  color: #B91C1C;
+}
+.example-code pre {
+  margin: 0;
+  padding: 12px;
+  background: #F8FAFC;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ==========================================
+   Progress Percentage
+   ========================================== */
+.progress-percentage {
+  text-align: center;
+  font-size: 12px;
+  color: var(--c-text-muted);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+/* ==========================================
+   Floating Help Button
+   ========================================== */
+.help-floating {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--c-primary), var(--c-secondary));
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(26,82,118,0.3);
+  transition: all 0.2s var(--ease);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.help-floating:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px rgba(26,82,118,0.4);
+}
+
+/* ==========================================
+   Help Modal
+   ========================================== */
+.help-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: fadeIn 0.2s ease both;
+}
+.help-modal {
+  background: white;
+  border-radius: var(--radius-xl);
+  max-width: 560px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-xl);
+  animation: scaleIn 0.3s var(--ease) both;
+}
+.help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--c-border-light);
+  position: sticky;
+  top: 0;
+  background: white;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.help-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--c-primary);
+}
+.help-header button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+.help-header button:hover { background: var(--c-bg); }
+.help-content {
+  padding: 20px 24px;
+}
+.help-content dl { margin: 0; }
+.help-content dt {
+  font-weight: 700;
+  margin-top: 16px;
+  color: var(--c-primary);
+  font-size: 14px;
+}
+.help-content dt:first-child { margin-top: 0; }
+.help-content dd {
+  margin: 6px 0 0 0;
+  padding-left: 0;
+  color: var(--c-text-secondary);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
 /* Safe area for mobile */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .app-shell { padding-bottom: env(safe-area-inset-bottom); }

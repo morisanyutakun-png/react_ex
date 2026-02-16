@@ -1385,6 +1385,8 @@ class RenderTemplateRequest(BaseModel):
     # Source text: user-provided problem text (extracted from PDF/image/text) to use as
     # reference for generating similar problems. The LLM will analyze this and create variants.
     source_text: Optional[str] = None
+    # LaTeX output format preset: controls prompt instructions and PDF preamble
+    latex_preset: Optional[str] = 'exam'
 
 
 @app.post('/api/render_template')
@@ -1480,26 +1482,42 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 conn = connect_db()
                 cur = conn.cursor()
 
-                # Build optional WHERE clause for subject/field filtering via metadata JSON
+                # Build optional WHERE clause for subject/field filtering
                 subject_f = req.subject_filter or req.subject or ''
                 field_f = getattr(req, 'field_filter', None) or ''
                 where_parts = []
                 params_list = []
 
+                # --- Field ID filtering (via fields table) ---
+                if field_f and not getattr(conn, '_is_sqlite', False):
+                    # Try to resolve field_filter to a field_id
+                    try:
+                        cur_f = conn.cursor()
+                        cur_f.execute(
+                            "SELECT id FROM fields WHERE field_code = %s OR field_name = %s LIMIT 1",
+                            (field_f, field_f)
+                        )
+                        fr = cur_f.fetchone()
+                        cur_f.close()
+                        if fr:
+                            where_parts.append("field_id = %s")
+                            params_list.append(fr[0])
+                            field_f = ''  # already handled
+                    except Exception:
+                        pass
+
                 if subject_f and getattr(conn, '_is_sqlite', False):
-                    # SQLite: metadata is stored as JSON text, use LIKE
                     where_parts.append("metadata LIKE %s")
                     params_list.append(f'%"subject"%{subject_f}%')
                 elif subject_f:
-                    # PostgreSQL: metadata is JSONB
-                    where_parts.append("metadata->>'subject' = %s")
+                    where_parts.append("subject = %s")
                     params_list.append(subject_f)
 
                 if field_f and getattr(conn, '_is_sqlite', False):
                     where_parts.append("metadata LIKE %s")
                     params_list.append(f'%"field"%{field_f}%')
                 elif field_f:
-                    where_parts.append("metadata->>'field' = %s")
+                    where_parts.append("topic = %s")
                     params_list.append(field_f)
 
                 where_sql = ('WHERE ' + ' AND '.join(where_parts)) if where_parts else ''
@@ -1847,6 +1865,15 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         f"--- 参照元 ---\n{source_text.strip()}\n--- 参照元ここまで ---\n"
                     )
 
+                # --- Load LaTeX preset prompt instruction if available ---
+                preset_id = getattr(req, 'latex_preset', 'exam') or 'exam'
+                preset_data = _load_latex_preset(preset_id)
+                preset_prompt_instr = ''
+                preset_name = '試験問題'
+                if preset_data and preset_data.get('prompt_instruction'):
+                    preset_prompt_instr = preset_data['prompt_instruction']
+                    preset_name = preset_data.get('name', preset_id)
+
                 # Enhanced LaTeX skeleton with professional layout
                 latex_skeleton = (
                     "\\documentclass[a4paper,11pt]{article}\n"
@@ -1935,6 +1962,13 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     "O) 難易度の指示に正確に従うこと。\n"
                 )
 
+                # --- Append preset-specific output format instruction ---
+                if preset_prompt_instr:
+                    latex_instr += (
+                        f"\n=== 出力形式: {preset_name} ===\n"
+                        f"{preset_prompt_instr}\n"
+                    )
+
                 # Reassemble the prompt: Skeleton first (as a target), then Instructions
                 prompt = f"以下のLaTeXスケルトンを完成させてください:\n\n{latex_skeleton}\n\n{latex_instr}{source_block}\n\n【指示内容】\n{orig_prompt_body}"
     except Exception as e:
@@ -1976,6 +2010,121 @@ def api_list_templates():
             item['prompt'] = v.get('prompt') or ''
         out.append(item)
     return JSONResponse({'templates': out})
+
+
+@app.get('/api/latex_presets')
+def api_list_latex_presets():
+    """Return available LaTeX output format presets."""
+    # Hardcoded fallback for SQLite or when DB table doesn't exist
+    fallback_presets = [
+        {'id': 'exam', 'name': '試験問題', 'description': '定期テスト・入試形式（配点・解答欄付き）'},
+        {'id': 'worksheet', 'name': '学習プリント', 'description': '演習用ワークシート（名前欄・日付欄付き）'},
+        {'id': 'flashcard', 'name': '一問一答カード', 'description': 'フラッシュカード形式'},
+        {'id': 'mock_exam', 'name': '模試', 'description': '模擬試験形式（制限時間・注意事項・大問構成）'},
+        {'id': 'report', 'name': 'レポート・解説', 'description': '解説重視のレポート形式'},
+        {'id': 'minimal', 'name': 'シンプル', 'description': '最小限のプレーンな形式'},
+    ]
+    try:
+        conn = connect_db()
+        if not getattr(conn, '_is_sqlite', False):
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, name, description, metadata
+                FROM latex_presets
+                WHERE is_active = true
+                ORDER BY created_at
+            """)
+            rows = cur.fetchall()
+            if rows:
+                presets = []
+                for r in rows:
+                    meta = r[3] or {}
+                    if isinstance(meta, str):
+                        try:
+                            meta = json.loads(meta)
+                        except Exception:
+                            meta = {}
+                    presets.append({'id': r[0], 'name': r[1], 'description': r[2] or '', 'metadata': meta})
+                cur.close()
+                conn.close()
+                return JSONResponse({'presets': presets})
+            cur.close()
+        conn.close()
+    except Exception as e:
+        logger.warning('Failed to load latex presets from DB: %s', e)
+    return JSONResponse({'presets': fallback_presets})
+
+
+def _load_latex_preset(preset_id: str):
+    """Load a single LaTeX preset from DB. Returns dict with preamble, document_wrapper, prompt_instruction or None."""
+    try:
+        conn = connect_db()
+        if not getattr(conn, '_is_sqlite', False):
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT preamble, document_wrapper, prompt_instruction, name
+                FROM latex_presets
+                WHERE id = %s AND is_active = true
+            """, (preset_id,))
+            row = cur.fetchone()
+            cur.close()
+            conn.close()
+            if row:
+                return {
+                    'preamble': row[0],
+                    'document_wrapper': row[1],
+                    'prompt_instruction': row[2],
+                    'name': row[3],
+                }
+        else:
+            conn.close()
+    except Exception as e:
+        logger.warning('Failed to load latex preset %s: %s', preset_id, e)
+    return None
+
+
+@app.get('/api/fields')
+def api_list_fields():
+    """Return available fields for filtering, grouped by subject."""
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        if not getattr(conn, '_is_sqlite', False):
+            cur.execute("""
+                SELECT f.id, f.field_code, f.subject, f.field_name,
+                       COUNT(p.id) as problem_count
+                FROM fields f
+                LEFT JOIN problems p ON p.field_id = f.id
+                WHERE f.is_active = true
+                GROUP BY f.id, f.field_code, f.subject, f.field_name
+                ORDER BY f.subject, f.field_name
+            """)
+            rows = cur.fetchall()
+            fields = [
+                {'id': r[0], 'code': r[1], 'subject': r[2], 'name': r[3], 'problem_count': r[4]}
+                for r in rows
+            ]
+        else:
+            # SQLite fallback: use subject/topic from problems
+            cur.execute("""
+                SELECT subject, topic, COUNT(*) as cnt
+                FROM problems
+                WHERE subject IS NOT NULL AND subject != ''
+                GROUP BY subject, topic
+                ORDER BY subject, topic
+            """)
+            rows = cur.fetchall()
+            fields = [
+                {'id': i + 1, 'code': f"{r[0]}_{r[1] or 'general'}", 'subject': r[0],
+                 'name': r[1] if r[1] else r[0] + '（全般）', 'problem_count': r[2]}
+                for i, r in enumerate(rows)
+            ]
+        cur.close()
+        conn.close()
+        return JSONResponse({'fields': fields})
+    except Exception as e:
+        logger.warning('Failed to load fields: %s', e)
+        return JSONResponse({'fields': []})
 
 
 @app.post('/api/template_render')
@@ -3419,12 +3568,46 @@ def api_get_generated_pdf(token: str):
 
 # Template loader
 def _load_templates():
-    """Load templates from backend/templates.json into global TEMPLATES dict.
+    """Load templates from DB (PostgreSQL) first, then fallback to templates.json.
 
-    Handles files that may accidentally contain multiple JSON objects concatenated.
+    DB storage ensures templates survive deploys on Render.
     """
     global TEMPLATES
     TEMPLATES = {}
+
+    # --- Try DB first (PostgreSQL only) ---
+    try:
+        conn = connect_db()
+        if not getattr(conn, '_is_sqlite', False):
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, name, description, prompt, metadata
+                FROM templates
+                WHERE is_active = true
+                ORDER BY created_at DESC
+            """)
+            rows = cur.fetchall()
+            for row in rows:
+                meta = row[4] or {}
+                if isinstance(meta, str):
+                    try:
+                        meta = json.loads(meta)
+                    except Exception:
+                        meta = {}
+                TEMPLATES[row[0]] = {
+                    'name': row[1],
+                    'description': row[2],
+                    'prompt': row[3],
+                    'metadata': meta,
+                }
+            cur.close()
+            conn.close()
+            if TEMPLATES:
+                return TEMPLATES
+    except Exception as e:
+        logger.warning('Failed to load templates from DB, falling back to JSON: %s', e)
+
+    # --- Fallback: load from JSON file ---
     cand_paths = [os.path.join(THIS_DIR, 'templates.json'), os.path.join(PROJECT_ROOT, 'backend', 'templates.json')]
     for p in cand_paths:
         try:
@@ -3437,7 +3620,6 @@ def _load_templates():
                     TEMPLATES = data
                     return TEMPLATES
             except Exception:
-                # attempt to extract top-level JSON objects and merge
                 objs = re.findall(r"\{[\s\S]*?\}(?=\s*\{|\s*$)", s)
                 for o in objs:
                     try:
@@ -3450,11 +3632,58 @@ def _load_templates():
                     return TEMPLATES
         except Exception:
             continue
-    # if not found or parse failed, leave empty dict
     TEMPLATES = {}
     return TEMPLATES
 
+
+def _seed_templates_to_db():
+    """On startup, import templates.json into DB if templates table is empty."""
+    try:
+        conn = connect_db()
+        if getattr(conn, '_is_sqlite', False):
+            conn.close()
+            return
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM templates")
+        count = cur.fetchone()[0]
+        if count > 0:
+            cur.close()
+            conn.close()
+            return
+        # Load from JSON
+        json_path = os.path.join(THIS_DIR, 'templates.json')
+        if not os.path.exists(json_path):
+            json_path = os.path.join(PROJECT_ROOT, 'backend', 'templates.json')
+        if not os.path.exists(json_path):
+            cur.close()
+            conn.close()
+            return
+        with open(json_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        for tid, tdata in data.items():
+            cur.execute("""
+                INSERT INTO templates (id, name, description, prompt, metadata)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+            """, (
+                tid,
+                tdata.get('name', ''),
+                tdata.get('description', ''),
+                tdata.get('prompt', ''),
+                json.dumps(tdata.get('metadata', {}), ensure_ascii=False),
+            ))
+        conn.commit()
+        cur.close()
+        conn.close()
+        logger.info('Seeded %d templates from JSON to DB', len(data))
+    except Exception as e:
+        logger.warning('Failed to seed templates to DB: %s', e)
+
 # Load templates at import time so /api/templates has content on first call
+try:
+    _seed_templates_to_db()
+except Exception:
+    pass
 try:
     _load_templates()
 except Exception:
@@ -3506,16 +3735,42 @@ def api_get_template(template_id: str):
 
 @app.post('/api/template')
 def api_save_template(req: TemplateSaveRequest = Body(...)):
-    """Save or update a template to backend/templates.json (overwrites file atomically).
-
-    Note: this endpoint is intended for local development / trusted use only.
-    """
+    """Save or update a template. Persists to DB (PostgreSQL) and JSON file as backup."""
     if not req.id or not isinstance(req.id, str):
         return JSONResponse({'error': 'invalid_id'}, status_code=400)
     try:
-        # load current templates and update in-memory dict
+        # --- Save to DB (PostgreSQL) ---
+        db_saved = False
+        try:
+            conn = connect_db()
+            if not getattr(conn, '_is_sqlite', False):
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT INTO templates (id, name, description, prompt, metadata, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, now())
+                    ON CONFLICT (id) DO UPDATE SET
+                        name = COALESCE(EXCLUDED.name, templates.name),
+                        description = COALESCE(EXCLUDED.description, templates.description),
+                        prompt = COALESCE(EXCLUDED.prompt, templates.prompt),
+                        metadata = COALESCE(EXCLUDED.metadata, templates.metadata),
+                        updated_at = now()
+                """, (
+                    req.id,
+                    req.name or '',
+                    req.description or '',
+                    req.prompt or '',
+                    json.dumps(req.metadata or {}, ensure_ascii=False),
+                ))
+                conn.commit()
+                cur.close()
+                conn.close()
+                db_saved = True
+        except Exception as e:
+            logger.warning('Failed to save template to DB: %s', e)
+
+        # --- Also save to JSON file as backup ---
         tpls = _load_templates() or {}
-        tpls = dict(tpls)  # make a shallow copy
+        tpls = dict(tpls)
         entry = tpls.get(req.id, {}) if isinstance(tpls.get(req.id), dict) else {}
         if req.name is not None:
             entry['name'] = req.name
@@ -3527,7 +3782,6 @@ def api_save_template(req: TemplateSaveRequest = Body(...)):
             entry['metadata'] = req.metadata
         tpls[req.id] = entry
 
-        # write atomically to backend/templates.json (create a backup first)
         target = os.path.join(THIS_DIR, 'templates.json')
         try:
             if os.path.exists(target):
@@ -3535,17 +3789,16 @@ def api_save_template(req: TemplateSaveRequest = Body(...)):
                 shutil.copyfile(target, bak)
         except Exception:
             logger.exception('Failed to backup templates.json')
-        # write pretty-printed JSON
         try:
             with open(target, 'w', encoding='utf-8') as f:
                 json.dump(tpls, f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.exception('Failed to write templates.json')
-            return _dev_error_response('failed_to_write_templates', e, status_code=500)
+            if not db_saved:
+                return _dev_error_response('failed_to_write_templates', e, status_code=500)
 
-        # update in-memory TEMPLATES
         globals()['TEMPLATES'] = tpls
-        return JSONResponse({'saved': True, 'id': req.id})
+        return JSONResponse({'saved': True, 'id': req.id, 'db_saved': db_saved})
     except Exception as e:
         logger.exception('failed to save template')
         return _dev_error_response('template_save_failed', e, status_code=500)
