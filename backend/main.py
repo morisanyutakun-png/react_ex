@@ -113,6 +113,12 @@ except Exception:
     # optional router; ignore if not present
     pass
 
+try:
+    from backend.routers.db_editor import router as db_editor_router
+    app.include_router(db_editor_router)
+except Exception:
+    pass
+
 class IngestJSON(BaseModel):
     latex: Optional[str] = None
     plain_text: Optional[str] = None

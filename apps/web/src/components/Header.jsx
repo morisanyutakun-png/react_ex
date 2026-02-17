@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: '/dev', label: '開発', icon: <Icons.Dev className="w-4 h-4" /> },
   { href: '/data', label: 'データ', icon: <Icons.Data className="w-4 h-4" /> },
   { href: '/search', label: '検索', icon: <Icons.Search className="w-4 h-4" /> },
+  { href: '/db-editor', label: 'DB編集', icon: <Icons.Table className="w-4 h-4" /> },
 ];
 
 export default function Header() {

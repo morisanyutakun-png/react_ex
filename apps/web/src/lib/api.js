@@ -196,4 +196,39 @@ export async function generateSimilarProblem(problemStem, options = {}) {
   });
 }
 
+// ── DB Editor ─────────────────────────────────────
+
+export async function fetchDbTables() {
+  return apiFetch('/api/db/tables');
+}
+
+export async function fetchDbSchema(table) {
+  return apiFetch(`/api/db/${table}/schema`);
+}
+
+export async function fetchDbRows(table, params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return apiFetch(`/api/db/${table}/rows${query ? '?' + query : ''}`);
+}
+
+export async function updateDbRow(table, id, data) {
+  return apiFetch(`/api/db/${table}/rows/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ data }),
+  });
+}
+
+export async function createDbRow(table, data) {
+  return apiFetch(`/api/db/${table}/rows`, {
+    method: 'POST',
+    body: JSON.stringify({ data }),
+  });
+}
+
+export async function deleteDbRow(table, id) {
+  return apiFetch(`/api/db/${table}/rows/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 
