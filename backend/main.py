@@ -2622,6 +2622,131 @@ def ask(req: AskRequest = Body(...)):
     return {"answer": answer, "contexts": contexts}
 
 
+# ── Gemini LLM → PDF ワンクリック生成 ──────────────────────────
+class GeminiGenerateRequest(BaseModel):
+    prompt: str
+    latex_preset: Optional[str] = 'exam'
+    title: Optional[str] = 'Generated Problems'
+
+
+@app.post('/api/generate_with_llm')
+def generate_with_llm(req: GeminiGenerateRequest = Body(...)):
+    """Call Gemini 2.5 Flash to generate LaTeX from a prompt, then compile to PDF.
+
+    Returns JSON with keys: latex (raw LaTeX), pdf_url (if compilation succeeded), error (if any).
+    """
+    gemini_key = os.getenv('GEMINI_API_KEY')
+    if not gemini_key:
+        return JSONResponse({'error': 'GEMINI_API_KEY が設定されていません。.env に GEMINI_API_KEY を追加してください。'}, status_code=500)
+
+    if not req.prompt or not req.prompt.strip():
+        raise HTTPException(status_code=400, detail='prompt is required')
+
+    # Build Gemini system instruction for LaTeX generation
+    system_instruction = (
+        'あなたは数学・理科の問題を LaTeX 形式で出力するアシスタントです。\n'
+        '以下のルールを厳守してください:\n'
+        '1. 出力は \\documentclass から \\end{document} までの完全な LaTeX 文書のみ。\n'
+        '2. 余分な説明やマークダウンは一切出力しない。コードブロック(```)で囲まない。\n'
+        '3. 日本語を含む場合は luatexja または CJK パッケージを使用すること。\n'
+        '4. 数式は amsmath, amssymb を使用。\n'
+        '5. 問題文と解答・解説を明確に分けて記載すること。\n'
+        '6. 数学の計算は必ず自分で検算してから出力すること。計算ミスは許されない。\n'
+        '7. 以下のプリアンブルを必ず使用すること:\n'
+        '\\documentclass[12pt,a4paper]{ltjsarticle}\n'
+        '\\usepackage{amsmath,amssymb,mathtools}\n'
+        '\\usepackage{geometry}\n'
+        '\\geometry{margin=2cm}\n'
+    )
+
+    # Call Gemini 2.5 Flash API
+    gemini_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent'
+    headers = {'Content-Type': 'application/json'}
+    gemini_payload = {
+        'contents': [
+            {
+                'role': 'user',
+                'parts': [{'text': req.prompt}]
+            }
+        ],
+        'systemInstruction': {
+            'parts': [{'text': system_instruction}]
+        },
+        'generationConfig': {
+            'temperature': 0.3,
+            'maxOutputTokens': 8192,
+        }
+    }
+
+    try:
+        resp = requests.post(
+            f'{gemini_url}?key={gemini_key}',
+            headers=headers,
+            json=gemini_payload,
+            timeout=120
+        )
+        resp.raise_for_status()
+        body = resp.json()
+    except requests.exceptions.Timeout:
+        return JSONResponse({'error': 'Gemini API がタイムアウトしました。再度お試しください。'}, status_code=504)
+    except requests.exceptions.RequestException as e:
+        logger.exception('Gemini API call failed')
+        error_detail = str(e)
+        try:
+            error_body = resp.json() if resp else {}
+            error_detail = error_body.get('error', {}).get('message', str(e))
+        except Exception:
+            pass
+        return JSONResponse({'error': f'Gemini API エラー: {error_detail}'}, status_code=502)
+
+    # Extract text from Gemini response
+    try:
+        candidates = body.get('candidates', [])
+        if not candidates:
+            return JSONResponse({'error': 'Gemini からの応答が空です', 'raw': body}, status_code=500)
+        parts = candidates[0].get('content', {}).get('parts', [])
+        raw_text = ''.join(p.get('text', '') for p in parts).strip()
+    except Exception as e:
+        return JSONResponse({'error': f'Gemini レスポンスの解析に失敗: {e}', 'raw': body}, status_code=500)
+
+    if not raw_text:
+        return JSONResponse({'error': 'Gemini からのテキスト出力が空です'}, status_code=500)
+
+    # Strip markdown code fences if present
+    latex_text = raw_text
+    if latex_text.startswith('```'):
+        lines = latex_text.split('\n')
+        # Remove first line (```latex or ```) and last line (```)
+        if lines[-1].strip() == '```':
+            lines = lines[1:-1]
+        elif lines[0].strip().startswith('```'):
+            lines = lines[1:]
+        latex_text = '\n'.join(lines).strip()
+
+    # Now compile LaTeX to PDF via the existing generate_pdf infrastructure
+    # We reuse the same logic by calling the endpoint internally
+    try:
+        from fastapi.testclient import TestClient
+        internal = TestClient(app)
+        pdf_resp = internal.post('/api/generate_pdf', json={
+            'latex': latex_text,
+            'title': req.title or 'Generated Problems',
+            'return_url': True,
+        })
+        pdf_data = pdf_resp.json() if pdf_resp.headers.get('content-type', '').startswith('application/json') else {}
+    except Exception as e:
+        logger.exception('Internal PDF generation failed')
+        pdf_data = {'error': f'PDF 生成失敗: {e}'}
+
+    result = {
+        'latex': latex_text,
+        'pdf_url': pdf_data.get('pdf_url'),
+        'pdf_error': pdf_data.get('error'),
+        'model': 'gemini-2.5-flash-preview-05-20',
+    }
+    return JSONResponse(result)
+
+
 @app.post('/api/generate_pdf')
 def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
     """Generate a PDF from an array of generated items. Payload: { generated: [ {latex, stem, explanation?} ], title?: str }
