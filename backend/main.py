@@ -2660,7 +2660,7 @@ def generate_with_llm(req: GeminiGenerateRequest = Body(...)):
     )
 
     # Call Gemini 2.5 Flash API
-    gemini_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent'
+    gemini_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
     headers = {'Content-Type': 'application/json'}
     gemini_payload = {
         'contents': [
@@ -2742,7 +2742,7 @@ def generate_with_llm(req: GeminiGenerateRequest = Body(...)):
         'latex': latex_text,
         'pdf_url': pdf_data.get('pdf_url'),
         'pdf_error': pdf_data.get('error'),
-        'model': 'gemini-2.5-flash-preview-05-20',
+        'model': 'gemini-2.0-flash',
     }
     return JSONResponse(result)
 
