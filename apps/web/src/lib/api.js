@@ -240,13 +240,13 @@ export async function deleteDbRow(table, id) {
   });
 }
 
-// ── Gemini LLM → PDF ワンクリック生成 ──────────────
+// ── Groq Cloud LLM → PDF ワンクリック生成 ──────────────
 
 export async function generateWithLlm(params) {
   return apiFetch('/api/generate_with_llm', {
     method: 'POST',
     body: JSON.stringify(params),
-    timeout: 180000, // Gemini + PDF compilation can take time
+    timeout: 180000, // LLM + PDF compilation can take time
   });
 }
 

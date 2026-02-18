@@ -2622,27 +2622,29 @@ def ask(req: AskRequest = Body(...)):
     return {"answer": answer, "contexts": contexts}
 
 
-# ── Gemini LLM → PDF ワンクリック生成 ──────────────────────────
-class GeminiGenerateRequest(BaseModel):
+# ── Groq Cloud LLM → PDF ワンクリック生成 ──────────────────────────
+class LlmGenerateRequest(BaseModel):
     prompt: str
     latex_preset: Optional[str] = 'exam'
     title: Optional[str] = 'Generated Problems'
 
 
 @app.post('/api/generate_with_llm')
-def generate_with_llm(req: GeminiGenerateRequest = Body(...)):
-    """Call Gemini 2.5 Flash to generate LaTeX from a prompt, then compile to PDF.
+def generate_with_llm(req: LlmGenerateRequest = Body(...)):
+    """Call Groq Cloud (Llama 3.3 70B) to generate LaTeX from a prompt, then compile to PDF.
 
     Returns JSON with keys: latex (raw LaTeX), pdf_url (if compilation succeeded), error (if any).
     """
-    gemini_key = os.getenv('GEMINI_API_KEY')
-    if not gemini_key:
-        return JSONResponse({'error': 'GEMINI_API_KEY が設定されていません。.env に GEMINI_API_KEY を追加してください。'}, status_code=500)
+    groq_key = os.getenv('GROQ_API_KEY')
+    if not groq_key:
+        return JSONResponse({'error': 'GROQ_API_KEY が設定されていません。.env に GROQ_API_KEY を追加してください。'}, status_code=500)
 
     if not req.prompt or not req.prompt.strip():
         raise HTTPException(status_code=400, detail='prompt is required')
 
-    # Build Gemini system instruction for LaTeX generation
+    groq_model = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
+
+    # Build system instruction for LaTeX generation
     system_instruction = (
         'あなたは数学・理科の問題を LaTeX 形式で出力するアシスタントです。\n'
         '以下のルールを厳守してください:\n'
@@ -2659,58 +2661,56 @@ def generate_with_llm(req: GeminiGenerateRequest = Body(...)):
         '\\geometry{margin=2cm}\n'
     )
 
-    # Call Gemini 2.5 Flash API
-    gemini_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
-    headers = {'Content-Type': 'application/json'}
-    gemini_payload = {
-        'contents': [
-            {
-                'role': 'user',
-                'parts': [{'text': req.prompt}]
-            }
+    # Call Groq Cloud API (OpenAI-compatible)
+    groq_url = 'https://api.groq.com/openai/v1/chat/completions'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {groq_key}',
+    }
+    groq_payload = {
+        'model': groq_model,
+        'messages': [
+            {'role': 'system', 'content': system_instruction},
+            {'role': 'user', 'content': req.prompt},
         ],
-        'systemInstruction': {
-            'parts': [{'text': system_instruction}]
-        },
-        'generationConfig': {
-            'temperature': 0.3,
-            'maxOutputTokens': 8192,
-        }
+        'temperature': 0.3,
+        'max_tokens': 8192,
     }
 
+    resp = None
     try:
         resp = requests.post(
-            f'{gemini_url}?key={gemini_key}',
+            groq_url,
             headers=headers,
-            json=gemini_payload,
+            json=groq_payload,
             timeout=120
         )
         resp.raise_for_status()
         body = resp.json()
     except requests.exceptions.Timeout:
-        return JSONResponse({'error': 'Gemini API がタイムアウトしました。再度お試しください。'}, status_code=504)
+        return JSONResponse({'error': 'Groq API がタイムアウトしました。再度お試しください。'}, status_code=504)
     except requests.exceptions.RequestException as e:
-        logger.exception('Gemini API call failed')
+        logger.exception('Groq API call failed')
         error_detail = str(e)
         try:
-            error_body = resp.json() if resp else {}
-            error_detail = error_body.get('error', {}).get('message', str(e))
+            if resp is not None:
+                error_body = resp.json()
+                error_detail = error_body.get('error', {}).get('message', str(e))
         except Exception:
             pass
-        return JSONResponse({'error': f'Gemini API エラー: {error_detail}'}, status_code=502)
+        return JSONResponse({'error': f'Groq API エラー: {error_detail}'}, status_code=502)
 
-    # Extract text from Gemini response
+    # Extract text from Groq response (OpenAI format)
     try:
-        candidates = body.get('candidates', [])
-        if not candidates:
-            return JSONResponse({'error': 'Gemini からの応答が空です', 'raw': body}, status_code=500)
-        parts = candidates[0].get('content', {}).get('parts', [])
-        raw_text = ''.join(p.get('text', '') for p in parts).strip()
+        choices = body.get('choices', [])
+        if not choices:
+            return JSONResponse({'error': 'Groq からの応答が空です', 'raw': body}, status_code=500)
+        raw_text = choices[0].get('message', {}).get('content', '').strip()
     except Exception as e:
-        return JSONResponse({'error': f'Gemini レスポンスの解析に失敗: {e}', 'raw': body}, status_code=500)
+        return JSONResponse({'error': f'Groq レスポンスの解析に失敗: {e}', 'raw': body}, status_code=500)
 
     if not raw_text:
-        return JSONResponse({'error': 'Gemini からのテキスト出力が空です'}, status_code=500)
+        return JSONResponse({'error': 'Groq からのテキスト出力が空です'}, status_code=500)
 
     # Strip markdown code fences if present
     latex_text = raw_text
@@ -2742,7 +2742,7 @@ def generate_with_llm(req: GeminiGenerateRequest = Body(...)):
         'latex': latex_text,
         'pdf_url': pdf_data.get('pdf_url'),
         'pdf_error': pdf_data.get('error'),
-        'model': 'gemini-2.0-flash',
+        'model': groq_model,
     }
     return JSONResponse(result)
 
