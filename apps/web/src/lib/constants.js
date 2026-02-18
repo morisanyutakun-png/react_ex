@@ -61,6 +61,7 @@ export const OUTPUT_FORMAT_INSTRUCTION = `
   "explanation": "詳しい解説（途中式や考え方を含む）",
   "answer_brief": "最終的な答えの要約（1〜2文）",
   "final_answer": "-4",
+  "verification_code": "from sympy import *\\nx = symbols('x')\\nf = x**2 + 4*x\\nresult = solve(diff(f, x), x)\\nmin_val = f.subs(x, result[0])\\nprint(min_val)  # => -4",
   "checks": [
     {"desc": "検算1の説明（日本語テキスト）", "ok": true},
     {"desc": "検算2の説明（日本語テキスト）", "ok": true}
@@ -72,7 +73,14 @@ export const OUTPUT_FORMAT_INSTRUCTION = `
 
 重要な制約:
 - final_answer: 数値または短い文字列のみ（例: "-4", "3", "x=2", "A"）。説明文や括弧付き注釈は入れず、値のみにすること。
+- verification_code（数学問題は必須）: final_answer を検算するための Python コード。
+  * sympy を使って数式を定義し、計算結果を print() で出力すること。
+  * コードの最終行の print() 出力が final_answer と一致すること。
+  * 例: 微分→diff(), 積分→integrate(), 方程式→solve(), 極値→solve(diff(f,x),x) 等
+  * コードは単独で実行可能であること（import文を含める）。
+  * 数学以外の問題（英語・暗記系など）では省略可。
 - checks: 必ず2件以上。各項目は {"desc": "説明文", "ok": true/false} の形式。
+  * 少なくとも1件は verification_code の実行結果に基づく検算を含めること。
 - stem（必須）: 問題文のプレーンテキスト
 - stem_latex: LaTeX形式の問題文
 - solution_outline: 解法の概要

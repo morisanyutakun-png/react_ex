@@ -3531,7 +3531,20 @@ def api_generate_latex(req: GenerateLatexRequest = Body(...)):
             except Exception:
                 pass
 
-    return JSONResponse({'generated': generated, 'raw': raw, 'errors': errors or [], 'inserted_ids': inserted_ids})
+    # Run Python verification on each generated item that has verification_code
+    verification_results = []
+    try:
+        from backend.llm_helpers import verify_answer
+        for it in generated:
+            if isinstance(it, dict) and it.get('verification_code'):
+                vr = verify_answer(it)
+                verification_results.append(vr)
+            else:
+                verification_results.append({'skipped': True})
+    except Exception:
+        pass
+
+    return JSONResponse({'generated': generated, 'raw': raw, 'errors': errors or [], 'inserted_ids': inserted_ids, 'verification': verification_results})
 
 
 # ephemeral store for generated PDF files so client can be redirected to a stable URL

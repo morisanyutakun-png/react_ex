@@ -546,14 +546,27 @@ export default function DevModePage() {
                   </span>
                 </div>
               ))}
+              {parsedProblem.verification_code && (
+                <div className="col-span-full flex gap-2 items-start">
+                  <span className="font-mono text-emerald-600 flex-shrink-0 min-w-[120px]">verification_code:</span>
+                  <pre className="text-slate-600 text-[11px] bg-white/60 rounded-lg p-2 overflow-x-auto max-w-full font-mono whitespace-pre-wrap">
+                    {parsedProblem.verification_code}
+                  </pre>
+                </div>
+              )}
               {parsedProblem.checks && (
                 <div className="col-span-full flex gap-2 items-start">
                   <span className="font-mono text-emerald-600 flex-shrink-0 min-w-[120px]">checks:</span>
-                  <span className="text-slate-600">
+                  <div className="text-slate-600 space-y-1">
                     {Array.isArray(parsedProblem.checks)
-                      ? `${parsedProblem.checks.length} 件`
+                      ? parsedProblem.checks.map((c, i) => (
+                          <div key={i} className={`flex items-center gap-2 text-xs ${c.ok ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            <span>{c.ok ? '\u2713' : '\u2717'}</span>
+                            <span>{c.desc}</span>
+                          </div>
+                        ))
                       : JSON.stringify(parsedProblem.checks)}
-                  </span>
+                  </div>
                 </div>
               )}
             </div>

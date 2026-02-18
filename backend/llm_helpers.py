@@ -1,5 +1,9 @@
 import json
 import uuid
+import subprocess
+import sys
+import re
+import tempfile
 from pathlib import Path
 import os
 import requests
@@ -28,10 +32,13 @@ def make_strict_prompt(stem: str, request_id: str = None) -> str:
 
     system = (
         'You are an assistant that outputs exactly one JSON object and nothing else. '
-        'Do not add any surrounding text, explanation, or markdown. The JSON MUST include ' 
+        'Do not add any surrounding text, explanation, or markdown. The JSON MUST include '
         'top-level fields "schema_version" and "request_id". The canonical schema_version is "1.0". '
-        'If the input is missing required problem details, return an object with only an "error" ' 
-        'field describing the missing information. Use only JSON types (no python/undefined).'
+        'If the input is missing required problem details, return an object with only an "error" '
+        'field describing the missing information. Use only JSON types (no python/undefined). '
+        'For math problems, you MUST include a "verification_code" field containing Python code (using sympy) '
+        'that independently computes and verifies the final_answer. The code must be self-contained '
+        '(include imports) and print the computed answer. This is critical for answer accuracy.'
     )
 
     user = (
@@ -39,8 +46,10 @@ def make_strict_prompt(stem: str, request_id: str = None) -> str:
         f'Response requirements:\n'
         '- Output exactly one JSON object (no surrounding text).\n'
         '- Include "schema_version":"1.0" and "request_id":"{request_id}".\n'
-        '- If solvable, include "problem" with subfields and a "final_answer" string and "checks" array ' 
+        '- If solvable, include "problem" with subfields and a "final_answer" string and "checks" array '
         'with at least two verification items.\n'
+        '- For math problems: include "verification_code" (Python/sympy code that computes the answer independently and prints it). '
+        'Use sympy functions (solve, diff, integrate, simplify, etc.) to verify. The printed output must match final_answer.\n'
         '- If not solvable because information is missing, return only an error object e.g. {"error":"..."}.\n'
     )
 
@@ -58,7 +67,9 @@ def make_strict_prompt_with_context(stem: str, request_id: str = None, context_t
     system = (
         'You are an assistant that outputs exactly one JSON object and nothing else. '
         'Do not add any surrounding text, explanation, or markdown. The JSON MUST include top-level fields "schema_version" and "request_id". '
-        'If the input is missing required problem details, return an object with only an "error" field describing the missing information.'
+        'If the input is missing required problem details, return an object with only an "error" field describing the missing information. '
+        'For math problems, you MUST include a "verification_code" field in the problem object: a self-contained Python script using sympy '
+        'that independently computes the answer and prints it. This verification code serves as a computational proof of correctness.'
     )
 
     profile_desc = ''
@@ -77,6 +88,7 @@ def make_strict_prompt_with_context(stem: str, request_id: str = None, context_t
     user_parts.append('- REQUIRED OUTPUT STRUCTURE: top-level fields: "schema_version", "request_id", "solvable" (boolean). Under "problem": include "stem", "final_answer", "checks" (>=2), optional "assumptions" (array), and "selected_reference" object referencing the chosen chunk (index and id). Do not return an "error" object unless you absolutely cannot proceed under any reasonable assumption.')
     # explicit requirement for machine-usable outputs
     user_parts.append('- REQUIRED: include "final_answer" (numeric if applicable) and "checks" (array with at least 2 verification objects).')
+    user_parts.append('- REQUIRED for math problems: include "verification_code" — a self-contained Python script (using sympy) that independently computes the final_answer and prints the result. Example: "from sympy import *\\nx = symbols(\'x\')\\nf = x**2 - 6*x + 5\\nvertex_x = Rational(-(-6), 2*1)\\nmin_val = f.subs(x, vertex_x)\\nprint(min_val)". The printed output MUST match final_answer. Use sympy functions: solve(), diff(), integrate(), simplify(), factor(), expand(), limit(), etc.')
     if context_text:
         # Prepend context so LLM uses it when forming solution
         user = 'Context:\n' + context_text + '\n\n' + '\n'.join(user_parts)
@@ -192,6 +204,36 @@ def validate_insertable(parsed: dict):
             # final_answer key exists but is None — treat as empty string
             problem['final_answer'] = ''
 
+    # ── verification_code (Python検算) ──
+    verification = verify_answer(parsed)
+    if not verification.get('skipped'):
+        problem['_verification'] = verification
+        if verification.get('verified'):
+            # Add a verification check entry
+            if not isinstance(problem.get('checks'), list):
+                problem['checks'] = []
+            problem['checks'].append({
+                'desc': f'Python検算一致 (computed={verification["computed"]})',
+                'ok': True
+            })
+        elif verification.get('error'):
+            if not isinstance(problem.get('checks'), list):
+                problem['checks'] = []
+            problem['checks'].append({
+                'desc': f'Python検算エラー: {verification["error"]}',
+                'ok': False
+            })
+            errs.append(f'verification_code error: {verification["error"]}')
+        else:
+            # Code ran but answer mismatch
+            if not isinstance(problem.get('checks'), list):
+                problem['checks'] = []
+            problem['checks'].append({
+                'desc': f'Python検算不一致 (expected={verification["expected"]}, computed={verification["computed"]})',
+                'ok': False
+            })
+            errs.append(f'verification mismatch: expected={verification["expected"]}, computed={verification["computed"]}')
+
     # ── checks ──
     checks = problem.get('checks')
     if checks is None:
@@ -226,6 +268,87 @@ def validate_insertable(parsed: dict):
     return errs
 
 
+def run_verification_code(code: str, timeout: int = 10) -> dict:
+    """Execute verification_code in a sandboxed subprocess and return the result.
+
+    Returns dict with keys:
+      - success (bool): whether execution succeeded
+      - output (str): stdout from the script (stripped)
+      - error (str|None): stderr or exception message if failed
+    """
+    if not code or not isinstance(code, str):
+        return {'success': False, 'output': '', 'error': 'no verification code provided'}
+
+    # Unescape \\n that may come from JSON string encoding
+    code = code.replace('\\n', '\n')
+
+    # Security: only allow sympy/math/fractions imports — reject os/subprocess/sys/etc.
+    forbidden = re.findall(r'\bimport\s+(os|subprocess|sys|shutil|socket|http|urllib|pathlib|ctypes|signal)\b', code)
+    if forbidden:
+        return {'success': False, 'output': '', 'error': f'forbidden import: {", ".join(forbidden)}'}
+
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+            f.write(code)
+            tmp_path = f.name
+        result = subprocess.run(
+            [sys.executable, tmp_path],
+            capture_output=True, text=True, timeout=timeout
+        )
+        os.unlink(tmp_path)
+        output = result.stdout.strip()
+        if result.returncode != 0:
+            return {'success': False, 'output': output, 'error': result.stderr.strip()}
+        return {'success': True, 'output': output, 'error': None}
+    except subprocess.TimeoutExpired:
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
+        return {'success': False, 'output': '', 'error': 'verification code timed out'}
+    except Exception as e:
+        return {'success': False, 'output': '', 'error': str(e)}
+
+
+def verify_answer(parsed: dict) -> dict:
+    """Run verification_code from a parsed problem and compare output to final_answer.
+
+    Returns dict with keys:
+      - verified (bool): True if verification_code output matches final_answer
+      - expected (str): the final_answer value
+      - computed (str): the output from verification_code
+      - error (str|None): error message if verification failed
+      - skipped (bool): True if no verification_code was present (non-math problem)
+    """
+    problem = parsed.get('problem') if isinstance(parsed.get('problem'), dict) else parsed
+    code = problem.get('verification_code')
+    final_answer = problem.get('final_answer')
+
+    if not code:
+        return {'verified': False, 'expected': str(final_answer) if final_answer else '', 'computed': '', 'error': None, 'skipped': True}
+
+    result = run_verification_code(code)
+
+    if not result['success']:
+        return {'verified': False, 'expected': str(final_answer) if final_answer else '', 'computed': result['output'], 'error': result['error'], 'skipped': False}
+
+    # Normalize both values for comparison
+    expected = str(final_answer).strip() if final_answer is not None else ''
+    computed = result['output'].strip()
+
+    # Try numeric comparison for floating point tolerance
+    verified = False
+    try:
+        e_num = float(expected)
+        c_num = float(computed)
+        verified = abs(e_num - c_num) < 1e-9
+    except (ValueError, TypeError):
+        # Fall back to string comparison (strip whitespace, normalize)
+        verified = expected == computed
+
+    return {'verified': verified, 'expected': expected, 'computed': computed, 'error': None, 'skipped': False}
+
+
 def make_generation_prompt_with_context(stem: str, num: int = 5, request_id: str = None, context_text: str = None, profile: str = 'latex_only', min_difficulty: float = None, max_difficulty: float = None, generation_style: str = None, prohibited_tags: list = None, include_explanations: bool = False) -> str:
     """Build a strict prompt instructing the LLM to return a JSON object with a 'generated' array.
 
@@ -254,6 +377,7 @@ def make_generation_prompt_with_context(stem: str, num: int = 5, request_id: str
         parts.append('- For each generated item include an optional short "explanation" field (one-sentence) describing the solution approach.')
     parts.append('- Output exactly one JSON object with fields: "schema_version":"1.0", "request_id":"%s", "generated": [ ... ]' % request_id)
     parts.append(r'- Each item in "generated" must be a JSON object with "latex" (string). The "latex" field MUST be a valid LaTeX-formatted problem (use inline $...$ or display \[...\] for equations, or full LaTeX environments). Optionally include "stem" (plain text), "difficulty" (number between 0 and 1), and "tags" (array of short strings).')
+    parts.append('- For math problems: each generated item SHOULD include "verification_code" (a self-contained Python/sympy script that computes the answer and prints it) and "final_answer" (the expected result). This ensures computational correctness of generated problems.')
     parts.append('Example output:\n{ "schema_version":"1.0", "request_id": "%s", "generated": [ {"latex":"\\\\[ x^2-4x+3=(x-2)^2-1 \\\\]", "stem":"二次関数 f(x)=x^2-4x+3 の最小値を求めよ", "difficulty":0.3 }, ... ] }' % request_id)
     parts.append('- Do not return extraneous commentary. If you cannot generate real variants, return an empty "generated" array instead of an error.')
 

@@ -163,6 +163,13 @@ export async function fetchDocEntries(docId) {
   return apiFetch(`/api/doc/${docId}/entries`);
 }
 
+// ── LaTeX Presets ──────────────────────────────────
+
+export async function fetchLatexPresets() {
+  const data = await apiFetch('/api/latex_presets');
+  return data.presets || [];
+}
+
 // ── PDF ────────────────────────────────────────────
 
 export async function generatePdf(latex) {

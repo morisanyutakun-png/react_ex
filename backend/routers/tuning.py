@@ -466,7 +466,16 @@ def run_llm_on_prompt(req: RunLLMRequest = Body(...)):
             # insertion failure should not mask the parsing result
             errors = (errors or []) + [f'insert_failed: {e}']
 
-    return {'parsed': parsed, 'raw': raw, 'errors': errors, 'attempts': attempts, 'inserted_id': inserted_id}
+    # Run Python verification if verification_code is present
+    verification_result = None
+    if parsed and isinstance(parsed, dict):
+        try:
+            from backend.llm_helpers import verify_answer
+            verification_result = verify_answer(parsed)
+        except Exception as e:
+            verification_result = {'verified': False, 'error': str(e), 'skipped': False}
+
+    return {'parsed': parsed, 'raw': raw, 'errors': errors, 'attempts': attempts, 'inserted_id': inserted_id, 'verification': verification_result}
 
 
 @router.get('/api/tuning/logs')

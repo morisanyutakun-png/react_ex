@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets } from '@/lib/api';
 import TemplateSelector from '@/components/TemplateSelector';
 import {
   StatusBar,
@@ -11,6 +11,7 @@ import {
   Button,
   CopyButton,
   NumberField,
+  SelectField,
   PageHeader,
   Icons,
 } from '@/components/ui';
@@ -29,6 +30,26 @@ export default function UserModePage() {
   const [llmOutput, setLlmOutput] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
   const [pdfWorking, setPdfWorking] = useState(false);
+
+  // LaTeX出力形式プリセット
+  const [latexPresets, setLatexPresets] = useState([]);
+  const [latexPreset, setLatexPreset] = useState('exam');
+
+  useEffect(() => {
+    fetchLatexPresets()
+      .then((presets) => setLatexPresets(presets))
+      .catch(() => {
+        // フォールバック
+        setLatexPresets([
+          { id: 'exam', name: '試験問題', description: '定期テスト・入試形式' },
+          { id: 'worksheet', name: '学習プリント', description: '演習用ワークシート' },
+          { id: 'flashcard', name: '一問一答カード', description: 'フラッシュカード形式' },
+          { id: 'mock_exam', name: '模試', description: '模擬試験形式' },
+          { id: 'report', name: 'レポート・解説', description: '解説重視のレポート形式' },
+          { id: 'minimal', name: 'シンプル', description: '最小限のプレーンな形式' },
+        ]);
+      });
+  }, []);
 
   useEffect(() => {
     if (templates.length > 0 && !templateId) {
@@ -64,6 +85,7 @@ export default function UserModePage() {
         subject_filter: subject,
         user_mode: true,
         top_k: topK,
+        latex_preset: latexPreset,
       });
       setRenderContext(data.context || null);
       setPrompt(data.rendered_prompt || data.rendered || '');
@@ -135,6 +157,22 @@ export default function UserModePage() {
 
               <div className="pt-2 flex flex-col gap-3">
                 <NumberField label="RAG Top-K" value={topK} onChange={setTopK} min={1} max={20} />
+
+                <SelectField
+                  label="PDF出力形式"
+                  value={latexPreset}
+                  onChange={setLatexPreset}
+                  options={latexPresets.map((p) => ({
+                    value: p.id,
+                    label: p.name,
+                  }))}
+                />
+                {latexPresets.length > 0 && (
+                  <div className="px-3 py-2 bg-indigo-50/50 rounded-xl border border-indigo-100 text-[11px] text-indigo-600">
+                    {latexPresets.find((p) => p.id === latexPreset)?.description || ''}
+                  </div>
+                )}
+
                 <Button onClick={generatePrompt} disabled={!templateId} className="w-full py-4 shadow-lg shadow-indigo-200/50">
                   <Icons.Prompt className="mr-2" />
                   プロンプトを生成
