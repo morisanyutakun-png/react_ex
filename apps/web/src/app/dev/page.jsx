@@ -76,6 +76,7 @@ export default function DevModePage() {
   const [parsedProblem, setParsedProblem] = useState(null);
   const [parseError, setParseError] = useState('');
   const [savedProblemId, setSavedProblemId] = useState(null);
+  const [verificationResult, setVerificationResult] = useState(null); // {verified, expected, computed, error, skipped}
   const [pdfUrl, setPdfUrl] = useState('');
   const [pdfWorking, setPdfWorking] = useState(false);
 
@@ -221,10 +222,11 @@ export default function DevModePage() {
     }
   };
 
-  // ── Step 4: problems テーブルへ保存 ──
+  // ── Step 4: problems テーブルへ保存（検算ゲート付き） ──
   const saveToProblemsDb = async () => {
     if (!parsedProblem) { setStatus('まず「出力をパース」してください'); return; }
-    setStatus('problems テーブルに保存中...');
+    setStatus('検算を実行して problems テーブルに保存中...');
+    setVerificationResult(null);
     try {
       const extraMeta = {
         subject: subject || null,
@@ -234,12 +236,25 @@ export default function DevModePage() {
         source: 'dev_mode',
       };
       const data = await saveProblem(parsedProblem, extraMeta);
+      // 検算結果をセット
+      if (data.verification) {
+        setVerificationResult(data.verification);
+      }
       setSavedProblemId(data.inserted_id || null);
       setCurrentStep(5);
-      setStatus(`problems テーブルに保存完了 (id: ${data.inserted_id || '—'})`);
+      setStatus(`検算一致 → problems テーブルに保存完了 (id: ${data.inserted_id || '—'})`);
     } catch (e) {
       const detail = e.message || '';
-      if (detail.includes('missing_stem')) {
+      const errData = e.data || {};
+      // 検算不一致エラー
+      if (errData.error === 'verification_failed' && errData.verification) {
+        setVerificationResult(errData.verification);
+        setStatus(`検算不一致: expected=${errData.verification.expected}, computed=${errData.verification.computed} — DB 保存をブロックしました`);
+        return;
+      }
+      if (detail.includes('verification_failed')) {
+        setStatus(`検算不一致 — DB 保存をブロックしました: ${detail}`);
+      } else if (detail.includes('missing_stem')) {
         setStatus('保存エラー: stem フィールドが必要です。LLM 出力を確認してください。');
       } else if (detail.includes('validation_failed')) {
         setStatus(`バリデーションエラー: ${detail}（final_answer, checks が必要な場合があります）`);
@@ -297,7 +312,7 @@ export default function DevModePage() {
     setBasePrompt(''); setRagPrompt(''); setRetrievedChunks([]);
     setRagSkipped(false);
     setLlmOutput(''); setParsedProblem(null); setParseError('');
-    setSavedProblemId(null); setReferenceStem(''); setReferenceAnswer('');
+    setSavedProblemId(null); setVerificationResult(null); setReferenceStem(''); setReferenceAnswer('');
     setPdfUrl(''); setTuningScore(''); setTuningNotes('');
     setExpectedOutput(''); setCurrentStep(1); setStatus('リセットしました');
   };
@@ -576,6 +591,29 @@ export default function DevModePage() {
         {parseError && (
           <div className="mt-3 p-3 bg-rose-50/60 rounded-xl border border-rose-200/40 text-xs text-rose-700">
             <Icons.Info className="w-3.5 h-3.5 inline mr-1" /> {parseError}
+          </div>
+        )}
+
+        {/* 検算結果ログ */}
+        {verificationResult && !verificationResult.skipped && (
+          <div className={`mt-3 p-3 rounded-xl border text-sm font-semibold flex items-center gap-2 ${
+            verificationResult.verified
+              ? 'bg-emerald-50/80 border-emerald-200/50 text-emerald-700'
+              : 'bg-rose-50/80 border-rose-200/50 text-rose-700'
+          }`}>
+            {verificationResult.verified ? (
+              <>
+                <Icons.Success className="w-4 h-4" />
+                検算一致: expected={verificationResult.expected}, computed={verificationResult.computed}
+              </>
+            ) : (
+              <>
+                <Icons.Info className="w-4 h-4" />
+                検算不一致: expected={verificationResult.expected}, computed={verificationResult.computed}
+                {verificationResult.error && ` (${verificationResult.error})`}
+                {' '}— DB 保存をブロックしました
+              </>
+            )}
           </div>
         )}
 

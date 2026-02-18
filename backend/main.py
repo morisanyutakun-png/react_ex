@@ -3623,14 +3623,34 @@ def api_generate_latex(req: GenerateLatexRequest = Body(...)):
         # if parsing failed, return raw text to the client for debugging
         return JSONResponse({'error': 'generation_failed', 'raw': raw, 'errors': errors}, status_code=500)
 
+    # Run Python verification BEFORE DB insert
+    verification_results = []
+    try:
+        from backend.llm_helpers import verify_answer
+        for it in generated:
+            if isinstance(it, dict) and it.get('verification_code'):
+                vr = verify_answer(it)
+                verification_results.append(vr)
+            else:
+                verification_results.append({'skipped': True})
+    except Exception:
+        logger.exception('verification failed')
+
+    # Only insert items that passed verification (verified=True or skipped=True)
     inserted_ids = []
+    rejected_indices = []
     if req.auto_insert and generated:
         try:
             conn = connect_db()
             from workers.ingest.ingest import insert_problem
-            for it in generated:
+            for idx, it in enumerate(generated):
+                vr = verification_results[idx] if idx < len(verification_results) else {'skipped': True}
+                # Block insert if verification ran and failed
+                if not vr.get('skipped') and not vr.get('verified'):
+                    rejected_indices.append(idx)
+                    logger.info(f'Problem #{idx} rejected: verification mismatch (expected={vr.get("expected")}, computed={vr.get("computed")})')
+                    continue
                 try:
-                    # prefer latex field; create a short plain stem from LaTeX for storage
                     latex = it.get('latex') if isinstance(it.get('latex'), str) else None
                     stem_plain = ''
                     try:
@@ -3656,20 +3676,14 @@ def api_generate_latex(req: GenerateLatexRequest = Body(...)):
             except Exception:
                 pass
 
-    # Run Python verification on each generated item that has verification_code
-    verification_results = []
-    try:
-        from backend.llm_helpers import verify_answer
-        for it in generated:
-            if isinstance(it, dict) and it.get('verification_code'):
-                vr = verify_answer(it)
-                verification_results.append(vr)
-            else:
-                verification_results.append({'skipped': True})
-    except Exception:
-        pass
-
-    return JSONResponse({'generated': generated, 'raw': raw, 'errors': errors or [], 'inserted_ids': inserted_ids, 'verification': verification_results})
+    return JSONResponse({
+        'generated': generated,
+        'raw': raw,
+        'errors': errors or [],
+        'inserted_ids': inserted_ids,
+        'verification': verification_results,
+        'rejected_indices': rejected_indices,
+    })
 
 
 # ephemeral store for generated PDF files so client can be redirected to a stable URL

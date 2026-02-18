@@ -78,7 +78,9 @@ export async function apiFetch(path, options = {}) {
 
     if (!res.ok) {
       const msg = data?.detail || data?.error || res.statusText || `HTTP ${res.status}`;
-      throw new Error(msg);
+      const err = new Error(msg);
+      err.data = data; // preserve full response body for structured error handling
+      throw err;
     }
 
     if (data === null || data === undefined) {

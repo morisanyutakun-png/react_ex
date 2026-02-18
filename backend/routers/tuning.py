@@ -366,6 +366,27 @@ def save_parsed_problem(payload: SaveProblemRequest = Body(...)):
     except Exception:
         pass
 
+    # ── verification_code 検算ゲート ──
+    # verification_code がある場合は実行し、不一致なら DB 保存を拒否する
+    verification_result = None
+    vcode = merged.get('verification_code') or (problem_obj.get('verification_code') if problem_obj else None)
+    if vcode:
+        try:
+            from backend.llm_helpers import verify_answer
+            check_obj = dict(merged)
+            if 'verification_code' not in check_obj:
+                check_obj['verification_code'] = vcode
+            verification_result = verify_answer({'problem': check_obj})
+        except Exception as e:
+            verification_result = {'verified': False, 'error': str(e), 'skipped': False}
+
+        if verification_result and not verification_result.get('skipped') and not verification_result.get('verified'):
+            return JSONResponse({
+                'error': 'verification_failed',
+                'detail': f'検算不一致: expected={verification_result.get("expected")}, computed={verification_result.get("computed")}',
+                'verification': verification_result,
+            }, status_code=400)
+
     # Insert via shared insert_problem to ensure consistent normalization and scoring
     try:
         from workers.ingest.ingest import insert_problem
@@ -375,7 +396,7 @@ def save_parsed_problem(payload: SaveProblemRequest = Body(...)):
             conn.close()
         except Exception:
             pass
-        return JSONResponse({'status': 'ok', 'inserted_id': pid})
+        return JSONResponse({'status': 'ok', 'inserted_id': pid, 'verification': verification_result})
     except Exception as e:
         return JSONResponse({'error': 'db_insert_failed', 'detail': str(e)}, status_code=500)
 
