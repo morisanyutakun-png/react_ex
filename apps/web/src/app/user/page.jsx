@@ -17,7 +17,60 @@ import {
 import { SUBJECTS, DIFFICULTIES } from '@/lib/constants';
 
 /* ── ウィザードステップ定義 ── */
-const STEPS = ['テンプレート選択', '設定', '生成', '結果'];
+const STEPS = ['テンプレート選択', '設定', 'PDF形式', '生成', '結果'];
+
+/* ── 各PDF形式のASCIIアートレイアウト図 ── */
+const PRESET_ILLUSTRATIONS = {
+  exam: `┌─────────────────┐
+│  第1問 [10点]   │
+│  問題文...      │
+│                 │
+│  第2問 [15点]   │
+│  問題文...      │
+│  ─── 解答 ─── │
+│  1. 解答...     │
+└─────────────────┘`,
+  worksheet: `┌─────────────────┐
+│名前:____ 日付:__│
+│  学習プリント   │
+│  1. 問題文...   │
+│  解答:          │
+│  _____________  │
+│  2. 問題文...   │
+└─────────────────┘`,
+  flashcard: `┌─────────────────┐
+│  問題  │  解答  │
+│────────┼────── │
+│  Q1... │  A1.. │
+│  Q2... │  A2.. │
+│  Q3... │  A3.. │
+│  Q4... │  A4.. │
+└─────────────────┘`,
+  mock_exam: `┌─────────────────┐
+│  模擬試験  60分 │
+│ 【注意事項】    │
+│ ・解答欄に記入  │
+│ 第1問  (30点)   │
+│  (1) 問題...    │
+│  (2) 問題...    │
+└─────────────────┘`,
+  report: `┌─────────────────┐
+│ 第1問           │
+│【問題】問題文.. │
+│【解法】         │
+│  途中式...      │
+│【ポイント】     │
+│  重要公式...    │
+└─────────────────┘`,
+  minimal: `┌─────────────────┐
+│                 │
+│ 問1. 問題文...  │
+│                 │
+│ 問2. 問題文...  │
+│                 │
+│ 解答: ...       │
+└─────────────────┘`,
+};
 
 export default function UserModePage() {
   const { templates, subjects } = useTemplates();
@@ -91,7 +144,7 @@ export default function UserModePage() {
     setGenerating(true);
     setGeneratedLatex('');
     setPdfUrl('');
-    setStep(3);
+    setStep(4);
 
     setStatus('Step 1/3: プロンプトを生成中...');
     let generatedPrompt = '';
@@ -145,13 +198,13 @@ export default function UserModePage() {
         setPdfUrl(data.pdf_url);
         window.open(data.pdf_url, '_blank');
         setStatus('PDF を生成・表示しました');
-        setStep(4);
+        setStep(5);
       } else if (data?.pdf_error) {
         setStatus(`LaTeX 生成成功 / PDF 変換失敗: ${data.pdf_error}`);
-        setStep(4);
+        setStep(5);
       } else {
         setStatus('LaTeX 生成完了（PDF エンジン未設定）');
-        setStep(4);
+        setStep(5);
       }
     } catch (e) {
       setStatus(`生成エラー: ${e.message}`);
@@ -185,7 +238,7 @@ export default function UserModePage() {
           ? `プロンプト生成完了（RAG: ${data.context.chunk_count}件参照）`
           : 'プロンプト生成完了'
       );
-      setStep(4);
+      setStep(5);
     } catch (e) {
       setStatus(`エラー: ${e.message}`);
     }
@@ -221,13 +274,14 @@ export default function UserModePage() {
   const canNext = () => {
     if (step === 1) return !!templateId;
     if (step === 2) return true;
+    if (step === 3) return true;
     return false;
   };
 
   const goNext = () => {
-    if (step === 2 && mode === 'auto') {
+    if (step === 3 && mode === 'auto') {
       handleAutoGenerate();
-    } else if (step === 2 && mode === 'manual') {
+    } else if (step === 3 && mode === 'manual') {
       generatePrompt();
     } else if (canNext()) {
       setStep(step + 1);
@@ -235,7 +289,8 @@ export default function UserModePage() {
   };
 
   const goBack = () => {
-    if (step > 1) setStep(step - 1);
+    if (step > 1 && step < 4) setStep(step - 1);
+    if (step === 5) setStep(3);
   };
 
   const resetWizard = () => {
@@ -247,6 +302,8 @@ export default function UserModePage() {
     setLlmOutput('');
     setStatus('');
   };
+
+  const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -366,18 +423,6 @@ export default function UserModePage() {
               <NumberField label="RAG参照数" value={topK} onChange={setTopK} min={1} max={20} />
             </div>
 
-            <SelectField
-              label="PDF出力形式"
-              value={latexPreset}
-              onChange={setLatexPreset}
-              options={latexPresets.map((p) => ({ value: p.id, label: p.name }))}
-            />
-            {latexPresets.length > 0 && (
-              <div className="px-3 py-2 bg-slate-50 rounded-lg text-[11px] text-slate-400">
-                {latexPresets.find((p) => p.id === latexPreset)?.description || ''}
-              </div>
-            )}
-
             {/* モード選択 */}
             <div>
               <label className="block text-[11px] font-black text-slate-400 mb-2 tracking-[0.1em] uppercase">
@@ -416,8 +461,78 @@ export default function UserModePage() {
         </SectionCard>
       )}
 
-      {/* ═══════ Step 3: 生成中 ═══════ */}
-      {step === 3 && generating && (
+      {/* ═══════ Step 3: PDF形式選択 ═══════ */}
+      {step === 3 && (
+        <SectionCard title="Step 3: PDF の出力形式を選ぶ" icon={<Icons.Pdf />}>
+          <p className="text-xs text-slate-400 mb-5">
+            生成する PDF のレイアウト形式を選んでください。
+            {mode === 'auto'
+              ? ' 選択後、「PDF を生成」ボタンで自動生成が始まります。'
+              : ' 選択後、「プロンプトを生成」ボタンでプロンプトが作成されます。'}
+          </p>
+
+          {latexPresets.length === 0 ? (
+            <div className="text-center py-8 text-slate-300">
+              <Icons.Empty className="mx-auto mb-2" />
+              <p className="text-sm">形式を読み込み中...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {latexPresets.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setLatexPreset(p.id)}
+                  className={`text-left rounded-xl border-2 transition-all overflow-hidden ${
+                    latexPreset === p.id
+                      ? 'border-indigo-400 bg-indigo-50/50 shadow-sm'
+                      : 'border-slate-100 bg-white hover:border-indigo-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {/* ASCIIアートイラスト */}
+                  <div
+                    className={`px-3 pt-3 pb-2 rounded-t-lg ${
+                      latexPreset === p.id ? 'bg-indigo-50' : 'bg-slate-50'
+                    }`}
+                  >
+                    <pre
+                      className={`text-[9px] leading-[1.4] font-mono select-none ${
+                        latexPreset === p.id ? 'text-indigo-500' : 'text-slate-400'
+                      }`}
+                      style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
+                    >
+                      {PRESET_ILLUSTRATIONS[p.id] || ''}
+                    </pre>
+                  </div>
+                  {/* ラベル */}
+                  <div className="px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      {latexPreset === p.id && (
+                        <span className="w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0" />
+                      )}
+                      <div className="text-sm font-bold text-slate-700">{p.name}</div>
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                      {p.description}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* 選択中プレビュー */}
+          {selectedPreset && (
+            <div className="mt-4 px-3 py-2.5 bg-indigo-50 rounded-lg border border-indigo-100 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-400 flex-shrink-0" />
+              <span className="text-xs font-bold text-indigo-700">{selectedPreset.name}</span>
+              <span className="text-[11px] text-indigo-400">{selectedPreset.description}</span>
+            </div>
+          )}
+        </SectionCard>
+      )}
+
+      {/* ═══════ Step 4: 生成中 ═══════ */}
+      {step === 4 && generating && (
         <SectionCard>
           <div className="flex flex-col items-center justify-center py-16">
             <svg className="animate-spin h-10 w-10 text-indigo-400 mb-4" viewBox="0 0 24 24">
@@ -430,8 +545,8 @@ export default function UserModePage() {
         </SectionCard>
       )}
 
-      {/* ═══════ Step 4: 結果表示 ═══════ */}
-      {step === 4 && (
+      {/* ═══════ Step 5: 結果表示 ═══════ */}
+      {step === 5 && (
         <div className="space-y-4">
           {/* AI自動生成の結果 */}
           {mode === 'auto' && generatedLatex && (
@@ -562,25 +677,35 @@ export default function UserModePage() {
       {/* ═══════ ナビゲーションボタン ═══════ */}
       <div className="flex items-center justify-between mt-6">
         <div>
-          {step > 1 && step < 3 && (
+          {step > 1 && step < 4 && (
             <Button variant="ghost" onClick={goBack}>
               ← 戻る
             </Button>
           )}
-          {step === 4 && (
-            <Button variant="ghost" onClick={resetWizard}>
-              ← 最初からやり直す
+          {step === 5 && (
+            <Button variant="ghost" onClick={goBack}>
+              ← PDF形式を変更
             </Button>
           )}
         </div>
 
-        <div>
+        <div className="flex items-center gap-2">
+          {step === 5 && (
+            <Button variant="ghost" onClick={resetWizard}>
+              最初からやり直す
+            </Button>
+          )}
           {step === 1 && (
             <Button onClick={goNext} disabled={!canNext()}>
               次へ →
             </Button>
           )}
-          {step === 2 && mode === 'auto' && (
+          {step === 2 && (
+            <Button onClick={goNext}>
+              次へ →
+            </Button>
+          )}
+          {step === 3 && mode === 'auto' && (
             <Button
               onClick={goNext}
               disabled={!templateId || generating}
@@ -601,7 +726,7 @@ export default function UserModePage() {
               )}
             </Button>
           )}
-          {step === 2 && mode === 'manual' && (
+          {step === 3 && mode === 'manual' && (
             <Button onClick={goNext} disabled={!templateId}>
               <Icons.Prompt className="w-4 h-4 mr-1" /> プロンプトを生成
             </Button>
@@ -615,7 +740,8 @@ export default function UserModePage() {
           <h3 className="text-xs font-bold text-slate-500 mb-2">使い方ガイド</h3>
           <ol className="text-xs text-slate-400 space-y-1.5 list-decimal list-inside">
             <li>上のリストからテンプレートを選択します</li>
-            <li>「次へ」で科目・難易度・問題数を設定します</li>
+            <li>「次へ」で科目・難易度・問題数と生成方法を設定します</li>
+            <li>PDF の出力形式（試験問題・プリント・模試など）を選択します</li>
             <li>「AI 自動生成」なら、ボタン1つで PDF まで完成します</li>
             <li>「手動」なら、プロンプトをコピーして好きな LLM に送れます</li>
           </ol>

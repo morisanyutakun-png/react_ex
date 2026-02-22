@@ -3733,35 +3733,34 @@ def _load_templates():
     global TEMPLATES
     TEMPLATES = {}
 
-    # --- Try DB first (PostgreSQL only) ---
+    # --- Try DB first (SQLite and PostgreSQL) ---
     try:
         conn = connect_db()
-        if not getattr(conn, '_is_sqlite', False):
-            cur = conn.cursor()
-            cur.execute("""
-                SELECT id, name, description, prompt, metadata
-                FROM templates
-                WHERE is_active = true
-                ORDER BY created_at DESC
-            """)
-            rows = cur.fetchall()
-            for row in rows:
-                meta = row[4] or {}
-                if isinstance(meta, str):
-                    try:
-                        meta = json.loads(meta)
-                    except Exception:
-                        meta = {}
-                TEMPLATES[row[0]] = {
-                    'name': row[1],
-                    'description': row[2],
-                    'prompt': row[3],
-                    'metadata': meta,
-                }
-            cur.close()
-            conn.close()
-            if TEMPLATES:
-                return TEMPLATES
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, name, description, prompt, metadata
+            FROM templates
+            WHERE is_active
+            ORDER BY created_at DESC
+        """)
+        rows = cur.fetchall()
+        for row in rows:
+            meta = row[4] or {}
+            if isinstance(meta, str):
+                try:
+                    meta = json.loads(meta)
+                except Exception:
+                    meta = {}
+            TEMPLATES[row[0]] = {
+                'name': row[1],
+                'description': row[2],
+                'prompt': row[3],
+                'metadata': meta,
+            }
+        cur.close()
+        conn.close()
+        if TEMPLATES:
+            return TEMPLATES
     except Exception as e:
         logger.warning('Failed to load templates from DB, falling back to JSON: %s', e)
 
@@ -3795,13 +3794,49 @@ def _load_templates():
 
 
 def _seed_templates_to_db():
-    """On startup, import templates.json into DB if templates table is empty."""
+    """On startup, import templates.json into DB if templates table is empty.
+
+    Works for both SQLite (dev) and PostgreSQL (prod).
+    """
     try:
         conn = connect_db()
-        if getattr(conn, '_is_sqlite', False):
-            conn.close()
-            return
+        is_sqlite = getattr(conn, '_is_sqlite', False)
         cur = conn.cursor()
+
+        # Ensure templates table exists regardless of DB type.
+        # Migration 008 may not have been applied to Neon/PostgreSQL (it's only
+        # auto-applied in Docker via docker-entrypoint-initdb.d).
+        if is_sqlite:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS templates (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL DEFAULT '',
+                    description TEXT,
+                    prompt TEXT NOT NULL DEFAULT '',
+                    metadata TEXT DEFAULT '{}',
+                    is_active INTEGER DEFAULT 1,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    updated_at TEXT DEFAULT (datetime('now'))
+                )
+            """)
+        else:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS templates (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL DEFAULT '',
+                    description TEXT,
+                    prompt TEXT NOT NULL DEFAULT '',
+                    metadata JSONB DEFAULT '{}',
+                    is_active BOOLEAN DEFAULT true,
+                    created_at TIMESTAMPTZ DEFAULT now(),
+                    updated_at TIMESTAMPTZ DEFAULT now()
+                )
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS idx_templates_active ON templates(is_active)
+            """)
+        conn.commit()
+
         cur.execute("SELECT COUNT(*) FROM templates")
         count = cur.fetchone()[0]
         if count > 0:
@@ -3819,17 +3854,29 @@ def _seed_templates_to_db():
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         for tid, tdata in data.items():
-            cur.execute("""
-                INSERT INTO templates (id, name, description, prompt, metadata)
-                VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT (id) DO NOTHING
-            """, (
-                tid,
-                tdata.get('name', ''),
-                tdata.get('description', ''),
-                tdata.get('prompt', ''),
-                json.dumps(tdata.get('metadata', {}), ensure_ascii=False),
-            ))
+            if is_sqlite:
+                cur.execute("""
+                    INSERT OR IGNORE INTO templates (id, name, description, prompt, metadata)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    tid,
+                    tdata.get('name', ''),
+                    tdata.get('description', ''),
+                    tdata.get('prompt', ''),
+                    json.dumps(tdata.get('metadata', {}), ensure_ascii=False),
+                ))
+            else:
+                cur.execute("""
+                    INSERT INTO templates (id, name, description, prompt, metadata)
+                    VALUES (%s, %s, %s, %s, %s)
+                    ON CONFLICT (id) DO NOTHING
+                """, (
+                    tid,
+                    tdata.get('name', ''),
+                    tdata.get('description', ''),
+                    tdata.get('prompt', ''),
+                    json.dumps(tdata.get('metadata', {}), ensure_ascii=False),
+                ))
         conn.commit()
         cur.close()
         conn.close()
@@ -3897,12 +3944,25 @@ def api_save_template(req: TemplateSaveRequest = Body(...)):
     if not req.id or not isinstance(req.id, str):
         return JSONResponse({'error': 'invalid_id'}, status_code=400)
     try:
-        # --- Save to DB (PostgreSQL) ---
+        # --- Save to DB (SQLite and PostgreSQL) ---
         db_saved = False
         try:
             conn = connect_db()
-            if not getattr(conn, '_is_sqlite', False):
-                cur = conn.cursor()
+            is_sqlite = getattr(conn, '_is_sqlite', False)
+            cur = conn.cursor()
+            if is_sqlite:
+                cur.execute("""
+                    INSERT OR REPLACE INTO templates
+                        (id, name, description, prompt, metadata, is_active, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, 1, datetime('now'))
+                """, (
+                    req.id,
+                    req.name or '',
+                    req.description or '',
+                    req.prompt or '',
+                    json.dumps(req.metadata or {}, ensure_ascii=False),
+                ))
+            else:
                 cur.execute("""
                     INSERT INTO templates (id, name, description, prompt, metadata, updated_at)
                     VALUES (%s, %s, %s, %s, %s, now())
@@ -3919,10 +3979,10 @@ def api_save_template(req: TemplateSaveRequest = Body(...)):
                     req.prompt or '',
                     json.dumps(req.metadata or {}, ensure_ascii=False),
                 ))
-                conn.commit()
-                cur.close()
-                conn.close()
-                db_saved = True
+            conn.commit()
+            cur.close()
+            conn.close()
+            db_saved = True
         except Exception as e:
             logger.warning('Failed to save template to DB: %s', e)
 
