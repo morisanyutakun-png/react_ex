@@ -28,6 +28,6 @@ EXPOSE 8000
 WORKDIR /app/backend
 
 # Run alembic migrations (non-fatal: if DB connection fails, still start the server)
-# --preload: load app in master process then fork → workers share memory via COW
 # --workers 1: single worker to minimize memory on free tier
-CMD ["sh", "-c", "alembic upgrade head || echo 'WARN: alembic migration skipped'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers 1 --preload --timeout 120"]
+# NOTE: do NOT use --preload with UvicornWorker (known compatibility issues)
+CMD ["sh", "-c", "alembic upgrade head || echo 'WARN: alembic migration skipped'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 120"]

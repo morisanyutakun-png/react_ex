@@ -14,7 +14,10 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(THIS_DIR)
 LOG_PATH = os.path.join(PROJECT_ROOT, 'data', 'tuning_logs.jsonl')
 
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+try:
+    os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+except Exception:
+    pass  # may fail on read-only filesystems (e.g. some container setups)
 
 
 class TuningLogIn(BaseModel):

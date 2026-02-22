@@ -1412,6 +1412,7 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
     New placeholders added here:
       {difficulty_score} (0..1), {difficulty_level} (1..5), {trickiness} (0..1), {difficulty_details}
     """
+    _ensure_templates()
     tpl = TEMPLATES.get(req.template_id)
     if not tpl:
         return JSONResponse({'error': 'template not found'}, status_code=404)
@@ -3044,6 +3045,9 @@ def _startup_reindex_on_start():
     """Optional startup hook: if REINDEX_ON_START is set (comma-separated doc_ids),
     attempt to reindex them into STORE. This runs synchronously during startup; keep list short.
     """
+    # Load templates on first startup (moved from module-level to avoid boot timeout)
+    _ensure_templates()
+
     env = os.environ.get('REINDEX_ON_START')
     if not env:
         return
@@ -4374,15 +4378,24 @@ def _seed_templates_to_db():
     except Exception as e:
         logger.warning('Failed to seed templates to DB: %s', e)
 
-# Load templates at import time so /api/templates has content on first call
-try:
-    _seed_templates_to_db()
-except Exception:
-    pass
-try:
-    _load_templates()
-except Exception:
-    pass
+# Load templates lazily on first request or at startup event
+# (NOT at import time — avoids DB connections during module load which can
+#  cause worker boot timeouts on constrained environments like Render free tier)
+_templates_loaded = False
+
+def _ensure_templates():
+    global _templates_loaded
+    if _templates_loaded:
+        return
+    _templates_loaded = True
+    try:
+        _seed_templates_to_db()
+    except Exception:
+        pass
+    try:
+        _load_templates()
+    except Exception:
+        pass
 
 def _dev_error_response(message: str, exc: Optional[Exception] = None, status_code: int = 500):
     """Return a JSONResponse for development error handling and log the exception.
@@ -4418,6 +4431,7 @@ class TemplateSaveRequest(BaseModel):
 
 @app.get('/api/template/{template_id}')
 def api_get_template(template_id: str):
+    _ensure_templates()
     try:
         _load_templates()
     except Exception:
