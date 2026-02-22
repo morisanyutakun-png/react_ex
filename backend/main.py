@@ -1903,7 +1903,9 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     "    \\usepackage{luatexja}\\usepackage{luatexja-fontspec}\n"
                     "  \\else\n"
                     "    \\usepackage{xeCJK}\n"
-                    "    \\setCJKmainfont{IPAexMincho}\n"
+                    "    \\IfFontExistsTF{IPAexMincho}{\\setCJKmainfont{IPAexMincho}}"
+                    "{\\IfFontExistsTF{Noto Serif CJK JP}{\\setCJKmainfont{Noto Serif CJK JP}}"
+                    "{\\IfFontExistsTF{Noto Sans CJK JP}{\\setCJKmainfont{Noto Sans CJK JP}}{}}}\\relax\n"
                     "  \\fi\n"
                     "\\fi\n"
                 )
@@ -1931,16 +1933,46 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "{{answers_section}}\n\n"
                         "\\end{document}\n"
                     )
-                    struct_rules = (
-                        "=== レイアウトルール（必須） ===\n"
-                        "H) 問題ページと解答ページは必ず \\newpage で分離。\n"
-                        "   前半: \\section*{問題}  後半: \\section*{解答・解説}\n"
-                        "I) 各問題は \\problem{N} コマンドで始める。\n"
-                        "J) 各解答は \\answer{N} コマンドで始める。\n"
-                        "   tcolorbox, mdframed, fbox 等のボックス環境は使用禁止。\n"
-                        "K) 通し番号（問題 1, 問題 2, ...）を使用。\n"
-                        "L) 解説には途中式・考え方・ポイントを含め、わかりやすく記述。\n\n"
-                    )
+                    if preset_id == 'mock_exam':
+                        struct_rules = (
+                            "=== レイアウトルール（必須） ===\n"
+                            "H) {{problems_section}} の冒頭に模試ヘッダーを入れること:\n"
+                            "   例: {\\large\\bfseries 模擬試験} \\hfill 制限時間: 60分 \\quad 満点: 100点\n"
+                            "   続けて注意事項を \\begin{itemize} で3〜5項目箇条書き。\n"
+                            "I) 大問は \\section*{第1問}（配点: XX点）の形式で区切る。\n"
+                            "   小問は \\begin{enumerate}[(1)] の \\item で列挙。\n"
+                            "J) {{answers_section}} には大問ごとに \\answer{N} で解答・解説を記載。\n"
+                            "   各大問の冒頭に配点内訳を示す。\n"
+                            "K) 問題ページと解答ページは \\newpage で必ず分離。\n"
+                            "L) tcolorbox, mdframed, fbox 等のボックス環境は使用禁止。\n"
+                            "M) 計算問題には答えのみでなく途中式も解答に含める。\n\n"
+                        )
+                    elif preset_id == 'report':
+                        struct_rules = (
+                            "=== レイアウトルール（必須） ===\n"
+                            "H) {{problems_section}} に全問題を \\problem{N} で列挙する。\n"
+                            "I) {{answers_section}} は各問について以下の3部構成で記述:\n"
+                            "   \\answer{N}\n"
+                            "   \\paragraph{問題} ... （問題文の再掲、簡潔に）\n"
+                            "   \\paragraph{解法} ... （途中計算を step-by-step で詳述）\n"
+                            "   \\paragraph{ポイント} ... （公式・注意点・間違えやすい箇所を箇条書き）\n"
+                            "J) 数式は全て amsmath で正しく組む。align* 環境で計算過程を縦に揃える。\n"
+                            "K) 問題ページと解説ページは \\newpage で必ず分離。\n"
+                            "L) tcolorbox, mdframed, fbox 等のボックス環境は使用禁止。\n"
+                            "M) ポイントは \\begin{itemize} の箇条書き形式で記述。\n\n"
+                        )
+                    else:  # exam
+                        struct_rules = (
+                            "=== レイアウトルール（必須） ===\n"
+                            "H) 問題ページと解答ページは必ず \\newpage で分離。\n"
+                            "   前半: \\section*{問題}  後半: \\section*{解答・解説}\n"
+                            "I) 各問題は \\problem{N} コマンドで始め、問題文の末尾に [XX点] と配点を記載。\n"
+                            "   小問がある場合は \\begin{enumerate}[(1)] の \\item で列挙。\n"
+                            "J) 各解答は \\answer{N} コマンドで始める。\n"
+                            "   tcolorbox, mdframed, fbox 等のボックス環境は使用禁止。\n"
+                            "K) 通し番号（問題 1, 問題 2, ...）を使用。\n"
+                            "L) 解説には途中式・考え方・ポイントを含め、わかりやすく記述。\n\n"
+                        )
 
                 elif preset_id == 'worksheet':
                     latex_skeleton = (
@@ -1961,11 +1993,18 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     )
                     struct_rules = (
                         "=== レイアウトルール（必須） ===\n"
-                        "H) 冒頭に名前欄・日付欄を配置済み（スケルトン通り）。\n"
-                        "I) 各問題は \\begin{enumerate} の \\item で番号付きリスト。\n"
-                        "J) 各問題の後に解答スペース（\\vspace{3cm} や罫線）を設ける。\n"
-                        "K) 解答・解説は \\newpage 後の別ページに記載。\n"
-                        "L) \\problem, \\answer 等の独自コマンドは使用しない。\n\n"
+                        "H) 冒頭に名前欄・日付欄を配置済み（スケルトン通り、変更しない）。\n"
+                        "I) {{problems_section}} に問題を以下の形式で列挙:\n"
+                        "   \\begin{enumerate}[leftmargin=*]\n"
+                        "   \\item 問題文\n"
+                        "   \\vspace{3cm}  % 解答スペース\n"
+                        "   \\item 問題文\n"
+                        "   \\vspace{3cm}\n"
+                        "   \\end{enumerate}\n"
+                        "J) 各問題の後には必ず \\vspace{3cm} または \\noindent\\rule{\\linewidth}{0.4pt} で解答スペースを設ける。\n"
+                        "K) {{answers_section}} には番号順に解答を \\begin{enumerate} で記載（解説付き）。\n"
+                        "L) \\problem, \\answer 等の独自コマンドは使用しない。\n"
+                        "M) \\newpage はスケルトン通りの1箇所のみ（問題と解答の間）。\n\n"
                     )
 
                 elif preset_id == 'flashcard':
@@ -1982,13 +2021,38 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "\\end{document}\n"
                     )
                     struct_rules = (
-                        "=== レイアウトルール（必須） ===\n"
-                        "H) longtable 環境で「問題」列と「解答」列の2列表を作成。\n"
-                        "   \\begin{longtable}{|p{0.45\\textwidth}|p{0.45\\textwidth}|} 等を使用。\n"
-                        "I) 各行が1問の問題と解答のペア。\\hline で区切る。\n"
-                        "J) 問題は簡潔に（1〜2行程度）、解答も簡潔に記述。\n"
-                        "K) \\problem, \\answer, \\section 等の独自コマンドは使用しない。\n"
-                        "L) \\newpage は不要（longtable が自動改ページ）。\n\n"
+                        "=== レイアウトルール（必須・厳守） ===\n"
+                        "H) {{problems_section}} を以下の「完全な longtable」で置き換えること（構造を一字一句守ること）:\n"
+                        "\n"
+                        "\\begin{longtable}{|p{0.47\\textwidth}|p{0.47\\textwidth}|}\n"
+                        "\\hline\n"
+                        "\\textbf{問題} & \\textbf{解答} \\\\\n"
+                        "\\hline\n"
+                        "\\endfirsthead\n"
+                        "\\multicolumn{2}{c}{（前ページより続く）} \\\\\n"
+                        "\\hline\n"
+                        "\\textbf{問題（続き）} & \\textbf{解答（続き）} \\\\\n"
+                        "\\hline\n"
+                        "\\endhead\n"
+                        "\\hline\n"
+                        "\\endlastfoot\n"
+                        "問題1のテキスト（数式は $...$で） & 解答1のテキスト（数式は $...$で） \\\\\n"
+                        "\\hline\n"
+                        "問題2のテキスト & 解答2のテキスト \\\\\n"
+                        "\\hline\n"
+                        "（N問分、同じパターンを繰り返す） & \\\\\n"
+                        "\\hline\n"
+                        "\\end{longtable}\n"
+                        "\n"
+                        "I) 【列の役割を厳守】左列（問題列）: 問題文のみを記載。右列（解答列）: 解答のみを記載。\n"
+                        "   問題と解答を同じセルに混在させることは絶対禁止。\n"
+                        "J) 【行末の書き方】各データ行の末尾は必ず \\\\ （バックスラッシュ2つ）のみ。\n"
+                        "   その直後に必ず \\hline を入れて行を区切る。\n"
+                        "K) 【数式の書き方】セル内の数式も $...$ で正しく囲む。\n"
+                        "   例: 積分 $\\int_0^1 x^2\\,dx = \\dfrac{1}{3}$\n"
+                        "L) 【禁止コマンド】\\problem, \\answer, \\section, \\subsection, \\newpage は一切使用しない。\n"
+                        "M) 【tabular 禁止】\\begin{tabular} は不可。必ず \\begin{longtable} を使う。\n"
+                        "N) 改ページは longtable が自動処理するため \\newpage は書かない。\n\n"
                     )
 
                 else:  # minimal
@@ -2001,9 +2065,10 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     )
                     struct_rules = (
                         "=== レイアウトルール ===\n"
-                        "H) シンプルな構成。装飾・独自コマンドは使用しない。\n"
-                        "I) 問題は \\begin{enumerate} の \\item で番号付きリスト。\n"
-                        "J) 解答は問題の直後か末尾にまとめて記載。\n\n"
+                        "H) シンプルな構成。余分な装飾・独自コマンドは使用しない。\n"
+                        "I) 問題は \\begin{enumerate}[leftmargin=*] の \\item で番号付きリスト。\n"
+                        "J) 解答は問題の直後か末尾の \\section*{解答} にまとめて記載。\n"
+                        "K) 問題と解答の間は \\medskip または \\bigskip で適切に空ける。\n\n"
                     )
 
                 # Comprehensive instruction for the LLM (syntax rules always apply)
@@ -2128,68 +2193,160 @@ _LATEX_PRESET_FALLBACKS: Dict[str, Dict[str, str]] = {
     'exam': {
         'name': '試験問題',
         'prompt_instruction': (
-            '以下の形式でLaTeXコードを出力してください：\n'
-            '- 試験問題形式（定期テスト風）\n'
-            '- 各問題に配点を明記（例: [10点]）\n'
-            '- \\begin{enumerate} で問題を番号付きリストにする\n'
-            '- 最後に「解答」セクションを設け、各問の解答・解説を記載\n'
-            '- \\documentclass{article} から \\end{document} まで完全な文書として出力'
+            '【出力形式: 試験問題（定期テスト形式）】\n'
+            '以下の構造を厳守してLaTeXを出力してください。\n'
+            '\n'
+            '■ 構造ルール:\n'
+            '- \\section*{問題} の下に \\problem{N} で各問題を列挙（N=問題番号）\n'
+            '- 各問題文の末尾に配点を [XX点] の形式で明記\n'
+            '- 小問がある場合は \\begin{enumerate}[(1)] の \\item で列挙\n'
+            '- \\newpage で問題ページと解答ページを分離\n'
+            '- \\section*{解答・解説} の下に \\answer{N} で各解答を記載\n'
+            '- 解答には途中式・考え方・ポイントを含める\n'
+            '\n'
+            '■ 禁止事項:\n'
+            '- tcolorbox, mdframed, fbox 等のボックス環境\n'
+            '- \\begin{tabular}（数表が必要な場合は \\begin{array} を使用）\n'
+            '- $$ ... $$ による数式（\\[ ... \\] を使用）\n'
         ),
     },
     'worksheet': {
         'name': '学習プリント',
         'prompt_instruction': (
-            '以下の形式でLaTeXコードを出力してください：\n'
-            '- 学習プリント形式（演習シート風）\n'
-            '- 冒頭に名前欄・日付欄を配置\n'
-            '- 問題は番号付きで、解答スペース（空行）を各問の後に設ける\n'
-            '- 解答・解説は別ページに記載\n'
-            '- \\documentclass{article} から \\end{document} まで完全な文書として出力'
+            '【出力形式: 学習プリント（演習ワークシート）】\n'
+            '以下の構造を厳守してLaTeXを出力してください。\n'
+            '\n'
+            '■ 構造ルール:\n'
+            '- 冒頭: 名前欄 \\underline{\\hspace{5cm}} と 日付欄 \\underline{\\hspace{3cm}} を配置\n'
+            '- 問題は \\begin{enumerate}[leftmargin=*] の \\item で番号付きリスト\n'
+            '- 各問の直後に \\vspace{3cm} または水平線（\\noindent\\rule{\\linewidth}{0.4pt}）で解答スペースを設ける\n'
+            '- \\newpage で問題ページと解答ページを分離\n'
+            '- 解答ページは \\begin{enumerate} で問題と同じ番号順に解答・解説を記載\n'
+            '\n'
+            '■ 禁止事項:\n'
+            '- \\problem, \\answer 等の独自コマンド（スケルトンに定義されていないもの）\n'
+            '- tcolorbox, mdframed などのボックス環境\n'
+            '- $$ ... $$ による数式（\\[ ... \\] を使用）\n'
         ),
     },
     'flashcard': {
         'name': '一問一答カード',
         'prompt_instruction': (
-            '以下の形式でLaTeXコードを出力してください：\n'
-            '- 一問一答カード形式\n'
-            '- 2列の表で「問題」と「解答」を左右に並べる\n'
-            '- longtable 環境を使い、\\hline で区切る\n'
-            '- 短い問題と簡潔な解答のペアにする\n'
-            '- \\documentclass{article} から \\end{document} まで完全な文書として出力'
+            '【出力形式: 一問一答カード（longtable形式）】\n'
+            '以下の「完全なlongtable構造」を厳守してLaTeXを出力してください。\n'
+            '\n'
+            '■ longtableの必須フォーマット（この構造を一字一句守ること）:\n'
+            '\n'
+            '\\begin{longtable}{|p{0.47\\textwidth}|p{0.47\\textwidth}|}\n'
+            '\\hline\n'
+            '\\textbf{問題} & \\textbf{解答} \\\\\n'
+            '\\hline\n'
+            '\\endfirsthead\n'
+            '\\multicolumn{2}{c}{（前ページより続く）} \\\\\n'
+            '\\hline\n'
+            '\\textbf{問題（続き）} & \\textbf{解答（続き）} \\\\\n'
+            '\\hline\n'
+            '\\endhead\n'
+            '\\hline\n'
+            '\\endlastfoot\n'
+            '問題1のテキスト & 解答1のテキスト \\\\\n'
+            '\\hline\n'
+            '問題2のテキスト & 解答2のテキスト \\\\\n'
+            '\\hline\n'
+            '\\end{longtable}\n'
+            '\n'
+            '■ 列の役割（絶対厳守）:\n'
+            '- 左列（第1列）: 問題文のみ。解答・ヒントを混在させない。\n'
+            '- 右列（第2列）: 解答のみ。問題文を繰り返さない。\n'
+            '\n'
+            '■ 書き方ルール:\n'
+            '- 各データ行の末尾: \\\\ のみ（スペースや他のコマンドを続けない）\n'
+            '- 各行の後: 必ず \\hline を単独行に記載\n'
+            '- セル内の数式: $...$ で囲む（\\[...\\] はセル内では不可）\n'
+            '- 問題・解答とも1〜2行程度の簡潔な記述\n'
+            '\n'
+            '■ 禁止事項:\n'
+            '- \\begin{tabular}（longtableのみ使用可）\n'
+            '- \\problem, \\answer, \\section, \\newpage\n'
+            '- $$ ... $$ による数式\n'
         ),
     },
     'mock_exam': {
         'name': '模試',
         'prompt_instruction': (
-            '以下の形式でLaTeXコードを出力してください：\n'
-            '- 模擬試験形式\n'
-            '- 冒頭に試験タイトル・制限時間・配点を記載\n'
-            '- 注意事項を箇条書きで記載\n'
-            '- 大問（\\section*{第1問}等）と小問（\\begin{enumerate}）の構成\n'
-            '- 各大問に配点を明記\n'
-            '- 最後に解答・解説セクションを設ける\n'
-            '- \\documentclass{article} から \\end{document} まで完全な文書として出力'
+            '【出力形式: 模擬試験】\n'
+            '以下の構造を厳守してLaTeXを出力してください。\n'
+            '\n'
+            '■ 問題ページ（\\section*{問題} 以下）の構造:\n'
+            '1. ヘッダー: {\\Large\\bfseries 模擬試験} \\hfill 制限時間: XX分 \\quad 満点: XX点\n'
+            '2. 注意事項（\\begin{itemize} で3〜5項目）:\n'
+            '   - 問題用紙は X 枚，解答用紙は X 枚。\n'
+            '   - 解答はすべて解答用紙に記入すること。\n'
+            '   等\n'
+            '3. 大問（\\section*{第1問}（XX点） 形式）ごとに:\n'
+            '   - 小問は \\begin{enumerate}[(1)] の \\item で列挙\n'
+            '   - 各大問の末尾に配点内訳を記載\n'
+            '\n'
+            '■ 解答ページ（\\section*{解答・解説} 以下）の構造:\n'
+            '- 大問ごとに \\answer{N} で区切り\n'
+            '- 配点内訳と採点基準を明記\n'
+            '- 途中式・考え方を詳述\n'
+            '\n'
+            '■ 禁止事項:\n'
+            '- tcolorbox, mdframed, fbox 等のボックス環境\n'
+            '- $$ ... $$ による数式（\\[ ... \\] を使用）\n'
         ),
     },
     'report': {
         'name': 'レポート・解説',
         'prompt_instruction': (
-            '以下の形式でLaTeXコードを出力してください：\n'
-            '- レポート・解説形式\n'
-            '- 各問題について「問題」→「解法」→「ポイント」の3部構成\n'
-            '- 解法は途中の計算過程を詳しく記述\n'
-            '- 「ポイント」では間違えやすい点や関連する公式をまとめる\n'
-            '- \\section で問題ごとにセクション分け\n'
-            '- \\documentclass{article} から \\end{document} まで完全な文書として出力'
+            '【出力形式: レポート・解説形式】\n'
+            '以下の構造を厳守してLaTeXを出力してください。\n'
+            '\n'
+            '■ 問題ページ（\\section*{問題} 以下）:\n'
+            '- \\problem{N} で各問題を列挙\n'
+            '- 問題文のみ記載（解答は別ページ）\n'
+            '\n'
+            '■ 解説ページ（\\section*{解答・解説} 以下）:\n'
+            '各問について以下の3部構成で記述:\n'
+            '\n'
+            '\\answer{N}\n'
+            '\\paragraph{解法}\n'
+            '途中の計算過程を step-by-step で詳述。align* 環境で式を縦に揃える。\n'
+            '例:\n'
+            '\\begin{align*}\n'
+            'f(x) &= x^2 - 4x + 3 \\\\\n'
+            '     &= (x-2)^2 - 1\n'
+            '\\end{align*}\n'
+            '\n'
+            '\\paragraph{ポイント}\n'
+            '\\begin{itemize}\n'
+            '\\item 間違えやすい点\n'
+            '\\item 使用した公式・定理\n'
+            '\\item 類題への応用方法\n'
+            '\\end{itemize}\n'
+            '\n'
+            '■ 禁止事項:\n'
+            '- tcolorbox, mdframed, fbox 等のボックス環境\n'
+            '- $$ ... $$ による数式（align* や \\[ ... \\] を使用）\n'
+            '- \\paragraph の代わりに \\section/\\subsection を乱用しない\n'
         ),
     },
     'minimal': {
         'name': 'シンプル',
         'prompt_instruction': (
-            '以下の形式でLaTeXコードを出力してください：\n'
-            '- シンプルな形式（装飾なし）\n'
-            '- 問題と解答をそのまま記述\n'
-            '- \\documentclass{article} から \\end{document} まで完全な文書として出力'
+            '【出力形式: シンプル形式】\n'
+            '以下の構造を厳守してLaTeXを出力してください。\n'
+            '\n'
+            '■ 構造ルール:\n'
+            '- 問題は \\begin{enumerate}[leftmargin=*] の \\item で番号付きリスト\n'
+            '- 解答は \\section*{解答} の下に \\begin{enumerate} で番号順に記載\n'
+            '- 装飾なし・コマンド追加なし・最小限の構成\n'
+            '\n'
+            '■ 禁止事項:\n'
+            '- \\problem, \\answer 等の独自コマンド\n'
+            '- tcolorbox, mdframed, fbox 等のボックス環境\n'
+            '- $$ ... $$ による数式（\\[ ... \\] を使用）\n'
         ),
     },
 }
@@ -2794,11 +2951,14 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         '2. 余分な説明・コメント・マークダウン（``` 等）は一切出力しない。\n'
         '3. 日本語を含む場合は \\usepackage{iftex} でエンジンを判定し、\n'
         '   PDFTeX なら CJKutf8、LuaTeX なら luatexja、XeTeX なら xeCJK を使用すること。\n'
-        '4. 数式は amsmath, amssymb, mathtools を使用。\n'
+        '4. 数式は amsmath, amssymb, mathtools を使用。インライン数式は $...$、\n'
+        '   ディスプレイ数式は \\[...\\] を使用。$$ ... $$ および \\(...\\) は禁止。\n'
         '5. 数学の計算は必ず自分で検算してから出力すること。計算ミスは許されない。\n'
+        '6. tcolorbox, mdframed, fbox 等のボックス環境は使用しない。\n'
+        '7. 指定された出力形式の構造ルールを厳守すること（形式固有のルールは下記参照）。\n'
     )
     if preset_instr:
-        system_instruction += f'\n【出力形式: {preset_name}】\n{preset_instr}\n'
+        system_instruction += f'\n{preset_instr}\n'
 
     # Call Groq Cloud API (OpenAI-compatible)
     groq_url = 'https://api.groq.com/openai/v1/chat/completions'
