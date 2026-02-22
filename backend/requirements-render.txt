@@ -1,0 +1,17 @@
+# Lightweight requirements for Render free-tier deployment.
+# Excludes sentence-transformers (+ torch ~1.5 GB) to stay within 512 MB RAM.
+# Vector-search endpoints will gracefully fall back to TF-IDF.
+fastapi
+uvicorn[standard]
+python-multipart
+pypdf
+scikit-learn
+numpy
+requests
+psycopg2-binary
+psycopg[binary]
+sqlalchemy>=2.0
+alembic
+jsonschema
+httpx
+gunicorn

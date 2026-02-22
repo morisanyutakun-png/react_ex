@@ -1575,81 +1575,110 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 texts = []
 
         ctx['chunk_count'] = len(texts)
+        logger.info('RAG: %d texts loaded for retrieval (subject_filter=%r)', len(texts), getattr(req, 'subject_filter', None))
 
         # Query for retrieval: combine subject, difficulty and a short template preview
         q_preview = (req.subject or '') + ' ' + (req.difficulty or '') + ' ' + (prompt[:400] if prompt else '')
+
+        # map difficulty string to numeric target (used in re-ranking)
+        def _difficulty_to_num(s):
+            if not s: return None
+            s = str(s).lower()
+            if s in ('易しい', 'easy', 'e'): return 0.2
+            if s in ('難しい', 'hard', 'h'): return 0.8
+            if s in ('普通', 'medium', 'normal', 'm'): return 0.5
+            try:
+                return float(s)
+            except Exception:
+                return None
+
         try:
-            # perform retrieval
+            # ── Step 1: retrieve top_k*3 candidates via TF-IDF ──────────────────
             top_k = min(int(req.top_k or 5), max(1, len(texts)))
             if vectorizer is not None and mat is not None:
-                results = rag.search(q_preview, vectorizer, mat, texts, top_k=top_k*3)
+                results = rag.search(q_preview, vectorizer, mat, texts, top_k=top_k * 3)
             else:
                 tv, tm = rag.build_index(texts)
-                results = rag.search(q_preview, tv, tm, texts, top_k=top_k*3)
+                results = rag.search(q_preview, tv, tm, texts, top_k=top_k * 3)
 
-                # re-rank by combining sim score with difficulty/trickiness preferences
-                # map difficulty string to numeric target
-                def difficulty_to_num(s):
-                    if not s: return None
-                    s = str(s).lower()
-                    if s.startswith('e') or 'easy' in s: return 0.2
-                    if s.startswith('h') or 'hard' in s: return 0.8
-                    if s.startswith('m') or 'med' in s: return 0.5
-                    try:
-                        return float(s)
-                    except Exception:
-                        return None
+            logger.info('RAG: TF-IDF search returned %d candidates (top_k=%d)', len(results), top_k)
 
-                target = difficulty_to_num(req.difficulty)
-                alpha = float(req.difficulty_match_weight or 0.6)
-                beta = float(req.trickiness_weight or 0.0)
+            # ── Step 2: re-rank by difficulty/trickiness match ──────────────────
+            # This block now always executes regardless of whether the vectorizer
+            # was pre-built or rebuilt on-the-fly.
+            target = _difficulty_to_num(req.difficulty)
+            alpha = float(req.difficulty_match_weight or 0.6)
+            beta = float(req.trickiness_weight or 0.0)
 
-                scored = []
-                for rr in results:
-                    if not rr: continue
-                    idx = int(rr.get('idx', 0))
-                    sim = float(rr.get('score', 0.0))
-                    cand = candidates[idx] if idx < len(candidates) else {'id': None, 'text': texts[idx] if idx < len(texts) else '', 'difficulty': None, 'trickiness': None, 'metadata': {}}
-                    pd = cand.get('difficulty')
-                    pt = cand.get('trickiness')
-                    try:
-                        pdn = float(pdn) if pd is not None else 0.5
-                    except Exception:
-                        pdn = 0.5
-                    try:
-                        ptn = float(ptn) if pt is not None else 0.0
-                    except Exception:
-                        ptn = 0.0
+            scored = []
+            for rr in results:
+                if not rr: continue
+                idx = int(rr.get('idx', 0))
+                sim = float(rr.get('score', 0.0))
+                cand = (
+                    candidates[idx]
+                    if idx < len(candidates)
+                    else {'id': None, 'text': texts[idx] if idx < len(texts) else '', 'difficulty': None, 'trickiness': None, 'metadata': {}}
+                )
+                pd_val = cand.get('difficulty')
+                pt_val = cand.get('trickiness')
+                try:
+                    pdn = float(pd_val) if pd_val is not None else 0.5
+                except Exception:
+                    pdn = 0.5
+                try:
+                    ptn = float(pt_val) if pt_val is not None else 0.0
+                except Exception:
+                    ptn = 0.0
 
-                    diff_match = 0.5
-                    if target is not None:
-                        diff_match = max(0.0, 1.0 - abs(pdn - target))
+                diff_match = 0.5
+                if target is not None:
+                    diff_match = max(0.0, 1.0 - abs(pdn - target))
 
-                    base = alpha * sim + (1.0 - alpha) * diff_match
-                    combined = (1.0 - beta) * base + beta * ptn
-                    scored.append({'idx': idx, 'sim': sim, 'combined': combined, 'candidate': cand})
+                base = alpha * sim + (1.0 - alpha) * diff_match
+                combined = (1.0 - beta) * base + beta * ptn
+                scored.append({'idx': idx, 'sim': sim, 'combined': combined, 'candidate': cand})
 
-                # sort by combined score
-                scored_sorted = sorted(scored, key=lambda x: -x['combined'])
-                top_selected = scored_sorted[:top_k]
+            scored_sorted = sorted(scored, key=lambda x: -x['combined'])
+            top_selected = scored_sorted[:top_k]
 
-                # prepare doc_snippets and items
-                items = []
-                seen_texts = set()
-                for s in top_selected:
-                    c = s['candidate']
-                    text_snip = (c.get('text') or '')
-                    if text_snip in seen_texts:
-                        continue
-                    seen_texts.add(text_snip)
-                    items.append({'id': c.get('id'), 'sim_score': s['sim'], 'combined_score': s['combined'], 'difficulty': c.get('difficulty'), 'trickiness': c.get('trickiness'), 'text': text_snip})
+            # ── Step 3: build doc_snippets ───────────────────────────────────────
+            items = []
+            seen_texts = set()
+            for s in top_selected:
+                c = s['candidate']
+                text_snip = (c.get('text') or '').strip()
+                if not text_snip or text_snip in seen_texts:
+                    continue
+                seen_texts.add(text_snip)
+                items.append({
+                    'id': c.get('id'),
+                    'sim_score': s['sim'],
+                    'combined_score': s['combined'],
+                    'difficulty': c.get('difficulty'),
+                    'trickiness': c.get('trickiness'),
+                    'text': text_snip,
+                })
 
-                ctx['doc_snippets_items'] = items
-                ctx['doc_snippets'] = '\n\n'.join([it['text'] for it in items])
-        except Exception:
-            # fallback: first few chunks
+            # If all similarity scores were zero (e.g. query terms not in corpus),
+            # fall back to the top-k texts in DB order so the prompt is never empty.
+            if not items and texts:
+                logger.info('RAG: all similarity scores zero, falling back to DB-order top-%d', top_k)
+                items = [
+                    {'id': None, 'sim_score': 0.0, 'combined_score': 0.0,
+                     'difficulty': None, 'trickiness': None, 'text': t.strip()}
+                    for t in texts[:top_k] if t and t.strip()
+                ]
+
+            ctx['doc_snippets_items'] = items
+            ctx['doc_snippets'] = '\n\n'.join([it['text'] for it in items])
+            logger.info('RAG: final doc_snippets has %d items, %d chars', len(items), len(ctx['doc_snippets']))
+
+        except Exception as exc:
+            logger.warning('RAG retrieval failed, using raw fallback: %s', exc)
+            # fallback: first few chunks in DB order
             ctx['doc_snippets_items'] = []
-            ctx['doc_snippets'] = '\n\n'.join(texts[:3])
+            ctx['doc_snippets'] = '\n\n'.join(t.strip() for t in texts[:top_k if 'top_k' in dir() else 5] if t and t.strip())
 
         # build a compact rag_summary by concatenating the retrieved snippets (up to 800 chars)
         summary = ''
@@ -1669,15 +1698,15 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
         for s in dedup:
             if not s:
                 continue
-            if len(summary) + len(s) + 2 > 800:
+            if len(summary) + len(s) + 2 > 2400:
                 if not summary:
-                    summary = s[:800]
+                    summary = s[:2400]
                 break
             if summary:
                 summary += '\n\n' + s
             else:
                 summary = s
-        ctx['rag_summary'] = summary[:800]
+        ctx['rag_summary'] = summary[:2400]
 
         # difficulty metrics: prefer metadata.difficulty_details if present, else compute
         md = {}
@@ -1820,7 +1849,11 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
     try:
         if req.rag_inject and isinstance(prompt, str):
             if ('{doc_snippets}' not in prompt and '{rag_summary}' not in prompt):
-                prompt = prompt + '\n\n参考資料:\n{rag_summary}\n'
+                # Use doc_snippets (full ranked items) when available, else rag_summary
+                if ctx.get('doc_snippets'):
+                    prompt = prompt + '\n\n【RAG参照問題（{chunk_count}件中上位抜粋）】\n{doc_snippets}\n'
+                else:
+                    prompt = prompt + '\n\n【参考資料】\n{rag_summary}\n'
 
             # difficulty/trickiness: provide a human-readable metadata block when
             # the template doesn't already reference these placeholders.
@@ -1872,6 +1905,28 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "元の問題をそのままコピーせず、数値や条件を変えた新しい問題を作成すること。\n\n"
                         f"--- 参照元 ---\n{source_text.strip()}\n--- 参照元ここまで ---\n"
                     )
+
+                # If RAG retrieved items exist, append them as a dedicated reference block
+                # so the LLM can analyze question style, difficulty, and phrasing patterns.
+                rag_items = ctx.get('doc_snippets_items') or []
+                if rag_items and not source_block:
+                    rag_lines = []
+                    for i, it in enumerate(rag_items, 1):
+                        t = (it.get('text') or '').strip()
+                        if not t:
+                            continue
+                        diff_label = ''
+                        if it.get('difficulty') is not None:
+                            diff_label = f' [難易度:{it["difficulty"]:.2f}]'
+                        rag_lines.append(f'参照問題 {i}{diff_label}:\n{t}')
+                    if rag_lines:
+                        source_block = (
+                            "\n\n【RAG参照問題（データベースから検索・ランク付け済み）】\n"
+                            "以下はデータベースから検索した類似問題です。これらの出題形式・難易度・語彙・解法パターンを参考にして、\n"
+                            "新しい問題を生成してください。参照問題をそのままコピーしないこと。\n\n"
+                            + '\n\n---\n'.join(rag_lines)
+                            + '\n'
+                        )
 
                 # --- Load LaTeX preset prompt instruction if available ---
                 preset_id = getattr(req, 'latex_preset', 'exam') or 'exam'

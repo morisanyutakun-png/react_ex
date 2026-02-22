@@ -32,8 +32,11 @@ try:
     from sentence_transformers import SentenceTransformer
     import numpy as np
 except Exception:
-    print("Missing dependency for sentence-transformers. Install requirements.", file=sys.stderr)
-    raise
+    SentenceTransformer = None  # type: ignore[misc]
+    np = None  # type: ignore[assignment]
+    logging.getLogger(__name__).warning(
+        "sentence-transformers not available; embedding features disabled."
+    )
 
 
 # ---- import safety: make project root importable ----

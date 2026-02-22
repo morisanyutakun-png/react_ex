@@ -6,23 +6,18 @@ ENV PYTHONPATH=/app
 
 WORKDIR /app
 
-# Install system deps + LaTeX (xelatex) for local PDF compilation
-# texlive-xetex: ~200MB, needed for local PDF generation
-# If RAM is limited (e.g. Render free 512MB), set CLOUD_LATEX_ONLY=1 at runtime
+# Install minimal system deps only.
+# texlive is omitted — set CLOUD_LATEX_ONLY=1 at runtime to use cloud LaTeX
+# (latex.ytotech.com) instead of local xelatex, avoiding OOM on free tier.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     poppler-utils \
-    texlive-xetex \
-    texlive-fonts-recommended \
-    texlive-latex-extra \
-    texlive-lang-japanese \
-    fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies (from backend/)
-COPY backend/requirements.txt /app/backend/requirements.txt
-RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+# Install Python dependencies (lightweight, no sentence-transformers/torch)
+COPY backend/requirements-render.txt /app/backend/requirements-render.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements-render.txt
 
 # Copy backend + workers (both needed at runtime)
 COPY backend/ /app/backend/
@@ -32,4 +27,4 @@ EXPOSE 8000
 
 WORKDIR /app/backend
 
-CMD ["sh", "-c", "alembic upgrade head && gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120"]
+CMD ["sh", "-c", "alembic upgrade head && gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 120"]
