@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, DIAGRAM_PACKAGE_DEFS } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -100,6 +100,23 @@ export default function UserModePage() {
   const [llmOutput, setLlmOutput] = useState('');
   const [mode, setMode] = useState('auto'); // 'auto' | 'manual'
 
+  /* ── 図表パッケージ ── */
+  const [extraPackages, setExtraPackages] = useState([]);
+  const [customPackage, setCustomPackage] = useState('');
+
+  const togglePackage = (id) =>
+    setExtraPackages((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+
+  const addCustomPackage = () => {
+    const pkg = customPackage.trim().toLowerCase().replace(/\s+/g, '-');
+    if (pkg && !extraPackages.includes(pkg)) {
+      setExtraPackages((prev) => [...prev, pkg]);
+    }
+    setCustomPackage('');
+  };
+
   useEffect(() => {
     fetchLatexPresets()
       .then((presets) => setLatexPresets(presets))
@@ -159,6 +176,7 @@ export default function UserModePage() {
         user_mode: true,
         top_k: topK,
         latex_preset: latexPreset,
+        extra_packages: extraPackages,
       });
       generatedPrompt = data.rendered_prompt || data.rendered || '';
       setRenderContext(data.context || null);
@@ -181,6 +199,7 @@ export default function UserModePage() {
         prompt: generatedPrompt,
         latex_preset: latexPreset,
         title: `${subject} - ${difficulty}`,
+        extra_packages: extraPackages,
       });
 
       if (data?.error) {
@@ -230,6 +249,7 @@ export default function UserModePage() {
         user_mode: true,
         top_k: topK,
         latex_preset: latexPreset,
+        extra_packages: extraPackages,
       });
       setRenderContext(data.context || null);
       setPrompt(data.rendered_prompt || data.rendered || '');
@@ -528,6 +548,95 @@ export default function UserModePage() {
               <span className="text-[11px] text-indigo-400">{selectedPreset.description}</span>
             </div>
           )}
+
+          {/* ── 図表パッケージ選択 ── */}
+          <div className="mt-6 border-t border-slate-100 pt-5">
+            <div className="flex items-center gap-2 mb-1">
+              <label className="block text-[11px] font-black text-slate-400 tracking-[0.1em] uppercase">
+                LaTeX 図表パッケージ
+              </label>
+              <span className="text-[10px] text-slate-300">（任意）</span>
+            </div>
+            <p className="text-[11px] text-slate-400 mb-3">
+              回路図・グラフ・コードなどが必要な場合に選択してください。
+            </p>
+
+            <div className="grid grid-cols-2 gap-2">
+              {DIAGRAM_PACKAGE_DEFS.map((pkg) => {
+                const active = extraPackages.includes(pkg.id);
+                return (
+                  <button
+                    key={pkg.id}
+                    onClick={() => togglePackage(pkg.id)}
+                    className={`text-left p-3 rounded-xl border-2 transition-all ${
+                      active
+                        ? 'border-violet-400 bg-violet-50/60 shadow-sm'
+                        : 'border-slate-100 bg-white hover:border-violet-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className={`text-base leading-none mt-0.5 ${active ? 'text-violet-500' : 'text-slate-300'}`}>
+                        {pkg.icon}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-bold text-slate-700">{pkg.name}</span>
+                          <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                            active ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-400'
+                          }`}>
+                            {pkg.label}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">{pkg.description}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* カスタムパッケージ入力 */}
+            <div className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={customPackage}
+                onChange={(e) => setCustomPackage(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addCustomPackage()}
+                placeholder="カスタムパッケージ名（例: chemfig）"
+                className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 placeholder:text-slate-300"
+              />
+              <button
+                onClick={addCustomPackage}
+                disabled={!customPackage.trim()}
+                className="px-3 py-2 text-xs font-bold bg-slate-100 text-slate-500 rounded-lg hover:bg-violet-100 hover:text-violet-600 disabled:opacity-40 transition-colors"
+              >
+                追加
+              </button>
+            </div>
+
+            {/* 選択中パッケージのタグ表示 */}
+            {extraPackages.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {extraPackages.map((pkg) => {
+                  const def = DIAGRAM_PACKAGE_DEFS.find((d) => d.id === pkg);
+                  return (
+                    <span
+                      key={pkg}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-violet-100 text-violet-700 rounded-full text-[10px] font-bold"
+                    >
+                      {def?.name || pkg}
+                      <button
+                        onClick={() => setExtraPackages((prev) => prev.filter((p) => p !== pkg))}
+                        className="ml-0.5 text-violet-400 hover:text-violet-700 leading-none"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </SectionCard>
       )}
 

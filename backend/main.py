@@ -1393,6 +1393,8 @@ class RenderTemplateRequest(BaseModel):
     source_text: Optional[str] = None
     # LaTeX output format preset: controls prompt instructions and PDF preamble
     latex_preset: Optional[str] = 'exam'
+    # Optional extra LaTeX packages to include (e.g. ['tikz', 'circuitikz', 'pgfplots'])
+    extra_packages: Optional[List[str]] = []
 
 
 @app.post('/api/render_template')
@@ -2101,6 +2103,26 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         f"{preset_prompt_instr}\n"
                     )
 
+                # --- Inject extra diagram/utility packages ---
+                extra_pkgs = getattr(req, 'extra_packages', None) or []
+                if extra_pkgs:
+                    pkg_usepackage_lines = ""
+                    pkg_hints = "\n=== 利用可能な追加パッケージ（必要に応じて使用すること） ===\n"
+                    for pkg_id in extra_pkgs:
+                        pkg_def = DIAGRAM_PACKAGES.get(pkg_id)
+                        if pkg_def:
+                            pkg_usepackage_lines += pkg_def['usepackage'] + "\n"
+                            pkg_hints += f"P-{pkg_id}) {pkg_def['prompt_hint']}\n"
+                        else:
+                            # custom package name (free text)
+                            pkg_usepackage_lines += f"\\usepackage{{{pkg_id}}}\n"
+                            pkg_hints += f"P-{pkg_id}) \\usepackage{{{pkg_id}}} が利用可能。\n"
+                    # Inject before \begin{document}
+                    latex_skeleton = latex_skeleton.replace(
+                        "\\begin{document}", pkg_usepackage_lines + "\\begin{document}", 1
+                    )
+                    latex_instr += pkg_hints
+
                 # Assemble: skeleton (target structure) + instructions + user prompt body
                 prompt = f"以下のLaTeXスケルトンを完成させてください:\n\n{latex_skeleton}\n\n{latex_instr}{source_block}\n\n【指示内容】\n{orig_prompt_body}"
     except Exception as e:
@@ -2347,6 +2369,102 @@ _LATEX_PRESET_FALLBACKS: Dict[str, Dict[str, str]] = {
             '- \\problem, \\answer 等の独自コマンド\n'
             '- tcolorbox, mdframed, fbox 等のボックス環境\n'
             '- $$ ... $$ による数式（\\[ ... \\] を使用）\n'
+        ),
+    },
+}
+
+
+# ── 図表パッケージカタログ ───────────────────────────────────────────────────
+# extra_packages パラメータで指定できるパッケージの定義。
+# usepackage: LaTeXプリアンブルに挿入するコマンド列
+# prompt_hint: LLMへのプロンプトに追加する使い方の説明
+DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
+    'tikz': {
+        'name': 'TikZ（図形・図解）',
+        'usepackage': (
+            '\\usepackage{tikz}\n'
+            '\\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,patterns}'
+        ),
+        'prompt_hint': (
+            'TikZ が利用可能。\\begin{tikzpicture}...\\end{tikzpicture} で図を描く。'
+            '\\draw[->] (0,0) -- (1,0); や \\node[circle,draw] at (0,0) {A}; 等を使用。'
+            '座標系は cm 単位が基本。'
+        ),
+    },
+    'circuitikz': {
+        'name': 'CircuiTikZ（回路図）',
+        'usepackage': (
+            '\\usepackage{tikz}\n'
+            '\\usepackage[siunitx]{circuitikz}'
+        ),
+        'prompt_hint': (
+            'CircuiTikZ が利用可能。\\begin{circuitikz}...\\end{circuitikz} で電気回路図を描く。'
+            '抵抗: to[R,l=$R$], コンデンサ: to[C,l=$C$], インダクタ: to[L,l=$L$], '
+            '電圧源: to[V,l=$V$], 電流源: to[I,l=$I$], ダイオード: to[D]。'
+            '配線は -- で接続し、ノードラベルは node[above]{ラベル} で付ける。'
+        ),
+    },
+    'pgfplots': {
+        'name': 'PGFPlots（グラフ・関数プロット）',
+        'usepackage': (
+            '\\usepackage{tikz}\n'
+            '\\usepackage{pgfplots}\n'
+            '\\pgfplotsset{compat=1.18}'
+        ),
+        'prompt_hint': (
+            'PGFPlots が利用可能。\\begin{tikzpicture}\\begin{axis}[...options...]...\\end{axis}\\end{tikzpicture} でグラフを描く。'
+            '関数プロット: \\addplot[domain=-3:3,samples=100,blue]{x^2};'
+            'データプロット: \\addplot coordinates {(0,0)(1,1)(2,4)};'
+            'axis options: xlabel={$x$}, ylabel={$y$}, xmin=-3, xmax=3, grid=both 等。'
+        ),
+    },
+    'tikz-cd': {
+        'name': 'TikZ-CD（可換図式）',
+        'usepackage': (
+            '\\usepackage{tikz-cd}'
+        ),
+        'prompt_hint': (
+            'TikZ-CD が利用可能。\\begin{tikzcd}...\\end{tikzcd} で可換図式を描く。'
+            '例: A \\arrow[r, "f"] \\arrow[d, "g"] & B \\arrow[d, "h"] \\\\ C \\arrow[r, "k"] & D'
+        ),
+    },
+    'forest': {
+        'name': 'Forest（樹形図・確率の木）',
+        'usepackage': (
+            '\\usepackage{forest}'
+        ),
+        'prompt_hint': (
+            'Forest が利用可能。\\begin{forest}...\\end{forest} で樹形図を描く。'
+            '例: [ROOT [A [C][D]] [B [E][F]]]'
+            '確率の樹形図: edge label={node[midway,left]{$p$}} 等でラベルを付ける。'
+        ),
+    },
+    'listings': {
+        'name': 'Listings（ソースコード表示）',
+        'usepackage': (
+            '\\usepackage{listings}\n'
+            '\\usepackage{xcolor}\n'
+            '\\lstset{basicstyle=\\ttfamily\\small,breaklines=true,'
+            'frame=single,numbers=left,numberstyle=\\tiny,'
+            'keywordstyle=\\color{blue}\\bfseries,'
+            'commentstyle=\\color{gray}\\itshape,'
+            'stringstyle=\\color{orange}}'
+        ),
+        'prompt_hint': (
+            'Listings が利用可能。\\begin{lstlisting}[language=Python]...\\end{lstlisting} でコードを表示。'
+            'language には Python, Java, C, JavaScript, SQL, bash 等が指定できる。'
+            '行番号は lstset で設定済み。インラインコードは \\lstinline|code| で記述。'
+        ),
+    },
+    'tabularx': {
+        'name': 'Tabularx（自動幅調整表）',
+        'usepackage': (
+            '\\usepackage{tabularx}\n'
+            '\\usepackage{booktabs}'
+        ),
+        'prompt_hint': (
+            'Tabularx が利用可能。\\begin{tabularx}{\\linewidth}{l X r} で幅を自動調整した表を作る。'
+            'X 列は残り幅を自動配分。booktabs も有効: \\toprule, \\midrule, \\bottomrule で罫線を引く。'
         ),
     },
 }
@@ -2920,6 +3038,7 @@ class LlmGenerateRequest(BaseModel):
     prompt: str
     latex_preset: Optional[str] = 'exam'
     title: Optional[str] = 'Generated Problems'
+    extra_packages: Optional[List[str]] = []
 
 
 @app.post('/api/generate_with_llm')
@@ -2959,6 +3078,17 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     )
     if preset_instr:
         system_instruction += f'\n{preset_instr}\n'
+
+    # Append extra package usage hints so Groq knows what's available
+    extra_pkgs = req.extra_packages or []
+    if extra_pkgs:
+        system_instruction += '\n【利用可能な追加パッケージ（プリアンブルに既に追加済み）】\n'
+        for pkg_id in extra_pkgs:
+            pkg_def = DIAGRAM_PACKAGES.get(pkg_id)
+            if pkg_def:
+                system_instruction += f'- {pkg_def["name"]}: {pkg_def["prompt_hint"]}\n'
+            else:
+                system_instruction += f'- \\usepackage{{{pkg_id}}} が利用可能。\n'
 
     # Call Groq Cloud API (OpenAI-compatible)
     groq_url = 'https://api.groq.com/openai/v1/chat/completions'

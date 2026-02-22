@@ -250,4 +250,59 @@ export async function generateWithLlm(params) {
   });
 }
 
+// ── LaTeX Diagram Packages ─────────────────────────────────────────────────
+
+/** 選択可能な図表パッケージの定義（フロントエンド表示用） */
+export const DIAGRAM_PACKAGE_DEFS = [
+  {
+    id: 'tikz',
+    name: 'TikZ',
+    label: '図形・図解',
+    icon: '◻',
+    description: '矢印図・幾何図形・フローチャートなど汎用的な図を描画',
+  },
+  {
+    id: 'circuitikz',
+    name: 'CircuiTikZ',
+    label: '回路図',
+    icon: '⚡',
+    description: '電気回路図（抵抗・コンデンサ・電源など）を描画',
+  },
+  {
+    id: 'pgfplots',
+    name: 'PGFPlots',
+    label: 'グラフ',
+    icon: '📈',
+    description: '関数グラフ・散布図・棒グラフなどを描画',
+  },
+  {
+    id: 'tikz-cd',
+    name: 'TikZ-CD',
+    label: '可換図式',
+    icon: '↗',
+    description: '数学の可換図式・射影ダイアグラムを描画',
+  },
+  {
+    id: 'forest',
+    name: 'Forest',
+    label: '樹形図',
+    icon: '🌲',
+    description: '確率の樹形図・構文木・階層図を描画',
+  },
+  {
+    id: 'listings',
+    name: 'Listings',
+    label: 'コード',
+    icon: '{ }',
+    description: 'Python・Java・C等のソースコードをシンタックスハイライト付きで表示',
+  },
+  {
+    id: 'tabularx',
+    name: 'Tabularx',
+    label: '拡張表',
+    icon: '⊞',
+    description: '幅を自動調整した表（booktabs罫線スタイル付き）',
+  },
+];
+
 
