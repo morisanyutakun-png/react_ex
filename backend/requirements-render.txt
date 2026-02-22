@@ -9,7 +9,6 @@ scikit-learn
 numpy
 requests
 psycopg2-binary
-psycopg[binary]
 sqlalchemy>=2.0
 alembic
 jsonschema

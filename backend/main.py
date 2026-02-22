@@ -3,7 +3,7 @@ import uuid
 import subprocess
 import shutil
 import zipfile
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import re
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi import Body
@@ -49,7 +49,13 @@ from fastapi.middleware.cors import CORSMiddleware
 import requests
 import logging
 import traceback
-from backend.db import connect_db
+try:
+    from backend.db import connect_db
+except Exception:
+    try:
+        from db import connect_db  # type: ignore
+    except Exception:
+        connect_db = None  # type: ignore[assignment]
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

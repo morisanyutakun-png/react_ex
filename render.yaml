@@ -18,3 +18,7 @@ services:
         value: "1"           # Use cloud LaTeX (latex.ytotech.com) instead of local xelatex to avoid OOM on free tier
       - key: PYTHON_VERSION
         value: "3.11.9"
+      - key: WEB_CONCURRENCY
+        value: "1"           # gunicorn: single worker for free tier memory limits
+      - key: MALLOC_ARENA_MAX
+        value: "2"           # glibc: limit memory arenas to reduce RSS

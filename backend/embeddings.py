@@ -24,8 +24,13 @@ from typing import List, Dict, Tuple, Optional
 import time
 import datetime
 
-import psycopg2
-from psycopg2.extras import execute_values
+try:
+    import psycopg2
+    from psycopg2.extras import execute_values
+except Exception:
+    psycopg2 = None  # type: ignore[assignment]
+    execute_values = None  # type: ignore[assignment]
+
 import logging
 
 try:
