@@ -1583,8 +1583,37 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     vectorizer, mat = rag.build_index(texts)
                 except Exception:
                     vectorizer, mat = None, None
-            except Exception:
+            except Exception as outer_exc:
+                import traceback
+                logger.warning('RAG: DB query or index build failed: %s\n%s', outer_exc, traceback.format_exc())
                 texts = []
+
+        # If texts is still empty but DB likely has problems, try a simple unfiltered query
+        if not texts:
+            try:
+                _conn2 = connect_db()
+                _cur2 = _conn2.cursor()
+                if getattr(_conn2, '_is_sqlite', False):
+                    _cur2.execute("SELECT id, stem, solution_outline, difficulty, trickiness FROM problems ORDER BY id DESC LIMIT %s", (200,))
+                else:
+                    _cur2.execute("SELECT id, stem, solution_outline, difficulty, trickiness FROM problems ORDER BY created_at DESC LIMIT %s", (200,))
+                _rows2 = _cur2.fetchall()
+                _cur2.close(); _conn2.close()
+                for r in _rows2:
+                    pt = (r[1] or '').strip()
+                    if not pt:
+                        continue
+                    texts.append(pt)
+                    candidates.append({'id': r[0], 'text': pt, 'difficulty': r[3], 'trickiness': r[4], 'metadata': {}})
+                    full += pt + '\n\n' + (r[2] or '') + '\n\n'
+                if texts:
+                    try:
+                        vectorizer, mat = rag.build_index(texts)
+                    except Exception:
+                        vectorizer, mat = None, None
+                    logger.info('RAG: recovered %d texts via unfiltered fallback query', len(texts))
+            except Exception as recovery_exc:
+                logger.warning('RAG: fallback DB query also failed: %s', recovery_exc)
 
         ctx['chunk_count'] = len(texts)
         ctx['rag_status'] = 'ok' if texts else 'no_data'
@@ -1680,11 +1709,19 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
             # fall back to the top-k texts in DB order so the prompt is never empty.
             if not items and texts:
                 logger.info('RAG: all similarity scores zero, falling back to DB-order top-%d', top_k)
-                items = [
-                    {'id': None, 'sim_score': 0.0, 'combined_score': 0.0,
-                     'difficulty': None, 'trickiness': None, 'text': t.strip()}
-                    for t in texts[:top_k] if t and t.strip()
-                ]
+                for i, t in enumerate(texts[:top_k]):
+                    t_stripped = (t or '').strip()
+                    if not t_stripped:
+                        continue
+                    cand = candidates[i] if i < len(candidates) else {}
+                    items.append({
+                        'id': cand.get('id'),
+                        'sim_score': 0.0,
+                        'combined_score': 0.0,
+                        'difficulty': cand.get('difficulty'),
+                        'trickiness': cand.get('trickiness'),
+                        'text': t_stripped,
+                    })
 
             ctx['doc_snippets_items'] = items
             ctx['doc_snippets'] = '\n\n'.join([it['text'] for it in items])
@@ -1702,6 +1739,26 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                  'difficulty': None, 'trickiness': None, 'text': t.strip()}
                 for t in texts[:_fb_k] if t and t.strip()
             ]
+            # If fb_items is empty but DB might have data, try one last DB query
+            if not fb_items:
+                try:
+                    _conn3 = connect_db()
+                    _cur3 = _conn3.cursor()
+                    if getattr(_conn3, '_is_sqlite', False):
+                        _cur3.execute("SELECT id, stem, difficulty, trickiness FROM problems WHERE stem IS NOT NULL AND stem != '' ORDER BY id DESC LIMIT %s", (_fb_k,))
+                    else:
+                        _cur3.execute("SELECT id, stem, difficulty, trickiness FROM problems WHERE stem IS NOT NULL AND stem != '' ORDER BY created_at DESC LIMIT %s", (_fb_k,))
+                    _rows3 = _cur3.fetchall()
+                    _cur3.close(); _conn3.close()
+                    fb_items = [
+                        {'id': r[0], 'sim_score': 0.0, 'combined_score': 0.0,
+                         'difficulty': r[2], 'trickiness': r[3], 'text': (r[1] or '').strip()}
+                        for r in _rows3 if r[1] and r[1].strip()
+                    ]
+                    if fb_items:
+                        logger.info('RAG: recovered %d items via last-resort DB query', len(fb_items))
+                except Exception as last_exc:
+                    logger.warning('RAG: last-resort DB query failed: %s', last_exc)
             ctx['doc_snippets_items'] = fb_items
             ctx['doc_snippets'] = '\n\n'.join(it['text'] for it in fb_items)
             ctx['rag_retrieved'] = len(fb_items)
