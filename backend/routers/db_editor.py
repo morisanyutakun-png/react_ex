@@ -26,23 +26,27 @@ ALLOWED_TABLES = {
 }
 
 
+def _is_sqlite(conn) -> bool:
+    """接続がSQLiteかどうかを判定"""
+    return getattr(conn, '_is_sqlite', False)
+
+
 def _get_columns(conn, table: str) -> List[Dict[str, Any]]:
     """テーブルのカラム情報を取得（SQLite / Postgres 両対応）"""
     cur = conn.cursor()
     cols = []
     try:
-        cur.execute(f"PRAGMA table_info('{table}')")
-        rows = cur.fetchall()
-        if rows:
+        if _is_sqlite(conn):
+            # SQLite: PRAGMA table_info を使う
+            cur.execute(f"PRAGMA table_info('{table}')")
+            rows = cur.fetchall()
             for r in rows:
                 cols.append({
                     "name": r[1], "type": r[2],
                     "notnull": bool(r[3]), "default": r[4], "pk": bool(r[5]),
                 })
         else:
-            raise Exception("not sqlite")
-    except Exception:
-        try:
+            # PostgreSQL: information_schema から取得
             cur.execute(
                 "SELECT column_name, data_type, is_nullable, column_default "
                 "FROM information_schema.columns WHERE table_name=%s "
@@ -54,8 +58,29 @@ def _get_columns(conn, table: str) -> List[Dict[str, Any]]:
                     "name": r[0], "type": r[1],
                     "notnull": r[2] == "NO", "default": r[3], "pk": False,
                 })
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"schema introspection failed: {e}")
+            # PK情報も取得
+            try:
+                cur.execute(
+                    "SELECT kcu.column_name "
+                    "FROM information_schema.table_constraints tc "
+                    "JOIN information_schema.key_column_usage kcu "
+                    "  ON tc.constraint_name = kcu.constraint_name "
+                    "WHERE tc.table_name = %s AND tc.constraint_type = 'PRIMARY KEY'",
+                    (table,),
+                )
+                pk_cols = {r[0] for r in cur.fetchall()}
+                for col in cols:
+                    if col["name"] in pk_cols:
+                        col["pk"] = True
+            except Exception:
+                pass
+    except Exception as e:
+        # トランザクションをrollbackしてクリーンな状態に戻す
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"schema introspection failed: {e}")
     finally:
         try:
             cur.close()
@@ -90,6 +115,14 @@ def get_table_schema(table: str):
     try:
         cols = _get_columns(conn, table)
         return {"table": table, "columns": cols, "pk": ALLOWED_TABLES[table]["pk"]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"schema fetch failed: {e}")
     finally:
         try:
             conn.close()
@@ -114,6 +147,9 @@ def list_rows(
         pk = ALLOWED_TABLES[table]["pk"]
         cur = conn.cursor()
 
+        # LIKE 演算子をDB種別で切り替え
+        like_op = "LIKE" if _is_sqlite(conn) else "ILIKE"
+
         # COUNT
         if search and search.strip():
             # 全カラムに対するOR検索（TEXT系のみ）
@@ -121,7 +157,15 @@ def list_rows(
                          if any(t in (c.get("type") or "").upper()
                                 for t in ("TEXT", "VARCHAR", "CHAR", "JSONB", "JSON"))]
             if text_cols:
-                where_clauses = " OR ".join(f"{c} LIKE %s" for c in text_cols)
+                # JSONB カラムは ::text にキャストして検索
+                clause_parts = []
+                for c in text_cols:
+                    col_schema = next((cs for cs in _get_columns(conn, table) if cs["name"] == c), None)
+                    if col_schema and "JSONB" in (col_schema.get("type") or "").upper() and not _is_sqlite(conn):
+                        clause_parts.append(f"{c}::text {like_op} %s")
+                    else:
+                        clause_parts.append(f"{c} {like_op} %s")
+                where_clauses = " OR ".join(clause_parts)
                 search_params = [f"%{search}%" for _ in text_cols]
                 cur.execute(
                     f"SELECT COUNT(*) FROM {table} WHERE {where_clauses}",
@@ -154,8 +198,9 @@ def list_rows(
 
         rows_raw = cur.fetchall()
 
-        # カラム名取得
-        col_names = list(valid_cols)
+        # カラム名取得 — スキーマ順をデフォルトとして使う
+        schema_cols = _get_columns(conn, table)
+        col_names = [c["name"] for c in schema_cols]
         try:
             # description から取得（PostgreSQL/SQLite cursor.description）
             if hasattr(cur, '_cur') and cur._cur.description:
@@ -163,8 +208,7 @@ def list_rows(
             elif hasattr(cur, 'description') and cur.description:
                 col_names = [d[0] for d in cur.description]
         except Exception:
-            # fallback: スキーマ順
-            col_names = [c["name"] for c in _get_columns(conn, table)]
+            pass  # fallback: スキーマ順のまま
 
         rows = []
         for r in rows_raw:
@@ -183,6 +227,15 @@ def list_rows(
 
         cur.close()
         return {"table": table, "total": total, "rows": rows, "limit": limit, "offset": offset}
+    except HTTPException:
+        raise
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        logger.exception("list_rows failed for table %s", table)
+        raise HTTPException(status_code=500, detail=f"data fetch failed: {e}")
     finally:
         try:
             conn.close()
