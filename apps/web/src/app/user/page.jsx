@@ -142,6 +142,9 @@ export default function UserModePage() {
   const [llmOutput, setLlmOutput] = useState('');
   const [mode, setMode] = useState('auto'); // 'auto' | 'manual'
 
+  /* ── ベース問題（過去問）参照 ── */
+  const [sourceText, setSourceText] = useState('');
+
   /* ── 図表パッケージ ── */
   const [extraPackages, setExtraPackages] = useState([]);
   const [customPackage, setCustomPackage] = useState('');
@@ -219,6 +222,7 @@ export default function UserModePage() {
         top_k: topK,
         latex_preset: latexPreset,
         extra_packages: extraPackages,
+        ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
       generatedPrompt = data.rendered_prompt || data.rendered || '';
       setRenderContext(data.context || null);
@@ -304,6 +308,7 @@ export default function UserModePage() {
         top_k: topK,
         latex_preset: latexPreset,
         extra_packages: extraPackages,
+        ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
       setRenderContext(data.context || null);
       setPrompt(data.rendered_prompt || data.rendered || '');
@@ -495,6 +500,49 @@ export default function UserModePage() {
             <div className="grid grid-cols-2 gap-3">
               <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
               <NumberField label="RAG参照数" value={topK} onChange={setTopK} min={1} max={20} />
+            </div>
+
+            {/* ── ベース問題（過去問）入力 ── */}
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <label className="block text-[11px] font-black text-slate-400 tracking-[0.1em] uppercase">
+                  ベースにする問題
+                </label>
+                <span className="text-[10px] text-slate-300">（任意）</span>
+              </div>
+              <p className="text-[11px] text-slate-400 mb-2">
+                過去問や参考にしたい問題を貼り付けると、その問題に沿った類題を生成します。
+              </p>
+              {sourceText ? (
+                <div className="relative">
+                  <textarea
+                    value={sourceText}
+                    onChange={(e) => setSourceText(e.target.value)}
+                    rows={5}
+                    className="w-full px-3 py-2.5 text-xs border-2 border-amber-200 bg-amber-50/30 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-200 placeholder:text-slate-300 font-mono leading-relaxed"
+                  />
+                  <button
+                    onClick={() => setSourceText('')}
+                    className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] text-amber-500 hover:text-amber-700 bg-amber-100 rounded font-bold"
+                  >
+                    クリア
+                  </button>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400" />
+                    <span className="text-[10px] text-amber-600 font-bold">
+                      この問題に即した類題を生成します
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <textarea
+                  value={sourceText}
+                  onChange={(e) => setSourceText(e.target.value)}
+                  rows={3}
+                  placeholder={'例:\n次の定積分を求めよ。\n∫₀¹ (x² + 2x + 1) dx'}
+                  className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-200 placeholder:text-slate-300 font-mono leading-relaxed"
+                />
+              )}
             </div>
 
             {/* モード選択 */}
@@ -804,6 +852,16 @@ export default function UserModePage() {
                   </span>
                 )}
               </div>
+              {/* ベース問題使用時の表示 */}
+              {sourceText.trim() && (
+                <div className="mt-2 pt-2 border-t border-amber-100 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+                  <span className="text-[10px] text-amber-700 font-bold">ベース問題を参照して類題を生成</span>
+                  <span className="text-[10px] text-amber-500 truncate max-w-[200px]">
+                    — {sourceText.trim().slice(0, 50)}{sourceText.trim().length > 50 ? '...' : ''}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

@@ -1921,10 +1921,10 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         f"--- 参照元 ---\n{source_text.strip()}\n--- 参照元ここまで ---\n"
                     )
 
-                # If RAG retrieved items exist, append them as a dedicated reference block
-                # so the LLM can analyze question style, difficulty, and phrasing patterns.
+                # If RAG retrieved items exist, append them as a supplementary reference block.
+                # When source_text is also provided, RAG items serve as additional examples.
                 rag_items = ctx.get('doc_snippets_items') or []
-                if rag_items and not source_block:
+                if rag_items:
                     rag_lines = []
                     for i, it in enumerate(rag_items, 1):
                         t = (it.get('text') or '').strip()
@@ -1935,13 +1935,22 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                             diff_label = f' [難易度:{it["difficulty"]:.2f}]'
                         rag_lines.append(f'参照問題 {i}{diff_label}:\n{t}')
                     if rag_lines:
-                        source_block = (
-                            "\n\n【RAG参照問題（データベースから検索・ランク付け済み）】\n"
-                            "以下はデータベースから検索した類似問題です。これらの出題形式・難易度・語彙・解法パターンを参考にして、\n"
-                            "新しい問題を生成してください。参照問題をそのままコピーしないこと。\n\n"
-                            + '\n\n---\n'.join(rag_lines)
-                            + '\n'
-                        )
+                        if source_block:
+                            # source_text が既にある場合: RAGは補助参考として追加
+                            source_block += (
+                                "\n\n【補助参照（データベースから検索した類似問題）】\n"
+                                "上記のユーザー提供問題を最優先とし、以下のDB問題も形式・難易度の参考にしてください。\n\n"
+                                + '\n\n---\n'.join(rag_lines)
+                                + '\n'
+                            )
+                        else:
+                            source_block = (
+                                "\n\n【RAG参照問題（データベースから検索・ランク付け済み）】\n"
+                                "以下はデータベースから検索した類似問題です。これらの出題形式・難易度・語彙・解法パターンを参考にして、\n"
+                                "新しい問題を生成してください。参照問題をそのままコピーしないこと。\n\n"
+                                + '\n\n---\n'.join(rag_lines)
+                                + '\n'
+                            )
 
                 # --- Load LaTeX preset prompt instruction if available ---
                 preset_id = getattr(req, 'latex_preset', 'exam') or 'exam'
