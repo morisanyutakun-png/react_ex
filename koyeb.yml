@@ -1,0 +1,48 @@
+# Koyeb app manifest
+# - `repository.url` を実際の GitHub リポジトリ URL に置き換えてください。
+# - DATABASE_URL / CORS_ALLOW_ORIGINS は Koyeb ダッシュボードの Secrets に登録してください。
+
+app:
+  name: react_ex-backend
+  region: was
+
+services:
+  - name: backend
+    type: web
+    repository:
+      type: git
+      url: https://github.com/your-org/your-repo.git  # <-- ここを置き換え
+      branch: main
+      path: .
+
+    build:
+      type: dockerfile
+      dockerfile: Dockerfile.koyeb
+
+    env:
+      - name: DATABASE_URL
+        secret: DATABASE_URL
+      - name: CORS_ALLOW_ORIGINS
+        secret: CORS_ALLOW_ORIGINS
+      - name: CLOUD_LATEX_ONLY
+        value: "1"
+      - name: WEB_CONCURRENCY
+        value: "1"
+      - name: MALLOC_ARENA_MAX
+        value: "2"
+
+    routes:
+      - protocol: http
+        path: /
+
+    healthcheck:
+      path: /health
+      interval: 10s
+
+    scale:
+      min: 1
+      max: 1
+
+# 注意:
+# - Koyeb はファイルシステムをエフェメラルに扱います。永続化が必要なら S3 等を使ってください。
+# - Secrets（例: DATABASE_URL）は Koyeb ダッシュボードで登録してからここで参照してください。
