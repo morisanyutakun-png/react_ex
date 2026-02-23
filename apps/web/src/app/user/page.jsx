@@ -19,6 +19,48 @@ import { SUBJECTS, DIFFICULTIES } from '@/lib/constants';
 /* ── ウィザードステップ定義 ── */
 const STEPS = ['テンプレート選択', '設定', 'PDF形式', '生成', '結果'];
 
+/* ── 各LaTeX図表パッケージのASCIIアートプレビュー ── */
+const PACKAGE_ILLUSTRATIONS = {
+  tikz: ` A ──► B
+ │       │
+ ▼       ▼
+ C ──► D
+ △  ○  □  ◇`,
+  circuitikz: `┌──[R]──┤├──┐
+│            │
+[+]         GND
+│            │
+└────────────┘`,
+  pgfplots: `y^│    ·˙·
+  │  ·     ·
+  │·         ·
+  └────────── x
+    関数グラフ`,
+  'tikz-cd': `A ──f──► B
+│          │
+g          h
+│          │
+▼          ▼
+C ──k──► D`,
+  forest: `     ┌─ 表
+  ┌表─┤
+  │   └─ 裏
+──┤
+  │   ┌─ 表
+  └裏─┤
+      └─ 裏`,
+  listings: `def f(n):
+  if n == 0:
+    return 1
+  return n * f(n-1)`,
+  tabularx: `┌──────┬─────┐
+│ 科目 │ 点数│
+├──────┼─────┤
+│ 数学 │  85 │
+│ 英語 │  92 │
+└──────┴─────┘`,
+};
+
 /* ── 各PDF形式のASCIIアートレイアウト図 ── */
 const PRESET_ILLUSTRATIONS = {
   exam: `┌─────────────────┐
@@ -558,37 +600,73 @@ export default function UserModePage() {
               <span className="text-[10px] text-slate-300">（任意）</span>
             </div>
             <p className="text-[11px] text-slate-400 mb-3">
-              回路図・グラフ・コードなどが必要な場合に選択してください。
+              図・グラフ・コードが必要な場合に選択してください。不要なら選ばなくてOKです。
             </p>
+
+            {/* どれを選ぶ？ガイダンス */}
+            <details className="mb-3 bg-amber-50 border border-amber-100 rounded-xl overflow-hidden group">
+              <summary className="px-3 py-2 text-[11px] font-bold text-amber-700 cursor-pointer list-none flex items-center gap-1.5 select-none">
+                <span>💡</span>
+                <span>どれを選べばいい？（初めての方はここを確認）</span>
+                <span className="ml-auto text-amber-400 text-[9px] group-open:hidden">▶ 開く</span>
+                <span className="ml-auto text-amber-400 text-[9px] hidden group-open:inline">▼ 閉じる</span>
+              </summary>
+              <div className="px-3 pb-3 pt-1 text-[10px] text-amber-800 space-y-1 leading-relaxed">
+                <p className="font-bold">迷ったら「TikZ」だけ選べばほとんどの図が描けます。</p>
+                <p>・ 電気回路の問題 → <strong>CircuiTikZ</strong></p>
+                <p>・ 関数グラフ・データグラフ → <strong>PGFPlots</strong></p>
+                <p>・ プログラミング問題のコード → <strong>Listings</strong></p>
+                <p>・ 確率の樹形図 → <strong>Forest</strong></p>
+                <p className="text-amber-600">図が不要な問題（文章・数式のみ）は何も選ばなくて大丈夫です。</p>
+              </div>
+            </details>
 
             <div className="grid grid-cols-2 gap-2">
               {DIAGRAM_PACKAGE_DEFS.map((pkg) => {
                 const active = extraPackages.includes(pkg.id);
+                const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
                 return (
                   <button
                     key={pkg.id}
                     onClick={() => togglePackage(pkg.id)}
-                    className={`text-left p-3 rounded-xl border-2 transition-all ${
+                    className={`text-left rounded-xl border-2 transition-all overflow-hidden ${
                       active
                         ? 'border-violet-400 bg-violet-50/60 shadow-sm'
                         : 'border-slate-100 bg-white hover:border-violet-200 hover:bg-slate-50'
                     }`}
                   >
-                    <div className="flex items-start gap-2">
-                      <span className={`text-base leading-none mt-0.5 ${active ? 'text-violet-500' : 'text-slate-300'}`}>
-                        {pkg.icon}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-sm font-bold text-slate-700">{pkg.name}</span>
-                          <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                            active ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-400'
-                          }`}>
-                            {pkg.label}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">{pkg.description}</p>
+                    {/* ASCIIアートプレビュー */}
+                    {illustration && (
+                      <div className={`px-3 pt-2 pb-1.5 ${active ? 'bg-violet-50' : 'bg-slate-50'}`}>
+                        <pre
+                          className={`text-[8px] leading-[1.35] font-mono select-none ${
+                            active ? 'text-violet-400' : 'text-slate-300'
+                          }`}
+                          style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
+                        >
+                          {illustration}
+                        </pre>
                       </div>
+                    )}
+                    {/* ラベル */}
+                    <div className="px-3 py-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-sm leading-none ${active ? 'text-violet-500' : 'text-slate-300'}`}>
+                          {pkg.icon}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">{pkg.name}</span>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                          active ? 'bg-violet-100 text-violet-600' : 'bg-slate-100 text-slate-400'
+                        }`}>
+                          {pkg.label}
+                        </span>
+                        {pkg.recommended && (
+                          <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-amber-100 text-amber-600">
+                            おすすめ
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-400 mt-1 leading-tight">{pkg.hint || pkg.description}</p>
                     </div>
                   </button>
                 );

@@ -85,8 +85,8 @@ CREATE TABLE IF NOT EXISTS embeddings (
   UNIQUE (problem_id, kind, embedding_version)
 );
 
--- IVFFlat index for vector similarity (lists may be tuned)
-CREATE INDEX IF NOT EXISTS idx_embeddings_vector_ivf ON embeddings USING ivfflat (vector) WITH (lists = 100);
+-- IVFFlat index for vector similarity (vector_l2_ops matches the <-> Euclidean distance queries)
+CREATE INDEX IF NOT EXISTS idx_embeddings_vector_ivf ON embeddings USING ivfflat (vector vector_l2_ops) WITH (lists = 100);
 CREATE INDEX IF NOT EXISTS idx_embeddings_kind ON embeddings (kind);
 
 -----------------------------------------------------------------

@@ -260,6 +260,8 @@ export const DIAGRAM_PACKAGE_DEFS = [
     label: '図形・図解',
     icon: '◻',
     description: '矢印図・幾何図形・フローチャートなど汎用的な図を描画',
+    hint: '矢印・図形が必要ならまずこれ',
+    recommended: true,
   },
   {
     id: 'circuitikz',
@@ -267,6 +269,7 @@ export const DIAGRAM_PACKAGE_DEFS = [
     label: '回路図',
     icon: '⚡',
     description: '電気回路図（抵抗・コンデンサ・電源など）を描画',
+    hint: '電気・電子回路の問題に',
   },
   {
     id: 'pgfplots',
@@ -274,6 +277,7 @@ export const DIAGRAM_PACKAGE_DEFS = [
     label: 'グラフ',
     icon: '📈',
     description: '関数グラフ・散布図・棒グラフなどを描画',
+    hint: '関数グラフ・データ可視化に',
   },
   {
     id: 'tikz-cd',
@@ -281,6 +285,7 @@ export const DIAGRAM_PACKAGE_DEFS = [
     label: '可換図式',
     icon: '↗',
     description: '数学の可換図式・射影ダイアグラムを描画',
+    hint: '大学数学（代数・位相）の図に',
   },
   {
     id: 'forest',
@@ -288,6 +293,7 @@ export const DIAGRAM_PACKAGE_DEFS = [
     label: '樹形図',
     icon: '🌲',
     description: '確率の樹形図・構文木・階層図を描画',
+    hint: '確率の試行・場合分けの図に',
   },
   {
     id: 'listings',
@@ -295,6 +301,7 @@ export const DIAGRAM_PACKAGE_DEFS = [
     label: 'コード',
     icon: '{ }',
     description: 'Python・Java・C等のソースコードをシンタックスハイライト付きで表示',
+    hint: 'プログラミング問題のコード表示に',
   },
   {
     id: 'tabularx',
@@ -302,6 +309,7 @@ export const DIAGRAM_PACKAGE_DEFS = [
     label: '拡張表',
     icon: '⊞',
     description: '幅を自動調整した表（booktabs罫線スタイル付き）',
+    hint: '複雑な表・データ表示に',
   },
 ];
 

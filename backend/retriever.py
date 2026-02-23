@@ -164,15 +164,24 @@ def _pgvector_search(conn, query_vec_lit: str, top_k: int = 100, shards: int = 1
     per_shard_limit = int(max(10, (top_k // shards) + 10))
     dsn = getattr(conn, 'dsn', None)
 
+    if dsn is None:
+        # Cannot open independent connections per worker; sharing one connection
+        # across threads is not thread-safe with psycopg2. Fall back to single query.
+        logger.warning(
+            '_pgvector_search: shards=%d requested but conn.dsn is not available; '
+            'falling back to shards=1 to avoid thread-unsafe connection sharing.',
+            shards,
+        )
+        return _pgvector_search_single(conn, query_vec_lit, top_k=top_k, shard_clause=None)
+
     def worker(shard_idx: int):
         # open a new connection per worker to allow parallel queries
-        subconn = psycopg2.connect(dsn) if dsn else conn
+        subconn = psycopg2.connect(dsn)
         clause = f"(problem_id % {shards}) = {shard_idx}"
         try:
             return _pgvector_search_single(subconn, query_vec_lit, top_k=per_shard_limit, shard_clause=clause)
         finally:
-            if dsn:
-                subconn.close()
+            subconn.close()
 
     results = []
     with ThreadPoolExecutor(max_workers=min(shards, 8)) as ex:

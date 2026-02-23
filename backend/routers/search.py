@@ -3,6 +3,9 @@ from pydantic import BaseModel
 from typing import Optional, List, Any, Dict
 import os
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from backend.db import connect_db
 
@@ -166,7 +169,8 @@ def _do_search(query_text: Optional[str], topic: Optional[str], difficulty: Opti
                                 'annotation_summary': None, 'score': float(score),
                             })
                     return {'results': results}
-                except Exception:
+                except Exception as exc:
+                    logger.warning('TF-IDF fallback search failed: %s', exc)
                     return {'results': []}
 
             model, _ = load_model()
@@ -181,7 +185,32 @@ def _do_search(query_text: Optional[str], topic: Optional[str], difficulty: Opti
             score_map = {int(r[0]): float(r[1]) for r in rows}
 
             if not cand_ids:
-                return {'results': []}
+                # pgvector returned nothing (embeddings may not exist for version/kind).
+                # Fall back to TF-IDF so users still get results.
+                logger.warning(
+                    'pgvector search returned no candidates (kind=%s, version=%s); '
+                    'falling back to TF-IDF. Check that embeddings exist for this version.',
+                    kind, version,
+                )
+                try:
+                    from backend.retriever import _tfidf_search
+                    tfidf_results = _tfidf_search(conn, query_text, top_k=limit)
+                    for pid, score in tfidf_results[:limit]:
+                        cur2 = conn.cursor()
+                        cur2.execute(
+                            "SELECT id, stem, difficulty, solution_outline FROM problems WHERE id = %s", (pid,)
+                        )
+                        r = cur2.fetchone()
+                        cur2.close()
+                        if r:
+                            results.append({
+                                'id': int(r[0]), 'text': r[1], 'stem': r[1],
+                                'difficulty': r[2], 'solution_outline': r[3],
+                                'annotation_summary': None, 'score': float(score),
+                            })
+                except Exception as exc:
+                    logger.warning('TF-IDF fallback after empty pgvector also failed: %s', exc)
+                return {'results': results}
 
             where_parts = ["p.id = ANY(%s)"]
             params = [cand_ids]
