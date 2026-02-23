@@ -50,10 +50,10 @@ const MAIN_ACTIONS = [
 
 const SUB_ACTIONS = [
   {
-    href: '/data',
+    href: '/db-editor',
     icon: <IconDatabase />,
-    label: 'データを管理',
-    hint: '参考資料の登録・閲覧',
+    label: 'DB編集',
+    hint: '問題データを直接編集',
     accent: 'emerald',
   },
   {
