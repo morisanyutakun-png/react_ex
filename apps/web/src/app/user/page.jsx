@@ -223,6 +223,18 @@ export default function UserModePage() {
       generatedPrompt = data.rendered_prompt || data.rendered || '';
       setRenderContext(data.context || null);
       setPrompt(generatedPrompt);
+
+      // RAGフィードバックをステータスに反映
+      const ctx = data.context;
+      if (ctx?.rag_status === 'ok' && ctx?.rag_retrieved > 0) {
+        setStatus(`Step 1/3 完了: RAG ${ctx.rag_retrieved}件参照`);
+      } else if (ctx?.rag_status === 'no_data') {
+        setStatus('Step 1/3 完了: RAG参照データなし（DB未登録）');
+      } else if (ctx?.rag_status === 'fallback') {
+        setStatus('Step 1/3 完了: RAGフォールバック使用');
+      } else {
+        setStatus('Step 1/3 完了');
+      }
     } catch (e) {
       setStatus(`プロンプト生成エラー: ${e.message}`);
       setGenerating(false);
@@ -735,6 +747,66 @@ export default function UserModePage() {
       {/* ═══════ Step 5: 結果表示 ═══════ */}
       {step === 5 && (
         <div className="space-y-4">
+          {/* RAG フィードバックカード */}
+          {renderContext && (
+            <div className={`px-4 py-3 rounded-xl border text-xs ${
+              renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0
+                ? 'bg-emerald-50 border-emerald-200'
+                : renderContext.rag_status === 'no_data'
+                  ? 'bg-slate-50 border-slate-200'
+                  : renderContext.rag_status === 'fallback'
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* ステータスアイコン */}
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0
+                    ? 'bg-emerald-200 text-emerald-700'
+                    : renderContext.rag_status === 'fallback'
+                      ? 'bg-amber-200 text-amber-700'
+                      : 'bg-slate-200 text-slate-500'
+                }`}>
+                  {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? '✓' : renderContext.rag_status === 'fallback' ? '!' : '—'}
+                </span>
+
+                {/* メッセージ */}
+                <span className="font-bold text-slate-700">RAG検索:</span>
+
+                {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? (
+                  <span className="text-emerald-700">
+                    DB {renderContext.chunk_count}件中 <strong>{renderContext.rag_retrieved}件</strong>を参照して問題を生成しました
+                  </span>
+                ) : renderContext.rag_status === 'no_data' ? (
+                  <span className="text-slate-500">
+                    参照データなし（DBにデータを登録するとRAGが有効になります）
+                  </span>
+                ) : renderContext.rag_status === 'empty' ? (
+                  <span className="text-slate-500">
+                    検索したが該当なし（{renderContext.chunk_count}件中0件一致）
+                  </span>
+                ) : renderContext.rag_status === 'fallback' ? (
+                  <span className="text-amber-700">
+                    検索エラーのためフォールバックで参照（精度が低い可能性があります）
+                  </span>
+                ) : renderContext.chunk_count > 0 ? (
+                  <span className="text-slate-600">
+                    {renderContext.chunk_count}件参照
+                  </span>
+                ) : (
+                  <span className="text-slate-400">RAG未使用</span>
+                )}
+
+                {/* 検索方式バッジ */}
+                {renderContext.rag_method && (
+                  <span className="ml-auto px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 text-[9px] font-bold uppercase">
+                    {renderContext.rag_method}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* AI自動生成の結果 */}
           {mode === 'auto' && generatedLatex && (
             <SectionCard title="生成結果" icon={<Icons.Success />}>

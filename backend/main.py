@@ -1582,6 +1582,9 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 texts = []
 
         ctx['chunk_count'] = len(texts)
+        ctx['rag_status'] = 'ok' if texts else 'no_data'
+        ctx['rag_method'] = ''
+        ctx['rag_retrieved'] = 0
         logger.info('RAG: %d texts loaded for retrieval (subject_filter=%r)', len(texts), getattr(req, 'subject_filter', None))
 
         # Query for retrieval: combine subject, difficulty and a short template preview
@@ -1608,6 +1611,7 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 tv, tm = rag.build_index(texts)
                 results = rag.search(q_preview, tv, tm, texts, top_k=top_k * 3)
 
+            ctx['rag_method'] = 'tfidf'
             logger.info('RAG: TF-IDF search returned %d candidates (top_k=%d)', len(results), top_k)
 
             # ── Step 2: re-rank by difficulty/trickiness match ──────────────────
@@ -1679,6 +1683,8 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
 
             ctx['doc_snippets_items'] = items
             ctx['doc_snippets'] = '\n\n'.join([it['text'] for it in items])
+            ctx['rag_retrieved'] = len(items)
+            ctx['rag_status'] = 'ok' if items else 'empty'
             logger.info('RAG: final doc_snippets has %d items, %d chars', len(items), len(ctx['doc_snippets']))
 
         except Exception as exc:
@@ -1686,6 +1692,8 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
             # fallback: first few chunks in DB order
             ctx['doc_snippets_items'] = []
             ctx['doc_snippets'] = '\n\n'.join(t.strip() for t in texts[:top_k if 'top_k' in dir() else 5] if t and t.strip())
+            ctx['rag_status'] = 'fallback'
+            ctx['rag_error'] = str(exc)[:200]
 
         # build a compact rag_summary by concatenating the retrieved snippets (up to 800 chars)
         summary = ''
@@ -3137,6 +3145,11 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         '   PDFTeX なら CJKutf8、LuaTeX なら luatexja、XeTeX なら xeCJK を使用すること。\n'
         '4. 数式は amsmath, amssymb, mathtools を使用。インライン数式は $...$、\n'
         '   ディスプレイ数式は \\[...\\] を使用。$$ ... $$ および \\(...\\) は禁止。\n'
+        '4a. 分数は必ず \\frac{分子}{分母} 形式で記述。a/b のようなスラッシュ表記は禁止。\n'
+        '    - 正: \\frac{1}{2}, \\frac{x+1}{x-1}, \\dfrac{a}{b}（ディスプレイ用大分数）\n'
+        '    - 誤: 1/2, (x+1)/(x-1), \\frac 1 2, \\frac{1/2}\n'
+        '    - 分数の中括弧 {} は必ず対応させること。\\frac の直後は必ず {分子}{分母} の形にする。\n'
+        '    - 解答・途中式でも \\frac を使い、a/b のまま放置しないこと。\n'
         '5. 数学の計算は必ず自分で検算してから出力すること。計算ミスは許されない。\n'
         '6. tcolorbox, mdframed, fbox 等のボックス環境は使用しない。\n'
         '7. 指定された出力形式の構造ルールを厳守すること（形式固有のルールは下記参照）。\n'
@@ -3789,6 +3802,41 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             # 7) Fix \\[2mm] style line breaks in align/gather environments
             #    Convert \\[<dimension>] to just \\ inside math environments
             tex = re.sub(r'\\\\(\[[\d.]+(?:mm|ex|pt|em|cm)\])', r'\\\\', tex)
+
+            # 7b) Fix common \frac breakage from LLM output
+            #  a) \frac followed by bare single chars without braces: \frac 1 2 → \frac{1}{2}
+            tex = re.sub(r'\\frac\s+([A-Za-z0-9])\s+([A-Za-z0-9])', r'\\frac{\1}{\2}', tex)
+            tex = re.sub(r'\\dfrac\s+([A-Za-z0-9])\s+([A-Za-z0-9])', r'\\dfrac{\1}{\2}', tex)
+            #  b) \frac with first arg braced but second bare: \frac{a} b → \frac{a}{b}
+            tex = re.sub(r'\\frac\{([^}]*)\}\s+([A-Za-z0-9])\b', r'\\frac{\1}{\2}', tex)
+            tex = re.sub(r'\\dfrac\{([^}]*)\}\s+([A-Za-z0-9])\b', r'\\dfrac{\1}{\2}', tex)
+            #  c) Slash fractions in math mode: convert a/b patterns to \frac{a}{b}
+            #     Only inside math environments ($...$, \[...\], align, etc.)
+            #     Handle common patterns: number/number, (expr)/(expr)
+            def _fix_slash_fractions(tex_str):
+                """Convert common slash fractions to \\frac inside math contexts."""
+                # Simple number/number: 1/2, 3/4 (but not in dates like 2024/01/01)
+                # Only replace inside math delimiters
+                def _replace_in_math(m):
+                    content = m.group(0)
+                    # Replace patterns like 1/2, a/b (single tokens)
+                    content = re.sub(
+                        r'(?<![/\\A-Za-z])(\d+)\s*/\s*(\d+)(?![/\d])',
+                        r'\\frac{\1}{\2}', content
+                    )
+                    # Replace (expr)/(expr)
+                    content = re.sub(
+                        r'\(([^()]+)\)\s*/\s*\(([^()]+)\)',
+                        r'\\frac{\1}{\2}', content
+                    )
+                    return content
+
+                # Process inline math $...$
+                tex_str = re.sub(r'(?<!\\)\$([^$]+)\$', _replace_in_math, tex_str)
+                # Process display math \[...\]
+                tex_str = re.sub(r'\\\[(.+?)\\\]', _replace_in_math, tex_str, flags=re.S)
+                return tex_str
+            tex = _fix_slash_fractions(tex)
 
             # 8) Remove %GEN_VALIDATION block if it appears AFTER \end{document}
             #    (it should be before \end{document} but LLMs sometimes put it after)
