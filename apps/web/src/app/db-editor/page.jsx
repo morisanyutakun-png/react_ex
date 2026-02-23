@@ -1067,10 +1067,11 @@ const MATH_SYMBOLS = [
   ]},
 ];
 
-/** リッチテキストエリア — 数式パレット付き */
+/** リッチテキストエリア — シンプル/数式モード切替付き */
 function RichTextArea({ value, onChange, rows, help, name }) {
   const textRef = useRef(null);
   const [showPalette, setShowPalette] = useState(false);
+  const [mode, setMode] = useState('simple'); // 'simple' | 'math'
 
   const insertAtCursor = (text) => {
     const ta = textRef.current;
@@ -1081,7 +1082,6 @@ function RichTextArea({ value, onChange, rows, help, name }) {
     const after = value.slice(end);
     const newVal = before + text + after;
     onChange(newVal);
-    // カーソル位置を挿入テキスト後に移動
     requestAnimationFrame(() => {
       ta.focus();
       ta.selectionStart = ta.selectionEnd = start + text.length;
@@ -1109,24 +1109,46 @@ function RichTextArea({ value, onChange, rows, help, name }) {
 
   return (
     <div className="md:col-span-2">
-      {/* ツールバー */}
-      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-        <button type="button" onClick={wrapWithDollar}
-          className="px-2 py-1 text-[11px] font-bold bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100"
-          title="選択テキストを数式$...$で囲む">
-          $ 数式 $
-        </button>
-        <button type="button" onClick={() => setShowPalette(!showPalette)}
-          className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-colors border ${
-            showPalette ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+      {/* モード切替タブ */}
+      <div className="flex items-center gap-0 mb-2 bg-slate-100/80 rounded-xl p-0.5 w-fit">
+        <button type="button" onClick={() => setMode('simple')}
+          className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+            mode === 'simple'
+              ? 'bg-white text-slate-700 shadow-sm'
+              : 'text-slate-400 hover:text-slate-600'
           }`}>
-          {showPalette ? '▼ パレット閉じる' : '▶ 数式パレット'}
+          📝 テキスト入力
         </button>
-        <span className="text-[10px] text-slate-300 ml-2">💡 ふつうの日本語テキストでOK。数式だけ $ で囲んで入力</span>
+        <button type="button" onClick={() => setMode('math')}
+          className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+            mode === 'math'
+              ? 'bg-white text-indigo-600 shadow-sm'
+              : 'text-slate-400 hover:text-slate-600'
+          }`}>
+          🔢 数式入力
+        </button>
       </div>
 
+      {/* 数式モード: ツールバー */}
+      {mode === 'math' && (
+        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+          <button type="button" onClick={wrapWithDollar}
+            className="px-2 py-1 text-[11px] font-bold bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100"
+            title="選択テキストを数式$...$で囲む">
+            $ 数式 $
+          </button>
+          <button type="button" onClick={() => setShowPalette(!showPalette)}
+            className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-colors border ${
+              showPalette ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+            }`}>
+            {showPalette ? '▼ パレット閉じる' : '▶ 数式パレット'}
+          </button>
+          <span className="text-[10px] text-slate-300 ml-2">日本語テキスト + 数式は $ で囲んで入力</span>
+        </div>
+      )}
+
       {/* 数式パレット */}
-      {showPalette && (
+      {mode === 'math' && showPalette && (
         <div className="mb-2 p-3 bg-gradient-to-b from-indigo-50/80 to-white rounded-xl border border-indigo-100 space-y-2">
           {MATH_SYMBOLS.map((g) => (
             <div key={g.group}>
@@ -1152,12 +1174,20 @@ function RichTextArea({ value, onChange, rows, help, name }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={rows || 6}
-        placeholder={help || '問題文を入力してください。日本語テキスト＋数式（$x^2+1$のように$で囲む）'}
+        placeholder={mode === 'simple'
+          ? 'テキストをそのまま入力 or 貼り付け（コピペOK）'
+          : '日本語テキスト＋数式（$x^2+1$のように$で囲む）'}
         className={`${baseInputClass} resize-y`}
       />
-      <p className="text-[10px] text-slate-300 mt-1">
-        例: 「$x^2 + 2x + 1 = 0$ を解け。」 — ふつうの文章の中に $...$ で数式を入れるだけ
-      </p>
+      {mode === 'simple' ? (
+        <p className="text-[10px] text-slate-400 mt-1">
+          テキストデータをそのままコピペできます。数式挿入が必要なら「🔢 数式入力」タブへ
+        </p>
+      ) : (
+        <p className="text-[10px] text-slate-400 mt-1">
+          例: 「$x^2 + 2x + 1 = 0$ を解け。」 — ふつうの文章の中に $...$ で数式を入れるだけ
+        </p>
+      )}
     </div>
   );
 }
@@ -1172,10 +1202,11 @@ function SmartField({ field, value, onChange, allValues }) {
 
   const isWide = type === 'textarea' || type === 'json' || type === 'rich_textarea';
 
-  // dependent_select: 親の選択に応じた選択肢を動的生成
+  // dependent_select: 親の選択に応じた選択肢を動的生成 + 自由入力対応
   if (type === 'dependent_select') {
     const parentVal = depends_on ? allValues?.[depends_on] : null;
     const dynamicOptions = parentVal ? (SUBJECT_TOPICS[parentVal] || []) : [];
+    const isCustom = value && dynamicOptions.length > 0 && !dynamicOptions.includes(value);
 
     return (
       <div className={isWide ? 'md:col-span-2' : ''}>
@@ -1183,24 +1214,38 @@ function SmartField({ field, value, onChange, allValues }) {
           {label}
           <span className="text-[10px] font-normal text-slate-300 ml-2 normal-case tracking-normal">{name}</span>
         </label>
-        <div className="relative">
-          <input
-            type="text"
-            list={`datalist-${name}`}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={parentVal ? `${parentVal}の分野を選択 or 自由入力` : '先に教科を選択してください'}
-            className={baseInputClass}
-          />
-          {dynamicOptions.length > 0 && (
-            <datalist id={`datalist-${name}`}>
-              {dynamicOptions.map((opt) => (
-                <option key={opt} value={opt} />
-              ))}
-            </datalist>
-          )}
-        </div>
-        {help && <p className="text-[10px] text-slate-300 mt-1">{help}</p>}
+
+        {/* 候補チップ（親が選択済みのとき表示） */}
+        {parentVal && dynamicOptions.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-1.5">
+            {dynamicOptions.map((opt) => (
+              <button key={opt} type="button"
+                onClick={() => onChange(opt)}
+                className={`px-2 py-0.5 text-[11px] rounded-lg border transition-all ${
+                  value === opt
+                    ? 'bg-indigo-500 text-white border-indigo-500'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                }`}>
+                {opt}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* 自由入力フィールド */}
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={parentVal ? `候補から選択 or 新しい分野を自由入力` : '先に教科を選択してください'}
+          className={`${baseInputClass} ${isCustom ? 'border-emerald-300 bg-emerald-50/30' : ''}`}
+        />
+        {isCustom && (
+          <p className="text-[10px] text-emerald-600 mt-0.5 flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            新しい分野「{value}」を追加します
+          </p>
+        )}
         {!parentVal && depends_on && (
           <p className="text-[10px] text-amber-500 mt-1">⬆ 教科を先に選択すると候補が表示されます</p>
         )}

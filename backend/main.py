@@ -1522,14 +1522,19 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         pass
 
                 if subject_f and getattr(conn, '_is_sqlite', False):
-                    where_parts.append("metadata LIKE %s")
+                    # SQLite: check both the subject column AND metadata JSON
+                    # because older rows may have subject='general' with the
+                    # real subject only in metadata.
+                    where_parts.append("(subject = %s OR metadata LIKE %s)")
+                    params_list.append(subject_f)
                     params_list.append(f'%"subject"%{subject_f}%')
                 elif subject_f:
                     where_parts.append("subject = %s")
                     params_list.append(subject_f)
 
                 if field_f and getattr(conn, '_is_sqlite', False):
-                    where_parts.append("metadata LIKE %s")
+                    where_parts.append("(topic = %s OR metadata LIKE %s)")
+                    params_list.append(field_f)
                     params_list.append(f'%"field"%{field_f}%')
                 elif field_f:
                     where_parts.append("topic = %s")

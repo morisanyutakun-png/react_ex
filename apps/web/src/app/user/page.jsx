@@ -235,11 +235,11 @@ export default function UserModePage() {
       // RAGフィードバックをステータスに反映
       const ctx = data.context;
       if (ctx?.rag_status === 'ok' && ctx?.rag_retrieved > 0) {
-        setStatus(`Step 1/3 完了: RAG ${ctx.rag_retrieved}件参照`);
+        setStatus(`Step 1/3 完了: 過去問 ${ctx.rag_retrieved}件を参照`);
       } else if (ctx?.rag_status === 'no_data') {
-        setStatus('Step 1/3 完了: RAG参照データなし（DB未登録）');
+        setStatus('Step 1/3 完了: AIのみで生成（DB登録で精度UP）');
       } else if (ctx?.rag_status === 'fallback') {
-        setStatus('Step 1/3 完了: RAGフォールバック使用');
+        setStatus('Step 1/3 完了: 簡易参照で生成');
       } else {
         setStatus('Step 1/3 完了');
       }
@@ -499,20 +499,33 @@ export default function UserModePage() {
                   分野
                   <span className="text-[10px] font-normal text-slate-300 ml-1 normal-case tracking-normal">（任意）</span>
                 </label>
+                {/* 候補チップ */}
+                {subject && SUBJECT_TOPICS[subject] && (
+                  <div className="flex flex-wrap gap-1 mb-1.5">
+                    {SUBJECT_TOPICS[subject].slice(0, 12).map((t) => (
+                      <button key={t} type="button"
+                        onClick={() => setField(field === t ? '' : t)}
+                        className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
+                          field === t
+                            ? 'bg-indigo-500 text-white border-indigo-500'
+                            : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                        }`}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <input
-                  list="user-field-suggestions"
+                  type="text"
                   value={field}
                   onChange={(e) => setField(e.target.value)}
-                  placeholder={subject ? `${subject}の分野…` : '先に科目を選択'}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 placeholder:text-slate-300"
+                  placeholder={subject ? `候補から選択 or 自由入力` : '先に科目を選択'}
+                  className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 placeholder:text-slate-300 ${
+                    field && subject && SUBJECT_TOPICS[subject] && !SUBJECT_TOPICS[subject].includes(field)
+                      ? 'border-emerald-300 bg-emerald-50/30'
+                      : 'border-slate-200'
+                  }`}
                 />
-                {subject && SUBJECT_TOPICS[subject] && (
-                  <datalist id="user-field-suggestions">
-                    {SUBJECT_TOPICS[subject].map((t) => (
-                      <option key={t} value={t} />
-                    ))}
-                  </datalist>
-                )}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -828,60 +841,73 @@ export default function UserModePage() {
               renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0
                 ? 'bg-emerald-50 border-emerald-200'
                 : renderContext.rag_status === 'no_data'
-                  ? 'bg-slate-50 border-slate-200'
+                  ? 'bg-blue-50 border-blue-200'
                   : renderContext.rag_status === 'fallback'
                     ? 'bg-amber-50 border-amber-200'
                     : 'bg-slate-50 border-slate-200'
             }`}>
               <div className="flex items-center gap-2 flex-wrap">
                 {/* ステータスアイコン */}
-                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                   renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0
                     ? 'bg-emerald-200 text-emerald-700'
-                    : renderContext.rag_status === 'fallback'
-                      ? 'bg-amber-200 text-amber-700'
-                      : 'bg-slate-200 text-slate-500'
+                    : renderContext.rag_status === 'no_data'
+                      ? 'bg-blue-200 text-blue-700'
+                      : renderContext.rag_status === 'fallback'
+                        ? 'bg-amber-200 text-amber-700'
+                        : 'bg-slate-200 text-slate-500'
                 }`}>
-                  {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? '✓' : renderContext.rag_status === 'fallback' ? '!' : '—'}
+                  {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? '✓' : renderContext.rag_status === 'no_data' ? 'i' : renderContext.rag_status === 'fallback' ? '!' : '—'}
                 </span>
 
-                {/* メッセージ */}
-                <span className="font-bold text-slate-700">RAG検索:</span>
-
-                {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? (
-                  <span className="text-emerald-700">
-                    DB {renderContext.chunk_count}件中 <strong>{renderContext.rag_retrieved}件</strong>を参照して問題を生成しました
-                  </span>
-                ) : renderContext.rag_status === 'no_data' ? (
-                  <span className="text-slate-500">
-                    参照データなし（DBにデータを登録するとRAGが有効になります）
-                  </span>
-                ) : renderContext.rag_status === 'empty' ? (
-                  <span className="text-slate-500">
-                    検索したが該当なし（{renderContext.chunk_count}件中0件一致）
-                  </span>
-                ) : renderContext.rag_status === 'fallback' ? (
-                  <span className="text-amber-700">
-                    検索エラーのためフォールバックで参照（精度が低い可能性があります）
-                  </span>
-                ) : renderContext.chunk_count > 0 ? (
-                  <span className="text-slate-600">
-                    {renderContext.chunk_count}件参照
-                  </span>
-                ) : (
-                  <span className="text-slate-400">RAG未使用</span>
-                )}
+                <div className="flex-1">
+                  {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? (
+                    <div>
+                      <span className="font-bold text-emerald-700">
+                        過去問 {renderContext.rag_retrieved}件を参照して生成しました
+                      </span>
+                      <span className="text-emerald-600 ml-1">（DB {renderContext.chunk_count}件中）</span>
+                    </div>
+                  ) : renderContext.rag_status === 'no_data' ? (
+                    <div>
+                      <span className="font-bold text-blue-700">AIのみで問題を生成しました</span>
+                      <p className="text-blue-500 mt-0.5">
+                        💡 DB に問題を登録すると、過去問を参照してより精度の高い問題を生成できます
+                      </p>
+                    </div>
+                  ) : renderContext.rag_status === 'empty' ? (
+                    <div>
+                      <span className="font-bold text-slate-700">AIのみで問題を生成しました</span>
+                      <p className="text-slate-500 mt-0.5">
+                        この条件に合う過去問がDB内に見つかりませんでした（{renderContext.chunk_count}件を検索）
+                      </p>
+                    </div>
+                  ) : renderContext.rag_status === 'fallback' ? (
+                    <div>
+                      <span className="font-bold text-amber-700">過去問の簡易参照で生成しました</span>
+                      <p className="text-amber-600 mt-0.5">
+                        検索の最適化が行えませんでしたが、問題は正常に生成されています
+                      </p>
+                    </div>
+                  ) : renderContext.chunk_count > 0 ? (
+                    <span className="text-slate-600 font-bold">
+                      {renderContext.chunk_count}件を参照して生成
+                    </span>
+                  ) : (
+                    <span className="text-slate-400">RAG未使用 — AIのみで生成</span>
+                  )}
+                </div>
 
                 {/* 検索方式バッジ */}
                 {renderContext.rag_method && (
-                  <span className="ml-auto px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 text-[9px] font-bold uppercase">
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 text-[9px] font-bold uppercase">
                     {renderContext.rag_method}
                   </span>
                 )}
               </div>
               {/* ベース問題使用時の表示 */}
               {sourceText.trim() && (
-                <div className="mt-2 pt-2 border-t border-amber-100 flex items-center gap-1.5">
+                <div className="mt-2 pt-2 border-t border-slate-100 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
                   <span className="text-[10px] text-amber-700 font-bold">ベース問題を参照して類題を生成</span>
                   <span className="text-[10px] text-amber-500 truncate max-w-[200px]">

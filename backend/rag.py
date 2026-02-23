@@ -206,15 +206,18 @@ def chunk_text(text: str, chunk_size: int = 800, overlap: int = 100) -> List[dic
 def build_index(chunks: List[str]) -> Tuple[object, object]:
     """Build a TF-IDF vectorizer and matrix for a list of chunk strings.
 
+    Uses character n-grams (2-4) instead of word-level tokens so that
+    Japanese text (which is not space-delimited) is indexed correctly.
+
     Returns (vectorizer, mat). If sklearn isn't available this will raise at runtime.
     """
     if TfidfVectorizer is None:
         raise RuntimeError("scikit-learn is required for build_index/search")
     if not chunks:
-        vectorizer = TfidfVectorizer()
+        vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 4))
         mat = vectorizer.fit_transform([""]).toarray()
         return vectorizer, mat
-    vectorizer = TfidfVectorizer()
+    vectorizer = TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 4), max_features=8000)
     mat = vectorizer.fit_transform(chunks).toarray()
     return vectorizer, mat
 
