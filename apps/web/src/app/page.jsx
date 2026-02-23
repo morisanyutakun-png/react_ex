@@ -1,113 +1,211 @@
 'use client';
 
 import Link from 'next/link';
-import { Icons } from '@/components/ui';
 
-const FEATURES = [
+/* ─── アイコンコンポーネント（大きめ・直感的） ─── */
+const IconCreate = () => (
+  <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 2h6M9 22h6" opacity={0.4} />
+  </svg>
+);
+const IconWand = () => (
+  <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59" />
+  </svg>
+);
+const IconDatabase = () => (
+  <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+    <ellipse cx="12" cy="5.5" rx="8" ry="3" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 5.5v13c0 1.657 3.582 3 8 3s8-1.343 8-3v-13" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 12c0 1.657 3.582 3 8 3s8-1.343 8-3" opacity={0.5} />
+  </svg>
+);
+const IconSearch = () => (
+  <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="7" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
+  </svg>
+);
+
+/* ─── メイン機能の定義 ─── */
+const MAIN_ACTIONS = [
   {
     href: '/user',
-    icon: <Icons.User />,
-    title: 'ユーザモード',
-    desc: 'テンプレートから LLM 用プロンプトを生成し、RAG で関連情報を自動注入。出力を貼り付ければ PDF 化も可能です。',
-    color: 'from-indigo-500 to-blue-500',
-    bgGlow: 'bg-indigo-500/10',
+    icon: <IconCreate />,
+    label: '問題をつくる',
+    hint: 'テンプレートから試験問題を自動生成',
+    accent: 'indigo',
+    tag: 'かんたん',
   },
   {
     href: '/dev',
-    icon: <Icons.Dev />,
-    title: '開発モード',
-    desc: 'プロンプトのチューニングからDB保存、RAG注入まで。対話的なワークフローで問題品質を高めます。',
-    color: 'from-purple-500 to-pink-500',
-    bgGlow: 'bg-purple-500/10',
-  },
-  {
-    href: '/data',
-    icon: <Icons.Data />,
-    title: 'データ管理',
-    desc: 'テキスト・LaTeX・JSONデータをチャンクしてDBに投入。RAGの情報源を構築・管理します。',
-    color: 'from-emerald-500 to-teal-500',
-    bgGlow: 'bg-emerald-500/10',
-  },
-  {
-    href: '/search',
-    icon: <Icons.Search />,
-    title: '問題検索',
-    desc: 'DB に保存された問題を科目・難易度・キーワードで検索し、内容を閲覧できます。',
-    color: 'from-amber-500 to-orange-500',
-    bgGlow: 'bg-amber-500/10',
+    icon: <IconWand />,
+    label: '問題を調整する',
+    hint: 'プロンプトを細かくチューニング',
+    accent: 'violet',
+    tag: '上級者向け',
   },
 ];
 
+const SUB_ACTIONS = [
+  {
+    href: '/data',
+    icon: <IconDatabase />,
+    label: 'データを管理',
+    hint: '参考資料の登録・閲覧',
+    accent: 'emerald',
+  },
+  {
+    href: '/search',
+    icon: <IconSearch />,
+    label: '問題を検索',
+    hint: '保存済み問題を探す',
+    accent: 'amber',
+  },
+];
+
+/* ─── アクセントカラー定義 ─── */
+const accentStyles = {
+  indigo: {
+    card: 'hover:border-indigo-300 hover:shadow-indigo-100/50',
+    icon: 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100',
+    tag: 'bg-indigo-100 text-indigo-600',
+    arrow: 'text-indigo-400 group-hover:text-indigo-600',
+  },
+  violet: {
+    card: 'hover:border-violet-300 hover:shadow-violet-100/50',
+    icon: 'bg-violet-50 text-violet-600 group-hover:bg-violet-100',
+    tag: 'bg-violet-100 text-violet-600',
+    arrow: 'text-violet-400 group-hover:text-violet-600',
+  },
+  emerald: {
+    card: 'hover:border-emerald-300 hover:shadow-emerald-100/50',
+    icon: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100',
+    tag: 'bg-emerald-50 text-emerald-600',
+    arrow: 'text-emerald-400 group-hover:text-emerald-600',
+  },
+  amber: {
+    card: 'hover:border-amber-300 hover:shadow-amber-100/50',
+    icon: 'bg-amber-50 text-amber-600 group-hover:bg-amber-100',
+    tag: 'bg-amber-50 text-amber-600',
+    arrow: 'text-amber-400 group-hover:text-amber-600',
+  },
+};
+
+/* ─── メインカード ─── */
+function MainCard({ href, icon, label, hint, accent, tag }) {
+  const s = accentStyles[accent];
+  return (
+    <Link href={href} className="group block">
+      <div
+        className={`relative flex items-center gap-5 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/70 px-6 py-5 shadow-sm cursor-pointer transition-all duration-300 ${s.card} hover:shadow-lg active:scale-[0.98]`}
+      >
+        {/* アイコン */}
+        <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors duration-300 ${s.icon}`}>
+          {icon}
+        </div>
+
+        {/* テキスト */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2.5 mb-1">
+            <span className="text-[17px] font-bold text-slate-800 tracking-tight">{label}</span>
+            {tag && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${s.tag}`}>
+                {tag}
+              </span>
+            )}
+          </div>
+          <span className="text-[13px] text-slate-400 font-medium">{hint}</span>
+        </div>
+
+        {/* 矢印 */}
+        <div className={`flex-shrink-0 transition-all duration-300 group-hover:translate-x-1 ${s.arrow}`}>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/* ─── サブカード（コンパクト） ─── */
+function SubCard({ href, icon, label, hint, accent }) {
+  const s = accentStyles[accent];
+  return (
+    <Link href={href} className="group block">
+      <div
+        className={`flex items-center gap-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50 px-5 py-4 cursor-pointer transition-all duration-300 ${s.card} hover:shadow-md active:scale-[0.98]`}
+      >
+        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${s.icon}`}>
+          <div className="scale-[0.78]">{icon}</div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-bold text-slate-700">{label}</span>
+          <span className="block text-[12px] text-slate-400 font-medium">{hint}</span>
+        </div>
+        <div className={`flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5 ${s.arrow}`}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/* ─── ページ本体 ─── */
 export default function HomePage() {
   return (
-    <div className="min-h-[90vh] flex items-center justify-center px-6 py-20">
-      <div className="max-w-5xl w-full mx-auto">
-        {/* Hero Section */}
-        <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 bg-indigo-50/50 text-indigo-600 rounded-2xl text-[13px] font-bold mb-8 border border-indigo-100/50 backdrop-blur-sm shadow-sm ring-4 ring-indigo-50/30">
-            <span className="relative flex h-2 w-2">
+    <div className="min-h-[90vh] flex items-center justify-center px-6 py-16">
+      <div className="max-w-xl w-full mx-auto">
+
+        {/* ── ヘッダー ── */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-indigo-50/60 text-indigo-500 rounded-full text-[11px] font-bold mb-5 border border-indigo-100/40">
+            <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500"></span>
             </span>
-            RAG-Powered Exam Generator
+            RAG-Powered
           </div>
-          <h1 className="text-6xl font-black text-slate-800 mb-6 tracking-tight">
+          <h1 className="text-4xl font-black text-slate-800 mb-3 tracking-tight">
             <span className="gradient-text">ExamGen</span>
-            <span className="text-slate-200 font-light ml-3">v2</span>
+            <span className="text-slate-200 font-light ml-2 text-3xl">v2</span>
           </h1>
-          <p className="text-[17px] text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium">
-            LLM と RAG (検索拡張生成) を組み合わせた次世代の試験問題作成プラットフォーム。<br className="hidden md:block"/>
-            過去問の文脈を活かし、高品質な問題を瞬時に生成・調整します。
+          <p className="text-[15px] text-slate-400 max-w-md mx-auto leading-relaxed font-medium">
+            AIと過去問データで、試験問題を賢くつくる
           </p>
         </div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16">
-          {FEATURES.map(({ href, icon, title, desc, color, bgGlow }) => (
-            <Link key={href} href={href} className="group block">
-              <div className="relative bg-white/70 backdrop-blur-xl rounded-[2rem] border border-slate-200/60 p-8 shadow-card hover-lift overflow-hidden h-full group-hover:border-indigo-300/30 transition-all duration-500">
-                {/* Background glow */}
-                <div
-                  className={`absolute -top-16 -right-16 w-36 h-36 rounded-full ${bgGlow} blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700`}
-                />
-
-                <div className="relative">
-                  <div
-                    className={`inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br ${color} text-white mb-6 shadow-lg shadow-indigo-200/20 group-hover:scale-110 transition-transform duration-500`}
-                  >
-                    {icon}
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-800 mb-3 tracking-tight">
-                    {title}
-                  </h2>
-                  <p className="text-[14px] text-slate-500 leading-relaxed mb-6 font-medium opacity-80">
-                    {desc}
-                  </p>
-                  <div className="flex items-center gap-2 text-sm font-bold text-indigo-500 group-hover:text-indigo-600 transition-colors">
-                    探索を始める
-                    <svg
-                      className="w-4.5 h-4.5 group-hover:translate-x-1 transition-transform"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
+        {/* ── 何をしますか？ ── */}
+        <div className="mb-4">
+          <h2 className="text-[11px] font-black text-slate-400 tracking-[0.15em] uppercase mb-3 px-1">
+            何をしますか？
+          </h2>
+          <div className="space-y-3">
+            {MAIN_ACTIONS.map((a) => (
+              <MainCard key={a.href} {...a} />
+            ))}
+          </div>
         </div>
 
-        {/* Footer info or stats could go here */}
-        <div className="text-center opacity-30 text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-          Professional Tool for Educators & Developers
+        {/* ── ツール ── */}
+        <div className="mt-8">
+          <h2 className="text-[11px] font-black text-slate-400 tracking-[0.15em] uppercase mb-3 px-1">
+            ツール
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {SUB_ACTIONS.map((a) => (
+              <SubCard key={a.href} {...a} />
+            ))}
+          </div>
+        </div>
+
+        {/* ── フッター ── */}
+        <div className="text-center mt-14 opacity-25 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+          For Educators & Developers
         </div>
       </div>
     </div>
