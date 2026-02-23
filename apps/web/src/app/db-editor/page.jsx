@@ -59,13 +59,74 @@ function truncateDisplay(val, max = 60) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// カラム日本語名マッピング
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const COL_LABELS = {
+  id: 'ID',
+  subject: '教科',
+  topic: 'トピック',
+  subtopic: 'サブトピック',
+  language: '言語',
+  origin: '登録元',
+  format: '形式',
+  stem: '問題文',
+  stem_latex: '問題文(LaTeX)',
+  choices_json: '選択肢',
+  answer_json: '正解データ',
+  answer_brief: '答え',
+  solution_outline: '解法概要',
+  explanation: '解説',
+  difficulty: '難易度',
+  difficulty_level: '難易度Lv',
+  trickiness: 'ひっかけ度',
+  est_time_sec: '想定時間(秒)',
+  skill_type: 'スキル種別',
+  concepts_json: '関連概念',
+  source: '出典名',
+  source_page: '出典ページ',
+  source_ref: '出典参照',
+  confidence: '信頼度',
+  solvable: '解答可能',
+  steps: 'ステップ数',
+  learning_objective: '学習目標',
+  prerequisite_level: '前提レベル',
+  parent_problem_id: '親問題ID',
+  generator: '生成器',
+  created_at: '作成日時',
+  updated_at: '更新日時',
+  wrong_patterns_json: '誤答パターン',
+  expected_mistakes: 'よくある間違い',
+  references_json: '参考文献',
+  structural_sim_target: '構造類似度',
+  surface_sim_target: '表面類似度',
+  parameter_dof: 'パラメータ自由度',
+  trap_type: 'トラップ種別',
+  context_dependency: '文脈依存度',
+  span_locality: 'スパン局所性',
+  noise_robustness: 'ノイズ耐性',
+  page: 'ページ',
+  final_answer_text: '最終解答(文)',
+  final_answer_numeric: '最終解答(数)',
+  raw_text: '生テキスト',
+  raw_json: '生JSON',
+  normalized_json: '正規化JSON',
+  normalized_text: '正規化テキスト',
+};
+
+/** カラム名 → 日本語表示名 */
+function colLabel(name) {
+  return COL_LABELS[name] || name;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // カラムグループ定義 (一覧表示用)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 const COLUMN_GROUPS = {
   core: {
     label: '基本',
-    cols: ['id', 'subject', 'topic', 'subtopic', 'language', 'origin', 'format'],
+    cols: ['id', 'subject', 'topic', 'subtopic', 'language', 'format'],
   },
   content: {
     label: '問題内容',
@@ -77,12 +138,12 @@ const COLUMN_GROUPS = {
   },
   meta: {
     label: 'メタ',
-    cols: ['skill_type', 'concepts_json', 'source', 'source_page', 'source_ref', 'confidence', 'solvable'],
+    cols: ['skill_type', 'concepts_json', 'source', 'source_page', 'source_ref', 'confidence', 'solvable', 'origin'],
   },
 };
 
 // 一覧表のデフォルト表示カラム（見やすい最小セット）
-const DEFAULT_VISIBLE_COLS = ['id', 'subject', 'stem', 'answer_brief', 'difficulty', 'difficulty_level', 'origin'];
+const DEFAULT_VISIBLE_COLS = ['id', 'subject', 'stem', 'answer_brief', 'difficulty', 'difficulty_level'];
 
 // 非表示推奨（embedding等の巨大カラム）
 const HIDDEN_COLS = new Set([
@@ -298,6 +359,12 @@ export default function DbEditorPage() {
           data[key] = val;
         }
       }
+      // auto_fill フィールドを自動マージ（ユーザが明示入力していなければ）
+      if (smartFields?.auto_fill) {
+        for (const [k, v] of Object.entries(smartFields.auto_fill)) {
+          if (!(k in data)) data[k] = v;
+        }
+      }
       const res = await createDbRow(selectedTable, data);
       setStatus(`登録完了! (ID: ${res.inserted_id || '—'})`);
       // フォームリセット
@@ -444,14 +511,14 @@ export default function DbEditorPage() {
                     </th>
                     {displayCols.map((col) => (
                       <th key={col.name}
-                        className="px-3 py-3 text-left font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap border-l border-slate-100"
+                        className="px-3 py-3 text-left font-bold text-slate-500 tracking-wider whitespace-nowrap border-l border-slate-100"
                         title={`${col.name} (${col.type})${col.notnull ? ' NOT NULL' : ''}`}
                       >
                         <div className="flex items-center gap-1">
-                          {col.name}
+                          {colLabel(col.name)}
                           {col.pk && <span className="text-[9px] bg-indigo-100 text-indigo-600 px-1 rounded">PK</span>}
                         </div>
-                        <div className="text-[9px] font-normal text-slate-300 mt-0.5">{col.type}</div>
+                        <div className="text-[9px] font-normal text-slate-300 mt-0.5">{col.name}</div>
                       </th>
                     ))}
                     <th className="px-2 py-3 text-center font-bold text-slate-500 uppercase tracking-wider border-l border-slate-100 w-20">
@@ -727,7 +794,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
             transition-colors ${visibleCols.includes(col.name) ? 'bg-indigo-50 text-indigo-700' : 'text-slate-400 hover:bg-slate-50'}`}>
             <input type="checkbox" checked={visibleCols.includes(col.name)}
               onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-indigo-500" />
-            <span className="truncate">{col.name}</span>
+            <span className="truncate">{colLabel(col.name)}</span>
           </label>
         ))}
       </div>
@@ -759,8 +826,8 @@ function RowDetailModal({ row, schema, pk, onClose }) {
             return (
               <div key={col.name} className="flex gap-3 py-2 border-b border-slate-50">
                 <div className="w-44 flex-shrink-0">
-                  <span className="text-xs font-bold text-slate-500 uppercase">{col.name}</span>
-                  <span className="text-[9px] text-slate-300 block">{col.type}</span>
+                  <span className="text-xs font-bold text-slate-700">{colLabel(col.name)}</span>
+                  <span className="text-[9px] text-slate-300 block">{col.name} · {col.type}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   {isEmpty ? (

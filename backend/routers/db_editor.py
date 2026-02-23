@@ -407,13 +407,11 @@ SMART_FIELDS = {
              "help": "問題の教科を選択"},
             {"name": "stem", "label": "問題文", "type": "textarea",
              "help": "問題のテキスト（LaTeX可）。RAG検索のメイン対象。", "rows": 6},
-            {"name": "language", "label": "言語", "type": "select",
-             "options": ["ja", "en"], "default": "ja",
-             "help": "問題の言語"},
-            {"name": "origin", "label": "出典", "type": "text",
-             "default": "manual",
-             "help": "manual / pdf_ingest / llm_generated など"},
         ],
+        "auto_fill": {
+            "language": "ja",
+            "origin": "manual",
+        },
         "recommended": [
             {"name": "stem_latex", "label": "LaTeX版問題文", "type": "textarea",
              "help": "LaTeX形式の問題文（embedding精度向上に有効）", "rows": 4},
