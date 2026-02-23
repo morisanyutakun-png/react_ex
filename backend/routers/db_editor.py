@@ -394,3 +394,102 @@ def delete_row(table: str, row_id: str):
             conn.close()
         except Exception:
             pass
+
+
+# ── スマート登録（最小フィールド → 自動補完） ──────────────
+
+# RAGに最低限必要なフィールド定義
+SMART_FIELDS = {
+    "problems": {
+        "required": [
+            {"name": "subject", "label": "教科", "type": "select",
+             "options": ["数学", "英語", "国語", "理科", "社会", "物理", "化学", "生物", "地学", "情報"],
+             "help": "問題の教科を選択"},
+            {"name": "stem", "label": "問題文", "type": "textarea",
+             "help": "問題のテキスト（LaTeX可）。RAG検索のメイン対象。", "rows": 6},
+            {"name": "language", "label": "言語", "type": "select",
+             "options": ["ja", "en"], "default": "ja",
+             "help": "問題の言語"},
+            {"name": "origin", "label": "出典", "type": "text",
+             "default": "manual",
+             "help": "manual / pdf_ingest / llm_generated など"},
+        ],
+        "recommended": [
+            {"name": "stem_latex", "label": "LaTeX版問題文", "type": "textarea",
+             "help": "LaTeX形式の問題文（embedding精度向上に有効）", "rows": 4},
+            {"name": "answer_json", "label": "正解", "type": "json",
+             "help": '例: {"answer": "42"} or {"choices": ["A","B","C","D"], "correct": "B"}', "rows": 3},
+            {"name": "choices_json", "label": "選択肢", "type": "json",
+             "help": '例: ["(A) 12", "(B) 24", "(C) 36", "(D) 48"]', "rows": 3},
+            {"name": "solution_outline", "label": "解法概要", "type": "textarea",
+             "help": "解き方の要点・ステップ", "rows": 3},
+            {"name": "explanation", "label": "詳細解説", "type": "textarea",
+             "help": "生徒向けの詳しい解説", "rows": 4},
+            {"name": "difficulty", "label": "難易度", "type": "slider",
+             "min": 0, "max": 1, "step": 0.05, "default": 0.5,
+             "help": "0.0(易)〜1.0(難)。RAGの類似度スコアリングに使用"},
+            {"name": "difficulty_level", "label": "難易度レベル", "type": "select",
+             "options": ["1", "2", "3", "4", "5"],
+             "help": "1(基礎)〜5(発展)"},
+            {"name": "trickiness", "label": "ひっかけ度", "type": "slider",
+             "min": 0, "max": 1, "step": 0.05, "default": 0.3,
+             "help": "0.0(素直)〜1.0(巧妙)。RAGのスコアリングに使用"},
+        ],
+        "optional": [
+            {"name": "topic", "label": "トピック", "type": "text",
+             "help": "例: 微分積分、関数、確率"},
+            {"name": "subtopic", "label": "サブトピック", "type": "text",
+             "help": "例: 三角関数の微分"},
+            {"name": "skill_type", "label": "スキルタイプ", "type": "text",
+             "help": "例: 計算、読解、推論"},
+            {"name": "format", "label": "問題形式", "type": "select",
+             "options": ["multiple_choice", "short_answer", "essay", "fill_in", "true_false", "calculation"],
+             "help": "問題の出題形式"},
+            {"name": "concepts_json", "label": "関連概念", "type": "json",
+             "help": '例: ["微分", "極限", "連続性"]', "rows": 2},
+            {"name": "source", "label": "出典名", "type": "text",
+             "help": "例: 2024年センター試験"},
+            {"name": "source_page", "label": "出典ページ", "type": "number"},
+            {"name": "est_time_sec", "label": "想定解答時間(秒)", "type": "number",
+             "help": "例: 180"},
+            {"name": "answer_brief", "label": "簡潔な答え", "type": "text",
+             "help": "例: 42, (B), x=3"},
+        ],
+    }
+}
+
+
+@router.get("/smart-fields/{table}")
+def get_smart_fields(table: str):
+    """スマート登録用のフィールド定義を返す"""
+    _validate_table(table)
+    fields = SMART_FIELDS.get(table)
+    if not fields:
+        # テーブル固有定義がない場合はスキーマから自動生成
+        conn = connect_db()
+        try:
+            cols = _get_columns(conn, table)
+            pk = ALLOWED_TABLES[table]["pk"]
+            auto_fields = []
+            for c in cols:
+                if c["name"] == pk:
+                    continue
+                f = {"name": c["name"], "label": c["name"], "type": "text",
+                     "help": f'{c["type"]}'}
+                if "json" in (c.get("type") or "").lower():
+                    f["type"] = "json"
+                    f["rows"] = 3
+                elif "int" in (c.get("type") or "").lower():
+                    f["type"] = "number"
+                elif "bool" in (c.get("type") or "").lower():
+                    f["type"] = "boolean"
+                elif "float" in (c.get("type") or "").lower() or "double" in (c.get("type") or "").lower():
+                    f["type"] = "number"
+                auto_fields.append(f)
+            return {"table": table, "required": auto_fields[:5], "recommended": auto_fields[5:10], "optional": auto_fields[10:]}
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    return {"table": table, **fields}

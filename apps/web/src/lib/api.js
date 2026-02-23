@@ -240,6 +240,10 @@ export async function deleteDbRow(table, id) {
   });
 }
 
+export async function fetchSmartFields(table) {
+  return apiFetch(`/api/db/smart-fields/${table}`);
+}
+
 // ── Groq Cloud LLM → PDF ワンクリック生成 ──────────────
 
 export async function generateWithLlm(params) {
