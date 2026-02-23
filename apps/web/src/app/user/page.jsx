@@ -14,7 +14,7 @@ import {
   ProgressSteps,
   Icons,
 } from '@/components/ui';
-import { SUBJECTS, DIFFICULTIES } from '@/lib/constants';
+import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES } from '@/lib/constants';
 
 /* ── ウィザードステップ定義 ── */
 const STEPS = ['テンプレート選択', '設定', 'PDF形式', '生成', '結果'];
@@ -124,6 +124,7 @@ export default function UserModePage() {
   /* ── フォーム状態 ── */
   const [templateId, setTemplateId] = useState('');
   const [subject, setSubject] = useState('数学');
+  const [field, setField] = useState('');
   const [difficulty, setDifficulty] = useState('普通');
   const [numQuestions, setNumQuestions] = useState(1);
   const [topK, setTopK] = useState(5);
@@ -182,6 +183,7 @@ export default function UserModePage() {
       const first = templates[0];
       setTemplateId(first.id || '');
       if (first.metadata?.subject) setSubject(first.metadata.subject);
+      if (first.metadata?.field) setField(first.metadata.field);
       if (first.metadata?.difficulty) setDifficulty(first.metadata.difficulty);
     }
   }, [templates, templateId]);
@@ -191,6 +193,7 @@ export default function UserModePage() {
     const tpl = templates.find((t) => t.id === id);
     if (tpl?.metadata) {
       if (tpl.metadata.subject) setSubject(tpl.metadata.subject);
+      if (tpl.metadata.field) setField(tpl.metadata.field);
       if (tpl.metadata.difficulty) setDifficulty(tpl.metadata.difficulty);
     }
   };
@@ -218,6 +221,7 @@ export default function UserModePage() {
         num_questions: numQuestions,
         rag_inject: true,
         subject_filter: subject,
+        field_filter: field || undefined,
         user_mode: true,
         top_k: topK,
         latex_preset: latexPreset,
@@ -304,6 +308,7 @@ export default function UserModePage() {
         num_questions: numQuestions,
         rag_inject: true,
         subject_filter: subject,
+        field_filter: field || undefined,
         user_mode: true,
         top_k: topK,
         latex_preset: latexPreset,
@@ -486,19 +491,41 @@ export default function UserModePage() {
               <SelectField
                 label="科目"
                 value={subject}
-                onChange={setSubject}
+                onChange={(v) => { setSubject(v); setField(''); }}
                 options={(subjects.length ? subjects : SUBJECTS).map((s) => ({ value: s, label: s }))}
               />
+              <div>
+                <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.1em] uppercase">
+                  分野
+                  <span className="text-[10px] font-normal text-slate-300 ml-1 normal-case tracking-normal">（任意）</span>
+                </label>
+                <input
+                  list="user-field-suggestions"
+                  value={field}
+                  onChange={(e) => setField(e.target.value)}
+                  placeholder={subject ? `${subject}の分野…` : '先に科目を選択'}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 placeholder:text-slate-300"
+                />
+                {subject && SUBJECT_TOPICS[subject] && (
+                  <datalist id="user-field-suggestions">
+                    {SUBJECT_TOPICS[subject].map((t) => (
+                      <option key={t} value={t} />
+                    ))}
+                  </datalist>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <SelectField
                 label="難易度"
                 value={difficulty}
                 onChange={setDifficulty}
                 options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
               />
+              <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
               <NumberField label="RAG参照数" value={topK} onChange={setTopK} min={1} max={20} />
             </div>
 

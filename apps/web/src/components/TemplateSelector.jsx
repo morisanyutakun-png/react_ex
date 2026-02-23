@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { SelectField, NumberField, Button, MetaTag, Icons } from './ui';
-import { SUBJECTS, DIFFICULTIES, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
+import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
 import { createTemplate } from '@/lib/api';
 
 /**
@@ -143,12 +143,20 @@ export default function TemplateSelector({
               分野
             </label>
             <input
+              list="field-suggestions"
               value={field || ''}
               onChange={(e) => onFieldChange?.(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm input-ring
                          placeholder:text-slate-300"
-              placeholder="微分積分..."
+              placeholder={subject ? `${subject}の分野を選択 or 自由入力` : '先に教科を選択...'}
             />
+            {subject && SUBJECT_TOPICS[subject] && (
+              <datalist id="field-suggestions">
+                {SUBJECT_TOPICS[subject].map((t) => (
+                  <option key={t} value={t} />
+                ))}
+              </datalist>
+            )}
           </div>
         )}
       </div>
@@ -230,11 +238,19 @@ export default function TemplateSelector({
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">分野</label>
               <input
+                list="new-tpl-field-suggestions"
                 value={newField}
                 onChange={(e) => setNewField(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm input-ring"
-                placeholder="例: 微分積分"
+                placeholder={newSubject && newSubject !== '__custom' ? `${newSubject}の分野...` : '例: 微分積分'}
               />
+              {newSubject && newSubject !== '__custom' && SUBJECT_TOPICS[newSubject] && (
+                <datalist id="new-tpl-field-suggestions">
+                  {SUBJECT_TOPICS[newSubject].map((t) => (
+                    <option key={t} value={t} />
+                  ))}
+                </datalist>
+              )}
             </div>
             <SelectField
               label="難易度"

@@ -18,6 +18,7 @@ import {
   SelectField,
   Icons,
 } from '@/components/ui';
+import { SUBJECT_TOPICS } from '@/lib/constants';
 
 const PAGE_SIZE = 30;
 
@@ -143,7 +144,7 @@ const COLUMN_GROUPS = {
 };
 
 // 一覧表のデフォルト表示カラム（見やすい最小セット）
-const DEFAULT_VISIBLE_COLS = ['id', 'subject', 'stem', 'answer_brief', 'difficulty', 'difficulty_level'];
+const DEFAULT_VISIBLE_COLS = ['id', 'subject', 'topic', 'stem', 'answer_brief', 'difficulty', 'difficulty_level'];
 
 // 非表示推奨（embedding等の巨大カラム）
 const HIDDEN_COLS = new Set([
@@ -902,7 +903,8 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
           {(smartFields.required || []).map((field) => (
             <SmartField key={field.name} field={field}
               value={smartForm[field.name] ?? ''}
-              onChange={(v) => onFieldChange(field.name, v)} />
+              onChange={(v) => onFieldChange(field.name, v)}
+              allValues={smartForm} />
           ))}
         </div>
       </FieldSection>
@@ -920,7 +922,8 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
           {(smartFields.recommended || []).map((field) => (
             <SmartField key={field.name} field={field}
               value={smartForm[field.name] ?? ''}
-              onChange={(v) => onFieldChange(field.name, v)} />
+              onChange={(v) => onFieldChange(field.name, v)}
+              allValues={smartForm} />
           ))}
         </div>
       </FieldSection>
@@ -938,7 +941,8 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
           {(smartFields.optional || []).map((field) => (
             <SmartField key={field.name} field={field}
               value={smartForm[field.name] ?? ''}
-              onChange={(v) => onFieldChange(field.name, v)} />
+              onChange={(v) => onFieldChange(field.name, v)}
+              allValues={smartForm} />
           ))}
         </div>
       </FieldSection>
@@ -1021,18 +1025,205 @@ function FieldSection({ title, subtitle, color, open, onToggle, badge, children 
 }
 
 
-// ── 個別フィールド入力 ──
-function SmartField({ field, value, onChange }) {
-  const { name, label, type, help, options, rows, min, max, step } = field;
+// ── 数式パレット（リッチテキストエリア用） ──
+const MATH_SYMBOLS = [
+  { group: '基本', items: [
+    { label: '分数', insert: '\\frac{a}{b}', display: 'a/b' },
+    { label: '平方根', insert: '\\sqrt{x}', display: '√x' },
+    { label: 'n乗根', insert: '\\sqrt[n]{x}', display: 'ⁿ√x' },
+    { label: '上付き', insert: 'x^{n}', display: 'xⁿ' },
+    { label: '下付き', insert: 'x_{i}', display: 'xᵢ' },
+    { label: 'プラマイ', insert: '\\pm', display: '±' },
+    { label: '掛ける', insert: '\\times', display: '×' },
+    { label: '割る', insert: '\\div', display: '÷' },
+  ]},
+  { group: 'ギリシャ文字', items: [
+    { label: 'α', insert: '\\alpha' },
+    { label: 'β', insert: '\\beta' },
+    { label: 'θ', insert: '\\theta' },
+    { label: 'π', insert: '\\pi' },
+    { label: 'Σ', insert: '\\sum_{i=1}^{n}' },
+    { label: '∫', insert: '\\int_{a}^{b}' },
+    { label: 'lim', insert: '\\lim_{x \\to \\infty}' },
+    { label: '∞', insert: '\\infty' },
+  ]},
+  { group: '関数・記号', items: [
+    { label: 'sin', insert: '\\sin' },
+    { label: 'cos', insert: '\\cos' },
+    { label: 'tan', insert: '\\tan' },
+    { label: 'log', insert: '\\log' },
+    { label: 'ln', insert: '\\ln' },
+    { label: '≤', insert: '\\leq' },
+    { label: '≥', insert: '\\geq' },
+    { label: '≠', insert: '\\neq' },
+    { label: '→', insert: '\\rightarrow' },
+    { label: '⇒', insert: '\\Rightarrow' },
+  ]},
+  { group: '括弧', items: [
+    { label: '()', insert: '\\left( \\right)' },
+    { label: '{}', insert: '\\left\\{ \\right\\}' },
+    { label: '||', insert: '\\left| \\right|' },
+    { label: '[]', insert: '\\left[ \\right]' },
+  ]},
+];
+
+/** リッチテキストエリア — 数式パレット付き */
+function RichTextArea({ value, onChange, rows, help, name }) {
+  const textRef = useRef(null);
+  const [showPalette, setShowPalette] = useState(false);
+
+  const insertAtCursor = (text) => {
+    const ta = textRef.current;
+    if (!ta) { onChange(value + text); return; }
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+    const newVal = before + text + after;
+    onChange(newVal);
+    // カーソル位置を挿入テキスト後に移動
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.selectionStart = ta.selectionEnd = start + text.length;
+    });
+  };
+
+  const wrapWithDollar = () => {
+    const ta = textRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    if (start !== end) {
+      const selected = value.slice(start, end);
+      const newVal = value.slice(0, start) + '$' + selected + '$' + value.slice(end);
+      onChange(newVal);
+      requestAnimationFrame(() => { ta.focus(); ta.selectionStart = start; ta.selectionEnd = end + 2; });
+    } else {
+      insertAtCursor('$$');
+      requestAnimationFrame(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + 1; });
+    }
+  };
 
   const baseInputClass = `w-full px-3 py-2.5 text-sm border-2 border-slate-100 rounded-xl bg-white/50
     text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-500 focus:bg-white outline-none`;
 
-  const isWide = type === 'textarea' || type === 'json';
+  return (
+    <div className="md:col-span-2">
+      {/* ツールバー */}
+      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+        <button type="button" onClick={wrapWithDollar}
+          className="px-2 py-1 text-[11px] font-bold bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100"
+          title="選択テキストを数式$...$で囲む">
+          $ 数式 $
+        </button>
+        <button type="button" onClick={() => setShowPalette(!showPalette)}
+          className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-colors border ${
+            showPalette ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+          }`}>
+          {showPalette ? '▼ パレット閉じる' : '▶ 数式パレット'}
+        </button>
+        <span className="text-[10px] text-slate-300 ml-2">💡 ふつうの日本語テキストでOK。数式だけ $ で囲んで入力</span>
+      </div>
+
+      {/* 数式パレット */}
+      {showPalette && (
+        <div className="mb-2 p-3 bg-gradient-to-b from-indigo-50/80 to-white rounded-xl border border-indigo-100 space-y-2">
+          {MATH_SYMBOLS.map((g) => (
+            <div key={g.group}>
+              <div className="text-[9px] font-black text-indigo-400 mb-1 tracking-wider">{g.group}</div>
+              <div className="flex flex-wrap gap-1">
+                {g.items.map((sym) => (
+                  <button key={sym.insert} type="button"
+                    onClick={() => insertAtCursor(sym.insert)}
+                    className="px-2 py-1 text-xs bg-white border border-indigo-100 rounded-md hover:bg-indigo-100 hover:border-indigo-300 transition-colors text-slate-700 font-mono"
+                    title={`${sym.label}: ${sym.insert}`}>
+                    {sym.display || sym.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* テキストエリア本体 */}
+      <textarea
+        ref={textRef}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={rows || 6}
+        placeholder={help || '問題文を入力してください。日本語テキスト＋数式（$x^2+1$のように$で囲む）'}
+        className={`${baseInputClass} resize-y`}
+      />
+      <p className="text-[10px] text-slate-300 mt-1">
+        例: 「$x^2 + 2x + 1 = 0$ を解け。」 — ふつうの文章の中に $...$ で数式を入れるだけ
+      </p>
+    </div>
+  );
+}
+
+
+// ── 個別フィールド入力 ──
+function SmartField({ field, value, onChange, allValues }) {
+  const { name, label, type, help, options, rows, min, max, step, depends_on } = field;
+
+  const baseInputClass = `w-full px-3 py-2.5 text-sm border-2 border-slate-100 rounded-xl bg-white/50
+    text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-500 focus:bg-white outline-none`;
+
+  const isWide = type === 'textarea' || type === 'json' || type === 'rich_textarea';
+
+  // dependent_select: 親の選択に応じた選択肢を動的生成
+  if (type === 'dependent_select') {
+    const parentVal = depends_on ? allValues?.[depends_on] : null;
+    const dynamicOptions = parentVal ? (SUBJECT_TOPICS[parentVal] || []) : [];
+
+    return (
+      <div className={isWide ? 'md:col-span-2' : ''}>
+        <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.08em]">
+          {label}
+          <span className="text-[10px] font-normal text-slate-300 ml-2 normal-case tracking-normal">{name}</span>
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            list={`datalist-${name}`}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={parentVal ? `${parentVal}の分野を選択 or 自由入力` : '先に教科を選択してください'}
+            className={baseInputClass}
+          />
+          {dynamicOptions.length > 0 && (
+            <datalist id={`datalist-${name}`}>
+              {dynamicOptions.map((opt) => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
+          )}
+        </div>
+        {help && <p className="text-[10px] text-slate-300 mt-1">{help}</p>}
+        {!parentVal && depends_on && (
+          <p className="text-[10px] text-amber-500 mt-1">⬆ 教科を先に選択すると候補が表示されます</p>
+        )}
+      </div>
+    );
+  }
+
+  // rich_textarea: 数式パレット付きテキストエリア
+  if (type === 'rich_textarea') {
+    return (
+      <div className="md:col-span-2">
+        <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.08em]">
+          {label}
+          <span className="text-[10px] font-normal text-slate-300 ml-2 normal-case tracking-normal">{name}</span>
+        </label>
+        <RichTextArea value={value} onChange={onChange} rows={rows} help={help} name={name} />
+      </div>
+    );
+  }
 
   return (
     <div className={isWide ? 'md:col-span-2' : ''}>
-      <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.08em] uppercase">
+      <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.08em]">
         {label}
         <span className="text-[10px] font-normal text-slate-300 ml-2 normal-case tracking-normal">{name}</span>
       </label>
