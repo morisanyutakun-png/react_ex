@@ -1693,11 +1693,20 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
             logger.info('RAG: final doc_snippets has %d items, %d chars', len(items), len(ctx['doc_snippets']))
 
         except Exception as exc:
-            logger.warning('RAG retrieval failed, using raw fallback: %s', exc)
-            # fallback: first few chunks in DB order
-            ctx['doc_snippets_items'] = []
-            ctx['doc_snippets'] = '\n\n'.join(t.strip() for t in texts[:top_k if 'top_k' in dir() else 5] if t and t.strip())
-            ctx['rag_status'] = 'fallback'
+            import traceback
+            logger.warning('RAG retrieval failed, using raw fallback: %s\n%s', exc, traceback.format_exc())
+            # fallback: use DB-order top-k texts (still useful for prompt context)
+            _fb_k = top_k if 'top_k' in dir() else 5
+            fb_items = [
+                {'id': None, 'sim_score': 0.0, 'combined_score': 0.0,
+                 'difficulty': None, 'trickiness': None, 'text': t.strip()}
+                for t in texts[:_fb_k] if t and t.strip()
+            ]
+            ctx['doc_snippets_items'] = fb_items
+            ctx['doc_snippets'] = '\n\n'.join(it['text'] for it in fb_items)
+            ctx['rag_retrieved'] = len(fb_items)
+            # If we still got items from DB, treat as degraded-ok rather than fallback
+            ctx['rag_status'] = 'ok' if fb_items else 'fallback'
             ctx['rag_error'] = str(exc)[:200]
 
         # build a compact rag_summary by concatenating the retrieved snippets (up to 800 chars)
@@ -2171,6 +2180,19 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     "   IfFontExistsTF, \\IfFontExistsTF による分岐は禁止。\n"
                     "F) 出力は .tex ソースコードのみ。Markdown記法や説明文は含めるな。\n"
                     "G) 区間表記は必ずインライン数式内に書くこと。例: $[0,1)$, $[a,b]$\n\n"
+                    "=== 分数・数式の記述ルール（最重要） ===\n"
+                    "G2) 分数は必ず \\frac{分子}{分母} の形式で記述すること。\n"
+                    "    - 正しい: $\\frac{1}{2}$, $\\frac{x+1}{x-1}$, $\\dfrac{a}{b}$\n"
+                    "    - 間違い: $1/2$, $(x+1)/(x-1)$, $\\frac 1 2$, $\\frac{1/2}$\n"
+                    "    - \\frac の直後は必ず {分子}{分母} の2つの中括弧を書くこと。\n"
+                    "    - 途中式・解答でも a/b のスラッシュ表記は禁止。常に \\frac を使う。\n"
+                    "    - ディスプレイ環境の大きい分数は \\dfrac を使う。\n"
+                    "    - 入れ子の分数: $\\frac{\\frac{a}{b}}{c}$ のように中括弧を正しく対応。\n"
+                    "G3) 数式全般:\n"
+                    "    - 掛け算記号は \\times (×) または \\cdot (·) を使う。* は禁止。\n"
+                    "    - 根号は \\sqrt{x} を使う。sqrt(x) のような関数表記は禁止。\n"
+                    "    - 添字: x_1 ではなく $x_1$ や $x_{10}$（2文字以上は中括弧必須）。\n"
+                    "    - 三角関数: sin x → $\\sin x$, cos → $\\cos$（バックスラッシュ必須）。\n\n"
                 )
                 latex_instr += struct_rules
                 latex_instr += (
@@ -3164,6 +3186,8 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         '    - 誤: 1/2, (x+1)/(x-1), \\frac 1 2, \\frac{1/2}\n'
         '    - 分数の中括弧 {} は必ず対応させること。\\frac の直後は必ず {分子}{分母} の形にする。\n'
         '    - 解答・途中式でも \\frac を使い、a/b のまま放置しないこと。\n'
+        '    - 入れ子の分数も中括弧を厳密に対応: \\frac{\\frac{a}{b}}{c+d} のように。\n'
+        '    - ディスプレイ環境（\\[...\\] や align*）内では \\dfrac を推奨。\n'
         '5. 数学の計算は必ず自分で検算してから出力すること。計算ミスは許されない。\n'
         '6. tcolorbox, mdframed, fbox 等のボックス環境は使用しない。\n'
         '7. 指定された出力形式の構造ルールを厳守すること（形式固有のルールは下記参照）。\n'
@@ -3824,18 +3848,32 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             #  b) \frac with first arg braced but second bare: \frac{a} b → \frac{a}{b}
             tex = re.sub(r'\\frac\{([^}]*)\}\s+([A-Za-z0-9])\b', r'\\frac{\1}{\2}', tex)
             tex = re.sub(r'\\dfrac\{([^}]*)\}\s+([A-Za-z0-9])\b', r'\\dfrac{\1}{\2}', tex)
+            #  b2) \frac with slash inside single braces: \frac{1/2} → \frac{1}{2}
+            tex = re.sub(r'\\frac\{(\w+)/(\w+)\}(?!\s*\{)', r'\\frac{\1}{\2}', tex)
+            tex = re.sub(r'\\dfrac\{(\w+)/(\w+)\}(?!\s*\{)', r'\\dfrac{\1}{\2}', tex)
+            #  b3) \frac with only one brace group (missing second): \frac{a} → \frac{a}{1}
+            #      Only when followed by whitespace/newline/end, not by {
+            tex = re.sub(r'\\frac\{([^}]+)\}\s*(?=[^{\\]|$)', r'\\frac{\1}{1}', tex)
+            #  b4) Bare \frac without any braces followed by expressions: \frac ab → \frac{a}{b}
+            tex = re.sub(r'\\frac\s+(\{[^}]+\}|[A-Za-z0-9])\s*(\{[^}]+\}|[A-Za-z0-9])', 
+                         lambda m: '\\frac' + (m.group(1) if m.group(1).startswith('{') else '{'+m.group(1)+'}') + (m.group(2) if m.group(2).startswith('{') else '{'+m.group(2)+'}'), tex)
+            tex = re.sub(r'\\dfrac\s+(\{[^}]+\}|[A-Za-z0-9])\s*(\{[^}]+\}|[A-Za-z0-9])', 
+                         lambda m: '\\dfrac' + (m.group(1) if m.group(1).startswith('{') else '{'+m.group(1)+'}') + (m.group(2) if m.group(2).startswith('{') else '{'+m.group(2)+'}'), tex)
             #  c) Slash fractions in math mode: convert a/b patterns to \frac{a}{b}
             #     Only inside math environments ($...$, \[...\], align, etc.)
-            #     Handle common patterns: number/number, (expr)/(expr)
+            #     Handle common patterns: number/number, (expr)/(expr), var/var
             def _fix_slash_fractions(tex_str):
                 """Convert common slash fractions to \\frac inside math contexts."""
-                # Simple number/number: 1/2, 3/4 (but not in dates like 2024/01/01)
-                # Only replace inside math delimiters
                 def _replace_in_math(m):
                     content = m.group(0)
-                    # Replace patterns like 1/2, a/b (single tokens)
+                    # Replace patterns like 1/2, a/b (single tokens) — not URL-like paths
                     content = re.sub(
                         r'(?<![/\\A-Za-z])(\d+)\s*/\s*(\d+)(?![/\d])',
+                        r'\\frac{\1}{\2}', content
+                    )
+                    # Replace single-letter/single-letter: a/b, x/y
+                    content = re.sub(
+                        r'(?<![/\\])([A-Za-z])\s*/\s*([A-Za-z0-9])(?![/])',
                         r'\\frac{\1}{\2}', content
                     )
                     # Replace (expr)/(expr)
@@ -3849,6 +3887,12 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 tex_str = re.sub(r'(?<!\\)\$([^$]+)\$', _replace_in_math, tex_str)
                 # Process display math \[...\]
                 tex_str = re.sub(r'\\\[(.+?)\\\]', _replace_in_math, tex_str, flags=re.S)
+                # Process align/aligned/gather environments
+                tex_str = re.sub(
+                    r'(\\begin\{(?:align\*?|aligned|gather\*?|equation\*?)\})(.*?)(\\end\{(?:align\*?|aligned|gather\*?|equation\*?)\})',
+                    lambda m: m.group(1) + _replace_in_math(type('M', (), {'group': lambda self, n=0: m.group(2)})()) + m.group(3),
+                    tex_str, flags=re.S
+                )
                 return tex_str
             tex = _fix_slash_fractions(tex)
 

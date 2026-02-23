@@ -239,7 +239,7 @@ export default function UserModePage() {
       } else if (ctx?.rag_status === 'no_data') {
         setStatus('Step 1/3 完了: AIのみで生成（DB登録で精度UP）');
       } else if (ctx?.rag_status === 'fallback') {
-        setStatus('Step 1/3 完了: 簡易参照で生成');
+        setStatus(`Step 1/3 完了: 過去問 ${ctx?.rag_retrieved || ctx?.chunk_count || 0}件を参照`);
       } else {
         setStatus('Step 1/3 完了');
       }
@@ -539,8 +539,27 @@ export default function UserModePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <NumberField label="RAG参照数" value={topK} onChange={setTopK} min={1} max={20} />
+              <NumberField label="参照する過去問数" value={topK} onChange={setTopK} min={1} max={20} />
             </div>
+
+            {/* RAG の仕組み説明（折りたたみ） */}
+            <details className="rounded-xl border border-slate-100 bg-slate-50/50">
+              <summary className="px-3 py-2 cursor-pointer text-[11px] font-bold text-slate-400 hover:text-indigo-500 select-none">
+                💡 「過去問参照」の仕組みを見る
+              </summary>
+              <div className="px-3 pb-3 text-[11px] text-slate-500 leading-relaxed space-y-1.5">
+                <p>このシステムは、DBに登録された過去問を参考にして新しい問題を作ります。</p>
+                <div className="bg-white rounded-lg p-2 border border-slate-100 space-y-1">
+                  <div className="flex gap-2"><span className="text-indigo-400 font-bold">1.</span> <span>科目・分野・難易度を選ぶと、DBから関連する過去問を検索</span></div>
+                  <div className="flex gap-2"><span className="text-indigo-400 font-bold">2.</span> <span>最も似ている問題を自動でランク付け（難易度も考慮）</span></div>
+                  <div className="flex gap-2"><span className="text-indigo-400 font-bold">3.</span> <span>上位の過去問をAIに参考資料として渡し、類題を生成</span></div>
+                </div>
+                <p className="text-slate-400">
+                  → <strong>科目</strong>と<strong>分野</strong>を正確に選ぶと、より想定通りの問題が生成されます。
+                  <br />「ベースにする問題」に過去問を貼り付けると更に精度UP！
+                </p>
+              </div>
+            </details>
 
             {/* ── ベース問題（過去問）入力 ── */}
             <div>
@@ -842,9 +861,7 @@ export default function UserModePage() {
                 ? 'bg-emerald-50 border-emerald-200'
                 : renderContext.rag_status === 'no_data'
                   ? 'bg-blue-50 border-blue-200'
-                  : renderContext.rag_status === 'fallback'
-                    ? 'bg-amber-50 border-amber-200'
-                    : 'bg-slate-50 border-slate-200'
+                  : 'bg-slate-50 border-slate-200'
             }`}>
               <div className="flex items-center gap-2 flex-wrap">
                 {/* ステータスアイコン */}
@@ -853,11 +870,9 @@ export default function UserModePage() {
                     ? 'bg-emerald-200 text-emerald-700'
                     : renderContext.rag_status === 'no_data'
                       ? 'bg-blue-200 text-blue-700'
-                      : renderContext.rag_status === 'fallback'
-                        ? 'bg-amber-200 text-amber-700'
-                        : 'bg-slate-200 text-slate-500'
+                      : 'bg-slate-200 text-slate-500'
                 }`}>
-                  {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? '✓' : renderContext.rag_status === 'no_data' ? 'i' : renderContext.rag_status === 'fallback' ? '!' : '—'}
+                  {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? '✓' : renderContext.rag_status === 'no_data' ? 'i' : '—'}
                 </span>
 
                 <div className="flex-1">
@@ -877,16 +892,16 @@ export default function UserModePage() {
                     </div>
                   ) : renderContext.rag_status === 'empty' ? (
                     <div>
-                      <span className="font-bold text-slate-700">AIのみで問題を生成しました</span>
+                      <span className="font-bold text-slate-600">AIのみで問題を生成しました</span>
                       <p className="text-slate-500 mt-0.5">
                         この条件に合う過去問がDB内に見つかりませんでした（{renderContext.chunk_count}件を検索）
                       </p>
                     </div>
                   ) : renderContext.rag_status === 'fallback' ? (
                     <div>
-                      <span className="font-bold text-amber-700">過去問の簡易参照で生成しました</span>
-                      <p className="text-amber-600 mt-0.5">
-                        検索の最適化が行えませんでしたが、問題は正常に生成されています
+                      <span className="font-bold text-slate-600">過去問を参照して生成しました</span>
+                      <p className="text-slate-500 mt-0.5">
+                        DB内の問題をベースに生成しています（{renderContext.rag_retrieved || renderContext.chunk_count || 0}件参照）
                       </p>
                     </div>
                   ) : renderContext.chunk_count > 0 ? (
