@@ -31,12 +31,18 @@ services:
       - name: MALLOC_ARENA_MAX
         value: "2"
 
+    ports:
+      - port: 8000
+        protocol: http
+
     routes:
       - protocol: http
         path: /
+        port: 8000
 
     healthcheck:
       path: /health
+      port: 8000
       interval: 10s
 
     scale:

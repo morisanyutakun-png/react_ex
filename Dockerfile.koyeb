@@ -31,4 +31,4 @@ WORKDIR /app/backend
 # --workers 1: single worker to minimize memory on free tier
 # NOTE: do NOT use --preload with UvicornWorker (known compatibility issues)
 # Koyeb injects $PORT automatically; fall back to 8000 for local testing.
-CMD ["sh", "-c", "alembic upgrade head || echo 'WARN: alembic migration skipped'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 120"]
+CMD ["sh", "-c", "alembic upgrade head || echo 'WARN: alembic migration skipped'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 1 --timeout 120"]
