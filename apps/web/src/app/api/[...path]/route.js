@@ -5,17 +5,17 @@
  *
  * ブラウザ → /api/generate_pdf (same-origin, CORS 不要)
  *   → この Route Handler がサーバーで受け取る
- *   → https://examgen-backend.onrender.com/api/generate_pdf へ転送
+ *   → Koyeb バックエンドへ転送
  *   → レスポンスをそのまま返す
  *
- * 注意: Render 無料枠はコールドスタートに ~30秒かかるため、
- *       fetch のタイムアウトを十分長く設定する。
+ * 環境変数 API_BASE_URL を設定すれば任意のバックエンドを指定可能。
+ * Vercel 上では Koyeb バックエンドがデフォルト。
  */
 
 const BACKEND_URL = (() => {
   const explicit = process.env.API_BASE_URL;
   if (explicit) return explicit.replace(/\/+$/, '');
-  if (process.env.VERCEL) return 'https://examgen-backend.onrender.com';
+  if (process.env.VERCEL) return 'https://zeroth-aubree-yutamori-95ef4ba2.koyeb.app';
   return 'http://localhost:8000';
 })();
 
@@ -40,7 +40,7 @@ async function handler(request, context) {
   const fetchInit = {
     method: request.method,
     headers,
-    // Render 無料枠のコールドスタート (~30s) + PDF 生成処理 (~30s) に対応
+    // Koyeb コールドスタート + PDF 生成処理に対応（最大 55s）
     signal: AbortSignal.timeout(55000),
   };
 
@@ -76,8 +76,9 @@ async function handler(request, context) {
       JSON.stringify({
         error: isTimeout ? 'backend_timeout' : 'backend_unavailable',
         detail: isTimeout
-          ? 'バックエンドの応答がタイムアウトしました。Render 無料枠はスリープから復帰に時間がかかります。もう一度お試しください。'
+          ? 'バックエンドの応答がタイムアウトしました。しばらく待ってからもう一度お試しください。'
           : `バックエンドに接続できません: ${err.message}`,
+        backend_url: BACKEND_URL,
       }),
       {
         status: isTimeout ? 504 : 502,
@@ -94,5 +95,5 @@ export const DELETE = handler;
 export const PATCH = handler;
 export const OPTIONS = handler;
 
-// Vercel Hobby: max 60s。Render コールドスタート + PDF生成に必要。
+// Vercel Hobby: max 60s。Koyeb コールドスタート + PDF生成に必要。
 export const maxDuration = 60;

@@ -48,8 +48,8 @@ export async function apiFetch(path, options = {}) {
     }
     clearTimeout(timer);
 
-    // 502/504 はサーバー復帰待ちの可能性が高いのでリトライ
-    if ((res.status === 502 || res.status === 504) && attempt < retries) {
+    // 500/502/504 はサーバー復帰待ちの可能性が高いのでリトライ
+    if ((res.status === 500 || res.status === 502 || res.status === 504) && attempt < retries) {
       lastError = new Error(`HTTP ${res.status}: バックエンドが一時的に利用できません（リトライ中...）`);
       continue;
     }

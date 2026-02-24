@@ -233,11 +233,11 @@ def _do_search(
             clauses = []
             params = []
             if subject:
-                clauses.append("(p.subject = %s OR p.metadata::text ILIKE %s)")
+                clauses.append("(p.subject = %s OR p.metadata_json::text ILIKE %s)")
                 params.extend([subject, f'%"subject"%{subject}%'])
             if filters_dict.get('topic'):
                 clauses.append(
-                    "(p.stem ILIKE %s OR p.topic ILIKE %s OR p.metadata::text ILIKE %s)"
+                    "(p.stem ILIKE %s OR p.topic ILIKE %s OR p.metadata_json::text ILIKE %s)"
                 )
                 params.extend([
                     f"%{filters_dict['topic']}%",
@@ -264,7 +264,8 @@ def _do_search(
                     for pid, score in tfidf_results[:limit]:
                         cur2 = conn.cursor()
                         cur2.execute(
-                            "SELECT id, stem, difficulty, solution_outline, subject, topic, metadata "
+                            "SELECT id, stem, difficulty, solution_outline, subject, topic, "
+                            "metadata_json, answer_brief, explanation, trickiness, source "
                             "FROM problems WHERE id = %s", (pid,)
                         )
                         r = cur2.fetchone()
@@ -276,6 +277,8 @@ def _do_search(
                                 'difficulty': r[2], 'solution_outline': r[3],
                                 'subject': r[4] if r[4] and r[4] != 'general' else meta.get('subject', ''),
                                 'topic': r[5] or meta.get('field', ''),
+                                'answer_brief': r[7], 'explanation': r[8],
+                                'trickiness': r[9], 'source': r[10],
                                 'metadata': meta,
                                 'annotation_summary': None, 'score': float(score),
                             })
@@ -310,7 +313,8 @@ def _do_search(
                     for pid, score in tfidf_results[:limit]:
                         cur2 = conn.cursor()
                         cur2.execute(
-                            "SELECT id, stem, difficulty, solution_outline, subject, topic, metadata "
+                            "SELECT id, stem, difficulty, solution_outline, subject, topic, "
+                            "metadata_json, answer_brief, explanation, trickiness, source "
                             "FROM problems WHERE id = %s", (pid,)
                         )
                         r = cur2.fetchone()
@@ -322,6 +326,8 @@ def _do_search(
                                 'difficulty': r[2], 'solution_outline': r[3],
                                 'subject': r[4] if r[4] and r[4] != 'general' else meta.get('subject', ''),
                                 'topic': r[5] or meta.get('field', ''),
+                                'answer_brief': r[7], 'explanation': r[8],
+                                'trickiness': r[9], 'source': r[10],
                                 'metadata': meta,
                                 'annotation_summary': None, 'score': float(score),
                             })
@@ -337,7 +343,7 @@ def _do_search(
 
             final_sql = (
                 "SELECT p.id, p.stem, p.difficulty, p.solution_outline, "
-                "p.subject, p.topic, p.metadata, p.answer_brief, p.explanation, "
+                "p.subject, p.topic, p.metadata_json, p.answer_brief, p.explanation, "
                 "p.trickiness, p.source, "
                 "a.payload->> 'summary' AS annotation_summary "
                 "FROM problems p "
@@ -372,7 +378,7 @@ def _do_search(
             where_sql = ('WHERE ' + ' AND '.join(where)) if where else ''
             final_sql = (
                 "SELECT p.id, p.stem, p.difficulty, p.solution_outline, "
-                "p.subject, p.topic, p.metadata, p.answer_brief, p.explanation, "
+                "p.subject, p.topic, p.metadata_json, p.answer_brief, p.explanation, "
                 "p.trickiness, p.source, "
                 "a.payload->> 'summary' AS annotation_summary "
                 "FROM problems p "
@@ -413,7 +419,11 @@ def api_search_get(
     limit: int = Query(10),
 ):
     """Search problems via GET with query parameters."""
-    return _do_search(q, topic, difficulty, limit, subject=subject)
+    try:
+        return _do_search(q, topic, difficulty, limit, subject=subject)
+    except Exception as exc:
+        logger.exception('Search GET failed')
+        raise HTTPException(status_code=500, detail=f'検索処理でエラーが発生しました: {exc}')
 
 
 # ---- POST endpoint: accepts JSON body (backward compat) ----
@@ -426,4 +436,8 @@ def api_search(req: SearchRequest):
         topic = req.filters.topic
         if req.filters.difficulty_min is not None:
             difficulty = str(req.filters.difficulty_min)
-    return _do_search(req.query, topic, difficulty, int(req.limit or 10))
+    try:
+        return _do_search(req.query, topic, difficulty, int(req.limit or 10))
+    except Exception as exc:
+        logger.exception('Search POST failed')
+        raise HTTPException(status_code=500, detail=f'検索処理でエラーが発生しました: {exc}')

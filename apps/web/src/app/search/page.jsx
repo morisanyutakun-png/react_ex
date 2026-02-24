@@ -63,13 +63,13 @@ export default function SearchPage() {
   // 科目変更時に分野をリセット
   useEffect(() => { setFieldFilter(''); }, [subjectFilter]);
 
-  const doSearch = useCallback(async () => {
+  const doSearch = useCallback(async (retryCount = 0) => {
     if (!query.trim() && !subjectFilter && !difficultyFilter) {
       setStatus('検索キーワード、科目、または難易度を指定してください');
       return;
     }
     setSearching(true);
-    setStatus('');
+    setStatus(retryCount > 0 ? `リトライ中... (${retryCount}/2)` : '');
     setHasSearched(true);
     try {
       const params = { limit: 20 };
@@ -88,7 +88,17 @@ export default function SearchPage() {
         setStatus(`${list.length} 件の問題が見つかりました`);
       }
     } catch (e) {
-      setStatus(`検索エラー: ${e.message}`);
+      const msg = e.message || '';
+      const isRetryable = msg.includes('500') || msg.includes('502') || msg.includes('504')
+        || msg.includes('timeout') || msg.includes('unavailable');
+      if (isRetryable && retryCount < 2) {
+        // サーバーがコールドスタート中の場合、自動リトライ
+        const delay = (retryCount + 1) * 2000;
+        setStatus(`サーバー応答待ち... ${Math.round(delay / 1000)}秒後にリトライします`);
+        setTimeout(() => doSearch(retryCount + 1), delay);
+        return; // keep searching=true
+      }
+      setStatus(`検索エラー: ${msg}`);
       setResults([]);
     }
     setSearching(false);
