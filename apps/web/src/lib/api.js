@@ -244,6 +244,20 @@ export async function fetchSmartFields(table) {
   return apiFetch(`/api/db/smart-fields/${table}`);
 }
 
+export async function estimateDifficulty(stem, answer = '') {
+  return apiFetch('/api/db/estimate-difficulty', {
+    method: 'POST',
+    body: JSON.stringify({ stem, answer }),
+  });
+}
+
+export async function smartCreateDbRow(table, data, autoDifficulty = true) {
+  return apiFetch(`/api/db/${table}/smart-create`, {
+    method: 'POST',
+    body: JSON.stringify({ data, auto_difficulty: autoDifficulty }),
+  });
+}
+
 // ── Groq Cloud LLM → PDF ワンクリック生成 ──────────────
 
 export async function generateWithLlm(params) {

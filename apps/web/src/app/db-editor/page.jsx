@@ -9,6 +9,8 @@ import {
   createDbRow,
   deleteDbRow,
   fetchSmartFields,
+  estimateDifficulty,
+  smartCreateDbRow,
 } from '@/lib/api';
 import {
   StatusBar,
@@ -194,6 +196,15 @@ export default function DbEditorPage() {
   const [smartExpanded, setSmartExpanded] = useState({ required: true, recommended: false, optional: false });
   const [saving, setSaving] = useState(false);
 
+  // インライン行追加 (browseタブ)
+  const [showInlineAdd, setShowInlineAdd] = useState(false);
+  const [inlineAddData, setInlineAddData] = useState({});
+  const [inlineAddSaving, setInlineAddSaving] = useState(false);
+
+  // 難易度推定状態
+  const [difficultyEstimating, setDifficultyEstimating] = useState(false);
+  const [difficultyResult, setDifficultyResult] = useState(null);
+
   // テーブル一覧取得
   useEffect(() => {
     fetchDbTables()
@@ -360,14 +371,13 @@ export default function DbEditorPage() {
           data[key] = val;
         }
       }
-      // auto_fill フィールドを自動マージ（ユーザが明示入力していなければ）
-      if (smartFields?.auto_fill) {
-        for (const [k, v] of Object.entries(smartFields.auto_fill)) {
-          if (!(k in data)) data[k] = v;
-        }
-      }
-      const res = await createDbRow(selectedTable, data);
-      setStatus(`登録完了! (ID: ${res.inserted_id || '—'})`);
+      // smart-create を使用（難易度自動計算付き）
+      const res = await smartCreateDbRow(selectedTable, data, true);
+      const diffInfo = res.difficulty_auto
+        ? ` [難易度: ${res.difficulty_auto.difficulty} / Lv${res.difficulty_auto.difficulty_level}]`
+        : '';
+      setStatus(`登録完了! (ID: ${res.inserted_id || '—'})${diffInfo}`);
+      setDifficultyResult(null);
       // フォームリセット
       const defaults = {};
       for (const group of ['required', 'recommended', 'optional']) {
@@ -381,6 +391,61 @@ export default function DbEditorPage() {
       setStatus(`登録エラー: ${e.message}`);
     }
     setSaving(false);
+  };
+
+  // ── 難易度自動推定 ──
+  const triggerDifficultyEstimate = useCallback(async (stem, answer) => {
+    if (!stem || !stem.trim()) return;
+    setDifficultyEstimating(true);
+    try {
+      const res = await estimateDifficulty(stem, answer || '');
+      setDifficultyResult(res);
+      return res;
+    } catch (e) {
+      console.warn('difficulty estimation failed:', e);
+      setDifficultyResult(null);
+      return null;
+    } finally {
+      setDifficultyEstimating(false);
+    }
+  }, []);
+
+  // ── インライン行追加 (browseタブ) ──
+  const onInlineFieldChange = (col, value) => {
+    setInlineAddData((prev) => ({ ...prev, [col]: value }));
+  };
+
+  const submitInlineAdd = async () => {
+    setInlineAddSaving(true);
+    setStatus('行を追加中...');
+    try {
+      const data = {};
+      for (const [col, val] of Object.entries(inlineAddData)) {
+        if (val === '' || val === null || val === undefined) continue;
+        const cs = schema.find((c) => c.name === col);
+        if (cs && isNumericColumn(cs.type) && val !== '' && val !== null) {
+          const num = Number(val);
+          data[col] = isNaN(num) ? val : num;
+        } else if (cs && isBoolColumn(cs.type)) {
+          data[col] = val === 'true' || val === true;
+        } else if (cs && isJsonColumn(cs.type) && typeof val === 'string') {
+          try { data[col] = JSON.parse(val); } catch { data[col] = val; }
+        } else {
+          data[col] = val;
+        }
+      }
+      const res = await smartCreateDbRow(selectedTable, data, true);
+      const diffInfo = res.difficulty_auto
+        ? ` [難易度: ${res.difficulty_auto.difficulty} / Lv${res.difficulty_auto.difficulty_level}]`
+        : '';
+      setStatus(`行を追加しました (ID: ${res.inserted_id || '—'})${diffInfo}`);
+      setInlineAddData({});
+      setShowInlineAdd(false);
+      loadTableData(selectedTable, page, search);
+    } catch (e) {
+      setStatus(`追加エラー: ${e.message}`);
+    }
+    setInlineAddSaving(false);
   };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -465,6 +530,16 @@ export default function DbEditorPage() {
             </button>
 
             <div className="flex gap-2 ml-auto">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => { setShowInlineAdd(!showInlineAdd); setInlineAddData({}); }}
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {showInlineAdd ? '追加を閉じる' : '行を追加'}
+              </Button>
               {hasDirty && (
                 <Button variant="success" onClick={saveAll}>
                   <Icons.Success className="w-4 h-4 mr-1" />
@@ -484,6 +559,23 @@ export default function DbEditorPage() {
               visibleCols={visibleCols}
               setVisibleCols={setVisibleCols}
               onClose={() => setShowColPicker(false)}
+            />
+          )}
+
+          {/* ── インライン行追加フォーム ── */}
+          {showInlineAdd && (
+            <InlineAddForm
+              schema={schema}
+              pk={pk}
+              table={selectedTable}
+              data={inlineAddData}
+              onChange={onInlineFieldChange}
+              onSubmit={submitInlineAdd}
+              onCancel={() => { setShowInlineAdd(false); setInlineAddData({}); }}
+              saving={inlineAddSaving}
+              onEstimateDifficulty={triggerDifficultyEstimate}
+              difficultyEstimating={difficultyEstimating}
+              difficultyResult={difficultyResult}
             />
           )}
 
@@ -641,6 +733,9 @@ export default function DbEditorPage() {
           onSubmit={submitSmartForm}
           saving={saving}
           table={selectedTable}
+          onEstimateDifficulty={triggerDifficultyEstimate}
+          difficultyEstimating={difficultyEstimating}
+          difficultyResult={difficultyResult}
         />
       )}
 
@@ -852,7 +947,7 @@ function RowDetailModal({ row, schema, pk, onClose }) {
 
 
 // ── スマート登録フォーム ──
-function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded, setExpanded, onSubmit, saving, table }) {
+function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded, setExpanded, onSubmit, saving, table, onEstimateDifficulty, difficultyEstimating, difficultyResult }) {
   const toggleSection = (section) => {
     setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
   };
@@ -864,6 +959,31 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
 
   const filledCount = Object.values(smartForm).filter((v) => v !== undefined && v !== null && v !== '').length;
   const totalFieldCount = [...(smartFields.required || []), ...(smartFields.recommended || []), ...(smartFields.optional || [])].length;
+
+  // 難易度推定トリガー: stem 入力後にBlurした時
+  const handleStemBlur = () => {
+    const stem = smartForm.stem || '';
+    const answer = smartForm.answer_brief || '';
+    if (stem.trim()) {
+      onEstimateDifficulty(stem, answer);
+    }
+  };
+
+  const handleAnswerBlur = () => {
+    const stem = smartForm.stem || '';
+    const answer = smartForm.answer_brief || '';
+    if (stem.trim()) {
+      onEstimateDifficulty(stem, answer);
+    }
+  };
+
+  // 推定結果を反映するボタン
+  const applyDifficultyResult = () => {
+    if (!difficultyResult) return;
+    onFieldChange('difficulty', difficultyResult.difficulty);
+    onFieldChange('difficulty_level', String(difficultyResult.difficulty_level));
+    onFieldChange('trickiness', difficultyResult.trickiness);
+  };
 
   return (
     <div className="space-y-4">
@@ -893,7 +1013,7 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
       {/* 必須フィールド */}
       <FieldSection
         title="必須フィールド"
-        subtitle="RAG検索に最低限必要な情報"
+        subtitle="教科・トピック・問題文・答えを優先入力"
         color="rose"
         open={expanded.required}
         onToggle={() => toggleSection('required')}
@@ -904,10 +1024,21 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
             <SmartField key={field.name} field={field}
               value={smartForm[field.name] ?? ''}
               onChange={(v) => onFieldChange(field.name, v)}
-              allValues={smartForm} />
+              allValues={smartForm}
+              onBlur={field.name === 'stem' ? handleStemBlur : field.name === 'answer_brief' ? handleAnswerBlur : undefined}
+            />
           ))}
         </div>
       </FieldSection>
+
+      {/* 難易度自動推定パネル */}
+      {(difficultyResult || difficultyEstimating) && (
+        <DifficultyEstimatePanel
+          result={difficultyResult}
+          estimating={difficultyEstimating}
+          onApply={applyDifficultyResult}
+        />
+      )}
 
       {/* 推奨フィールド */}
       <FieldSection
@@ -982,6 +1113,319 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
             </>
           )}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+
+// ── 難易度推定結果パネル ──
+function DifficultyEstimatePanel({ result, estimating, onApply }) {
+  if (estimating) {
+    return (
+      <div className="bg-indigo-50/60 border border-indigo-200/60 rounded-2xl p-4 flex items-center gap-3">
+        <svg className="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <span className="text-sm font-semibold text-indigo-600">難易度を推定中...</span>
+      </div>
+    );
+  }
+  if (!result) return null;
+
+  const levelColors = {
+    1: 'bg-emerald-100 text-emerald-700',
+    2: 'bg-blue-100 text-blue-700',
+    3: 'bg-amber-100 text-amber-700',
+    4: 'bg-orange-100 text-orange-700',
+    5: 'bg-rose-100 text-rose-700',
+  };
+  const levelLabels = { 1: '基礎', 2: '標準', 3: '応用', 4: '発展', 5: '難問' };
+
+  return (
+    <div className="bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200/60 rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span className="text-sm font-bold text-violet-700">難易度自動推定</span>
+        </div>
+        <button
+          onClick={onApply}
+          className="px-3 py-1.5 text-xs font-bold bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
+        >
+          推定値を適用
+        </button>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white/80 rounded-xl p-3 text-center">
+          <div className="text-[10px] font-bold text-slate-400 mb-1">難易度スコア</div>
+          <div className="text-xl font-black text-violet-600">{result.difficulty.toFixed(3)}</div>
+          <div className="h-1.5 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+            <div className="h-full bg-violet-500 rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
+          </div>
+        </div>
+        <div className="bg-white/80 rounded-xl p-3 text-center">
+          <div className="text-[10px] font-bold text-slate-400 mb-1">レベル</div>
+          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-black ${levelColors[result.difficulty_level] || 'bg-slate-100 text-slate-600'}`}>
+            Lv.{result.difficulty_level}
+          </div>
+          <div className="text-[10px] text-slate-400 mt-1">{levelLabels[result.difficulty_level] || ''}</div>
+        </div>
+        <div className="bg-white/80 rounded-xl p-3 text-center">
+          <div className="text-[10px] font-bold text-slate-400 mb-1">ひっかけ度</div>
+          <div className="text-xl font-black text-amber-600">{result.trickiness.toFixed(3)}</div>
+          <div className="h-1.5 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+            <div className="h-full bg-amber-500 rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
+          </div>
+        </div>
+      </div>
+      <p className="text-[10px] text-slate-400 mt-2 text-center">
+        登録時に自動で反映されます。「推定値を適用」で推奨フィールドにも即座に反映できます。
+      </p>
+    </div>
+  );
+}
+
+
+// ── インライン行追加フォーム (browseタブ用) ──
+const PRIORITY_FIELDS = ['subject', 'topic', 'stem', 'answer_brief'];
+
+function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, saving, onEstimateDifficulty, difficultyEstimating, difficultyResult }) {
+  const [showMore, setShowMore] = useState(false);
+
+  // 優先フィールド（教科, トピック, 問題文, 答え）
+  const priorityCols = PRIORITY_FIELDS
+    .map((name) => schema.find((c) => c.name === name))
+    .filter(Boolean);
+
+  // その他の編集可能カラム
+  const otherCols = schema.filter((c) =>
+    c.name !== pk &&
+    !PRIORITY_FIELDS.includes(c.name) &&
+    !HIDDEN_COLS.has(c.name.toLowerCase()) &&
+    !['created_at', 'updated_at'].includes(c.name)
+  );
+
+  const baseInputClass = `w-full px-3 py-2 text-sm border-2 border-slate-100 rounded-xl bg-white/50
+    text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-500 focus:bg-white outline-none`;
+
+  const handleStemBlur = () => {
+    if (data.stem?.trim()) {
+      onEstimateDifficulty(data.stem, data.answer_brief || '');
+    }
+  };
+  const handleAnswerBlur = () => {
+    if (data.stem?.trim()) {
+      onEstimateDifficulty(data.stem, data.answer_brief || '');
+    }
+  };
+
+  const subjectOptions = ['数学', '英語', '国語', '理科', '社会', '物理', '化学', '生物', '地学', '情報'];
+  const topicOptions = data.subject ? (SUBJECT_TOPICS[data.subject] || []) : [];
+
+  const hasPriority = data.subject && data.stem;
+
+  return (
+    <div className="bg-gradient-to-r from-emerald-50/80 to-teal-50/80 border-2 border-emerald-200/60 rounded-2xl p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span className="text-sm font-bold text-emerald-700">新しい行を追加</span>
+          <span className="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-lg font-bold">
+            {table}
+          </span>
+        </div>
+        <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors p-1">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {/* 優先入力フィールド: 教科・トピック・問題文・答え */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* 教科 */}
+        <div>
+          <label className="block text-[11px] font-black text-emerald-600 mb-1">
+            教科 <span className="text-rose-400">*</span>
+          </label>
+          <select
+            value={data.subject || ''}
+            onChange={(e) => onChange('subject', e.target.value)}
+            className={baseInputClass}
+          >
+            <option value="">— 選択 —</option>
+            {subjectOptions.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+
+        {/* トピック */}
+        <div>
+          <label className="block text-[11px] font-black text-emerald-600 mb-1">
+            トピック <span className="text-rose-400">*</span>
+          </label>
+          {topicOptions.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1">
+              {topicOptions.map((t) => (
+                <button key={t} type="button" onClick={() => onChange('topic', t)}
+                  className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
+                    data.topic === t
+                      ? 'bg-emerald-500 text-white border-emerald-500'
+                      : 'bg-white text-slate-500 border-slate-200 hover:border-emerald-300'
+                  }`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
+          <input
+            type="text"
+            value={data.topic || ''}
+            onChange={(e) => onChange('topic', e.target.value)}
+            placeholder={data.subject ? '候補から選択 or 自由入力' : '先に教科を選択してください'}
+            className={baseInputClass}
+          />
+        </div>
+
+        {/* 問題文 */}
+        <div className="md:col-span-2">
+          <label className="block text-[11px] font-black text-emerald-600 mb-1">
+            問題文 <span className="text-rose-400">*</span>
+            <span className="text-[10px] font-normal text-slate-300 ml-2">数式は $...$ で囲んで入力</span>
+          </label>
+          <textarea
+            value={data.stem || ''}
+            onChange={(e) => onChange('stem', e.target.value)}
+            onBlur={handleStemBlur}
+            rows={3}
+            placeholder="問題のテキストを入力..."
+            className={`${baseInputClass} resize-y`}
+          />
+        </div>
+
+        {/* 答え */}
+        <div className="md:col-span-2">
+          <label className="block text-[11px] font-black text-emerald-600 mb-1">
+            答え
+          </label>
+          <input
+            type="text"
+            value={data.answer_brief || ''}
+            onChange={(e) => onChange('answer_brief', e.target.value)}
+            onBlur={handleAnswerBlur}
+            placeholder="例: 42, (B), x=3"
+            className={baseInputClass}
+          />
+        </div>
+      </div>
+
+      {/* 難易度推定結果 (インライン) */}
+      {(difficultyResult || difficultyEstimating) && (
+        <DifficultyEstimatePanel
+          result={difficultyResult}
+          estimating={difficultyEstimating}
+          onApply={() => {
+            if (difficultyResult) {
+              onChange('difficulty', difficultyResult.difficulty);
+              onChange('difficulty_level', difficultyResult.difficulty_level);
+              onChange('trickiness', difficultyResult.trickiness);
+            }
+          }}
+        />
+      )}
+
+      {/* 追加フィールド展開 */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowMore(!showMore)}
+          className="text-xs text-slate-400 hover:text-slate-600 font-semibold flex items-center gap-1"
+        >
+          <svg className={`w-3.5 h-3.5 transition-transform ${showMore ? 'rotate-180' : ''}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+          {showMore ? 'その他のフィールドを閉じる' : `その他のフィールド (${otherCols.length}項目)`}
+        </button>
+        {showMore && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+            {otherCols.map((col) => (
+              <div key={col.name}>
+                <label className="block text-[10px] font-bold text-slate-400 mb-1">
+                  {colLabel(col.name)} <span className="text-[9px] text-slate-300">{col.name}</span>
+                </label>
+                {isJsonColumn(col.type) ? (
+                  <textarea
+                    value={data[col.name] || ''}
+                    onChange={(e) => onChange(col.name, e.target.value)}
+                    rows={2}
+                    className={`${baseInputClass} font-mono text-xs resize-y`}
+                    placeholder={col.type}
+                  />
+                ) : isBoolColumn(col.type) ? (
+                  <select
+                    value={data[col.name] ?? ''}
+                    onChange={(e) => onChange(col.name, e.target.value)}
+                    className={baseInputClass}
+                  >
+                    <option value="">—</option>
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                  </select>
+                ) : (
+                  <input
+                    type={isNumericColumn(col.type) ? 'number' : 'text'}
+                    value={data[col.name] ?? ''}
+                    onChange={(e) => onChange(col.name, e.target.value)}
+                    step={isNumericColumn(col.type) ? 'any' : undefined}
+                    className={baseInputClass}
+                    placeholder={colLabel(col.name)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 追加ボタン */}
+      <div className="flex gap-3 justify-end pt-1">
+        <button onClick={onCancel}
+          className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors font-semibold">
+          キャンセル
+        </button>
+        <button
+          onClick={onSubmit}
+          disabled={!hasPriority || saving}
+          className={`px-6 py-2.5 text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5
+            ${hasPriority && !saving
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200'
+              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+            }`}
+        >
+          {saving ? (
+            <>
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              追加中...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              行を追加 (難易度自動計算)
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
@@ -1068,7 +1512,7 @@ const MATH_SYMBOLS = [
 ];
 
 /** リッチテキストエリア — シンプル/数式モード切替付き */
-function RichTextArea({ value, onChange, rows, help, name }) {
+function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
   const textRef = useRef(null);
   const [showPalette, setShowPalette] = useState(false);
   const [mode, setMode] = useState('simple'); // 'simple' | 'math'
@@ -1173,6 +1617,7 @@ function RichTextArea({ value, onChange, rows, help, name }) {
         ref={textRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         rows={rows || 6}
         placeholder={mode === 'simple'
           ? 'テキストをそのまま入力 or 貼り付け（コピペOK）'
@@ -1194,7 +1639,7 @@ function RichTextArea({ value, onChange, rows, help, name }) {
 
 
 // ── 個別フィールド入力 ──
-function SmartField({ field, value, onChange, allValues }) {
+function SmartField({ field, value, onChange, allValues, onBlur }) {
   const { name, label, type, help, options, rows, min, max, step, depends_on } = field;
 
   const baseInputClass = `w-full px-3 py-2.5 text-sm border-2 border-slate-100 rounded-xl bg-white/50
@@ -1261,7 +1706,7 @@ function SmartField({ field, value, onChange, allValues }) {
           {label}
           <span className="text-[10px] font-normal text-slate-300 ml-2 normal-case tracking-normal">{name}</span>
         </label>
-        <RichTextArea value={value} onChange={onChange} rows={rows} help={help} name={name} />
+        <RichTextArea value={value} onChange={onChange} rows={rows} help={help} name={name} onBlur={onBlur} />
       </div>
     );
   }
@@ -1331,6 +1776,7 @@ function SmartField({ field, value, onChange, allValues }) {
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
           placeholder={help}
           className={baseInputClass}
         />

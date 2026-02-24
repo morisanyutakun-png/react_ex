@@ -16,6 +16,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# 難易度推定ヘルパー (遅延インポート)
+_difficulty_estimator = None
+
+def _get_difficulty_estimator():
+    global _difficulty_estimator
+    if _difficulty_estimator is None:
+        try:
+            from workers.ingest.estimate_difficulty import estimate_difficulty_verbose
+            _difficulty_estimator = estimate_difficulty_verbose
+        except ImportError:
+            logger.warning("estimate_difficulty not available")
+            _difficulty_estimator = False  # sentinel: 利用不可
+    return _difficulty_estimator if _difficulty_estimator else None
+
 router = APIRouter(prefix="/api/db", tags=["db-editor"])
 
 # 編集可能テーブルのホワイトリスト & 主キー情報
@@ -492,3 +506,151 @@ def get_smart_fields(table: str):
             except Exception:
                 pass
     return {"table": table, **fields}
+
+
+# ── 難易度推定エンドポイント ──────────────
+
+class EstimateDifficultyRequest(BaseModel):
+    stem: str
+    answer: Optional[str] = ""
+
+
+@router.post("/estimate-difficulty")
+def estimate_difficulty_endpoint(payload: EstimateDifficultyRequest):
+    """問題文（＋答え）から難易度・難易度レベル・ひっかけ度を自動推定する。
+
+    フロントエンドでの入力補助: stem と answer を入力したら即座に呼び出す。
+    """
+    estimator = _get_difficulty_estimator()
+    if estimator is None:
+        raise HTTPException(
+            status_code=501,
+            detail="難易度推定モジュールが読み込めません"
+        )
+
+    # stem + answer を結合して推定（回答パートがあると solution_len 等が効く）
+    full_text = (payload.stem or "").strip()
+    if payload.answer:
+        full_text += "\n\n解答: " + payload.answer.strip()
+
+    try:
+        diff, level, trick, details = estimator(full_text)
+        return {
+            "difficulty": round(diff, 4),
+            "difficulty_level": level,
+            "trickiness": round(trick, 4),
+            "details": {
+                "features": details.get("features", {}),
+                "contributions": details.get("contributions", {}),
+            },
+        }
+    except Exception as e:
+        logger.exception("difficulty estimation failed")
+        raise HTTPException(status_code=500, detail=f"推定エラー: {e}")
+
+
+# ── スマート行追加（難易度自動計算付き） ──────────────
+
+class SmartCreateRequest(BaseModel):
+    data: Dict[str, Any]
+    auto_difficulty: Optional[bool] = True
+
+
+@router.post("/{table}/smart-create")
+def smart_create_row(table: str, payload: SmartCreateRequest):
+    """行挿入 + 難易度自動計算。
+
+    auto_difficulty=True の場合、stem が含まれていれば難易度を自動計算して
+    difficulty / difficulty_level / trickiness を埋める。
+    """
+    _validate_table(table)
+    if not payload.data:
+        raise HTTPException(status_code=400, detail="no data to insert")
+
+    data = dict(payload.data)
+
+    # 自動難易度計算
+    difficulty_result = None
+    if payload.auto_difficulty and table == "problems":
+        stem = data.get("stem", "")
+        answer = data.get("answer_brief", "")
+        if stem and stem.strip():
+            estimator = _get_difficulty_estimator()
+            if estimator:
+                try:
+                    full_text = stem.strip()
+                    if answer:
+                        full_text += "\n\n解答: " + str(answer).strip()
+                    diff, level, trick, details = estimator(full_text)
+                    # ユーザが明示的に入力していなければ自動補完
+                    if "difficulty" not in data or data["difficulty"] in (None, "", 0):
+                        data["difficulty"] = round(diff, 4)
+                    if "difficulty_level" not in data or data["difficulty_level"] in (None, "", 0):
+                        data["difficulty_level"] = level
+                    if "trickiness" not in data or data["trickiness"] in (None, "", 0):
+                        data["trickiness"] = round(trick, 4)
+                    difficulty_result = {
+                        "difficulty": round(diff, 4),
+                        "difficulty_level": level,
+                        "trickiness": round(trick, 4),
+                    }
+                except Exception as e:
+                    logger.warning("auto difficulty failed: %s", e)
+
+    # auto_fill
+    SMART = SMART_FIELDS.get(table, {})
+    auto_fill = SMART.get("auto_fill", {})
+    for k, v in auto_fill.items():
+        if k not in data:
+            data[k] = v
+
+    conn = connect_db()
+    try:
+        valid_cols = _valid_column_names(conn, table)
+        pk = ALLOWED_TABLES[table]["pk"]
+        insert_data = {k: v for k, v in data.items() if k in valid_cols}
+        if not insert_data:
+            raise HTTPException(status_code=400, detail="no valid columns to insert")
+
+        columns = list(insert_data.keys())
+        params = []
+        for val in insert_data.values():
+            if isinstance(val, (dict, list)):
+                params.append(json.dumps(val, ensure_ascii=False))
+            else:
+                params.append(val)
+
+        placeholders = ", ".join(["%s"] * len(columns))
+        col_str = ", ".join(columns)
+        sql = f"INSERT INTO {table} ({col_str}) VALUES ({placeholders})"
+
+        cur = conn.cursor()
+        cur.execute(sql, params)
+        conn.commit()
+
+        new_id = None
+        try:
+            if hasattr(cur, '_cur') and hasattr(cur._cur, 'lastrowid'):
+                new_id = cur._cur.lastrowid
+        except Exception:
+            pass
+
+        cur.close()
+        result = {"status": "ok", "inserted_id": new_id}
+        if difficulty_result:
+            result["difficulty_auto"] = difficulty_result
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"insert failed: {e}")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
