@@ -387,14 +387,24 @@ def _collapse_internal_newlines(latex: str) -> str:
 def _unescape_latex(latex: str) -> str:
     """Heuristic unescape for LaTeX-like strings that were JSON-escaped
 
-    Converts common escape sequences (\n, \r\n, \t) back to real newlines/tabs
-    and collapses accidental doubled backslashes before letters (e.g. "\\\\bigskip"
-    -> "\\bigskip"). This fixes cases where the client sent a string with
+    Converts common escape sequences (\\n, \\r\\n, \\t) back to real newlines/tabs
+    and collapses accidental doubled backslashes before letters (e.g. "\\\\\\\\bigskip"
+    -> "\\\\bigskip"). This fixes cases where the client sent a string with
     literal escape sequences instead of raw newlines.
+
+    IMPORTANT: We only collapse doubled backslashes when there is strong
+    evidence the string was double-JSON-escaped (i.e. literal \\\\n or \\\\r\\\\n
+    sequences were detected). Without that evidence, collapsing \\\\ before
+    a letter would destroy intentional LaTeX line breaks (\\\\) that precede
+    a command, e.g. ``\\\\ \\\\textbf{...}`` → ``\\\\textbf{...}``.
     """
     if not latex or not isinstance(latex, str):
         return latex
     s = latex
+    # Track whether we find evidence of JSON double-escaping:
+    # literal '\\n' (two chars: backslash + n that is NOT a LaTeX command)
+    # or literal '\\r\\n' in the string.
+    found_escaped_newlines = ('\\r\\n' in s or '\\n' in s)
     # quick heuristics: if we see literal \n or \r\n sequences, convert them
     # NOTE: we deliberately DO NOT convert "\\t" -> real tab here because
     # sequences like "\textbf" can be misinterpreted as "\\t" + "extbf"
@@ -410,13 +420,20 @@ def _unescape_latex(latex: str) -> str:
     # \notag, \nonumber, etc.  Using a negative-lookahead (?![a-zA-Z])
     # ensures we only convert standalone \n (JSON-escaped newlines) and
     # leave LaTeX command prefixes intact.
-    if '\\r\\n' in s or '\\n' in s:
+    if found_escaped_newlines:
         s = re.sub(r'\\r\\n(?![a-zA-Z])', '\n', s)
         s = re.sub(r'\\n(?![a-zA-Z])', '\n', s)
-    # collapse doubled backslashes before letters into single backslash
+    # Collapse doubled backslashes before letters into single backslash
+    # ONLY when we detected double-escaping evidence.
     # e.g. "\\\\textbf" -> "\\textbf"  (this handles JSON-escaped
-    # backslashes that became doubled during transmission)
-    s = re.sub(r"\\\\([a-zA-Z@]+)", r"\\\1", s)
+    # backslashes that became doubled during transmission).
+    # Without evidence of double-escaping, \\textbf is a legitimate
+    # LaTeX line-break (\\) followed by \textbf command — do NOT collapse.
+    if found_escaped_newlines:
+        # First collapse quadruple+ backslashes (heavily escaped): \\\\ → \\
+        s = re.sub(r"\\\\\\\\([a-zA-Z@]+)", r"\\\\\1", s)
+        # Then collapse remaining doubled backslashes before commands
+        s = re.sub(r"\\\\([a-zA-Z@]+)", r"\\\1", s)
     # Replace any actual tab characters with a single space so TeX doesn't
     # receive raw tabs which are often rendered as ^^I in the log and can
     # break control sequences when adjacent to backslash sequences.
@@ -3387,6 +3404,35 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
             lines = lines[1:]
         latex_text = '\n'.join(lines).strip()
 
+    # Also strip markdown fences that appear mid-stream (e.g. ```latex ... ```)
+    latex_text = re.sub(r'^```(?:latex|tex)?\s*$', '', latex_text, flags=re.MULTILINE)
+    latex_text = re.sub(r'^```\s*$', '', latex_text, flags=re.MULTILINE)
+    latex_text = latex_text.strip()
+
+    # Pre-sanitize the LLM output before passing to generate_pdf:
+    # 1) Unescape JSON-escaped sequences (if the LLM produced literal \n etc.)
+    try:
+        latex_text = _unescape_latex(latex_text)
+    except Exception:
+        pass
+    # 2) Collapse internal newlines that split math tokens
+    try:
+        latex_text = _collapse_internal_newlines(latex_text)
+    except Exception:
+        pass
+    # 3) Strip LLM preamble/postamble text around the LaTeX document
+    #    (e.g. "Here is the LaTeX code:" before \documentclass)
+    dc_match = re.search(r'\\documentclass', latex_text)
+    if dc_match and dc_match.start() > 0:
+        before_dc = latex_text[:dc_match.start()]
+        # If text before \documentclass is not LaTeX (no backslash commands), strip it
+        if not re.search(r'\\[a-zA-Z]', before_dc):
+            latex_text = latex_text[dc_match.start():]
+    # Strip text after \end{document}
+    end_doc_match = re.search(r'\\end\{document\}', latex_text)
+    if end_doc_match:
+        latex_text = latex_text[:end_doc_match.end()]
+
     # Now compile LaTeX to PDF via the existing generate_pdf infrastructure
     # We reuse the same logic by calling the endpoint internally
     try:
@@ -3500,6 +3546,8 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             """Best-effort: wrap math-like fragments with $...$ if missing.
 
             Avoid touching lines that already contain math delimiters or LaTeX environments.
+            For lines with Japanese text, we use a smarter heuristic that detects
+            actual math expressions rather than naively wrapping every ASCII token.
             """
             if not isinstance(blob, str) or not blob.strip():
                 return blob
@@ -3516,10 +3564,35 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 mathy = re.search(r'(=|\\ge|\\le|\\frac|\\sqrt|\\sum|\\int|\\lim|\^|_)', line)
                 if not mathy:
                     return line
-                # If line has Japanese text, wrap only math-like tokens
+                # If line has Japanese text, wrap only genuine math-like expressions
+                # (not plain English words or short labels)
                 has_ja = re.search(r'[ぁ-んァ-ン一-龥]', line)
                 if has_ja:
-                    return re.sub(r'([A-Za-z0-9\\\(\)\[\]\+\-\*/=\^_\.,]+)', r'$\1$', line)
+                    # Strategy: find contiguous math-like fragments that contain
+                    # at least one operator/relation/command, and wrap those.
+                    # This avoids wrapping plain words like "Point", "ra", "the" etc.
+                    def _maybe_wrap_token(m):
+                        tok = m.group(0)
+                        # Only wrap if the token contains a math indicator:
+                        # operator (+,-,*,/,=,^,_), digit+operator combo,
+                        # or LaTeX command (\frac, \sqrt, etc.)
+                        has_math = re.search(
+                            r'[=\+\-\*/\^_<>]|'    # operators / relations
+                            r'\d.*[+\-*/=^]|'        # digit followed by operator
+                            r'[+\-*/=^].*\d|'        # operator followed by digit
+                            r'\\[a-zA-Z]|'           # LaTeX command
+                            r'\d+\.\d+|'             # decimal numbers
+                            r'[a-zA-Z]\d|'           # variable with subscript-like: x2
+                            r'\d[a-zA-Z]',           # 2x
+                            tok
+                        )
+                        if has_math:
+                            return f'${tok}$'
+                        return tok
+                    return re.sub(
+                        r'([A-Za-z0-9\\\(\)\[\]\+\-\*/=\^_\.,]+(?:\s*[A-Za-z0-9\\\(\)\[\]\+\-\*/=\^_\.,]+)*)',
+                        _maybe_wrap_token, line
+                    )
                 # Otherwise wrap the whole line (preserving \item prefix)
                 m = re.match(r'(\s*\\item\s*)(.*)$', line)
                 if m:
@@ -3828,6 +3901,49 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             """Fix all known LLM LaTeX mistakes so XeLaTeX/LuaLaTeX compiles cleanly."""
             if not isinstance(tex, str) or not tex.strip():
                 return tex
+
+            # 0a) ★ Remove duplicate \\documentclass ★
+            #     If the header is already prepended AND the LLM also output its own
+            #     \\documentclass, we end up with two preambles. Keep only the first.
+            dc_matches = list(re.finditer(r'\\documentclass', tex))
+            if len(dc_matches) > 1:
+                # Keep everything from the FIRST \documentclass.
+                # Find the second \documentclass and its \begin{document}
+                second_dc = dc_matches[1].start()
+                first_begin_doc = tex.find('\\begin{document}')
+                if first_begin_doc >= 0 and first_begin_doc < second_dc:
+                    # The first preamble is complete; the second is redundant.
+                    # Find second \begin{document} and keep only the body from it
+                    second_begin_doc = tex.find('\\begin{document}', second_dc)
+                    if second_begin_doc >= 0:
+                        # Remove everything between first \begin{document}\n...second \begin{document}
+                        # i.e. keep: first preamble + first \begin{document} + content after second \begin{document}
+                        after_first_begin = first_begin_doc + len('\\begin{document}')
+                        after_second_begin = second_begin_doc + len('\\begin{document}')
+                        tex = tex[:after_first_begin] + tex[after_second_begin:]
+
+            # 0b) ★ Convert $$ ... $$ display math to \\[ ... \\] ★
+            #     $$ is deprecated/problematic in LaTeX; convert to \\[...\\]
+            tex = re.sub(r'\$\$([\s\S]*?)\$\$', r'\\[\1\\]', tex)
+
+            # 0c) ★ Convert \\( ... \\) to $ ... $ ★
+            #     \\(...\\) is valid LaTeX but some engines/packages handle it
+            #     poorly; normalize to $...$
+            tex = re.sub(r'\\\((.*?)\\\)', r'$\1$', tex, flags=re.S)
+
+            # 0d) ★ Fix stray backslash-letter sequences that aren't real commands ★
+            #     LLMs sometimes produce \Ra, \Le etc. that aren't real commands.
+            #     Map common wrong ones to correct commands.
+            typo_cmds = {
+                r'\\Ra\b': r'\\Rightarrow',
+                r'\\La\b': r'\\Leftarrow',
+                r'\\ra\b': r'\\rightarrow',
+                r'\\la\b': r'\\leftarrow',
+                r'\\mark\b': r'\\checkmark',
+                r'\\del\b': r'\\partial',
+            }
+            for pat, repl in typo_cmds.items():
+                tex = re.sub(pat, repl, tex)
 
             # 1) Remove \usepackage{unicode-math} (conflicts with fontspec/xeCJK)
             tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{unicode-math\}\s*\n?', '', tex)
@@ -4242,6 +4358,185 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 return re.sub(pattern, _fix_tikz_env, tex_str, flags=re.S)
 
             tex = _fix_tikz_coordinate_closure(tex)
+
+            # 7h) ★ Indentation normalizer for LaTeX environments ★
+            #     Re-indent \begin{...} / \end{...} blocks with consistent
+            #     2-space indent per nesting level. This makes the source
+            #     cleaner and helps catch mismatched environments.
+            def _normalize_indentation(tex_str):
+                """Normalize indentation of LaTeX environments.
+
+                Lines between \\begin{...} and \\end{...} are indented by
+                2 spaces per nesting level. Content INSIDE the preamble
+                (before \\begin{document}) is left as-is. Only the document
+                body is re-indented.
+                """
+                # Find the body start
+                doc_start = tex_str.find('\\begin{document}')
+                if doc_start < 0:
+                    return tex_str  # No document body to indent
+
+                # Find end of \begin{document} line
+                after_doc_start = tex_str.find('\n', doc_start)
+                if after_doc_start < 0:
+                    return tex_str
+
+                preamble = tex_str[:after_doc_start + 1]
+                body = tex_str[after_doc_start + 1:]
+
+                lines = body.split('\n')
+                result = []
+                depth = 0
+                INDENT = '  '
+                # Environments that should not be re-indented internally
+                # (their content is whitespace-sensitive)
+                verbatim_envs = {'verbatim', 'lstlisting', 'minted', 'Verbatim'}
+                in_verbatim = False
+                verbatim_env_name = None
+
+                for line in lines:
+                    stripped = line.strip()
+
+                    # Handle verbatim environments — pass through as-is
+                    if in_verbatim:
+                        result.append(line)
+                        if re.match(rf'\\end\{{{re.escape(verbatim_env_name)}\}}', stripped):
+                            in_verbatim = False
+                            verbatim_env_name = None
+                        continue
+
+                    # Check for verbatim environment start
+                    vm = re.match(r'\\begin\{(\w+)\}', stripped)
+                    if vm and vm.group(1) in verbatim_envs:
+                        result.append(INDENT * depth + stripped)
+                        in_verbatim = True
+                        verbatim_env_name = vm.group(1)
+                        continue
+
+                    # Empty lines: pass through
+                    if not stripped:
+                        result.append('')
+                        continue
+
+                    # \end{...} decreases depth BEFORE this line
+                    if stripped.startswith('\\end{'):
+                        depth = max(0, depth - 1)
+                        result.append(INDENT * depth + stripped)
+                        continue
+
+                    # Normal line: add current indent
+                    result.append(INDENT * depth + stripped)
+
+                    # \begin{...} increases depth AFTER this line
+                    if stripped.startswith('\\begin{') and not stripped.startswith('\\begin{document}'):
+                        depth += 1
+
+                return preamble + '\n'.join(result)
+
+            tex = _normalize_indentation(tex)
+
+            # 7i) ★ Strip raw LLM artifacts ★
+            #     LLMs sometimes include non-LaTeX text like "Here is the LaTeX:",
+            #     "```latex", explanatory comments in natural language outside of
+            #     %-comments, or stray markdown. Remove them.
+            def _strip_llm_artifacts(tex_str):
+                """Remove common LLM artifacts that aren't valid LaTeX."""
+                # Remove any remaining markdown code fences
+                tex_str = re.sub(r'^```(?:latex|tex)?\s*$', '', tex_str, flags=re.MULTILINE)
+                tex_str = re.sub(r'^```\s*$', '', tex_str, flags=re.MULTILINE)
+
+                # Remove common LLM preamble/postamble text OUTSIDE document body
+                doc_start = tex_str.find('\\begin{document}')
+                if doc_start >= 0:
+                    before = tex_str[:doc_start]
+                    # Remove lines before \documentclass that look like natural language
+                    dc_pos = before.find('\\documentclass')
+                    if dc_pos > 0:
+                        pre_dc = before[:dc_pos]
+                        # Keep only lines that start with % (comments) or are empty
+                        cleaned_lines = []
+                        for ln in pre_dc.split('\n'):
+                            s = ln.strip()
+                            if not s or s.startswith('%') or s.startswith('\\'):
+                                cleaned_lines.append(ln)
+                            # else: discard natural language line
+                        tex_str = '\n'.join(cleaned_lines) + before[dc_pos:] + tex_str[doc_start:]
+
+                # Remove text after \end{document} (except %GEN_VALIDATION blocks)
+                end_doc = tex_str.rfind('\\end{document}')
+                if end_doc >= 0:
+                    after = tex_str[end_doc + len('\\end{document}'):]
+                    # Keep %GEN_VALIDATION blocks
+                    val_match = re.search(r'(%GEN_VALIDATION:.*?%GEN_VALIDATION: END)', after, re.S)
+                    kept = ''
+                    if val_match:
+                        kept = '\n' + val_match.group(1)
+                    tex_str = tex_str[:end_doc] + kept + '\n\\end{document}'
+
+                return tex_str
+
+            tex = _strip_llm_artifacts(tex)
+
+            # 7j) ★ Environment nesting validator ★
+            #     Verify all \begin{env} / \end{env} are properly nested.
+            #     Fix common issues: misordered ends, missing ends, duplicate ends.
+            def _validate_env_nesting(tex_str):
+                """Validate and repair environment nesting.
+
+                - Remove orphan \\end{env} that have no matching \\begin{env}
+                - Add missing \\end{env} for unclosed environments (before \\end{document})
+                """
+                # Build a list of (position, 'begin'|'end', env_name, full_match)
+                token_re = re.compile(r'\\(begin|end)\{([^}]+)\}')
+                tokens = [(m.start(), m.group(1), m.group(2), m.group(0)) for m in token_re.finditer(tex_str)]
+
+                stack = []
+                orphan_ends = []  # positions of \end{...} to remove
+
+                for pos, kind, env, full in tokens:
+                    if kind == 'begin':
+                        stack.append((pos, env))
+                    else:  # end
+                        if stack and stack[-1][1] == env:
+                            stack.pop()
+                        elif stack:
+                            # Check if there's a matching begin deeper in the stack
+                            # (indicates a missing \end for an inner environment)
+                            found = False
+                            for idx in range(len(stack) - 1, -1, -1):
+                                if stack[idx][1] == env:
+                                    # Pop everything above it (those are unclosed)
+                                    # and the matching begin
+                                    for _ in range(len(stack) - 1 - idx):
+                                        stack.pop()
+                                    stack.pop()
+                                    found = True
+                                    break
+                            if not found:
+                                orphan_ends.append((pos, full))
+                        else:
+                            orphan_ends.append((pos, full))
+
+                # Remove orphan \end{...} (process in reverse to preserve positions)
+                result = tex_str
+                for pos, full in reversed(orphan_ends):
+                    # Remove the orphan \end{env} and its trailing newline if any
+                    end_pos = pos + len(full)
+                    if end_pos < len(result) and result[end_pos] == '\n':
+                        end_pos += 1
+                    result = result[:pos] + result[end_pos:]
+
+                # Add missing \end{env} for unclosed environments
+                if stack:
+                    # Find position right before \end{document}
+                    end_doc = result.rfind('\\end{document}')
+                    insert_pos = end_doc if end_doc >= 0 else len(result)
+                    missing = '\n'.join(f'\\end{{{env}}}' for _, env in reversed(stack))
+                    result = result[:insert_pos] + '\n' + missing + '\n' + result[insert_pos:]
+
+                return result
+
+            tex = _validate_env_nesting(tex)
 
             # 8) Remove %GEN_VALIDATION block if it appears AFTER \end{document}
             #    (it should be before \end{document} but LLMs sometimes put it after)
