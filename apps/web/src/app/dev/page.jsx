@@ -8,12 +8,10 @@ import {
   saveProblem,
   saveTuningLog,
   generatePdf,
-  createTemplate,
 } from '@/lib/api';
 import {
-  DIFFICULTIES, DIFFICULTY_MAP, SUBJECT_TOPICS,
+  DIFFICULTY_MAP,
   OUTPUT_FORMAT_INSTRUCTION, buildReferencePromptSection,
-  buildTemplatePrompt, buildTemplateId,
 } from '@/lib/constants';
 import {
   StatusBar,
@@ -107,39 +105,6 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
 }
 
 /* ═══════════════════════════════════════════════════════
-   インライン追加モーダル（汎用）
-   ═══════════════════════════════════════════════════════ */
-
-function InlineAddModal({ title, isOpen, onClose, children }) {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm"
-      onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/60 w-full max-w-md overflow-hidden animate-in"
-        onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-            </div>
-            <h3 className="text-sm font-bold text-slate-700">{title}</h3>
-          </div>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex items-center justify-center">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="p-5">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ═══════════════════════════════════════════════════════
    選択中タグ表示
    ═══════════════════════════════════════════════════════ */
@@ -161,49 +126,6 @@ function SelectedTag({ label, value, color = 'indigo', onClear }) {
         <button onClick={onClear} className="ml-0.5 opacity-40 hover:opacity-100 transition-opacity">×</button>
       )}
     </span>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════
-   汎用項目追加フォーム（教科・分野追加モーダル内で使用）
-   ═══════════════════════════════════════════════════════ */
-
-function AddItemForm({ label, placeholder, onAdd, onCancel }) {
-  const [value, setValue] = useState('');
-  return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-[11px] font-black text-slate-400 mb-2 tracking-[0.08em] uppercase">{label}</label>
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={placeholder}
-          autoFocus
-          onKeyDown={(e) => { if (e.key === 'Enter' && value.trim()) onAdd(value.trim()); }}
-          className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-white/70 text-sm text-slate-700 outline-none
-            hover:border-indigo-200 focus:border-indigo-400 focus:bg-white transition-all shadow-sm font-medium"
-        />
-      </div>
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => { if (value.trim()) onAdd(value.trim()); }}
-          disabled={!value.trim()}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold
-                     bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-sm
-                     hover:from-indigo-600 hover:to-indigo-700 hover:shadow-md
-                     disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          追加する
-        </button>
-        <button onClick={onCancel}
-          className="px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
-          キャンセル
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -294,103 +216,11 @@ function QualityRating({ score, onChange }) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   テンプレート追加モーダル（改良版）
-   ═══════════════════════════════════════════════════════ */
-
-function AddTemplateModal({ isOpen, onClose, subjects, onCreated, setStatus }) {
-  const [newSubject, setNewSubject] = useState('');
-  const [customSubject, setCustomSubject] = useState('');
-  const [newField, setNewField] = useState('');
-  const [newDifficulty, setNewDifficulty] = useState('普通');
-  const [saving, setSaving] = useState(false);
-
-  const effectiveSubject = newSubject === '__custom' ? customSubject : newSubject;
-  const fieldOptions = (newSubject && newSubject !== '__custom' && SUBJECT_TOPICS[newSubject])
-    ? SUBJECT_TOPICS[newSubject]
-    : [];
-
-  const handleSave = async () => {
-    if (!effectiveSubject) { setStatus('教科を選択してください'); return; }
-    const f = newField;
-    const label = f ? `${effectiveSubject}（${f}）` : effectiveSubject;
-    const id = buildTemplateId(effectiveSubject, f);
-    setSaving(true);
-    setStatus(`テンプレート「${label}」を作成中...`);
-    try {
-      await createTemplate({
-        id,
-        name: `${label} テンプレート`,
-        description: `${label} の問題を生成するテンプレート`,
-        prompt: buildTemplatePrompt(effectiveSubject, f),
-        metadata: { subject: effectiveSubject, field: f || null, difficulty: newDifficulty, auto_generated: true },
-      });
-      setStatus(`テンプレート「${label}」を作成しました`);
-      onCreated?.(id, effectiveSubject, f);
-      onClose();
-      setNewSubject(''); setCustomSubject(''); setNewField(''); setNewDifficulty('普通');
-    } catch (e) { setStatus(`作成失敗: ${e.message}`); }
-    setSaving(false);
-  };
-
-  return (
-    <InlineAddModal title="テンプレートを新規追加" isOpen={isOpen} onClose={onClose}>
-      <div className="space-y-4">
-        <p className="text-xs text-slate-400 leading-relaxed">
-          教科と分野を選ぶだけで、テンプレートが自動生成されます。
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <Dropdown label="教科 *" value={newSubject} onChange={setNewSubject}
-            placeholder="選択..."
-            options={[
-              ...subjects.map((s) => ({ value: s, label: s })),
-              { value: '__custom', label: '✏️ その他（入力）' },
-            ]} />
-          <Dropdown label="難易度" value={newDifficulty} onChange={setNewDifficulty}
-            options={DIFFICULTIES.map((d) => ({ value: d, label: d }))} />
-        </div>
-
-        {newSubject === '__custom' && (
-          <div>
-            <label className="block text-[11px] font-black text-slate-400 mb-2 tracking-[0.08em] uppercase">教科名（入力）</label>
-            <input value={customSubject} onChange={(e) => setCustomSubject(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-white/70 text-sm text-slate-700 outline-none
-                hover:border-indigo-200 focus:border-indigo-400 focus:bg-white transition-all shadow-sm font-medium"
-              placeholder="例: 地学" autoFocus />
-          </div>
-        )}
-
-        {fieldOptions.length > 0 && (
-          <Dropdown label="分野（任意）" value={newField} onChange={setNewField}
-            placeholder="全般"
-            options={fieldOptions.map((f) => ({ value: f, label: f }))} />
-        )}
-
-        <div className="flex items-center gap-3 pt-2">
-          <button onClick={handleSave}
-            disabled={saving || !effectiveSubject}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold
-                       bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-sm
-                       hover:from-indigo-600 hover:to-indigo-700 hover:shadow-md
-                       disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]">
-            <Icons.Success className="w-4 h-4" />
-            {saving ? '作成中...' : 'テンプレートを作成'}
-          </button>
-          <button onClick={onClose}
-            className="px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
-            キャンセル
-          </button>
-        </div>
-      </div>
-    </InlineAddModal>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════
    メインページ
    ═══════════════════════════════════════════════════════ */
 
 export default function TuningPage() {
-  const { templates, subjects, refresh } = useTemplates();
+  const { templates, refresh } = useTemplates();
   const [status, setStatus] = useState('');
 
   // 条件設定
@@ -400,12 +230,7 @@ export default function TuningPage() {
   const [difficulty, setDifficulty] = useState('普通');
   const [numQuestions, setNumQuestions] = useState(1);
 
-  // モーダル開閉
-  const [showAddTemplate, setShowAddTemplate] = useState(false);
-  const [showAddSubject, setShowAddSubject] = useState(false);
-  const [showAddField, setShowAddField] = useState(false);
-  const [customSubjects, setCustomSubjects] = useState([]);
-  const [customFields, setCustomFields] = useState({});
+
 
   // プロンプト
   const [basePrompt, setBasePrompt] = useState('');
@@ -439,31 +264,18 @@ export default function TuningPage() {
   // UI状態
   const [activeSection, setActiveSection] = useState('configure');
 
-  /* ── テンプレート選択に連動するフィルタリング ── */
-  const filteredTemplates = subject
-    ? templates.filter((t) => !t.metadata?.subject || t.metadata.subject === subject)
-    : templates;
-
-  const templateOptions = filteredTemplates.map((t) => ({
+  /* ── テンプレート選択肢 ── */
+  const templateOptions = templates.map((t) => ({
     value: t.id,
     label: `${t.name || t.id}${t.metadata?.field ? ` (${t.metadata.field})` : ''}`,
   }));
-
-  const fieldOptions = (() => {
-    const base = (subject && SUBJECT_TOPICS[subject]) ? [...SUBJECT_TOPICS[subject]] : [];
-    const custom = (subject && customFields[subject]) ? customFields[subject] : [];
-    return [...new Set([...base, ...custom])];
-  })();
-
-  /* ── 全科目リスト（SUBJECTS + カスタム） ── */
-  const allSubjects = [...new Set([...subjects, ...customSubjects])];
 
   /* ── テンプレート選択ハンドラ ── */
   const onSelectTemplate = (id) => {
     setTemplateId(id);
     const tpl = templates.find((t) => t.id === id);
     if (tpl?.metadata) {
-      if (tpl.metadata.subject && !subject) setSubject(tpl.metadata.subject);
+      if (tpl.metadata.subject) setSubject(tpl.metadata.subject);
       if (tpl.metadata.field) setField(tpl.metadata.field);
       if (tpl.metadata.difficulty) setDifficulty(tpl.metadata.difficulty);
     }
@@ -471,22 +283,6 @@ export default function TuningPage() {
     setRagPrompt('');
     setRetrievedChunks([]);
     setRagSkipped(false);
-  };
-
-  /* ── 科目変更 → テンプレート・分野リセット ── */
-  const onSubjectChange = (v) => {
-    setSubject(v);
-    setTemplateId('');
-    setField('');
-  };
-
-  /* ── テンプレート追加コールバック ── */
-  const onTemplateCreated = async (id, sub, f) => {
-    await refresh();
-    setSubject(sub);
-    if (f) setField(f);
-    setTemplateId(id);
-    setShowAddTemplate(false);
   };
 
   // ── ベースプロンプト生成 ──
@@ -702,69 +498,29 @@ export default function TuningPage() {
       {activeSection === 'configure' && (
         <div className="space-y-6">
 
-          {/* ── 条件設定（全プルダウン＋追加ボタン） ── */}
+          {/* ── 条件設定（テンプレート＋問数のみ） ── */}
           <SectionCard title="条件を選ぶ" icon={<Icons.File />}
-            subtitle="すべてプルダウンから選択 — 項目が足りなければ ＋ ボタンで追加">
+            subtitle="テンプレートを選択してください — 教科・分野・難易度はテンプレートに含まれます">
 
             {/* 選択中サマリータグ */}
-            {(subject || templateId || field || difficulty) && (
+            {templateId && (
               <div className="flex flex-wrap gap-2 mb-5 pb-4 border-b border-slate-100">
-                <SelectedTag label="科目" value={subject} color="indigo" onClear={() => { setSubject(''); setTemplateId(''); setField(''); }} />
-                {templateId && (() => {
+                {(() => {
                   const sel = templates.find((t) => t.id === templateId);
                   return <SelectedTag label="テンプレート" value={sel?.name || templateId} color="violet" onClear={() => setTemplateId('')} />;
                 })()}
-                <SelectedTag label="分野" value={field} color="emerald" onClear={() => setField('')} />
-                <SelectedTag label="難易度" value={difficulty} color="amber" />
                 <SelectedTag label="問数" value={`${numQuestions}問`} color="sky" />
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
-              {/* 科目 */}
-              <Dropdown
-                label="教科"
-                value={subject}
-                onChange={onSubjectChange}
-                placeholder="— 選択してください —"
-                options={allSubjects.map((s) => ({ value: s, label: s }))}
-                onAdd={() => setShowAddSubject(true)}
-                addLabel="教科を追加"
-              />
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
               {/* テンプレート */}
               <Dropdown
                 label="テンプレート"
                 value={templateId}
                 onChange={onSelectTemplate}
-                placeholder={subject ? '— 選択してください —' : '先に教科を選択'}
+                placeholder="— 選択してください —"
                 options={templateOptions}
-                disabled={!subject}
-                className="sm:col-span-1 lg:col-span-2"
-                onAdd={() => setShowAddTemplate(true)}
-                addLabel="テンプレートを追加"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
-              {/* 分野 */}
-              <Dropdown
-                label="分野"
-                value={field}
-                onChange={setField}
-                placeholder="全ての分野"
-                options={fieldOptions.map((f) => ({ value: f, label: f }))}
-                disabled={!subject}
-                onAdd={() => setShowAddField(true)}
-                addLabel="分野を追加"
-              />
-
-              {/* 難易度 */}
-              <Dropdown
-                label="難易度"
-                value={difficulty}
-                onChange={setDifficulty}
-                options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
               />
 
               {/* 問数 */}
@@ -807,46 +563,6 @@ export default function TuningPage() {
               <span className="text-[10px] text-slate-300">{templates.length}件のテンプレート</span>
             </div>
           </SectionCard>
-
-          {/* ── 追加モーダル群 ── */}
-          <AddTemplateModal
-            isOpen={showAddTemplate}
-            onClose={() => setShowAddTemplate(false)}
-            subjects={allSubjects}
-            onCreated={onTemplateCreated}
-            setStatus={setStatus}
-          />
-
-          <InlineAddModal title="教科を追加" isOpen={showAddSubject} onClose={() => setShowAddSubject(false)}>
-            <AddItemForm
-              label="教科名"
-              placeholder="例: 地学、家庭科"
-              onAdd={(v) => {
-                setCustomSubjects((prev) => [...new Set([...prev, v])]);
-                setSubject(v);
-                setShowAddSubject(false);
-                setStatus(`教科「${v}」を追加しました`);
-              }}
-              onCancel={() => setShowAddSubject(false)}
-            />
-          </InlineAddModal>
-
-          <InlineAddModal title="分野を追加" isOpen={showAddField} onClose={() => setShowAddField(false)}>
-            <AddItemForm
-              label="分野名"
-              placeholder={subject ? `「${subject}」の分野を入力` : '分野名を入力'}
-              onAdd={(v) => {
-                setCustomFields((prev) => ({
-                  ...prev,
-                  [subject]: [...new Set([...(prev[subject] || []), v])],
-                }));
-                setField(v);
-                setShowAddField(false);
-                setStatus(`分野「${v}」を追加しました`);
-              }}
-              onCancel={() => setShowAddField(false)}
-            />
-          </InlineAddModal>
 
           {/* ── 参考問題（折りたたみ） ── */}
           <SectionCard>

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, DIAGRAM_PACKAGE_DEFS } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, DIAGRAM_PACKAGE_DEFS } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -14,7 +14,8 @@ import {
   ProgressSteps,
   Icons,
 } from '@/components/ui';
-import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES } from '@/lib/constants';
+import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
+import { LatexText } from '@/components/LatexRenderer';
 
 /* ── ウィザードステップ定義 ── */
 const STEPS = ['テンプレート選択', '設定', 'PDF形式', '生成', '結果'];
@@ -115,11 +116,50 @@ const PRESET_ILLUSTRATIONS = {
 };
 
 export default function UserModePage() {
-  const { templates, subjects } = useTemplates();
+  const { templates, subjects, refresh } = useTemplates();
 
   /* ── ウィザード状態 ── */
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState('');
+
+  /* ── テンプレート新規作成 ── */
+  const [showCreateTemplate, setShowCreateTemplate] = useState(false);
+  const [newTplSubject, setNewTplSubject] = useState('');
+  const [newTplCustomSubject, setNewTplCustomSubject] = useState('');
+  const [newTplField, setNewTplField] = useState('');
+  const [newTplDifficulty, setNewTplDifficulty] = useState('普通');
+  const [creatingTemplate, setCreatingTemplate] = useState(false);
+
+  const effectiveNewSubject = newTplSubject === '__custom' ? newTplCustomSubject : newTplSubject;
+  const newTplFieldOptions = (newTplSubject && newTplSubject !== '__custom' && SUBJECT_TOPICS[newTplSubject])
+    ? SUBJECT_TOPICS[newTplSubject] : [];
+
+  const handleCreateTemplate = async () => {
+    if (!effectiveNewSubject) { setStatus('教科を選択してください'); return; }
+    const f = newTplField;
+    const label = f ? `${effectiveNewSubject}（${f}）` : effectiveNewSubject;
+    const id = buildTemplateId(effectiveNewSubject, f);
+    setCreatingTemplate(true);
+    setStatus(`テンプレート「${label}」を作成中...`);
+    try {
+      await createTemplate({
+        id,
+        name: `${label} テンプレート`,
+        description: `${label} の問題を生成するテンプレート`,
+        prompt: buildTemplatePrompt(effectiveNewSubject, f),
+        metadata: { subject: effectiveNewSubject, field: f || null, difficulty: newTplDifficulty, auto_generated: true },
+      });
+      await refresh();
+      setTemplateId(id);
+      setSubject(effectiveNewSubject);
+      if (f) setField(f);
+      setDifficulty(newTplDifficulty);
+      setStatus(`テンプレート「${label}」を作成しました`);
+      setShowCreateTemplate(false);
+      setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty('普通');
+    } catch (e) { setStatus(`作成失敗: ${e.message}`); }
+    setCreatingTemplate(false);
+  };
 
   /* ── フォーム状態 ── */
   const [templateId, setTemplateId] = useState('');
@@ -143,8 +183,33 @@ export default function UserModePage() {
   const [llmOutput, setLlmOutput] = useState('');
   const [mode, setMode] = useState('auto'); // 'auto' | 'manual'
 
-  /* ── ベース問題（過去問）参照 ── */
-  const [sourceText, setSourceText] = useState('');
+  /* ── ベース問題DB検索 ── */
+  const [baseSearchQuery, setBaseSearchQuery] = useState('');
+  const [baseSearchResults, setBaseSearchResults] = useState([]);
+  const [baseSearching, setBaseSearching] = useState(false);
+  const [selectedBaseProblem, setSelectedBaseProblem] = useState(null);
+  const baseSearchInputRef = useRef(null);
+
+  /* ── ベース問題（過去問）参照: 選択された問題のテキストを sourceText として使う ── */
+  const sourceText = selectedBaseProblem?.stem || selectedBaseProblem?.text || '';
+
+  /* ── DB検索関数 ── */
+  const doBaseSearch = useCallback(async () => {
+    const q = baseSearchQuery.trim();
+    if (!q) return;
+    setBaseSearching(true);
+    try {
+      const params = { q, limit: 10 };
+      // テンプレートの科目でフィルタ
+      if (subject) params.subject = subject;
+      const data = await searchProblems(params);
+      const items = data.results || data.problems || data || [];
+      setBaseSearchResults(Array.isArray(items) ? items : []);
+    } catch {
+      setBaseSearchResults([]);
+    }
+    setBaseSearching(false);
+  }, [baseSearchQuery, subject]);
 
   /* ── 図表パッケージ ── */
   const [extraPackages, setExtraPackages] = useState([]);
@@ -385,6 +450,9 @@ export default function UserModePage() {
     setRenderContext(null);
     setLlmOutput('');
     setStatus('');
+    setSelectedBaseProblem(null);
+    setBaseSearchQuery('');
+    setBaseSearchResults([]);
   };
 
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
@@ -416,17 +484,18 @@ export default function UserModePage() {
       {step === 1 && (
         <SectionCard title="Step 1: テンプレートを選ぶ" icon={<Icons.File />}>
           <p className="text-xs text-slate-400 mb-4">
-            問題の元となるテンプレートを選んでください。科目や難易度は次のステップで調整できます。
+            問題の元となるテンプレートを選んでください。科目・分野・難易度はテンプレートに含まれています。
           </p>
 
           <div className="space-y-3">
-            {templates.length === 0 ? (
+            {/* テンプレート一覧 */}
+            {templates.length === 0 && !showCreateTemplate ? (
               <div className="text-center py-8 text-slate-300">
                 <Icons.Empty className="mx-auto mb-2" />
                 <p className="text-sm">テンプレートがありません</p>
-                <p className="text-xs mt-1">データ管理画面からテンプレートを追加してください</p>
+                <p className="text-xs mt-1">下の「+ 新規作成」ボタンからテンプレートを作成してください</p>
               </div>
-            ) : (
+            ) : !showCreateTemplate ? (
               <div className="grid gap-2">
                 {templates.map((t) => (
                   <button
@@ -453,6 +522,11 @@ export default function UserModePage() {
                             {t.metadata.subject}
                           </span>
                         )}
+                        {t.metadata?.field && (
+                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">
+                            {t.metadata.field}
+                          </span>
+                        )}
                         {t.metadata?.difficulty && (
                           <span className="px-2 py-0.5 bg-amber-100 text-amber-600 rounded-full text-[10px] font-bold">
                             {t.metadata.difficulty}
@@ -463,6 +537,124 @@ export default function UserModePage() {
                   </button>
                 ))}
               </div>
+            ) : null}
+
+            {/* ── テンプレート新規作成フォーム ── */}
+            {showCreateTemplate ? (
+              <div className="p-5 bg-gradient-to-br from-indigo-50/60 to-violet-50/40 rounded-xl border-2 border-indigo-200 space-y-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-700">テンプレートを新規作成</h3>
+                </div>
+                <p className="text-xs text-slate-400">
+                  教科と分野を選ぶだけで、テンプレートが自動生成されます。
+                </p>
+
+                {/* 教科 + 難易度 */}
+                <div className="grid grid-cols-2 gap-3">
+                  <SelectField
+                    label="教科 *"
+                    value={newTplSubject}
+                    onChange={(v) => { setNewTplSubject(v); setNewTplField(''); }}
+                    options={[
+                      ...(subjects.length ? subjects : SUBJECTS).map((s) => ({ value: s, label: s })),
+                      { value: '__custom', label: '✏️ その他（入力）' },
+                    ]}
+                  />
+                  <SelectField
+                    label="難易度"
+                    value={newTplDifficulty}
+                    onChange={setNewTplDifficulty}
+                    options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
+                  />
+                </div>
+
+                {/* カスタム教科入力 */}
+                {newTplSubject === '__custom' && (
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.1em] uppercase">教科名（入力）</label>
+                    <input
+                      value={newTplCustomSubject}
+                      onChange={(e) => setNewTplCustomSubject(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none
+                        hover:border-indigo-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all"
+                      placeholder="例: 地学"
+                      autoFocus
+                    />
+                  </div>
+                )}
+
+                {/* 分野 */}
+                {newTplFieldOptions.length > 0 && (
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.1em] uppercase">
+                      分野
+                      <span className="text-[10px] font-normal text-slate-300 ml-1 normal-case tracking-normal">（任意）</span>
+                    </label>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {newTplFieldOptions.slice(0, 15).map((f) => (
+                        <button key={f} type="button"
+                          onClick={() => setNewTplField(newTplField === f ? '' : f)}
+                          className={`px-2.5 py-1 text-[11px] rounded-lg border transition-all ${
+                            newTplField === f
+                              ? 'bg-indigo-500 text-white border-indigo-500'
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                          }`}>
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      value={newTplField}
+                      onChange={(e) => setNewTplField(e.target.value)}
+                      placeholder="候補から選択 or 自由入力"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none
+                        hover:border-indigo-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 transition-all placeholder:text-slate-300"
+                    />
+                  </div>
+                )}
+
+                {/* 作成ボタン */}
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    onClick={handleCreateTemplate}
+                    disabled={creatingTemplate || !effectiveNewSubject}
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold
+                               bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-sm
+                               hover:from-indigo-600 hover:to-indigo-700 hover:shadow-md
+                               disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    {creatingTemplate ? '作成中...' : 'テンプレートを作成'}
+                  </button>
+                  <button
+                    onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty('普通'); }}
+                    className="px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* ── 新規作成ボタン ── */
+              <button
+                onClick={() => setShowCreateTemplate(true)}
+                className="w-full p-4 rounded-xl border-2 border-dashed border-slate-200 text-slate-400
+                           hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50/30
+                           transition-all flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span className="text-sm font-bold">テンプレートを新規作成</span>
+              </button>
             )}
           </div>
         </SectionCard>
@@ -470,137 +662,200 @@ export default function UserModePage() {
 
       {/* ═══════ Step 2: 設定 ═══════ */}
       {step === 2 && (
-        <SectionCard title="Step 2: 設定を調整" icon={<Icons.Prompt />}>
+        <SectionCard title="Step 2: 生成設定" icon={<Icons.Prompt />}>
           <p className="text-xs text-slate-400 mb-5">
-            必要に応じて科目・難易度・問題数を変更してください。そのまま進んでもOKです。
+            問題数やRAG参照数を設定し、必要に応じてベースにする過去問をDBから選択してください。
           </p>
 
           <div className="space-y-4">
-            {/* 選択中テンプレート表示 */}
+            {/* 選択中テンプレート表示（科目・分野・難易度もここに表示） */}
             {selectedTemplate && (
-              <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100 flex items-center gap-3">
-                <Icons.File className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                <div>
-                  <div className="text-sm font-bold text-slate-700">{selectedTemplate.name}</div>
-                  <div className="text-[11px] text-slate-400">{selectedTemplate.description}</div>
+              <div className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                <div className="flex items-center gap-3">
+                  <Icons.File className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-slate-700">{selectedTemplate.name}</div>
+                    <div className="text-[11px] text-slate-400">{selectedTemplate.description}</div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2 ml-7">
+                  {subject && (
+                    <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 rounded-full text-[10px] font-bold">
+                      科目: {subject}
+                    </span>
+                  )}
+                  {field && (
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold">
+                      分野: {field}
+                    </span>
+                  )}
+                  {difficulty && (
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-600 rounded-full text-[10px] font-bold">
+                      難易度: {difficulty}
+                    </span>
+                  )}
                 </div>
               </div>
             )}
 
+            {/* 問題数 + RAG参照数 */}
             <div className="grid grid-cols-2 gap-3">
-              <SelectField
-                label="科目"
-                value={subject}
-                onChange={(v) => { setSubject(v); setField(''); }}
-                options={(subjects.length ? subjects : SUBJECTS).map((s) => ({ value: s, label: s }))}
-              />
-              <div>
-                <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.1em] uppercase">
-                  分野
-                  <span className="text-[10px] font-normal text-slate-300 ml-1 normal-case tracking-normal">（任意）</span>
-                </label>
-                {/* 候補チップ */}
-                {subject && SUBJECT_TOPICS[subject] && (
-                  <div className="flex flex-wrap gap-1 mb-1.5">
-                    {SUBJECT_TOPICS[subject].slice(0, 12).map((t) => (
-                      <button key={t} type="button"
-                        onClick={() => setField(field === t ? '' : t)}
-                        className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
-                          field === t
-                            ? 'bg-indigo-500 text-white border-indigo-500'
-                            : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
-                        }`}>
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <input
-                  type="text"
-                  value={field}
-                  onChange={(e) => setField(e.target.value)}
-                  placeholder={subject ? `候補から選択 or 自由入力` : '先に科目を選択'}
-                  className={`w-full px-3 py-2.5 rounded-xl border text-sm focus:outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-200 placeholder:text-slate-300 ${
-                    field && subject && SUBJECT_TOPICS[subject] && !SUBJECT_TOPICS[subject].includes(field)
-                      ? 'border-emerald-300 bg-emerald-50/30'
-                      : 'border-slate-200'
-                  }`}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <SelectField
-                label="難易度"
-                value={difficulty}
-                onChange={setDifficulty}
-                options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
-              />
               <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <NumberField label="参照する過去問数" value={topK} onChange={setTopK} min={1} max={20} />
+              <NumberField label="参照する過去問数（RAG）" value={topK} onChange={setTopK} min={1} max={20} />
             </div>
 
             {/* RAG の仕組み説明（折りたたみ） */}
             <details className="rounded-xl border border-slate-100 bg-slate-50/50">
               <summary className="px-3 py-2 cursor-pointer text-[11px] font-bold text-slate-400 hover:text-indigo-500 select-none">
-                💡 「過去問参照」の仕組みを見る
+                💡 「過去問参照（RAG）」の仕組みを見る
               </summary>
               <div className="px-3 pb-3 text-[11px] text-slate-500 leading-relaxed space-y-1.5">
                 <p>このシステムは、DBに登録された過去問を参考にして新しい問題を作ります。</p>
                 <div className="bg-white rounded-lg p-2 border border-slate-100 space-y-1">
-                  <div className="flex gap-2"><span className="text-indigo-400 font-bold">1.</span> <span>科目・分野・難易度を選ぶと、DBから関連する過去問を検索</span></div>
+                  <div className="flex gap-2"><span className="text-indigo-400 font-bold">1.</span> <span>テンプレートの科目・分野を基にDBから関連する過去問を検索</span></div>
                   <div className="flex gap-2"><span className="text-indigo-400 font-bold">2.</span> <span>最も似ている問題を自動でランク付け（難易度も考慮）</span></div>
                   <div className="flex gap-2"><span className="text-indigo-400 font-bold">3.</span> <span>上位の過去問をAIに参考資料として渡し、類題を生成</span></div>
                 </div>
                 <p className="text-slate-400">
-                  → <strong>科目</strong>と<strong>分野</strong>を正確に選ぶと、より想定通りの問題が生成されます。
-                  <br />「ベースにする問題」に過去問を貼り付けると更に精度UP！
+                  下の「ベース過去問」を選択すると、その問題に沿った類題をさらに正確に生成できます。
                 </p>
               </div>
             </details>
 
-            {/* ── ベース問題（過去問）入力 ── */}
+            {/* ── ベース過去問選択（DB検索） ── */}
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <label className="block text-[11px] font-black text-slate-400 tracking-[0.1em] uppercase">
-                  ベースにする問題
+                  ベース過去問を選択
                 </label>
                 <span className="text-[10px] text-slate-300">（任意）</span>
               </div>
               <p className="text-[11px] text-slate-400 mb-2">
-                過去問や参考にしたい問題を貼り付けると、その問題に沿った類題を生成します。
+                DBから過去問を検索して選択すると、その問題に沿った類題を生成します。
               </p>
-              {sourceText ? (
-                <div className="relative">
-                  <textarea
-                    value={sourceText}
-                    onChange={(e) => setSourceText(e.target.value)}
-                    rows={5}
-                    className="w-full px-3 py-2.5 text-xs border-2 border-amber-200 bg-amber-50/30 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-200 placeholder:text-slate-300 font-mono leading-relaxed"
-                  />
-                  <button
-                    onClick={() => setSourceText('')}
-                    className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] text-amber-500 hover:text-amber-700 bg-amber-100 rounded font-bold"
-                  >
-                    クリア
-                  </button>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    <span className="text-[10px] text-amber-600 font-bold">
-                      この問題に即した類題を生成します
-                    </span>
+
+              {/* 選択済み問題の表示 */}
+              {selectedBaseProblem ? (
+                <div className="mb-3 p-3 bg-amber-50/50 rounded-xl border-2 border-amber-200">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+                        <span className="text-[10px] text-amber-600 font-bold">選択中のベース問題</span>
+                        {selectedBaseProblem.id && (
+                          <span className="text-[10px] text-amber-400 font-mono">#{selectedBaseProblem.id}</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-700 leading-relaxed line-clamp-3">
+                        <LatexText>{(selectedBaseProblem.stem || selectedBaseProblem.text || '').slice(0, 200)}</LatexText>
+                      </div>
+                      <div className="flex gap-1 mt-1.5 flex-wrap">
+                        {selectedBaseProblem.subject && (
+                          <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[9px] font-bold">{selectedBaseProblem.subject}</span>
+                        )}
+                        {(selectedBaseProblem.topic || selectedBaseProblem.metadata?.field) && (
+                          <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-600 rounded text-[9px] font-bold">{selectedBaseProblem.topic || selectedBaseProblem.metadata?.field}</span>
+                        )}
+                        {selectedBaseProblem.difficulty != null && (
+                          <span className="px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-[9px] font-bold">{difficultyLabel(selectedBaseProblem.difficulty)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedBaseProblem(null)}
+                      className="px-2 py-1 text-[10px] text-amber-500 hover:text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg font-bold transition-colors flex-shrink-0"
+                    >
+                      解除
+                    </button>
                   </div>
                 </div>
-              ) : (
-                <textarea
-                  value={sourceText}
-                  onChange={(e) => setSourceText(e.target.value)}
-                  rows={3}
-                  placeholder={'例:\n次の定積分を求めよ。\n∫₀¹ (x² + 2x + 1) dx'}
-                  className="w-full px-3 py-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-200 placeholder:text-slate-300 font-mono leading-relaxed"
-                />
+              ) : null}
+
+              {/* DB検索フォーム */}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="relative flex-1">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    ref={baseSearchInputRef}
+                    type="text"
+                    value={baseSearchQuery}
+                    onChange={(e) => setBaseSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') doBaseSearch(); }}
+                    placeholder="キーワードで過去問を検索..."
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs
+                               text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-400
+                               focus:ring-1 focus:ring-indigo-200 outline-none placeholder:text-slate-300"
+                  />
+                </div>
+                <button
+                  onClick={doBaseSearch}
+                  disabled={baseSearching || !baseSearchQuery.trim()}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-600
+                             hover:bg-indigo-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                             flex items-center gap-1.5"
+                >
+                  {baseSearching ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      検索中
+                    </>
+                  ) : '検索'}
+                </button>
+              </div>
+
+              {/* 検索結果一覧 */}
+              {baseSearchResults.length > 0 && (
+                <div className="border border-slate-200 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+                  {baseSearchResults.map((item, idx) => {
+                    const isSelected = selectedBaseProblem?.id === item.id;
+                    return (
+                      <button
+                        key={item.id ?? idx}
+                        onClick={() => {
+                          setSelectedBaseProblem(item);
+                          setBaseSearchResults([]);
+                          setBaseSearchQuery('');
+                        }}
+                        className={`w-full text-left px-3 py-2.5 border-b border-slate-100 last:border-b-0
+                                    transition-all hover:bg-indigo-50/50 ${
+                                      isSelected ? 'bg-amber-50' : 'bg-white'
+                                    }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className="text-[10px] text-slate-300 font-mono mt-0.5 flex-shrink-0">#{item.id ?? idx + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[11px] text-slate-700 leading-relaxed line-clamp-2">
+                              <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
+                            </div>
+                            <div className="flex gap-1 mt-1 flex-wrap">
+                              {item.subject && (
+                                <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[9px] font-bold">{item.subject}</span>
+                              )}
+                              {(item.topic || item.metadata?.field) && (
+                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-500 rounded text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
+                              )}
+                              {item.difficulty != null && (
+                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-500 rounded text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 検索結果が0件の場合 */}
+              {baseSearchResults.length === 0 && baseSearchQuery && !baseSearching && baseSearchResults !== null && (
+                <div className="text-center py-3 text-[11px] text-slate-400">
+                  該当する問題が見つかりません
+                </div>
               )}
             </div>
 
@@ -1124,8 +1379,8 @@ export default function UserModePage() {
         <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100">
           <h3 className="text-xs font-bold text-slate-500 mb-2">使い方ガイド</h3>
           <ol className="text-xs text-slate-400 space-y-1.5 list-decimal list-inside">
-            <li>上のリストからテンプレートを選択します</li>
-            <li>「次へ」で科目・難易度・問題数と生成方法を設定します</li>
+            <li>上のリストからテンプレートを選択します（科目・分野・難易度はテンプレートに含まれています）</li>
+            <li>「次へ」で問題数・RAG参照数・ベース過去問と生成方法を設定します</li>
             <li>PDF の出力形式（試験問題・プリント・模試など）を選択します</li>
             <li>「AI 自動生成」なら、ボタン1つで PDF まで完成します</li>
             <li>「手動」なら、プロンプトをコピーして好きな LLM に送れます</li>

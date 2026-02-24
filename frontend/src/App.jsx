@@ -270,7 +270,7 @@ export default function App() {
 
                 <h3>4つのステップ</h3>
                 <ol>
-                  <li><strong>条件設定</strong> - 科目・分野・難易度・出力形式を選びます。</li>
+                  <li><strong>条件設定</strong> - テンプレート・問題数・出力形式を選びます。</li>
                   <li><strong>プロンプト生成</strong> - システムが類似問題を検索し、AIへの指示文を自動作成します。</li>
                   <li><strong>外部AIで生成</strong> - ChatGPTやClaudeにプロンプトを貼り付け、LaTeXコードを生成してもらいます。</li>
                   <li><strong>PDF化</strong> - 生成されたLaTeXコードを貼り付けると、きれいなPDFに変換されます。</li>
@@ -332,61 +332,23 @@ export default function App() {
 
                 <div className="tip">
                   <span className="tip-icon">💡</span>
-                  <div>初めての方：下の項目を選んで<strong>「プロンプトを生成」</strong>ボタンを押すだけ！<br />分野やファイルアップロードは任意です。</div>
+                  <div>初めての方：テンプレートを選び、問題数を決めて<strong>「プロンプトを生成」</strong>ボタンを押すだけ！</div>
                 </div>
 
-                {/* Row 1: テンプレート + 科目 */}
-                <div className="form-row form-row-2" style={{marginBottom:16}}>
+                {/* Row 1: テンプレート */}
+                <div className="form-row" style={{marginBottom:16}}>
                   <div className="field">
                     <label className="field-label">
                       テンプレート
-                      <span className="tooltip-icon" title="問題の出題形式やスタイルを決めるテンプレートです。過去の出題傾向が含まれています。">?</span>
+                      <span className="tooltip-icon" title="問題の出題形式やスタイルを決めるテンプレートです。科目・分野・難易度はテンプレートに含まれています。">?</span>
                     </label>
                     <select className="select" value={form.templateId} onChange={e => upd('templateId', e.target.value)}>
                       {templates.map(t => <option key={t.id} value={t.id}>{t.name || t.id}</option>)}
                     </select>
                   </div>
-                  <div className="field">
-                    <label className="field-label">
-                      科目
-                      <span className="tooltip-icon" title="問題を生成する科目を選択してください">?</span>
-                    </label>
-                    <select className="select" value={form.subject} onChange={e => { upd('subject', e.target.value); upd('fieldFilter', '') }}>
-                      {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
                 </div>
 
-                {/* Row 2: 分野 + 難易度 */}
-                <div className="form-row form-row-2" style={{marginBottom:16}}>
-                  <div className="field">
-                    <label className="field-label">
-                      分野（任意）
-                      <span className="tooltip-icon" title="特定の分野に絞ると、その分野の類似問題を重点的に検索します">?</span>
-                    </label>
-                    <select className="select" value={form.fieldFilter} onChange={e => upd('fieldFilter', e.target.value)}>
-                      <option value="">全ての分野</option>
-                      {filteredFields.map(f => (
-                        <option key={f.code || f.id} value={f.code || f.name}>
-                          {f.name}{f.problem_count > 0 ? ` (${f.problem_count}問)` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="field-hint">分野を選ぶとRAG検索の精度が上がります</div>
-                  </div>
-                  <div className="field">
-                    <label className="field-label">
-                      難易度
-                      <span className="tooltip-icon" title="易: 基礎〜標準 / 普通: 標準〜やや応用 / 難: 応用〜発展">?</span>
-                    </label>
-                    <select className="select" value={form.difficulty} onChange={e => upd('difficulty', e.target.value)}>
-                      {difficulties.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                    <div className="field-hint"><strong>易</strong>: 基本 | <strong>普通</strong>: 標準 | <strong>難</strong>: 応用</div>
-                  </div>
-                </div>
-
-                {/* Row 3: 問題数 + 出力形式 */}
+                {/* Row 2: 問題数 + 出力形式 */}
                 <div className="form-row form-row-2" style={{marginBottom:20}}>
                   <div className="field">
                     <label className="field-label">問題数</label>
