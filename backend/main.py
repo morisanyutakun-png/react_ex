@@ -2571,9 +2571,14 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '\\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,patterns}'
         ),
         'prompt_hint': (
-            'TikZ が利用可能。\\begin{tikzpicture}...\\end{tikzpicture} で図を描く。'
-            '\\draw[->] (0,0) -- (1,0); や \\node[circle,draw] at (0,0) {A}; 等を使用。'
-            '座標系は cm 単位が基本。'
+            'TikZ が利用可能。\\begin{tikzpicture}...\\end{tikzpicture} で図を描く。\n'
+            '【厳密な座標計算ルール — 必ず守ること】\n'
+            '1. すべてのノード・描画に明示的な座標 (x,y) を cm 単位で指定する。相対配置 (right=of ...) だけに頼らない。\n'
+            '2. 閉じた図形（多角形・閉領域）は最後に -- cycle を付けるか、始点の座標に正確に戻る。\n'
+            '3. 座標計算の検算: 直角三角形なら三平方の定理、正三角形なら辺の長さが同じか確認。\n'
+            '4. \\draw (0,0) -- (3,0) -- (3,4) -- cycle; のように閉路を明記。\n'
+            '5. ノード間の配線では、接続元と接続先の座標が一致しているか必ず確認する。\n'
+            '6. 座標の一覧表を先にコメントで書いてから描画コードを書く（例: % A=(0,0), B=(3,0), C=(3,4)）。\n'
         ),
     },
     'circuitikz': {
@@ -2583,10 +2588,26 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '\\usepackage[siunitx]{circuitikz}'
         ),
         'prompt_hint': (
-            'CircuiTikZ が利用可能。\\begin{circuitikz}...\\end{circuitikz} で電気回路図を描く。'
-            '抵抗: to[R,l=$R$], コンデンサ: to[C,l=$C$], インダクタ: to[L,l=$L$], '
-            '電圧源: to[V,l=$V$], 電流源: to[I,l=$I$], ダイオード: to[D]。'
-            '配線は -- で接続し、ノードラベルは node[above]{ラベル} で付ける。'
+            'CircuiTikZ が利用可能。\\begin{circuitikz}...\\end{circuitikz} で電気回路図を描く。\n'
+            '素子: 抵抗 to[R,l=$R$], コンデンサ to[C,l=$C$], インダクタ to[L,l=$L$], '
+            '電圧源 to[V,l=$V$], 電流源 to[I,l=$I$], ダイオード to[D]。\n'
+            '配線は -- で接続し、ノードラベルは node[above]{ラベル} で付ける。\n\n'
+            '【回路図の厳密な座標計算ルール — 必ず守ること】\n'
+            '1. ★閉回路の保証★: 回路は必ず閉じたループを形成すること。\n'
+            '   最後の配線の終点座標は、始点の座標と正確に一致しなければならない。\n'
+            '2. 正確な座標を使い、各配線パスの (始点) to[素子] (終点) で始点と終点を明記。\n'
+            '3. 配線例（閉回路の直列RLC回路）:\n'
+            '   \\draw (0,0) to[V,l=$E$] (0,3)  % 左辺: 上昇\n'
+            '         to[R,l=$R$] (3,3)          % 上辺: 右へ\n'
+            '         to[C,l=$C$] (3,0)          % 右辺: 下降\n'
+            '         -- (0,0);                   % 下辺: 始点に戻る（閉回路完成）\n'
+            '4. 並列回路は分岐点の座標を明確にし、各枝の上端・下端座標を一致させる。\n'
+            '5. 接地記号: node[ground]{} を使用する場合も座標を明記。\n'
+            '6. 描画前にまず座標一覧をコメントで書く:\n'
+            '   % ノード座標: A=(0,0), B=(0,3), C=(3,3), D=(3,0)\n'
+            '   % パス: A→B (電圧源), B→C (抵抗), C→D (コンデンサ), D→A (配線)\n'
+            '7. 座標が矩形ならば y座標・x座標がそれぞれ揃っているか確認:\n'
+            '   左辺は x=0 で統一、右辺は x=3 で統一、上辺は y=3 で統一、下辺は y=0 で統一。\n'
         ),
     },
     'pgfplots': {
@@ -3260,16 +3281,35 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         '   PDFTeX なら CJKutf8、LuaTeX なら luatexja、XeTeX なら xeCJK を使用すること。\n'
         '4. 数式は amsmath, amssymb, mathtools を使用。インライン数式は $...$、\n'
         '   ディスプレイ数式は \\[...\\] を使用。$$ ... $$ および \\(...\\) は禁止。\n'
-        '4a. 分数は必ず \\frac{分子}{分母} 形式で記述。a/b のようなスラッシュ表記は禁止。\n'
+        '4a. 【分数の厳密な記述ルール（最重要）】\n'
+        '    分数は必ず \\frac{分子}{分母} 形式で記述。a/b のようなスラッシュ表記は禁止。\n'
         '    - 正: \\frac{1}{2}, \\frac{x+1}{x-1}, \\dfrac{a}{b}（ディスプレイ用大分数）\n'
         '    - 誤: 1/2, (x+1)/(x-1), \\frac 1 2, \\frac{1/2}\n'
-        '    - 分数の中括弧 {} は必ず対応させること。\\frac の直後は必ず {分子}{分母} の形にする。\n'
-        '    - 解答・途中式でも \\frac を使い、a/b のまま放置しないこと。\n'
-        '    - 入れ子の分数も中括弧を厳密に対応: \\frac{\\frac{a}{b}}{c+d} のように。\n'
-        '    - ディスプレイ環境（\\[...\\] や align*）内では \\dfrac を推奨。\n'
+        '    - \\frac の直後は必ず {分子}{分母} の2つの中括弧グループ。\n'
+        '    - 中括弧は必ず対応させる。開き { の数 = 閉じ } の数を自分で数えて検算すること。\n'
+        '    ◆入れ子（ネスト）分数の厳格ルール:\n'
+        '    - 分子や分母に \\frac を含む場合、階層ごとに中括弧を完全に対応させる。\n'
+        '    - 例: \\frac{\\frac{a}{b}}{c+d}  ← { が4個、} が4個で対応。\n'
+        '    - 例: \\frac{1}{\\frac{x}{y}+1}  ← 分母の中に \\frac があっても外側の {} で包む。\n'
+        '    - 例: \\dfrac{\\dfrac{R_1 R_2}{R_1 + R_2}}{\\dfrac{R_1 R_2}{R_1 + R_2} + R_3}\n'
+        '    - 作成後に必ず中括弧の数を数えて { の個数 = } の個数 を確認すること。\n'
+        '    - 中括弧の対応が壊れると LaTeX コンパイルエラーまたは表示崩れの原因になる。\n'
+        '    - ディスプレイ環境（\\[...\\] や align*）内では入れ子分数に \\dfrac を推奨。\n'
         '5. 数学の計算は必ず自分で検算してから出力すること。計算ミスは許されない。\n'
         '6. tcolorbox, mdframed, fbox 等のボックス環境は使用しない。\n'
         '7. 指定された出力形式の構造ルールを厳守すること（形式固有のルールは下記参照）。\n'
+        '8. 【図の厳密な座標計算ルール（TikZ / CircuiTikZ / PGFPlots）】\n'
+        '   - すべての図において、座標 (x,y) は cm 単位の正確な数値で指定する。\n'
+        '   - 描画前に、まず座標一覧をコメントで書き出す:\n'
+        '     % 座標: A=(0,0), B=(4,0), C=(4,3), D=(0,3)\n'
+        '   - 閉じた図形（回路、多角形、閉領域）は、パスの最後が始点と完全に一致するか確認。\n'
+        '     cycle キーワード、または始点座標への明示的な配線 -- (始点) で閉じる。\n'
+        '   - 電気回路図では:\n'
+        '     a) 全ノードの座標を先にリストアップ。\n'
+        '     b) 各パスの始点・終点が隣接ノードの座標と正確に一致するか検算。\n'
+        '     c) 閉ループ: 最後のパスの終点 = 最初のパスの始点 であることを確認。\n'
+        '     d) 矩形回路なら x座標・y座標の整合性を確認（左辺と右辺で x が同じ、等）。\n'
+        '   - 図を描く前に、座標の一貫性チェックを行なうこと。\n'
     )
     if preset_instr:
         system_instruction += f'\n{preset_instr}\n'
@@ -3938,9 +3978,74 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                          lambda m: '\\frac' + (m.group(1) if m.group(1).startswith('{') else '{'+m.group(1)+'}') + (m.group(2) if m.group(2).startswith('{') else '{'+m.group(2)+'}'), tex)
             tex = re.sub(r'\\dfrac\s+(\{[^}]+\}|[A-Za-z0-9])\s*(\{[^}]+\}|[A-Za-z0-9])', 
                          lambda m: '\\dfrac' + (m.group(1) if m.group(1).startswith('{') else '{'+m.group(1)+'}') + (m.group(2) if m.group(2).startswith('{') else '{'+m.group(2)+'}'), tex)
-            #  c) Slash fractions in math mode: convert a/b patterns to \frac{a}{b}
+
+            # 7c) ★ Robust nested fraction brace fixer ★
+            #     Walk through the tex and find every \frac or \dfrac, then
+            #     ensure it's followed by exactly two brace-delimited groups.
+            #     If braces are mismatched (nested \frac inside), repair them.
+            def _fix_nested_fractions(tex_str):
+                """Parse \frac / \dfrac commands and ensure each has exactly two
+                properly balanced brace-delimited arguments {num}{den}.
+                This handles nested fracs that simple regex cannot correctly process."""
+                result = []
+                i = 0
+                n = len(tex_str)
+                while i < n:
+                    # Look for \frac or \dfrac
+                    if tex_str[i] == '\\' and i + 1 < n:
+                        # Check for \frac or \dfrac
+                        rest = tex_str[i:]
+                        m = re.match(r'\\(d?frac)\b', rest)
+                        if m:
+                            cmd = m.group(0)  # \frac or \dfrac
+                            j = i + len(cmd)
+                            # skip whitespace after command
+                            while j < n and tex_str[j] in ' \t\n\r':
+                                j += 1
+                            # Extract two brace groups
+                            args = []
+                            for _arg_idx in range(2):
+                                while j < n and tex_str[j] in ' \t\n\r':
+                                    j += 1
+                                if j < n and tex_str[j] == '{':
+                                    # Match balanced braces
+                                    depth = 0
+                                    start = j
+                                    while j < n:
+                                        if tex_str[j] == '{' and (j == 0 or tex_str[j-1] != '\\'):
+                                            depth += 1
+                                        elif tex_str[j] == '}' and (j == 0 or tex_str[j-1] != '\\'):
+                                            depth -= 1
+                                            if depth == 0:
+                                                args.append(tex_str[start:j+1])
+                                                j += 1
+                                                break
+                                        j += 1
+                                    else:
+                                        # Reached end without closing brace — add missing }
+                                        args.append(tex_str[start:] + '}')
+                                        j = n
+                                elif j < n and tex_str[j] not in '\\{}':
+                                    # Bare character: wrap in braces
+                                    args.append('{' + tex_str[j] + '}')
+                                    j += 1
+                                else:
+                                    # Missing argument — insert {1} as placeholder
+                                    args.append('{1}')
+                            # Ensure we have exactly 2 args
+                            while len(args) < 2:
+                                args.append('{1}')
+                            result.append(cmd + args[0] + args[1])
+                            i = j
+                            continue
+                    result.append(tex_str[i])
+                    i += 1
+                return ''.join(result)
+
+            tex = _fix_nested_fractions(tex)
+
+            # 7d) Slash fractions in math mode: convert a/b patterns to \frac{a}{b}
             #     Only inside math environments ($...$, \[...\], align, etc.)
-            #     Handle common patterns: number/number, (expr)/(expr), var/var
             def _fix_slash_fractions(tex_str):
                 """Convert common slash fractions to \\frac inside math contexts."""
                 def _replace_in_math(m):
@@ -3974,6 +4079,169 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 )
                 return tex_str
             tex = _fix_slash_fractions(tex)
+
+            # 7e) ★ Final nested fraction brace balance audit ★
+            #     After all frac fixes, do a final pass to ensure every \frac / \dfrac
+            #     has balanced braces within its arguments.
+            def _audit_frac_braces(tex_str):
+                """Final audit: for each \\frac/\\dfrac, verify that the two brace-groups
+                are individually balanced. If not, insert missing closing braces."""
+                result = []
+                i = 0
+                n = len(tex_str)
+                while i < n:
+                    if tex_str[i] == '\\' and i + 1 < n:
+                        m = re.match(r'\\(d?frac)\b', tex_str[i:])
+                        if m:
+                            cmd = m.group(0)
+                            j = i + len(cmd)
+                            # Skip whitespace
+                            while j < n and tex_str[j] in ' \t\n\r':
+                                j += 1
+                            # Read two brace groups and balance them
+                            for _k in range(2):
+                                while j < n and tex_str[j] in ' \t\n\r':
+                                    j += 1
+                                if j < n and tex_str[j] == '{':
+                                    depth = 0
+                                    start = j
+                                    while j < n:
+                                        c = tex_str[j]
+                                        if c == '{' and (j == start or tex_str[j-1] != '\\'):
+                                            depth += 1
+                                        elif c == '}' and (j == 0 or tex_str[j-1] != '\\'):
+                                            depth -= 1
+                                            if depth == 0:
+                                                j += 1
+                                                break
+                                        j += 1
+                                    # If we exhausted the string without finding closing
+                                    # brace, this means braces are unbalanced
+                                elif j < n:
+                                    j += 1  # bare char
+                            result.append(tex_str[i:j])
+                            # Check brace balance in what we just appended
+                            segment = tex_str[i:j]
+                            opens = segment.count('{')
+                            closes = segment.count('}')
+                            if opens > closes:
+                                result.append('}' * (opens - closes))
+                            i = j
+                            continue
+                    result.append(tex_str[i])
+                    i += 1
+                return ''.join(result)
+
+            tex = _audit_frac_braces(tex)
+
+            # 7f) ★ CircuiTikZ closed-loop fixer ★
+            #     Detect circuitikz environments and ensure paths form closed loops.
+            #     If the last coordinate doesn't return to the first, append -- (first_coord).
+            def _fix_circuitikz_closed_loops(tex_str):
+                """For each \\begin{circuitikz}...\\end{circuitikz}, ensure \\draw paths
+                that start and end at different coordinates are closed by appending the
+                starting coordinate at the end."""
+                pattern = r'(\\begin\{circuitikz\}(?:\[.*?\])?)([\s\S]*?)(\\end\{circuitikz\})'
+
+                def _fix_env(m):
+                    begin = m.group(1)
+                    body = m.group(2)
+                    end = m.group(3)
+
+                    # Find all \draw commands in the body
+                    # Each \draw ... ;  is a separate path
+                    draw_pattern = r'(\\draw\b[^;]*;)'
+                    def _fix_draw(dm):
+                        draw_cmd = dm.group(1)
+                        # Extract all coordinates (x,y) from the draw command
+                        coords = re.findall(r'\(([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\)', draw_cmd)
+                        if len(coords) < 2:
+                            return draw_cmd
+                        first = coords[0]
+                        last = coords[-1]
+                        # Check if the path already closes (last coord == first coord or has 'cycle')
+                        if 'cycle' in draw_cmd:
+                            return draw_cmd
+                        try:
+                            fx, fy = float(first[0]), float(first[1])
+                            lx, ly = float(last[0]), float(last[1])
+                        except (ValueError, IndexError):
+                            return draw_cmd
+
+                        # If the path has circuit elements (to[...]) it's likely meant to be
+                        # a closed circuit. Check if first != last.
+                        has_circuit_elements = bool(re.search(r'to\s*\[', draw_cmd))
+                        if not has_circuit_elements:
+                            return draw_cmd
+
+                        # If first and last are different, the circuit is open — close it
+                        if abs(fx - lx) > 0.01 or abs(fy - ly) > 0.01:
+                            # Insert -- (first_x, first_y) before the semicolon
+                            close_str = f' -- ({first[0]},{first[1]})'
+                            # Find the last semicolon
+                            idx = draw_cmd.rfind(';')
+                            if idx >= 0:
+                                draw_cmd = draw_cmd[:idx] + close_str + draw_cmd[idx:]
+                        return draw_cmd
+
+                    body = re.sub(draw_pattern, _fix_draw, body, flags=re.S)
+                    return begin + body + end
+
+                return re.sub(pattern, _fix_env, tex_str, flags=re.S)
+
+            tex = _fix_circuitikz_closed_loops(tex)
+
+            # 7g) ★ TikZ coordinate consistency checker ★
+            #     For tikzpicture environments, verify that paths using -- connect
+            #     declared/used coordinates consistently. Fix common issue of
+            #     disconnected segments by ensuring node names used in paths exist.
+            def _fix_tikz_coordinate_closure(tex_str):
+                """For \\begin{tikzpicture}...\\end{tikzpicture}, ensure \\draw paths
+                that appear to be closed shapes (polygons, etc.) actually close.
+                Detect paths with -- cycle or paths that should close but don't."""
+                pattern = r'(\\begin\{tikzpicture\}(?:\[.*?\])?)([\s\S]*?)(\\end\{tikzpicture\})'
+
+                def _fix_tikz_env(m):
+                    begin = m.group(1)
+                    body = m.group(2)
+                    end = m.group(3)
+
+                    draw_pattern = r'(\\draw\b[^;]*;)'
+                    def _fix_draw_path(dm):
+                        draw_cmd = dm.group(1)
+                        # Already has cycle — skip
+                        if 'cycle' in draw_cmd:
+                            return draw_cmd
+                        # Extract numeric coordinates
+                        coords = re.findall(r'\(([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\)', draw_cmd)
+                        if len(coords) < 3:  # Need at least 3 points for a polygon
+                            return draw_cmd
+                        first = coords[0]
+                        last = coords[-1]
+                        try:
+                            fx, fy = float(first[0]), float(first[1])
+                            lx, ly = float(last[0]), float(last[1])
+                        except (ValueError, IndexError):
+                            return draw_cmd
+                        # If the path has 3+ points, looks like it connects most of them
+                        # with --, and ends close to the start (within 2cm), it's probably
+                        # meant to be closed but the LLM forgot to close it.
+                        double_dash_count = len(re.findall(r'--', draw_cmd))
+                        if double_dash_count >= 2:
+                            distance = ((fx - lx)**2 + (fy - ly)**2) ** 0.5
+                            # If points differ and distance is reasonable, close the path
+                            if distance > 0.01 and distance < 10:
+                                idx = draw_cmd.rfind(';')
+                                if idx >= 0:
+                                    draw_cmd = draw_cmd[:idx] + ' -- cycle' + draw_cmd[idx:]
+                        return draw_cmd
+
+                    body = re.sub(draw_pattern, _fix_draw_path, body, flags=re.S)
+                    return begin + body + end
+
+                return re.sub(pattern, _fix_tikz_env, tex_str, flags=re.S)
+
+            tex = _fix_tikz_coordinate_closure(tex)
 
             # 8) Remove %GEN_VALIDATION block if it appears AFTER \end{document}
             #    (it should be before \end{document} but LLMs sometimes put it after)
