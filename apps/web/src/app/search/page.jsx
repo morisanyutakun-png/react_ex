@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { searchProblems, generateSimilarProblem } from '@/lib/api';
 import { StatusBar, Button, SelectField, SectionCard, EmptyState, Icons, PageHeader } from '@/components/ui';
 import { SUBJECTS, DIFFICULTIES, SUBJECT_TOPICS, difficultyLabel } from '@/lib/constants';
+import { LatexText, LatexBlock } from '@/components/LatexRenderer';
 
 /* ── 小さなUIパーツ ── */
 function Badge({ children, color = 'slate' }) {
@@ -32,9 +33,9 @@ function DetailBlock({ label, color = 'slate', children }) {
   return (
     <div>
       <div className="text-[10px] font-black text-slate-400 mb-1.5 uppercase tracking-[0.1em]">{label}</div>
-      <pre className={`text-xs whitespace-pre-wrap text-slate-600 ${bgMap[color] || bgMap.slate} rounded-xl p-3 font-mono leading-relaxed`}>
-        {children}
-      </pre>
+      <div className={`text-sm text-slate-600 ${bgMap[color] || bgMap.slate} rounded-xl p-3 leading-relaxed`}>
+        <LatexBlock>{children}</LatexBlock>
+      </div>
     </div>
   );
 }
@@ -250,8 +251,8 @@ export default function SearchPage() {
                     <span className="text-xs text-slate-300 font-mono mt-0.5 flex-shrink-0 w-8 text-right">#{item.id ?? idx + 1}</span>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-slate-700 leading-relaxed">
-                        {(item.stem || item.text || '').slice(0, 160)}
-                        {(item.stem || item.text || '').length > 160 ? '...' : ''}
+                        <LatexText>{(item.stem || item.text || '').slice(0, 200)}</LatexText>
+                        {(item.stem || item.text || '').length > 200 ? <span className="text-slate-400">...</span> : ''}
                       </div>
                       <div className="flex gap-1.5 mt-2.5 flex-wrap">
                         {subj && <Badge color="indigo">{subj}</Badge>}
@@ -328,9 +329,9 @@ export default function SearchPage() {
                         </div>
                         {similarResults[item.id].map((sim, sIdx) => (
                           <div key={sIdx} className="bg-violet-50/50 rounded-xl p-3 border border-violet-100">
-                            <pre className="text-xs whitespace-pre-wrap text-slate-700 font-mono leading-relaxed">
+                            <LatexBlock className="text-xs text-slate-700">
                               {sim.text || sim.stem || JSON.stringify(sim, null, 2)}
-                            </pre>
+                            </LatexBlock>
                           </div>
                         ))}
                       </div>

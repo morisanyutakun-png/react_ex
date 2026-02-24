@@ -14,9 +14,21 @@ _embedding_model_cache = None
 
 
 def _get_embedding_helpers():
-    """Lazily import embedding helpers; returns (load_model_fn, vector_to_sql_literal_fn) or (None, None)."""
+    """Lazily import embedding helpers; returns (load_model_fn, vector_to_sql_literal_fn) or (None, None).
+
+    Returns (None, None) when sentence-transformers is not installed (e.g. Koyeb free tier),
+    so callers fall back to TF-IDF or substring search.
+    """
     try:
         from backend.embeddings import load_model, vector_to_sql_literal
+        # Verify that SentenceTransformer is actually available (it may be None
+        # when sentence-transformers package is not installed)
+        try:
+            from sentence_transformers import SentenceTransformer
+            if SentenceTransformer is None:
+                return None, None
+        except Exception:
+            return None, None
         return load_model, vector_to_sql_literal
     except Exception:
         return None, None
@@ -257,7 +269,7 @@ def _do_search(
         if query_text:
             load_model, vector_to_sql_literal = _get_embedding_helpers()
             if load_model is None or vector_to_sql_literal is None:
-                # Fall back to TF-IDF if embeddings unavailable
+                # Fall back to TF-IDF if embeddings unavailable, then to ILIKE
                 try:
                     from backend.retriever import _tfidf_search
                     tfidf_results = _tfidf_search(conn, query_text, top_k=limit)
@@ -284,7 +296,44 @@ def _do_search(
                             })
                     return {'results': results, 'total': len(results)}
                 except Exception as exc:
-                    logger.warning('TF-IDF fallback search failed: %s', exc)
+                    logger.warning('TF-IDF fallback search failed, trying ILIKE: %s', exc)
+
+                # Ultimate fallback: Postgres ILIKE substring search
+                try:
+                    where_parts = ["p.stem ILIKE %s"]
+                    params_fb = [f"%{query_text}%"]
+                    if subject:
+                        where_parts.append("(p.subject = %s OR p.metadata_json::text ILIKE %s)")
+                        params_fb.extend([subject, f'%"subject"%{subject}%'])
+                    if filter_clause:
+                        where_parts.append(filter_clause)
+                        params_fb.extend(filter_params)
+                    where_sql = " AND ".join(where_parts)
+                    fb_sql = (
+                        "SELECT p.id, p.stem, p.difficulty, p.solution_outline, "
+                        "p.subject, p.topic, p.metadata_json, p.answer_brief, p.explanation, "
+                        "p.trickiness, p.source "
+                        f"FROM problems p WHERE {where_sql} "
+                        "ORDER BY p.created_at DESC LIMIT %s"
+                    )
+                    params_fb.append(limit)
+                    cur.execute(fb_sql, params_fb)
+                    rows = cur.fetchall()
+                    for r in rows:
+                        meta = _extract_metadata(r[6])
+                        results.append({
+                            'id': int(r[0]), 'text': r[1], 'stem': r[1],
+                            'difficulty': r[2], 'solution_outline': r[3],
+                            'subject': r[4] if r[4] and r[4] != 'general' else meta.get('subject', ''),
+                            'topic': r[5] or meta.get('field', ''),
+                            'answer_brief': r[7], 'explanation': r[8],
+                            'trickiness': r[9], 'source': r[10],
+                            'metadata': meta,
+                            'annotation_summary': None, 'score': None,
+                        })
+                    return {'results': results, 'total': len(results)}
+                except Exception as exc2:
+                    logger.exception('ILIKE fallback also failed: %s', exc2)
                     return {'results': [], 'total': 0}
 
             model, _ = load_model()
