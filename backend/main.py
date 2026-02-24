@@ -957,6 +957,26 @@ def assemble_prompt(payload: AssemblePromptRequest = Body(...)):
             for r in rows:
                 retrieved.append({'id': r[0], 'text_score': 0.0, 'difficulty': r[1], 'trickiness': r[2], 'final_score': 0.0, 'text': (r[3] or '')[:500]})
         else:
+            # ── subject / field フィルタを metadata から抽出 ──
+            _subject_filter = None
+            _field_filter = None  # field_id (int)
+            if payload.metadata:
+                _subject_filter = (payload.metadata.get('subject') or '').strip() or None
+                _field_name = (payload.metadata.get('field') or '').strip()
+                if _field_name and not getattr(conn, '_is_sqlite', False):
+                    try:
+                        _cur_f = conn.cursor()
+                        _cur_f.execute(
+                            "SELECT id FROM fields WHERE field_name = %s OR field_code = %s LIMIT 1",
+                            (_field_name, _field_name),
+                        )
+                        _fr = _cur_f.fetchone()
+                        _cur_f.close()
+                        if _fr:
+                            _field_filter = _fr[0]
+                    except Exception:
+                        pass
+
             retrieved = retrieve_with_profile(
                 conn,
                 q,
@@ -969,6 +989,8 @@ def assemble_prompt(payload: AssemblePromptRequest = Body(...)):
                 use_vector=bool(payload.use_vector),
                 model=model,
                 tfidf_force_refresh=False,
+                field_filter=_field_filter,
+                subject_filter=_subject_filter,
             )
     except Exception as e:
         # Provide a clearer message for common DB schema issues

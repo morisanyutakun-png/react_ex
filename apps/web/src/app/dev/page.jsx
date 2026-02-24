@@ -922,16 +922,31 @@ export default function TuningPage() {
           )}
 
           {retrievedChunks.length > 0 && (
-            <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100 max-h-48 overflow-y-auto custom-scrollbar">
-              <div className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">
+            <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-100 max-h-56 overflow-y-auto custom-scrollbar">
+              <div className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide flex items-center gap-2">
                 参照データ ({retrievedChunks.length}件)
+                {retrievedChunks[0]?.search_tier && (
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                    retrievedChunks[0].search_tier === 'subject+field' ? 'bg-emerald-100 text-emerald-700' :
+                    retrievedChunks[0].search_tier === 'subject-only' ? 'bg-amber-100 text-amber-700' :
+                    'bg-slate-200 text-slate-500'
+                  }`}>
+                    {retrievedChunks[0].search_tier === 'subject+field' ? '科目+分野' :
+                     retrievedChunks[0].search_tier === 'subject-only' ? '科目のみ' : 'グローバル'}
+                  </span>
+                )}
               </div>
               {retrievedChunks.map((c, i) => (
                 <div key={i} className="py-2 border-b border-slate-100 last:border-0 text-xs flex items-start gap-2">
                   <span className="text-slate-300 font-mono flex-shrink-0">#{i + 1}</span>
-                  <span className="text-slate-600 flex-1 leading-relaxed">
-                    {(c.text || '').slice(0, 150).replace(/\n/g, ' ')}{(c.text || '').length > 150 ? '...' : ''}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    {c.subject && (
+                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-indigo-50 text-indigo-500 mr-1">{c.subject}</span>
+                    )}
+                    <span className="text-slate-600 leading-relaxed">
+                      {(c.text || '').slice(0, 150).replace(/\n/g, ' ')}{(c.text || '').length > 150 ? '...' : ''}
+                    </span>
+                  </div>
                   <span className="text-slate-400 flex-shrink-0 tabular-nums">
                     {c.final_score !== undefined ? Number(c.final_score).toFixed(2) : c.score !== undefined ? Number(c.score).toFixed(2) : '—'}
                   </span>
