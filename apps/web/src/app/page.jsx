@@ -41,10 +41,10 @@ const MAIN_ACTIONS = [
   {
     href: '/dev',
     icon: <IconWand />,
-    label: '問題を調整する',
-    hint: 'プロンプトを細かくチューニング',
+    label: '品質を高める',
+    hint: 'RAGとプロンプトを調整して出力を改善',
     accent: 'violet',
-    tag: '上級者向け',
+    tag: 'チューニング',
   },
 ];
 

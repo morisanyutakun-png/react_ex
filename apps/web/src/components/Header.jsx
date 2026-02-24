@@ -7,7 +7,7 @@ import { Icons } from '@/components/ui';
 const NAV_ITEMS = [
   { href: '/', label: 'ホーム', icon: <Icons.Home className="w-4 h-4" /> },
   { href: '/user', label: 'つくる', icon: <Icons.User className="w-4 h-4" /> },
-  { href: '/dev', label: '調整する', icon: <Icons.Dev className="w-4 h-4" /> },
+  { href: '/dev', label: '高める', icon: <Icons.Dev className="w-4 h-4" /> },
   { href: '/search', label: '検索', icon: <Icons.Search className="w-4 h-4" /> },
   { href: '/db-editor', label: 'DB編集', icon: <Icons.Table className="w-4 h-4" /> },
 ];
