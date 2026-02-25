@@ -20,6 +20,80 @@ except Exception:
     pass  # may fail on read-only filesystems (e.g. some container setups)
 
 
+def _ensure_tuning_logs_schema():
+    """Ensure tuning_logs table has all required columns.
+
+    Adds missing columns that the original sqlite_init.sql didn't include,
+    so that INSERT/SELECT operations work correctly.
+    """
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        # Detect existing columns -- try SQLite PRAGMA first, then Postgres
+        existing_cols = set()
+        try:
+            cur.execute("PRAGMA table_info('tuning_logs')")
+            rows = cur.fetchall()
+            if rows:
+                existing_cols = {r[1] for r in rows}
+        except Exception:
+            pass
+        if not existing_cols:
+            try:
+                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='tuning_logs'")
+                rows = cur.fetchall()
+                existing_cols = {r[0] for r in rows}
+            except Exception:
+                pass
+
+        if not existing_cols:
+            # Table doesn't exist at all -- create it with full schema
+            cur.execute("""CREATE TABLE IF NOT EXISTS tuning_logs (
+                id TEXT PRIMARY KEY,
+                timestamp TEXT,
+                prompt TEXT,
+                model_name TEXT,
+                model_output TEXT,
+                parsed_output TEXT,
+                valid_json INTEGER DEFAULT 0,
+                parse_error TEXT,
+                expected_output TEXT,
+                score REAL,
+                notes TEXT,
+                metadata TEXT DEFAULT '{}',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )""")
+        else:
+            # Add missing columns one by one (ALTER TABLE ADD COLUMN)
+            additions = [
+                ('timestamp', 'TEXT'),
+                ('parsed_output', 'TEXT'),
+                ('valid_json', 'INTEGER DEFAULT 0'),
+                ('parse_error', 'TEXT'),
+            ]
+            for col_name, col_type in additions:
+                if col_name not in existing_cols:
+                    try:
+                        cur.execute(f"ALTER TABLE tuning_logs ADD COLUMN {col_name} {col_type}")
+                    except Exception:
+                        pass  # column may already exist in some environments
+        conn.commit()
+        try:
+            cur.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+    except Exception:
+        pass  # best-effort; if migration fails, JSONL fallback still works
+
+
+# Run schema migration on module load
+_ensure_tuning_logs_schema()
+
+
 class TuningLogIn(BaseModel):
     prompt: str
     model_name: Optional[str] = None
@@ -225,21 +299,22 @@ def log_tuning_entry(payload: TuningLogIn = Body(...)):
         try:
             conn = connect_db()
             cur = conn.cursor()
+            # Omit 'id' from INSERT to let SQLite AUTOINCREMENT handle it.
+            # For Postgres, the id column may be TEXT or SERIAL; omitting is safe.
             cur.execute(
-                "INSERT INTO tuning_logs (id, timestamp, prompt, model_name, model_output, parsed_output, valid_json, parse_error, expected_output, score, notes, metadata) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                "INSERT INTO tuning_logs (timestamp, prompt, model_name, model_output, parsed_output, valid_json, parse_error, expected_output, score, notes, metadata) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (
-                    entry['id'],
                     entry['timestamp'],
                     entry['prompt'],
                     entry['model_name'],
                     entry['model_output'],
-                    json.dumps(entry.get('parsed_output')) if entry.get('parsed_output') is not None else None,
+                    json.dumps(entry.get('parsed_output'), ensure_ascii=False) if entry.get('parsed_output') is not None else None,
                     1 if entry.get('valid_json') else 0,
                     entry.get('parse_error'),
                     entry.get('expected_output'),
                     entry.get('score'),
                     entry.get('notes'),
-                    json.dumps(entry.get('metadata') or {}),
+                    json.dumps(entry.get('metadata') or {}, ensure_ascii=False),
                 )
             )
             conn.commit()
@@ -249,8 +324,34 @@ def log_tuning_entry(payload: TuningLogIn = Body(...)):
                 pass
             entry['db_saved'] = True
         except Exception as e:
-            entry['db_saved'] = False
-            entry['db_error'] = str(e)
+            # Fallback: try simplified INSERT without columns that may not exist
+            try:
+                if conn:
+                    cur2 = conn.cursor()
+                    cur2.execute(
+                        "INSERT INTO tuning_logs (prompt, model_name, model_output, expected_output, score, notes, metadata) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                        (
+                            entry['prompt'],
+                            entry['model_name'],
+                            entry['model_output'],
+                            entry.get('expected_output'),
+                            entry.get('score'),
+                            entry.get('notes'),
+                            json.dumps(entry.get('metadata') or {}, ensure_ascii=False),
+                        )
+                    )
+                    conn.commit()
+                    try:
+                        cur2.close()
+                    except Exception:
+                        pass
+                    entry['db_saved'] = True
+                else:
+                    entry['db_saved'] = False
+                    entry['db_error'] = str(e)
+            except Exception as e2:
+                entry['db_saved'] = False
+                entry['db_error'] = f'{e} / fallback: {e2}'
         finally:
             try:
                 if conn:
@@ -290,12 +391,13 @@ def get_tuning_feedback(
         # metadata is stored as JSON text; use LIKE for simple filtering
         if subject:
             conditions.append("metadata LIKE %s")
-            params.append(f'%"subject":%"{subject}"%')
+            params.append(f'%{subject}%')
         if template_id:
             conditions.append("metadata LIKE %s")
-            params.append(f'%"template_id":%"{template_id}"%')
+            params.append(f'%{template_id}%')
         where = " AND ".join(conditions)
-        q = f"SELECT id, timestamp, score, notes, model_output, metadata FROM tuning_logs WHERE {where} ORDER BY score DESC, timestamp DESC LIMIT %s"
+        # Use COALESCE to handle both 'timestamp' and 'created_at' column names
+        q = f"SELECT id, COALESCE(timestamp, created_at) as ts, score, notes, model_output, metadata FROM tuning_logs WHERE {where} ORDER BY score DESC, ts DESC LIMIT %s"
         params.append(limit)
         cur.execute(q, tuple(params))
         rows = cur.fetchall()
@@ -362,6 +464,7 @@ def get_tuning_feedback(
 
     # ── Build summary stats ──
     stats = {'total_evaluations': 0, 'avg_score': None, 'high_score_count': len(results)}
+    stats_ok = False
     try:
         conn = connect_db()
         cur = conn.cursor()
@@ -369,17 +472,42 @@ def get_tuning_feedback(
         ps: list = []
         if subject:
             conds.append("metadata LIKE %s")
-            ps.append(f'%"subject":%"{subject}"%')
+            ps.append(f'%{subject}%')
         w = " AND ".join(conds)
         cur.execute(f"SELECT COUNT(*), AVG(score) FROM tuning_logs WHERE {w}", tuple(ps))
         row = cur.fetchone()
         if row:
             stats['total_evaluations'] = row[0] or 0
             stats['avg_score'] = round(float(row[1]), 2) if row[1] is not None else None
+            stats_ok = True
         cur.close()
         conn.close()
     except Exception:
         pass
+
+    # ── JSONL fallback for stats if DB failed ──
+    if not stats_ok and os.path.exists(LOG_PATH):
+        try:
+            all_scores = []
+            with open(LOG_PATH, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        entry = json.loads(line)
+                    except Exception:
+                        continue
+                    s = entry.get('score')
+                    if s is None:
+                        continue
+                    md = entry.get('metadata') or {}
+                    if subject and md.get('subject') != subject:
+                        continue
+                    all_scores.append(s)
+            stats['total_evaluations'] = len(all_scores)
+            if all_scores:
+                stats['avg_score'] = round(sum(all_scores) / len(all_scores), 2)
+                stats['high_score_count'] = sum(1 for s in all_scores if s >= min_score)
+        except Exception:
+            pass
 
     return {'feedback': results, 'stats': stats}
 
@@ -656,7 +784,7 @@ def list_tuning_db_logs(limit: int = 100, offset: int = 0):
         conn = connect_db()
         cur = conn.cursor()
         cur.execute(
-            "SELECT id, timestamp, prompt, model_name, model_output, parsed_output, valid_json, parse_error, expected_output, score, notes, metadata FROM tuning_logs ORDER BY timestamp DESC LIMIT %s OFFSET %s",
+            "SELECT id, COALESCE(timestamp, created_at) as ts, prompt, model_name, model_output, parsed_output, valid_json, parse_error, expected_output, score, notes, metadata FROM tuning_logs ORDER BY ts DESC LIMIT %s OFFSET %s",
             (limit, offset),
         )
         rows = cur.fetchall()
