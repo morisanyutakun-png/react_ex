@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 
 export const metadata = {
-  title: 'DB編集 — ExamGen RAG',
+  title: 'DB編集 — REM',
 };
 
 export default function DbEditorLayout({ children }) {

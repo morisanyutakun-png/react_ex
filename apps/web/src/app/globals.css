@@ -53,15 +53,15 @@ body {
 }
 
 /* ============================
-   Glass Card Effect (Dark Theme)
+   Glass Card Effect (Apple Frosted)
    ============================ */
 
 .glass-card {
-  background: rgba(26, 26, 26, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
 }
 
 /* ============================
@@ -107,12 +107,11 @@ body {
   @apply transition-all duration-200;
 }
 .input-ring:focus {
-  @apply ring-2 ring-red-600/40 border-red-600 outline-none;
-  box-shadow: 0 0 12px rgba(220, 38, 38, 0.3);
+  @apply ring-4 ring-red-600/10 border-red-500 outline-none;
 }
 
 /* ============================
-   Scrollbar (Dark Theme)
+   Scrollbar (Apple Light)
    ============================ */
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -143,7 +142,7 @@ body {
 }
 
 /* ============================
-   Skeleton Loader (Dark)
+   Skeleton Loader (Light)
    ============================ */
 
 @keyframes shimmer {
@@ -152,7 +151,7 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #171717 25%, #262626 50%, #171717 75%);
+  background: linear-gradient(90deg, #f0f0f0 25%, #e5e5ea 50%, #f0f0f0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   @apply rounded;
@@ -198,7 +197,7 @@ body {
   width: 3px;
   height: 100%;
   background: linear-gradient(180deg, #dc2626, #ef4444);
-  box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+  border-radius: 3px;
 }
 
 /* ============================

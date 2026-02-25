@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 
 export const metadata = {
-  title: '開発モード — ExamGen RAG',
+  title: '高める — REM',
 };
 
 export default function DevLayout({ children }) {

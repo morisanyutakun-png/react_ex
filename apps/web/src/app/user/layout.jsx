@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 
 export const metadata = {
-  title: 'ユーザモード — ExamGen RAG',
+  title: 'つくる — REM',
 };
 
 export default function UserLayout({ children }) {

@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 
 export const metadata = {
-  title: '問題検索 — ExamGen REM',
+  title: '検索 — REM',
 };
 
 export default function SearchLayout({ children }) {

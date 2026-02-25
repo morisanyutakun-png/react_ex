@@ -1,7 +1,7 @@
 import Header from '@/components/Header';
 
 export const metadata = {
-  title: 'データ管理 — ExamGen RAG',
+  title: 'データ — REM',
 };
 
 export default function DataLayout({ children }) {
