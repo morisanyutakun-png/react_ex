@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-neutral-950 text-neutral-50 selection:bg-red-600/30 selection:text-red-100">
+      <body className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] selection:bg-red-100 selection:text-red-900">
         {children}
       </body>
     </html>

@@ -19,29 +19,27 @@ module.exports = {
           900: '#7f1d1d',
           950: '#450a0a',
         },
+        apple: {
+          bg: '#f5f5f7',
+          card: '#ffffff',
+          label: '#6e6e73',
+          title: '#1d1d1f',
+          divider: '#d2d2d7',
+        },
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'SF Pro Display', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'sans-serif'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'SF Pro Text', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Helvetica Neue', 'sans-serif'],
         mono: ['SF Mono', 'Monaco', 'Menlo', 'Consolas', 'monospace'],
       },
       boxShadow: {
-        'card': '0 4px 12px rgba(0, 0, 0, 0.6)',
-        'card-hover': '0 0 8px rgba(220, 38, 38, 0.15), 0 4px 16px rgba(0, 0, 0, 0.7)',
-        'glow-sm': '0 0 8px rgba(220, 38, 38, 0.4)',
-        'glow-md': '0 0 16px rgba(220, 38, 38, 0.5)',
-        'glow-lg': '0 0 24px rgba(220, 38, 38, 0.6)',
+        'card': '0 2px 8px rgba(0,0,0,0.04), 0 0 1px rgba(0,0,0,0.06)',
+        'card-hover': '0 8px 28px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+        'soft': '0 1px 3px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)',
+        'elevated': '0 12px 40px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04)',
       },
       borderRadius: {
-        'DEFAULT': '0.375rem',
-      },
-      animation: {
-        'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
-      },
-      keyframes: {
-        'glow-pulse': {
-          '0%, 100%': { boxShadow: '0 0 8px rgba(220, 38, 38, 0.4)' },
-          '50%': { boxShadow: '0 0 16px rgba(220, 38, 38, 0.6)' },
-        },
+        'DEFAULT': '0.625rem',
+        'apple': '0.75rem',
       },
     },
   },

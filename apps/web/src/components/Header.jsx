@@ -22,15 +22,15 @@ export default function Header() {
       {/* ── デスクトップヘッダー ── */}
       <header className="glass-card sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
+          <div className="flex items-center justify-between h-12">
             <Link
               href="/"
-              className="flex items-center gap-2.5 group"
+              className="flex items-center gap-2 group"
             >
-              <div className="flex items-center justify-center w-8 h-8 rounded bg-gradient-to-br from-red-600 to-red-700 text-white shadow-glow-sm">
-                <Icons.Book className="w-[18px] h-[18px]" />
+              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-600 text-white">
+                <Icons.Book className="w-4 h-4" />
               </div>
-              <span className="text-base sm:text-lg font-extrabold tracking-wider gradient-text">
+              <span className="text-[15px] font-bold tracking-tight text-[#1d1d1f]">
                 REM
               </span>
             </Link>
@@ -46,10 +46,10 @@ export default function Header() {
                   <Link
                     key={href}
                     href={href}
-                    className={`relative px-3 py-1.5 rounded text-sm font-semibold transition-all duration-200 flex items-center gap-1.5
+                    className={`relative px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 flex items-center gap-1.5
                       ${active
-                        ? 'bg-red-600/90 text-white shadow-glow-sm'
-                        : 'text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200'
+                        ? 'bg-red-600 text-white'
+                        : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.04]'
                       }`}
                   >
                     {icon}
@@ -62,7 +62,7 @@ export default function Header() {
             {/* モバイルハンバーガー */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="sm:hidden p-2 rounded text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-all"
+              className="sm:hidden p-2 -mr-2 rounded-lg text-[#6e6e73] hover:bg-black/[0.04] transition-all"
               aria-label="メニューを開く"
             >
               {mobileMenuOpen ? (
@@ -80,7 +80,7 @@ export default function Header() {
 
         {/* モバイルドロップダウンメニュー */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-neutral-800 bg-neutral-900 animate-in">
+          <div className="sm:hidden border-t border-black/[0.06] bg-white/90 backdrop-blur-xl animate-in">
             <nav className="px-3 py-2 space-y-0.5">
               {NAV_ITEMS.map(({ href, label, icon }) => {
                 const active =
@@ -92,16 +92,16 @@ export default function Header() {
                     key={href}
                     href={href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm font-semibold transition-all
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all
                       ${active
-                        ? 'bg-red-600/90 text-white shadow-glow-sm'
-                        : 'text-neutral-400 hover:bg-neutral-800 active:bg-neutral-700'
+                        ? 'bg-red-600 text-white'
+                        : 'text-[#1d1d1f] hover:bg-black/[0.04] active:bg-black/[0.06]'
                       }`}
                   >
                     {icon}
                     {label}
                     {active && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500 shadow-glow-sm" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />
                     )}
                   </Link>
                 );
@@ -112,7 +112,7 @@ export default function Header() {
       </header>
 
       {/* ── モバイルボトムナビバー ── */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-neutral-950/95 backdrop-blur-lg border-t border-neutral-800 safe-area-bottom">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-black/[0.06] safe-area-bottom">
         <div className="flex items-center justify-around px-1 py-1">
           {NAV_ITEMS.map(({ href, label, mobileIcon }) => {
             const active =
@@ -123,16 +123,16 @@ export default function Header() {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded min-w-[3.5rem] transition-all active:scale-95
+                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-xl min-w-[3.5rem] transition-all active:scale-95
                   ${active
-                    ? 'text-red-500'
-                    : 'text-neutral-500'
+                    ? 'text-red-600'
+                    : 'text-[#aeaeb2]'
                   }`}
               >
-                <div className={`p-1 rounded transition-colors ${active ? 'bg-red-600/20' : ''}`}>
+                <div className="p-0.5">
                   {mobileIcon}
                 </div>
-                <span className={`text-[10px] font-bold leading-none tracking-wide ${active ? 'text-red-500' : 'text-neutral-500'}`}>
+                <span className={`text-[10px] font-medium leading-none ${active ? 'text-red-600' : 'text-[#aeaeb2]'}`}>
                   {label}
                 </span>
               </Link>

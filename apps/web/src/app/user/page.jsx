@@ -462,14 +462,14 @@ export default function UserModePage() {
     <div className="max-w-2xl mx-auto py-4 sm:py-8 px-1 sm:px-4">
       {/* ヘッダー */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-950/30 text-red-400 rounded-full text-xs font-bold mb-3 sm:mb-4 border border-neutral-800">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-full text-xs font-bold mb-3 sm:mb-4 border border-black/[0.06]">
           <Icons.User className="w-4 h-4" />
           ユーザモード
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-neutral-50">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f]">
           問題を生成する
         </h1>
-        <p className="text-xs sm:text-sm text-neutral-400 mt-1">
+        <p className="text-xs sm:text-sm text-[#6e6e73] mt-1">
           ステップに沿って操作するだけで、試験問題の PDF が完成します
         </p>
       </div>
@@ -484,14 +484,14 @@ export default function UserModePage() {
       {/* ═══════ Step 1: テンプレート選択 ═══════ */}
       {step === 1 && (
         <SectionCard title="Step 1: テンプレートを選ぶ" icon={<Icons.File />}>
-          <p className="text-xs text-neutral-400 mb-4">
+          <p className="text-xs text-[#6e6e73] mb-4">
             問題の元となるテンプレートを選んでください。科目・分野・難易度はテンプレートに含まれています。
           </p>
 
           <div className="space-y-3">
             {/* テンプレート一覧 */}
             {templates.length === 0 && !showCreateTemplate ? (
-              <div className="text-center py-8 text-neutral-500">
+              <div className="text-center py-8 text-[#1d1d1f]0">
                 <Icons.Empty className="mx-auto mb-2" />
                 <p className="text-sm">テンプレートがありません</p>
                 <p className="text-xs mt-1">下の「+ 新規作成」ボタンからテンプレートを作成してください</p>
@@ -502,34 +502,34 @@ export default function UserModePage() {
                   <button
                     key={t.id}
                     onClick={() => onSelectTemplate(t.id)}
-                    className={`w-full text-left p-4 rounded-lg border transition-all ${
+                    className={`w-full text-left p-4 rounded-xl border transition-all ${
                       templateId === t.id
-                        ? 'border-red-600 bg-red-950/30 shadow-glow-sm'
-                        : 'border-neutral-800 bg-neutral-900 hover:border-red-600/50 hover:bg-neutral-800/50'
+                        ? 'border-red-600 bg-red-50'
+                        : 'border-black/[0.06] bg-white hover:border-red-600/50 hover:bg-black/[0.04]'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-bold text-neutral-50">
+                        <div className="text-sm font-bold text-[#1d1d1f]">
                           {t.name || t.id}
                         </div>
                         {t.description && (
-                          <div className="text-xs text-neutral-400 mt-0.5">{t.description}</div>
+                          <div className="text-xs text-[#6e6e73] mt-0.5">{t.description}</div>
                         )}
                       </div>
                       <div className="flex gap-1.5">
                         {t.metadata?.subject && (
-                          <span className="px-2 py-0.5 bg-red-950/30 text-red-400 rounded-full text-[10px] font-bold">
+                          <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-bold">
                             {t.metadata.subject}
                           </span>
                         )}
                         {t.metadata?.field && (
-                          <span className="px-2 py-0.5 bg-emerald-950/30 text-emerald-400 rounded-full text-[10px] font-bold">
+                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold">
                             {t.metadata.field}
                           </span>
                         )}
                         {t.metadata?.difficulty && (
-                          <span className="px-2 py-0.5 bg-amber-950/30 text-amber-400 rounded-full text-[10px] font-bold">
+                          <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
                             {t.metadata.difficulty}
                           </span>
                         )}
@@ -542,16 +542,16 @@ export default function UserModePage() {
 
             {/* ── テンプレート新規作成フォーム ── */}
             {showCreateTemplate ? (
-              <div className="p-5 bg-neutral-800/50 rounded-lg border border-neutral-800 space-y-4">
+              <div className="p-5 bg-[#f5f5f7] rounded-xl border border-black/[0.06] space-y-4">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-lg bg-red-950/30 text-red-400 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-bold text-neutral-50">テンプレートを新規作成</h3>
+                  <h3 className="text-sm font-bold text-[#1d1d1f]">テンプレートを新規作成</h3>
                 </div>
-                <p className="text-xs text-neutral-400">
+                <p className="text-xs text-[#6e6e73]">
                   教科と分野を選ぶだけで、テンプレートが自動生成されます。
                 </p>
 
@@ -581,12 +581,12 @@ export default function UserModePage() {
                 {/* カスタム教科入力 */}
                 {newTplSubject === '__custom' && (
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5">教科名（入力）</label>
+                    <label className="block text-xs font-semibold text-[#6e6e73] mb-1.5">教科名（入力）</label>
                     <input
                       value={newTplCustomSubject}
                       onChange={(e) => setNewTplCustomSubject(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-lg border border-neutral-700 bg-neutral-900 text-sm text-neutral-100 outline-none
-                        hover:border-neutral-600 focus:border-red-600 focus:ring-2 focus:ring-red-600/40 transition-all placeholder:text-neutral-600"
+                      className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm text-[#1d1d1f] outline-none
+                        hover:border-black/[0.12] focus:border-red-500 focus:ring-4 focus:ring-red-600/10 transition-all placeholder:text-[#aeaeb2]"
                       placeholder="例: 地学"
                       autoFocus
                     />
@@ -596,18 +596,18 @@ export default function UserModePage() {
                 {/* 分野 */}
                 {newTplFieldOptions.length > 0 && (
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-400 mb-1.5">
+                    <label className="block text-xs font-semibold text-[#6e6e73] mb-1.5">
                       分野
-                      <span className="text-[10px] font-normal text-neutral-500 ml-1">（任意）</span>
+                      <span className="text-[10px] font-normal text-[#1d1d1f]0 ml-1">（任意）</span>
                     </label>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {newTplFieldOptions.slice(0, 15).map((f) => (
                         <button key={f} type="button"
                           onClick={() => setNewTplField(newTplField === f ? '' : f)}
-                          className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${
+                          className={`px-2.5 py-1 text-xs rounded-xl border transition-all ${
                             newTplField === f
-                              ? 'bg-red-600 text-white border-red-600 shadow-glow-sm'
-                              : 'bg-neutral-900 text-neutral-400 border-neutral-700 hover:border-red-600 hover:text-red-400'
+                              ? 'bg-red-600 text-white border-red-600'
+                              : 'bg-white text-[#6e6e73] border-black/[0.08] hover:border-red-600 hover:text-red-600'
                           }`}>
                           {f}
                         </button>
@@ -618,8 +618,8 @@ export default function UserModePage() {
                       value={newTplField}
                       onChange={(e) => setNewTplField(e.target.value)}
                       placeholder="候補から選択 or 自由入力"
-                      className="w-full px-3 py-2.5 rounded-lg border border-neutral-700 bg-neutral-900 text-sm text-neutral-100 outline-none
-                        hover:border-neutral-600 focus:border-red-600 focus:ring-2 focus:ring-red-600/40 transition-all placeholder:text-neutral-600"
+                      className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm text-[#1d1d1f] outline-none
+                        hover:border-black/[0.12] focus:border-red-500 focus:ring-4 focus:ring-red-600/10 transition-all placeholder:text-[#aeaeb2]"
                     />
                   </div>
                 )}
@@ -629,8 +629,8 @@ export default function UserModePage() {
                   <button
                     onClick={handleCreateTemplate}
                     disabled={creatingTemplate || !effectiveNewSubject || !newTplDifficulty}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold
-                               bg-red-600 text-white shadow-glow-sm
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold
+                               bg-red-600 text-white
                                hover:bg-red-700
                                disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                   >
@@ -641,7 +641,7 @@ export default function UserModePage() {
                   </button>
                   <button
                     onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty(''); }}
-                    className="px-4 py-3 rounded-lg text-sm font-medium text-neutral-400 hover:text-neutral-300 hover:bg-neutral-800 transition-all"
+                    className="px-4 py-3 rounded-xl text-sm font-medium text-[#6e6e73] hover:text-[#424245] hover:bg-black/[0.04] transition-all"
                   >
                     キャンセル
                   </button>
@@ -651,8 +651,8 @@ export default function UserModePage() {
               /* ── 新規作成ボタン ── */
               <button
                 onClick={() => setShowCreateTemplate(true)}
-                className="w-full p-4 rounded-lg border border-dashed border-neutral-700 text-neutral-400
-                           hover:border-red-600 hover:text-red-400 hover:bg-red-950/20
+                className="w-full p-4 rounded-xl border border-dashed border-black/[0.08] text-[#6e6e73]
+                           hover:border-red-600 hover:text-red-600 hover:bg-red-50
                            transition-all flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -668,34 +668,34 @@ export default function UserModePage() {
       {/* ═══════ Step 2: 設定 ═══════ */}
       {step === 2 && (
         <SectionCard title="Step 2: 生成設定" icon={<Icons.Prompt />}>
-          <p className="text-xs text-neutral-400 mb-5">
+          <p className="text-xs text-[#6e6e73] mb-5">
             問題数やRAG参照数を設定し、必要に応じてベースにする過去問をDBから選択してください。
           </p>
 
           <div className="space-y-4">
             {/* 選択中テンプレート表示（科目・分野・難易度もここに表示） */}
             {selectedTemplate && (
-              <div className="p-3 bg-neutral-800/50 rounded-lg border border-neutral-800">
+              <div className="p-3 bg-[#f5f5f7] rounded-xl border border-black/[0.06]">
                 <div className="flex items-center gap-3">
-                  <Icons.File className="w-4 h-4 text-red-400 flex-shrink-0" />
+                  <Icons.File className="w-4 h-4 text-red-600 flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="text-sm font-bold text-neutral-50">{selectedTemplate.name}</div>
-                    <div className="text-xs text-neutral-400">{selectedTemplate.description}</div>
+                    <div className="text-sm font-bold text-[#1d1d1f]">{selectedTemplate.name}</div>
+                    <div className="text-xs text-[#6e6e73]">{selectedTemplate.description}</div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2 ml-7">
                   {subject && (
-                    <span className="px-2 py-0.5 bg-red-950/30 text-red-400 rounded-full text-[10px] font-bold">
+                    <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-bold">
                       科目: {subject}
                     </span>
                   )}
                   {field && (
-                    <span className="px-2 py-0.5 bg-emerald-950/30 text-emerald-400 rounded-full text-[10px] font-bold">
+                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold">
                       分野: {field}
                     </span>
                   )}
                   {difficulty && (
-                    <span className="px-2 py-0.5 bg-amber-950/30 text-amber-400 rounded-full text-[10px] font-bold">
+                    <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
                       難易度: {difficulty}
                     </span>
                   )}
@@ -710,18 +710,18 @@ export default function UserModePage() {
             </div>
 
             {/* RAG の仕組み説明（折りたたみ） */}
-            <details className="rounded-lg border border-neutral-800 bg-neutral-800/50">
-              <summary className="px-3 py-2 cursor-pointer text-xs font-bold text-neutral-400 hover:text-red-400 select-none">
+            <details className="rounded-xl border border-black/[0.06] bg-[#f5f5f7]">
+              <summary className="px-3 py-2 cursor-pointer text-xs font-bold text-[#6e6e73] hover:text-red-600 select-none">
                 💡 「過去問参照（RAG）」の仕組みを見る
               </summary>
-              <div className="px-3 pb-3 text-xs text-neutral-400 leading-relaxed space-y-1.5">
+              <div className="px-3 pb-3 text-xs text-[#6e6e73] leading-relaxed space-y-1.5">
                 <p>このシステムは、DBに登録された過去問を参考にして新しい問題を作ります。</p>
-                <div className="bg-neutral-900 rounded-lg p-2 border border-neutral-800 space-y-1">
-                  <div className="flex gap-2"><span className="text-red-400 font-bold">1.</span> <span>テンプレートの科目・分野を基にDBから関連する過去問を検索</span></div>
-                  <div className="flex gap-2"><span className="text-red-400 font-bold">2.</span> <span>最も似ている問題を自動でランク付け（難易度も考慮）</span></div>
-                  <div className="flex gap-2"><span className="text-red-400 font-bold">3.</span> <span>上位の過去問をAIに参考資料として渡し、類題を生成</span></div>
+                <div className="bg-white rounded-xl p-2 border border-black/[0.06] space-y-1">
+                  <div className="flex gap-2"><span className="text-red-600 font-bold">1.</span> <span>テンプレートの科目・分野を基にDBから関連する過去問を検索</span></div>
+                  <div className="flex gap-2"><span className="text-red-600 font-bold">2.</span> <span>最も似ている問題を自動でランク付け（難易度も考慮）</span></div>
+                  <div className="flex gap-2"><span className="text-red-600 font-bold">3.</span> <span>上位の過去問をAIに参考資料として渡し、類題を生成</span></div>
                 </div>
-                <p className="text-neutral-500">
+                <p className="text-[#1d1d1f]0">
                   下の「ベース過去問」を選択すると、その問題に沿った類題をさらに正確に生成できます。
                 </p>
               </div>
@@ -730,45 +730,45 @@ export default function UserModePage() {
             {/* ── ベース過去問選択（DB検索） ── */}
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <label className="block text-xs font-semibold text-neutral-400">
+                <label className="block text-xs font-semibold text-[#6e6e73]">
                   ベース過去問を選択
                 </label>
-                <span className="text-[10px] text-neutral-500">（任意）</span>
+                <span className="text-[10px] text-[#1d1d1f]0">（任意）</span>
               </div>
-              <p className="text-xs text-neutral-400 mb-2">
+              <p className="text-xs text-[#6e6e73] mb-2">
                 DBから過去問を検索して選択すると、その問題に沿った類題を生成します。
               </p>
 
               {/* 選択済み問題の表示 */}
               {selectedBaseProblem ? (
-                <div className="mb-3 p-3 bg-amber-950/30 rounded-lg border border-amber-900">
+                <div className="mb-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
-                        <span className="text-[10px] text-amber-400 font-bold">選択中のベース問題</span>
+                        <span className="text-[10px] text-amber-600 font-bold">選択中のベース問題</span>
                         {selectedBaseProblem.id && (
                           <span className="text-[10px] text-amber-500 font-mono">#{selectedBaseProblem.id}</span>
                         )}
                       </div>
-                      <div className="text-xs text-neutral-200 leading-relaxed line-clamp-3">
+                      <div className="text-xs text-[#1d1d1f] leading-relaxed line-clamp-3">
                         <LatexText>{(selectedBaseProblem.stem || selectedBaseProblem.text || '').slice(0, 200)}</LatexText>
                       </div>
                       <div className="flex gap-1 mt-1.5 flex-wrap">
                         {selectedBaseProblem.subject && (
-                          <span className="px-1.5 py-0.5 bg-red-950/30 text-red-400 rounded text-[9px] font-bold">{selectedBaseProblem.subject}</span>
+                          <span className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-bold">{selectedBaseProblem.subject}</span>
                         )}
                         {(selectedBaseProblem.topic || selectedBaseProblem.metadata?.field) && (
-                          <span className="px-1.5 py-0.5 bg-emerald-950/30 text-emerald-400 rounded text-[9px] font-bold">{selectedBaseProblem.topic || selectedBaseProblem.metadata?.field}</span>
+                          <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[9px] font-bold">{selectedBaseProblem.topic || selectedBaseProblem.metadata?.field}</span>
                         )}
                         {selectedBaseProblem.difficulty != null && (
-                          <span className="px-1.5 py-0.5 bg-amber-950/30 text-amber-400 rounded text-[9px] font-bold">{difficultyLabel(selectedBaseProblem.difficulty)}</span>
+                          <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[9px] font-bold">{difficultyLabel(selectedBaseProblem.difficulty)}</span>
                         )}
                       </div>
                     </div>
                     <button
                       onClick={() => setSelectedBaseProblem(null)}
-                      className="px-2 py-1 text-[10px] text-amber-400 hover:text-amber-300 bg-amber-950/30 hover:bg-amber-900/50 rounded-lg font-bold transition-colors flex-shrink-0"
+                      className="px-2 py-1 text-[10px] text-amber-600 hover:text-amber-300 bg-amber-50 hover:bg-amber-900/50 rounded-xl font-bold transition-colors flex-shrink-0"
                     >
                       解除
                     </button>
@@ -779,7 +779,7 @@ export default function UserModePage() {
               {/* DB検索フォーム */}
               <div className="flex items-center gap-2 mb-2">
                 <div className="relative flex-1">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#1d1d1f]0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
@@ -789,15 +789,15 @@ export default function UserModePage() {
                     onChange={(e) => setBaseSearchQuery(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') doBaseSearch(); }}
                     placeholder="キーワードで過去問を検索..."
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-neutral-700 bg-neutral-900 text-xs
-                               text-neutral-200 transition-all hover:border-neutral-600 focus:border-red-600
-                               focus:ring-2 focus:ring-red-600/40 outline-none placeholder:text-neutral-600"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-xs
+                               text-[#1d1d1f] transition-all hover:border-black/[0.12] focus:border-red-500
+                               focus:ring-4 focus:ring-red-600/10 outline-none placeholder:text-[#aeaeb2]"
                   />
                 </div>
                 <button
                   onClick={doBaseSearch}
                   disabled={baseSearching || !baseSearchQuery.trim()}
-                  className="px-4 py-2.5 rounded-lg text-xs font-bold bg-red-950/30 text-red-400
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-red-50 text-red-600
                              hover:bg-red-900/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed
                              flex items-center gap-1.5"
                 >
@@ -815,7 +815,7 @@ export default function UserModePage() {
 
               {/* 検索結果一覧 */}
               {baseSearchResults.length > 0 && (
-                <div className="border border-neutral-800 rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                <div className="border border-black/[0.06] rounded-xl overflow-hidden max-h-64 overflow-y-auto">
                   {baseSearchResults.map((item, idx) => {
                     const isSelected = selectedBaseProblem?.id === item.id;
                     return (
@@ -826,26 +826,26 @@ export default function UserModePage() {
                           setBaseSearchResults([]);
                           setBaseSearchQuery('');
                         }}
-                        className={`w-full text-left px-3 py-2.5 border-b border-neutral-800 last:border-b-0
-                                    transition-all hover:bg-red-950/20 ${
-                                      isSelected ? 'bg-amber-950/30' : 'bg-neutral-900'
+                        className={`w-full text-left px-3 py-2.5 border-b border-black/[0.06] last:border-b-0
+                                    transition-all hover:bg-red-50 ${
+                                      isSelected ? 'bg-amber-50' : 'bg-white'
                                     }`}
                       >
                         <div className="flex items-start gap-2">
-                          <span className="text-[10px] text-neutral-500 font-mono mt-0.5 flex-shrink-0">#{item.id ?? idx + 1}</span>
+                          <span className="text-[10px] text-[#1d1d1f]0 font-mono mt-0.5 flex-shrink-0">#{item.id ?? idx + 1}</span>
                           <div className="flex-1 min-w-0">
-                            <div className="text-xs text-neutral-200 leading-relaxed line-clamp-2">
+                            <div className="text-xs text-[#1d1d1f] leading-relaxed line-clamp-2">
                               <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
                             </div>
                             <div className="flex gap-1 mt-1 flex-wrap">
                               {item.subject && (
-                                <span className="px-1.5 py-0.5 bg-red-950/30 text-red-400 rounded text-[9px] font-bold">{item.subject}</span>
+                                <span className="px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-[9px] font-bold">{item.subject}</span>
                               )}
                               {(item.topic || item.metadata?.field) && (
-                                <span className="px-1.5 py-0.5 bg-emerald-950/30 text-emerald-400 rounded text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
+                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
                               )}
                               {item.difficulty != null && (
-                                <span className="px-1.5 py-0.5 bg-amber-950/30 text-amber-400 rounded text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
+                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 rounded text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
                               )}
                             </div>
                           </div>
@@ -858,7 +858,7 @@ export default function UserModePage() {
 
               {/* 検索結果が0件の場合 */}
               {baseSearchResults.length === 0 && baseSearchQuery && !baseSearching && baseSearchResults !== null && (
-                <div className="text-center py-3 text-xs text-neutral-400">
+                <div className="text-center py-3 text-xs text-[#6e6e73]">
                   該当する問題が見つかりません
                 </div>
               )}
@@ -866,33 +866,33 @@ export default function UserModePage() {
 
             {/* モード選択 */}
             <div>
-              <label className="block text-xs font-semibold text-neutral-400 mb-2">
+              <label className="block text-xs font-semibold text-[#6e6e73] mb-2">
                 生成方法
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button
                   onClick={() => setMode('auto')}
-                  className={`p-3 rounded-lg border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all ${
                     mode === 'auto'
-                      ? 'border-red-600 bg-red-950/30 shadow-glow-sm'
-                      : 'border-neutral-800 hover:border-red-600/50'
+                      ? 'border-red-600 bg-red-50'
+                      : 'border-black/[0.06] hover:border-red-600/50'
                   }`}
                 >
-                  <div className="text-sm font-bold text-neutral-50">AI 自動生成</div>
-                  <div className="text-xs text-neutral-400 mt-0.5">
+                  <div className="text-sm font-bold text-[#1d1d1f]">AI 自動生成</div>
+                  <div className="text-xs text-[#6e6e73] mt-0.5">
                     ワンクリックで PDF まで自動作成
                   </div>
                 </button>
                 <button
                   onClick={() => setMode('manual')}
-                  className={`p-3 rounded-lg border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all ${
                     mode === 'manual'
-                      ? 'border-neutral-400 bg-neutral-800'
-                      : 'border-neutral-800 hover:border-neutral-600'
+                      ? 'border-[#6e6e73] bg-[#f5f5f7]'
+                      : 'border-black/[0.06] hover:border-black/[0.12]'
                   }`}
                 >
-                  <div className="text-sm font-bold text-neutral-50">手動</div>
-                  <div className="text-xs text-neutral-400 mt-0.5">
+                  <div className="text-sm font-bold text-[#1d1d1f]">手動</div>
+                  <div className="text-xs text-[#6e6e73] mt-0.5">
                     プロンプトを取得して自分で LLM に送る
                   </div>
                 </button>
@@ -905,7 +905,7 @@ export default function UserModePage() {
       {/* ═══════ Step 3: PDF形式選択 ═══════ */}
       {step === 3 && (
         <SectionCard title="Step 3: PDF の出力形式を選ぶ" icon={<Icons.Pdf />}>
-          <p className="text-xs text-neutral-400 mb-5">
+          <p className="text-xs text-[#6e6e73] mb-5">
             生成する PDF のレイアウト形式を選んでください。
             {mode === 'auto'
               ? ' 選択後、「PDF を生成」ボタンで自動生成が始まります。'
@@ -913,7 +913,7 @@ export default function UserModePage() {
           </p>
 
           {latexPresets.length === 0 ? (
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-[#1d1d1f]0">
               <Icons.Empty className="mx-auto mb-2" />
               <p className="text-sm">形式を読み込み中...</p>
             </div>
@@ -923,21 +923,21 @@ export default function UserModePage() {
                 <button
                   key={p.id}
                   onClick={() => setLatexPreset(p.id)}
-                  className={`text-left rounded-lg border transition-all overflow-hidden ${
+                  className={`text-left rounded-xl border transition-all overflow-hidden ${
                     latexPreset === p.id
-                      ? 'border-red-600 bg-red-950/30 shadow-glow-sm'
-                      : 'border-neutral-800 bg-neutral-900 hover:border-red-600/50 hover:bg-neutral-800'
+                      ? 'border-red-600 bg-red-50'
+                      : 'border-black/[0.06] bg-white hover:border-red-600/50 hover:bg-black/[0.04]'
                   }`}
                 >
                   {/* ASCIIアートイラスト */}
                   <div
                     className={`px-3 pt-3 pb-2 rounded-t-lg ${
-                      latexPreset === p.id ? 'bg-red-950/30' : 'bg-neutral-800/50'
+                      latexPreset === p.id ? 'bg-red-50' : 'bg-[#f5f5f7]'
                     }`}
                   >
                     <pre
                       className={`text-[9px] leading-[1.4] font-mono select-none ${
-                        latexPreset === p.id ? 'text-red-400' : 'text-neutral-500'
+                        latexPreset === p.id ? 'text-red-600' : 'text-[#1d1d1f]0'
                       }`}
                       style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
                     >
@@ -950,9 +950,9 @@ export default function UserModePage() {
                       {latexPreset === p.id && (
                         <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
                       )}
-                      <div className="text-sm font-bold text-neutral-50">{p.name}</div>
+                      <div className="text-sm font-bold text-[#1d1d1f]">{p.name}</div>
                     </div>
-                    <div className="text-[10px] text-neutral-400 mt-0.5 leading-tight">
+                    <div className="text-[10px] text-[#6e6e73] mt-0.5 leading-tight">
                       {p.description}
                     </div>
                   </div>
@@ -963,34 +963,34 @@ export default function UserModePage() {
 
           {/* 選択中プレビュー */}
           {selectedPreset && (
-            <div className="mt-4 px-3 py-2.5 bg-red-950/30 rounded-lg border border-red-900 flex items-center gap-2">
+            <div className="mt-4 px-3 py-2.5 bg-red-50 rounded-xl border border-red-200 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
-              <span className="text-xs font-bold text-red-400">{selectedPreset.name}</span>
-              <span className="text-xs text-red-500">{selectedPreset.description}</span>
+              <span className="text-xs font-bold text-red-600">{selectedPreset.name}</span>
+              <span className="text-xs text-red-600">{selectedPreset.description}</span>
             </div>
           )}
 
           {/* ── 図表パッケージ選択 ── */}
-          <div className="mt-6 border-t border-neutral-800 pt-5">
+          <div className="mt-6 border-t border-black/[0.06] pt-5">
             <div className="flex items-center gap-2 mb-1">
-              <label className="block text-xs font-semibold text-neutral-400">
+              <label className="block text-xs font-semibold text-[#6e6e73]">
                 LaTeX 図表パッケージ
               </label>
-              <span className="text-[10px] text-neutral-500">（任意）</span>
+              <span className="text-[10px] text-[#1d1d1f]0">（任意）</span>
             </div>
-            <p className="text-xs text-neutral-400 mb-3">
+            <p className="text-xs text-[#6e6e73] mb-3">
               図・グラフ・コードが必要な場合に選択してください。不要なら選ばなくてOKです。
             </p>
 
             {/* どれを選ぶ？ガイダンス */}
-            <details className="mb-3 bg-amber-950/30 border border-amber-900 rounded-lg overflow-hidden group">
-              <summary className="px-3 py-2 text-xs font-bold text-amber-400 cursor-pointer list-none flex items-center gap-1.5 select-none">
+            <details className="mb-3 bg-amber-50 border border-amber-200 rounded-xl overflow-hidden group">
+              <summary className="px-3 py-2 text-xs font-bold text-amber-600 cursor-pointer list-none flex items-center gap-1.5 select-none">
                 <span>💡</span>
                 <span>どれを選べばいい？（初めての方はここを確認）</span>
                 <span className="ml-auto text-amber-500 text-[9px] group-open:hidden">▶ 開く</span>
                 <span className="ml-auto text-amber-500 text-[9px] hidden group-open:inline">▼ 閉じる</span>
               </summary>
-              <div className="px-3 pb-3 pt-1 text-[10px] text-amber-400 space-y-1 leading-relaxed">
+              <div className="px-3 pb-3 pt-1 text-[10px] text-amber-600 space-y-1 leading-relaxed">
                 <p className="font-bold">迷ったら「TikZ」だけ選べばほとんどの図が描けます。</p>
                 <p>・ 電気回路の問題 → <strong>CircuiTikZ</strong></p>
                 <p>・ 関数グラフ・データグラフ → <strong>PGFPlots</strong></p>
@@ -1008,18 +1008,18 @@ export default function UserModePage() {
                   <button
                     key={pkg.id}
                     onClick={() => togglePackage(pkg.id)}
-                    className={`text-left rounded-lg border transition-all overflow-hidden ${
+                    className={`text-left rounded-xl border transition-all overflow-hidden ${
                       active
-                        ? 'border-violet-400 bg-violet-950/30 shadow-glow-sm'
-                        : 'border-neutral-800 bg-neutral-900 hover:border-violet-400/50 hover:bg-neutral-800'
+                        ? 'border-violet-400 bg-violet-50'
+                        : 'border-black/[0.06] bg-white hover:border-violet-400/50 hover:bg-black/[0.04]'
                     }`}
                   >
                     {/* ASCIIアートプレビュー */}
                     {illustration && (
-                      <div className={`px-3 pt-2 pb-1.5 ${active ? 'bg-violet-950/30' : 'bg-neutral-800/50'}`}>
+                      <div className={`px-3 pt-2 pb-1.5 ${active ? 'bg-violet-50' : 'bg-[#f5f5f7]'}`}>
                         <pre
                           className={`text-[8px] leading-[1.35] font-mono select-none ${
-                            active ? 'text-violet-400' : 'text-neutral-500'
+                            active ? 'text-violet-600' : 'text-[#1d1d1f]0'
                           }`}
                           style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
                         >
@@ -1030,22 +1030,22 @@ export default function UserModePage() {
                     {/* ラベル */}
                     <div className="px-3 py-2">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-sm leading-none ${active ? 'text-violet-400' : 'text-neutral-500'}`}>
+                        <span className={`text-sm leading-none ${active ? 'text-violet-600' : 'text-[#1d1d1f]0'}`}>
                           {pkg.icon}
                         </span>
-                        <span className="text-xs font-bold text-neutral-50">{pkg.name}</span>
+                        <span className="text-xs font-bold text-[#1d1d1f]">{pkg.name}</span>
                         <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                          active ? 'bg-violet-950/30 text-violet-400' : 'bg-neutral-800 text-neutral-500'
+                          active ? 'bg-violet-50 text-violet-600' : 'bg-[#f5f5f7] text-[#1d1d1f]0'
                         }`}>
                           {pkg.label}
                         </span>
                         {pkg.recommended && (
-                          <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-amber-950/30 text-amber-400">
+                          <span className="px-1 py-0.5 rounded text-[8px] font-bold bg-amber-50 text-amber-600">
                             おすすめ
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] text-neutral-400 mt-1 leading-tight">{pkg.hint || pkg.description}</p>
+                      <p className="text-[10px] text-[#6e6e73] mt-1 leading-tight">{pkg.hint || pkg.description}</p>
                     </div>
                   </button>
                 );
@@ -1060,12 +1060,12 @@ export default function UserModePage() {
                 onChange={(e) => setCustomPackage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addCustomPackage()}
                 placeholder="カスタムパッケージ名（例: chemfig）"
-                className="flex-1 px-3 py-2 text-xs border border-neutral-700 bg-neutral-900 rounded-lg focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/40 placeholder:text-neutral-600"
+                className="flex-1 px-3 py-2 text-xs border border-black/[0.08] bg-white rounded-xl focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-400/40 placeholder:text-[#aeaeb2]"
               />
               <button
                 onClick={addCustomPackage}
                 disabled={!customPackage.trim()}
-                className="px-3 py-2 text-xs font-bold bg-neutral-800 text-neutral-400 rounded-lg hover:bg-violet-950/30 hover:text-violet-400 disabled:opacity-40 transition-colors"
+                className="px-3 py-2 text-xs font-bold bg-[#f5f5f7] text-[#6e6e73] rounded-xl hover:bg-violet-50 hover:text-violet-600 disabled:opacity-40 transition-colors"
               >
                 追加
               </button>
@@ -1079,7 +1079,7 @@ export default function UserModePage() {
                   return (
                     <span
                       key={pkg}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-violet-950/30 text-violet-400 rounded-full text-[10px] font-bold"
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-violet-50 text-violet-600 rounded-full text-[10px] font-bold"
                     >
                       {def?.name || pkg}
                       <button
@@ -1101,12 +1101,12 @@ export default function UserModePage() {
       {step === 4 && generating && (
         <SectionCard>
           <div className="flex flex-col items-center justify-center py-16">
-            <svg className="animate-spin h-10 w-10 text-red-400 mb-4" viewBox="0 0 24 24">
+            <svg className="animate-spin h-10 w-10 text-red-600 mb-4" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            <p className="text-sm font-semibold text-red-400">{status}</p>
-            <p className="text-xs text-neutral-500 mt-2">しばらくお待ちください...</p>
+            <p className="text-sm font-semibold text-red-600">{status}</p>
+            <p className="text-xs text-[#1d1d1f]0 mt-2">しばらくお待ちください...</p>
           </div>
         </SectionCard>
       )}
@@ -1116,21 +1116,21 @@ export default function UserModePage() {
         <div className="space-y-4">
           {/* RAG フィードバックカード */}
           {renderContext && (
-            <div className={`px-4 py-3 rounded-lg border text-xs ${
+            <div className={`px-4 py-3 rounded-xl border text-xs ${
               renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0
-                ? 'bg-emerald-950/30 border-emerald-900'
+                ? 'bg-emerald-50 border-emerald-200'
                 : renderContext.rag_status === 'no_data'
-                  ? 'bg-blue-950/30 border-blue-900'
-                  : 'bg-neutral-800/50 border-neutral-800'
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-[#f5f5f7] border-black/[0.06]'
             }`}>
               <div className="flex items-center gap-2 flex-wrap">
                 {/* ステータスアイコン */}
                 <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                   renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0
-                    ? 'bg-emerald-900/50 text-emerald-400'
+                    ? 'bg-emerald-900/50 text-emerald-600'
                     : renderContext.rag_status === 'no_data'
                       ? 'bg-blue-900/50 text-blue-400'
-                      : 'bg-neutral-700 text-neutral-400'
+                      : 'bg-[#e5e5ea] text-[#6e6e73]'
                 }`}>
                   {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? '✓' : renderContext.rag_status === 'no_data' ? 'i' : '—'}
                 </span>
@@ -1138,10 +1138,10 @@ export default function UserModePage() {
                 <div className="flex-1">
                   {renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0 ? (
                     <div>
-                      <span className="font-bold text-emerald-400">
+                      <span className="font-bold text-emerald-600">
                         過去問 {renderContext.rag_retrieved}件を参照して生成しました
                       </span>
-                      <span className="text-emerald-500 ml-1">（DB {renderContext.chunk_count}件中）</span>
+                      <span className="text-emerald-600 ml-1">（DB {renderContext.chunk_count}件中）</span>
                     </div>
                   ) : renderContext.rag_status === 'no_data' ? (
                     <div>
@@ -1152,39 +1152,39 @@ export default function UserModePage() {
                     </div>
                   ) : renderContext.rag_status === 'empty' ? (
                     <div>
-                      <span className="font-bold text-neutral-300">AIのみで問題を生成しました</span>
-                      <p className="text-neutral-400 mt-0.5">
+                      <span className="font-bold text-[#424245]">AIのみで問題を生成しました</span>
+                      <p className="text-[#6e6e73] mt-0.5">
                         この条件に合う過去問がDB内に見つかりませんでした（{renderContext.chunk_count}件を検索）
                       </p>
                     </div>
                   ) : renderContext.rag_status === 'fallback' ? (
                     <div>
-                      <span className="font-bold text-neutral-300">過去問を参照して生成しました</span>
-                      <p className="text-neutral-400 mt-0.5">
+                      <span className="font-bold text-[#424245]">過去問を参照して生成しました</span>
+                      <p className="text-[#6e6e73] mt-0.5">
                         DB内の問題をベースに生成しています（{renderContext.rag_retrieved || renderContext.chunk_count || 0}件参照）
                       </p>
                     </div>
                   ) : renderContext.chunk_count > 0 ? (
-                    <span className="text-neutral-300 font-bold">
+                    <span className="text-[#424245] font-bold">
                       {renderContext.chunk_count}件を参照して生成
                     </span>
                   ) : (
-                    <span className="text-neutral-500">RAG未使用 — AIのみで生成</span>
+                    <span className="text-[#1d1d1f]0">RAG未使用 — AIのみで生成</span>
                   )}
                 </div>
 
                 {/* 検索方式バッジ */}
                 {renderContext.rag_method && (
-                  <span className="px-1.5 py-0.5 rounded bg-neutral-800 text-neutral-500 text-[9px] font-bold uppercase">
+                  <span className="px-1.5 py-0.5 rounded bg-[#f5f5f7] text-[#1d1d1f]0 text-[9px] font-bold uppercase">
                     {renderContext.rag_method}
                   </span>
                 )}
               </div>
               {/* ベース問題使用時の表示 */}
               {sourceText.trim() && (
-                <div className="mt-2 pt-2 border-t border-neutral-800 flex items-center gap-1.5">
+                <div className="mt-2 pt-2 border-t border-black/[0.06] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
-                  <span className="text-[10px] text-amber-400 font-bold">ベース問題を参照して類題を生成</span>
+                  <span className="text-[10px] text-amber-600 font-bold">ベース問題を参照して類題を生成</span>
                   <span className="text-[10px] text-amber-500 truncate max-w-[200px]">
                     — {sourceText.trim().slice(0, 50)}{sourceText.trim().length > 50 ? '...' : ''}
                   </span>
@@ -1202,15 +1202,15 @@ export default function UserModePage() {
                     href={pdfUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-center gap-2 p-4 bg-emerald-950/30 text-emerald-400 rounded-lg border border-emerald-900 font-bold hover:bg-emerald-900/50 transition-colors"
+                    className="flex items-center justify-center gap-2 p-4 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-200 font-bold hover:bg-emerald-900/50 transition-colors"
                   >
                     <Icons.Pdf /> PDF を別タブで開く
                   </a>
                 )}
 
                 <details className="group">
-                  <summary className="cursor-pointer text-neutral-400 text-xs font-bold hover:text-red-400 transition-colors list-none flex items-center gap-2">
-                    <span className="w-4 h-4 rounded bg-neutral-800 flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
+                  <summary className="cursor-pointer text-[#6e6e73] text-xs font-bold hover:text-red-600 transition-colors list-none flex items-center gap-2">
+                    <span className="w-4 h-4 rounded bg-[#f5f5f7] flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
                       ▸
                     </span>
                     LaTeX を表示・編集
@@ -1235,8 +1235,8 @@ export default function UserModePage() {
 
                 {prompt && (
                   <details className="group">
-                    <summary className="cursor-pointer text-neutral-400 text-xs font-bold hover:text-red-400 transition-colors list-none flex items-center gap-2">
-                      <span className="w-4 h-4 rounded bg-neutral-800 flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
+                    <summary className="cursor-pointer text-[#6e6e73] text-xs font-bold hover:text-red-600 transition-colors list-none flex items-center gap-2">
+                      <span className="w-4 h-4 rounded bg-[#f5f5f7] flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
                         ▸
                       </span>
                       使用されたプロンプトを確認
@@ -1246,7 +1246,7 @@ export default function UserModePage() {
                       <div className="mt-2 flex items-center gap-2">
                         <CopyButton text={prompt} onCopied={setStatus} />
                         {renderContext?.chunk_count > 0 && (
-                          <span className="text-xs text-red-400 font-medium">
+                          <span className="text-xs text-red-600 font-medium">
                             RAG {renderContext.chunk_count}件参照
                           </span>
                         )}
@@ -1265,15 +1265,15 @@ export default function UserModePage() {
                 <TextArea value={prompt} onChange={setPrompt} rows={12} />
                 <div className="flex items-center justify-between gap-3">
                   {renderContext?.chunk_count > 0 && (
-                    <span className="text-xs text-red-500 font-medium px-3 py-1 bg-red-950/30 rounded-full">
+                    <span className="text-xs text-red-600 font-medium px-3 py-1 bg-red-50 rounded-full">
                       RAG {renderContext.chunk_count}件参照
                     </span>
                   )}
                   <CopyButton text={prompt} onCopied={setStatus} />
                 </div>
 
-                <div className="border-t border-neutral-800 pt-4">
-                  <p className="text-xs text-neutral-400 mb-3">
+                <div className="border-t border-black/[0.06] pt-4">
+                  <p className="text-xs text-[#6e6e73] mb-3">
                     上のプロンプトを ChatGPT 等に送って、得られた LaTeX を下に貼り付けてください。
                   </p>
                   <TextArea
@@ -1307,7 +1307,7 @@ export default function UserModePage() {
                       href={pdfUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-3 flex items-center justify-center gap-2 p-3 bg-emerald-950/30 text-emerald-400 rounded-lg border border-emerald-900 font-bold hover:bg-emerald-900/50 transition-colors"
+                      className="mt-3 flex items-center justify-center gap-2 p-3 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-200 font-bold hover:bg-emerald-900/50 transition-colors"
                     >
                       <Icons.Pdf /> PDF を別タブで開く
                     </a>
@@ -1354,7 +1354,7 @@ export default function UserModePage() {
             <Button
               onClick={goNext}
               disabled={!templateId || generating}
-              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white shadow-glow-sm px-6 py-3"
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-3"
             >
               {generating ? (
                 <span className="flex items-center justify-center gap-2">
@@ -1381,9 +1381,9 @@ export default function UserModePage() {
 
       {/* ヘルプ */}
       {step === 1 && (
-        <div className="mt-8 p-4 bg-neutral-800/50 rounded-lg border border-neutral-800">
-          <h3 className="text-xs font-bold text-neutral-400 mb-2">使い方ガイド</h3>
-          <ol className="text-xs text-neutral-400 space-y-1.5 list-decimal list-inside">
+        <div className="mt-8 p-4 bg-[#f5f5f7] rounded-xl border border-black/[0.06]">
+          <h3 className="text-xs font-bold text-[#6e6e73] mb-2">使い方ガイド</h3>
+          <ol className="text-xs text-[#6e6e73] space-y-1.5 list-decimal list-inside">
             <li>上のリストからテンプレートを選択します（科目・分野・難易度はテンプレートに含まれています）</li>
             <li>「次へ」で問題数・RAG参照数・ベース過去問と生成方法を設定します</li>
             <li>PDF の出力形式（試験問題・プリント・模試など）を選択します</li>
