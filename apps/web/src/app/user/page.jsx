@@ -127,7 +127,7 @@ export default function UserModePage() {
   const [newTplSubject, setNewTplSubject] = useState('');
   const [newTplCustomSubject, setNewTplCustomSubject] = useState('');
   const [newTplField, setNewTplField] = useState('');
-  const [newTplDifficulty, setNewTplDifficulty] = useState('普通');
+  const [newTplDifficulty, setNewTplDifficulty] = useState('');
   const [creatingTemplate, setCreatingTemplate] = useState(false);
 
   const effectiveNewSubject = newTplSubject === '__custom' ? newTplCustomSubject : newTplSubject;
@@ -136,6 +136,7 @@ export default function UserModePage() {
 
   const handleCreateTemplate = async () => {
     if (!effectiveNewSubject) { setStatus('教科を選択してください'); return; }
+    if (!newTplDifficulty) { setStatus('難易度を選択してください'); return; }
     const f = newTplField;
     const label = f ? `${effectiveNewSubject}（${f}）` : effectiveNewSubject;
     const id = buildTemplateId(effectiveNewSubject, f);
@@ -156,14 +157,14 @@ export default function UserModePage() {
       setDifficulty(newTplDifficulty);
       setStatus(`テンプレート「${label}」を作成しました`);
       setShowCreateTemplate(false);
-      setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty('普通');
+      setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty('');
     } catch (e) { setStatus(`作成失敗: ${e.message}`); }
     setCreatingTemplate(false);
   };
 
   /* ── フォーム状態 ── */
   const [templateId, setTemplateId] = useState('');
-  const [subject, setSubject] = useState('数学');
+  const [subject, setSubject] = useState('');
   const [field, setField] = useState('');
   const [difficulty, setDifficulty] = useState('普通');
   const [numQuestions, setNumQuestions] = useState(1);
@@ -458,23 +459,23 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
+    <div className="max-w-2xl mx-auto py-4 sm:py-8 px-1 sm:px-4">
       {/* ヘッダー */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold mb-4 border border-indigo-100">
+      <div className="text-center mb-6 sm:mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold mb-3 sm:mb-4 border border-indigo-100">
           <Icons.User className="w-4 h-4" />
           ユーザモード
         </div>
-        <h1 className="text-2xl font-black text-slate-800 tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-black text-slate-800 tracking-tight">
           問題を生成する
         </h1>
-        <p className="text-sm text-slate-400 mt-1">
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
           ステップに沿って操作するだけで、試験問題の PDF が完成します
         </p>
       </div>
 
       {/* プログレスバー */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <ProgressSteps steps={STEPS} current={step} />
       </div>
 
@@ -555,21 +556,25 @@ export default function UserModePage() {
                 </p>
 
                 {/* 教科 + 難易度 */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <SelectField
                     label="教科 *"
                     value={newTplSubject}
                     onChange={(v) => { setNewTplSubject(v); setNewTplField(''); }}
                     options={[
+                      { value: '', label: '— 選択してください —' },
                       ...(subjects.length ? subjects : SUBJECTS).map((s) => ({ value: s, label: s })),
                       { value: '__custom', label: '✏️ その他（入力）' },
                     ]}
                   />
                   <SelectField
-                    label="難易度"
+                    label="難易度 *"
                     value={newTplDifficulty}
                     onChange={setNewTplDifficulty}
-                    options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
+                    options={[
+                      { value: '', label: '— 選択してください —' },
+                      ...DIFFICULTIES.map((d) => ({ value: d, label: d })),
+                    ]}
                   />
                 </div>
 
@@ -623,7 +628,7 @@ export default function UserModePage() {
                 <div className="flex items-center gap-3 pt-1">
                   <button
                     onClick={handleCreateTemplate}
-                    disabled={creatingTemplate || !effectiveNewSubject}
+                    disabled={creatingTemplate || !effectiveNewSubject || !newTplDifficulty}
                     className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold
                                bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-sm
                                hover:from-indigo-600 hover:to-indigo-700 hover:shadow-md
@@ -635,7 +640,7 @@ export default function UserModePage() {
                     {creatingTemplate ? '作成中...' : 'テンプレートを作成'}
                   </button>
                   <button
-                    onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty('普通'); }}
+                    onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty(''); }}
                     className="px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
                   >
                     キャンセル
@@ -699,7 +704,7 @@ export default function UserModePage() {
             )}
 
             {/* 問題数 + RAG参照数 */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
               <NumberField label="参照する過去問数（RAG）" value={topK} onChange={setTopK} min={1} max={20} />
             </div>
@@ -864,7 +869,7 @@ export default function UserModePage() {
               <label className="block text-[11px] font-black text-slate-400 mb-2 tracking-[0.1em] uppercase">
                 生成方法
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button
                   onClick={() => setMode('auto')}
                   className={`p-3 rounded-xl border-2 text-left transition-all ${
@@ -913,7 +918,7 @@ export default function UserModePage() {
               <p className="text-sm">形式を読み込み中...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {latexPresets.map((p) => (
                 <button
                   key={p.id}
@@ -995,7 +1000,7 @@ export default function UserModePage() {
               </div>
             </details>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {DIAGRAM_PACKAGE_DEFS.map((pkg) => {
                 const active = extraPackages.includes(pkg.id);
                 const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
@@ -1315,33 +1320,33 @@ export default function UserModePage() {
       )}
 
       {/* ═══════ ナビゲーションボタン ═══════ */}
-      <div className="flex items-center justify-between mt-6">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4 sm:mt-6 mb-4 sm:mb-0">
         <div>
           {step > 1 && step < 4 && (
-            <Button variant="ghost" onClick={goBack}>
+            <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
               ← 戻る
             </Button>
           )}
           {step === 5 && (
-            <Button variant="ghost" onClick={goBack}>
+            <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
               ← PDF形式を変更
             </Button>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {step === 5 && (
-            <Button variant="ghost" onClick={resetWizard}>
+            <Button variant="ghost" onClick={resetWizard} className="w-full sm:w-auto">
               最初からやり直す
             </Button>
           )}
           {step === 1 && (
-            <Button onClick={goNext} disabled={!canNext()}>
+            <Button onClick={goNext} disabled={!canNext()} className="w-full sm:w-auto">
               次へ →
             </Button>
           )}
           {step === 2 && (
-            <Button onClick={goNext}>
+            <Button onClick={goNext} className="w-full sm:w-auto">
               次へ →
             </Button>
           )}
@@ -1349,10 +1354,10 @@ export default function UserModePage() {
             <Button
               onClick={goNext}
               disabled={!templateId || generating}
-              className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-lg shadow-indigo-200/50 px-6 py-3"
+              className="w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-lg shadow-indigo-200/50 px-6 py-3"
             >
               {generating ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -1360,14 +1365,14 @@ export default function UserModePage() {
                   生成中...
                 </span>
               ) : (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <Icons.Pdf className="w-4 h-4" /> PDF を生成
                 </span>
               )}
             </Button>
           )}
           {step === 3 && mode === 'manual' && (
-            <Button onClick={goNext} disabled={!templateId}>
+            <Button onClick={goNext} disabled={!templateId} className="w-full sm:w-auto">
               <Icons.Prompt className="w-4 h-4 mr-1" /> プロンプトを生成
             </Button>
           )}

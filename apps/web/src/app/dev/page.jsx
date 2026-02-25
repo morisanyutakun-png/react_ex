@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
 import {
   renderTemplate,
@@ -8,11 +8,14 @@ import {
   saveProblem,
   saveTuningLog,
   generatePdf,
+  searchProblems,
 } from '@/lib/api';
 import {
   DIFFICULTY_MAP,
   OUTPUT_FORMAT_INSTRUCTION, buildReferencePromptSection,
+  difficultyLabel,
 } from '@/lib/constants';
+import { LatexText } from '@/components/LatexRenderer';
 import {
   StatusBar,
   SectionCard,
@@ -259,7 +262,44 @@ export default function TuningPage() {
   // 参考問題
   const [referenceStem, setReferenceStem] = useState('');
   const [referenceAnswer, setReferenceAnswer] = useState('');
-  const [showRefInput, setShowRefInput] = useState(false);
+
+  // 参考問題DB検索
+  const [refSearchQuery, setRefSearchQuery] = useState('');
+  const [refSearchResults, setRefSearchResults] = useState([]);
+  const [refSearching, setRefSearching] = useState(false);
+  const [selectedRefProblem, setSelectedRefProblem] = useState(null);
+  const refSearchInputRef = useRef(null);
+
+  /* ── 参考問題DB検索関数 ── */
+  const doRefSearch = useCallback(async () => {
+    const q = refSearchQuery.trim();
+    if (!q) return;
+    setRefSearching(true);
+    try {
+      const params = { q, limit: 10 };
+      if (subject) params.subject = subject;
+      const data = await searchProblems(params);
+      const items = data.results || data.problems || data || [];
+      setRefSearchResults(Array.isArray(items) ? items : []);
+    } catch {
+      setRefSearchResults([]);
+    }
+    setRefSearching(false);
+  }, [refSearchQuery, subject]);
+
+  const selectRefProblem = (item) => {
+    setSelectedRefProblem(item);
+    setReferenceStem(item.stem || item.text || '');
+    setReferenceAnswer(item.final_answer || item.answer || '');
+    setRefSearchResults([]);
+    setRefSearchQuery('');
+  };
+
+  const clearRefProblem = () => {
+    setSelectedRefProblem(null);
+    setReferenceStem('');
+    setReferenceAnswer('');
+  };
 
   // UI状態
   const [activeSection, setActiveSection] = useState('configure');
@@ -445,7 +485,7 @@ export default function TuningPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 px-1 sm:px-4">
       <PageHeader
         title="チューニング"
         description="プロンプトとRAGの設定を調整して、生成される問題の品質を高めるワークスペース"
@@ -456,10 +496,10 @@ export default function TuningPage() {
       <StatusBar message={status} />
 
       {/* ── セクションナビ (ステップ風) ── */}
-      <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-md p-1.5 rounded-2xl border border-slate-100/80 shadow-sm">
+      <div className="flex items-center gap-1 sm:gap-1.5 bg-white/70 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-100/80 shadow-sm overflow-x-auto no-scrollbar">
         {sections.map((s, idx) => (
           <button key={s.id} onClick={() => s.enabled && setActiveSection(s.id)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 relative
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 relative whitespace-nowrap
               ${activeSection === s.id
                 ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-200/40'
                 : s.enabled
@@ -564,24 +604,153 @@ export default function TuningPage() {
             </div>
           </SectionCard>
 
-          {/* ── 参考問題（折りたたみ） ── */}
-          <SectionCard>
-            <button onClick={() => setShowRefInput(!showRefInput)}
-              className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors w-full">
-              <svg className={`w-4 h-4 transition-transform ${showRefInput ? 'rotate-90' : ''}`}
-                fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-              参考問題を追加（類題を作りたい場合）
-              {referenceStem && <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full ml-auto">設定済み</span>}
-            </button>
-            {showRefInput && (
-              <div className="mt-4 p-4 bg-violet-50/60 rounded-xl border border-violet-200/40 space-y-3">
-                <p className="text-xs text-violet-600">基本となる問題を入力すると、同パターンの類題を生成します。</p>
+          {/* ── 参考問題（DB検索ベース） ── */}
+          <SectionCard title="参考問題を選択" icon={<Icons.Search />}
+            subtitle="DBから参考問題を検索して選択、または手動で入力できます。選択した問題に沿った類題を生成します。">
+
+            {/* 選択済み問題の表示 */}
+            {selectedRefProblem && (
+              <div className="mb-4 p-3 bg-amber-50/50 rounded-xl border-2 border-amber-200">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
+                      <span className="text-[10px] text-amber-600 font-bold">選択中の参考問題</span>
+                      {selectedRefProblem.id && (
+                        <span className="text-[10px] text-amber-400 font-mono">#{selectedRefProblem.id}</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-700 leading-relaxed line-clamp-3">
+                      <LatexText>{(selectedRefProblem.stem || selectedRefProblem.text || '').slice(0, 200)}</LatexText>
+                    </div>
+                    <div className="flex gap-1 mt-1.5 flex-wrap">
+                      {selectedRefProblem.subject && (
+                        <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[9px] font-bold">{selectedRefProblem.subject}</span>
+                      )}
+                      {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
+                        <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-600 rounded text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
+                      )}
+                      {selectedRefProblem.difficulty != null && (
+                        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-[9px] font-bold">{difficultyLabel(selectedRefProblem.difficulty)}</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={clearRefProblem}
+                    className="px-2 py-1 text-[10px] text-amber-500 hover:text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg font-bold transition-colors flex-shrink-0"
+                  >
+                    解除
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* DB検索フォーム */}
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <label className="block text-[11px] font-black text-slate-400 tracking-[0.1em] uppercase">
+                  キーワードでDBから検索
+                </label>
+                <span className="text-[10px] text-slate-300">（任意）</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-300 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    ref={refSearchInputRef}
+                    type="text"
+                    value={refSearchQuery}
+                    onChange={(e) => setRefSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') doRefSearch(); }}
+                    placeholder="キーワードで過去問を検索..."
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs
+                               text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-400
+                               focus:ring-1 focus:ring-indigo-200 outline-none placeholder:text-slate-300"
+                  />
+                </div>
+                <button
+                  onClick={doRefSearch}
+                  disabled={refSearching || !refSearchQuery.trim()}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-600
+                             hover:bg-indigo-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                             flex items-center gap-1.5"
+                >
+                  {refSearching ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      検索中
+                    </>
+                  ) : '検索'}
+                </button>
+              </div>
+            </div>
+
+            {/* 検索結果一覧 */}
+            {refSearchResults.length > 0 && (
+              <div className="border border-slate-200 rounded-xl overflow-hidden max-h-64 overflow-y-auto mb-3">
+                {refSearchResults.map((item, idx) => (
+                  <button
+                    key={item.id ?? idx}
+                    onClick={() => selectRefProblem(item)}
+                    className="w-full text-left px-3 py-2.5 border-b border-slate-100 last:border-b-0
+                               transition-all hover:bg-indigo-50/50 bg-white"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="text-[10px] text-slate-300 font-mono mt-0.5 flex-shrink-0">#{item.id ?? idx + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[11px] text-slate-700 leading-relaxed line-clamp-2">
+                          <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
+                        </div>
+                        <div className="flex gap-1 mt-1 flex-wrap">
+                          {item.subject && (
+                            <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[9px] font-bold">{item.subject}</span>
+                          )}
+                          {(item.topic || item.metadata?.field) && (
+                            <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-500 rounded text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
+                          )}
+                          {item.difficulty != null && (
+                            <span className="px-1.5 py-0.5 bg-amber-50 text-amber-500 rounded text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* 検索結果が0件の場合 */}
+            {refSearchResults.length === 0 && refSearchQuery && !refSearching && (
+              <div className="text-center py-3 text-[11px] text-slate-400 mb-3">
+                該当する問題が見つかりません
+              </div>
+            )}
+
+            {/* 手動入力（折りたたみ） */}
+            <details className="rounded-xl border border-slate-100 bg-slate-50/50 mt-2">
+              <summary className="px-3 py-2.5 cursor-pointer text-[11px] font-bold text-slate-400 hover:text-indigo-500 select-none list-none flex items-center gap-1.5">
+                <svg className="w-3 h-3 transition-transform details-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+                手動で参考問題を入力する
+              </summary>
+              <div className="px-3 pb-3 pt-1 space-y-3">
                 <TextArea label="参考問題文" value={referenceStem} onChange={setReferenceStem} rows={3}
                   placeholder="例: 2次関数 f(x)=x^2-6x+5 の最小値とそのときのxの値を求めよ。" />
                 <TextArea label="参考解答（任意）" value={referenceAnswer} onChange={setReferenceAnswer} rows={2}
                   placeholder="例: f(x)=(x-3)^2-4 より、x=3のとき最小値-4" />
+              </div>
+            </details>
+
+            {referenceStem && (
+              <div className="mt-2 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+                <span className="text-[10px] text-emerald-600 font-bold">参考問題が設定されています</span>
               </div>
             )}
           </SectionCard>

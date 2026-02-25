@@ -105,9 +105,9 @@ export const Icons = {
  */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
-    <div className="mb-12">
+    <div className="mb-8 sm:mb-12">
       {breadcrumbs ? (
-        <nav className="flex items-center gap-2 mb-8 text-[13px] font-bold tracking-tight">
+        <nav className="flex items-center gap-2 mb-6 sm:mb-8 text-[13px] font-bold tracking-tight">
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-2">
               {bc.href ? (
@@ -131,11 +131,11 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           </div>
         )}
         <div className="flex-1 text-center md:text-left">
-          <h1 className="text-4xl font-black text-slate-800 mb-2 tracking-tight">
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-800 mb-2 tracking-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[17px] text-slate-500 font-medium max-w-2xl leading-relaxed">
+            <p className="text-sm sm:text-[17px] text-slate-500 font-medium max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
@@ -189,7 +189,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-white/50 text-sm
+          className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border-2 border-slate-100 bg-white/50 text-sm
                     text-slate-700 transition-all cursor-pointer appearance-none
                     hover:border-indigo-200 focus:border-indigo-500 focus:bg-white
                     outline-none pr-10 shadow-sm group-hover:shadow-md"
@@ -416,14 +416,14 @@ export function CopyButton({ text, onCopied, label = 'コピー' }) {
  */
 export function SectionCard({ title, subtitle, icon, children, className = '' }) {
   return (
-    <div className={`bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200/80 p-6 shadow-card hover:border-indigo-200/50 transition-colors ${className}`}>
+    <div className={`bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200/80 p-3 sm:p-6 shadow-card hover:border-indigo-200/50 transition-colors ${className}`}>
       {(title || icon) && (
-        <div className="mb-5">
-          <div className="flex items-center gap-3">
+        <div className="mb-4 sm:mb-5">
+          <div className="flex items-center gap-2 sm:gap-3">
             {icon && <span className="text-indigo-500">{icon}</span>}
-            {title && <h2 className="text-[17px] font-bold text-slate-800 tracking-tight">{title}</h2>}
+            {title && <h2 className="text-[15px] sm:text-[17px] font-bold text-slate-800 tracking-tight">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[13px] text-slate-400 mt-1">{subtitle}</p>}
+          {subtitle && <p className="text-[12px] sm:text-[13px] text-slate-400 mt-1">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -475,12 +475,12 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
  */
 export function ProgressSteps({ steps, current }) {
   return (
-    <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
+    <div className="flex items-center gap-1 sm:gap-4 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
       {steps.map((s, i) => (
-        <div key={i} className="flex items-center gap-3 flex-shrink-0">
-          <div className="flex items-center gap-2.5">
+        <div key={i} className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2.5">
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-xl text-xs font-bold transition-all shadow-sm
+              className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold transition-all shadow-sm
                 ${i + 1 <= current
                   ? 'bg-indigo-600 text-white shadow-indigo-100'
                   : i + 1 === current + 1
@@ -488,10 +488,10 @@ export function ProgressSteps({ steps, current }) {
                   : 'bg-slate-50 text-slate-300'
                 }`}
             >
-              {i + 1 < current ? <Icons.Success className="w-4 h-4" /> : i + 1}
+              {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-4 sm:h-4" /> : i + 1}
             </div>
             <span
-              className={`text-[13px] font-bold tracking-tight transition-colors whitespace-nowrap
+              className={`text-[9px] sm:text-[13px] font-bold tracking-tight transition-colors whitespace-nowrap
                 ${i + 1 <= current ? 'text-slate-800' : 'text-slate-400'}
               `}
             >
@@ -500,7 +500,7 @@ export function ProgressSteps({ steps, current }) {
           </div>
           {i < steps.length - 1 && (
             <div
-              className={`w-8 h-0.5 rounded-full ${
+              className={`w-3 sm:w-8 h-0.5 rounded-full ${
                 i + 1 < current ? 'bg-indigo-200' : 'bg-slate-100'
               }`}
             />

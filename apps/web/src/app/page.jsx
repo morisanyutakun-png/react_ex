@@ -99,10 +99,10 @@ function MainCard({ href, icon, label, hint, accent, tag }) {
   return (
     <Link href={href} className="group block">
       <div
-        className={`relative flex items-center gap-5 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/70 px-6 py-5 shadow-sm cursor-pointer transition-all duration-300 ${s.card} hover:shadow-lg active:scale-[0.98]`}
+        className={`relative flex items-center gap-4 sm:gap-5 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/70 px-4 sm:px-6 py-4 sm:py-5 shadow-sm cursor-pointer transition-all duration-300 ${s.card} hover:shadow-lg active:scale-[0.98]`}
       >
         {/* アイコン */}
-        <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors duration-300 ${s.icon}`}>
+        <div className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center transition-colors duration-300 ${s.icon}`}>
           {icon}
         </div>
 
@@ -158,11 +158,11 @@ function SubCard({ href, icon, label, hint, accent }) {
 /* ─── ページ本体 ─── */
 export default function HomePage() {
   return (
-    <div className="min-h-[90vh] flex items-center justify-center px-6 py-16">
+    <div className="min-h-screen flex items-center justify-center px-3 py-6 sm:px-6 sm:py-16 pb-24 sm:pb-16">
       <div className="max-w-xl w-full mx-auto">
 
         {/* ── ヘッダー ── */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-indigo-50/60 text-indigo-500 rounded-full text-[11px] font-bold mb-5 border border-indigo-100/40">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
@@ -170,7 +170,7 @@ export default function HomePage() {
             </span>
             RAG-Powered
           </div>
-          <h1 className="text-4xl font-black text-slate-800 mb-3 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-800 mb-3 tracking-tight">
             <span className="gradient-text">ExamGen</span>
             <span className="text-slate-200 font-light ml-2 text-3xl">v2</span>
           </h1>
@@ -196,7 +196,7 @@ export default function HomePage() {
           <h2 className="text-[11px] font-black text-slate-400 tracking-[0.15em] uppercase mb-3 px-1">
             ツール
           </h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {SUB_ACTIONS.map((a) => (
               <SubCard key={a.href} {...a} />
             ))}
@@ -204,7 +204,7 @@ export default function HomePage() {
         </div>
 
         {/* ── フッター ── */}
-        <div className="text-center mt-14 opacity-25 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+        <div className="text-center mt-10 sm:mt-14 opacity-25 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
           For Educators & Developers
         </div>
       </div>
