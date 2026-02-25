@@ -37,11 +37,11 @@ const IconData = () => (
 
 /* ─── カラーテーマ ─── */
 const themes = {
-  red:     { bg: 'bg-red-50',     text: 'text-red-600',     border: 'border-red-100',     hover: 'group-hover:border-red-200 group-hover:shadow-lg group-hover:shadow-red-100/40' },
-  violet:  { bg: 'bg-violet-50',  text: 'text-violet-600',  border: 'border-violet-100',  hover: 'group-hover:border-violet-200 group-hover:shadow-lg group-hover:shadow-violet-100/40' },
-  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100', hover: 'group-hover:border-emerald-200 group-hover:shadow-lg group-hover:shadow-emerald-100/40' },
-  amber:   { bg: 'bg-amber-50',   text: 'text-amber-600',   border: 'border-amber-100',   hover: 'group-hover:border-amber-200 group-hover:shadow-lg group-hover:shadow-amber-100/40' },
-  sky:     { bg: 'bg-sky-50',     text: 'text-sky-600',     border: 'border-sky-100',     hover: 'group-hover:border-sky-200 group-hover:shadow-lg group-hover:shadow-sky-100/40' },
+  red:     { bg: 'bg-red-500/10',    text: 'text-red-600',     border: 'border-transparent',  hover: 'group-hover:shadow-xl group-hover:shadow-red-500/[0.06] group-hover:border-red-100' },
+  violet:  { bg: 'bg-violet-500/10', text: 'text-violet-600',  border: 'border-transparent',  hover: 'group-hover:shadow-xl group-hover:shadow-violet-500/[0.06] group-hover:border-violet-100' },
+  emerald: { bg: 'bg-emerald-500/10',text: 'text-emerald-600', border: 'border-transparent',  hover: 'group-hover:shadow-xl group-hover:shadow-emerald-500/[0.06] group-hover:border-emerald-100' },
+  amber:   { bg: 'bg-amber-500/10',  text: 'text-amber-600',   border: 'border-transparent',  hover: 'group-hover:shadow-xl group-hover:shadow-amber-500/[0.06] group-hover:border-amber-100' },
+  sky:     { bg: 'bg-sky-500/10',    text: 'text-sky-600',     border: 'border-transparent',  hover: 'group-hover:shadow-xl group-hover:shadow-sky-500/[0.06] group-hover:border-sky-100' },
 };
 
 /* ─── メイン機能 ─── */
@@ -75,25 +75,25 @@ function FeatureCard({ href, icon, label, description, theme, badge }) {
   const t = themes[theme];
   return (
     <Link href={href} className="group block">
-      <div className={`relative bg-white rounded-2xl border ${t.border} p-5 sm:p-6 transition-all duration-300 ${t.hover} active:scale-[0.98]`}>
+      <div className={`relative bg-white rounded-2xl border ${t.border} p-6 transition-all duration-500 ease-out ${t.hover} active:scale-[0.98] shadow-sm`}>
         {/* アイコン + バッジ行 */}
-        <div className="flex items-start justify-between mb-4">
-          <div className={`w-12 h-12 rounded-2xl ${t.bg} ${t.text} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
+        <div className="flex items-start justify-between mb-5">
+          <div className={`w-12 h-12 rounded-2xl ${t.bg} ${t.text} flex items-center justify-center transition-transform duration-500 ease-out group-hover:scale-105`}>
             {icon}
           </div>
           {badge && (
-            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${t.bg} ${t.text}`}>
+            <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${t.bg} ${t.text}`}>
               {badge}
             </span>
           )}
         </div>
         {/* テキスト */}
-        <h3 className="text-lg font-bold text-[#1d1d1f] mb-1 tracking-tight">{label}</h3>
-        <p className="text-[13px] text-[#6e6e73] leading-relaxed whitespace-pre-line">{description}</p>
+        <h3 className="text-[17px] font-bold text-[#1d1d1f] mb-1.5 tracking-tight">{label}</h3>
+        <p className="text-[13px] text-[#86868b] leading-[1.6] whitespace-pre-line">{description}</p>
         {/* 矢印 */}
-        <div className={`absolute right-5 bottom-5 ${t.text} opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-0 group-hover:translate-x-1`}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        <div className={`absolute right-5 bottom-5 ${t.text} opacity-0 group-hover:opacity-60 transition-all duration-500 translate-x-0 group-hover:translate-x-0.5`}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
         </div>
       </div>
@@ -106,16 +106,16 @@ function CompactCard({ href, icon, label, description, theme }) {
   const t = themes[theme];
   return (
     <Link href={href} className="group block">
-      <div className={`flex items-center gap-4 bg-white rounded-2xl border ${t.border} px-4 py-3.5 transition-all duration-300 ${t.hover} active:scale-[0.98]`}>
-        <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${t.bg} ${t.text} flex items-center justify-center transition-transform duration-300 group-hover:scale-110`}>
+      <div className={`flex items-center gap-4 bg-white rounded-2xl border ${t.border} px-4 py-3.5 transition-all duration-500 ease-out ${t.hover} active:scale-[0.98] shadow-sm`}>
+        <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${t.bg} ${t.text} flex items-center justify-center transition-transform duration-500 ease-out group-hover:scale-105`}>
           <div className="scale-90">{icon}</div>
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[15px] font-semibold text-[#1d1d1f]">{label}</div>
-          <div className="text-[12px] text-[#aeaeb2] mt-0.5">{description}</div>
+          <div className="text-[12px] text-[#86868b] mt-0.5">{description}</div>
         </div>
-        <div className={`flex-shrink-0 ${t.text} opacity-0 group-hover:opacity-60 transition-all duration-300`}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <div className={`flex-shrink-0 ${t.text} opacity-0 group-hover:opacity-40 transition-all duration-500`}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
         </div>
@@ -127,34 +127,34 @@ function CompactCard({ href, icon, label, description, theme }) {
 /* ─── ページ本体 ─── */
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-16 pb-24 sm:pb-16">
-      <div className="max-w-lg w-full mx-auto">
+    <div className="min-h-screen flex items-center justify-center px-5 py-10 sm:px-6 sm:py-20 pb-28 sm:pb-20">
+      <div className="max-w-[480px] w-full mx-auto">
 
         {/* ── ヒーロー ── */}
-        <div className="text-center mb-10 sm:mb-12">
+        <div className="text-center mb-12 sm:mb-14">
           {/* ロゴマーク */}
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-[20px] bg-gradient-to-br from-red-500 to-red-600 text-white mb-5 shadow-lg shadow-red-200/50">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center w-[72px] h-[72px] rounded-[22px] bg-gradient-to-br from-red-500 to-red-600 text-white mb-6 shadow-lg shadow-red-500/20">
+            <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
           {/* タイトル */}
-          <h1 className="text-[40px] sm:text-5xl font-bold tracking-tight text-[#1d1d1f] mb-2">
+          <h1 className="text-[44px] sm:text-[56px] font-bold tracking-tight text-[#1d1d1f] mb-3 leading-none">
             REM
           </h1>
-          <p className="text-[15px] sm:text-base text-[#6e6e73] leading-relaxed">
+          <p className="text-[17px] text-[#86868b] font-medium">
             Rapid Exam Maker
           </p>
-          <p className="text-[13px] text-[#aeaeb2] mt-1">
+          <p className="text-[15px] text-[#aeaeb2] mt-2 leading-relaxed">
             AIと過去問データで、試験問題を賢くつくる
           </p>
         </div>
 
         {/* ── メイン機能 ── */}
-        <div className="mb-5">
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <h2 className="text-[13px] font-semibold text-[#1d1d1f]">はじめる</h2>
-            <div className="flex-1 h-px bg-black/[0.06]" />
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-3.5 px-0.5">
+            <h2 className="text-[13px] font-semibold text-[#86868b] uppercase tracking-wider">はじめる</h2>
+            <div className="flex-1 h-px bg-black/[0.04]" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {MAIN_ACTIONS.map((a) => (
@@ -165,11 +165,11 @@ export default function HomePage() {
 
         {/* ── ツール ── */}
         <div>
-          <div className="flex items-center gap-2 mb-3 px-1">
-            <h2 className="text-[13px] font-semibold text-[#1d1d1f]">ツール</h2>
-            <div className="flex-1 h-px bg-black/[0.06]" />
+          <div className="flex items-center gap-3 mb-3.5 px-0.5">
+            <h2 className="text-[13px] font-semibold text-[#86868b] uppercase tracking-wider">ツール</h2>
+            <div className="flex-1 h-px bg-black/[0.04]" />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {SUB_ACTIONS.map((a) => (
               <CompactCard key={a.href} {...a} />
             ))}
@@ -177,13 +177,13 @@ export default function HomePage() {
         </div>
 
         {/* ── フッター ── */}
-        <div className="text-center mt-10 sm:mt-14">
+        <div className="text-center mt-12 sm:mt-16">
           <div className="inline-flex items-center gap-2 text-[11px] text-[#d2d2d7]">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400"></span>
             </span>
-            <span className="font-medium tracking-wide">RAG-Powered</span>
+            <span className="font-medium tracking-wider">RAG-Powered</span>
           </div>
         </div>
       </div>

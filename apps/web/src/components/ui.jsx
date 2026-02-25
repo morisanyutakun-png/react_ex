@@ -105,13 +105,13 @@ export const Icons = {
  */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
-    <div className="mb-6 sm:mb-8">
+    <div className="mb-8 sm:mb-10">
       {breadcrumbs ? (
-        <nav className="flex items-center gap-1.5 mb-4 sm:mb-5 text-[12px] font-medium tracking-wide">
+        <nav className="flex items-center gap-1.5 mb-5 sm:mb-6 text-[12px] font-medium tracking-wide">
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="flex items-center gap-1 text-[#aeaeb2] hover:text-red-600 transition-colors">
+                <a href={bc.href} className="flex items-center gap-1 text-[#aeaeb2] hover:text-red-600 transition-colors duration-300">
                   {i === 0 && bc.label === 'Home' && <Icons.Home className="w-3.5 h-3.5" />}
                   <span>{bc.label}</span>
                 </a>
@@ -120,7 +120,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
               )}
               {i < breadcrumbs.length - 1 && (
                 <svg className="w-3 h-3 text-[#d2d2d7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               )}
             </div>
@@ -130,16 +130,16 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
       
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
-          <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center shadow-sm shadow-red-200/40">
+          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center shadow-lg shadow-red-500/20">
             {icon}
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f] tracking-tight">
+          <h1 className="text-[22px] sm:text-[28px] font-bold text-[#1d1d1f] tracking-tight leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#6e6e73] mt-0.5 max-w-2xl leading-relaxed">
+            <p className="text-[13px] text-[#86868b] mt-1 max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
@@ -161,14 +161,14 @@ export function StatusBar({ message }) {
     message.includes('取得') || message.includes('作成') || message.includes('開きました');
 
   const styles = isError
-    ? 'bg-red-50 text-red-700 border-red-100'
+    ? 'bg-red-500/[0.08] text-red-600 border-red-500/[0.12]'
     : isSuccess
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-    : 'bg-red-50 text-red-700 border-red-100';
+    ? 'bg-emerald-500/[0.08] text-emerald-600 border-emerald-500/[0.12]'
+    : 'bg-red-500/[0.08] text-red-600 border-red-500/[0.12]';
 
   return (
     <div
-      className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg text-sm font-medium mb-4 border transition-all duration-200 ${styles}`}
+      className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-semibold mb-4 border transition-all duration-500 animate-in fade-in ${styles}`}
     >
       <span className="flex-shrink-0">
         {isError ? <Icons.Error /> : isSuccess ? <Icons.Success /> : <Icons.Info />}
@@ -312,17 +312,17 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
 
   const variants = {
     primary:
-      'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-sm shadow-red-200/40',
+      'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-sm shadow-red-500/20 hover:shadow-md hover:shadow-red-500/25',
     secondary:
-      'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f5f5f7] shadow-sm',
+      'bg-white/80 backdrop-blur-sm text-[#1d1d1f] border border-black/[0.06] hover:bg-white hover:border-black/[0.1] shadow-sm',
     success:
-      'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-sm shadow-emerald-200/40',
+      'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-sm shadow-emerald-500/20',
     danger:
-      'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-sm shadow-red-200/40',
+      'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-sm shadow-red-500/20',
     warning:
-      'bg-gradient-to-b from-amber-400 to-amber-500 text-white hover:from-amber-500 hover:to-amber-600 shadow-sm shadow-amber-200/40',
+      'bg-gradient-to-b from-amber-400 to-amber-500 text-white hover:from-amber-500 hover:to-amber-600 shadow-sm shadow-amber-500/20',
     ghost:
-      'bg-transparent text-[#6e6e73] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
+      'bg-transparent text-[#86868b] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
   };
 
   return (
@@ -342,12 +342,12 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
 export function MetaTag({ icon, label, value, color = 'slate' }) {
   if (!value) return null;
   const colorMap = {
-    slate: 'bg-gray-100 text-gray-600',
-    neutral: 'bg-gray-100 text-gray-600',
-    indigo: 'bg-red-50 text-red-600',
-    emerald: 'bg-emerald-50 text-emerald-700',
-    amber: 'bg-amber-50 text-amber-700',
-    rose: 'bg-rose-50 text-rose-700',
+    slate: 'bg-black/[0.04] text-[#86868b]',
+    neutral: 'bg-black/[0.04] text-[#86868b]',
+    indigo: 'bg-red-500/[0.08] text-red-600',
+    emerald: 'bg-emerald-500/[0.08] text-emerald-600',
+    amber: 'bg-amber-500/[0.08] text-amber-600',
+    rose: 'bg-rose-500/[0.08] text-rose-600',
   };
   return (
     <span className={`badge ${colorMap[color] || colorMap.slate}`}>
@@ -420,14 +420,14 @@ export function CopyButton({ text, onCopied, label = 'コピー' }) {
  */
 export function SectionCard({ title, subtitle, icon, children, className = '' }) {
   return (
-    <div className={`bg-white rounded-2xl border border-black/[0.04] p-5 sm:p-6 shadow-card ${className}`}>
+    <div className={`bg-white rounded-2xl border border-black/[0.04] p-5 sm:p-6 shadow-sm transition-shadow duration-500 hover:shadow-md ${className}`}>
       {(title || icon) && (
-        <div className="mb-4">
+        <div className="mb-5">
           <div className="flex items-center gap-2.5">
-            {icon && <span className="text-red-600">{icon}</span>}
+            {icon && <span className="text-red-500">{icon}</span>}
             {title && <h2 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">{title}</h2>}
           </div>
-          {subtitle && <p className="text-xs text-[#6e6e73] mt-0.5 ml-[26px]">{subtitle}</p>}
+          {subtitle && <p className="text-[12px] text-[#86868b] mt-1 ml-[26px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -440,12 +440,12 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
  */
 export function EmptyState({ icon, title, description }) {
   return (
-    <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-[#d2d2d7]">
-      <div className="flex justify-center mb-4 text-[#d2d2d7]">
+    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-black/[0.06]">
+      <div className="flex justify-center mb-5 text-[#d2d2d7]">
         {icon || <Icons.Empty />}
       </div>
-      {title && <div className="text-[15px] font-semibold text-[#6e6e73] mb-1">{title}</div>}
-      {description && <div className="text-[13px] text-[#aeaeb2]">{description}</div>}
+      {title && <div className="text-[15px] font-semibold text-[#86868b] mb-1.5">{title}</div>}
+      {description && <div className="text-[13px] text-[#aeaeb2] leading-relaxed">{description}</div>}
     </div>
   );
 }
@@ -455,15 +455,15 @@ export function EmptyState({ icon, title, description }) {
  */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-1 bg-black/[0.04] rounded-xl">
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.05] rounded-[14px]">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`flex-1 px-3 py-2 rounded-[10px] text-[13px] font-semibold transition-all duration-200
+          className={`flex-1 px-3.5 py-[7px] rounded-[11px] text-[13px] font-semibold transition-all duration-300
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f] shadow-sm'
-              : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+              ? 'bg-white text-[#1d1d1f] shadow-sm shadow-black/[0.04]'
+              : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
         >
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}

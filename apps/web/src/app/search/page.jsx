@@ -9,16 +9,16 @@ import { LatexText, LatexBlock } from '@/components/LatexRenderer';
 /* ── 小さなUIパーツ ── */
 function Badge({ children, color = 'slate' }) {
   const map = {
-    indigo: 'bg-red-50 text-red-600 border-black/[0.06]',
-    emerald: 'bg-emerald-50 text-emerald-600 border-black/[0.06]',
-    amber: 'bg-amber-50 text-amber-600 border-black/[0.06]',
-    rose: 'bg-rose-50 text-rose-600 border-black/[0.06]',
-    violet: 'bg-violet-50 text-violet-600 border-black/[0.06]',
-    slate: 'bg-[#f5f5f7] text-[#6e6e73] border-black/[0.06]',
-    sky: 'bg-sky-50 text-sky-600 border-black/[0.06]',
+    indigo: 'bg-red-500/[0.08] text-red-600 border-red-500/[0.08]',
+    emerald: 'bg-emerald-500/[0.08] text-emerald-600 border-emerald-500/[0.08]',
+    amber: 'bg-amber-500/[0.08] text-amber-600 border-amber-500/[0.08]',
+    rose: 'bg-rose-500/[0.08] text-rose-600 border-rose-500/[0.08]',
+    violet: 'bg-violet-500/[0.08] text-violet-600 border-violet-500/[0.08]',
+    slate: 'bg-black/[0.04] text-[#86868b] border-black/[0.04]',
+    sky: 'bg-sky-500/[0.08] text-sky-600 border-sky-500/[0.08]',
   };
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${map[color] || map.slate}`}>
+    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${map[color] || map.slate}`}>
       {children}
     </span>
   );

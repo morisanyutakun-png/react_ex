@@ -49,11 +49,11 @@ body {
    ============================ */
 
 .transition-base {
-  @apply transition-all duration-200 ease-out;
+  @apply transition-all duration-300 ease-out;
 }
 
 /* ============================
-   Glass Card Effect (Apple Frosted)
+   Glass Card Effect (Apple Frosted Light)
    ============================ */
 
 .glass-card {
@@ -62,6 +62,17 @@ body {
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* ============================
+   Header Bar (Apple Music Dark Nav)
+   ============================ */
+
+.header-bar {
+  background: rgba(29, 29, 31, 0.96);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 
 /* ============================
@@ -78,11 +89,11 @@ body {
    ============================ */
 
 .hover-lift {
-  @apply transition-all duration-300;
+  @apply transition-all duration-300 ease-out;
 }
 .hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-elevated);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 /* ============================
@@ -90,14 +101,14 @@ body {
    ============================ */
 
 .badge {
-  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold tracking-wide uppercase;
+  @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-normal;
   border: 1px solid;
 }
-.badge-primary { @apply bg-red-50 text-red-600 border-red-200/60; }
-.badge-success { @apply bg-emerald-50 text-emerald-700 border-emerald-200/60; }
-.badge-warning { @apply bg-amber-50 text-amber-700 border-amber-200/60; }
-.badge-danger  { @apply bg-red-50 text-red-600 border-red-200/60; }
-.badge-neutral { @apply bg-gray-100 text-[#6e6e73] border-black/[0.06]; }
+.badge-primary { @apply bg-red-500/[0.08] text-red-600 border-red-500/[0.08]; }
+.badge-success { @apply bg-emerald-500/[0.08] text-emerald-600 border-emerald-500/[0.08]; }
+.badge-warning { @apply bg-amber-500/[0.08] text-amber-600 border-amber-500/[0.08]; }
+.badge-danger  { @apply bg-red-500/[0.08] text-red-600 border-red-500/[0.08]; }
+.badge-neutral { @apply bg-black/[0.04] text-[#86868b] border-black/[0.03]; }
 
 /* ============================
    Input Focus Ring (Red Glow)
@@ -173,7 +184,7 @@ body {
 }
 
 .animate-in {
-  animation: modal-in 0.2s ease-out;
+  animation: modal-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* ============================
@@ -196,7 +207,7 @@ body {
   top: 0;
   width: 3px;
   height: 100%;
-  background: linear-gradient(180deg, #dc2626, #ef4444);
+  background: #dc2626;
   border-radius: 3px;
 }
 
