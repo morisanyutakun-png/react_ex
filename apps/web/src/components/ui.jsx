@@ -101,7 +101,7 @@ export const Icons = {
 };
 
 /**
- * ページヘッダー
+ * ページヘッダー（Apple HIG Premium）
  */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
@@ -111,7 +111,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="flex items-center gap-1 text-[#aeaeb2] hover:text-red-600 transition-colors duration-300">
+                <a href={bc.href} className="flex items-center gap-1 text-[#aeaeb2] hover:text-[#fc3c44] transition-colors duration-300">
                   {i === 0 && bc.label === 'Home' && <Icons.Home className="w-3.5 h-3.5" />}
                   <span>{bc.label}</span>
                 </a>
@@ -130,16 +130,17 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
       
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
-          <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center shadow-lg shadow-red-500/20">
+          <div className="relative flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-[#fc3c44] to-[#d42d34] text-white flex items-center justify-center shadow-lg shadow-[#fc3c44]/20">
             {icon}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-[22px] sm:text-[28px] font-bold text-[#1d1d1f] tracking-tight leading-tight">
+          <h1 className="text-[24px] sm:text-[30px] font-extrabold text-[#1d1d1f] tracking-tight leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#86868b] mt-1 max-w-2xl leading-relaxed">
+            <p className="text-[13px] text-[#86868b] mt-1.5 max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
@@ -162,14 +163,14 @@ export function StatusBar({ message }) {
     /\d+件/.test(message);
 
   const styles = isError
-    ? 'bg-red-500/[0.08] text-red-600 border-red-500/[0.12]'
+    ? 'bg-red-500/[0.06] text-[#ff3b30] border-red-500/[0.1]'
     : isSuccess
-    ? 'bg-emerald-500/[0.08] text-emerald-600 border-emerald-500/[0.12]'
-    : 'bg-black/[0.04] text-[#6e6e73] border-black/[0.06]';
+    ? 'bg-[#34c759]/[0.06] text-[#34c759] border-[#34c759]/[0.1]'
+    : 'bg-black/[0.03] text-[#6e6e73] border-black/[0.04]';
 
   return (
     <div
-      className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-semibold mb-4 border transition-all duration-500 animate-in fade-in ${styles}`}
+      className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-semibold mb-4 border backdrop-blur-sm transition-all duration-500 animate-in ${styles}`}
     >
       <span className="flex-shrink-0">
         {isError ? <Icons.Error /> : isSuccess ? <Icons.Success /> : <Icons.Info />}
@@ -194,9 +195,9 @@ export function SelectField({ label, value, onChange, options, className = '' })
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm
-                    text-[#1d1d1f] transition-all cursor-pointer appearance-none
-                    hover:border-black/[0.12] focus:border-red-500 focus:ring-4 focus:ring-red-600/10
+          className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                    text-[#1d1d1f] transition-all duration-200 cursor-pointer appearance-none
+                    hover:border-black/[0.1] focus:border-[#fc3c44] focus:ring-4 focus:ring-[#fc3c44]/10
                     outline-none pr-9"
         >
           {options.map((opt) =>
@@ -239,8 +240,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step, classN
         min={min}
         max={max}
         step={step}
-        className="w-24 px-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm text-[#1d1d1f]
-                   transition-all hover:border-black/[0.12] focus:border-red-500 focus:ring-4 focus:ring-red-600/10
+        className="w-24 px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f]
+                   transition-all duration-200 hover:border-black/[0.1] focus:border-[#fc3c44] focus:ring-4 focus:ring-[#fc3c44]/10
                    outline-none [&::-webkit-inner-spin-button]:opacity-100"
       />
     </div>
@@ -264,9 +265,9 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
         rows={rows}
         placeholder={placeholder}
         readOnly={readOnly}
-        className="w-full px-3.5 py-3 rounded-xl border border-black/[0.08] bg-white font-mono text-sm
-                   leading-relaxed resize-y text-[#1d1d1f] transition-all
-                   hover:border-black/[0.12] focus:border-red-500 focus:ring-4 focus:ring-red-600/10
+          className="w-full px-3.5 py-3 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm font-mono text-sm
+                   leading-relaxed resize-y text-[#1d1d1f] transition-all duration-200
+                   hover:border-black/[0.1] focus:border-[#fc3c44] focus:ring-4 focus:ring-[#fc3c44]/10
                    outline-none placeholder:text-[#aeaeb2]
                    read-only:bg-[#f5f5f7] read-only:text-[#6e6e73] read-only:border-black/[0.04]"
       />
@@ -290,8 +291,8 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm text-[#1d1d1f]
-                   transition-all hover:border-black/[0.12] focus:border-red-500 focus:ring-4 focus:ring-red-600/10
+        className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f]
+                   transition-all duration-200 hover:border-black/[0.1] focus:border-[#fc3c44] focus:ring-4 focus:ring-[#fc3c44]/10
                    outline-none placeholder:text-[#aeaeb2]"
       />
     </div>
@@ -313,15 +314,15 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
 
   const variants = {
     primary:
-      'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-sm shadow-red-500/20 hover:shadow-md hover:shadow-red-500/25',
+      'bg-gradient-to-b from-[#fc3c44] to-[#d42d34] text-white hover:from-[#e0353c] hover:to-[#c02830] shadow-sm shadow-[#fc3c44]/25 hover:shadow-md hover:shadow-[#fc3c44]/30',
     secondary:
-      'bg-white/80 backdrop-blur-sm text-[#1d1d1f] border border-black/[0.06] hover:bg-white hover:border-black/[0.1] shadow-sm',
+      'bg-white/80 backdrop-blur-sm text-[#1d1d1f] border border-black/[0.06] hover:bg-white hover:border-black/[0.1] shadow-sm hover:shadow-md',
     success:
-      'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 shadow-sm shadow-emerald-500/20',
+      'bg-gradient-to-b from-[#34c759] to-[#28a745] text-white hover:from-[#2db84e] hover:to-[#239a3c] shadow-sm shadow-[#34c759]/20',
     danger:
-      'bg-gradient-to-b from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-sm shadow-red-500/20',
+      'bg-gradient-to-b from-[#ff3b30] to-[#d42d34] text-white hover:from-[#e6352b] hover:to-[#bf282f] shadow-sm shadow-[#ff3b30]/20',
     warning:
-      'bg-gradient-to-b from-amber-400 to-amber-500 text-white hover:from-amber-500 hover:to-amber-600 shadow-sm shadow-amber-500/20',
+      'bg-gradient-to-b from-[#ff9f0a] to-[#f59e0b] text-white hover:from-[#e89009] hover:to-[#d48e0a] shadow-sm shadow-[#ff9f0a]/20',
     ghost:
       'bg-transparent text-[#86868b] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
   };
@@ -345,7 +346,7 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
   const colorMap = {
     slate: 'bg-black/[0.04] text-[#86868b]',
     neutral: 'bg-black/[0.04] text-[#86868b]',
-    indigo: 'bg-red-500/[0.08] text-red-600',
+    indigo: 'bg-[#fc3c44]/[0.08] text-[#fc3c44]',
     emerald: 'bg-emerald-500/[0.08] text-emerald-600',
     amber: 'bg-amber-500/[0.08] text-amber-600',
     rose: 'bg-rose-500/[0.08] text-rose-600',
@@ -376,19 +377,19 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1 })
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
           className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                     bg-[#e5e5ea] accent-red-600
+                     bg-[#e5e5ea] accent-[#fc3c44]
                      [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
                      [&::-webkit-slider-thumb]:rounded-full
-                     [&::-webkit-slider-thumb]:bg-red-600
+                     [&::-webkit-slider-thumb]:bg-[#fc3c44]
                      [&::-webkit-slider-thumb]:appearance-none
                      [&::-webkit-slider-thumb]:transition-transform
                      [&::-webkit-slider-thumb]:hover:scale-110"
           style={{
-            background: `linear-gradient(to right, #dc2626 0%, #dc2626 ${pct}%, #e5e5ea ${pct}%, #e5e5ea 100%)`,
+            background: `linear-gradient(to right, #fc3c44 0%, #fc3c44 ${pct}%, #e5e5ea ${pct}%, #e5e5ea 100%)`,
           }}
         />
       </div>
-      <span className="font-semibold text-red-600 w-10 text-right tabular-nums">
+      <span className="font-semibold text-[#fc3c44] w-10 text-right tabular-nums">
         {Number(value).toFixed(1)}
       </span>
     </label>
@@ -421,12 +422,12 @@ export function CopyButton({ text, onCopied, label = 'コピー' }) {
  */
 export function SectionCard({ title, subtitle, icon, children, className = '' }) {
   return (
-    <div className={`bg-white rounded-2xl border border-black/[0.04] p-5 sm:p-6 shadow-sm transition-shadow duration-500 hover:shadow-md ${className}`}>
+    <div className={`card-premium p-5 sm:p-6 ${className}`}>
       {(title || icon) && (
         <div className="mb-5">
           <div className="flex items-center gap-2.5">
-            {icon && <span className="text-red-500">{icon}</span>}
-            {title && <h2 className="text-[15px] font-semibold text-[#1d1d1f] tracking-tight">{title}</h2>}
+            {icon && <span className="text-[#fc3c44]">{icon}</span>}
+            {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">{title}</h2>}
           </div>
           {subtitle && <p className="text-[12px] text-[#86868b] mt-1 ml-[26px]">{subtitle}</p>}
         </div>
@@ -441,12 +442,12 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
  */
 export function EmptyState({ icon, title, description }) {
   return (
-    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-black/[0.06]">
+    <div className="text-center py-20 card-premium border-dashed !border-black/[0.06]">
       <div className="flex justify-center mb-5 text-[#d2d2d7]">
         {icon || <Icons.Empty />}
       </div>
-      {title && <div className="text-[15px] font-semibold text-[#86868b] mb-1.5">{title}</div>}
-      {description && <div className="text-[13px] text-[#aeaeb2] leading-relaxed">{description}</div>}
+      {title && <div className="text-[15px] font-bold text-[#86868b] mb-1.5">{title}</div>}
+      {description && <div className="text-[13px] text-[#aeaeb2] leading-relaxed max-w-sm mx-auto">{description}</div>}
     </div>
   );
 }
@@ -456,14 +457,14 @@ export function EmptyState({ icon, title, description }) {
  */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.05] rounded-[14px]">
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px] backdrop-blur-sm">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`flex-1 px-3.5 py-[7px] rounded-[11px] text-[13px] font-semibold transition-all duration-300
+          className={`flex-1 px-3.5 py-[8px] rounded-[11px] text-[13px] font-bold transition-all duration-300
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f] shadow-sm shadow-black/[0.04]'
+              ? 'bg-white text-[#1d1d1f] shadow-sm shadow-black/[0.06]'
               : 'text-[#86868b] hover:text-[#1d1d1f]'
             }`}
         >
@@ -487,9 +488,9 @@ export function ProgressSteps({ steps, current }) {
             <div
               className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all
                 ${i + 1 <= current
-                  ? 'bg-gradient-to-b from-red-500 to-red-600 text-white shadow-sm shadow-red-200/40'
+                  ? 'bg-gradient-to-b from-[#fc3c44] to-[#d42d34] text-white shadow-sm shadow-[#fc3c44]/20'
                   : i + 1 === current + 1
-                  ? 'bg-white text-red-600 border-2 border-red-200'
+                  ? 'bg-white text-[#fc3c44] border-2 border-[#fc3c44]/20'
                   : 'bg-black/[0.04] text-[#aeaeb2]'
                 }`}
             >
@@ -506,7 +507,7 @@ export function ProgressSteps({ steps, current }) {
           {i < steps.length - 1 && (
             <div
               className={`w-3 sm:w-6 h-px ${
-                i + 1 < current ? 'bg-red-600' : 'bg-[#e5e5ea]'
+                i + 1 < current ? 'bg-[#fc3c44]' : 'bg-[#e5e5ea]'
               }`}
             />
           )}
