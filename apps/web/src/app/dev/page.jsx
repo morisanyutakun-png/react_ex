@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
 import {
   renderTemplate,
@@ -9,6 +9,7 @@ import {
   saveTuningLog,
   generatePdf,
   searchProblems,
+  fetchTuningFeedback,
 } from '@/lib/api';
 import {
   DIFFICULTY_MAP,
@@ -270,6 +271,29 @@ export default function TuningPage() {
   const [selectedRefProblem, setSelectedRefProblem] = useState(null);
   const refSearchInputRef = useRef(null);
 
+  // フィードバックループ
+  const [feedbackData, setFeedbackData] = useState(null); // { feedback: [...], stats: {...} }
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+
+  /* ── フィードバック取得 ── */
+  const loadFeedback = useCallback(async (subj, tplId) => {
+    setFeedbackLoading(true);
+    try {
+      const data = await fetchTuningFeedback({ subject: subj || undefined, templateId: tplId || undefined, minScore: 4.0, limit: 5 });
+      setFeedbackData(data);
+    } catch {
+      setFeedbackData(null);
+    }
+    setFeedbackLoading(false);
+  }, []);
+
+  // テンプレートや教科変更時にフィードバックを自動取得
+  useEffect(() => {
+    if (subject || templateId) {
+      loadFeedback(subject, templateId);
+    }
+  }, [subject, templateId, loadFeedback]);
+
   /* ── 参考問題DB検索関数 ── */
   const doRefSearch = useCallback(async () => {
     const q = refSearchQuery.trim();
@@ -337,7 +361,24 @@ export default function TuningPage() {
       const rendered = data.rendered_prompt || data.rendered || '';
       const hasOutputSpec = /出力形式.*json|json.*形式|必ず.*json/i.test(rendered);
       const refSection = buildReferencePromptSection(referenceStem, referenceAnswer);
-      setBasePrompt((hasOutputSpec ? rendered : rendered + OUTPUT_FORMAT_INSTRUCTION) + refSection);
+      // フィードバックから高評価例をプロンプトに注入
+      let feedbackSection = '';
+      if (feedbackData?.feedback?.length > 0) {
+        const examples = feedbackData.feedback
+          .filter((f) => f.model_output_excerpt?.trim())
+          .slice(0, 3);
+        if (examples.length > 0) {
+          const lines = ['\n\n--- 過去の高評価出力例（参考）---',
+            '以下は過去に高評価（スコア4以上）を受けた出力例です。品質・形式の参考にしてください。'];
+          examples.forEach((ex, i) => {
+            lines.push(`\n【例${i + 1}】(スコア: ${ex.score}${ex.notes ? `, メモ: ${ex.notes}` : ''})`);
+            lines.push(ex.model_output_excerpt.slice(0, 300));
+          });
+          lines.push('\n---');
+          feedbackSection = lines.join('\n');
+        }
+      }
+      setBasePrompt((hasOutputSpec ? rendered : rendered + OUTPUT_FORMAT_INSTRUCTION) + refSection + feedbackSection);
       setRagPrompt('');
       setRetrievedChunks([]);
       setRagSkipped(false);
@@ -462,6 +503,8 @@ export default function TuningPage() {
       });
       setStatus('評価を記録しました');
       setTuningScore(''); setTuningNotes(''); setExpectedOutput('');
+      // フィードバックデータを再読み込み（今の評価を次回に反映）
+      loadFeedback(subject, templateId);
     } catch (e) { setStatus(`保存エラー: ${e.message}`); }
   };
 
@@ -606,7 +649,7 @@ export default function TuningPage() {
 
           {/* ── 参考問題（DB検索ベース） ── */}
           <SectionCard title="参考問題を選択" icon={<Icons.Search />}
-            subtitle="DBから参考問題を検索して選択、または手動で入力できます。選択した問題に沿った類題を生成します。">
+            subtitle="DBから参考問題を検索して選択できます。選択した問題に沿った類題を生成します。">
 
             {/* 選択済み問題の表示 */}
             {selectedRefProblem && (
@@ -730,22 +773,6 @@ export default function TuningPage() {
                 該当する問題が見つかりません
               </div>
             )}
-
-            {/* 手動入力（折りたたみ） */}
-            <details className="rounded-xl border border-slate-100 bg-slate-50/50 mt-2">
-              <summary className="px-3 py-2.5 cursor-pointer text-[11px] font-bold text-slate-400 hover:text-indigo-500 select-none list-none flex items-center gap-1.5">
-                <svg className="w-3 h-3 transition-transform details-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-                手動で参考問題を入力する
-              </summary>
-              <div className="px-3 pb-3 pt-1 space-y-3">
-                <TextArea label="参考問題文" value={referenceStem} onChange={setReferenceStem} rows={3}
-                  placeholder="例: 2次関数 f(x)=x^2-6x+5 の最小値とそのときのxの値を求めよ。" />
-                <TextArea label="参考解答（任意）" value={referenceAnswer} onChange={setReferenceAnswer} rows={2}
-                  placeholder="例: f(x)=(x-3)^2-4 より、x=3のとき最小値-4" />
-              </div>
-            </details>
 
             {referenceStem && (
               <div className="mt-2 flex items-center gap-1.5">
@@ -978,6 +1005,66 @@ export default function TuningPage() {
               </Button>
             </div>
           </SectionCard>
+
+          {/* ── フィードバック統計 ── */}
+          {feedbackData && (
+            <SectionCard title="改善フィードバック" icon={<Icons.Chart />}
+              subtitle="過去の評価データに基づく改善サイクル">
+              <div className="space-y-4">
+                {/* 統計サマリー */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100/40 text-center">
+                    <div className="text-lg font-black text-indigo-600">{feedbackData.stats?.total_evaluations ?? 0}</div>
+                    <div className="text-[10px] text-indigo-400 font-bold mt-0.5">総評価数</div>
+                  </div>
+                  <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100/40 text-center">
+                    <div className="text-lg font-black text-emerald-600">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
+                    <div className="text-[10px] text-emerald-400 font-bold mt-0.5">平均スコア</div>
+                  </div>
+                  <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-100/40 text-center">
+                    <div className="text-lg font-black text-amber-600">{feedbackData.stats?.high_score_count ?? 0}</div>
+                    <div className="text-[10px] text-amber-400 font-bold mt-0.5">高評価 (4+)</div>
+                  </div>
+                </div>
+
+                {/* 高評価例リスト */}
+                {feedbackData.feedback?.length > 0 ? (
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-400 mb-2 tracking-[0.1em] uppercase">
+                      高評価の過去出力（プロンプトに自動注入済み）
+                    </label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
+                      {feedbackData.feedback.map((fb, idx) => (
+                        <div key={fb.id || idx} className="p-2.5 bg-white/60 rounded-lg border border-slate-100 text-xs">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-[9px] font-black">★ {fb.score}</span>
+                              {fb.metadata?.subject && (
+                                <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[9px] font-bold">{fb.metadata.subject}</span>
+                              )}
+                            </div>
+                            <span className="text-[9px] text-slate-300">{fb.timestamp?.slice(0, 10)}</span>
+                          </div>
+                          {fb.notes && <div className="text-slate-500 text-[10px] mb-1">💬 {fb.notes}</div>}
+                          <div className="text-slate-600 line-clamp-2">{fb.model_output_excerpt?.slice(0, 150)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-xs text-slate-400">
+                    まだ高評価データがありません。評価を記録するとここに表示され、次回のプロンプト生成に自動反映されます。
+                  </div>
+                )}
+
+                {/* フィードバックの仕組み説明 */}
+                <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100/40 text-[11px] text-blue-600 leading-relaxed">
+                  <span className="font-bold">📊 フィードバックループ:</span> スコア4以上の評価データは自動的にプロンプトに注入され、
+                  LLMが過去の良い出力パターンを学習します。評価を重ねるほど出力品質が向上します。
+                </div>
+              </div>
+            </SectionCard>
+          )}
 
           <SectionCard title="問題をDBに保存" icon={<Icons.Data />}
             subtitle="パースした問題データをDBに保存（検算を自動実行）">

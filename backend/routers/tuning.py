@@ -146,14 +146,13 @@ def log_tuning_entry(payload: TuningLogIn = Body(...)):
     # Validate parsed_output against expected tuning schema. If the parsed JSON
     # does not follow the expected schema (answer_brief as LaTeX, explanation, references list, confidence number),
     # reject the submission so bad examples are not saved.
-    # NOTE: removed strict LaTeX heuristic enforcement here. Some model outputs
-    # include LaTeX while others include plain text; rejecting submissions
-    # because they don't match a LaTeX pattern caused many valid examples to
-    # be dropped. We'll accept any string for `answer_brief` and only enforce
-    # structural requirements below.
+    # NOTE: When a score is provided (evaluation-only mode), we skip strict schema
+    # validation. The strict check only applies when saving structured LLM outputs
+    # without an evaluation score, so that malformed generation examples are caught.
 
     validation_errors = []
-    if valid_json and parsed_output is not None:
+    is_evaluation_save = payload.score is not None
+    if valid_json and parsed_output is not None and not is_evaluation_save:
         if not isinstance(parsed_output, dict):
             validation_errors.append('parsed output must be a JSON object')
         else:
@@ -263,6 +262,126 @@ def log_tuning_entry(payload: TuningLogIn = Body(...)):
         pass
 
     return JSONResponse({'status': 'ok', 'id': entry['id'], 'db_saved': entry.get('db_saved', False), 'db_error': entry.get('db_error')})
+
+
+@router.get('/api/tuning/feedback')
+def get_tuning_feedback(
+    subject: Optional[str] = None,
+    template_id: Optional[str] = None,
+    min_score: float = 4.0,
+    limit: int = 5,
+):
+    """Return high-scoring past evaluations as feedback for future prompt generation.
+
+    Queries tuning_logs (DB first, JSONL fallback) for entries with score >= min_score.
+    Optionally filters by subject or template_id in metadata.
+    Returns a list of {score, notes, model_output_excerpt, metadata, timestamp}.
+    """
+    results = []
+
+    # ── Try DB first ──
+    db_ok = False
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        # Build dynamic WHERE clause
+        conditions = ["score IS NOT NULL", "score >= %s"]
+        params: list = [min_score]
+        # metadata is stored as JSON text; use LIKE for simple filtering
+        if subject:
+            conditions.append("metadata LIKE %s")
+            params.append(f'%"subject":%"{subject}"%')
+        if template_id:
+            conditions.append("metadata LIKE %s")
+            params.append(f'%"template_id":%"{template_id}"%')
+        where = " AND ".join(conditions)
+        q = f"SELECT id, timestamp, score, notes, model_output, metadata FROM tuning_logs WHERE {where} ORDER BY score DESC, timestamp DESC LIMIT %s"
+        params.append(limit)
+        cur.execute(q, tuple(params))
+        rows = cur.fetchall()
+        for r in rows:
+            md = {}
+            if r[5]:
+                try:
+                    md = json.loads(r[5]) if isinstance(r[5], str) else r[5]
+                except Exception:
+                    md = {}
+            excerpt = (r[4] or '')[:500]
+            results.append({
+                'id': r[0],
+                'timestamp': r[1],
+                'score': r[2],
+                'notes': r[3],
+                'model_output_excerpt': excerpt,
+                'metadata': md,
+            })
+        try:
+            cur.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    # ── Fallback to JSONL ──
+    if not db_ok and os.path.exists(LOG_PATH):
+        try:
+            all_entries = []
+            with open(LOG_PATH, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        entry = json.loads(line)
+                    except Exception:
+                        continue
+                    s = entry.get('score')
+                    if s is None or s < min_score:
+                        continue
+                    md = entry.get('metadata') or {}
+                    if subject and md.get('subject') != subject:
+                        continue
+                    if template_id and md.get('template_id') != template_id:
+                        continue
+                    all_entries.append(entry)
+            # sort by score desc, then timestamp desc
+            all_entries.sort(key=lambda e: (-(e.get('score') or 0), e.get('timestamp', '')))
+            for entry in all_entries[:limit]:
+                results.append({
+                    'id': entry.get('id'),
+                    'timestamp': entry.get('timestamp'),
+                    'score': entry.get('score'),
+                    'notes': entry.get('notes'),
+                    'model_output_excerpt': (entry.get('model_output') or '')[:500],
+                    'metadata': entry.get('metadata') or {},
+                })
+        except Exception:
+            pass
+
+    # ── Build summary stats ──
+    stats = {'total_evaluations': 0, 'avg_score': None, 'high_score_count': len(results)}
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        conds = ["score IS NOT NULL"]
+        ps: list = []
+        if subject:
+            conds.append("metadata LIKE %s")
+            ps.append(f'%"subject":%"{subject}"%')
+        w = " AND ".join(conds)
+        cur.execute(f"SELECT COUNT(*), AVG(score) FROM tuning_logs WHERE {w}", tuple(ps))
+        row = cur.fetchone()
+        if row:
+            stats['total_evaluations'] = row[0] or 0
+            stats['avg_score'] = round(float(row[1]), 2) if row[1] is not None else None
+        cur.close()
+        conn.close()
+    except Exception:
+        pass
+
+    return {'feedback': results, 'stats': stats}
 
 
 @router.post('/api/tuning/save_problem')

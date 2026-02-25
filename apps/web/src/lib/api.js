@@ -145,6 +145,19 @@ export async function saveTuningLog(body) {
 }
 
 /**
+ * 過去の高評価チューニングログを取得（フィードバックループ用）
+ * subject, template_id, min_score, limit で絞り込み可能
+ */
+export async function fetchTuningFeedback({ subject, templateId, minScore = 4.0, limit = 5 } = {}) {
+  const params = new URLSearchParams();
+  if (subject) params.set('subject', subject);
+  if (templateId) params.set('template_id', templateId);
+  if (minScore != null) params.set('min_score', String(minScore));
+  if (limit != null) params.set('limit', String(limit));
+  return apiFetch(`/api/tuning/feedback?${params.toString()}`);
+}
+
+/**
  * Parse された問題データを problems テーブルに保存
  * parsed_output には最低限 stem フィールドが必要。
  * final_answer, checks (2件以上) も含めるとバリデーション通過。
