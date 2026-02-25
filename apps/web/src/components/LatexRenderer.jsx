@@ -138,7 +138,7 @@ export function LatexBlock({ children, className = '' }) {
   const html = useMemo(() => renderLatexToHtml(children || ''), [children]);
   return (
     <div
-      className={`text-sm text-slate-700 leading-relaxed ${className}`}
+      className={`text-sm text-gray-700 leading-relaxed ${className}`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

@@ -20,13 +20,8 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
-        <div className="fixed inset-0 pointer-events-none -z-10">
-          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-200/20 blur-[120px] rounded-full" />
-          <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-200/10 blur-[120px] rounded-full" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
-        </div>
-        <div className="relative">{children}</div>
+      <body className="min-h-screen bg-gray-50 text-gray-900 selection:bg-indigo-100 selection:text-indigo-900">
+        {children}
       </body>
     </html>
   );

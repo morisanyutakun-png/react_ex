@@ -20,17 +20,17 @@ export default function Header() {
   return (
     <>
       {/* ── デスクトップヘッダー ── */}
-      <header className="glass-card sticky top-0 z-50 border-b border-white/40">
+      <header className="glass-card sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center justify-between h-14">
             <Link
               href="/"
-              className="flex items-center gap-2.5 group"
+              className="flex items-center gap-2 group"
             >
-              <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-indigo-600 text-white shadow-indigo-200 shadow-lg">
-                <Icons.Book className="w-4 h-4 sm:w-5 sm:h-5" />
+              <div className="flex items-center justify-center w-7 h-7 rounded-md bg-indigo-600 text-white">
+                <Icons.Book className="w-4 h-4" />
               </div>
-              <span className="text-base sm:text-lg font-bold gradient-text">
+              <span className="text-sm sm:text-base font-bold gradient-text">
                 ExamGen RAG
               </span>
             </Link>
@@ -46,17 +46,14 @@ export default function Header() {
                   <Link
                     key={href}
                     href={href}
-                    className={`relative px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center gap-1.5
+                    className={`relative px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 flex items-center gap-1.5
                       ${active
-                        ? 'bg-white/80 text-indigo-600 shadow-sm'
-                        : 'text-slate-500 hover:bg-white/50 hover:text-slate-700'
+                        ? 'bg-indigo-50 text-indigo-700'
+                        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                       }`}
                   >
                     {icon}
                     {label}
-                    {active && (
-                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full bg-indigo-500" />
-                    )}
                   </Link>
                 );
               })}
@@ -65,7 +62,7 @@ export default function Header() {
             {/* モバイルハンバーガー */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="sm:hidden p-2 rounded-xl text-slate-500 hover:bg-white/60 hover:text-slate-700 transition-all"
+              className="sm:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
               aria-label="メニューを開く"
             >
               {mobileMenuOpen ? (
@@ -83,7 +80,7 @@ export default function Header() {
 
         {/* モバイルドロップダウンメニュー */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-slate-100/50 bg-white/95 backdrop-blur-lg animate-in">
+          <div className="sm:hidden border-t border-gray-100 bg-white animate-in">
             <nav className="px-3 py-2 space-y-0.5">
               {NAV_ITEMS.map(({ href, label, icon }) => {
                 const active =
@@ -95,16 +92,16 @@ export default function Header() {
                     key={href}
                     href={href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all
                       ${active
-                        ? 'bg-indigo-50 text-indigo-600'
-                        : 'text-slate-600 hover:bg-slate-50 active:bg-slate-100'
+                        ? 'bg-indigo-50 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-50 active:bg-gray-100'
                       }`}
                   >
                     {icon}
                     {label}
                     {active && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-600" />
                     )}
                   </Link>
                 );
@@ -115,7 +112,7 @@ export default function Header() {
       </header>
 
       {/* ── モバイルボトムナビバー ── */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-lg border-t border-slate-200/60 safe-area-bottom">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 safe-area-bottom">
         <div className="flex items-center justify-around px-1 py-1">
           {NAV_ITEMS.map(({ href, label, mobileIcon }) => {
             const active =
@@ -126,16 +123,16 @@ export default function Header() {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-xl min-w-[3.5rem] transition-all active:scale-95
+                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-md min-w-[3.5rem] transition-all active:scale-95
                   ${active
                     ? 'text-indigo-600'
-                    : 'text-slate-400'
+                    : 'text-gray-400'
                   }`}
               >
-                <div className={`p-1 rounded-lg transition-colors ${active ? 'bg-indigo-50' : ''}`}>
+                <div className={`p-1 rounded-md transition-colors ${active ? 'bg-indigo-50' : ''}`}>
                   {mobileIcon}
                 </div>
-                <span className={`text-[10px] font-bold leading-none ${active ? 'text-indigo-600' : 'text-slate-400'}`}>
+                <span className={`text-[10px] font-medium leading-none ${active ? 'text-indigo-600' : 'text-gray-400'}`}>
                   {label}
                 </span>
               </Link>

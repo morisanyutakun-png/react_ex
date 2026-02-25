@@ -507,9 +507,9 @@ export default function DbEditorPage() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="キーワード検索..."
-                className="px-3 py-2 rounded-xl border-2 border-slate-100 bg-white/50 text-sm
-                           text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-500
-                           focus:bg-white outline-none w-48"
+                className="px-3 py-2 rounded-lg border border-gray-100 bg-white text-sm
+                           text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500
+                           focus:ring-2 focus:ring-indigo-500/10 outline-none w-48"
               />
               <Button variant="secondary" size="sm" onClick={handleSearch}>
                 <Icons.Search className="w-4 h-4" />
@@ -519,8 +519,8 @@ export default function DbEditorPage() {
             {/* カラム選択ボタン */}
             <button
               onClick={() => setShowColPicker(!showColPicker)}
-              className="px-3 py-2 text-xs font-semibold text-slate-500 bg-white border-2 border-slate-100
-                         rounded-xl hover:border-indigo-200 transition-all flex items-center gap-1.5"
+              className="px-3 py-2 text-xs font-semibold text-gray-500 bg-white border border-gray-100
+                         rounded-lg hover:border-gray-300 transition-all flex items-center gap-1.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -580,7 +580,7 @@ export default function DbEditorPage() {
           )}
 
           {/* ページネーション */}
-          <div className="flex items-center gap-4 text-sm text-slate-500">
+          <div className="flex items-center gap-4 text-sm text-gray-500">
             <span>{total}件中 {Math.min(page * PAGE_SIZE + 1, total)}〜{Math.min((page + 1) * PAGE_SIZE, total)}件</span>
             <div className="flex gap-1">
               <Button variant="ghost" size="sm" onClick={() => handlePageChange(page - 1)} disabled={page === 0}>
@@ -594,27 +594,27 @@ export default function DbEditorPage() {
           </div>
 
           {/* テーブル */}
-          <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-card overflow-hidden">
+          <div className="bg-white backdrop-blur-md rounded-lg border border-gray-200 shadow-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-200">
-                    <th className="px-2 py-3 text-left font-bold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50/80 z-10 w-10">
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-2 py-3 text-left font-bold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 w-10">
                       #
                     </th>
                     {displayCols.map((col) => (
                       <th key={col.name}
-                        className="px-3 py-3 text-left font-bold text-slate-500 tracking-wider whitespace-nowrap border-l border-slate-100"
+                        className="px-3 py-3 text-left font-bold text-gray-500 tracking-wider whitespace-nowrap border-l border-gray-100"
                         title={`${col.name} (${col.type})${col.notnull ? ' NOT NULL' : ''}`}
                       >
                         <div className="flex items-center gap-1">
                           {colLabel(col.name)}
                           {col.pk && <span className="text-[9px] bg-indigo-100 text-indigo-600 px-1 rounded">PK</span>}
                         </div>
-                        <div className="text-[9px] font-normal text-slate-300 mt-0.5">{col.name}</div>
+                        <div className="text-[9px] font-normal text-gray-300 mt-0.5">{col.name}</div>
                       </th>
                     ))}
-                    <th className="px-2 py-3 text-center font-bold text-slate-500 uppercase tracking-wider border-l border-slate-100 w-20">
+                    <th className="px-2 py-3 text-center font-bold text-gray-500 uppercase tracking-wider border-l border-gray-100 w-20">
                       操作
                     </th>
                   </tr>
@@ -625,11 +625,11 @@ export default function DbEditorPage() {
                     const rowDirty = !!edits[rowPk];
                     return (
                       <tr key={rowPk ?? idx}
-                        className={`border-b border-slate-100 hover:bg-indigo-50/30 transition-colors
-                          ${rowDirty ? 'bg-amber-50/40' : idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}
+                        className={`border-b border-gray-100 hover:bg-indigo-50/30 transition-colors
+                          ${rowDirty ? 'bg-amber-50/40' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
                       >
-                        <td className={`px-2 py-2 font-mono text-slate-400 sticky left-0 z-10
-                          ${rowDirty ? 'bg-amber-50/40' : idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                        <td className={`px-2 py-2 font-mono text-gray-400 sticky left-0 z-10
+                          ${rowDirty ? 'bg-amber-50/40' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                           {page * PAGE_SIZE + idx + 1}
                         </td>
                         {displayCols.map((col) => {
@@ -640,7 +640,7 @@ export default function DbEditorPage() {
 
                           if (isPkCol) {
                             return (
-                              <td key={col.name} className="px-3 py-2 border-l border-slate-100 font-mono text-indigo-600 font-bold">
+                              <td key={col.name} className="px-3 py-2 border-l border-gray-100 font-mono text-indigo-600 font-bold">
                                 {formatCellValue(cellVal)}
                               </td>
                             );
@@ -648,7 +648,7 @@ export default function DbEditorPage() {
 
                           return (
                             <td key={col.name}
-                              className={`px-1 py-1 border-l border-slate-100 cursor-pointer
+                              className={`px-1 py-1 border-l border-gray-100 cursor-pointer
                                 ${dirty ? 'bg-amber-100/60 ring-1 ring-amber-300/50' : ''}
                                 ${isEditing ? 'p-0' : ''}`}
                               onClick={() => !isEditing && startEdit(rowPk, col.name)}
@@ -663,22 +663,22 @@ export default function DbEditorPage() {
                                   onFinish={finishEdit}
                                 />
                               ) : (
-                                <span className={`block px-2 py-1 text-slate-600 max-w-[300px] truncate ${
+                                <span className={`block px-2 py-1 text-gray-600 max-w-[300px] truncate ${
                                   typeof cellVal === 'object' && cellVal !== null ? 'font-mono text-[10px] text-violet-600' : ''
                                 }`}>
                                   {cellVal === null || cellVal === undefined
-                                    ? <span className="text-slate-300 italic">null</span>
+                                    ? <span className="text-gray-300 italic">null</span>
                                     : truncateDisplay(cellVal)}
                                 </span>
                               )}
                             </td>
                           );
                         })}
-                        <td className="px-2 py-2 border-l border-slate-100 text-center">
+                        <td className="px-2 py-2 border-l border-gray-100 text-center">
                           <div className="flex gap-1 justify-center">
                             <button
                               onClick={() => setDetailRow(row)}
-                              className="text-slate-300 hover:text-indigo-500 transition-colors p-1"
+                              className="text-gray-300 hover:text-indigo-500 transition-colors p-1"
                               title="詳細"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -690,7 +690,7 @@ export default function DbEditorPage() {
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(rowPk)}
-                              className="text-slate-300 hover:text-rose-500 transition-colors p-1"
+                              className="text-gray-300 hover:text-rose-500 transition-colors p-1"
                               title="削除"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -705,7 +705,7 @@ export default function DbEditorPage() {
                   })}
                   {rows.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={displayCols.length + 2} className="text-center py-12 text-slate-400">
+                      <td colSpan={displayCols.length + 2} className="text-center py-12 text-gray-400">
                         データがありません
                       </td>
                     </tr>
@@ -714,7 +714,7 @@ export default function DbEditorPage() {
               </table>
             </div>
             {loading && (
-              <div className="flex items-center justify-center py-8 text-slate-400">
+              <div className="flex items-center justify-center py-8 text-gray-400">
                 <Icons.Info className="w-5 h-5 animate-pulse mr-2" /> 読み込み中...
               </div>
             )}
@@ -747,9 +747,9 @@ export default function DbEditorPage() {
       {/* ── 削除確認 ── */}
       {deleteConfirm !== null && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-6 shadow-xl max-w-sm mx-4">
-            <div className="text-lg font-bold text-slate-800 mb-2">削除確認</div>
-            <p className="text-sm text-slate-600 mb-4">
+          <div className="bg-white rounded-lg p-6 shadow-xl max-w-sm mx-4">
+            <div className="text-lg font-bold text-gray-800 mb-2">削除確認</div>
+            <p className="text-sm text-gray-600 mb-4">
               ID: <strong>{deleteConfirm}</strong> を削除しますか？この操作は取り消せません。
             </p>
             <div className="flex gap-3 justify-end">
@@ -772,10 +772,10 @@ function TabButton({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all
+      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all
         ${active
           ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-          : 'bg-white text-slate-500 border-2 border-slate-100 hover:border-indigo-200 hover:text-indigo-600'
+          : 'bg-white text-gray-500 border border-gray-100 hover:border-gray-300 hover:text-indigo-600'
         }`}
     >
       {children}
@@ -796,7 +796,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         onChange={(e) => onChange(e.target.value)}
         onBlur={onFinish}
         onKeyDown={(e) => { if (e.key === 'Escape') onFinish(); }}
-        className="w-full min-w-[200px] px-2 py-1.5 text-xs border-2 border-indigo-400
+        className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-indigo-400
                    rounded-lg bg-white font-mono resize-y outline-none shadow-inner"
         rows={4}
       />
@@ -809,7 +809,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         value={String(value ?? '')}
         onChange={(e) => { onChange(e.target.value); onFinish(); }}
         onBlur={onFinish}
-        className="px-2 py-1.5 text-xs border-2 border-indigo-400 rounded-lg bg-white"
+        className="px-2 py-1.5 text-xs border border-indigo-400 rounded-lg bg-white"
       >
         <option value="">—</option>
         <option value="true">true</option>
@@ -829,7 +829,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         if (e.key === 'Escape') onFinish();
       }}
       step={isNumericColumn(col.type) ? 'any' : undefined}
-      className="w-full min-w-[80px] px-2 py-1.5 text-xs border-2 border-indigo-400
+      className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-indigo-400
                  rounded-lg bg-white outline-none shadow-inner"
     />
   );
@@ -860,16 +860,16 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-lg p-5">
+    <div className="bg-white rounded-lg border border-gray-200 shadow-lg p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-slate-700">表示カラムを選択</h3>
+        <h3 className="text-sm font-bold text-gray-700">表示カラムを選択</h3>
         <div className="flex gap-2">
           <button onClick={() => setVisibleCols(DEFAULT_VISIBLE_COLS)}
             className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold">デフォルト</button>
           <button onClick={() => setVisibleCols(colNames)}
-            className="text-xs text-slate-400 hover:text-slate-600 font-semibold">全選択</button>
+            className="text-xs text-gray-400 hover:text-gray-600 font-semibold">全選択</button>
           <button onClick={onClose}
-            className="text-xs text-slate-400 hover:text-slate-600 font-semibold ml-2">閉じる</button>
+            className="text-xs text-gray-400 hover:text-gray-600 font-semibold ml-2">閉じる</button>
         </div>
       </div>
 
@@ -877,8 +877,8 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="flex gap-2 mb-3">
         {Object.entries(COLUMN_GROUPS).map(([key, group]) => (
           <button key={key} onClick={() => selectGroup(key)}
-            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500
-                       hover:bg-indigo-50 hover:text-indigo-600 transition-colors border border-slate-100">
+            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500
+                       hover:bg-indigo-50 hover:text-indigo-600 transition-colors border border-gray-100">
             {group.label}
           </button>
         ))}
@@ -887,7 +887,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5">
         {allCols.map((col) => (
           <label key={col.name} className={`flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer text-[11px]
-            transition-colors ${visibleCols.includes(col.name) ? 'bg-indigo-50 text-indigo-700' : 'text-slate-400 hover:bg-slate-50'}`}>
+            transition-colors ${visibleCols.includes(col.name) ? 'bg-indigo-50 text-indigo-700' : 'text-gray-400 hover:bg-gray-50'}`}>
             <input type="checkbox" checked={visibleCols.includes(col.name)}
               onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-indigo-500" />
             <span className="truncate">{colLabel(col.name)}</span>
@@ -904,12 +904,12 @@ function RowDetailModal({ row, schema, pk, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800">
+      <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800">
             行詳細 — ID: {row[pk]}
           </h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -920,20 +920,20 @@ function RowDetailModal({ row, schema, pk, onClose }) {
             const val = row[col.name];
             const isEmpty = val === null || val === undefined || val === '';
             return (
-              <div key={col.name} className="flex gap-3 py-2 border-b border-slate-50">
+              <div key={col.name} className="flex gap-3 py-2 border-b border-gray-50">
                 <div className="w-44 flex-shrink-0">
-                  <span className="text-xs font-bold text-slate-700">{colLabel(col.name)}</span>
-                  <span className="text-[9px] text-slate-300 block">{col.name} · {col.type}</span>
+                  <span className="text-xs font-bold text-gray-700">{colLabel(col.name)}</span>
+                  <span className="text-[9px] text-gray-300 block">{col.name} · {col.type}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   {isEmpty ? (
-                    <span className="text-xs text-slate-300 italic">null</span>
+                    <span className="text-xs text-gray-300 italic">null</span>
                   ) : typeof val === 'object' ? (
-                    <pre className="text-xs text-violet-600 font-mono bg-slate-50 rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
+                    <pre className="text-xs text-violet-600 font-mono bg-gray-50 rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
                       {JSON.stringify(val, null, 2)}
                     </pre>
                   ) : (
-                    <span className="text-xs text-slate-700 whitespace-pre-wrap break-all">{String(val)}</span>
+                    <span className="text-xs text-gray-700 whitespace-pre-wrap break-all">{String(val)}</span>
                   )}
                 </div>
               </div>
@@ -988,12 +988,12 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
   return (
     <div className="space-y-4">
       {/* プログレスバー */}
-      <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-slate-200/80 p-4">
+      <div className="bg-white backdrop-blur-md rounded-lg border border-gray-200 p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-bold text-slate-700">入力進捗</span>
-          <span className="text-xs text-slate-400">{filledCount}/{totalFieldCount} フィールド入力済み</span>
+          <span className="text-sm font-bold text-gray-700">入力進捗</span>
+          <span className="text-xs text-gray-400">{filledCount}/{totalFieldCount} フィールド入力済み</span>
         </div>
-        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${requiredFilled ? 'bg-emerald-500' : 'bg-indigo-500'}`}
             style={{ width: `${Math.min(100, (filledCount / totalFieldCount) * 100)}%` }}
@@ -1123,7 +1123,7 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
 function DifficultyEstimatePanel({ result, estimating, onApply }) {
   if (estimating) {
     return (
-      <div className="bg-indigo-50/60 border border-indigo-200/60 rounded-2xl p-4 flex items-center gap-3">
+      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 flex items-center gap-3">
         <svg className="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -1144,7 +1144,7 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
   const levelLabels = { 1: '基礎', 2: '標準', 3: '応用', 4: '発展', 5: '難問' };
 
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200/60 rounded-2xl p-4">
+    <div className="bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1161,29 +1161,29 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
         </button>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white/80 rounded-xl p-3 text-center">
-          <div className="text-[10px] font-bold text-slate-400 mb-1">難易度スコア</div>
-          <div className="text-xl font-black text-violet-600">{result.difficulty.toFixed(3)}</div>
-          <div className="h-1.5 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+        <div className="bg-white rounded-lg p-3 text-center">
+          <div className="text-[10px] font-bold text-gray-400 mb-1">難易度スコア</div>
+          <div className="text-xl font-bold text-violet-600">{result.difficulty.toFixed(3)}</div>
+          <div className="h-1.5 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
             <div className="h-full bg-violet-500 rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
           </div>
         </div>
-        <div className="bg-white/80 rounded-xl p-3 text-center">
-          <div className="text-[10px] font-bold text-slate-400 mb-1">レベル</div>
-          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-black ${levelColors[result.difficulty_level] || 'bg-slate-100 text-slate-600'}`}>
+        <div className="bg-white rounded-lg p-3 text-center">
+          <div className="text-[10px] font-bold text-gray-400 mb-1">レベル</div>
+          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-bold ${levelColors[result.difficulty_level] || 'bg-gray-100 text-gray-600'}`}>
             Lv.{result.difficulty_level}
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">{levelLabels[result.difficulty_level] || ''}</div>
+          <div className="text-[10px] text-gray-400 mt-1">{levelLabels[result.difficulty_level] || ''}</div>
         </div>
-        <div className="bg-white/80 rounded-xl p-3 text-center">
-          <div className="text-[10px] font-bold text-slate-400 mb-1">ひっかけ度</div>
-          <div className="text-xl font-black text-amber-600">{result.trickiness.toFixed(3)}</div>
-          <div className="h-1.5 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+        <div className="bg-white rounded-lg p-3 text-center">
+          <div className="text-[10px] font-bold text-gray-400 mb-1">ひっかけ度</div>
+          <div className="text-xl font-bold text-amber-600">{result.trickiness.toFixed(3)}</div>
+          <div className="h-1.5 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
             <div className="h-full bg-amber-500 rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
           </div>
         </div>
       </div>
-      <p className="text-[10px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] text-gray-400 mt-2 text-center">
         登録時に自動で反映されます。「推定値を適用」で推奨フィールドにも即座に反映できます。
       </p>
     </div>
@@ -1210,8 +1210,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
     !['created_at', 'updated_at'].includes(c.name)
   );
 
-  const baseInputClass = `w-full px-3 py-2 text-sm border-2 border-slate-100 rounded-xl bg-white/50
-    text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-500 focus:bg-white outline-none`;
+  const baseInputClass = `w-full px-3 py-2 text-sm border border-gray-100 rounded-lg bg-white
+    text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none`;
 
   const handleStemBlur = () => {
     if (data.stem?.trim()) {
@@ -1230,7 +1230,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
   const hasPriority = data.subject && data.stem;
 
   return (
-    <div className="bg-gradient-to-r from-emerald-50/80 to-teal-50/80 border-2 border-emerald-200/60 rounded-2xl p-5 space-y-4">
+    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1241,7 +1241,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
             {table}
           </span>
         </div>
-        <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors p-1">
+        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -1252,7 +1252,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* 教科 */}
         <div>
-          <label className="block text-[11px] font-black text-emerald-600 mb-1">
+          <label className="block text-[11px] font-bold text-emerald-600 mb-1">
             教科 <span className="text-rose-400">*</span>
           </label>
           <select
@@ -1267,7 +1267,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* トピック */}
         <div>
-          <label className="block text-[11px] font-black text-emerald-600 mb-1">
+          <label className="block text-[11px] font-bold text-emerald-600 mb-1">
             トピック <span className="text-rose-400">*</span>
           </label>
           {topicOptions.length > 0 && (
@@ -1277,7 +1277,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
                   className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
                     data.topic === t
                       ? 'bg-emerald-500 text-white border-emerald-500'
-                      : 'bg-white text-slate-500 border-slate-200 hover:border-emerald-300'
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-emerald-300'
                   }`}>
                   {t}
                 </button>
@@ -1295,9 +1295,9 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* 問題文 */}
         <div className="md:col-span-2">
-          <label className="block text-[11px] font-black text-emerald-600 mb-1">
+          <label className="block text-[11px] font-bold text-emerald-600 mb-1">
             問題文 <span className="text-rose-400">*</span>
-            <span className="text-[10px] font-normal text-slate-300 ml-2">数式は $...$ で囲んで入力</span>
+            <span className="text-[10px] font-normal text-gray-300 ml-2">数式は $...$ で囲んで入力</span>
           </label>
           <textarea
             value={data.stem || ''}
@@ -1311,7 +1311,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* 答え */}
         <div className="md:col-span-2">
-          <label className="block text-[11px] font-black text-emerald-600 mb-1">
+          <label className="block text-[11px] font-bold text-emerald-600 mb-1">
             答え
           </label>
           <input
@@ -1345,7 +1345,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
         <button
           type="button"
           onClick={() => setShowMore(!showMore)}
-          className="text-xs text-slate-400 hover:text-slate-600 font-semibold flex items-center gap-1"
+          className="text-xs text-gray-400 hover:text-gray-600 font-semibold flex items-center gap-1"
         >
           <svg className={`w-3.5 h-3.5 transition-transform ${showMore ? 'rotate-180' : ''}`}
             fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1357,8 +1357,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
             {otherCols.map((col) => (
               <div key={col.name}>
-                <label className="block text-[10px] font-bold text-slate-400 mb-1">
-                  {colLabel(col.name)} <span className="text-[9px] text-slate-300">{col.name}</span>
+                <label className="block text-[10px] font-bold text-gray-400 mb-1">
+                  {colLabel(col.name)} <span className="text-[9px] text-gray-300">{col.name}</span>
                 </label>
                 {isJsonColumn(col.type) ? (
                   <textarea
@@ -1397,16 +1397,16 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
       {/* 追加ボタン */}
       <div className="flex gap-3 justify-end pt-1">
         <button onClick={onCancel}
-          className="px-4 py-2 text-sm text-slate-500 hover:text-slate-700 transition-colors font-semibold">
+          className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-semibold">
           キャンセル
         </button>
         <button
           onClick={onSubmit}
           disabled={!hasPriority || saving}
-          className={`px-6 py-2.5 text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5
+          className={`px-6 py-2.5 text-sm font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5
             ${hasPriority && !saving
               ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200'
-              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
         >
           {saving ? (
@@ -1435,23 +1435,23 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 // ── フィールドセクション (アコーディオン) ──
 function FieldSection({ title, subtitle, color, open, onToggle, badge, children }) {
   const colorMap = {
-    rose: { bg: 'bg-rose-50/50', border: 'border-rose-200/60', badge: 'bg-rose-100 text-rose-600', icon: 'text-rose-400' },
-    amber: { bg: 'bg-amber-50/50', border: 'border-amber-200/60', badge: 'bg-amber-100 text-amber-600', icon: 'text-amber-400' },
-    slate: { bg: 'bg-slate-50/50', border: 'border-slate-200/60', badge: 'bg-slate-100 text-slate-500', icon: 'text-slate-400' },
+    rose: { bg: 'bg-rose-50', border: 'border-rose-200', badge: 'bg-rose-100 text-rose-600', icon: 'text-rose-400' },
+    amber: { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-600', icon: 'text-amber-400' },
+    slate: { bg: 'bg-gray-50', border: 'border-gray-200', badge: 'bg-gray-100 text-gray-500', icon: 'text-gray-400' },
   };
   const c = colorMap[color] || colorMap.slate;
 
   return (
-    <div className={`rounded-2xl border ${c.border} overflow-hidden transition-all`}>
+    <div className={`rounded-lg border ${c.border} overflow-hidden transition-all`}>
       <button onClick={onToggle}
         className={`w-full flex items-center justify-between px-5 py-4 ${c.bg} hover:brightness-95 transition-all`}>
         <div className="flex items-center gap-3">
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${c.badge}`}>
+          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${c.badge}`}>
             {badge}
           </span>
           <div className="text-left">
-            <div className="text-sm font-bold text-slate-700">{title}</div>
-            <div className="text-[11px] text-slate-400">{subtitle}</div>
+            <div className="text-sm font-bold text-gray-700">{title}</div>
+            <div className="text-[11px] text-gray-400">{subtitle}</div>
           </div>
         </div>
         <svg className={`w-5 h-5 ${c.icon} transition-transform ${open ? 'rotate-180' : ''}`}
@@ -1548,18 +1548,18 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
     }
   };
 
-  const baseInputClass = `w-full px-3 py-2.5 text-sm border-2 border-slate-100 rounded-xl bg-white/50
-    text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-500 focus:bg-white outline-none`;
+  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-gray-100 rounded-lg bg-white
+    text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none`;
 
   return (
     <div className="md:col-span-2">
       {/* モード切替タブ */}
-      <div className="flex items-center gap-0 mb-2 bg-slate-100/80 rounded-xl p-0.5 w-fit">
+      <div className="flex items-center gap-0 mb-2 bg-gray-100 rounded-lg p-0.5 w-fit">
         <button type="button" onClick={() => setMode('simple')}
           className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
             mode === 'simple'
-              ? 'bg-white text-slate-700 shadow-sm'
-              : 'text-slate-400 hover:text-slate-600'
+              ? 'bg-white text-gray-700 shadow-sm'
+              : 'text-gray-400 hover:text-gray-600'
           }`}>
           📝 テキスト入力
         </button>
@@ -1567,7 +1567,7 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
           className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
             mode === 'math'
               ? 'bg-white text-indigo-600 shadow-sm'
-              : 'text-slate-400 hover:text-slate-600'
+              : 'text-gray-400 hover:text-gray-600'
           }`}>
           🔢 数式入力
         </button>
@@ -1583,25 +1583,25 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
           </button>
           <button type="button" onClick={() => setShowPalette(!showPalette)}
             className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-colors border ${
-              showPalette ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+              showPalette ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
             }`}>
             {showPalette ? '▼ パレット閉じる' : '▶ 数式パレット'}
           </button>
-          <span className="text-[10px] text-slate-300 ml-2">日本語テキスト + 数式は $ で囲んで入力</span>
+          <span className="text-[10px] text-gray-300 ml-2">日本語テキスト + 数式は $ で囲んで入力</span>
         </div>
       )}
 
       {/* 数式パレット */}
       {mode === 'math' && showPalette && (
-        <div className="mb-2 p-3 bg-gradient-to-b from-indigo-50/80 to-white rounded-xl border border-indigo-100 space-y-2">
+        <div className="mb-2 p-3 bg-gradient-to-b from-indigo-50 to-white rounded-lg border border-indigo-100 space-y-2">
           {MATH_SYMBOLS.map((g) => (
             <div key={g.group}>
-              <div className="text-[9px] font-black text-indigo-400 mb-1 tracking-wider">{g.group}</div>
+              <div className="text-[9px] font-bold text-indigo-400 mb-1 tracking-wider">{g.group}</div>
               <div className="flex flex-wrap gap-1">
                 {g.items.map((sym) => (
                   <button key={sym.insert} type="button"
                     onClick={() => insertAtCursor(sym.insert)}
-                    className="px-2 py-1 text-xs bg-white border border-indigo-100 rounded-md hover:bg-indigo-100 hover:border-indigo-300 transition-colors text-slate-700 font-mono"
+                    className="px-2 py-1 text-xs bg-white border border-indigo-100 rounded-md hover:bg-indigo-100 hover:border-indigo-300 transition-colors text-gray-700 font-mono"
                     title={`${sym.label}: ${sym.insert}`}>
                     {sym.display || sym.label}
                   </button>
@@ -1625,11 +1625,11 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
         className={`${baseInputClass} resize-y`}
       />
       {mode === 'simple' ? (
-        <p className="text-[10px] text-slate-400 mt-1">
+        <p className="text-[10px] text-gray-400 mt-1">
           テキストデータをそのままコピペできます。数式挿入が必要なら「🔢 数式入力」タブへ
         </p>
       ) : (
-        <p className="text-[10px] text-slate-400 mt-1">
+        <p className="text-[10px] text-gray-400 mt-1">
           例: 「$x^2 + 2x + 1 = 0$ を解け。」 — ふつうの文章の中に $...$ で数式を入れるだけ
         </p>
       )}
@@ -1642,8 +1642,8 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
 function SmartField({ field, value, onChange, allValues, onBlur }) {
   const { name, label, type, help, options, rows, min, max, step, depends_on } = field;
 
-  const baseInputClass = `w-full px-3 py-2.5 text-sm border-2 border-slate-100 rounded-xl bg-white/50
-    text-slate-700 transition-all hover:border-indigo-200 focus:border-indigo-500 focus:bg-white outline-none`;
+  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-gray-100 rounded-lg bg-white
+    text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none`;
 
   const isWide = type === 'textarea' || type === 'json' || type === 'rich_textarea';
 
@@ -1655,9 +1655,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
 
     return (
       <div className={isWide ? 'md:col-span-2' : ''}>
-        <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.08em]">
+        <label className="block text-[11px] font-bold text-gray-400 mb-1.5 tracking-[0.08em]">
           {label}
-          <span className="text-[10px] font-normal text-slate-300 ml-2 normal-case tracking-normal">{name}</span>
+          <span className="text-[10px] font-normal text-gray-300 ml-2 normal-case tracking-normal">{name}</span>
         </label>
 
         {/* 候補チップ（親が選択済みのとき表示） */}
@@ -1669,7 +1669,7 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
                 className={`px-2 py-0.5 text-[11px] rounded-lg border transition-all ${
                   value === opt
                     ? 'bg-indigo-500 text-white border-indigo-500'
-                    : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'
                 }`}>
                 {opt}
               </button>
@@ -1702,9 +1702,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
   if (type === 'rich_textarea') {
     return (
       <div className="md:col-span-2">
-        <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.08em]">
+        <label className="block text-[11px] font-bold text-gray-400 mb-1.5 tracking-[0.08em]">
           {label}
-          <span className="text-[10px] font-normal text-slate-300 ml-2 normal-case tracking-normal">{name}</span>
+          <span className="text-[10px] font-normal text-gray-300 ml-2 normal-case tracking-normal">{name}</span>
         </label>
         <RichTextArea value={value} onChange={onChange} rows={rows} help={help} name={name} onBlur={onBlur} />
       </div>
@@ -1713,9 +1713,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
 
   return (
     <div className={isWide ? 'md:col-span-2' : ''}>
-      <label className="block text-[11px] font-black text-slate-400 mb-1.5 tracking-[0.08em]">
+      <label className="block text-[11px] font-bold text-gray-400 mb-1.5 tracking-[0.08em]">
         {label}
-        <span className="text-[10px] font-normal text-slate-300 ml-2 normal-case tracking-normal">{name}</span>
+        <span className="text-[10px] font-normal text-gray-300 ml-2 normal-case tracking-normal">{name}</span>
       </label>
 
       {type === 'select' && options ? (
@@ -1750,7 +1750,7 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
             step={step ?? 0.05}
             value={value || min || 0}
             onChange={(e) => onChange(e.target.value)}
-            className="flex-1 h-2 bg-slate-200 rounded-full appearance-none accent-indigo-500"
+            className="flex-1 h-2 bg-gray-200 rounded-full appearance-none accent-indigo-500"
           />
           <span className="text-sm font-mono text-indigo-600 font-bold w-12 text-right">
             {Number(value || 0).toFixed(2)}
@@ -1783,7 +1783,7 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
       )}
 
       {help && type !== 'textarea' && type !== 'json' && (
-        <p className="text-[10px] text-slate-300 mt-1">{help}</p>
+        <p className="text-[10px] text-gray-300 mt-1">{help}</p>
       )}
     </div>
   );

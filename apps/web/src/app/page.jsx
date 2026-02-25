@@ -68,28 +68,28 @@ const SUB_ACTIONS = [
 /* ─── アクセントカラー定義 ─── */
 const accentStyles = {
   indigo: {
-    card: 'hover:border-indigo-300 hover:shadow-indigo-100/50',
-    icon: 'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100',
-    tag: 'bg-indigo-100 text-indigo-600',
-    arrow: 'text-indigo-400 group-hover:text-indigo-600',
+    card: 'hover:border-indigo-200',
+    icon: 'bg-indigo-50 text-indigo-600',
+    tag: 'bg-indigo-50 text-indigo-600',
+    arrow: 'text-gray-300 group-hover:text-indigo-500',
   },
   violet: {
-    card: 'hover:border-violet-300 hover:shadow-violet-100/50',
-    icon: 'bg-violet-50 text-violet-600 group-hover:bg-violet-100',
-    tag: 'bg-violet-100 text-violet-600',
-    arrow: 'text-violet-400 group-hover:text-violet-600',
+    card: 'hover:border-violet-200',
+    icon: 'bg-violet-50 text-violet-600',
+    tag: 'bg-violet-50 text-violet-600',
+    arrow: 'text-gray-300 group-hover:text-violet-500',
   },
   emerald: {
-    card: 'hover:border-emerald-300 hover:shadow-emerald-100/50',
-    icon: 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100',
+    card: 'hover:border-emerald-200',
+    icon: 'bg-emerald-50 text-emerald-600',
     tag: 'bg-emerald-50 text-emerald-600',
-    arrow: 'text-emerald-400 group-hover:text-emerald-600',
+    arrow: 'text-gray-300 group-hover:text-emerald-500',
   },
   amber: {
-    card: 'hover:border-amber-300 hover:shadow-amber-100/50',
-    icon: 'bg-amber-50 text-amber-600 group-hover:bg-amber-100',
+    card: 'hover:border-amber-200',
+    icon: 'bg-amber-50 text-amber-600',
     tag: 'bg-amber-50 text-amber-600',
-    arrow: 'text-amber-400 group-hover:text-amber-600',
+    arrow: 'text-gray-300 group-hover:text-amber-500',
   },
 };
 
@@ -99,29 +99,29 @@ function MainCard({ href, icon, label, hint, accent, tag }) {
   return (
     <Link href={href} className="group block">
       <div
-        className={`relative flex items-center gap-4 sm:gap-5 bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/70 px-4 sm:px-6 py-4 sm:py-5 shadow-sm cursor-pointer transition-all duration-300 ${s.card} hover:shadow-lg active:scale-[0.98]`}
+        className={`relative flex items-center gap-4 bg-white rounded-lg border border-gray-200 px-4 sm:px-5 py-4 cursor-pointer transition-all duration-200 ${s.card} hover:shadow-sm active:scale-[0.99]`}
       >
         {/* アイコン */}
-        <div className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center transition-colors duration-300 ${s.icon}`}>
+        <div className={`flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center ${s.icon}`}>
           {icon}
         </div>
 
         {/* テキスト */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2.5 mb-1">
-            <span className="text-[17px] font-bold text-slate-800 tracking-tight">{label}</span>
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-base font-semibold text-gray-900">{label}</span>
             {tag && (
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${s.tag}`}>
+              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${s.tag}`}>
                 {tag}
               </span>
             )}
           </div>
-          <span className="text-[13px] text-slate-400 font-medium">{hint}</span>
+          <span className="text-xs text-gray-500">{hint}</span>
         </div>
 
         {/* 矢印 */}
-        <div className={`flex-shrink-0 transition-all duration-300 group-hover:translate-x-1 ${s.arrow}`}>
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+        <div className={`flex-shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${s.arrow}`}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
         </div>
@@ -136,17 +136,17 @@ function SubCard({ href, icon, label, hint, accent }) {
   return (
     <Link href={href} className="group block">
       <div
-        className={`flex items-center gap-4 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-200/50 px-5 py-4 cursor-pointer transition-all duration-300 ${s.card} hover:shadow-md active:scale-[0.98]`}
+        className={`flex items-center gap-3 bg-white rounded-lg border border-gray-200 px-4 py-3 cursor-pointer transition-all duration-200 ${s.card} hover:shadow-sm active:scale-[0.99]`}
       >
-        <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${s.icon}`}>
+        <div className={`flex-shrink-0 w-9 h-9 rounded-md flex items-center justify-center ${s.icon}`}>
           <div className="scale-[0.78]">{icon}</div>
         </div>
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-bold text-slate-700">{label}</span>
-          <span className="block text-[12px] text-slate-400 font-medium">{hint}</span>
+          <span className="text-sm font-medium text-gray-800">{label}</span>
+          <span className="block text-[11px] text-gray-400">{hint}</span>
         </div>
-        <div className={`flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-300 group-hover:translate-x-0.5 ${s.arrow}`}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+        <div className={`flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200 ${s.arrow}`}>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
           </svg>
         </div>
@@ -158,33 +158,33 @@ function SubCard({ href, icon, label, hint, accent }) {
 /* ─── ページ本体 ─── */
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-3 py-6 sm:px-6 sm:py-16 pb-24 sm:pb-16">
-      <div className="max-w-xl w-full mx-auto">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-16 pb-24 sm:pb-16">
+      <div className="max-w-lg w-full mx-auto">
 
         {/* ── ヘッダー ── */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-indigo-50/60 text-indigo-500 rounded-full text-[11px] font-bold mb-5 border border-indigo-100/40">
+        <div className="text-center mb-8 sm:mb-10">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-md text-[11px] font-medium mb-4 border border-indigo-100">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500"></span>
             </span>
             RAG-Powered
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-800 mb-3 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
             <span className="gradient-text">ExamGen</span>
-            <span className="text-slate-200 font-light ml-2 text-3xl">v2</span>
+            <span className="text-gray-300 font-normal ml-1.5 text-2xl">v2</span>
           </h1>
-          <p className="text-[15px] text-slate-400 max-w-md mx-auto leading-relaxed font-medium">
+          <p className="text-sm text-gray-500 max-w-sm mx-auto leading-relaxed">
             AIと過去問データで、試験問題を賢くつくる
           </p>
         </div>
 
         {/* ── 何をしますか？ ── */}
-        <div className="mb-4">
-          <h2 className="text-[11px] font-black text-slate-400 tracking-[0.15em] uppercase mb-3 px-1">
+        <div className="mb-6">
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 px-0.5">
             何をしますか？
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {MAIN_ACTIONS.map((a) => (
               <MainCard key={a.href} {...a} />
             ))}
@@ -192,11 +192,11 @@ export default function HomePage() {
         </div>
 
         {/* ── ツール ── */}
-        <div className="mt-8">
-          <h2 className="text-[11px] font-black text-slate-400 tracking-[0.15em] uppercase mb-3 px-1">
+        <div>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2.5 px-0.5">
             ツール
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {SUB_ACTIONS.map((a) => (
               <SubCard key={a.href} {...a} />
             ))}
@@ -204,7 +204,7 @@ export default function HomePage() {
         </div>
 
         {/* ── フッター ── */}
-        <div className="text-center mt-10 sm:mt-14 opacity-25 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+        <div className="text-center mt-10 sm:mt-12 text-[10px] font-medium uppercase tracking-widest text-gray-300">
           For Educators & Developers
         </div>
       </div>

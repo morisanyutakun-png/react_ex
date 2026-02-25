@@ -3,26 +3,30 @@
 @tailwind utilities;
 
 /* ============================
-   CSS Custom Properties
+   Design System – Clean Professional
    ============================ */
 
 :root {
-  --color-primary: #6366f1;
-  --color-primary-dark: #4f46e5;
+  --color-primary: #4f46e5;
+  --color-primary-light: #eef2ff;
+  --color-primary-dark: #3730a3;
   --color-surface: #ffffff;
-  --color-surface-alt: #f8fafc;
-  --color-border: #e2e8f0;
-  --color-text: #0f172a;
-  --color-text-secondary: #64748b;
-  --color-success: #10b981;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --radius-lg: 1rem;
-  --radius-md: 0.75rem;
-  --radius-sm: 0.5rem;
-  --shadow-card: 0 1px 3px 0 rgba(0,0,0,.04), 0 1px 2px -1px rgba(0,0,0,.06);
-  --shadow-elevated: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -2px rgba(0,0,0,.05);
-  --shadow-glow: 0 0 0 3px rgba(99,102,241,.15);
+  --color-surface-alt: #f9fafb;
+  --color-border: #e5e7eb;
+  --color-border-light: #f3f4f6;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-success: #059669;
+  --color-danger: #dc2626;
+  --color-warning: #d97706;
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.375rem;
+  --shadow-xs: 0 1px 2px 0 rgba(0,0,0,.03);
+  --shadow-sm: 0 1px 3px 0 rgba(0,0,0,.04), 0 1px 2px -1px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.05), 0 2px 4px -2px rgba(0,0,0,.03);
+  --shadow-focus: 0 0 0 2px rgba(79,70,229,.12);
 }
 
 /* ============================
@@ -30,12 +34,12 @@
    ============================ */
 
 body {
-  @apply text-slate-900 antialiased;
+  @apply text-gray-900 antialiased;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Hiragino Sans', 'Noto Sans JP', sans-serif;
-  background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdfa 100%);
-  background-attachment: fixed;
+  background-color: #f9fafb;
   min-height: 100vh;
+  letter-spacing: -0.011em;
 }
 
 /* ============================
@@ -43,27 +47,27 @@ body {
    ============================ */
 
 .transition-base {
-  @apply transition-all duration-200 ease-out;
+  @apply transition-all duration-150 ease-out;
 }
 
 /* ============================
-   Glass Card Effect
+   Glass Card Effect (simplified)
    ============================ */
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-border);
 }
 
 /* ============================
-   Gradient Text
+   Gradient Text (subtle)
    ============================ */
 
 .gradient-text {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+  background-image: linear-gradient(135deg, #4f46e5, #7c3aed);
 }
 
 /* ============================
@@ -71,11 +75,11 @@ body {
    ============================ */
 
 .hover-lift {
-  @apply transition-all duration-300;
+  @apply transition-all duration-200;
 }
 .hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-elevated);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 /* ============================
@@ -83,23 +87,23 @@ body {
    ============================ */
 
 .badge {
-  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
 }
 .badge-primary { @apply bg-indigo-50 text-indigo-700; }
 .badge-success { @apply bg-emerald-50 text-emerald-700; }
 .badge-warning { @apply bg-amber-50 text-amber-700; }
 .badge-danger  { @apply bg-rose-50 text-rose-700; }
-.badge-neutral { @apply bg-slate-100 text-slate-600; }
+.badge-neutral { @apply bg-gray-100 text-gray-600; }
 
 /* ============================
    Input Focus Ring
    ============================ */
 
 .input-ring {
-  @apply transition-all duration-200;
+  @apply transition-all duration-150;
 }
 .input-ring:focus {
-  @apply ring-2 ring-indigo-500/30 border-indigo-400 outline-none;
+  @apply ring-2 ring-indigo-500/20 border-indigo-400 outline-none;
 }
 
 /* ============================
@@ -107,17 +111,17 @@ body {
    ============================ */
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full;
+  @apply bg-gray-200 rounded-full;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  @apply bg-slate-300;
+  @apply bg-gray-300;
 }
 
 /* ============================
@@ -143,10 +147,10 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  @apply rounded-md;
+  @apply rounded;
 }
 
 /* ============================
@@ -156,7 +160,7 @@ body {
 @keyframes modal-in {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(8px);
+    transform: scale(0.97) translateY(4px);
   }
   to {
     opacity: 1;
@@ -165,29 +169,33 @@ body {
 }
 
 .animate-in {
-  animation: modal-in 0.2s ease-out;
+  animation: modal-in 0.15s ease-out;
+}
+
+/* ============================
+   Section Divider
+   ============================ */
+.section-divider {
+  @apply border-t border-gray-100;
 }
 
 /* ============================
    Mobile Optimizations
    ============================ */
 
-/* セーフエリア対応 */
 body {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* タッチデバイスでのホバー無効化 */
 @media (hover: none) {
   .hover-lift:hover {
     transform: none;
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-sm);
   }
 }
 
-/* モバイルでスクロールバーを非表示 */
 @media (max-width: 640px) {
   .custom-scrollbar::-webkit-scrollbar {
     display: none;
@@ -202,15 +210,13 @@ body {
    Bottom Navigation Safe Area
    ============================ */
 
-/* ボトムナビのセーフエリア対応 */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* モバイルでボトムナビ分の余白を確保 */
 @media (max-width: 639px) {
   main {
-    padding-bottom: 5rem !important;
+    padding-bottom: 4.5rem !important;
   }
 }
 
@@ -231,17 +237,14 @@ body {
    ============================ */
 
 @media (max-width: 640px) {
-  /* タップターゲットを大きくする */
   button, a, select, input[type="number"] {
     min-height: 44px;
   }
 
-  /* フォーカス時のズーム防止 */
   input, select, textarea {
     font-size: 16px !important;
   }
 
-  /* モバイルでのスクロール改善 */
   .overflow-y-auto {
     -webkit-overflow-scrolling: touch;
   }
