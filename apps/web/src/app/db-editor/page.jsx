@@ -507,9 +507,9 @@ export default function DbEditorPage() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="キーワード検索..."
-                className="px-3 py-2 rounded-lg border border-gray-100 bg-white text-sm
-                           text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500
-                           focus:ring-2 focus:ring-indigo-500/10 outline-none w-48"
+                className="px-3 py-2 rounded-lg border border-neutral-700 bg-neutral-900 text-sm
+                           text-neutral-50 transition-all hover:border-neutral-600 focus:border-red-600
+                           focus:ring-2 focus:ring-red-600/40 outline-none w-48"
               />
               <Button variant="secondary" size="sm" onClick={handleSearch}>
                 <Icons.Search className="w-4 h-4" />
@@ -519,8 +519,8 @@ export default function DbEditorPage() {
             {/* カラム選択ボタン */}
             <button
               onClick={() => setShowColPicker(!showColPicker)}
-              className="px-3 py-2 text-xs font-semibold text-gray-500 bg-white border border-gray-100
-                         rounded-lg hover:border-gray-300 transition-all flex items-center gap-1.5"
+              className="px-3 py-2 text-xs font-semibold text-neutral-400 bg-neutral-900 border border-neutral-800
+                         rounded-lg hover:border-neutral-700 transition-all flex items-center gap-1.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -580,7 +580,7 @@ export default function DbEditorPage() {
           )}
 
           {/* ページネーション */}
-          <div className="flex items-center gap-4 text-sm text-gray-500">
+          <div className="flex items-center gap-4 text-sm text-neutral-400">
             <span>{total}件中 {Math.min(page * PAGE_SIZE + 1, total)}〜{Math.min((page + 1) * PAGE_SIZE, total)}件</span>
             <div className="flex gap-1">
               <Button variant="ghost" size="sm" onClick={() => handlePageChange(page - 1)} disabled={page === 0}>
@@ -594,27 +594,27 @@ export default function DbEditorPage() {
           </div>
 
           {/* テーブル */}
-          <div className="bg-white backdrop-blur-md rounded-lg border border-gray-200 shadow-card overflow-hidden">
+          <div className="bg-neutral-900 backdrop-blur-md rounded-lg border border-neutral-800 shadow-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-2 py-3 text-left font-bold text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 z-10 w-10">
+                  <tr className="bg-neutral-800 border-b border-neutral-700">
+                    <th className="px-2 py-3 text-left font-bold text-neutral-300 uppercase tracking-wider sticky left-0 bg-neutral-800 z-10 w-10">
                       #
                     </th>
                     {displayCols.map((col) => (
                       <th key={col.name}
-                        className="px-3 py-3 text-left font-bold text-gray-500 tracking-wider whitespace-nowrap border-l border-gray-100"
+                        className="px-3 py-3 text-left font-bold text-neutral-300 tracking-wider whitespace-nowrap border-l border-neutral-700"
                         title={`${col.name} (${col.type})${col.notnull ? ' NOT NULL' : ''}`}
                       >
                         <div className="flex items-center gap-1">
                           {colLabel(col.name)}
-                          {col.pk && <span className="text-[9px] bg-indigo-100 text-indigo-600 px-1 rounded">PK</span>}
+                          {col.pk && <span className="text-[9px] bg-red-950/30 text-red-500 px-1 rounded">PK</span>}
                         </div>
-                        <div className="text-[9px] font-normal text-gray-300 mt-0.5">{col.name}</div>
+                        <div className="text-[9px] font-normal text-neutral-600 mt-0.5">{col.name}</div>
                       </th>
                     ))}
-                    <th className="px-2 py-3 text-center font-bold text-gray-500 uppercase tracking-wider border-l border-gray-100 w-20">
+                    <th className="px-2 py-3 text-center font-bold text-neutral-300 uppercase tracking-wider border-l border-neutral-700 w-20">
                       操作
                     </th>
                   </tr>
@@ -625,11 +625,11 @@ export default function DbEditorPage() {
                     const rowDirty = !!edits[rowPk];
                     return (
                       <tr key={rowPk ?? idx}
-                        className={`border-b border-gray-100 hover:bg-indigo-50/30 transition-colors
-                          ${rowDirty ? 'bg-amber-50/40' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
+                        className={`border-b border-neutral-800 hover:bg-neutral-800/70 transition-colors
+                          ${rowDirty ? 'bg-amber-900/30' : idx % 2 === 0 ? 'bg-neutral-900' : 'bg-neutral-800/30'}`}
                       >
-                        <td className={`px-2 py-2 font-mono text-gray-400 sticky left-0 z-10
-                          ${rowDirty ? 'bg-amber-50/40' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
+                        <td className={`px-2 py-2 font-mono text-neutral-500 sticky left-0 z-10
+                          ${rowDirty ? 'bg-amber-900/30' : idx % 2 === 0 ? 'bg-neutral-900' : 'bg-neutral-800/30'}`}>
                           {page * PAGE_SIZE + idx + 1}
                         </td>
                         {displayCols.map((col) => {
@@ -640,7 +640,7 @@ export default function DbEditorPage() {
 
                           if (isPkCol) {
                             return (
-                              <td key={col.name} className="px-3 py-2 border-l border-gray-100 font-mono text-indigo-600 font-bold">
+                              <td key={col.name} className="px-3 py-2 border-l border-neutral-800 font-mono text-red-500 font-bold">
                                 {formatCellValue(cellVal)}
                               </td>
                             );
@@ -648,8 +648,8 @@ export default function DbEditorPage() {
 
                           return (
                             <td key={col.name}
-                              className={`px-1 py-1 border-l border-gray-100 cursor-pointer
-                                ${dirty ? 'bg-amber-100/60 ring-1 ring-amber-300/50' : ''}
+                              className={`px-1 py-1 border-l border-neutral-800 cursor-pointer
+                                ${dirty ? 'bg-amber-900/50 ring-1 ring-amber-600/50' : ''}
                                 ${isEditing ? 'p-0' : ''}`}
                               onClick={() => !isEditing && startEdit(rowPk, col.name)}
                               title={formatCellValue(cellVal)}
@@ -663,22 +663,22 @@ export default function DbEditorPage() {
                                   onFinish={finishEdit}
                                 />
                               ) : (
-                                <span className={`block px-2 py-1 text-gray-600 max-w-[300px] truncate ${
-                                  typeof cellVal === 'object' && cellVal !== null ? 'font-mono text-[10px] text-violet-600' : ''
+                                <span className={`block px-2 py-1 text-neutral-200 max-w-[300px] truncate ${
+                                  typeof cellVal === 'object' && cellVal !== null ? 'font-mono text-[10px] text-violet-400' : ''
                                 }`}>
                                   {cellVal === null || cellVal === undefined
-                                    ? <span className="text-gray-300 italic">null</span>
+                                    ? <span className="text-neutral-600 italic">null</span>
                                     : truncateDisplay(cellVal)}
                                 </span>
                               )}
                             </td>
                           );
                         })}
-                        <td className="px-2 py-2 border-l border-gray-100 text-center">
+                        <td className="px-2 py-2 border-l border-neutral-800 text-center">
                           <div className="flex gap-1 justify-center">
                             <button
                               onClick={() => setDetailRow(row)}
-                              className="text-gray-300 hover:text-indigo-500 transition-colors p-1"
+                              className="text-neutral-600 hover:text-red-500 transition-colors p-1"
                               title="詳細"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -690,7 +690,7 @@ export default function DbEditorPage() {
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(rowPk)}
-                              className="text-gray-300 hover:text-rose-500 transition-colors p-1"
+                              className="text-neutral-600 hover:text-rose-500 transition-colors p-1"
                               title="削除"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -705,7 +705,7 @@ export default function DbEditorPage() {
                   })}
                   {rows.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={displayCols.length + 2} className="text-center py-12 text-gray-400">
+                      <td colSpan={displayCols.length + 2} className="text-center py-12 text-neutral-500">
                         データがありません
                       </td>
                     </tr>
@@ -714,7 +714,7 @@ export default function DbEditorPage() {
               </table>
             </div>
             {loading && (
-              <div className="flex items-center justify-center py-8 text-gray-400">
+              <div className="flex items-center justify-center py-8 text-neutral-500">
                 <Icons.Info className="w-5 h-5 animate-pulse mr-2" /> 読み込み中...
               </div>
             )}
@@ -747,9 +747,9 @@ export default function DbEditorPage() {
       {/* ── 削除確認 ── */}
       {deleteConfirm !== null && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 shadow-xl max-w-sm mx-4">
-            <div className="text-lg font-bold text-gray-800 mb-2">削除確認</div>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="bg-neutral-900 rounded-lg p-6 shadow-xl max-w-sm mx-4 border border-neutral-800">
+            <div className="text-lg font-bold text-neutral-50 mb-2">削除確認</div>
+            <p className="text-sm text-neutral-300 mb-4">
               ID: <strong>{deleteConfirm}</strong> を削除しますか？この操作は取り消せません。
             </p>
             <div className="flex gap-3 justify-end">
@@ -772,10 +772,10 @@ function TabButton({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all
+      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all shadow-glow-sm
         ${active
-          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-          : 'bg-white text-gray-500 border border-gray-100 hover:border-gray-300 hover:text-indigo-600'
+          ? 'bg-red-600 text-white shadow-glow-sm'
+          : 'bg-neutral-900 text-neutral-400 border border-neutral-800 hover:border-neutral-700 hover:text-red-500'
         }`}
     >
       {children}
@@ -796,8 +796,8 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         onChange={(e) => onChange(e.target.value)}
         onBlur={onFinish}
         onKeyDown={(e) => { if (e.key === 'Escape') onFinish(); }}
-        className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-indigo-400
-                   rounded-lg bg-white font-mono resize-y outline-none shadow-inner"
+        className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-red-600
+                   rounded-lg bg-neutral-900 font-mono resize-y outline-none shadow-inner"
         rows={4}
       />
     );
@@ -809,7 +809,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         value={String(value ?? '')}
         onChange={(e) => { onChange(e.target.value); onFinish(); }}
         onBlur={onFinish}
-        className="px-2 py-1.5 text-xs border border-indigo-400 rounded-lg bg-white"
+        className="px-2 py-1.5 text-xs border border-red-600 rounded-lg bg-neutral-900"
       >
         <option value="">—</option>
         <option value="true">true</option>
@@ -829,8 +829,8 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         if (e.key === 'Escape') onFinish();
       }}
       step={isNumericColumn(col.type) ? 'any' : undefined}
-      className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-indigo-400
-                 rounded-lg bg-white outline-none shadow-inner"
+      className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-red-600
+                 rounded-lg bg-neutral-900 outline-none shadow-inner"
     />
   );
 });
@@ -860,16 +860,16 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-lg p-5">
+    <div className="bg-neutral-900 rounded-lg border border-neutral-800 shadow-lg p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-gray-700">表示カラムを選択</h3>
+        <h3 className="text-sm font-bold text-neutral-200">表示カラムを選択</h3>
         <div className="flex gap-2">
           <button onClick={() => setVisibleCols(DEFAULT_VISIBLE_COLS)}
-            className="text-xs text-indigo-500 hover:text-indigo-700 font-semibold">デフォルト</button>
+            className="text-xs text-red-500 hover:text-red-400 font-semibold">デフォルト</button>
           <button onClick={() => setVisibleCols(colNames)}
-            className="text-xs text-gray-400 hover:text-gray-600 font-semibold">全選択</button>
+            className="text-xs text-neutral-600 hover:text-neutral-400 font-semibold">全選択</button>
           <button onClick={onClose}
-            className="text-xs text-gray-400 hover:text-gray-600 font-semibold ml-2">閉じる</button>
+            className="text-xs text-neutral-600 hover:text-neutral-400 font-semibold ml-2">閉じる</button>
         </div>
       </div>
 
@@ -877,8 +877,8 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="flex gap-2 mb-3">
         {Object.entries(COLUMN_GROUPS).map(([key, group]) => (
           <button key={key} onClick={() => selectGroup(key)}
-            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500
-                       hover:bg-indigo-50 hover:text-indigo-600 transition-colors border border-gray-100">
+            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-neutral-800/50 text-neutral-400
+                       hover:bg-red-950/30 hover:text-red-500 transition-colors border border-neutral-800">
             {group.label}
           </button>
         ))}
@@ -887,9 +887,9 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5">
         {allCols.map((col) => (
           <label key={col.name} className={`flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer text-[11px]
-            transition-colors ${visibleCols.includes(col.name) ? 'bg-indigo-50 text-indigo-700' : 'text-gray-400 hover:bg-gray-50'}`}>
+            transition-colors ${visibleCols.includes(col.name) ? 'bg-red-950/30 text-red-400' : 'text-neutral-500 hover:bg-neutral-800/50'}`}>
             <input type="checkbox" checked={visibleCols.includes(col.name)}
-              onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-indigo-500" />
+              onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-red-600" />
             <span className="truncate">{colLabel(col.name)}</span>
           </label>
         ))}
@@ -904,12 +904,12 @@ function RowDetailModal({ row, schema, pk, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800">
+      <div className="bg-neutral-900 rounded-lg shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col border border-neutral-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
+          <h2 className="text-lg font-bold text-neutral-50">
             行詳細 — ID: {row[pk]}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1">
+          <button onClick={onClose} className="text-neutral-500 hover:text-neutral-300 text-xl font-bold p-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -920,20 +920,20 @@ function RowDetailModal({ row, schema, pk, onClose }) {
             const val = row[col.name];
             const isEmpty = val === null || val === undefined || val === '';
             return (
-              <div key={col.name} className="flex gap-3 py-2 border-b border-gray-50">
+              <div key={col.name} className="flex gap-3 py-2 border-b border-neutral-800">
                 <div className="w-44 flex-shrink-0">
-                  <span className="text-xs font-bold text-gray-700">{colLabel(col.name)}</span>
-                  <span className="text-[9px] text-gray-300 block">{col.name} · {col.type}</span>
+                  <span className="text-xs font-bold text-neutral-300">{colLabel(col.name)}</span>
+                  <span className="text-[9px] text-neutral-600 block">{col.name} · {col.type}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   {isEmpty ? (
-                    <span className="text-xs text-gray-300 italic">null</span>
+                    <span className="text-xs text-neutral-600 italic">null</span>
                   ) : typeof val === 'object' ? (
-                    <pre className="text-xs text-violet-600 font-mono bg-gray-50 rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
+                    <pre className="text-xs text-violet-400 font-mono bg-neutral-800/50 rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
                       {JSON.stringify(val, null, 2)}
                     </pre>
                   ) : (
-                    <span className="text-xs text-gray-700 whitespace-pre-wrap break-all">{String(val)}</span>
+                    <span className="text-xs text-neutral-200 whitespace-pre-wrap break-all">{String(val)}</span>
                   )}
                 </div>
               </div>
@@ -988,19 +988,19 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
   return (
     <div className="space-y-4">
       {/* プログレスバー */}
-      <div className="bg-white backdrop-blur-md rounded-lg border border-gray-200 p-4">
+      <div className="bg-neutral-900 backdrop-blur-md rounded-lg border border-neutral-800 p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-bold text-gray-700">入力進捗</span>
-          <span className="text-xs text-gray-400">{filledCount}/{totalFieldCount} フィールド入力済み</span>
+          <span className="text-sm font-bold text-neutral-200">入力進捗</span>
+          <span className="text-xs text-neutral-500">{filledCount}/{totalFieldCount} フィールド入力済み</span>
         </div>
-        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${requiredFilled ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+            className={`h-full rounded-full transition-all duration-500 ${requiredFilled ? 'bg-emerald-500' : 'bg-red-600'}`}
             style={{ width: `${Math.min(100, (filledCount / totalFieldCount) * 100)}%` }}
           />
         </div>
         {!requiredFilled && (
-          <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+          <p className="text-xs text-amber-500 mt-2 flex items-center gap-1">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1123,67 +1123,67 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
 function DifficultyEstimatePanel({ result, estimating, onApply }) {
   if (estimating) {
     return (
-      <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 flex items-center gap-3">
-        <svg className="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+      <div className="bg-red-950/30 border border-neutral-800 rounded-lg p-4 flex items-center gap-3">
+        <svg className="w-5 h-5 animate-spin text-red-500" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <span className="text-sm font-semibold text-indigo-600">難易度を推定中...</span>
+        <span className="text-sm font-semibold text-red-400">難易度を推定中...</span>
       </div>
     );
   }
   if (!result) return null;
 
   const levelColors = {
-    1: 'bg-emerald-100 text-emerald-700',
-    2: 'bg-blue-100 text-blue-700',
-    3: 'bg-amber-100 text-amber-700',
-    4: 'bg-orange-100 text-orange-700',
-    5: 'bg-rose-100 text-rose-700',
+    1: 'bg-emerald-900/50 text-emerald-400',
+    2: 'bg-blue-900/50 text-blue-400',
+    3: 'bg-amber-900/50 text-amber-400',
+    4: 'bg-orange-900/50 text-orange-400',
+    5: 'bg-rose-900/50 text-rose-400',
   };
   const levelLabels = { 1: '基礎', 2: '標準', 3: '応用', 4: '発展', 5: '難問' };
 
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 rounded-lg p-4">
+    <div className="bg-gradient-to-r from-violet-950/30 to-red-950/30 border border-neutral-800 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span className="text-sm font-bold text-violet-700">難易度自動推定</span>
+          <span className="text-sm font-bold text-violet-400">難易度自動推定</span>
         </div>
         <button
           onClick={onApply}
-          className="px-3 py-1.5 text-xs font-bold bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors shadow-sm"
+          className="px-3 py-1.5 text-xs font-bold bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors shadow-glow-sm"
         >
           推定値を適用
         </button>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-lg p-3 text-center">
-          <div className="text-[10px] font-bold text-gray-400 mb-1">難易度スコア</div>
-          <div className="text-xl font-bold text-violet-600">{result.difficulty.toFixed(3)}</div>
-          <div className="h-1.5 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
+        <div className="bg-neutral-900 rounded-lg p-3 text-center border border-neutral-800">
+          <div className="text-[10px] font-bold text-neutral-500 mb-1">難易度スコア</div>
+          <div className="text-xl font-bold text-violet-400">{result.difficulty.toFixed(3)}</div>
+          <div className="h-1.5 bg-neutral-800 rounded-full mt-1.5 overflow-hidden">
             <div className="h-full bg-violet-500 rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
           </div>
         </div>
-        <div className="bg-white rounded-lg p-3 text-center">
-          <div className="text-[10px] font-bold text-gray-400 mb-1">レベル</div>
-          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-bold ${levelColors[result.difficulty_level] || 'bg-gray-100 text-gray-600'}`}>
+        <div className="bg-neutral-900 rounded-lg p-3 text-center border border-neutral-800">
+          <div className="text-[10px] font-bold text-neutral-500 mb-1">レベル</div>
+          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-bold ${levelColors[result.difficulty_level] || 'bg-neutral-800 text-neutral-400'}`}>
             Lv.{result.difficulty_level}
           </div>
-          <div className="text-[10px] text-gray-400 mt-1">{levelLabels[result.difficulty_level] || ''}</div>
+          <div className="text-[10px] text-neutral-500 mt-1">{levelLabels[result.difficulty_level] || ''}</div>
         </div>
-        <div className="bg-white rounded-lg p-3 text-center">
-          <div className="text-[10px] font-bold text-gray-400 mb-1">ひっかけ度</div>
-          <div className="text-xl font-bold text-amber-600">{result.trickiness.toFixed(3)}</div>
-          <div className="h-1.5 bg-gray-100 rounded-full mt-1.5 overflow-hidden">
+        <div className="bg-neutral-900 rounded-lg p-3 text-center border border-neutral-800">
+          <div className="text-[10px] font-bold text-neutral-500 mb-1">ひっかけ度</div>
+          <div className="text-xl font-bold text-amber-500">{result.trickiness.toFixed(3)}</div>
+          <div className="h-1.5 bg-neutral-800 rounded-full mt-1.5 overflow-hidden">
             <div className="h-full bg-amber-500 rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
           </div>
         </div>
       </div>
-      <p className="text-[10px] text-gray-400 mt-2 text-center">
+      <p className="text-[10px] text-neutral-600 mt-2 text-center">
         登録時に自動で反映されます。「推定値を適用」で推奨フィールドにも即座に反映できます。
       </p>
     </div>
@@ -1210,8 +1210,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
     !['created_at', 'updated_at'].includes(c.name)
   );
 
-  const baseInputClass = `w-full px-3 py-2 text-sm border border-gray-100 rounded-lg bg-white
-    text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none`;
+  const baseInputClass = `w-full px-3 py-2 text-sm border border-neutral-700 rounded-lg bg-neutral-900
+    text-neutral-50 transition-all hover:border-neutral-600 focus:border-red-600 focus:ring-2 focus:ring-red-600/40 outline-none placeholder:text-neutral-600`;
 
   const handleStemBlur = () => {
     if (data.stem?.trim()) {
@@ -1230,18 +1230,18 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
   const hasPriority = data.subject && data.stem;
 
   return (
-    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-5 space-y-4">
+    <div className="bg-gradient-to-r from-emerald-950/30 to-teal-950/30 border border-neutral-800 rounded-lg p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          <span className="text-sm font-bold text-emerald-700">新しい行を追加</span>
-          <span className="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-lg font-bold">
+          <span className="text-sm font-bold text-emerald-400">新しい行を追加</span>
+          <span className="text-[10px] bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded-lg font-bold">
             {table}
           </span>
         </div>
-        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
+        <button onClick={onCancel} className="text-neutral-500 hover:text-neutral-300 transition-colors p-1">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -1252,7 +1252,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* 教科 */}
         <div>
-          <label className="block text-[11px] font-bold text-emerald-600 mb-1">
+          <label className="block text-[11px] font-bold text-emerald-400 mb-1">
             教科 <span className="text-rose-400">*</span>
           </label>
           <select
@@ -1267,7 +1267,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* トピック */}
         <div>
-          <label className="block text-[11px] font-bold text-emerald-600 mb-1">
+          <label className="block text-[11px] font-bold text-emerald-400 mb-1">
             トピック <span className="text-rose-400">*</span>
           </label>
           {topicOptions.length > 0 && (
@@ -1276,8 +1276,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
                 <button key={t} type="button" onClick={() => onChange('topic', t)}
                   className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
                     data.topic === t
-                      ? 'bg-emerald-500 text-white border-emerald-500'
-                      : 'bg-white text-gray-500 border-gray-200 hover:border-emerald-300'
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-neutral-900 text-neutral-400 border-neutral-800 hover:border-emerald-600'
                   }`}>
                   {t}
                 </button>
@@ -1295,9 +1295,9 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* 問題文 */}
         <div className="md:col-span-2">
-          <label className="block text-[11px] font-bold text-emerald-600 mb-1">
+          <label className="block text-[11px] font-bold text-emerald-400 mb-1">
             問題文 <span className="text-rose-400">*</span>
-            <span className="text-[10px] font-normal text-gray-300 ml-2">数式は $...$ で囲んで入力</span>
+            <span className="text-[10px] font-normal text-neutral-600 ml-2">数式は $...$ で囲んで入力</span>
           </label>
           <textarea
             value={data.stem || ''}
@@ -1311,7 +1311,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* 答え */}
         <div className="md:col-span-2">
-          <label className="block text-[11px] font-bold text-emerald-600 mb-1">
+          <label className="block text-[11px] font-bold text-emerald-400 mb-1">
             答え
           </label>
           <input
@@ -1345,7 +1345,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
         <button
           type="button"
           onClick={() => setShowMore(!showMore)}
-          className="text-xs text-gray-400 hover:text-gray-600 font-semibold flex items-center gap-1"
+          className="text-xs text-neutral-600 hover:text-neutral-400 font-semibold flex items-center gap-1"
         >
           <svg className={`w-3.5 h-3.5 transition-transform ${showMore ? 'rotate-180' : ''}`}
             fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1357,8 +1357,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
             {otherCols.map((col) => (
               <div key={col.name}>
-                <label className="block text-[10px] font-bold text-gray-400 mb-1">
-                  {colLabel(col.name)} <span className="text-[9px] text-gray-300">{col.name}</span>
+                <label className="block text-[10px] font-bold text-neutral-600 mb-1">
+                  {colLabel(col.name)} <span className="text-[9px] text-neutral-500">{col.name}</span>
                 </label>
                 {isJsonColumn(col.type) ? (
                   <textarea
@@ -1397,16 +1397,16 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
       {/* 追加ボタン */}
       <div className="flex gap-3 justify-end pt-1">
         <button onClick={onCancel}
-          className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors font-semibold">
+          className="px-4 py-2 text-sm text-neutral-600 hover:text-neutral-400 transition-colors font-semibold">
           キャンセル
         </button>
         <button
           onClick={onSubmit}
           disabled={!hasPriority || saving}
-          className={`px-6 py-2.5 text-sm font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5
+          className={`px-6 py-2.5 text-sm font-bold rounded-lg shadow-card transition-all flex items-center gap-1.5
             ${hasPriority && !saving
               ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
             }`}
         >
           {saving ? (
@@ -1437,7 +1437,7 @@ function FieldSection({ title, subtitle, color, open, onToggle, badge, children 
   const colorMap = {
     rose: { bg: 'bg-rose-50', border: 'border-rose-200', badge: 'bg-rose-100 text-rose-600', icon: 'text-rose-400' },
     amber: { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-600', icon: 'text-amber-400' },
-    slate: { bg: 'bg-gray-50', border: 'border-gray-200', badge: 'bg-gray-100 text-gray-500', icon: 'text-gray-400' },
+    slate: { bg: 'bg-neutral-800/50', border: 'border-neutral-800', badge: 'bg-neutral-800 text-neutral-400', icon: 'text-neutral-600' },
   };
   const c = colorMap[color] || colorMap.slate;
 
@@ -1450,8 +1450,8 @@ function FieldSection({ title, subtitle, color, open, onToggle, badge, children 
             {badge}
           </span>
           <div className="text-left">
-            <div className="text-sm font-bold text-gray-700">{title}</div>
-            <div className="text-[11px] text-gray-400">{subtitle}</div>
+            <div className="text-sm font-bold text-neutral-100">{title}</div>
+            <div className="text-[11px] text-neutral-500">{subtitle}</div>
           </div>
         </div>
         <svg className={`w-5 h-5 ${c.icon} transition-transform ${open ? 'rotate-180' : ''}`}
@@ -1460,7 +1460,7 @@ function FieldSection({ title, subtitle, color, open, onToggle, badge, children 
         </svg>
       </button>
       {open && (
-        <div className="px-5 py-5 bg-white/80">
+        <div className="px-5 py-5 bg-neutral-900/80">
           {children}
         </div>
       )}
@@ -1548,26 +1548,26 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
     }
   };
 
-  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-gray-100 rounded-lg bg-white
-    text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none`;
+  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-neutral-700 rounded-lg bg-neutral-900
+    text-neutral-50 transition-all hover:border-neutral-600 focus:border-red-600 focus:ring-2 focus:ring-red-600/40 outline-none`;
 
   return (
     <div className="md:col-span-2">
       {/* モード切替タブ */}
-      <div className="flex items-center gap-0 mb-2 bg-gray-100 rounded-lg p-0.5 w-fit">
+      <div className="flex items-center gap-0 mb-2 bg-neutral-800 rounded-lg p-0.5 w-fit">
         <button type="button" onClick={() => setMode('simple')}
           className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
             mode === 'simple'
-              ? 'bg-white text-gray-700 shadow-sm'
-              : 'text-gray-400 hover:text-gray-600'
+              ? 'bg-neutral-900 text-neutral-50 shadow-card'
+              : 'text-neutral-600 hover:text-neutral-400'
           }`}>
           📝 テキスト入力
         </button>
         <button type="button" onClick={() => setMode('math')}
           className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
             mode === 'math'
-              ? 'bg-white text-indigo-600 shadow-sm'
-              : 'text-gray-400 hover:text-gray-600'
+              ? 'bg-neutral-900 text-red-500 shadow-card'
+              : 'text-neutral-600 hover:text-neutral-400'
           }`}>
           🔢 数式入力
         </button>
@@ -1577,31 +1577,31 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
       {mode === 'math' && (
         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
           <button type="button" onClick={wrapWithDollar}
-            className="px-2 py-1 text-[11px] font-bold bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-100"
+            className="px-2 py-1 text-[11px] font-bold bg-red-950/30 text-red-500 rounded-lg hover:bg-red-950/50 transition-colors border border-red-900/50"
             title="選択テキストを数式$...$で囲む">
             $ 数式 $
           </button>
           <button type="button" onClick={() => setShowPalette(!showPalette)}
             className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-colors border ${
-              showPalette ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+              showPalette ? 'bg-red-600 text-white border-red-600' : 'bg-neutral-900 text-neutral-500 border-neutral-800 hover:bg-neutral-800'
             }`}>
             {showPalette ? '▼ パレット閉じる' : '▶ 数式パレット'}
           </button>
-          <span className="text-[10px] text-gray-300 ml-2">日本語テキスト + 数式は $ で囲んで入力</span>
+          <span className="text-[10px] text-neutral-600 ml-2">日本語テキスト + 数式は $ で囲んで入力</span>
         </div>
       )}
 
       {/* 数式パレット */}
       {mode === 'math' && showPalette && (
-        <div className="mb-2 p-3 bg-gradient-to-b from-indigo-50 to-white rounded-lg border border-indigo-100 space-y-2">
+        <div className="mb-2 p-3 bg-gradient-to-b from-red-950/30 to-neutral-900 rounded-lg border border-red-900/50 space-y-2">
           {MATH_SYMBOLS.map((g) => (
             <div key={g.group}>
-              <div className="text-[9px] font-bold text-indigo-400 mb-1 tracking-wider">{g.group}</div>
+              <div className="text-[9px] font-bold text-red-400 mb-1 tracking-wider">{g.group}</div>
               <div className="flex flex-wrap gap-1">
                 {g.items.map((sym) => (
                   <button key={sym.insert} type="button"
                     onClick={() => insertAtCursor(sym.insert)}
-                    className="px-2 py-1 text-xs bg-white border border-indigo-100 rounded-md hover:bg-indigo-100 hover:border-indigo-300 transition-colors text-gray-700 font-mono"
+                    className="px-2 py-1 text-xs bg-neutral-900 border border-red-900/50 rounded-md hover:bg-red-950/30 hover:border-red-700 transition-colors text-neutral-200 font-mono"
                     title={`${sym.label}: ${sym.insert}`}>
                     {sym.display || sym.label}
                   </button>
@@ -1625,11 +1625,11 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
         className={`${baseInputClass} resize-y`}
       />
       {mode === 'simple' ? (
-        <p className="text-[10px] text-gray-400 mt-1">
+        <p className="text-[10px] text-neutral-600 mt-1">
           テキストデータをそのままコピペできます。数式挿入が必要なら「🔢 数式入力」タブへ
         </p>
       ) : (
-        <p className="text-[10px] text-gray-400 mt-1">
+        <p className="text-[10px] text-neutral-600 mt-1">
           例: 「$x^2 + 2x + 1 = 0$ を解け。」 — ふつうの文章の中に $...$ で数式を入れるだけ
         </p>
       )}
@@ -1642,8 +1642,8 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
 function SmartField({ field, value, onChange, allValues, onBlur }) {
   const { name, label, type, help, options, rows, min, max, step, depends_on } = field;
 
-  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-gray-100 rounded-lg bg-white
-    text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none`;
+  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-neutral-700 rounded-lg bg-neutral-900
+    text-neutral-50 transition-all hover:border-neutral-600 focus:border-red-600 focus:ring-2 focus:ring-red-600/40 outline-none`;
 
   const isWide = type === 'textarea' || type === 'json' || type === 'rich_textarea';
 
@@ -1655,9 +1655,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
 
     return (
       <div className={isWide ? 'md:col-span-2' : ''}>
-        <label className="block text-[11px] font-bold text-gray-400 mb-1.5 tracking-[0.08em]">
+        <label className="block text-[11px] font-bold text-neutral-400 mb-1.5 tracking-[0.08em]">
           {label}
-          <span className="text-[10px] font-normal text-gray-300 ml-2 normal-case tracking-normal">{name}</span>
+          <span className="text-[10px] font-normal text-neutral-500 ml-2 normal-case tracking-normal">{name}</span>
         </label>
 
         {/* 候補チップ（親が選択済みのとき表示） */}
@@ -1668,8 +1668,8 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
                 onClick={() => onChange(opt)}
                 className={`px-2 py-0.5 text-[11px] rounded-lg border transition-all ${
                   value === opt
-                    ? 'bg-indigo-500 text-white border-indigo-500'
-                    : 'bg-white text-gray-500 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'
+                    ? 'bg-red-600 text-white border-red-600'
+                    : 'bg-neutral-900 text-neutral-500 border-neutral-800 hover:border-red-700 hover:text-red-500'
                 }`}>
                 {opt}
               </button>
@@ -1686,13 +1686,13 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
           className={`${baseInputClass} ${isCustom ? 'border-emerald-300 bg-emerald-50/30' : ''}`}
         />
         {isCustom && (
-          <p className="text-[10px] text-emerald-600 mt-0.5 flex items-center gap-1">
+          <p className="text-[10px] text-emerald-400 mt-0.5 flex items-center gap-1">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
             新しい分野「{value}」を追加します
           </p>
         )}
         {!parentVal && depends_on && (
-          <p className="text-[10px] text-amber-500 mt-1">⬆ 教科を先に選択すると候補が表示されます</p>
+          <p className="text-[10px] text-amber-400 mt-1">⬆ 教科を先に選択すると候補が表示されます</p>
         )}
       </div>
     );
@@ -1702,9 +1702,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
   if (type === 'rich_textarea') {
     return (
       <div className="md:col-span-2">
-        <label className="block text-[11px] font-bold text-gray-400 mb-1.5 tracking-[0.08em]">
+        <label className="block text-[11px] font-bold text-neutral-400 mb-1.5 tracking-[0.08em]">
           {label}
-          <span className="text-[10px] font-normal text-gray-300 ml-2 normal-case tracking-normal">{name}</span>
+          <span className="text-[10px] font-normal text-neutral-500 ml-2 normal-case tracking-normal">{name}</span>
         </label>
         <RichTextArea value={value} onChange={onChange} rows={rows} help={help} name={name} onBlur={onBlur} />
       </div>
@@ -1713,9 +1713,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
 
   return (
     <div className={isWide ? 'md:col-span-2' : ''}>
-      <label className="block text-[11px] font-bold text-gray-400 mb-1.5 tracking-[0.08em]">
+      <label className="block text-[11px] font-bold text-neutral-400 mb-1.5 tracking-[0.08em]">
         {label}
-        <span className="text-[10px] font-normal text-gray-300 ml-2 normal-case tracking-normal">{name}</span>
+        <span className="text-[10px] font-normal text-neutral-500 ml-2 normal-case tracking-normal">{name}</span>
       </label>
 
       {type === 'select' && options ? (
@@ -1750,9 +1750,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
             step={step ?? 0.05}
             value={value || min || 0}
             onChange={(e) => onChange(e.target.value)}
-            className="flex-1 h-2 bg-gray-200 rounded-full appearance-none accent-indigo-500"
+            className="flex-1 h-2 bg-neutral-800 rounded-full appearance-none accent-red-500"
           />
-          <span className="text-sm font-mono text-indigo-600 font-bold w-12 text-right">
+          <span className="text-sm font-mono text-red-500 font-bold w-12 text-right">
             {Number(value || 0).toFixed(2)}
           </span>
         </div>
@@ -1783,7 +1783,7 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
       )}
 
       {help && type !== 'textarea' && type !== 'json' && (
-        <p className="text-[10px] text-gray-300 mt-1">{help}</p>
+        <p className="text-[10px] text-neutral-600 mt-1">{help}</p>
       )}
     </div>
   );

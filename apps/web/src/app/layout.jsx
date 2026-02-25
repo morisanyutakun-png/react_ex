@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'ExamGen RAG — Pro Edition',
-  description: 'RAG ベースの試験問題生成・チューニングプラットフォーム',
+  title: 'REM — Rapid Exam Maker',
+  description: '次世代試験問題生成プラットフォーム',
 };
 
 export default function RootLayout({ children }) {
@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-gray-50 text-gray-900 selection:bg-indigo-100 selection:text-indigo-900">
+      <body className="min-h-screen bg-neutral-950 text-neutral-50 selection:bg-red-600/30 selection:text-red-100">
         {children}
       </body>
     </html>

@@ -60,7 +60,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
   return (
     <div className={className}>
       {label && (
-        <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+        <label className="block text-xs font-semibold text-neutral-400 mb-1.5">
           {label}
         </label>
       )}
@@ -70,10 +70,10 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-sm
-                      text-gray-700 transition-all cursor-pointer appearance-none
-                      hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10
-                      outline-none pr-10 shadow-sm font-medium
+            className="w-full px-4 py-3 rounded-lg border border-neutral-700 bg-neutral-900 text-sm
+                      text-neutral-200 transition-all cursor-pointer appearance-none
+                      hover:border-neutral-600 focus:border-red-600 focus:ring-2 focus:ring-red-600/40
+                      outline-none pr-10 shadow-card font-medium
                       disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {placeholder && <option value="">{placeholder}</option>}
@@ -83,7 +83,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
                 : <option key={opt.value} value={opt.value}>{opt.label}</option>
             )}
           </select>
-          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400 transition-colors">
+          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-neutral-500 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
@@ -94,8 +94,8 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             type="button"
             onClick={onAdd}
             title={addLabel || '追加'}
-            className="flex items-center justify-center w-10 rounded-lg border border-dashed border-gray-200
-                       text-gray-400 hover:border-indigo-300 hover:text-indigo-500 hover:bg-indigo-50
+            className="flex items-center justify-center w-10 rounded-lg border border-dashed border-neutral-700
+                       text-neutral-500 hover:border-red-600 hover:text-red-400 hover:bg-red-950/20
                        transition-all duration-200 flex-shrink-0 active:scale-95"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -113,17 +113,17 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
    選択中タグ表示
    ═══════════════════════════════════════════════════════ */
 
-function SelectedTag({ label, value, color = 'indigo', onClear }) {
+function SelectedTag({ label, value, color = 'red', onClear }) {
   if (!value) return null;
   const colors = {
-    indigo: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    amber: 'bg-amber-50 text-amber-700 border-amber-100',
-    violet: 'bg-violet-50 text-violet-700 border-violet-100',
-    sky: 'bg-sky-50 text-sky-700 border-sky-100',
+    red: 'bg-red-950/30 text-red-400 border-red-900',
+    emerald: 'bg-emerald-950/30 text-emerald-400 border-emerald-900',
+    amber: 'bg-amber-950/30 text-amber-400 border-amber-900',
+    violet: 'bg-violet-950/30 text-violet-400 border-violet-900',
+    sky: 'bg-sky-950/30 text-sky-400 border-sky-900',
   };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${colors[color] || colors.indigo}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${colors[color] || colors.red}`}>
       <span className="opacity-60">{label}:</span>
       <span>{value}</span>
       {onClear && (
@@ -147,8 +147,8 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">バランス</div>
-        <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
+        <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">バランス</div>
+        <div className="flex h-3 rounded-full overflow-hidden bg-neutral-800">
           {pcts.map((p, i) => {
             const w = (p.value / total) * 100;
             return w > 0 ? (
@@ -156,7 +156,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
             ) : null;
           })}
         </div>
-        <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+        <div className="flex justify-between text-[10px] text-neutral-500 font-medium">
           {pcts.map((p, i) => (
             <span key={i}>{p.label} {Math.round((p.value / total) * 100)}%</span>
           ))}
@@ -166,19 +166,19 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
         {pcts.map((p, i) => (
           <div key={i} className="flex items-center gap-3">
             <div className={`w-2 h-2 rounded-full ${p.color} flex-shrink-0`} />
-            <span className="text-xs font-medium text-gray-500 w-16 flex-shrink-0">{p.label}</span>
+            <span className="text-xs font-medium text-neutral-400 w-16 flex-shrink-0">{p.label}</span>
             <input
               type="range" min={0} max={2} step={0.1} value={p.value}
               onChange={(e) => p.onChange(Number(e.target.value))}
-              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-gray-200 accent-indigo-600
+              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-neutral-800 accent-red-600
                 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-500
+                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-red-500
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
               style={{
-                background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${(p.value / 2) * 100}%, #e5e7eb ${(p.value / 2) * 100}%, #e5e7eb 100%)`,
+                background: `linear-gradient(to right, #dc2626 0%, #dc2626 ${(p.value / 2) * 100}%, #262626 ${(p.value / 2) * 100}%, #262626 100%)`,
               }}
             />
-            <span className="text-xs font-bold text-indigo-600 w-8 text-right tabular-nums">
+            <span className="text-xs font-bold text-red-400 w-8 text-right tabular-nums">
               {p.value.toFixed(1)}
             </span>
           </div>
@@ -206,11 +206,11 @@ function QualityRating({ score, onChange }) {
         <button key={l.value} onClick={() => onChange(l.value)}
           className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-all duration-200
             ${score === l.value
-              ? 'bg-indigo-50 border-2 border-indigo-400 scale-105'
-              : 'bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+              ? 'bg-red-950/30 border-2 border-red-600 scale-105 shadow-glow-sm'
+              : 'bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700'
             }`}>
           <span className="text-xl">{l.emoji}</span>
-          <span className={`text-[10px] font-bold ${score === l.value ? 'text-indigo-600' : 'text-gray-400'}`}>
+          <span className={`text-[10px] font-bold ${score === l.value ? 'text-red-500' : 'text-neutral-500'}`}>
             {l.label}
           </span>
         </button>
@@ -548,29 +548,29 @@ export default function TuningPage() {
 
       {/* ── フィードバック統計（常時表示） ── */}
       {feedbackData && (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="p-4 bg-neutral-800/50 rounded-lg border border-neutral-800">
           <div className="flex items-center gap-2 mb-3">
-            <Icons.Chart className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-bold text-gray-700">改善フィードバック</span>
-            {feedbackLoading && <span className="text-[10px] text-gray-400 animate-pulse">更新中...</span>}
+            <Icons.Chart className="w-4 h-4 text-red-400" />
+            <span className="text-sm font-bold text-neutral-50">改善フィードバック</span>
+            {feedbackLoading && <span className="text-[10px] text-neutral-500 animate-pulse">更新中...</span>}
           </div>
           <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
-            <div className="p-2 sm:p-3 bg-white rounded-lg border border-indigo-100/40 text-center">
-              <div className="text-base sm:text-lg font-bold text-indigo-600">{feedbackData.stats?.total_evaluations ?? 0}</div>
-              <div className="text-[9px] sm:text-[10px] text-indigo-400 font-bold">総評価数</div>
+            <div className="p-2 sm:p-3 bg-neutral-900 rounded-lg border border-red-950/30 text-center">
+              <div className="text-base sm:text-lg font-bold text-red-400">{feedbackData.stats?.total_evaluations ?? 0}</div>
+              <div className="text-[9px] sm:text-[10px] text-red-500 font-bold">総評価数</div>
             </div>
-            <div className="p-2 sm:p-3 bg-white rounded-lg border border-emerald-100/40 text-center">
-              <div className="text-base sm:text-lg font-bold text-emerald-600">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
-              <div className="text-[9px] sm:text-[10px] text-emerald-400 font-bold">平均スコア</div>
+            <div className="p-2 sm:p-3 bg-neutral-900 rounded-lg border border-emerald-950/30 text-center">
+              <div className="text-base sm:text-lg font-bold text-emerald-400">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
+              <div className="text-[9px] sm:text-[10px] text-emerald-500 font-bold">平均スコア</div>
             </div>
-            <div className="p-2 sm:p-3 bg-white rounded-lg border border-amber-100/40 text-center">
-              <div className="text-base sm:text-lg font-bold text-amber-600">{feedbackData.stats?.high_score_count ?? 0}</div>
-              <div className="text-[9px] sm:text-[10px] text-amber-400 font-bold">高評価 (4+)</div>
+            <div className="p-2 sm:p-3 bg-neutral-900 rounded-lg border border-amber-950/30 text-center">
+              <div className="text-base sm:text-lg font-bold text-amber-400">{feedbackData.stats?.high_score_count ?? 0}</div>
+              <div className="text-[9px] sm:text-[10px] text-amber-500 font-bold">高評価 (4+)</div>
             </div>
           </div>
           {feedbackData.feedback?.length > 0 ? (
             <details className="rounded-lg">
-              <summary className="cursor-pointer text-xs font-bold text-indigo-400 hover:text-indigo-600 select-none flex items-center gap-1">
+              <summary className="cursor-pointer text-xs font-bold text-red-400 hover:text-red-300 select-none flex items-center gap-1">
                 <svg className="w-3 h-3 transition-transform details-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
@@ -578,24 +578,24 @@ export default function TuningPage() {
               </summary>
               <div className="mt-2 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
                 {feedbackData.feedback.map((fb, idx) => (
-                  <div key={fb.id || idx} className="p-2 bg-white rounded-lg border border-gray-100 text-xs">
+                  <div key={fb.id || idx} className="p-2 bg-neutral-900 rounded-lg border border-neutral-800 text-xs">
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-1.5">
-                        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-[9px] font-bold">★ {fb.score}</span>
+                        <span className="px-1.5 py-0.5 bg-amber-950/30 text-amber-400 rounded text-[9px] font-bold">★ {fb.score}</span>
                         {fb.metadata?.subject && (
-                          <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[9px] font-bold">{fb.metadata.subject}</span>
+                          <span className="px-1.5 py-0.5 bg-red-950/30 text-red-400 rounded text-[9px] font-bold">{fb.metadata.subject}</span>
                         )}
                       </div>
-                      <span className="text-[9px] text-gray-300">{fb.timestamp?.slice(0, 10)}</span>
+                      <span className="text-[9px] text-neutral-500">{fb.timestamp?.slice(0, 10)}</span>
                     </div>
-                    {fb.notes && <div className="text-gray-500 text-[10px]">💬 {fb.notes}</div>}
-                    <div className="text-gray-600 line-clamp-1 text-[10px]">{fb.model_output_excerpt?.slice(0, 120)}</div>
+                    {fb.notes && <div className="text-neutral-400 text-[10px]">💬 {fb.notes}</div>}
+                    <div className="text-neutral-300 line-clamp-1 text-[10px]">{fb.model_output_excerpt?.slice(0, 120)}</div>
                   </div>
                 ))}
               </div>
             </details>
           ) : (
-            <div className="text-xs text-gray-400 text-center py-1">
+            <div className="text-xs text-neutral-400 text-center py-1">
               評価を記録すると次回のプロンプトに自動反映されます
             </div>
           )}
@@ -603,36 +603,36 @@ export default function TuningPage() {
       )}
 
       {/* ── セクションナビ (ステップ風) ── */}
-      <div className="flex items-center gap-1 sm:gap-1.5 bg-white p-1 sm:p-1.5 rounded-lg border border-gray-200 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1 sm:gap-1.5 bg-neutral-900 p-1 sm:p-1.5 rounded-lg border border-neutral-800 overflow-x-auto no-scrollbar">
         {sections.map((s, idx) => (
           <button key={s.id} onClick={() => s.enabled && setActiveSection(s.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 sm:py-3.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 relative whitespace-nowrap
               ${activeSection === s.id
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-red-600 text-white shadow-glow-sm'
                 : s.enabled
-                  ? 'text-gray-500 hover:text-indigo-600 hover:bg-indigo-50'
-                  : 'text-gray-300 cursor-not-allowed'
+                  ? 'text-neutral-400 hover:text-red-500 hover:bg-red-950/30'
+                  : 'text-neutral-700 cursor-not-allowed'
               }`}
             disabled={!s.enabled}>
-            <span className={`flex items-center justify-center w-5 h-5 rounded-md text-[10px] font-bold
+            <span className={`flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold
               ${activeSection === s.id
-                ? 'bg-white/20 text-white'
+                ? 'bg-red-600/20 text-white'
                 : s.enabled
-                  ? 'bg-gray-100 text-gray-400'
-                  : 'bg-gray-50 text-gray-200'
+                  ? 'bg-neutral-800 text-neutral-500'
+                  : 'bg-neutral-900 text-neutral-700'
               }`}>
               {idx + 1}
             </span>
             <span>{s.icon} {s.label}</span>
             {!s.enabled && s.id !== 'configure' && (
-              <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[9px] bg-gray-100 text-gray-400 px-2 py-0.5 rounded-full whitespace-nowrap">
+              <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[9px] bg-neutral-800 text-neutral-500 px-2 py-0.5 rounded-full whitespace-nowrap">
                 {s.id === 'execute' ? 'プロンプト生成後' : '出力貼付後'}
               </span>
             )}
           </button>
         ))}
         <button onClick={resetAll} title="リセット"
-          className="px-3 py-3 rounded-lg text-gray-300 hover:text-rose-500 hover:bg-rose-50 transition-all flex-shrink-0">
+          className="px-3 py-3 rounded-lg text-neutral-600 hover:text-rose-500 hover:bg-rose-950/30 transition-all flex-shrink-0">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
           </svg>
@@ -651,7 +651,7 @@ export default function TuningPage() {
 
             {/* 選択中サマリータグ */}
             {templateId && (
-              <div className="flex flex-wrap gap-2 mb-5 pb-4 border-b border-gray-100">
+              <div className="flex flex-wrap gap-2 mb-5 pb-4 border-b border-neutral-800">
                 {(() => {
                   const sel = templates.find((t) => t.id === templateId);
                   return <SelectedTag label="テンプレート" value={sel?.name || templateId} color="violet" onClear={() => setTemplateId('')} />;
@@ -678,9 +678,9 @@ export default function TuningPage() {
             {templateId && (() => {
               const sel = templates.find((t) => t.id === templateId);
               return sel ? (
-                <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100/50">
+                <div className="p-4 bg-red-950/30 rounded-lg border border-red-900/50">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center flex-shrink-0">
                       <Icons.File className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -689,7 +689,7 @@ export default function TuningPage() {
                     </div>
                   </div>
                   <div className="flex gap-2 mt-3 flex-wrap">
-                    {sel.metadata?.subject && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600">{sel.metadata.subject}</span>}
+                    {sel.metadata?.subject && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-950/30 text-red-500">{sel.metadata.subject}</span>}
                     {sel.metadata?.field && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">{sel.metadata.field}</span>}
                     {sel.metadata?.difficulty && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">{sel.metadata.difficulty}</span>}
                   </div>
@@ -698,9 +698,9 @@ export default function TuningPage() {
             })()}
 
             {/* リフレッシュボタン */}
-            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-neutral-800">
               <button onClick={async () => { await refresh(); setStatus('テンプレート一覧を再読み込みしました'); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-neutral-400 hover:text-red-500 hover:bg-red-950/30 transition-all"
                 title="テンプレートを再読込">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -732,7 +732,7 @@ export default function TuningPage() {
                     </div>
                     <div className="flex gap-1 mt-1.5 flex-wrap">
                       {selectedRefProblem.subject && (
-                        <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[9px] font-bold">{selectedRefProblem.subject}</span>
+                        <span className="px-1.5 py-0.5 bg-red-950/30 text-red-500 rounded text-[9px] font-bold">{selectedRefProblem.subject}</span>
                       )}
                       {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
                         <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-600 rounded text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
@@ -772,16 +772,16 @@ export default function TuningPage() {
                     onChange={(e) => setRefSearchQuery(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') doRefSearch(); }}
                     placeholder="キーワードで過去問を検索..."
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-gray-200 bg-white text-xs
-                               text-gray-700 transition-all hover:border-gray-300 focus:border-indigo-500
-                               focus:ring-2 focus:ring-indigo-500/10 outline-none placeholder:text-gray-300"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-neutral-700 bg-neutral-900 text-xs
+                               text-neutral-200 transition-all hover:border-neutral-600 focus:border-red-600
+                               focus:ring-2 focus:ring-red-600/40 outline-none placeholder:text-neutral-600"
                   />
                 </div>
                 <button
                   onClick={doRefSearch}
                   disabled={refSearching || !refSearchQuery.trim()}
-                  className="px-4 py-2.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-600
-                             hover:bg-indigo-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                  className="px-4 py-2.5 rounded-lg text-xs font-bold bg-red-950/30 text-red-500
+                             hover:bg-red-600 hover:text-white shadow-glow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed
                              flex items-center gap-1.5"
                 >
                   {refSearching ? (
@@ -799,23 +799,23 @@ export default function TuningPage() {
 
             {/* 検索結果一覧 */}
             {refSearchResults.length > 0 && (
-              <div className="border border-gray-200 rounded-lg overflow-hidden max-h-64 overflow-y-auto mb-3">
+              <div className="border border-neutral-800 rounded-lg overflow-hidden max-h-64 overflow-y-auto mb-3">
                 {refSearchResults.map((item, idx) => (
                   <button
                     key={item.id ?? idx}
                     onClick={() => selectRefProblem(item)}
-                    className="w-full text-left px-3 py-2.5 border-b border-gray-100 last:border-b-0
-                               transition-all hover:bg-indigo-50 bg-white"
+                    className="w-full text-left px-3 py-2.5 border-b border-neutral-800 last:border-b-0
+                               transition-all hover:bg-neutral-800 bg-neutral-900"
                   >
                     <div className="flex items-start gap-2">
-                      <span className="text-[10px] text-gray-300 font-mono mt-0.5 flex-shrink-0">#{item.id ?? idx + 1}</span>
+                      <span className="text-[10px] text-neutral-600 font-mono mt-0.5 flex-shrink-0">#{item.id ?? idx + 1}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs text-gray-700 leading-relaxed line-clamp-2">
+                        <div className="text-xs text-neutral-200 leading-relaxed line-clamp-2">
                           <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
                         </div>
                         <div className="flex gap-1 mt-1 flex-wrap">
                           {item.subject && (
-                            <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[9px] font-bold">{item.subject}</span>
+                            <span className="px-1.5 py-0.5 bg-red-950/30 text-red-500 rounded text-[9px] font-bold">{item.subject}</span>
                           )}
                           {(item.topic || item.metadata?.field) && (
                             <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-500 rounded text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
@@ -898,7 +898,7 @@ export default function TuningPage() {
           )}
 
           {retrievedChunks.length > 0 && (
-            <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 max-h-56 overflow-y-auto custom-scrollbar">
+            <div className="p-4 bg-neutral-800/50 rounded-lg border border-neutral-800 max-h-56 overflow-y-auto custom-scrollbar">
               <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide flex items-center gap-2">
                 参照データ ({retrievedChunks.length}件)
                 {retrievedChunks[0]?.search_tier && (
@@ -913,11 +913,11 @@ export default function TuningPage() {
                 )}
               </div>
               {retrievedChunks.map((c, i) => (
-                <div key={i} className="py-2 border-b border-gray-100 last:border-0 text-xs flex items-start gap-2">
+                <div key={i} className="py-2 border-b border-neutral-800 last:border-0 text-xs flex items-start gap-2">
                   <span className="text-gray-300 font-mono flex-shrink-0">#{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     {c.subject && (
-                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-indigo-50 text-indigo-500 mr-1">{c.subject}</span>
+                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-red-950/30 text-red-500 mr-1">{c.subject}</span>
                     )}
                     <span className="text-gray-600 leading-relaxed">
                       {(c.text || '').slice(0, 150).replace(/\n/g, ' ')}{(c.text || '').length > 150 ? '...' : ''}
@@ -953,9 +953,9 @@ export default function TuningPage() {
         <div className="space-y-6">
           <SectionCard title="LLMにプロンプトを送る" icon={<Icons.Prompt />}
             subtitle="プロンプトをコピーして、お好みのLLMに貼り付けて実行">
-            <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+            <div className="p-4 bg-red-950/30 rounded-lg border border-red-900/50">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-500 text-white flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-red-600 text-white flex items-center justify-center">
                   <Icons.Copy className="w-4 h-4" />
                 </div>
                 <div className="flex-1">
@@ -968,7 +968,7 @@ export default function TuningPage() {
                 </div>
                 <CopyButton text={finalPrompt} onCopied={setStatus} label="コピー" />
               </div>
-              <pre className="text-xs text-gray-600 bg-white rounded-lg p-3 max-h-32 overflow-auto custom-scrollbar font-mono leading-relaxed">
+              <pre className="text-xs text-neutral-400 bg-neutral-900 rounded-lg p-3 max-h-32 overflow-auto custom-scrollbar font-mono leading-relaxed">
                 {finalPrompt.slice(0, 500)}{finalPrompt.length > 500 ? '\n...' : ''}
               </pre>
             </div>
@@ -1055,17 +1055,17 @@ export default function TuningPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">メモ</label>
+                  <label className="block text-xs font-semibold text-neutral-500 mb-1.5">メモ</label>
                   <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-700
-                      transition-all hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none shadow-sm font-medium"
+                    className="w-full px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-900 text-sm text-neutral-200
+                      transition-all hover:border-neutral-700 focus:border-red-600 focus:ring-2 focus:ring-red-600/40 outline-none shadow-sm font-medium"
                     placeholder="例: 難易度は適切だが解説が冗長" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 mb-1.5">期待していた出力（任意）</label>
+                  <label className="block text-xs font-semibold text-neutral-500 mb-1.5">期待していた出力（任意）</label>
                   <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-sm text-gray-700
-                      transition-all hover:border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 outline-none shadow-sm font-medium"
+                    className="w-full px-4 py-3 rounded-lg border border-neutral-800 bg-neutral-900 text-sm text-neutral-200
+                      transition-all hover:border-neutral-700 focus:border-red-600 focus:ring-2 focus:ring-red-600/40 outline-none shadow-sm font-medium"
                     placeholder="期待される出力の要約" />
                 </div>
               </div>
@@ -1081,12 +1081,12 @@ export default function TuningPage() {
             subtitle="パースした問題データをDBに保存（検算を自動実行）">
             {parsedProblem ? (
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-xs space-y-1.5">
+                <div className="p-4 bg-neutral-800/50 rounded-lg border border-neutral-800 text-xs space-y-1.5">
                   {parsedProblem.stem && (
                     <div><span className="font-bold text-gray-500">問題:</span> <span className="text-gray-700">{parsedProblem.stem.slice(0, 200)}{parsedProblem.stem.length > 200 ? '...' : ''}</span></div>
                   )}
                   {parsedProblem.final_answer && (
-                    <div><span className="font-bold text-gray-500">解答:</span> <span className="text-indigo-600 font-bold">{parsedProblem.final_answer}</span></div>
+                    <div><span className="font-bold text-neutral-400">解答:</span> <span className="text-red-500 font-bold">{parsedProblem.final_answer}</span></div>
                   )}
                   {parsedProblem.checks && (
                     <div className="flex gap-3 mt-1">

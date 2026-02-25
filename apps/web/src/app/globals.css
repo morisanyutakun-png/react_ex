@@ -3,30 +3,33 @@
 @tailwind utilities;
 
 /* ============================
-   Design System – Clean Professional
+   Design System – REM (Futuristic Premium)
+   Red × Black × White
    ============================ */
 
 :root {
-  --color-primary: #4f46e5;
-  --color-primary-light: #eef2ff;
-  --color-primary-dark: #3730a3;
-  --color-surface: #ffffff;
-  --color-surface-alt: #f9fafb;
-  --color-border: #e5e7eb;
-  --color-border-light: #f3f4f6;
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-tertiary: #9ca3af;
+  --color-primary: #dc2626;
+  --color-primary-light: #ef4444;
+  --color-primary-dark: #991b1b;
+  --color-surface: #0a0a0a;
+  --color-surface-alt: #171717;
+  --color-surface-card: #1a1a1a;
+  --color-border: #262626;
+  --color-border-light: #404040;
+  --color-text: #fafafa;
+  --color-text-secondary: #a3a3a3;
+  --color-text-tertiary: #737373;
   --color-success: #059669;
   --color-danger: #dc2626;
-  --color-warning: #d97706;
-  --radius-lg: 0.75rem;
-  --radius-md: 0.5rem;
-  --radius-sm: 0.375rem;
-  --shadow-xs: 0 1px 2px 0 rgba(0,0,0,.03);
-  --shadow-sm: 0 1px 3px 0 rgba(0,0,0,.04), 0 1px 2px -1px rgba(0,0,0,.04);
-  --shadow-md: 0 4px 6px -1px rgba(0,0,0,.05), 0 2px 4px -2px rgba(0,0,0,.03);
-  --shadow-focus: 0 0 0 2px rgba(79,70,229,.12);
+  --color-warning: #f59e0b;
+  --radius-lg: 0.5rem;
+  --radius-md: 0.375rem;
+  --radius-sm: 0.25rem;
+  --shadow-glow-sm: 0 0 8px rgba(220, 38, 38, 0.15);
+  --shadow-glow-md: 0 0 16px rgba(220, 38, 38, 0.25);
+  --shadow-glow-lg: 0 0 24px rgba(220, 38, 38, 0.35);
+  --shadow-depth: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-focus: 0 0 0 2px rgba(220, 38, 38, 0.4);
 }
 
 /* ============================
@@ -34,12 +37,12 @@
    ============================ */
 
 body {
-  @apply text-gray-900 antialiased;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Hiragino Sans', 'Noto Sans JP', sans-serif;
-  background-color: #f9fafb;
+  @apply text-neutral-50 antialiased;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display',
+    'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  background: linear-gradient(180deg, #0a0a0a 0%, #121212 100%);
   min-height: 100vh;
-  letter-spacing: -0.011em;
+  letter-spacing: 0.01em;
 }
 
 /* ============================
@@ -47,90 +50,93 @@ body {
    ============================ */
 
 .transition-base {
-  @apply transition-all duration-150 ease-out;
+  @apply transition-all duration-200 ease-out;
 }
 
 /* ============================
-   Glass Card Effect (simplified)
+   Glass Card Effect (Dark Theme)
    ============================ */
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.97);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 
 /* ============================
-   Gradient Text (subtle)
+   Gradient Text (Red Accent)
    ============================ */
 
 .gradient-text {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background-image: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
 }
 
 /* ============================
-   Hover Card Lift
+   Hover Glow Effect
    ============================ */
 
 .hover-lift {
-  @apply transition-all duration-200;
+  @apply transition-all duration-300;
 }
 .hover-lift:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow-sm), var(--shadow-depth);
 }
 
 /* ============================
-   Badge Styles
+   Badge Styles (Dark Theme)
    ============================ */
 
 .badge {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium;
+  @apply inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold tracking-wide uppercase;
+  border: 1px solid;
 }
-.badge-primary { @apply bg-indigo-50 text-indigo-700; }
-.badge-success { @apply bg-emerald-50 text-emerald-700; }
-.badge-warning { @apply bg-amber-50 text-amber-700; }
-.badge-danger  { @apply bg-rose-50 text-rose-700; }
-.badge-neutral { @apply bg-gray-100 text-gray-600; }
+.badge-primary { @apply bg-red-950/50 text-red-400 border-red-900/50; }
+.badge-success { @apply bg-emerald-950/50 text-emerald-400 border-emerald-900/50; }
+.badge-warning { @apply bg-amber-950/50 text-amber-400 border-amber-900/50; }
+.badge-danger  { @apply bg-red-950/50 text-red-400 border-red-900/50; }
+.badge-neutral { @apply bg-neutral-900/50 text-neutral-400 border-neutral-800/50; }
 
 /* ============================
-   Input Focus Ring
+   Input Focus Ring (Red Glow)
    ============================ */
 
 .input-ring {
-  @apply transition-all duration-150;
+  @apply transition-all duration-200;
 }
 .input-ring:focus {
-  @apply ring-2 ring-indigo-500/20 border-indigo-400 outline-none;
+  @apply ring-2 ring-red-600/40 border-red-600 outline-none;
+  box-shadow: 0 0 12px rgba(220, 38, 38, 0.3);
 }
 
 /* ============================
-   Scrollbar
+   Scrollbar (Dark Theme)
    ============================ */
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-transparent;
+  @apply bg-neutral-900;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-gray-200 rounded-full;
+  @apply bg-neutral-700 rounded-full;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-300;
+  @apply bg-red-600;
 }
 
 /* ============================
-   Pulse Dot Animation
+   Pulse Dot Animation (Red)
    ============================ */
 
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0.3; }
 }
 
 .animate-pulse-dot {
@@ -138,7 +144,7 @@ body {
 }
 
 /* ============================
-   Skeleton Loader
+   Skeleton Loader (Dark)
    ============================ */
 
 @keyframes shimmer {
@@ -147,7 +153,7 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background: linear-gradient(90deg, #171717 25%, #262626 50%, #171717 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   @apply rounded;
@@ -160,7 +166,7 @@ body {
 @keyframes modal-in {
   from {
     opacity: 0;
-    transform: scale(0.97) translateY(4px);
+    transform: scale(0.95) translateY(8px);
   }
   to {
     opacity: 1;
@@ -169,14 +175,31 @@ body {
 }
 
 .animate-in {
-  animation: modal-in 0.15s ease-out;
+  animation: modal-in 0.2s ease-out;
 }
 
 /* ============================
-   Section Divider
+   Section Divider (Dark)
    ============================ */
 .section-divider {
-  @apply border-t border-gray-100;
+  @apply border-t border-neutral-800;
+}
+
+/* ============================
+   Red Accent Line
+   ============================ */
+.accent-line {
+  position: relative;
+}
+.accent-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #dc2626, #ef4444);
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
 }
 
 /* ============================

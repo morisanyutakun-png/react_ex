@@ -128,13 +128,13 @@ export default function DataPage() {
                 options={SUBJECTS.map((s) => ({ value: s, label: s }))}
               />
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                <label className="block text-xs font-semibold text-neutral-500 mb-1.5">
                   ソース
                 </label>
                 <input
                   value={ingestSource}
                   onChange={(e) => setIngestSource(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm input-ring placeholder:text-gray-300"
+                  className="w-full px-3 py-2.5 rounded-lg border border-neutral-800 text-sm input-ring placeholder:text-neutral-600"
                   placeholder="教科書名、URL等"
                 />
               </div>
@@ -201,15 +201,15 @@ export default function DataPage() {
           </SectionCard>
 
           {/* ヒント */}
-          <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-            <div className="text-xs font-semibold text-indigo-600 mb-2 flex items-center gap-2">
+          <div className="p-4 bg-red-950/30 rounded-lg border border-red-900/50">
+            <div className="text-xs font-semibold text-red-500 mb-2 flex items-center gap-2">
               <Icons.Info className="w-3.5 h-3.5" />
               投入のヒント
             </div>
-            <ul className="text-xs text-indigo-500 space-y-1.5 list-none">
-              <li>• LaTeX形式の場合、<code className="bg-indigo-100 px-1 rounded">\begin{'{'}problem{'}'}</code> や <code className="bg-indigo-100 px-1 rounded">\item</code> で自動分割</li>
+            <ul className="text-xs text-red-400 space-y-1.5 list-none">
+              <li>• LaTeX形式の場合、<code className="bg-red-950/30 px-1 rounded">\begin{'{'}problem{'}'}</code> や <code className="bg-red-950/30 px-1 rounded">\item</code> で自動分割</li>
               <li>• テキスト形式の場合、「問1.」「Q1.」などの見出しで自動分割</li>
-              <li>• JSON形式（<code className="bg-indigo-100 px-1 rounded">{'{"stem":"...","solution_outline":"..."}'}</code>）も対応</li>
+              <li>• JSON形式（<code className="bg-red-950/30 px-1 rounded">{'{'}\"stem\":\"...\",\"solution_outline\":\"...\"{'}'}</code>）も対応</li>
               <li>• 大量のデータは複数回に分けて投入すると安定します</li>
             </ul>
           </div>
@@ -222,7 +222,7 @@ export default function DataPage() {
           <SectionCard title="保存済みデータの閲覧" icon={<Icons.Search />}>
             <div className="flex flex-wrap items-end gap-3">
               <div className="flex-1 min-w-[200px]">
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                <label className="block text-xs font-semibold text-neutral-500 mb-1.5">
                   キーワード
                 </label>
                 <input
@@ -230,8 +230,8 @@ export default function DataPage() {
                   value={browseQuery}
                   onChange={(e) => setBrowseQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleBrowse()}
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 text-sm input-ring
-                             placeholder:text-gray-300"
+                  className="w-full px-4 py-2.5 rounded-lg border border-neutral-800 text-sm input-ring
+                             placeholder:text-neutral-600"
                   placeholder="検索ワード（任意）"
                 />
               </div>
@@ -260,19 +260,19 @@ export default function DataPage() {
                 return (
                   <div
                     key={item.id || idx}
-                    className={`bg-white rounded-lg border p-4 cursor-pointer transition-all duration-200
+                    className={`bg-neutral-900 rounded-lg border p-4 cursor-pointer transition-all duration-200
                       ${isOpen
-                        ? 'border-indigo-200 ring-1 ring-indigo-100 shadow-card-hover'
-                        : 'border-gray-200 shadow-card hover:shadow-card-hover'
+                        ? 'border-red-700 ring-1 ring-red-900/50 shadow-card-hover'
+                        : 'border-neutral-800 shadow-card hover:shadow-card-hover'
                       }`}
                     onClick={() => setSelectedProblem(isOpen ? null : (item.id || idx))}
                   >
                     <div className="flex items-start gap-3">
-                      <span className="text-xs text-gray-300 font-mono mt-0.5">
+                      <span className="text-xs text-neutral-600 font-mono mt-0.5">
                         #{item.id || idx + 1}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm text-gray-700">
+                        <div className="text-sm text-neutral-200">
                           {(item.stem || item.text || item.normalized_text || '').slice(0, 100)}
                           {(item.stem || item.text || '').length > 100 ? '...' : ''}
                         </div>
@@ -291,14 +291,14 @@ export default function DataPage() {
                     </div>
 
                     {isOpen && (
-                      <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                      <div className="mt-3 pt-3 border-t border-neutral-800 space-y-2">
                         {item.stem && (
-                          <pre className="text-xs whitespace-pre-wrap text-gray-600 bg-gray-50 rounded-lg p-3 font-mono">
+                          <pre className="text-xs whitespace-pre-wrap text-neutral-400 bg-neutral-800 rounded-lg p-3 font-mono">
                             {item.stem}
                           </pre>
                         )}
                         {item.solution_outline && (
-                          <pre className="text-xs whitespace-pre-wrap text-gray-600 bg-indigo-50 rounded-lg p-3 font-mono">
+                          <pre className="text-xs whitespace-pre-wrap text-neutral-400 bg-neutral-800/50 rounded-lg p-3 font-mono">
                             {item.solution_outline}
                           </pre>
                         )}
