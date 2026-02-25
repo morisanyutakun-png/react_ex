@@ -382,7 +382,9 @@ export default function TuningPage() {
       setRagPrompt('');
       setRetrievedChunks([]);
       setRagSkipped(false);
-      setStatus('プロンプト生成完了');
+      setStatus('プロンプト生成完了 → 実行へ移動');
+      // 自動的に「実行」ステップへ遷移
+      setActiveSection('execute');
     } catch (e) { setStatus(`エラー: ${e.message}`); }
   };
 
@@ -437,13 +439,17 @@ export default function TuningPage() {
         while (parsed.checks.length < 2) parsed.checks.push({ desc: '自動補完 — 未検証', ok: false });
       }
       setParsedProblem(parsed);
-      setStatus('パース成功');
+      setStatus('パース成功 → 評価・保存へ移動');
+      // 自動的に「評価・保存」ステップへ遷移
+      setActiveSection('evaluate');
     } else {
       setParsedProblem({
         stem: llmOutput.trim(), stem_latex: llmOutput.trim(), final_answer: '',
         checks: [{ desc: '自動生成 — 未検証', ok: false }, { desc: '自動生成 — 未検証', ok: false }],
       });
-      setStatus('テキストとして読み取りました（JSON形式推奨）');
+      setStatus('テキストとして読み取りました → 評価・保存へ移動');
+      // テキスト読み取りでも自動遷移
+      setActiveSection('evaluate');
     }
   };
 
@@ -503,8 +509,10 @@ export default function TuningPage() {
       });
       setStatus('評価を記録しました');
       setTuningScore(''); setTuningNotes(''); setExpectedOutput('');
-      // フィードバックデータを再読み込み（今の評価を次回に反映）
-      loadFeedback(subject, templateId);
+      // フィードバックデータを再読み込み（今の評価を即座に反映）
+      // 少し待ってからリロード（DBへの書き込みが完了するのを待つ）
+      await new Promise((r) => setTimeout(r, 500));
+      await loadFeedback(subject, templateId);
     } catch (e) { setStatus(`保存エラー: ${e.message}`); }
   };
 
@@ -537,6 +545,62 @@ export default function TuningPage() {
       />
 
       <StatusBar message={status} />
+
+      {/* ── フィードバック統計（常時表示） ── */}
+      {feedbackData && (
+        <div className="p-4 bg-gradient-to-r from-indigo-50/80 via-white to-amber-50/80 rounded-2xl border border-slate-100/80 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Icons.Chart className="w-4 h-4 text-indigo-500" />
+            <span className="text-sm font-bold text-slate-700">改善フィードバック</span>
+            {feedbackLoading && <span className="text-[10px] text-slate-400 animate-pulse">更新中...</span>}
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
+            <div className="p-2 sm:p-3 bg-white/80 rounded-xl border border-indigo-100/40 text-center">
+              <div className="text-base sm:text-lg font-black text-indigo-600">{feedbackData.stats?.total_evaluations ?? 0}</div>
+              <div className="text-[9px] sm:text-[10px] text-indigo-400 font-bold">総評価数</div>
+            </div>
+            <div className="p-2 sm:p-3 bg-white/80 rounded-xl border border-emerald-100/40 text-center">
+              <div className="text-base sm:text-lg font-black text-emerald-600">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
+              <div className="text-[9px] sm:text-[10px] text-emerald-400 font-bold">平均スコア</div>
+            </div>
+            <div className="p-2 sm:p-3 bg-white/80 rounded-xl border border-amber-100/40 text-center">
+              <div className="text-base sm:text-lg font-black text-amber-600">{feedbackData.stats?.high_score_count ?? 0}</div>
+              <div className="text-[9px] sm:text-[10px] text-amber-400 font-bold">高評価 (4+)</div>
+            </div>
+          </div>
+          {feedbackData.feedback?.length > 0 ? (
+            <details className="rounded-xl">
+              <summary className="cursor-pointer text-[11px] font-bold text-indigo-400 hover:text-indigo-600 select-none flex items-center gap-1">
+                <svg className="w-3 h-3 transition-transform details-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+                高評価例を表示 ({feedbackData.feedback.length}件)
+              </summary>
+              <div className="mt-2 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
+                {feedbackData.feedback.map((fb, idx) => (
+                  <div key={fb.id || idx} className="p-2 bg-white/60 rounded-lg border border-slate-100 text-xs">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-[9px] font-black">★ {fb.score}</span>
+                        {fb.metadata?.subject && (
+                          <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[9px] font-bold">{fb.metadata.subject}</span>
+                        )}
+                      </div>
+                      <span className="text-[9px] text-slate-300">{fb.timestamp?.slice(0, 10)}</span>
+                    </div>
+                    {fb.notes && <div className="text-slate-500 text-[10px]">💬 {fb.notes}</div>}
+                    <div className="text-slate-600 line-clamp-1 text-[10px]">{fb.model_output_excerpt?.slice(0, 120)}</div>
+                  </div>
+                ))}
+              </div>
+            </details>
+          ) : (
+            <div className="text-xs text-slate-400 text-center py-1">
+              評価を記録すると次回のプロンプトに自動反映されます
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── セクションナビ (ステップ風) ── */}
       <div className="flex items-center gap-1 sm:gap-1.5 bg-white/70 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl border border-slate-100/80 shadow-sm overflow-x-auto no-scrollbar">
@@ -908,6 +972,16 @@ export default function TuningPage() {
                 {finalPrompt.slice(0, 500)}{finalPrompt.length > 500 ? '\n...' : ''}
               </pre>
             </div>
+            {/* RAG 注入ボタン（未注入の場合に表示） */}
+            {!ragPrompt && !ragSkipped && (
+              <div className="flex flex-wrap items-center gap-2 mt-3 p-3 bg-amber-50/60 rounded-xl border border-amber-100/40">
+                <span className="text-[11px] text-amber-600 font-bold">RAG未注入:</span>
+                <Button onClick={injectRag} variant="secondary" size="sm">
+                  <Icons.Search className="w-3.5 h-3.5" /> RAGを注入
+                </Button>
+                <Button onClick={skipRag} variant="ghost" size="sm">スキップ</Button>
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-3 mt-4">
               {[
                 { name: 'ChatGPT', url: 'https://chat.openai.com', color: 'from-green-500 to-emerald-600' },
@@ -931,11 +1005,6 @@ export default function TuningPage() {
               <Button onClick={parseLlmOutput} disabled={!llmOutput}>
                 <Icons.Search className="w-4 h-4" /> パースする
               </Button>
-              {parsedProblem && (
-                <Button variant="secondary" size="sm" onClick={() => setActiveSection('evaluate')}>
-                  評価・保存へ <Icons.ArrowRight className="w-3 h-3" />
-                </Button>
-              )}
             </div>
             {parseError && (
               <div className="mt-3 p-3 bg-rose-50/60 rounded-xl border border-rose-200/40 text-xs text-rose-700">
@@ -1006,65 +1075,7 @@ export default function TuningPage() {
             </div>
           </SectionCard>
 
-          {/* ── フィードバック統計 ── */}
-          {feedbackData && (
-            <SectionCard title="改善フィードバック" icon={<Icons.Chart />}
-              subtitle="過去の評価データに基づく改善サイクル">
-              <div className="space-y-4">
-                {/* 統計サマリー */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100/40 text-center">
-                    <div className="text-lg font-black text-indigo-600">{feedbackData.stats?.total_evaluations ?? 0}</div>
-                    <div className="text-[10px] text-indigo-400 font-bold mt-0.5">総評価数</div>
-                  </div>
-                  <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100/40 text-center">
-                    <div className="text-lg font-black text-emerald-600">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
-                    <div className="text-[10px] text-emerald-400 font-bold mt-0.5">平均スコア</div>
-                  </div>
-                  <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-100/40 text-center">
-                    <div className="text-lg font-black text-amber-600">{feedbackData.stats?.high_score_count ?? 0}</div>
-                    <div className="text-[10px] text-amber-400 font-bold mt-0.5">高評価 (4+)</div>
-                  </div>
-                </div>
 
-                {/* 高評価例リスト */}
-                {feedbackData.feedback?.length > 0 ? (
-                  <div>
-                    <label className="block text-[11px] font-black text-slate-400 mb-2 tracking-[0.1em] uppercase">
-                      高評価の過去出力（プロンプトに自動注入済み）
-                    </label>
-                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
-                      {feedbackData.feedback.map((fb, idx) => (
-                        <div key={fb.id || idx} className="p-2.5 bg-white/60 rounded-lg border border-slate-100 text-xs">
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-600 rounded text-[9px] font-black">★ {fb.score}</span>
-                              {fb.metadata?.subject && (
-                                <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-[9px] font-bold">{fb.metadata.subject}</span>
-                              )}
-                            </div>
-                            <span className="text-[9px] text-slate-300">{fb.timestamp?.slice(0, 10)}</span>
-                          </div>
-                          {fb.notes && <div className="text-slate-500 text-[10px] mb-1">💬 {fb.notes}</div>}
-                          <div className="text-slate-600 line-clamp-2">{fb.model_output_excerpt?.slice(0, 150)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-xs text-slate-400">
-                    まだ高評価データがありません。評価を記録するとここに表示され、次回のプロンプト生成に自動反映されます。
-                  </div>
-                )}
-
-                {/* フィードバックの仕組み説明 */}
-                <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100/40 text-[11px] text-blue-600 leading-relaxed">
-                  <span className="font-bold">📊 フィードバックループ:</span> スコア4以上の評価データは自動的にプロンプトに注入され、
-                  LLMが過去の良い出力パターンを学習します。評価を重ねるほど出力品質が向上します。
-                </div>
-              </div>
-            </SectionCard>
-          )}
 
           <SectionCard title="問題をDBに保存" icon={<Icons.Data />}
             subtitle="パースした問題データをDBに保存（検算を自動実行）">
