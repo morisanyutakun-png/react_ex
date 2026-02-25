@@ -158,13 +158,14 @@ export function StatusBar({ message }) {
     message.includes('失敗') || message.includes('エラー') || message.includes('Error');
   const isSuccess =
     message.includes('完了') || message.includes('成功') ||
-    message.includes('取得') || message.includes('作成') || message.includes('開きました');
+    message.includes('取得') || message.includes('作成') || message.includes('開きました') ||
+    /\d+件/.test(message);
 
   const styles = isError
     ? 'bg-red-500/[0.08] text-red-600 border-red-500/[0.12]'
     : isSuccess
     ? 'bg-emerald-500/[0.08] text-emerald-600 border-emerald-500/[0.12]'
-    : 'bg-red-500/[0.08] text-red-600 border-red-500/[0.12]';
+    : 'bg-black/[0.04] text-[#6e6e73] border-black/[0.06]';
 
   return (
     <div

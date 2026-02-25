@@ -27,13 +27,6 @@ const IconSearch = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
   </svg>
 );
-const IconData = () => (
-  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-  </svg>
-);
 
 /* ─── カラーテーマ ─── */
 const themes = {
@@ -67,7 +60,6 @@ const MAIN_ACTIONS = [
 const SUB_ACTIONS = [
   { href: '/search',    icon: <IconSearch />,   label: '問題を検索',  description: '保存済み問題を検索・閲覧', theme: 'amber' },
   { href: '/db-editor', icon: <IconDatabase />, label: 'DB編集',     description: '問題データを直接編集・管理', theme: 'emerald' },
-  { href: '/data',      icon: <IconData />,     label: 'データ管理',  description: '統計・エクスポート・インポート', theme: 'sky' },
 ];
 
 /* ─── メインカード (Apple Music Featured スタイル) ─── */
