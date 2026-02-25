@@ -1,4 +1,5 @@
 import './globals.css';
+import Header from '@/components/Header';
 
 export const metadata = {
   title: 'REM — Rapid Exam Maker',
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] selection:bg-red-100 selection:text-red-900">
+        <Header />
         {children}
       </body>
     </html>
