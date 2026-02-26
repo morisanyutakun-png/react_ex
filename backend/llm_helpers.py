@@ -349,20 +349,41 @@ def verify_answer(parsed: dict) -> dict:
     return {'verified': verified, 'expected': expected, 'computed': computed, 'error': None, 'skipped': False}
 
 
-def make_generation_prompt_with_context(stem: str, num: int = 5, request_id: str = None, context_text: str = None, profile: str = 'latex_only', min_difficulty: float = None, max_difficulty: float = None, generation_style: str = None, prohibited_tags: list = None, include_explanations: bool = False) -> str:
+def make_generation_prompt_with_context(stem: str, num: int = 5, request_id: str = None, context_text: str = None, profile: str = 'latex_only', min_difficulty: float = None, max_difficulty: float = None, generation_style: str = None, prohibited_tags: list = None, include_explanations: bool = False, subject: str = None) -> str:
     """Build a strict prompt instructing the LLM to return a JSON object with a 'generated' array.
 
     Each generated item should be an object with keys: 'latex' (required), optional 'stem', optional 'difficulty', optional 'tags'.
     The output MUST be a single JSON object with top-level fields: schema_version, request_id, generated.
+    Subject-aware: math-specific instructions only appear for STEM subjects.
     """
     if not request_id:
         request_id = str(uuid.uuid4())
 
+    # Determine if subject is STEM (needs math-specific LaTeX instructions)
+    _stem_keywords = {'数学', '物理', '化学', '生物', '情報', '理科', '微分', '積分', '関数', '方程式', '確率', '統計', 'math', 'physics', 'chemistry'}
+    _combined = ((subject or '') + ' ' + (stem or '')[:300]).lower()
+    is_stem = any(kw in _combined for kw in _stem_keywords) if _combined.strip() else True
+
     system = (
-        'You are a generator that outputs exactly one JSON object and nothing else. The JSON object MUST include top-level keys "schema_version" and "request_id" and a key "generated" which is an array of generated problems. Each generated problem should be an object containing at minimum a "latex" string (the full problem in LaTeX). Optional fields: "stem" (plain text), "difficulty" (0-1), and "tags" (array of strings). Do not include any surrounding text or explanations.'
+        'You are a generator that outputs exactly one JSON object and nothing else. '
+        'The JSON object MUST include top-level keys "schema_version" and "request_id" and a key "generated" '
+        'which is an array of generated problems. Each generated problem should be an object containing at minimum '
+        'a "latex" string (the full problem in LaTeX). Optional fields: "stem" (plain text), "difficulty" (0-1), '
+        'and "tags" (array of strings). Do not include any surrounding text or explanations.'
     )
 
-    parts = [f'Generate {num} distinct problems similar to the following prompt (do not simply repeat).', f'Include each problem as a LaTeX string in the "latex" field.']
+    parts = [
+        f'Generate {num} distinct problems similar to the following prompt (do not simply repeat).',
+        'Include each problem as a LaTeX string in the "latex" field.',
+    ]
+
+    # LaTeX rules (always)
+    parts.append('- LaTeX rules: use $...$ for inline math, \\[...\\] for display math. Do not use $$. Ensure all {} braces are balanced.')
+
+    # Math-specific rules (STEM only)
+    if is_stem:
+        parts.append('- Math formatting: use \\frac{num}{den} for fractions (always two brace groups after \\frac), \\sqrt{x} for roots, \\sin/\\cos/\\tan for trig functions.')
+
     # add difficulty constraints if provided
     if min_difficulty is not None or max_difficulty is not None:
         rng = f"between {min_difficulty if min_difficulty is not None else 0.0} and {max_difficulty if max_difficulty is not None else 1.0}"
@@ -377,7 +398,8 @@ def make_generation_prompt_with_context(stem: str, num: int = 5, request_id: str
         parts.append('- For each generated item include an optional short "explanation" field (one-sentence) describing the solution approach.')
     parts.append('- Output exactly one JSON object with fields: "schema_version":"1.0", "request_id":"%s", "generated": [ ... ]' % request_id)
     parts.append(r'- Each item in "generated" must be a JSON object with "latex" (string). The "latex" field MUST be a valid LaTeX-formatted problem (use inline $...$ or display \[...\] for equations, or full LaTeX environments). Optionally include "stem" (plain text), "difficulty" (number between 0 and 1), and "tags" (array of short strings).')
-    parts.append('- For math problems: each generated item SHOULD include "verification_code" (a self-contained Python/sympy script that computes the answer and prints it) and "final_answer" (the expected result). This ensures computational correctness of generated problems.')
+    if is_stem:
+        parts.append('- For math problems: each generated item SHOULD include "verification_code" (a self-contained Python/sympy script that computes the answer and prints it) and "final_answer" (the expected result).')
     parts.append('Example output:\n{ "schema_version":"1.0", "request_id": "%s", "generated": [ {"latex":"\\\\[ x^2-4x+3=(x-2)^2-1 \\\\]", "stem":"二次関数 f(x)=x^2-4x+3 の最小値を求めよ", "difficulty":0.3 }, ... ] }' % request_id)
     parts.append('- Do not return extraneous commentary. If you cannot generate real variants, return an empty "generated" array instead of an error.')
 
