@@ -304,246 +304,232 @@ def retrieve_with_profile(
     subject_filter: Optional[str] = None,
     topic_filter: Optional[str] = None,
 ) -> List[Dict]:
-    """Retrieve top candidates using a profile that weights text and attribute proximity.
+    """Retrieve top candidates using DB-first filtering + optional vector/TF-IDF ranking.
 
-    Uses a cascading filter strategy:
-      1. subject + field/topic → if sufficient results, use these
-      2. subject only          → if sufficient results, use these
-      3. global (no filter)    → fallback
-    This prevents cross-topic pollution (e.g. calculus for quadratic function queries).
+    Strategy (guaranteed to return results if DB has matching rows):
+      1. Query problems table directly with cascading filters:
+         subject+field → subject+topic → subject → global
+      2. If vector model available, compute similarity scores for ranking boost
+      3. Rank by combined score (text similarity + difficulty match + bonuses)
+      4. Return top_k results
 
-    Returns list of dicts: {id, text_score, difficulty, trickiness, final_score, subject_match, field_match}
+    This ensures that even 1 matching row in DB will be returned.
     """
-    # Minimum number of candidates to consider a search tier "sufficient".
-    # If fewer candidates are found, cascade to the next (broader) tier.
-    MIN_CASCADE_CANDIDATES = max(top_k, 5)
+    is_sqlite = getattr(conn, '_is_sqlite', False)
 
-    # Step 1: get candidate list via vector (if requested and model provided) or TF-IDF fallback
-    candidates: List[Tuple[int, float]] = []
+    # ── Step 1: DB-first query with cascading filters ──
+    # Always query problems table directly. This guarantees results if data exists.
+    def _subject_where(subj):
+        """Build flexible subject match clause."""
+        if is_sqlite:
+            return "(subject = %s OR subject LIKE %s)", [subj, subj + '%']
+        else:
+            return "(subject = %s OR subject LIKE %s)", [subj, subj + '%']
 
-    # ── Cascading search tiers ──
-    # Build a list of (subject_f, field_f, topic_f, label) tiers to try in order.
-    # Priority: subject+field+topic → subject+topic → subject+field → subject-only → global
-    has_field = field_filter is not None
-    has_topic = bool(topic_filter)
-    # 教科+分野一致を最優先、subject-onlyをフォールバック
-    # 難易度・問題文類似度はスコア順で上位N件を返す
-    tiers = []
-    if subject_filter and has_field:
-        tiers.append((subject_filter, field_filter, None, 'subject+field'))
-    if subject_filter and has_topic:
-        tiers.append((subject_filter, None, topic_filter, 'subject+topic'))
+    def _query_problems(where_clause, params, limit=200):
+        """Execute a query on problems and return rows."""
+        cur = conn.cursor()
+        order_col = 'id' if is_sqlite else 'created_at'
+        sql = (
+            f"SELECT id, stem, difficulty, trickiness, subject, "
+            f"{'topic' if is_sqlite else 'field_id, topic'} "
+            f"FROM problems WHERE {where_clause} "
+            f"AND stem IS NOT NULL AND stem != '' "
+            f"ORDER BY {order_col} DESC LIMIT %s"
+        )
+        cur.execute(sql, tuple(params + [limit]))
+        rows = cur.fetchall()
+        cur.close()
+        return rows
+
+    # Build cascading filter attempts
+    attempts = []
+    if subject_filter and field_filter is not None:
+        sw, sp = _subject_where(subject_filter)
+        attempts.append((f"{sw} AND field_id = %s", sp + [field_filter], 'subject+field'))
+    if subject_filter and topic_filter:
+        sw, sp = _subject_where(subject_filter)
+        attempts.append((f"{sw} AND topic = %s", sp + [topic_filter], 'subject+topic'))
     if subject_filter:
-        tiers.append((subject_filter, None, None, 'subject-only'))
-    if not subject_filter:
-        tiers.append((None, None, None, 'global'))
+        sw, sp = _subject_where(subject_filter)
+        attempts.append((sw, sp, 'subject-only'))
+    attempts.append(("1=1", [], 'global'))
 
-    # Track which tier was actually used (for scoring bonus)
+    db_rows = []
     used_tier = 'global'
+    for where_clause, params, tier_label in attempts:
+        rows = _query_problems(where_clause, params, limit=200)
+        logger.info('RAG DB tier=%s: %d rows found', tier_label, len(rows))
+        if rows:
+            db_rows = rows
+            used_tier = tier_label
+            break
 
-    if use_vector and model is not None:
+    if not db_rows:
+        logger.info('RAG: no problems found in DB at all')
+        return []
+
+    # Parse DB rows into prob_map
+    prob_map = {}
+    for r in db_rows:
+        if is_sqlite:
+            pid, stem, diff, trick, subj, topic = r[0], r[1], r[2], r[3], r[4], r[5]
+            fid = None
+        else:
+            pid, stem, diff, trick, subj, fid, topic = r[0], r[1], r[2], r[3], r[4], r[5], r[6]
+        prob_map[pid] = {
+            'id': pid,
+            'text': (stem or '').strip(),
+            'difficulty': diff,
+            'trickiness': trick,
+            'subject': subj,
+            'field_id': fid,
+            'topic': topic,
+        }
+
+    pids = list(prob_map.keys())
+    logger.info('RAG: %d candidate problems from DB (tier=%s)', len(pids), used_tier)
+
+    # ── Step 2: Compute text similarity scores ──
+    # Try vector similarity first, then TF-IDF, then fall back to no text score
+    text_scores = {pid: 0.0 for pid in pids}
+
+    # Try pgvector
+    vector_ok = False
+    if use_vector and model is not None and not is_sqlite:
         try:
-            # If running on SQLite, skip pgvector and fall back to TF-IDF
-            if getattr(conn, '_is_sqlite', False):
-                logger.info('SQLite detected: skipping pgvector search, using TF-IDF')
-                candidates = _tfidf_search(conn, query, top_k=top_k * 3, force_refresh=tfidf_force_refresh)
-                used_tier = 'global'  # TF-IDF has no built-in subject/field filter
-            else:
+            from backend.embeddings import vector_to_sql_literal as _v2s
+        except Exception:
+            try:
+                from embeddings import vector_to_sql_literal as _v2s
+            except Exception:
+                _v2s = None
+
+        if _v2s is not None:
+            try:
                 qvec = model.encode([query], convert_to_numpy=True)[0]
-                # import vector_to_sql_literal lazily
-                try:
-                    from backend.embeddings import vector_to_sql_literal as _v2s
-                except Exception:
-                    try:
-                        from embeddings import vector_to_sql_literal as _v2s  # type: ignore
-                    except Exception:
-                        _v2s = None
-                if _v2s is None:
-                    raise RuntimeError('vector_to_sql_literal not available (missing embeddings module)')
                 qvec_lit = _v2s(qvec.tolist())
+                cur = conn.cursor()
+                # Get vector distances for our candidate problem IDs
+                cur.execute(
+                    "SELECT e.problem_id, (e.vector <-> %s) AS dist "
+                    "FROM embeddings e "
+                    "WHERE e.kind = 'stem' AND e.problem_id = ANY(%s) "
+                    "ORDER BY dist",
+                    (qvec_lit, pids)
+                )
+                for pid, dist in cur.fetchall():
+                    try:
+                        text_scores[pid] = 1.0 / (1.0 + float(dist))
+                    except Exception:
+                        pass
+                cur.close()
+                vector_ok = True
+                logger.info('RAG: pgvector scores computed for %d problems', sum(1 for v in text_scores.values() if v > 0))
+            except Exception as e:
+                logger.warning('RAG: pgvector scoring failed: %s', e)
 
-                # Try each tier until we get enough candidates
-                for tier_subject, tier_field, tier_topic, tier_label in tiers:
-                    tier_candidates = _pgvector_search(
-                        conn, qvec_lit, top_k=top_k * 3, shards=pgvector_shards,
-                        subject_filter=tier_subject, field_filter=tier_field,
-                        topic_filter=tier_topic,
-                    )
-                    logger.info(
-                        'pgvector cascade tier=%s retrieved %d candidates',
-                        tier_label, len(tier_candidates),
-                    )
-                    if len(tier_candidates) >= MIN_CASCADE_CANDIDATES:
-                        candidates = tier_candidates
-                        used_tier = tier_label
-                        break
-                    # If this tier has SOME results but not enough, keep them as
-                    # a fallback and try the next broader tier
-                    if tier_candidates and not candidates:
-                        candidates = tier_candidates
-                        used_tier = tier_label
-
-                # If we iterated all tiers without breaking, candidates holds
-                # the best we found (or the global search result from the last tier)
-                if not candidates:
-                    if subject_filter:
-                        # Subject was specified but nothing found — return empty rather than
-                        # polluting with unrelated cross-subject results
-                        logger.info('pgvector: no candidates for subject=%r; returning empty (strict mode)', subject_filter)
-                    else:
-                        # No subject filter: safe to do a global search
-                        candidates = _pgvector_search(conn, qvec_lit, top_k=top_k * 3, shards=pgvector_shards)
-                        used_tier = 'global'
-
-                logger.info('pgvector final: tier=%s, %d candidates', used_tier, len(candidates))
+    # Try TF-IDF if vector didn't work
+    if not vector_ok:
+        try:
+            texts_for_tfidf = [prob_map[pid]['text'] for pid in pids]
+            if texts_for_tfidf and TfidfVectorizer is not None:
+                normalized = [_normalize_latex_text(t) for t in texts_for_tfidf]
+                use_char = any(re.search(r'[\u4e00-\u9fff]', t) for t in normalized)
+                if use_char:
+                    vec = TfidfVectorizer(analyzer='char_wb', ngram_range=(2, 4))
+                else:
+                    vec = TfidfVectorizer()
+                mat = vec.fit_transform(normalized)
+                qv = vec.transform([_normalize_latex_text(query)])
+                sims = cosine_similarity(qv, mat)[0]
+                for i, pid in enumerate(pids):
+                    text_scores[pid] = float(sims[i])
+                logger.info('RAG: TF-IDF scores computed for %d problems', len(pids))
         except Exception as e:
-            logger.warning('pgvector search failed: %s; falling back to tfidf', e)
-            candidates = _tfidf_search(conn, query, top_k=top_k * 3, force_refresh=tfidf_force_refresh)
-            used_tier = 'global'
-    else:
-        candidates = _tfidf_search(conn, query, top_k=top_k * 3, force_refresh=tfidf_force_refresh)
-        used_tier = 'global'
+            logger.warning('RAG: TF-IDF scoring failed: %s', e)
 
-    if not candidates:
-        return []
-
-    cids = [c[0] for c in candidates]
-    # fetch attributes — also retrieve subject, field_id & topic for match bonus scoring
-    cur = conn.cursor()
-
-    # Note: We no longer do post-fetch filtering here because the cascading
-    # search already filters at the SQL level (JOIN + WHERE). We still apply
-    # a lightweight post-filter for TF-IDF fallback (which doesn't support
-    # SQL-level subject/field/topic filtering).
-    if getattr(conn, '_is_sqlite', False):
-        placeholders = ','.join(['%s'] * len(cids))
-        q = f"SELECT id, difficulty, trickiness, stem, subject, topic FROM problems WHERE id IN ({placeholders})"
-        cur.execute(q, cids)
-    else:
-        q = "SELECT id, difficulty, trickiness, stem, subject, field_id, topic FROM problems WHERE id = ANY(%s)"
-        cur.execute(q, (cids,))
-    rows = cur.fetchall()
-
-    if getattr(conn, '_is_sqlite', False):
-        prob_map = {
-            r[0]: {'difficulty': r[1], 'trickiness': r[2], 'text': r[3], 'subject': r[4], 'field_id': None, 'topic': r[5]}
-            for r in rows
-        }
-    else:
-        prob_map = {
-            r[0]: {'difficulty': r[1], 'trickiness': r[2], 'text': r[3], 'subject': r[4], 'field_id': r[5], 'topic': r[6]}
-            for r in rows
-        }
-
-    # For TF-IDF fallback, apply post-filter if subject_filter / topic_filter is given.
-    # Use partial match (startswith / contains) so "数学" matches "数学I", "数学II" etc.
-    def _subject_matches(db_subject, filter_subject):
-        if not db_subject or not filter_subject:
-            return False
-        return db_subject == filter_subject or db_subject.startswith(filter_subject) or filter_subject in db_subject
-
-    if used_tier == 'global' and subject_filter:
-        filtered = [(pid, score) for pid, score in candidates
-                    if pid in prob_map and _subject_matches(prob_map[pid].get('subject', ''), subject_filter)]
-        if filtered:
-            candidates = filtered
-    if used_tier in ('global', 'subject-only') and topic_filter:
-        filtered = [(pid, score) for pid, score in candidates
-                    if pid in prob_map and prob_map[pid].get('topic') == topic_filter]
-        if filtered:
-            candidates = filtered
-
-    # Filter candidates to only those found in prob_map
-    candidates = [(pid, score) for pid, score in candidates if pid in prob_map]
-    if not candidates:
-        return []
-
-    # Build a map of text_score
-    score_map = {pid: score for pid, score in candidates}
-
-    # prepare arrays for standardization
-    pids = [pid for pid, _ in candidates]
-    text_scores = [score_map.get(pid, 0.0) for pid in pids]
-    diffs = []
-    tricks = []
-    # compute raw diffs/tricks first
+    # ── Step 3: Compute final ranking scores ──
+    # Combine text similarity, difficulty match, trickiness match, and bonuses
+    score_list = list(text_scores.values())
+    diff_list = []
+    trick_list = []
     for pid in pids:
-        p = prob_map.get(pid, {})
-        if target_difficulty is not None:
-            if p.get('difficulty') is not None:
-                diffs.append(abs(float(p['difficulty']) - float(target_difficulty)))
-            else:
-                diffs.append(0.5)
+        p = prob_map[pid]
+        if target_difficulty is not None and p.get('difficulty') is not None:
+            try:
+                diff_list.append(abs(float(p['difficulty']) - float(target_difficulty)))
+            except Exception:
+                diff_list.append(0.5)
         else:
-            diffs.append(0.0)
-        if target_trickiness is not None:
-            if p.get('trickiness') is not None:
-                tricks.append(abs(float(p['trickiness']) - float(target_trickiness)))
-            else:
-                tricks.append(0.5)
+            diff_list.append(0.0)
+        if target_trickiness is not None and p.get('trickiness') is not None:
+            try:
+                trick_list.append(abs(float(p['trickiness']) - float(target_trickiness)))
+            except Exception:
+                trick_list.append(0.5)
         else:
-            tricks.append(0.0)
+            trick_list.append(0.0)
 
-    # standardize (z-score) arrays so scales are comparable
-    z_text = _zscore(text_scores)
-    z_diff = _zscore(diffs)
-    z_trick = _zscore(tricks)
+    z_text = _zscore(score_list)
+    z_diff = _zscore(diff_list)
+    z_trick = _zscore(trick_list)
 
-    ranked = []
-    # Subject / field / topic match bonus weights
     SUBJECT_MATCH_BONUS = 0.3
     FIELD_MATCH_BONUS = 0.5
-    TOPIC_MATCH_BONUS = 0.6  # topic text match is the strongest signal
+    TOPIC_MATCH_BONUS = 0.6
 
-    for idx, (pid, text_score) in enumerate(candidates):
-        p = prob_map.get(pid, {})
-        zt = z_text[idx]
-        zd = z_diff[idx]
-        zt2 = z_trick[idx]
-        final_score = alpha_text * float(zt) - beta_difficulty * float(zd) - gamma_trickiness * float(zt2)
+    def _subject_matches(db_subj, filter_subj):
+        if not db_subj or not filter_subj:
+            return False
+        return db_subj == filter_subj or db_subj.startswith(filter_subj) or filter_subj in db_subj
 
-        # ── subject / field / topic match bonus ──
-        # Reward candidates that match the requested subject/field/topic to ensure
-        # topically relevant results rank higher even after cascade relaxation.
-        if subject_filter and p.get('subject') == subject_filter:
+    ranked = []
+    for idx, pid in enumerate(pids):
+        p = prob_map[pid]
+        zt = z_text[idx] if idx < len(z_text) else 0.0
+        zd = z_diff[idx] if idx < len(z_diff) else 0.0
+        ztk = z_trick[idx] if idx < len(z_trick) else 0.0
+
+        final_score = alpha_text * float(zt) - beta_difficulty * float(zd) - gamma_trickiness * float(ztk)
+
+        # Bonuses for matching filters
+        if subject_filter and _subject_matches(p.get('subject', ''), subject_filter):
             final_score += SUBJECT_MATCH_BONUS
         if field_filter is not None and p.get('field_id') == field_filter:
             final_score += FIELD_MATCH_BONUS
         if topic_filter and p.get('topic') == topic_filter:
             final_score += TOPIC_MATCH_BONUS
 
-        # small exact-match / token-overlap boost to favor strong matches (helps math queries)
+        # Token overlap boost
         try:
             qnorm = _normalize_latex_text(query)
-            txt = _normalize_latex_text((p.get('text') or ''))
+            txt = _normalize_latex_text(p.get('text', ''))
             q_tokens = set(qnorm.lower().split())
             txt_tokens = set(txt.lower().split())
-            if not q_tokens:
-                overlap = 0.0
-            else:
+            if q_tokens:
                 overlap = len(q_tokens & txt_tokens) / float(len(q_tokens))
-            # if high overlap or query is substring, boost final score
-            if overlap > overlap_threshold or qnorm.lower() in txt.lower():
-                final_score += overlap_boost * overlap
+                if overlap > overlap_threshold or qnorm.lower() in txt.lower():
+                    final_score += overlap_boost * overlap
         except Exception:
             pass
-        ranked.append(
-            {
-                'id': pid,
-                'text_score': float(text_score),
-                'difficulty': p.get('difficulty'),
-                'trickiness': p.get('trickiness'),
-                'final_score': float(final_score),
-                'text': (p.get('text') or '')[:500],
-                'subject': p.get('subject'),
-                'field_id': p.get('field_id'),
-                'topic': p.get('topic'),
-                'search_tier': used_tier,
-            }
-        )
 
-    # sort by final_score desc and return top_k
+        ranked.append({
+            'id': pid,
+            'text_score': text_scores.get(pid, 0.0),
+            'difficulty': p.get('difficulty'),
+            'trickiness': p.get('trickiness'),
+            'final_score': float(final_score),
+            'text': (p.get('text', ''))[:500],
+            'subject': p.get('subject'),
+            'field_id': p.get('field_id'),
+            'topic': p.get('topic'),
+            'search_tier': used_tier,
+        })
+
+    # Sort by final_score desc and return top_k
     ranked_sorted = sorted(ranked, key=lambda x: -x['final_score'])[:top_k]
+    logger.info('RAG: returning %d results (top_k=%d, tier=%s)', len(ranked_sorted), top_k, used_tier)
     return ranked_sorted
 
 
