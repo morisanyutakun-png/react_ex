@@ -129,6 +129,7 @@ def _pgvector_search_single(
     shard_clause: str = None,
     subject_filter: Optional[str] = None,
     field_filter: Optional[int] = None,
+    topic_filter: Optional[str] = None,
 ) -> List[Tuple[int, float]]:
     """pgvector search with optional subject/field pre-filtering via JOIN.
 
@@ -150,6 +151,10 @@ def _pgvector_search_single(
     if field_filter is not None:
         where_parts.append("p.field_id = %s")
         params.append(field_filter)
+        need_join = True
+    if topic_filter:
+        where_parts.append("p.topic = %s")
+        params.append(topic_filter)
         need_join = True
     if shard_clause:
         where_parts.append(shard_clause)
@@ -190,6 +195,7 @@ def _pgvector_search(
     conn,
     query_vec_lit: str,
     top_k: int = 100,
+    topic_filter: Optional[str] = None,
     shards: int = 1,
     subject_filter: Optional[str] = None,
     field_filter: Optional[int] = None,
@@ -205,6 +211,7 @@ def _pgvector_search(
         return _pgvector_search_single(
             conn, query_vec_lit, top_k=top_k, shard_clause=None,
             subject_filter=subject_filter, field_filter=field_filter,
+            topic_filter=topic_filter,
         )
 
     # prepare per-shard workload
@@ -219,7 +226,8 @@ def _pgvector_search(
             'falling back to shards=1 to avoid thread-unsafe connection sharing.',
             shards,
         )
-        return _pgvector_search_single(conn, query_vec_lit, top_k=top_k, shard_clause=None)
+        return _pgvector_search_single(conn, query_vec_lit, top_k=top_k, shard_clause=None,
+                                         topic_filter=topic_filter)
 
     def worker(shard_idx: int):
         # open a new connection per worker to allow parallel queries
@@ -229,6 +237,7 @@ def _pgvector_search(
             return _pgvector_search_single(
                 subconn, query_vec_lit, top_k=per_shard_limit, shard_clause=clause,
                 subject_filter=subject_filter, field_filter=field_filter,
+                topic_filter=topic_filter,
             )
         finally:
             subconn.close()
@@ -291,13 +300,14 @@ def retrieve_with_profile(
     pgvector_shards: int = 1,
     field_filter: Optional[int] = None,
     subject_filter: Optional[str] = None,
+    topic_filter: Optional[str] = None,
 ) -> List[Dict]:
     """Retrieve top candidates using a profile that weights text and attribute proximity.
 
     Uses a cascading filter strategy:
-      1. subject + field  → if sufficient results, use these
-      2. subject only     → if sufficient results, use these
-      3. global (no filter) → fallback
+      1. subject + field/topic → if sufficient results, use these
+      2. subject only          → if sufficient results, use these
+      3. global (no filter)    → fallback
     This prevents cross-topic pollution (e.g. calculus for quadratic function queries).
 
     Returns list of dicts: {id, text_score, difficulty, trickiness, final_score, subject_match, field_match}
@@ -310,13 +320,20 @@ def retrieve_with_profile(
     candidates: List[Tuple[int, float]] = []
 
     # ── Cascading search tiers ──
-    # Build a list of (subject_f, field_f, label) tiers to try in order.
+    # Build a list of (subject_f, field_f, topic_f, label) tiers to try in order.
+    # Priority: subject+field+topic → subject+topic → subject+field → subject-only → global
+    has_field = field_filter is not None
+    has_topic = bool(topic_filter)
     tiers = []
-    if subject_filter and field_filter is not None:
-        tiers.append((subject_filter, field_filter, 'subject+field'))
+    if subject_filter and has_field and has_topic:
+        tiers.append((subject_filter, field_filter, topic_filter, 'subject+field+topic'))
+    if subject_filter and has_topic:
+        tiers.append((subject_filter, None, topic_filter, 'subject+topic'))
+    if subject_filter and has_field:
+        tiers.append((subject_filter, field_filter, None, 'subject+field'))
     if subject_filter:
-        tiers.append((subject_filter, None, 'subject-only'))
-    tiers.append((None, None, 'global'))
+        tiers.append((subject_filter, None, None, 'subject-only'))
+    tiers.append((None, None, None, 'global'))
 
     # Track which tier was actually used (for scoring bonus)
     used_tier = 'global'
@@ -343,10 +360,11 @@ def retrieve_with_profile(
                 qvec_lit = _v2s(qvec.tolist())
 
                 # Try each tier until we get enough candidates
-                for tier_subject, tier_field, tier_label in tiers:
+                for tier_subject, tier_field, tier_topic, tier_label in tiers:
                     tier_candidates = _pgvector_search(
                         conn, qvec_lit, top_k=top_k * 3, shards=pgvector_shards,
                         subject_filter=tier_subject, field_filter=tier_field,
+                        topic_filter=tier_topic,
                     )
                     logger.info(
                         'pgvector cascade tier=%s retrieved %d candidates',
@@ -382,37 +400,42 @@ def retrieve_with_profile(
         return []
 
     cids = [c[0] for c in candidates]
-    # fetch attributes — also retrieve subject & field_id for match bonus scoring
+    # fetch attributes — also retrieve subject, field_id & topic for match bonus scoring
     cur = conn.cursor()
 
     # Note: We no longer do post-fetch filtering here because the cascading
     # search already filters at the SQL level (JOIN + WHERE). We still apply
     # a lightweight post-filter for TF-IDF fallback (which doesn't support
-    # SQL-level subject/field filtering).
+    # SQL-level subject/field/topic filtering).
     if getattr(conn, '_is_sqlite', False):
         placeholders = ','.join(['%s'] * len(cids))
-        q = f"SELECT id, difficulty, trickiness, stem, subject FROM problems WHERE id IN ({placeholders})"
+        q = f"SELECT id, difficulty, trickiness, stem, subject, topic FROM problems WHERE id IN ({placeholders})"
         cur.execute(q, cids)
     else:
-        q = "SELECT id, difficulty, trickiness, stem, subject, field_id FROM problems WHERE id = ANY(%s)"
+        q = "SELECT id, difficulty, trickiness, stem, subject, field_id, topic FROM problems WHERE id = ANY(%s)"
         cur.execute(q, (cids,))
     rows = cur.fetchall()
 
     if getattr(conn, '_is_sqlite', False):
         prob_map = {
-            r[0]: {'difficulty': r[1], 'trickiness': r[2], 'text': r[3], 'subject': r[4], 'field_id': None}
+            r[0]: {'difficulty': r[1], 'trickiness': r[2], 'text': r[3], 'subject': r[4], 'field_id': None, 'topic': r[5]}
             for r in rows
         }
     else:
         prob_map = {
-            r[0]: {'difficulty': r[1], 'trickiness': r[2], 'text': r[3], 'subject': r[4], 'field_id': r[5]}
+            r[0]: {'difficulty': r[1], 'trickiness': r[2], 'text': r[3], 'subject': r[4], 'field_id': r[5], 'topic': r[6]}
             for r in rows
         }
 
-    # For TF-IDF fallback on SQLite, apply post-filter if subject_filter is given
+    # For TF-IDF fallback, apply post-filter if subject_filter / topic_filter is given
     if used_tier == 'global' and subject_filter:
         filtered = [(pid, score) for pid, score in candidates
                     if pid in prob_map and prob_map[pid].get('subject') == subject_filter]
+        if len(filtered) >= top_k:
+            candidates = filtered
+    if used_tier in ('global', 'subject-only') and topic_filter:
+        filtered = [(pid, score) for pid, score in candidates
+                    if pid in prob_map and prob_map[pid].get('topic') == topic_filter]
         if len(filtered) >= top_k:
             candidates = filtered
 
@@ -453,9 +476,10 @@ def retrieve_with_profile(
     z_trick = _zscore(tricks)
 
     ranked = []
-    # Subject / field match bonus weights
+    # Subject / field / topic match bonus weights
     SUBJECT_MATCH_BONUS = 0.3
     FIELD_MATCH_BONUS = 0.5
+    TOPIC_MATCH_BONUS = 0.6  # topic text match is the strongest signal
 
     for idx, (pid, text_score) in enumerate(candidates):
         p = prob_map.get(pid, {})
@@ -464,13 +488,15 @@ def retrieve_with_profile(
         zt2 = z_trick[idx]
         final_score = alpha_text * float(zt) - beta_difficulty * float(zd) - gamma_trickiness * float(zt2)
 
-        # ── subject / field match bonus ──
-        # Reward candidates that match the requested subject/field to ensure
+        # ── subject / field / topic match bonus ──
+        # Reward candidates that match the requested subject/field/topic to ensure
         # topically relevant results rank higher even after cascade relaxation.
         if subject_filter and p.get('subject') == subject_filter:
             final_score += SUBJECT_MATCH_BONUS
         if field_filter is not None and p.get('field_id') == field_filter:
             final_score += FIELD_MATCH_BONUS
+        if topic_filter and p.get('topic') == topic_filter:
+            final_score += TOPIC_MATCH_BONUS
 
         # small exact-match / token-overlap boost to favor strong matches (helps math queries)
         try:
@@ -497,6 +523,7 @@ def retrieve_with_profile(
                 'text': (p.get('text') or '')[:500],
                 'subject': p.get('subject'),
                 'field_id': p.get('field_id'),
+                'topic': p.get('topic'),
                 'search_tier': used_tier,
             }
         )

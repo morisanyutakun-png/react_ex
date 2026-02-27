@@ -974,12 +974,15 @@ def assemble_prompt(payload: AssemblePromptRequest = Body(...)):
             for r in rows:
                 retrieved.append({'id': r[0], 'text_score': 0.0, 'difficulty': r[1], 'trickiness': r[2], 'final_score': 0.0, 'text': (r[3] or '')[:500]})
         else:
-            # ── subject / field フィルタを metadata から抽出 ──
+            # ── subject / field / topic フィルタを metadata から抽出 ──
             _subject_filter = None
             _field_filter = None  # field_id (int)
+            _topic_filter = None  # topic text (str) e.g. "積分法"
             if payload.metadata:
                 _subject_filter = (payload.metadata.get('subject') or '').strip() or None
                 _field_name = (payload.metadata.get('field') or '').strip()
+                # topic テキストフィルタ: field 名をそのまま topic として使う
+                _topic_filter = _field_name or (payload.metadata.get('topic') or '').strip() or None
                 if _field_name and not getattr(conn, '_is_sqlite', False):
                     try:
                         _cur_f = conn.cursor()
@@ -1008,6 +1011,7 @@ def assemble_prompt(payload: AssemblePromptRequest = Body(...)):
                 tfidf_force_refresh=False,
                 field_filter=_field_filter,
                 subject_filter=_subject_filter,
+                topic_filter=_topic_filter,
             )
     except Exception as e:
         # Provide a clearer message for common DB schema issues
@@ -2412,54 +2416,51 @@ _LATEX_CORE_RULES = (
     "4. align* 等の行末改行は \\\\ のみ。\\\\[2mm] 等の寸法付き改行は使わない。\n"
     "5. パッケージはスケルトンに含まれているものだけ使う。追加しない。\n"
     "6. CJK フォント指定はスケルトンの iftex 分岐に従う。独自のフォント設定は書かない。\n"
-    "7. tcolorbox, mdframed, fbox 等のボックス環境は使わない。\n"
+    "7. tcolorbox, mdframed, fbox, \\mbox{}, \\hbox{} は使わない。\n"
     "8. 中括弧 {} のバランスを必ず確認する。開き { の数 = 閉じ } の数。\n"
+    "9. 装飾用の記号行（===, ---, ***, ~~~ 等）は絶対に出力しない。\n"
+    "   区切りには \\vspace{1em} や \\hrulefill を使う。\n"
     "\n"
     "=== ネスト・改行ルール（厳守） ===\n"
-    "N1. \\begin{} と \\end{} は必ず対応させる。ネスト添字を一致させる。\n"
-    "N2. enumerate, itemize, description の入れ子は最大 2 階層とする。\n"
+    "N1. \\begin{} と \\end{} は必ず対応させる。\n"
+    "N2. enumerate, itemize の入れ子は最大 2 階層。\n"
     "N3. 各環境の開始・終了はそれぞれ単独の行に書く。\n"
-    "    例:\n"
-    "    \\begin{enumerate}\n"
-    "      \\item 問題文\n"
-    "      \\item 問題文\n"
-    "    \\end{enumerate}\n"
     "N4. 改行のタイミング:\n"
-    "    - 大問と大問の間: \\vspace{1em} または空行 1行\n"
-    "    - 問題文と選択肢: \\vspace{0.5em} または空行 1行\n"
-    "    - 本文（長文）と問題: \\vspace{1em} + \\noindent で明確に分離\n"
+    "    - 大問と大問: \\vspace{1em}\n"
+    "    - 問題文と選択肢: \\vspace{0.5em}\n"
+    "    - 本文と問題: \\vspace{1em} + \\noindent\n"
     "N5. インデントはネスト深さに応じて一貫する。\n"
     "\n"
-    "=== ページ幅・テキスト折り返しルール（厳守） ===\n"
-    "W1. 長い英文テキストは LaTeX の自動折り返しに任せる。手動で改行を入れない限り、\n"
-    "    LaTeX は \\textwidth の範囲で自動的に行を折り返す。\n"
-    "W2. 長い英文パッセージや問題文は、paragraph またはそのまま地の文として記述する。\n"
-    "    \\mbox{} や \\hbox{} で囲んではいけない（折り返しが効かなくなる）。\n"
-    "W3. 表のセル幅は p{} や X 型で指定し、合計が \\textwidth を超えないようにする。\n"
-    "W4. verbatim/lstlisting 環境以外では、1行あたり80文字を超える連続テキストを \n"
-    "    hardcoded で入れない。LaTeX に折り返しを任せる。\n"
-    "W5. quotation/quote 環境内のテキストも自動折り返しされるので、\n"
-    "    長いパラグラフはそのまま1段落として記述する。\n"
+    "=== 数式関数の記述ルール（厳守） ===\n"
+    "F1. 三角関数・逆三角関数・双曲線関数・対数等は必ずバックスラッシュ付きで書く:\n"
+    "    \\sin, \\cos, \\tan, \\arcsin, \\arccos, \\arctan,\n"
+    "    \\sinh, \\cosh, \\tanh, \\log, \\ln, \\exp, \\lim,\n"
+    "    \\max, \\min, \\sup, \\inf, \\det, \\gcd, \\deg, \\arg\n"
+    "    × 誤: $arctan(x)$  ○ 正: $\\arctan(x)$\n"
+    "F2. \\frac{分子}{分母} は必ず分子・分母の両方を記述する。\n"
+    "    空の分子 \\frac{}{x} や空の分母 \\frac{x}{} は禁止。\n"
     "\n"
-    "=== 行間・余白ルール ===\n"
-    "S1. 行間は \\usepackage{setspace} + \\setstretch{1.3} で設定する。\n"
-    "    ※ プリアンブルで setspace を読み込み、\\begin{document} の直後に \\setstretch{1.3} を置く。\n"
-    "S2. パラグラフ間のスペースは \\usepackage{parskip} で自動調整する。\n"
+    "=== テキスト折り返し・行間ルール ===\n"
+    "W1. 長いテキストは LaTeX の自動折り返しに任せる。\n"
+    "W2. \\mbox{}, \\hbox{} でテキストを囲まない。\n"
+    "W3. 表のセル幅は p{} で指定し、\\textwidth を超えない。\n"
+    "S1. 行間は setspace + \\setstretch{1.3} で設定済み。\n"
 )
 
 # --- プロンプト部品: 数式ルール（理系科目のみ追加）---
 _LATEX_MATH_RULES = (
     "\n=== 数式の記述ルール（理系科目用） ===\n"
-    "M1. 分数: \\frac{分子}{分母} の形式。\\frac の直後に必ず {}{} の2つの中括弧。\n"
-    "    例: $\\frac{1}{2}$, $\\frac{x+1}{x-1}$\n"
-    "    ディスプレイ環境の大きい分数は \\dfrac を使う。\n"
-    "    入れ子の分数は中括弧の対応を特に注意:\n"
-    "    例: $\\frac{\\frac{a}{b}}{c}$ → { が4個、} が4個で対応。\n"
-    "M2. 掛け算: \\times または \\cdot を使う。\n"
-    "M3. 根号: \\sqrt{x} を使う。\n"
-    "M4. 三角関数: \\sin, \\cos, \\tan 等、バックスラッシュ付きコマンドを使う。\n"
-    "M5. 添字が2文字以上の場合は中括弧で囲む: $x_{10}$, $a_{ij}$\n"
-    "M6. 区間表記は数式内に書く: $[0,1)$, $[a,b]$\n"
+    "M1. 分数: \\frac{分子}{分母}。必ず {分子}{分母} の2つの中括弧を書く。\n"
+    "    分子・分母が空の \\frac{}{} は絶対禁止。\n"
+    "    入れ子: \\frac{\\frac{a}{b}}{c} のように中括弧を完全に対応。\n"
+    "M2. 掛け算: \\times または \\cdot。\n"
+    "M3. 根号: \\sqrt{x}。\n"
+    "M4. 関数: 必ずバックスラッシュ付き。\n"
+    "    \\sin, \\cos, \\tan, \\arcsin, \\arccos, \\arctan,\n"
+    "    \\log, \\ln, \\exp, \\lim, \\max, \\min\n"
+    "    × 誤: arctan x  ○ 正: \\arctan x\n"
+    "M5. 添字2文字以上は中括弧: $x_{10}$, $a_{ij}$\n"
+    "M6. 区間は数式内: $[0,1)$, $[a,b]$\n"
 )
 
 # --- プロンプト部品: 品質ルール ---
@@ -2563,65 +2564,49 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
         '以下のルールを守ってください:\n\n'
     ]
 
-    # Core rules
+    # Core rules (concise, non-contradictory)
     parts.append(
         '【基本ルール】\n'
         '1. 出力は \\documentclass から \\end{document} までの完全な LaTeX 文書のみ。\n'
-        '2. 余分な説明・コメント・マークダウン（``` 等）は出力しない。\n'
+        '2. 余分な説明・マークダウン（``` 等）・装飾行（===, --- 等）は出力しない。\n'
         '3. 日本語を含む場合は \\usepackage{iftex} でエンジンを判定し、\n'
         '   PDFTeX なら CJKutf8、LuaTeX なら luatexja、XeTeX なら xeCJK を使用。\n'
-        '4. インライン数式は $...$、ディスプレイ数式は \\[...\\]。\n'
-        '5. tcolorbox, mdframed, fbox 等のボックス環境は使わない。\n'
-        '6. 中括弧 {} は必ず対応させる。開き { の数 = 閉じ } の数を確認。\n'
-        '7. 指定された出力形式の構造ルールを守ること。\n\n'
-        '【ネスト・改行ルール】\n'
-        '- \\begin{} と \\end{} は必ず対応させる。それぞれ単独の行に書く。\n'
-        '- enumerate, itemize の入れ子は最大2階層。\n'
-        '- 大問と大問の間: \\vspace{1em} または空行1行。\n'
-        '- 本文（長文）と問題: \\vspace{1em} + \\noindent で明確に分離。\n'
-        '- 問題文と選択肢の間: \\vspace{0.5em} または空行1行。\n'
-        '- インデントはネスト深さに応じて一貫させる。\n\n'
-        '【ページ幅・テキスト折り返しルール】\n'
-        '- 長い英文や日本語のテキストは LaTeX の自動折り返しに任せる。\n'
-        '- \\mbox{} や \\hbox{} でテキストを囲まない（折り返しが効かなくなる）。\n'
-        '- パラグラフはそのまま地の文として記述する。\n'
-        '- 行間は \\usepackage{setspace} + \\setstretch{1.3} で広めに設定する。\n\n'
+        '4. インライン数式は $...$、ディスプレイ数式は \\[...\\]。$$ は使わない。\n'
+        '5. tcolorbox, mdframed, fbox, \\mbox{}, \\hbox{} は使わない。\n'
+        '6. 中括弧 {} は必ず対応させる。\n'
+        '7. \\begin{} / \\end{} は必ず対応。enumerate/itemize の入れ子は最大2階層。\n'
+        '8. 大問間は \\vspace{1em}、問題文と選択肢間は \\vspace{0.5em}。\n'
+        '9. 長いテキストは LaTeX に折り返しを任せる。\n\n'
     )
 
     # Math-specific rules (STEM only)
     if is_stem:
         parts.append(
             '【数式ルール（理系科目）】\n'
-            '- 分数: \\frac{分子}{分母} の形式。\\frac の直後に必ず {}{} の2つの中括弧。\n'
-            '  例: \\frac{1}{2}, \\dfrac{x+1}{x-1}\n'
-            '  入れ子: \\frac{\\frac{a}{b}}{c+d} のように階層ごとに中括弧を完全に対応。\n'
-            '- 掛け算: \\times または \\cdot を使う。\n'
-            '- 根号: \\sqrt{x}、三角関数: \\sin, \\cos, \\tan 等。\n'
-            '- 検算: 数式・計算結果を出力前に必ず検算すること。\n\n'
+            '- \\frac{分子}{分母}: 分子・分母は必ず両方記述。空禁止。\n'
+            '  入れ子: \\frac{\\frac{a}{b}}{c+d} のように中括弧を完全に対応。\n'
+            '- 関数は必ず \\付き: \\sin, \\cos, \\tan, \\arcsin, \\arccos, \\arctan,\n'
+            '  \\log, \\ln, \\exp, \\lim, \\max, \\min\n'
+            '  × 誤: arctan x  ○ 正: \\arctan x\n'
+            '- 掛け算: \\times / \\cdot。根号: \\sqrt{x}。\n'
+            '- 添字2文字以上は中括弧: $x_{10}$。\n\n'
         )
 
-    # Diagram rules (always include as TikZ may be used)
+    # Diagram rules
     parts.append(
-        '【図の座標ルール（TikZ / CircuiTikZ / PGFPlots 使用時）】\n'
-        '- 座標 (x,y) は cm 単位の正確な数値で指定。\n'
-        '- 描画前に座標一覧をコメントで書く: % A=(0,0), B=(4,0), C=(4,3)\n'
-        '- 閉じた図形は cycle または始点座標への配線で閉じる。\n'
-        '- 電気回路図: 閉ループの始点=終点を確認。\n\n'
+        '【図の座標ルール（TikZ 使用時）】\n'
+        '- 座標 (x,y) は数値で指定。閉じた図形は cycle で閉じる。\n\n'
     )
 
     # English-specific rules
     if _is_english_subject(subject, prompt_text):
         parts.append(
             '【英語問題の書式ルール（厳守）】\n'
-            '- 英文は \\textit{} で斜体にしない。ローマン体（デフォルト）でそのまま記述する。\n'
-            '- 長文読解: 本文（英文パッセージ）は \\begin{quotation}...\\end{quotation} で囲む。\n'
-            '  本文の前後には \\vspace{1em} を入れて問題部分と明確に分離する。\n'
-            '- 長い英文は LaTeX の自動折り返しに任せ、80文字以上の連続テキストを無理に1行にしない。\n'
-            '- \\mbox{} や \\hbox{} で英文を囲まない。\n'
-            '- 下線部: \\underline{word} を使用。\\textit{} は使わない。\n'
-            '- 選択肢: \\begin{enumerate}[(A)] の \\item で記述。\n'
-            '- 各大問の間に \\vspace{1.5em} を入れる。\n'
-            '- 問題ページと解答ページは \\newpage で分離する。\n\n'
+            '- 英文は斜体にしない（\\textit{} 禁止）。ローマン体で記述。\n'
+            '- 長文は \\begin{quotation}...\\end{quotation} で囲み、前後に \\vspace{1em}。\n'
+            '- \\mbox{} で英文を囲まない。自動折り返しに任せる。\n'
+            '- 下線部: \\underline{word}。選択肢: \\begin{enumerate}[(A)]。\n'
+            '- 問題ページと解答ページは \\newpage で分離。\n\n'
         )
 
     if preset_instr:
@@ -4059,7 +4044,122 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             for pat, repl in typo_cmds.items():
                 tex = re.sub(pat, repl, tex)
 
-            # 1) Remove \usepackage{unicode-math} (conflicts with fontspec/xeCJK)
+            # 0e) ★ Remove decorative separator lines ★
+            #     LLMs sometimes generate lines of ===, ---, ***, ~~~ etc.
+            #     as section dividers. These are not valid LaTeX and break compilation.
+            #     Remove lines that are mostly repeated =, -, *, ~ (5+ chars).
+            tex = re.sub(r'^\s*[=]{5,}\s*$', '', tex, flags=re.MULTILINE)
+            tex = re.sub(r'^\s*[-]{5,}\s*$', '', tex, flags=re.MULTILINE)
+            tex = re.sub(r'^\s*[*]{5,}\s*$', '', tex, flags=re.MULTILINE)
+            tex = re.sub(r'^\s*[~]{5,}\s*$', '', tex, flags=re.MULTILINE)
+            tex = re.sub(r'^\s*[_]{5,}\s*$', '', tex, flags=re.MULTILINE)
+            # Also remove inline decorative runs (e.g. "===問題===" → "問題")
+            tex = re.sub(r'={3,}', '', tex)
+            tex = re.sub(r'-{5,}', '', tex)
+
+            # 0f) ★ Convert plain-text math functions to LaTeX commands ★
+            #     LLMs sometimes write "arctan", "arcsin" etc. as plain text
+            #     instead of \arctan, \arcsin. Fix inside math mode.
+            _math_funcs = {
+                'arctan': r'\\arctan',
+                'arcsin': r'\\arcsin',
+                'arccos': r'\\arccos',
+                'sinh': r'\\sinh',
+                'cosh': r'\\cosh',
+                'tanh': r'\\tanh',
+                'log': r'\\log',
+                'ln': r'\\ln',
+                'exp': r'\\exp',
+                'sin': r'\\sin',
+                'cos': r'\\cos',
+                'tan': r'\\tan',
+                'sec': r'\\sec',
+                'csc': r'\\csc',
+                'cot': r'\\cot',
+                'lim': r'\\lim',
+                'max': r'\\max',
+                'min': r'\\min',
+                'sup': r'\\sup',
+                'inf': r'\\inf',
+                'det': r'\\det',
+                'gcd': r'\\gcd',
+                'deg': r'\\deg',
+                'dim': r'\\dim',
+                'ker': r'\\ker',
+                'hom': r'\\hom',
+                'arg': r'\\arg',
+            }
+            # Process math environments to convert plain-text function names.
+            # Match inside $...$ and \[...\] and math envs (align*, equation*, gather*).
+            def _fix_math_functions_in_segment(seg):
+                """Replace plain math function names with backslash commands in a math segment."""
+                result = seg
+                for func_name, latex_cmd in _math_funcs.items():
+                    # Match the function name NOT preceded by a backslash
+                    # and followed by typical math patterns: (, {, ^, _, space, digit
+                    result = re.sub(
+                        r'(?<!\\)\b' + func_name + r'(?=\s*[\({^_\d\\]|\s*$)',
+                        latex_cmd, result
+                    )
+                return result
+
+            # Fix in inline math $...$
+            tex = re.sub(
+                r'(?<!\$)\$(?!\$)(.*?)\$(?!\$)',
+                lambda m: '$' + _fix_math_functions_in_segment(m.group(1)) + '$',
+                tex
+            )
+            # Fix in display math \[...\]
+            tex = re.sub(
+                r'\\\[(.*?)\\\]',
+                lambda m: '\\[' + _fix_math_functions_in_segment(m.group(1)) + '\\]',
+                tex, flags=re.S
+            )
+            # Fix in align*, equation*, gather* environments
+            for env_name in ('align', 'align*', 'equation', 'equation*', 'gather', 'gather*', 'multline', 'multline*'):
+                env_esc = re.escape(env_name)
+                tex = re.sub(
+                    r'(\\begin\{' + env_esc + r'\})(.*?)(\\end\{' + env_esc + r'\})',
+                    lambda m: m.group(1) + _fix_math_functions_in_segment(m.group(2)) + m.group(3),
+                    tex, flags=re.S
+                )
+
+            # 0g) ★ Fix empty fraction numerators/denominators ★
+            #     \frac{}{denominator} → remove the broken fraction, keep denominator
+            #     \frac{numerator}{} → remove the broken fraction, keep numerator
+            #     \frac{}{} → remove entirely
+            tex = re.sub(r'\\d?frac\s*\{\s*\}\s*\{\s*\}', '', tex)  # \frac{}{} → empty
+            tex = re.sub(r'\\d?frac\s*\{\s*\}\s*\{([^}]+)\}', r'\1', tex)  # \frac{}{x} → x
+            tex = re.sub(r'\\d?frac\s*\{([^}]+)\}\s*\{\s*\}', r'\1', tex)  # \frac{x}{} → x
+
+            # 0h) ★ Remove \mbox{} and \hbox{} wrapping around text ★
+            #     These prevent line-wrapping. Convert \mbox{content} → content.
+            #     Use brace-counting to handle nested braces correctly.
+            def _unwrap_box(tex_str, cmd):
+                """Remove \\mbox{...} or \\hbox{...} keeping content."""
+                result = []
+                pat = '\\' + cmd + '{'
+                i = 0
+                n = len(tex_str)
+                while i < n:
+                    if tex_str[i:i+len(pat)] == pat:
+                        j = i + len(pat)
+                        depth = 1
+                        while j < n and depth > 0:
+                            if tex_str[j] == '{' and (j == 0 or tex_str[j-1] != '\\'):
+                                depth += 1
+                            elif tex_str[j] == '}' and (j == 0 or tex_str[j-1] != '\\'):
+                                depth -= 1
+                            j += 1
+                        inner = tex_str[i+len(pat):j-1]
+                        result.append(inner)
+                        i = j
+                    else:
+                        result.append(tex_str[i])
+                        i += 1
+                return ''.join(result)
+            tex = _unwrap_box(tex, 'mbox')
+            tex = _unwrap_box(tex, 'hbox')
             tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{unicode-math\}\s*\n?', '', tex)
 
             # 2) Remove \usepackage{CJKutf8} and CJK environment wrappers (XeLaTeX incompatible)
