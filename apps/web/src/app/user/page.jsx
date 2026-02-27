@@ -328,6 +328,8 @@ export default function UserModePage() {
         latex_preset: latexPreset,
         title: `${subject} - ${difficulty}`,
         extra_packages: extraPackages,
+        subject: subject || '',
+        field: field || '',
       });
 
       if (data?.error) {

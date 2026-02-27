@@ -333,7 +333,9 @@ def retrieve_with_profile(
         tiers.append((subject_filter, field_filter, None, 'subject+field'))
     if subject_filter:
         tiers.append((subject_filter, None, None, 'subject-only'))
-    tiers.append((None, None, None, 'global'))
+    # Only fall to global when NO subject filter is given — prevents cross-subject pollution
+    if not subject_filter:
+        tiers.append((None, None, None, 'global'))
 
     # Track which tier was actually used (for scoring bonus)
     used_tier = 'global'
@@ -383,9 +385,14 @@ def retrieve_with_profile(
                 # If we iterated all tiers without breaking, candidates holds
                 # the best we found (or the global search result from the last tier)
                 if not candidates:
-                    # All tiers returned nothing – do a final global search
-                    candidates = _pgvector_search(conn, qvec_lit, top_k=top_k * 3, shards=pgvector_shards)
-                    used_tier = 'global'
+                    if subject_filter:
+                        # Subject was specified but nothing found — return empty rather than
+                        # polluting with unrelated cross-subject results
+                        logger.info('pgvector: no candidates for subject=%r; returning empty (strict mode)', subject_filter)
+                    else:
+                        # No subject filter: safe to do a global search
+                        candidates = _pgvector_search(conn, qvec_lit, top_k=top_k * 3, shards=pgvector_shards)
+                        used_tier = 'global'
 
                 logger.info('pgvector final: tier=%s, %d candidates', used_tier, len(candidates))
         except Exception as e:
@@ -427,16 +434,17 @@ def retrieve_with_profile(
             for r in rows
         }
 
-    # For TF-IDF fallback, apply post-filter if subject_filter / topic_filter is given
+    # For TF-IDF fallback, apply post-filter if subject_filter / topic_filter is given.
+    # When subject is specified, ALWAYS filter (strict mode) — don't allow cross-subject leakage.
     if used_tier == 'global' and subject_filter:
         filtered = [(pid, score) for pid, score in candidates
                     if pid in prob_map and prob_map[pid].get('subject') == subject_filter]
-        if len(filtered) >= top_k:
+        if filtered:
             candidates = filtered
     if used_tier in ('global', 'subject-only') and topic_filter:
         filtered = [(pid, score) for pid, score in candidates
                     if pid in prob_map and prob_map[pid].get('topic') == topic_filter]
-        if len(filtered) >= top_k:
+        if filtered:
             candidates = filtered
 
     # Filter candidates to only those found in prob_map

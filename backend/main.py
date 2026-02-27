@@ -1534,280 +1534,155 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     # reindex failed; leave texts empty
                     texts = []
         else:
-            # No doc_id provided: sample recent problems from DB to create a temporary index
-            # Apply subject/field filter if provided to avoid mixing unrelated topics
+            # No doc_id provided: use retrieve_with_profile (same as assemble_prompt)
+            # to get DB-stored problems filtered by subject/field/topic.
             try:
                 conn = connect_db()
-                cur = conn.cursor()
 
-                # Build optional WHERE clause for subject/field filtering
                 subject_f = req.subject_filter or req.subject or ''
                 field_f = getattr(req, 'field_filter', None) or ''
-                where_parts = []
-                params_list = []
 
-                # --- Field ID filtering (via fields table) ---
+                # Resolve field_filter → topic_filter and field_id
+                _topic_filter = field_f or None
+                _field_id_filter = None
                 if field_f and not getattr(conn, '_is_sqlite', False):
-                    # Try to resolve field_filter to a field_id
                     try:
-                        cur_f = conn.cursor()
-                        cur_f.execute(
-                            "SELECT id FROM fields WHERE field_code = %s OR field_name = %s LIMIT 1",
-                            (field_f, field_f)
+                        _cur_f = conn.cursor()
+                        _cur_f.execute(
+                            "SELECT id FROM fields WHERE field_name = %s OR field_code = %s LIMIT 1",
+                            (field_f, field_f),
                         )
-                        fr = cur_f.fetchone()
-                        cur_f.close()
-                        if fr:
-                            where_parts.append("field_id = %s")
-                            params_list.append(fr[0])
-                            field_f = ''  # already handled
+                        _fr = _cur_f.fetchone()
+                        _cur_f.close()
+                        if _fr:
+                            _field_id_filter = _fr[0]
                     except Exception:
                         pass
 
-                if subject_f and getattr(conn, '_is_sqlite', False):
-                    # SQLite: check both the subject column AND metadata JSON
-                    # because older rows may have subject='general' with the
-                    # real subject only in metadata.
-                    where_parts.append("(subject = %s OR metadata LIKE %s)")
-                    params_list.append(subject_f)
-                    params_list.append(f'%"subject"%{subject_f}%')
-                elif subject_f:
-                    where_parts.append("subject = %s")
-                    params_list.append(subject_f)
+                # Map difficulty string to numeric value
+                def _difficulty_to_num(s):
+                    if not s: return None
+                    s = str(s).lower()
+                    if s in ('易しい', 'easy', 'e'): return 0.2
+                    if s in ('難しい', 'hard', 'h'): return 0.8
+                    if s in ('普通', 'medium', 'normal', 'm'): return 0.5
+                    try: return float(s)
+                    except Exception: return None
 
-                if field_f and getattr(conn, '_is_sqlite', False):
-                    where_parts.append("(topic = %s OR metadata LIKE %s)")
-                    params_list.append(field_f)
-                    params_list.append(f'%"field"%{field_f}%')
-                elif field_f:
-                    where_parts.append("topic = %s")
-                    params_list.append(field_f)
+                target_diff = _difficulty_to_num(req.difficulty)
+                top_k = int(req.top_k or 5)
 
-                where_sql = ('WHERE ' + ' AND '.join(where_parts)) if where_parts else ''
-
-                if getattr(conn, '_is_sqlite', False):
-                    sql = f"SELECT id, stem, solution_outline, difficulty, trickiness, metadata FROM problems {where_sql} ORDER BY id DESC LIMIT %s"
-                else:
-                    sql = f"SELECT id, stem, solution_outline, difficulty, trickiness, metadata FROM problems {where_sql} ORDER BY created_at DESC LIMIT %s"
-                params_list.append(200)
-                cur.execute(sql, tuple(params_list))
-                rows = cur.fetchall()
-
-                # If subject filter returned too few results, fall back to unfiltered
-                if len(rows) < 3 and (subject_f or field_f):
-                    logger.info('Subject/field filter returned only %d rows, falling back to unfiltered', len(rows))
-                    if getattr(conn, '_is_sqlite', False):
-                        cur.execute("SELECT id, stem, solution_outline, difficulty, trickiness, metadata FROM problems ORDER BY id DESC LIMIT %s", (200,))
-                    else:
-                        cur.execute("SELECT id, stem, solution_outline, difficulty, trickiness, metadata FROM problems ORDER BY created_at DESC LIMIT %s", (200,))
-                    rows = cur.fetchall()
-
-                cur.close(); conn.close()
-                for r in rows:
-                    # row format will be (id, stem, solution_outline, difficulty, trickiness, metadata)
+                # Use retrieve_with_profile for consistent filtering
+                _model = None
+                if retrieve_with_profile is not None:
                     try:
-                        pid = r[0]
-                        pt = r[1] or ''
-                        so = r[2] or ''
-                        pdiff = r[3]
-                        ptrick = r[4]
-                        pmeta = r[5] if len(r) > 5 else {}
+                        _model, _ = load_model()
                     except Exception:
-                        pid = None
-                        pt = r[0] or ''
-                        so = r[1] or ''
-                        pdiff = None
-                        ptrick = None
-                        pmeta = {}
-                    texts.append(pt)
-                    candidates.append({'id': pid, 'text': pt, 'difficulty': pdiff, 'trickiness': ptrick, 'metadata': pmeta})
-                    full += pt + '\n\n' + so + '\n\n'
-                try:
-                    vectorizer, mat = rag.build_index(texts)
-                except Exception:
-                    vectorizer, mat = None, None
-            except Exception as outer_exc:
-                import traceback
-                logger.warning('RAG: DB query or index build failed: %s\n%s', outer_exc, traceback.format_exc())
-                texts = []
+                        _model = None
 
-        # If texts is still empty but DB likely has problems, try a simple unfiltered query
-        if not texts:
-            try:
-                _conn2 = connect_db()
-                _cur2 = _conn2.cursor()
-                if getattr(_conn2, '_is_sqlite', False):
-                    _cur2.execute("SELECT id, stem, solution_outline, difficulty, trickiness FROM problems ORDER BY id DESC LIMIT %s", (200,))
+                if retrieve_with_profile is not None:
+                    retrieved = retrieve_with_profile(
+                        conn, (req.subject or '') + ' ' + (req.difficulty or '') + ' ' + (prompt[:400] if prompt else ''),
+                        top_k=top_k,
+                        target_difficulty=target_diff,
+                        target_trickiness=None,
+                        alpha_text=float(req.difficulty_match_weight or 0.6),
+                        beta_difficulty=float(req.difficulty_match_weight or 0.6),
+                        gamma_trickiness=float(req.trickiness_weight or 0.0),
+                        use_vector=(_model is not None),
+                        model=_model,
+                        tfidf_force_refresh=False,
+                        field_filter=_field_id_filter,
+                        subject_filter=subject_f or None,
+                        topic_filter=_topic_filter,
+                    )
+                    for item in retrieved:
+                        pt = (item.get('text') or '').strip()
+                        if pt:
+                            texts.append(pt)
+                            candidates.append({
+                                'id': item.get('id'),
+                                'text': pt,
+                                'difficulty': item.get('difficulty'),
+                                'trickiness': item.get('trickiness'),
+                                'metadata': {},
+                            })
+                            full += pt + '\n\n'
                 else:
-                    _cur2.execute("SELECT id, stem, solution_outline, difficulty, trickiness FROM problems ORDER BY created_at DESC LIMIT %s", (200,))
-                _rows2 = _cur2.fetchall()
-                _cur2.close(); _conn2.close()
-                for r in _rows2:
-                    pt = (r[1] or '').strip()
-                    if not pt:
-                        continue
-                    texts.append(pt)
-                    candidates.append({'id': r[0], 'text': pt, 'difficulty': r[3], 'trickiness': r[4], 'metadata': {}})
-                    full += pt + '\n\n' + (r[2] or '') + '\n\n'
+                    # Fallback: simple DB query with subject/field filter (no cascade relaxation to global)
+                    cur = conn.cursor()
+                    where_parts = []
+                    params_list = []
+                    if subject_f:
+                        where_parts.append("subject = %s")
+                        params_list.append(subject_f)
+                    if _field_id_filter is not None:
+                        where_parts.append("field_id = %s")
+                        params_list.append(_field_id_filter)
+                    elif _topic_filter:
+                        where_parts.append("topic = %s")
+                        params_list.append(_topic_filter)
+                    where_sql = ('WHERE ' + ' AND '.join(where_parts)) if where_parts else ''
+                    order_col = 'id' if getattr(conn, '_is_sqlite', False) else 'created_at'
+                    sql = f"SELECT id, stem, solution_outline, difficulty, trickiness FROM problems {where_sql} ORDER BY {order_col} DESC LIMIT %s"
+                    params_list.append(200)
+                    cur.execute(sql, tuple(params_list))
+                    rows = cur.fetchall()
+                    cur.close()
+                    for r in rows:
+                        pt = (r[1] or '').strip()
+                        if pt:
+                            texts.append(pt)
+                            candidates.append({'id': r[0], 'text': pt, 'difficulty': r[3], 'trickiness': r[4], 'metadata': {}})
+                            full += pt + '\n\n' + (r[2] or '') + '\n\n'
+
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+                # Build TF-IDF index on the retrieved texts (for rag_summary etc.)
                 if texts:
                     try:
                         vectorizer, mat = rag.build_index(texts)
                     except Exception:
                         vectorizer, mat = None, None
-                    logger.info('RAG: recovered %d texts via unfiltered fallback query', len(texts))
-            except Exception as recovery_exc:
-                logger.warning('RAG: fallback DB query also failed: %s', recovery_exc)
+                logger.info('RAG(render_template): retrieved %d texts (subject=%r, field=%r)', len(texts), subject_f, field_f)
+            except Exception as outer_exc:
+                import traceback
+                logger.warning('RAG: DB query or index build failed: %s\n%s', outer_exc, traceback.format_exc())
+                texts = []
 
         ctx['chunk_count'] = len(texts)
         ctx['rag_status'] = 'ok' if texts else 'no_data'
-        ctx['rag_method'] = ''
-        ctx['rag_retrieved'] = 0
-        logger.info('RAG: %d texts loaded for retrieval (subject_filter=%r)', len(texts), getattr(req, 'subject_filter', None))
+        ctx['rag_method'] = 'retrieve_with_profile' if retrieve_with_profile is not None else 'db_query'
+        ctx['rag_retrieved'] = len(texts)
+        logger.info('RAG: %d texts loaded for retrieval (subject_filter=%r, field_filter=%r)',
+                     len(texts), getattr(req, 'subject_filter', None), getattr(req, 'field_filter', None))
 
-        # Query for retrieval: combine subject, difficulty and a short template preview
-        q_preview = (req.subject or '') + ' ' + (req.difficulty or '') + ' ' + (prompt[:400] if prompt else '')
+        # ── Build doc_snippets directly from candidates (already ranked by retrieve_with_profile) ──
+        top_k = int(req.top_k or 5)
+        items = []
+        seen_texts = set()
+        for c in candidates[:top_k]:
+            text_snip = (c.get('text') or '').strip()
+            if not text_snip or text_snip in seen_texts:
+                continue
+            seen_texts.add(text_snip)
+            items.append({
+                'id': c.get('id'),
+                'sim_score': 0.0,
+                'combined_score': 0.0,
+                'difficulty': c.get('difficulty'),
+                'trickiness': c.get('trickiness'),
+                'text': text_snip,
+            })
 
-        # map difficulty string to numeric target (used in re-ranking)
-        def _difficulty_to_num(s):
-            if not s: return None
-            s = str(s).lower()
-            if s in ('易しい', 'easy', 'e'): return 0.2
-            if s in ('難しい', 'hard', 'h'): return 0.8
-            if s in ('普通', 'medium', 'normal', 'm'): return 0.5
-            try:
-                return float(s)
-            except Exception:
-                return None
-
-        try:
-            # ── Step 1: retrieve top_k*3 candidates via TF-IDF ──────────────────
-            top_k = min(int(req.top_k or 5), max(1, len(texts)))
-            if vectorizer is not None and mat is not None:
-                results = rag.search(q_preview, vectorizer, mat, texts, top_k=top_k * 3)
-            else:
-                tv, tm = rag.build_index(texts)
-                results = rag.search(q_preview, tv, tm, texts, top_k=top_k * 3)
-
-            ctx['rag_method'] = 'tfidf'
-            logger.info('RAG: TF-IDF search returned %d candidates (top_k=%d)', len(results), top_k)
-
-            # ── Step 2: re-rank by difficulty/trickiness match ──────────────────
-            # This block now always executes regardless of whether the vectorizer
-            # was pre-built or rebuilt on-the-fly.
-            target = _difficulty_to_num(req.difficulty)
-            alpha = float(req.difficulty_match_weight or 0.6)
-            beta = float(req.trickiness_weight or 0.0)
-
-            scored = []
-            for rr in results:
-                if not rr: continue
-                idx = int(rr.get('idx', 0))
-                sim = float(rr.get('score', 0.0))
-                cand = (
-                    candidates[idx]
-                    if idx < len(candidates)
-                    else {'id': None, 'text': texts[idx] if idx < len(texts) else '', 'difficulty': None, 'trickiness': None, 'metadata': {}}
-                )
-                pd_val = cand.get('difficulty')
-                pt_val = cand.get('trickiness')
-                try:
-                    pdn = float(pd_val) if pd_val is not None else 0.5
-                except Exception:
-                    pdn = 0.5
-                try:
-                    ptn = float(pt_val) if pt_val is not None else 0.0
-                except Exception:
-                    ptn = 0.0
-
-                diff_match = 0.5
-                if target is not None:
-                    diff_match = max(0.0, 1.0 - abs(pdn - target))
-
-                base = alpha * sim + (1.0 - alpha) * diff_match
-                combined = (1.0 - beta) * base + beta * ptn
-                scored.append({'idx': idx, 'sim': sim, 'combined': combined, 'candidate': cand})
-
-            scored_sorted = sorted(scored, key=lambda x: -x['combined'])
-            top_selected = scored_sorted[:top_k]
-
-            # ── Step 3: build doc_snippets ───────────────────────────────────────
-            items = []
-            seen_texts = set()
-            for s in top_selected:
-                c = s['candidate']
-                text_snip = (c.get('text') or '').strip()
-                if not text_snip or text_snip in seen_texts:
-                    continue
-                seen_texts.add(text_snip)
-                items.append({
-                    'id': c.get('id'),
-                    'sim_score': s['sim'],
-                    'combined_score': s['combined'],
-                    'difficulty': c.get('difficulty'),
-                    'trickiness': c.get('trickiness'),
-                    'text': text_snip,
-                })
-
-            # If all similarity scores were zero (e.g. query terms not in corpus),
-            # fall back to the top-k texts in DB order so the prompt is never empty.
-            if not items and texts:
-                logger.info('RAG: all similarity scores zero, falling back to DB-order top-%d', top_k)
-                for i, t in enumerate(texts[:top_k]):
-                    t_stripped = (t or '').strip()
-                    if not t_stripped:
-                        continue
-                    cand = candidates[i] if i < len(candidates) else {}
-                    items.append({
-                        'id': cand.get('id'),
-                        'sim_score': 0.0,
-                        'combined_score': 0.0,
-                        'difficulty': cand.get('difficulty'),
-                        'trickiness': cand.get('trickiness'),
-                        'text': t_stripped,
-                    })
-
-            ctx['doc_snippets_items'] = items
-            ctx['doc_snippets'] = '\n\n'.join([it['text'] for it in items])
-            ctx['rag_retrieved'] = len(items)
-            ctx['rag_status'] = 'ok' if items else 'empty'
-            logger.info('RAG: final doc_snippets has %d items, %d chars', len(items), len(ctx['doc_snippets']))
-
-        except Exception as exc:
-            import traceback
-            logger.warning('RAG retrieval failed, using raw fallback: %s\n%s', exc, traceback.format_exc())
-            # fallback: use DB-order top-k texts (still useful for prompt context)
-            _fb_k = top_k if 'top_k' in dir() else 5
-            fb_items = [
-                {'id': None, 'sim_score': 0.0, 'combined_score': 0.0,
-                 'difficulty': None, 'trickiness': None, 'text': t.strip()}
-                for t in texts[:_fb_k] if t and t.strip()
-            ]
-            # If fb_items is empty but DB might have data, try one last DB query
-            if not fb_items:
-                try:
-                    _conn3 = connect_db()
-                    _cur3 = _conn3.cursor()
-                    if getattr(_conn3, '_is_sqlite', False):
-                        _cur3.execute("SELECT id, stem, difficulty, trickiness FROM problems WHERE stem IS NOT NULL AND stem != '' ORDER BY id DESC LIMIT %s", (_fb_k,))
-                    else:
-                        _cur3.execute("SELECT id, stem, difficulty, trickiness FROM problems WHERE stem IS NOT NULL AND stem != '' ORDER BY created_at DESC LIMIT %s", (_fb_k,))
-                    _rows3 = _cur3.fetchall()
-                    _cur3.close(); _conn3.close()
-                    fb_items = [
-                        {'id': r[0], 'sim_score': 0.0, 'combined_score': 0.0,
-                         'difficulty': r[2], 'trickiness': r[3], 'text': (r[1] or '').strip()}
-                        for r in _rows3 if r[1] and r[1].strip()
-                    ]
-                    if fb_items:
-                        logger.info('RAG: recovered %d items via last-resort DB query', len(fb_items))
-                except Exception as last_exc:
-                    logger.warning('RAG: last-resort DB query failed: %s', last_exc)
-            ctx['doc_snippets_items'] = fb_items
-            ctx['doc_snippets'] = '\n\n'.join(it['text'] for it in fb_items)
-            ctx['rag_retrieved'] = len(fb_items)
-            # If we still got items from DB, treat as degraded-ok rather than fallback
-            ctx['rag_status'] = 'ok' if fb_items else 'fallback'
-            ctx['rag_error'] = str(exc)[:200]
+        ctx['doc_snippets_items'] = items
+        ctx['doc_snippets'] = '\n\n'.join([it['text'] for it in items])
+        ctx['rag_retrieved'] = len(items)
+        ctx['rag_status'] = 'ok' if items else 'empty'
+        logger.info('RAG: final doc_snippets has %d items, %d chars', len(items), len(ctx['doc_snippets']))
 
         # build a compact rag_summary by concatenating the retrieved snippets (up to 800 chars)
         summary = ''
@@ -2604,8 +2479,16 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
             '【英語問題の書式ルール（厳守）】\n'
             '- 英文は斜体にしない（\\textit{} 禁止）。ローマン体で記述。\n'
             '- 長文は \\begin{quotation}...\\end{quotation} で囲み、前後に \\vspace{1em}。\n'
-            '- \\mbox{} で英文を囲まない。自動折り返しに任せる。\n'
-            '- 下線部: \\underline{word}。選択肢: \\begin{enumerate}[(A)]。\n'
+            '- \\mbox{}, \\hbox{}, \\fbox{}, tcolorbox, mdframed は使わない。\n'
+            '- 自動折り返しに任せる。手動改行(\\\\)で英文を折り返さない。\n'
+            '- 下線部: \\underline{word} のみ使用。入れ子禁止:\n'
+            '  × \\underline{\\underline{text}} は絶対に書かない\n'
+            '  × \\underline{...\\underline{...}...} のようなネストも禁止\n'
+            '  ○ \\underline{This is the underlined part} のようにフラットに書く\n'
+            '- インデントは最大2段階。enumerate/itemize のネストは最大2階層。\n'
+            '  \\begin{enumerate}[(1)] の中にさらに \\begin{enumerate}[(a)] は可。\n'
+            '  3階層以上のネストは絶対に行わない。\n'
+            '- 選択肢: \\begin{enumerate}[(A)] または \\begin{enumerate}[(1)]。\n'
             '- 問題ページと解答ページは \\newpage で分離。\n\n'
         )
 
@@ -3398,6 +3281,8 @@ class LlmGenerateRequest(BaseModel):
     latex_preset: Optional[str] = 'exam'
     title: Optional[str] = 'Generated Problems'
     extra_packages: Optional[List[str]] = []
+    subject: Optional[str] = ''
+    field: Optional[str] = ''
 
 
 @app.post('/api/generate_with_llm')
@@ -3423,7 +3308,7 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
 
     # Build system instruction for LaTeX generation (subject-aware)
     system_instruction = _build_groq_system_prompt(
-        subject='',  # Groq endpoint doesn't have explicit subject; infer from prompt
+        subject=req.subject or '',
         prompt_text=req.prompt,
         preset_instr=preset_instr,
     )
@@ -4161,6 +4046,69 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             tex = _unwrap_box(tex, 'mbox')
             tex = _unwrap_box(tex, 'hbox')
             tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{unicode-math\}\s*\n?', '', tex)
+
+            # 0i) ★ Flatten nested \underline ★
+            #     \underline{\underline{text}} → \underline{text}
+            #     Also handles deeper nesting by iterating
+            for _ in range(5):
+                prev = tex
+                tex = re.sub(
+                    r'\\underline\{((?:[^{}]|\{[^{}]*\})*?)\\underline\{((?:[^{}]|\{[^{}]*\})*?)\}((?:[^{}]|\{[^{}]*\})*?)\}',
+                    r'\\underline{\1\2\3}',
+                    tex
+                )
+                if tex == prev:
+                    break
+
+            # 0j) ★ Remove \textit wrapping around English text ★
+            #     English exam problems should NOT use italic for body text.
+            #     \textit{some english text} → some english text
+            #     Only unwrap when the content looks like English (ASCII-dominant).
+            def _unwrap_textit(m):
+                inner = m.group(1)
+                # Only unwrap if content is mostly ASCII (English text)
+                ascii_count = sum(1 for c in inner if ord(c) < 128)
+                if len(inner) > 0 and ascii_count / len(inner) > 0.7:
+                    return inner
+                return m.group(0)  # Keep for non-English text
+            tex = re.sub(
+                r'\\textit\{((?:[^{}]|\{[^{}]*\})*?)\}',
+                _unwrap_textit, tex
+            )
+
+            # 0k) ★ Limit enumerate/itemize nesting depth ★
+            #     Count nesting depth of enumerate/itemize environments and
+            #     remove the innermost begin/end when depth exceeds 2.
+            def _limit_list_nesting(tex_str, max_depth=2):
+                """Remove list environments nested deeper than max_depth."""
+                lines = tex_str.split('\n')
+                result = []
+                depth = 0
+                skip_depth = None
+                for line in lines:
+                    stripped = line.strip()
+                    # Check for \begin{enumerate} or \begin{itemize}
+                    begin_match = re.match(r'^\s*\\begin\{(enumerate|itemize)\}', stripped)
+                    end_match = re.match(r'^\s*\\end\{(enumerate|itemize)\}', stripped)
+                    if begin_match:
+                        depth += 1
+                        if depth > max_depth:
+                            if skip_depth is None:
+                                skip_depth = depth
+                            continue  # Skip this \begin
+                        result.append(line)
+                    elif end_match:
+                        if skip_depth is not None and depth >= skip_depth:
+                            depth -= 1
+                            if depth < skip_depth:
+                                skip_depth = None
+                            continue  # Skip this \end
+                        depth -= 1
+                        result.append(line)
+                    else:
+                        result.append(line)
+                return '\n'.join(result)
+            tex = _limit_list_nesting(tex)
 
             # 2) Remove \usepackage{CJKutf8} and CJK environment wrappers (XeLaTeX incompatible)
             tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{CJKutf8\}\s*\n?', '', tex)
