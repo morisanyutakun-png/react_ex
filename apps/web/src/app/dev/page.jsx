@@ -1018,6 +1018,8 @@ export default function TuningPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {[
+                    ['科目', parsedProblem.subject],
+                    ['分野', parsedProblem.field],
                     ['問題文', parsedProblem.stem],
                     ['LaTeX', parsedProblem.stem_latex],
                     ['解法', parsedProblem.solution_outline],

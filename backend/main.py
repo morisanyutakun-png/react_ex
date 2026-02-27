@@ -2383,6 +2383,21 @@ def _is_stem_subject(subject: str, prompt_text: str = '') -> bool:
     return False  # デフォルトは非STEM（不要なルールを含めない）
 
 
+def _is_english_subject(subject: str, prompt_text: str = '') -> bool:
+    """科目名やプロンプト文から英語科目かどうか判定。"""
+    s = (subject or '').strip().lower()
+    if s in ('英語', 'english'):
+        return True
+    combined = (s + ' ' + (prompt_text or '')[:500]).lower()
+    english_keywords = {'英語', 'english', '長文読解', '英作文', 'リスニング', '文法',
+                        'reading comprehension', 'grammar', 'vocabulary', 'idiom',
+                        '語彙', 'イディオム'}
+    for kw in english_keywords:
+        if kw in combined:
+            return True
+    return False
+
+
 # --- プロンプト部品: コアルール（全科目共通）---
 _LATEX_CORE_RULES = (
     "=== LaTeX 出力の基本ルール（全科目共通・厳守） ===\n"
@@ -2394,6 +2409,21 @@ _LATEX_CORE_RULES = (
     "6. CJK フォント指定はスケルトンの iftex 分岐に従う。独自のフォント設定は書かない。\n"
     "7. tcolorbox, mdframed, fbox 等のボックス環境は使わない。\n"
     "8. 中括弧 {} のバランスを必ず確認する。開き { の数 = 閉じ } の数。\n"
+    "\n"
+    "=== ネスト・改行ルール（厳守） ===\n"
+    "N1. \\begin{} と \\end{} は必ず対応させる。ネスト添字を一致させる。\n"
+    "N2. enumerate, itemize, description の入れ子は最大 2 階層とする。\n"
+    "N3. 各環境の開始・終了はそれぞれ単独の行に書く。\n"
+    "    例:\n"
+    "    \\begin{enumerate}\n"
+    "      \\item 問題文\n"
+    "      \\item 問題文\n"
+    "    \\end{enumerate}\n"
+    "N4. 改行のタイミング:\n"
+    "    - 大問と大問の間: \\vspace{1em} または空行 1行\n"
+    "    - 問題文と選択肢: \\vspace{0.5em} または空行 1行\n"
+    "    - 本文（長文）と問題: \\vspace{1em} + \\noindent で明確に分離\n"
+    "N5. インデントはネスト深さに応じて一貫する。\n"
 )
 
 # --- プロンプト部品: 数式ルール（理系科目のみ追加）---
@@ -2429,7 +2459,34 @@ _LATEX_HUMANITIES_HINTS = (
     "H1. 問題文・解説は自然な日本語で記述する。\n"
     "H2. 数式コマンド（\\frac, \\sqrt 等）は必要な場合のみ使用する。\n"
     "H3. 長文の説明には \\paragraph{} や itemize 環境を活用する。\n"
-    "H4. 英語科目の場合、例文は \\textit{} で斜体にし、和訳は（）内に記述する。\n"
+    "H4. 英語科目の場合、\\textit{} は使わない。英文はそのままローマン体（デフォルト）で記述する。\n"
+)
+
+# --- プロンプト部品: 英語科目専用ルール ---
+_LATEX_ENGLISH_RULES = (
+    "\n=== 英語問題の書式ルール（英語科目の場合厳守） ===\n"
+    "E1. 英文は \\textit{} で斜体にしない。ローマン体（\\textrm{} またはそのまま）で記述する。\n"
+    "E2. 長文読解問題の構成:\n"
+    "    - 本文（英文パッセージ）を先に記述。\n"
+    "    - 本文の前後には \\vspace{1em} を入れて問題部分と明確に分離。\n"
+    "    - 本文は\u300cNext, read the following passage and answer the questions below.\u300d等の指示文の後に置く。\n"
+    "    - 本文は \\begin{quotation} ... \\end{quotation} で囲む。\n"
+    "E3. 英文の下線部:\n"
+    "    - \\underline{word} を使用。\\textit{} は使わない。\n"
+    "E4. 英文問題の解答選択肢:\n"
+    "    - \\begin{enumerate}[(A)] または \\begin{enumerate}[(1)] で番号付きリスト。\n"
+    "    - 各選択肢は \\item で記述。\n"
+    "E5. 和訳問題:\n"
+    "    - 英文をそのままローマン体で提示し、「次の英文を日本語に訳しなさい。」のように指示。\n"
+    "E6. 英作文問題:\n"
+    "    - 日本語の指示文をそのまま記述し、解答欄を \\vspace{3cm} で確保。\n"
+    "E7. 問題番号と配点:\n"
+    "    - 大問: \\textbf{\\large 問N} または \\section*{問N} で明示。\n"
+    "    - 小問: \\begin{enumerate}[(1)]\n"
+    "    - 配点: 各問の末尾に [XX点] を記載。\n"
+    "E8. レイアウト:\n"
+    "    - 問題部分と解答部分を \\newpage で分離。\n"
+    "    - 各大問の間に \\vspace{1.5em} を入れる。\n"
 )
 
 
@@ -2448,6 +2505,10 @@ def _build_latex_instructions(subject: str = '', prompt_text: str = '', struct_r
         parts.append(_LATEX_MATH_RULES)
     else:
         parts.append(_LATEX_HUMANITIES_HINTS)
+
+    # English-specific rules
+    if _is_english_subject(subject, prompt_text):
+        parts.append(_LATEX_ENGLISH_RULES)
 
     # Structural rules (preset-specific layout)
     if struct_rules:
@@ -2492,6 +2553,13 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
         '5. tcolorbox, mdframed, fbox 等のボックス環境は使わない。\n'
         '6. 中括弧 {} は必ず対応させる。開き { の数 = 閉じ } の数を確認。\n'
         '7. 指定された出力形式の構造ルールを守ること。\n\n'
+        '【ネスト・改行ルール】\n'
+        '- \\begin{} と \\end{} は必ず対応させる。それぞれ単独の行に書く。\n'
+        '- enumerate, itemize の入れ子は最大2階層。\n'
+        '- 大問と大問の間: \\vspace{1em} または空行1行。\n'
+        '- 本文（長文）と問題: \\vspace{1em} + \\noindent で明確に分離。\n'
+        '- 問題文と選択肢の間: \\vspace{0.5em} または空行1行。\n'
+        '- インデントはネスト深さに応じて一貫させる。\n\n'
     )
 
     # Math-specific rules (STEM only)
@@ -2514,6 +2582,19 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
         '- 閉じた図形は cycle または始点座標への配線で閉じる。\n'
         '- 電気回路図: 閉ループの始点=終点を確認。\n\n'
     )
+
+    # English-specific rules
+    if _is_english_subject(subject, prompt_text):
+        parts.append(
+            '【英語問題の書式ルール（厳守）】\n'
+            '- 英文は \\textit{} で斜体にしない。ローマン体（デフォルト）でそのまま記述する。\n'
+            '- 長文読解: 本文（英文パッセージ）は \\begin{quotation}...\\end{quotation} で囲む。\n'
+            '  本文の前後には \\vspace{1em} を入れて問題部分と明確に分離する。\n'
+            '- 下線部: \\underline{word} を使用。\\textit{} は使わない。\n'
+            '- 選択肢: \\begin{enumerate}[(A)] の \\item で記述。\n'
+            '- 各大問の間に \\vspace{1.5em} を入れる。\n'
+            '- 問題ページと解答ページは \\newpage で分離する。\n\n'
+        )
 
     if preset_instr:
         parts.append(f'{preset_instr}\n')
@@ -4479,6 +4560,59 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 return tex_str
 
             tex = _strip_llm_artifacts(tex)
+
+            # 7j-pre) ★ Fix \textit for English exam text ★
+            #     LLMs often wrap English sentences in \textit{} making them italic.
+            #     For English exam/problem documents, English text should be in
+            #     roman (upright) style, not italic. Convert \textit{text} → text
+            #     when the content is primarily English prose (not short emphasis).
+            def _fix_english_italic(tex_str):
+                """Convert \\textit{...} to plain text when content is English prose."""
+                def _replace_textit(m):
+                    inner = m.group(1)
+                    # Keep \textit for very short content (likely intentional emphasis)
+                    if len(inner.strip()) < 5:
+                        return m.group(0)
+                    # Check if content is primarily English/ASCII
+                    ascii_ratio = sum(1 for c in inner if c.isascii()) / max(len(inner), 1)
+                    if ascii_ratio > 0.7:
+                        # English prose — remove italic
+                        return inner
+                    return m.group(0)
+
+                # Match \textit{...} with balanced braces
+                result = []
+                i = 0
+                n = len(tex_str)
+                textit_pat = '\\textit{'
+                while i < n:
+                    if tex_str[i:i+len(textit_pat)] == textit_pat:
+                        # Find matching closing brace
+                        j = i + len(textit_pat)
+                        depth = 1
+                        while j < n and depth > 0:
+                            if tex_str[j] == '{' and (j == 0 or tex_str[j-1] != '\\'):
+                                depth += 1
+                            elif tex_str[j] == '}' and (j == 0 or tex_str[j-1] != '\\'):
+                                depth -= 1
+                            j += 1
+                        inner = tex_str[i+len(textit_pat):j-1]
+                        # Check if this is English prose
+                        if len(inner.strip()) >= 5:
+                            ascii_ratio = sum(1 for c in inner if c.isascii()) / max(len(inner), 1)
+                            if ascii_ratio > 0.7:
+                                result.append(inner)
+                            else:
+                                result.append(tex_str[i:j])
+                        else:
+                            result.append(tex_str[i:j])
+                        i = j
+                    else:
+                        result.append(tex_str[i])
+                        i += 1
+                return ''.join(result)
+
+            tex = _fix_english_italic(tex)
 
             # 7j) ★ Environment nesting validator ★
             #     Verify all \begin{env} / \end{env} are properly nested.

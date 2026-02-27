@@ -905,6 +905,41 @@ export default function UserModePage() {
       {/* ═══════ Step 3: PDF形式選択 ═══════ */}
       {step === 3 && (
         <SectionCard title="Step 3: PDF の出力形式を選ぶ" icon={<Icons.Pdf />}>
+          {/* 選択中テンプレート情報 */}
+          {selectedTemplate && (
+            <div className="mb-5 p-3 bg-[#f5f5f7] rounded-xl border border-black/[0.06]">
+              <div className="flex items-center gap-3">
+                <Icons.File className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <div className="text-xs font-bold text-[#6e6e73] mb-0.5">選択中のテンプレート</div>
+                  <div className="text-sm font-bold text-[#1d1d1f]">{selectedTemplate.name}</div>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-2 ml-7">
+                {subject && (
+                  <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-bold">
+                    科目: {subject}
+                  </span>
+                )}
+                {field && (
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold">
+                    分野: {field}
+                  </span>
+                )}
+                {difficulty && (
+                  <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
+                    難易度: {difficulty}
+                  </span>
+                )}
+                {numQuestions && (
+                  <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-bold">
+                    問題数: {numQuestions}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           <p className="text-xs text-[#6e6e73] mb-5">
             生成する PDF のレイアウト形式を選んでください。
             {mode === 'auto'

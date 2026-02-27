@@ -112,6 +112,8 @@ export const OUTPUT_FORMAT_INSTRUCTION = `
 
 \`\`\`json
 {
+  "subject": "科目名（例: 数学, 英語, 物理）",
+  "field": "分野名（例: 微分積分, 長文読解, 力学）",
   "stem": "問題文（プレーンテキスト。LaTeX数式は$...$で囲む）",
   "stem_latex": "問題文のLaTeX表現（\\\\documentclassから\\\\end{document}まで完全な文書、または数式のみ）",
   "solution_outline": "解法の手順・方針を簡潔に記述",
@@ -138,6 +140,8 @@ export const OUTPUT_FORMAT_INSTRUCTION = `
   * 数学以外の問題（英語・暗記系など）では省略可。
 - checks: 必ず2件以上。各項目は {"desc": "説明文", "ok": true/false} の形式。
   * 少なくとも1件は verification_code の実行結果に基づく検算を含めること。
+- subject（必須）: 科目名（例: 数学, 英語, 物理）
+- field（必須）: 分野名（例: 微分積分, 長文読解, 力学）
 - stem（必須）: 問題文のプレーンテキスト
 - stem_latex: LaTeX形式の問題文
 - solution_outline: 解法の概要
