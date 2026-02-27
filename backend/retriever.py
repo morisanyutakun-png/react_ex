@@ -343,8 +343,9 @@ def retrieve_with_profile(
         return rows
 
     # Build cascading filter attempts
+    # Note: SQLite has no field_id column, so skip field_id-based filter on SQLite
     attempts = []
-    if subject_filter and field_filter is not None:
+    if subject_filter and field_filter is not None and not is_sqlite:
         sw, sp = _subject_where(subject_filter)
         attempts.append((f"{sw} AND field_id = %s", sp + [field_filter], 'subject+field'))
     if subject_filter and topic_filter:
