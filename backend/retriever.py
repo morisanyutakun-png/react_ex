@@ -145,8 +145,10 @@ def _pgvector_search_single(
     need_join = False
 
     if subject_filter:
-        where_parts.append("p.subject = %s")
+        # Use LIKE for flexible matching: "数学" matches "数学", "数学I", "数学II" etc.
+        where_parts.append("(p.subject = %s OR p.subject LIKE %s)")
         params.append(subject_filter)
+        params.append(subject_filter + '%')
         need_join = True
     if field_filter is not None:
         where_parts.append("p.field_id = %s")
@@ -323,13 +325,17 @@ def retrieve_with_profile(
     # Build a list of (subject_f, field_f, topic_f, label) tiers to try in order.
     # Priority: subject+field+topic → subject+topic → subject+field → subject-only → global
     has_field = field_filter is not None
-    # subject+field一致のみを絶対条件とし、他条件はスコア順
+    has_topic = bool(topic_filter)
+    # 教科+分野一致を最優先、subject-onlyをフォールバック
+    # 難易度・問題文類似度はスコア順で上位N件を返す
     tiers = []
     if subject_filter and has_field:
         tiers.append((subject_filter, field_filter, None, 'subject+field'))
-    elif subject_filter:
+    if subject_filter and has_topic:
+        tiers.append((subject_filter, None, topic_filter, 'subject+topic'))
+    if subject_filter:
         tiers.append((subject_filter, None, None, 'subject-only'))
-    else:
+    if not subject_filter:
         tiers.append((None, None, None, 'global'))
 
     # Track which tier was actually used (for scoring bonus)
@@ -430,10 +436,15 @@ def retrieve_with_profile(
         }
 
     # For TF-IDF fallback, apply post-filter if subject_filter / topic_filter is given.
-    # When subject is specified, ALWAYS filter (strict mode) — don't allow cross-subject leakage.
+    # Use partial match (startswith / contains) so "数学" matches "数学I", "数学II" etc.
+    def _subject_matches(db_subject, filter_subject):
+        if not db_subject or not filter_subject:
+            return False
+        return db_subject == filter_subject or db_subject.startswith(filter_subject) or filter_subject in db_subject
+
     if used_tier == 'global' and subject_filter:
         filtered = [(pid, score) for pid, score in candidates
-                    if pid in prob_map and prob_map[pid].get('subject') == subject_filter]
+                    if pid in prob_map and _subject_matches(prob_map[pid].get('subject', ''), subject_filter)]
         if filtered:
             candidates = filtered
     if used_tier in ('global', 'subject-only') and topic_filter:

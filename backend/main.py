@@ -1580,22 +1580,55 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     except Exception:
                         _model = None
 
+                # ── Helper: simple DB query with cascading subject/field/topic filters ──
+                def _db_fallback_query(connection, subj, fld_id, topic_f, limit=200):
+                    """Query problems table with cascading filters: subject+field → subject+topic → subject → all."""
+                    _cur = connection.cursor()
+                    _is_sqlite = getattr(connection, '_is_sqlite', False)
+                    _order = 'id' if _is_sqlite else 'created_at'
+                    # Use flexible subject matching (prefix match)
+                    _subj_clause = "(subject = %s OR subject LIKE %s)"
+                    _subj_params = [subj, subj + '%'] if subj else []
+                    # Build cascading WHERE clauses to try
+                    _attempts = []
+                    if subj and fld_id is not None:
+                        _attempts.append((_subj_clause + " AND field_id = %s", _subj_params + [fld_id]))
+                    if subj and topic_f:
+                        _attempts.append((_subj_clause + " AND topic = %s", _subj_params + [topic_f]))
+                    if subj:
+                        _attempts.append((_subj_clause, _subj_params))
+                    _attempts.append(("1=1", []))  # global fallback
+                    for _where, _params in _attempts:
+                        _sql = f"SELECT id, stem, solution_outline, difficulty, trickiness FROM problems WHERE {_where} AND stem IS NOT NULL AND stem != '' ORDER BY {_order} DESC LIMIT %s"
+                        _cur.execute(_sql, tuple(_params + [limit]))
+                        _rows = _cur.fetchall()
+                        if _rows:
+                            _cur.close()
+                            logger.info('RAG DB fallback: %d rows via WHERE %s', len(_rows), _where)
+                            return _rows
+                    _cur.close()
+                    return []
+
                 if retrieve_with_profile is not None:
-                    retrieved = retrieve_with_profile(
-                        conn, (req.subject or '') + ' ' + (req.difficulty or '') + ' ' + (prompt[:400] if prompt else ''),
-                        top_k=top_k,
-                        target_difficulty=target_diff,
-                        target_trickiness=None,
-                        alpha_text=float(req.difficulty_match_weight or 0.6),
-                        beta_difficulty=float(req.difficulty_match_weight or 0.6),
-                        gamma_trickiness=float(req.trickiness_weight or 0.0),
-                        use_vector=(_model is not None),
-                        model=_model,
-                        tfidf_force_refresh=False,
-                        field_filter=_field_id_filter,
-                        subject_filter=subject_f or None,
-                        topic_filter=_topic_filter,
-                    )
+                    try:
+                        retrieved = retrieve_with_profile(
+                            conn, (req.subject or '') + ' ' + (req.difficulty or '') + ' ' + (prompt[:400] if prompt else ''),
+                            top_k=top_k,
+                            target_difficulty=target_diff,
+                            target_trickiness=None,
+                            alpha_text=float(req.difficulty_match_weight or 0.6),
+                            beta_difficulty=float(req.difficulty_match_weight or 0.6),
+                            gamma_trickiness=float(req.trickiness_weight or 0.0),
+                            use_vector=(_model is not None),
+                            model=_model,
+                            tfidf_force_refresh=False,
+                            field_filter=_field_id_filter,
+                            subject_filter=subject_f or None,
+                            topic_filter=_topic_filter,
+                        )
+                    except Exception as rwp_exc:
+                        logger.warning('retrieve_with_profile failed: %s', rwp_exc)
+                        retrieved = []
                     for item in retrieved:
                         pt = (item.get('text') or '').strip()
                         if pt:
@@ -1608,27 +1641,19 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                                 'metadata': {},
                             })
                             full += pt + '\n\n'
+                    # If retrieve_with_profile returned 0, fall back to DB query
+                    if not texts:
+                        logger.info('RAG: retrieve_with_profile returned 0; falling back to DB query')
+                        rows = _db_fallback_query(conn, subject_f, _field_id_filter, _topic_filter, 200)
+                        for r in rows:
+                            pt = (r[1] or '').strip()
+                            if pt:
+                                texts.append(pt)
+                                candidates.append({'id': r[0], 'text': pt, 'difficulty': r[3], 'trickiness': r[4], 'metadata': {}})
+                                full += pt + '\n\n' + (r[2] or '') + '\n\n'
                 else:
-                    # Fallback: simple DB query with subject/field filter (no cascade relaxation to global)
-                    cur = conn.cursor()
-                    where_parts = []
-                    params_list = []
-                    if subject_f:
-                        where_parts.append("subject = %s")
-                        params_list.append(subject_f)
-                    if _field_id_filter is not None:
-                        where_parts.append("field_id = %s")
-                        params_list.append(_field_id_filter)
-                    elif _topic_filter:
-                        where_parts.append("topic = %s")
-                        params_list.append(_topic_filter)
-                    where_sql = ('WHERE ' + ' AND '.join(where_parts)) if where_parts else ''
-                    order_col = 'id' if getattr(conn, '_is_sqlite', False) else 'created_at'
-                    sql = f"SELECT id, stem, solution_outline, difficulty, trickiness FROM problems {where_sql} ORDER BY {order_col} DESC LIMIT %s"
-                    params_list.append(200)
-                    cur.execute(sql, tuple(params_list))
-                    rows = cur.fetchall()
-                    cur.close()
+                    # retrieve_with_profile not available: use DB query directly
+                    rows = _db_fallback_query(conn, subject_f, _field_id_filter, _topic_filter, 200)
                     for r in rows:
                         pt = (r[1] or '').strip()
                         if pt:
@@ -3884,35 +3909,6 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
         # ── Comprehensive LaTeX sanitizer (failsafe for LLM output) ──
         def _comprehensive_latex_sanitize(tex: str) -> str:
-            # 0y) ★ 積分のdx前のカンマ・ピリオド混入を修正 ★
-            #   \int ... , dx → \int ... dx
-            #   \int ... ,dx → \int ... dx
-            #   \int ... . dx → \int ... dx
-            #   \int ... .dx → \int ... dx
-            tex = re.sub(r'([\]\])\s*[,\.]\s*(d[xt])', r'\1 \2', tex)  # \[ ... , dx → \[ ... dx
-            tex = re.sub(r'([a-zA-Z0-9\}\]])\s*[,\.]\s*(d[xt])', r'\1 \2', tex)  # ... , dx → ... dx
-            # 0z) ★ 英語設問文の自動強調 ★
-            #   Next, Read the following..., Answer the following... など設問文らしい英文を
-            #   自動で \textbf{\large ...} で囲む（既に囲まれていなければ）
-            def _emphasize_english_instructions(text):
-                # 英語設問文の典型的なパターン
-                patterns = [
-                    r'^(Next, .+)$',
-                    r'^(Read the following .+)$',
-                    r'^(Answer the following .+)$',
-                    r'^(Choose the correct .+)$',
-                    r'^(Which of the following .+)$',
-                    r'^(Select the .+)$',
-                    r'^(Write your answer .+)$',
-                ]
-                lines = text.split('\n')
-                for i, line in enumerate(lines):
-                    for pat in patterns:
-                        m = re.match(pat, line.strip())
-                        if m and not re.search(r'\\textbf\{\\large', line):
-                            lines[i] = f'\\textbf{{\\large {line.strip()}}}'
-                return '\n'.join(lines)
-            tex = _emphasize_english_instructions(tex)
             """Fix all known LLM LaTeX mistakes so XeLaTeX/LuaLaTeX compiles cleanly."""
             if not isinstance(tex, str) or not tex.strip():
                 return tex
@@ -4140,6 +4136,61 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                         result.append(line)
                 return '\n'.join(result)
             tex = _limit_list_nesting(tex)
+
+            # 0y) ★ 積分の dx 前のカンマ・ピリオド混入を修正 ★
+            #   \int ... , dx → \int ... \,dx （数式環境内のみ）
+            def _fix_integral_comma(seg):
+                """Remove stray comma/period before differential dx/dt/dy in math."""
+                return re.sub(r',\s*(d[xtysuvw])\b', r' \\,\1', seg)
+            # inline math $...$
+            tex = re.sub(
+                r'(?<!\$)\$(?!\$)(.*?)\$(?!\$)',
+                lambda m: '$' + _fix_integral_comma(m.group(1)) + '$',
+                tex
+            )
+            # display math \[...\]
+            tex = re.sub(
+                r'\\\[(.*?)\\\]',
+                lambda m: '\\[' + _fix_integral_comma(m.group(1)) + '\\]',
+                tex, flags=re.S
+            )
+            # align*, equation*, gather* environments
+            for _env_name_y in ('align', 'align*', 'equation', 'equation*', 'gather', 'gather*', 'multline', 'multline*'):
+                _env_esc_y = re.escape(_env_name_y)
+                tex = re.sub(
+                    r'(\\begin\{' + _env_esc_y + r'\})(.*?)(\\end\{' + _env_esc_y + r'\})',
+                    lambda m: m.group(1) + _fix_integral_comma(m.group(2)) + m.group(3),
+                    tex, flags=re.S
+                )
+
+            # 0z) ★ 英語設問文の自動強調 ★
+            #   Next, Read the following... など指示文を \textbf{\large ...} で囲む
+            def _emphasize_english_instructions(text):
+                _instr_patterns = [
+                    r'^(Next,\s.+)$',
+                    r'^(Read the following .+)$',
+                    r'^(Answer the following .+)$',
+                    r'^(Choose the (?:best|correct|most) .+)$',
+                    r'^(Which of the following .+)$',
+                    r'^(Select the .+)$',
+                    r'^(Write your answer .+)$',
+                    r'^(Fill in .+)$',
+                    r'^(Complete the .+)$',
+                    r'^(Translate the following .+)$',
+                    r'^(Look at the .+)$',
+                ]
+                lines = text.split('\n')
+                for i, line in enumerate(lines):
+                    stripped = line.strip()
+                    if not stripped or stripped.startswith('\\'):
+                        continue
+                    for pat in _instr_patterns:
+                        m = re.match(pat, stripped)
+                        if m and '\\textbf' not in line:
+                            lines[i] = '\\textbf{\\large ' + stripped + '}'
+                            break
+                return '\n'.join(lines)
+            tex = _emphasize_english_instructions(tex)
 
             # 2) Remove \usepackage{CJKutf8} and CJK environment wrappers (XeLaTeX incompatible)
             tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{CJKutf8\}\s*\n?', '', tex)
