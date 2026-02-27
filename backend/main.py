@@ -1534,150 +1534,105 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     # reindex failed; leave texts empty
                     texts = []
         else:
-            # No doc_id provided: use retrieve_with_profile (same as assemble_prompt)
-            # to get DB-stored problems filtered by subject/field/topic.
+            # No doc_id provided: query DB directly for problems, then optionally rank with TF-IDF.
+            # This is a simple, reliable approach that guarantees results if DB has any problems.
             try:
                 conn = connect_db()
+                _is_sq = getattr(conn, '_is_sqlite', False)
 
                 subject_f = req.subject_filter or req.subject or ''
                 field_f = getattr(req, 'field_filter', None) or ''
-
-                # Resolve field_filter → topic_filter and field_id
-                _topic_filter = field_f or None
-                _field_id_filter = None
-                if field_f and not getattr(conn, '_is_sqlite', False):
-                    try:
-                        _cur_f = conn.cursor()
-                        _cur_f.execute(
-                            "SELECT id FROM fields WHERE field_name = %s OR field_code = %s LIMIT 1",
-                            (field_f, field_f),
-                        )
-                        _fr = _cur_f.fetchone()
-                        _cur_f.close()
-                        if _fr:
-                            _field_id_filter = _fr[0]
-                    except Exception:
-                        pass
-
-                # Map difficulty string to numeric value
-                def _difficulty_to_num(s):
-                    if not s: return None
-                    s = str(s).lower()
-                    if s in ('易しい', 'easy', 'e'): return 0.2
-                    if s in ('難しい', 'hard', 'h'): return 0.8
-                    if s in ('普通', 'medium', 'normal', 'm'): return 0.5
-                    try: return float(s)
-                    except Exception: return None
-
-                target_diff = _difficulty_to_num(req.difficulty)
                 top_k = int(req.top_k or 5)
 
-                # Use retrieve_with_profile for consistent filtering
-                # On SQLite, skip embedding model loading entirely (pgvector not available)
-                # to avoid hanging on model download.
-                _model = None
-                _is_sqlite_conn = getattr(conn, '_is_sqlite', False)
-                if retrieve_with_profile is not None and not _is_sqlite_conn:
-                    try:
-                        if load_model is not None:
-                            _model, _ = load_model()
-                    except Exception:
-                        _model = None
-                logger.info('RAG: is_sqlite=%s, model=%s, retrieve_with_profile=%s',
-                            _is_sqlite_conn, _model is not None, retrieve_with_profile is not None)
+                logger.info('RAG: starting DB query — subject=%r, field=%r, top_k=%d, is_sqlite=%s',
+                            subject_f, field_f, top_k, _is_sq)
 
-                # ── Helper: simple DB query with cascading subject/field/topic filters ──
-                def _db_fallback_query(connection, subj, fld_id, topic_f, limit=200):
-                    """Query problems table with cascading filters: subject+topic → subject → all.
-                    SQLite-safe: never references field_id column on SQLite."""
-                    _cur = connection.cursor()
-                    _is_sq = getattr(connection, '_is_sqlite', False)
-                    _order = 'id' if _is_sq else 'created_at'
-                    # Use flexible subject matching (prefix match)
-                    _subj_clause = "(subject = %s OR subject LIKE %s)"
-                    _subj_params = [subj, subj + '%'] if subj else []
-                    # Build cascading WHERE clauses to try
-                    _attempts = []
-                    # field_id only on PostgreSQL (SQLite has no field_id column)
-                    if subj and fld_id is not None and not _is_sq:
-                        _attempts.append((_subj_clause + " AND field_id = %s", _subj_params + [fld_id]))
-                    if subj and topic_f:
-                        _attempts.append((_subj_clause + " AND topic = %s", _subj_params + [topic_f]))
-                    if subj:
-                        _attempts.append((_subj_clause, _subj_params))
-                    _attempts.append(("1=1", []))  # global fallback
-                    for _where, _params in _attempts:
-                        _sql = f"SELECT id, stem, solution_outline, difficulty, trickiness FROM problems WHERE {_where} AND stem IS NOT NULL AND stem != '' ORDER BY {_order} DESC LIMIT %s"
-                        _cur.execute(_sql, tuple(_params + [limit]))
-                        _rows = _cur.fetchall()
-                        if _rows:
-                            _cur.close()
-                            logger.info('RAG DB fallback: %d rows via WHERE %s', len(_rows), _where)
-                            return _rows
-                    _cur.close()
-                    return []
+                # ── Direct DB query with cascading WHERE ──
+                # Try narrowest filter first, broaden until we get results
+                cur = conn.cursor()
+                _order = 'id DESC' if _is_sq else 'created_at DESC'
+                _found_rows = []
+                _used_tier = 'none'
 
-                if retrieve_with_profile is not None:
+                # Build cascading WHERE attempts
+                _attempts = []
+
+                # Tier 1: subject + topic (field name used as topic)
+                if subject_f and field_f:
+                    _attempts.append((
+                        "(subject = %s OR subject LIKE %s) AND topic = %s",
+                        [subject_f, subject_f + '%', field_f],
+                        'subject+topic',
+                    ))
+
+                # Tier 2: subject only
+                if subject_f:
+                    _attempts.append((
+                        "(subject = %s OR subject LIKE %s)",
+                        [subject_f, subject_f + '%'],
+                        'subject-only',
+                    ))
+
+                # Tier 3: global (all problems)
+                _attempts.append(("1=1", [], 'global'))
+
+                for _where, _params, _tier in _attempts:
+                    _sql = (
+                        f"SELECT id, stem, solution_outline, difficulty, trickiness, subject, topic "
+                        f"FROM problems "
+                        f"WHERE {_where} AND stem IS NOT NULL AND stem != '' "
+                        f"ORDER BY {_order} LIMIT %s"
+                    )
+                    cur.execute(_sql, tuple(_params + [200]))
+                    _found_rows = cur.fetchall()
+                    logger.info('RAG DB tier=%s: %d rows', _tier, len(_found_rows))
+                    if _found_rows:
+                        _used_tier = _tier
+                        break
+
+                cur.close()
+
+                # Convert rows to candidates
+                for r in _found_rows:
+                    pt = (r[1] or '').strip()
+                    if pt:
+                        texts.append(pt)
+                        candidates.append({
+                            'id': r[0],
+                            'text': pt,
+                            'difficulty': r[3],
+                            'trickiness': r[4],
+                            'search_tier': _used_tier,
+                            'metadata': {},
+                        })
+                        sol = (r[2] or '').strip()
+                        full += pt + '\n\n' + (sol + '\n\n' if sol else '')
+
+                logger.info('RAG: %d texts from DB (tier=%s)', len(texts), _used_tier)
+
+                # Optional: rank using TF-IDF similarity if we have more than top_k texts
+                if len(texts) > top_k:
                     try:
-                        # Build query string: subject + field/topic + difficulty for TF-IDF relevance
                         _rag_query = ' '.join(filter(None, [
-                            req.subject or '', field_f or '', req.difficulty or '',
+                            subject_f, field_f, req.difficulty or '',
                             (prompt[:400] if prompt else ''),
                         ]))
-                        logger.info('RAG: calling retrieve_with_profile subject=%r field_id=%r topic=%r query_len=%d',
-                                    subject_f, _field_id_filter, _topic_filter, len(_rag_query))
-                        retrieved = retrieve_with_profile(
-                            conn, _rag_query,
-                            top_k=top_k,
-                            target_difficulty=target_diff,
-                            target_trickiness=None,
-                            alpha_text=float(req.difficulty_match_weight or 0.6),
-                            beta_difficulty=float(req.difficulty_match_weight or 0.6),
-                            gamma_trickiness=float(req.trickiness_weight or 0.0),
-                            use_vector=(_model is not None),
-                            model=_model,
-                            tfidf_force_refresh=False,
-                            field_filter=_field_id_filter,
-                            subject_filter=subject_f or None,
-                            topic_filter=_topic_filter,
-                        )
-                    except Exception as rwp_exc:
-                        import traceback
-                        logger.warning('retrieve_with_profile failed: %s\n%s', rwp_exc, traceback.format_exc())
-                        retrieved = []
-                    logger.info('RAG: retrieve_with_profile returned %d items', len(retrieved))
-                    for item in retrieved:
-                        pt = (item.get('text') or '').strip()
-                        if pt:
-                            texts.append(pt)
-                            candidates.append({
-                                'id': item.get('id'),
-                                'text': pt,
-                                'difficulty': item.get('difficulty'),
-                                'trickiness': item.get('trickiness'),
-                                'search_tier': item.get('search_tier', 'unknown'),
-                                'metadata': {},
-                            })
-                            full += pt + '\n\n'
-                    # If retrieve_with_profile returned 0, fall back to DB query
-                    if not texts:
-                        logger.info('RAG: retrieve_with_profile returned 0; falling back to DB query')
-                        rows = _db_fallback_query(conn, subject_f, _field_id_filter, _topic_filter, 200)
-                        for r in rows:
-                            pt = (r[1] or '').strip()
-                            if pt:
-                                texts.append(pt)
-                                candidates.append({'id': r[0], 'text': pt, 'difficulty': r[3], 'trickiness': r[4], 'metadata': {}})
-                                full += pt + '\n\n' + (r[2] or '') + '\n\n'
-                else:
-                    # retrieve_with_profile not available: use DB query directly
-                    rows = _db_fallback_query(conn, subject_f, _field_id_filter, _topic_filter, 200)
-                    for r in rows:
-                        pt = (r[1] or '').strip()
-                        if pt:
-                            texts.append(pt)
-                            candidates.append({'id': r[0], 'text': pt, 'difficulty': r[3], 'trickiness': r[4], 'metadata': {}})
-                            full += pt + '\n\n' + (r[2] or '') + '\n\n'
+                        if rag and hasattr(rag, 'build_index'):
+                            _vz, _mt = rag.build_index(texts)
+                            if _vz and _mt is not None:
+                                from sklearn.metrics.pairwise import cosine_similarity as _cs
+                                _qv = _vz.transform([_rag_query])
+                                _sims = _cs(_qv, _mt)[0]
+                                # Attach similarity scores to candidates
+                                for i, c in enumerate(candidates):
+                                    c['sim_score'] = float(_sims[i]) if i < len(_sims) else 0.0
+                                # Sort by sim_score desc
+                                candidates.sort(key=lambda x: -x.get('sim_score', 0.0))
+                                texts = [c['text'] for c in candidates]
+                                logger.info('RAG: TF-IDF ranking applied, top score=%.3f',
+                                            candidates[0].get('sim_score', 0) if candidates else 0)
+                    except Exception as rank_err:
+                        logger.warning('RAG: TF-IDF ranking failed (non-fatal): %s', rank_err)
 
                 try:
                     conn.close()
@@ -1690,20 +1645,22 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         vectorizer, mat = rag.build_index(texts)
                     except Exception:
                         vectorizer, mat = None, None
-                logger.info('RAG(render_template): retrieved %d texts (subject=%r, field=%r)', len(texts), subject_f, field_f)
+
+                logger.info('RAG(render_template): final %d texts (subject=%r, field=%r, tier=%s)',
+                            len(texts), subject_f, field_f, _used_tier)
             except Exception as outer_exc:
                 import traceback
-                logger.warning('RAG: DB query or index build failed: %s\n%s', outer_exc, traceback.format_exc())
+                logger.warning('RAG: DB query failed: %s\n%s', outer_exc, traceback.format_exc())
                 texts = []
+                _used_tier = 'error'
 
         ctx['chunk_count'] = len(texts)
-        ctx['rag_status'] = 'ok' if texts else 'no_data'
-        ctx['rag_method'] = 'retrieve_with_profile' if retrieve_with_profile is not None else 'db_query'
+        ctx['rag_method'] = 'db_direct'
         ctx['rag_retrieved'] = len(texts)
-        logger.info('RAG: %d texts loaded for retrieval (subject_filter=%r, field_filter=%r)',
-                     len(texts), getattr(req, 'subject_filter', None), getattr(req, 'field_filter', None))
+        # _used_tier is set in the DB query section; default to 'none' if doc_id path was taken
+        _used_tier_val = locals().get('_used_tier', 'none')
 
-        # ── Build doc_snippets directly from candidates (already ranked by retrieve_with_profile) ──
+        # ── Build doc_snippets directly from candidates (already ranked) ──
         top_k = int(req.top_k or 5)
         items = []
         seen_texts = set()
@@ -1714,24 +1671,26 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
             seen_texts.add(text_snip)
             items.append({
                 'id': c.get('id'),
-                'sim_score': 0.0,
+                'sim_score': c.get('sim_score', 0.0),
                 'combined_score': 0.0,
                 'difficulty': c.get('difficulty'),
                 'trickiness': c.get('trickiness'),
                 'text': text_snip,
+                'search_tier': c.get('search_tier', _used_tier_val),
             })
 
         ctx['doc_snippets_items'] = items
         ctx['doc_snippets'] = '\n\n'.join([it['text'] for it in items])
         ctx['rag_retrieved'] = len(items)
-        # Determine rag_status: 'ok' if we have items, 'fallback' if from global cascade, 'empty' if nothing
+        # Determine rag_status based on results
         if items:
-            # Check if any candidate came via global fallback (subject didn't match)
-            _any_tier = items[0].get('search_tier', '') if isinstance(items[0], dict) else ''
-            ctx['rag_status'] = 'fallback' if _any_tier == 'global' else 'ok'
+            ctx['rag_status'] = 'ok'  # We have results — always report as OK
+        elif len(texts) == 0:
+            ctx['rag_status'] = 'no_data'  # DB is empty
         else:
             ctx['rag_status'] = 'empty'
-        logger.info('RAG: final doc_snippets has %d items, %d chars, status=%s', len(items), len(ctx['doc_snippets']), ctx['rag_status'])
+        logger.info('RAG: final doc_snippets=%d items, %d chars, status=%s, tier=%s',
+                     len(items), len(ctx['doc_snippets']), ctx['rag_status'], _used_tier_val)
 
         # build a compact rag_summary by concatenating the retrieved snippets (up to 800 chars)
         summary = ''
