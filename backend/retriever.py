@@ -342,29 +342,38 @@ def retrieve_with_profile(
         cur.close()
         return rows
 
-    # Build cascading filter attempts
+    # Build strict filter — only inject when subject+field/topic match.
+    # Do NOT fall back to broader tiers (subject-only or global) to avoid
+    # cross-field pollution (e.g. injecting 積分法 into 確率 prompt).
     # Note: SQLite has no field_id column, so skip field_id-based filter on SQLite
-    attempts = []
-    if subject_filter and field_filter is not None and not is_sqlite:
-        sw, sp = _subject_where(subject_filter)
-        attempts.append((f"{sw} AND field_id = %s", sp + [field_filter], 'subject+field'))
-    if subject_filter and topic_filter:
-        sw, sp = _subject_where(subject_filter)
-        attempts.append((f"{sw} AND topic = %s", sp + [topic_filter], 'subject+topic'))
-    if subject_filter:
-        sw, sp = _subject_where(subject_filter)
-        attempts.append((sw, sp, 'subject-only'))
-    attempts.append(("1=1", [], 'global'))
-
     db_rows = []
-    used_tier = 'global'
-    for where_clause, params, tier_label in attempts:
-        rows = _query_problems(where_clause, params, limit=200)
-        logger.info('RAG DB tier=%s: %d rows found', tier_label, len(rows))
+    used_tier = 'none'
+
+    if subject_filter and (field_filter is not None or topic_filter):
+        # Strict: subject + field/topic must both match
+        if field_filter is not None and not is_sqlite:
+            sw, sp = _subject_where(subject_filter)
+            rows = _query_problems(f"{sw} AND field_id = %s", sp + [field_filter], limit=200)
+            logger.info('RAG DB strict subject+field: %d rows', len(rows))
+            if rows:
+                db_rows = rows
+                used_tier = 'subject+field'
+        if not db_rows and topic_filter:
+            sw, sp = _subject_where(subject_filter)
+            rows = _query_problems(f"{sw} AND topic = %s", sp + [topic_filter], limit=200)
+            logger.info('RAG DB strict subject+topic: %d rows', len(rows))
+            if rows:
+                db_rows = rows
+                used_tier = 'subject+topic'
+    elif subject_filter:
+        # No field/topic specified — subject-only is acceptable
+        sw, sp = _subject_where(subject_filter)
+        rows = _query_problems(sw, sp, limit=200)
+        logger.info('RAG DB subject-only: %d rows', len(rows))
         if rows:
             db_rows = rows
-            used_tier = tier_label
-            break
+            used_tier = 'subject-only'
+    # else: no filters → no injection
 
     if not db_rows:
         logger.info('RAG: no problems found in DB at all')

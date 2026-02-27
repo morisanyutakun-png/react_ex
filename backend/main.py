@@ -1547,48 +1547,45 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 logger.info('RAG: starting DB query — subject=%r, field=%r, top_k=%d, is_sqlite=%s',
                             subject_f, field_f, top_k, _is_sq)
 
-                # ── Direct DB query with cascading WHERE ──
-                # Try narrowest filter first, broaden until we get results
+                # ── Direct DB query — strict subject+field filter ──
+                # Only inject problems whose subject AND field/topic match.
+                # If no match, inject nothing (do NOT fall back to subject-only or global).
                 cur = conn.cursor()
                 _order = 'id DESC' if _is_sq else 'created_at DESC'
                 _found_rows = []
                 _used_tier = 'none'
 
-                # Build cascading WHERE attempts
-                _attempts = []
-
-                # Tier 1: subject + topic (field name used as topic)
                 if subject_f and field_f:
-                    _attempts.append((
-                        "(subject = %s OR subject LIKE %s) AND topic = %s",
-                        [subject_f, subject_f + '%', field_f],
-                        'subject+topic',
-                    ))
-
-                # Tier 2: subject only
-                if subject_f:
-                    _attempts.append((
-                        "(subject = %s OR subject LIKE %s)",
-                        [subject_f, subject_f + '%'],
-                        'subject-only',
-                    ))
-
-                # Tier 3: global (all problems)
-                _attempts.append(("1=1", [], 'global'))
-
-                for _where, _params, _tier in _attempts:
+                    # Strict: subject + topic must both match
                     _sql = (
-                        f"SELECT id, stem, solution_outline, difficulty, trickiness, subject, topic "
-                        f"FROM problems "
-                        f"WHERE {_where} AND stem IS NOT NULL AND stem != '' "
+                        "SELECT id, stem, solution_outline, difficulty, trickiness, subject, topic "
+                        "FROM problems "
+                        "WHERE (subject = %s OR subject LIKE %s) AND topic = %s "
+                        "AND stem IS NOT NULL AND stem != '' "
                         f"ORDER BY {_order} LIMIT %s"
                     )
-                    cur.execute(_sql, tuple(_params + [200]))
+                    cur.execute(_sql, (subject_f, subject_f + '%', field_f, 200))
                     _found_rows = cur.fetchall()
-                    logger.info('RAG DB tier=%s: %d rows', _tier, len(_found_rows))
-                    if _found_rows:
-                        _used_tier = _tier
-                        break
+                    _used_tier = 'subject+topic'
+                    logger.info('RAG DB strict subject+topic: %d rows (subject=%r, topic=%r)',
+                                len(_found_rows), subject_f, field_f)
+                elif subject_f:
+                    # No field specified — allow subject-only match
+                    _sql = (
+                        "SELECT id, stem, solution_outline, difficulty, trickiness, subject, topic "
+                        "FROM problems "
+                        "WHERE (subject = %s OR subject LIKE %s) "
+                        "AND stem IS NOT NULL AND stem != '' "
+                        f"ORDER BY {_order} LIMIT %s"
+                    )
+                    cur.execute(_sql, (subject_f, subject_f + '%', 200))
+                    _found_rows = cur.fetchall()
+                    _used_tier = 'subject-only'
+                    logger.info('RAG DB subject-only: %d rows (subject=%r)',
+                                len(_found_rows), subject_f)
+                else:
+                    # No filter at all — skip injection
+                    logger.info('RAG: no subject/field specified, skipping injection')
 
                 cur.close()
 
