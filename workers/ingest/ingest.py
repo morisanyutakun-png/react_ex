@@ -412,7 +412,13 @@ def insert_problem(conn, problem, page=None):
 
     # ── Compute subject/topic/subtopic/language for both SQLite and Postgres ──
     subject = metadata.get('subject') if isinstance(metadata, dict) and metadata.get('subject') else (metadata.get('topic') if isinstance(metadata, dict) else None) or 'general'
-    topic = metadata.get('topic') if isinstance(metadata, dict) else None
+    # topic: prefer metadata 'topic', then 'field' (UI/LLM use 'field' for 分野)
+    topic = None
+    if isinstance(metadata, dict):
+        topic = metadata.get('topic') or metadata.get('field') or None
+    # Also check problem-level 'field' when topic still empty
+    if not topic and isinstance(problem, dict):
+        topic = problem.get('field') or problem.get('topic') or None
     subtopic = metadata.get('subtopic') if isinstance(metadata, dict) else None
     language = metadata.get('language') if isinstance(metadata, dict) and metadata.get('language') else 'ja'
 

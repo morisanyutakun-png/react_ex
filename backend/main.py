@@ -2082,6 +2082,7 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     "\\usepackage{enumitem}\n"
                     "\\usepackage{geometry}\n"
                     "\\geometry{top=20mm,bottom=25mm,left=22mm,right=22mm}\n"
+                    "\\usepackage{setspace}\n"
                     "\\usepackage{iftex}\n"
                     "\\ifPDFTeX\n"
                     "  \\usepackage[utf8]{inputenc}\\usepackage[T1]{fontenc}\n"
@@ -2116,7 +2117,8 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "\\setlength{\\headheight}{14pt}\n"
                         "\\newcommand{\\problem}[1]{\\subsection*{\\textbf{問題 #1}}}\n"
                         "\\newcommand{\\answer}[1]{\\noindent\\rule{\\linewidth}{0.4pt}\\subsection*{問題 #1 の解答}}\n\n"
-                        "\\begin{document}\n\n"
+                        "\\begin{document}\n"
+                        "\\setstretch{1.3}\n\n"
                         "\\section*{問題}\n\n"
                         "{{problems_section}}\n\n"
                         "\\newpage\n\n"
@@ -2156,7 +2158,8 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     latex_skeleton = (
                         _cjk_preamble +
                         "\\usepackage{ulem}\n\n"
-                        "\\begin{document}\n\n"
+                        "\\begin{document}\n"
+                        "\\setstretch{1.3}\n\n"
                         "\\begin{flushright}\n"
                         "名前：\\underline{\\hspace{5cm}} \\quad 日付：\\underline{\\hspace{3cm}}\n"
                         "\\end{flushright}\n"
@@ -2184,7 +2187,8 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "\\usepackage{array}\n"
                         "\\usepackage{longtable}\n"
                         "\\usepackage{booktabs}\n\n"
-                        "\\begin{document}\n\n"
+                        "\\begin{document}\n"
+                        "\\setstretch{1.3}\n\n"
                         "\\begin{center}{\\Large\\bfseries {{title}}}\\end{center}\n"
                         "\\vspace{1em}\n\n"
                         "% 一問一答カード: longtable で問題と解答を左右に並べる\n"
@@ -2217,7 +2221,8 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 else:  # minimal
                     latex_skeleton = (
                         _cjk_preamble +
-                        "\\begin{document}\n\n"
+                        "\\begin{document}\n"
+                        "\\setstretch{1.3}\n\n"
                         "% コンテンツをここに記述\n"
                         "{{problems_section}}\n\n"
                         "\\end{document}\n"
@@ -2424,6 +2429,22 @@ _LATEX_CORE_RULES = (
     "    - 問題文と選択肢: \\vspace{0.5em} または空行 1行\n"
     "    - 本文（長文）と問題: \\vspace{1em} + \\noindent で明確に分離\n"
     "N5. インデントはネスト深さに応じて一貫する。\n"
+    "\n"
+    "=== ページ幅・テキスト折り返しルール（厳守） ===\n"
+    "W1. 長い英文テキストは LaTeX の自動折り返しに任せる。手動で改行を入れない限り、\n"
+    "    LaTeX は \\textwidth の範囲で自動的に行を折り返す。\n"
+    "W2. 長い英文パッセージや問題文は、paragraph またはそのまま地の文として記述する。\n"
+    "    \\mbox{} や \\hbox{} で囲んではいけない（折り返しが効かなくなる）。\n"
+    "W3. 表のセル幅は p{} や X 型で指定し、合計が \\textwidth を超えないようにする。\n"
+    "W4. verbatim/lstlisting 環境以外では、1行あたり80文字を超える連続テキストを \n"
+    "    hardcoded で入れない。LaTeX に折り返しを任せる。\n"
+    "W5. quotation/quote 環境内のテキストも自動折り返しされるので、\n"
+    "    長いパラグラフはそのまま1段落として記述する。\n"
+    "\n"
+    "=== 行間・余白ルール ===\n"
+    "S1. 行間は \\usepackage{setspace} + \\setstretch{1.3} で設定する。\n"
+    "    ※ プリアンブルで setspace を読み込み、\\begin{document} の直後に \\setstretch{1.3} を置く。\n"
+    "S2. パラグラフ間のスペースは \\usepackage{parskip} で自動調整する。\n"
 )
 
 # --- プロンプト部品: 数式ルール（理系科目のみ追加）---
@@ -2560,6 +2581,11 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
         '- 本文（長文）と問題: \\vspace{1em} + \\noindent で明確に分離。\n'
         '- 問題文と選択肢の間: \\vspace{0.5em} または空行1行。\n'
         '- インデントはネスト深さに応じて一貫させる。\n\n'
+        '【ページ幅・テキスト折り返しルール】\n'
+        '- 長い英文や日本語のテキストは LaTeX の自動折り返しに任せる。\n'
+        '- \\mbox{} や \\hbox{} でテキストを囲まない（折り返しが効かなくなる）。\n'
+        '- パラグラフはそのまま地の文として記述する。\n'
+        '- 行間は \\usepackage{setspace} + \\setstretch{1.3} で広めに設定する。\n\n'
     )
 
     # Math-specific rules (STEM only)
@@ -2590,6 +2616,8 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
             '- 英文は \\textit{} で斜体にしない。ローマン体（デフォルト）でそのまま記述する。\n'
             '- 長文読解: 本文（英文パッセージ）は \\begin{quotation}...\\end{quotation} で囲む。\n'
             '  本文の前後には \\vspace{1em} を入れて問題部分と明確に分離する。\n'
+            '- 長い英文は LaTeX の自動折り返しに任せ、80文字以上の連続テキストを無理に1行にしない。\n'
+            '- \\mbox{} や \\hbox{} で英文を囲まない。\n'
             '- 下線部: \\underline{word} を使用。\\textit{} は使わない。\n'
             '- 選択肢: \\begin{enumerate}[(A)] の \\item で記述。\n'
             '- 各大問の間に \\vspace{1.5em} を入れる。\n'
@@ -3602,6 +3630,7 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             "\\usepackage{amsmath,amssymb,mathtools}\n"
             "\\usepackage{geometry}\n"
             "\\geometry{margin=1in}\n"
+            "\\usepackage{setspace}\n"
             "\\ifPDFTeX\n"
             "  \\usepackage[utf8]{inputenc}\n"
             "  \\usepackage[T1]{fontenc}\n"
@@ -3622,6 +3651,7 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             "% avoid forcing system fonts here to reduce engine failures\n"
             "\\title{__TITLE__}\n"
             "\\begin{document}\n"
+            "\\setstretch{1.3}\n"
             "\\maketitle\n"
         )
         header = header.replace('__TITLE__', title.replace('%', '%%'))

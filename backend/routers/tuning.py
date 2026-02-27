@@ -573,6 +573,28 @@ def save_parsed_problem(payload: SaveProblemRequest = Body(...)):
     if payload.extra_metadata:
         merged['metadata'].update(payload.extra_metadata)
 
+    # ── Map 'field' → 'topic' for DB storage ──
+    # The UI and LLM use 'field' (分野) but the DB `problems` table expects 'topic'.
+    # Ensure metadata contains 'topic' so insert_problem populates the column.
+    _field_val = (
+        merged['metadata'].get('field')
+        or problem_obj.get('field')
+        or parsed.get('field')
+        or None
+    )
+    if _field_val and not merged['metadata'].get('topic'):
+        merged['metadata']['topic'] = _field_val
+
+    # Also propagate 'subject' from parsed JSON into metadata if missing
+    _subj_val = (
+        merged['metadata'].get('subject')
+        or problem_obj.get('subject')
+        or parsed.get('subject')
+        or None
+    )
+    if _subj_val and not merged['metadata'].get('subject'):
+        merged['metadata']['subject'] = _subj_val
+
     # set source/page if provided
     merged['source'] = payload.overwrite_source or problem_obj.get('source') or parsed.get('source')
     merged['page'] = problem_obj.get('page') or parsed.get('page')
