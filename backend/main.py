@@ -2463,6 +2463,7 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
             '- 関数は必ず \\付き: \\sin, \\cos, \\tan, \\arcsin, \\arccos, \\arctan,\n'
             '  \\log, \\ln, \\exp, \\lim, \\max, \\min\n'
             '  × 誤: arctan x  ○ 正: \\arctan x\n'
+            '- 積分記号の微分子（dx, dt等）の前にカンマやピリオドを絶対に入れない。\\int ... dx のように書く。\n'
             '- 掛け算: \\times / \\cdot。根号: \\sqrt{x}。\n'
             '- 添字2文字以上は中括弧: $x_{10}$。\n\n'
         )
@@ -2478,6 +2479,7 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
         parts.append(
             '【英語問題の書式ルール（厳守）】\n'
             '- 英文は斜体にしない（\\textit{} 禁止）。ローマン体で記述。\n'
+            '- 設問文（Next, Read the following... など指示文）は必ず \\textbf{\\large ...} で囲み、本文や選択肢と明確に区別すること。\n'
             '- 長文は \\begin{quotation}...\\end{quotation} で囲み、前後に \\vspace{1em}。\n'
             '- \\mbox{}, \\hbox{}, \\fbox{}, tcolorbox, mdframed は使わない。\n'
             '- 自動折り返しに任せる。手動改行(\\\\)で英文を折り返さない。\n'
@@ -3882,6 +3884,35 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
         # ── Comprehensive LaTeX sanitizer (failsafe for LLM output) ──
         def _comprehensive_latex_sanitize(tex: str) -> str:
+            # 0y) ★ 積分のdx前のカンマ・ピリオド混入を修正 ★
+            #   \int ... , dx → \int ... dx
+            #   \int ... ,dx → \int ... dx
+            #   \int ... . dx → \int ... dx
+            #   \int ... .dx → \int ... dx
+            tex = re.sub(r'([\]\])\s*[,\.]\s*(d[xt])', r'\1 \2', tex)  # \[ ... , dx → \[ ... dx
+            tex = re.sub(r'([a-zA-Z0-9\}\]])\s*[,\.]\s*(d[xt])', r'\1 \2', tex)  # ... , dx → ... dx
+            # 0z) ★ 英語設問文の自動強調 ★
+            #   Next, Read the following..., Answer the following... など設問文らしい英文を
+            #   自動で \textbf{\large ...} で囲む（既に囲まれていなければ）
+            def _emphasize_english_instructions(text):
+                # 英語設問文の典型的なパターン
+                patterns = [
+                    r'^(Next, .+)$',
+                    r'^(Read the following .+)$',
+                    r'^(Answer the following .+)$',
+                    r'^(Choose the correct .+)$',
+                    r'^(Which of the following .+)$',
+                    r'^(Select the .+)$',
+                    r'^(Write your answer .+)$',
+                ]
+                lines = text.split('\n')
+                for i, line in enumerate(lines):
+                    for pat in patterns:
+                        m = re.match(pat, line.strip())
+                        if m and not re.search(r'\\textbf\{\\large', line):
+                            lines[i] = f'\\textbf{{\\large {line.strip()}}}'
+                return '\n'.join(lines)
+            tex = _emphasize_english_instructions(tex)
             """Fix all known LLM LaTeX mistakes so XeLaTeX/LuaLaTeX compiles cleanly."""
             if not isinstance(tex, str) or not tex.strip():
                 return tex

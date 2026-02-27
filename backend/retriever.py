@@ -323,18 +323,13 @@ def retrieve_with_profile(
     # Build a list of (subject_f, field_f, topic_f, label) tiers to try in order.
     # Priority: subject+field+topic → subject+topic → subject+field → subject-only → global
     has_field = field_filter is not None
-    has_topic = bool(topic_filter)
+    # subject+field一致のみを絶対条件とし、他条件はスコア順
     tiers = []
-    if subject_filter and has_field and has_topic:
-        tiers.append((subject_filter, field_filter, topic_filter, 'subject+field+topic'))
-    if subject_filter and has_topic:
-        tiers.append((subject_filter, None, topic_filter, 'subject+topic'))
     if subject_filter and has_field:
         tiers.append((subject_filter, field_filter, None, 'subject+field'))
-    if subject_filter:
+    elif subject_filter:
         tiers.append((subject_filter, None, None, 'subject-only'))
-    # Only fall to global when NO subject filter is given — prevents cross-subject pollution
-    if not subject_filter:
+    else:
         tiers.append((None, None, None, 'global'))
 
     # Track which tier was actually used (for scoring bonus)
