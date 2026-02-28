@@ -2293,6 +2293,24 @@ _NON_STEM_SUBJECTS = frozenset({
 })
 
 
+def _is_physics_subject(subject: str, prompt_text: str = '') -> bool:
+    """科目名やプロンプト文から物理科目かどうか判定。"""
+    s = (subject or '').strip().lower()
+    if s in ('物理', 'physics'):
+        return True
+    combined = (s + ' ' + (prompt_text or '')[:500]).lower()
+    physics_keywords = {
+        '物理', 'physics', '力学', '運動方程式', '電磁気', '電場', '磁場',
+        '波動', '光学', '熱力学', '原子物理', '回路', '電気', 'エネルギー',
+        '万有引力', '慣性', '摩擦', '弾性', 'ばね', '振り子', 'コンデンサ',
+        '抵抗', 'オームの法則', 'クーロン', 'ローレンツ', 'ファラデー',
+    }
+    for kw in physics_keywords:
+        if kw in combined:
+            return True
+    return False
+
+
 def _is_stem_subject(subject: str, prompt_text: str = '') -> bool:
     """科目名やプロンプト文から理系（数式が必要）かどうか判定。"""
     if not subject and not prompt_text:
@@ -2382,6 +2400,38 @@ _LATEX_MATH_RULES = (
 )
 
 # --- プロンプト部品: 品質ルール ---
+# --- プロンプト部品: 物理科目 TikZ 図専用ルール ---
+_LATEX_PHYSICS_DIAGRAM_RULES = (
+    "\n=== 物理科目の図（TikZ）作成ルール（物理の場合厳守） ===\n"
+    "PD1. ラベルは物理量の記号（$F$, $v$, $m$, $\\theta$, $T$, $N$, $\\mu$, $g$ 等）を使う。\n"
+    "     日本語テキスト（「力」「速度」等）を TikZ ノードに直接書かない。\n"
+    "     × node{力} → ○ node{$F$}\n"
+    "     × node{速度} → ○ node{$v$}\n"
+    "     日本語の説明が必要な場合は図の外の問題文中に記述する。\n"
+    "PD2. 力のベクトルは矢印付きで描く: \\draw[-{Stealth[length=3mm]},thick]\n"
+    "     作用点から力の向きに矢印を描くこと。\n"
+    "PD3. 物体の形状は正確に:\n"
+    "     - 質点: \\filldraw (x,y) circle (2pt);\n"
+    "     - 直方体: \\draw[thick] (x1,y1) rectangle (x2,y2);\n"
+    "     - 円: \\draw[thick] (cx,cy) circle (r);\n"
+    "     - ばね: snake decoration または coil decoration を使用。\n"
+    "     - 滑車: 小さい円で描画。\n"
+    "PD4. 角度の表記: \\draw (始点) arc (開始角:終了角:半径) で円弧を描き、\n"
+    "     中央付近に $\\theta$ 等の角度記号を配置する。\n"
+    "PD5. 接触面・床・壁:\n"
+    "     - 床面: \\draw[thick] (x1,0) -- (x2,0); にハッチング \\fill[pattern=north east lines]\n"
+    "     - 斜面: 傾斜角度を正確に座標で反映。三角関数で計算した座標を使う。\n"
+    "PD6. 力の分解図: 元のベクトルを実線、分解成分を破線 [dashed] で描き、\n"
+    "     直角マークを \\draw で小さい正方形として示す。\n"
+    "PD7. 電気回路図は circuitikz を使い、TikZ で手書きしない。\n"
+    "PD8. グラフ（v-t図、x-t図等）は pgfplots の axis 環境を使い、\n"
+    "     軸ラベルには物理量記号と単位を付ける: xlabel={$t$ [s]}, ylabel={$v$ [m/s]}。\n"
+    "PD9. 寸法・距離の表示: |<->| スタイルで描く:\n"
+    "     \\draw[|<->|] (x1,y-0.5) -- (x2,y-0.5) node[midway,below]{$L$};\n"
+    "PD10. 各物理量には SI 単位を正しく使用すること。\n"
+    "      siunitx パッケージがある場合は \\SI{9.8}{m/s^2} 等を使用。\n"
+)
+
 _LATEX_QUALITY_RULES = (
     "\n=== 品質ルール ===\n"
     "Q1. 塾の配布プリントとして使える教材品質で作成する。\n"
@@ -2450,6 +2500,10 @@ def _build_latex_instructions(subject: str = '', prompt_text: str = '', struct_r
     if _is_english_subject(subject, prompt_text):
         parts.append(_LATEX_ENGLISH_RULES)
 
+    # Physics-specific diagram rules
+    if _is_physics_subject(subject, prompt_text):
+        parts.append(_LATEX_PHYSICS_DIAGRAM_RULES)
+
     # Structural rules (preset-specific layout)
     if struct_rules:
         parts.append(struct_rules)
@@ -2516,6 +2570,16 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
         '【図の座標ルール（TikZ 使用時）】\n'
         '- 座標 (x,y) は数値で指定。閉じた図形は cycle で閉じる。\n\n'
     )
+
+    # Physics-specific diagram rules (Groq path)
+    if _is_physics_subject(subject, prompt_text):
+        parts.append(
+            '【物理科目の図ルール（厳守）】\n'
+            '- TikZ 図中のラベルは物理量の記号（$F$, $v$, $m$, $\\theta$ 等）を使用し、日本語テキストを書かない。\n'
+            '- 力のベクトルは矢印 [-{Stealth}] で描く。物体の形状は正確に（rectangle, circle 等）。\n'
+            '- 角度は arc で円弧を描き記号 $\\theta$ を配置。床面にはハッチングを付ける。\n'
+            '- 電気回路は circuitikz を使用。グラフは pgfplots で軸に物理量と単位を明記。\n\n'
+        )
 
     # English-specific rules
     if _is_english_subject(subject, prompt_text):
