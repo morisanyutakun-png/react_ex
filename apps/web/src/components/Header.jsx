@@ -101,7 +101,7 @@ export default function Header() {
                     {icon}
                     {label}
                     {active && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#fa2d48]" />
                     )}
                   </Link>
                 );
@@ -111,8 +111,8 @@ export default function Header() {
         )}
       </header>
 
-      {/* ── モバイルボトムナビバー (Apple Music style - frosted light) ── */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-2xl border-t border-black/[0.04] safe-area-bottom">
+      {/* ── モバイルボトムナビバー (Apple Music style - frosted dark) ── */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-2xl border-t border-white/[0.06] safe-area-bottom">
         <div className="flex items-center justify-around px-2 py-1.5">
           {NAV_ITEMS.map(({ href, label, mobileIcon }) => {
             const active =
@@ -125,12 +125,12 @@ export default function Header() {
                 href={href}
                 className={`flex flex-col items-center gap-0.5 py-1 px-2 min-w-[3.5rem] transition-all active:scale-95
                   ${active
-                    ? 'text-red-600'
-                    : 'text-[#8e8e93]'
+                    ? 'text-[#fa2d48]'
+                    : 'text-[#636366]'
                   }`}
               >
                 {mobileIcon}
-                <span className={`text-[10px] font-medium leading-none ${active ? 'text-red-600' : 'text-[#8e8e93]'}`}>
+                <span className={`text-[10px] font-medium leading-none ${active ? 'text-[#fa2d48]' : 'text-[#636366]'}`}>
                   {label}
                 </span>
               </Link>
