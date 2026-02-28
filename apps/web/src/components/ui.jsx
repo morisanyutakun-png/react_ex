@@ -98,21 +98,21 @@ export const Icons = {
   )
 };
 
-/* ── PageHeader ── */
+/* ── PageHeader (Vivid) ── */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
-    <div className="mb-8 sm:mb-10">
+    <div className="mb-8 sm:mb-10 animate-fade-in-up">
       {breadcrumbs && (
-        <nav className="flex items-center gap-1.5 mb-5 sm:mb-6 text-[12px] font-medium tracking-wide">
+        <nav className="flex items-center gap-1.5 mb-5 sm:mb-6 text-[12px] font-semibold tracking-wide">
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="flex items-center gap-1 text-[#86868b] hover:text-[#fc3c44] transition-colors duration-300">
+                <a href={bc.href} className="flex items-center gap-1 text-[#6e6e73] hover:text-[#fc3c44] transition-colors duration-300">
                   {i === 0 && bc.label === 'Home' && <Icons.Home className="w-3.5 h-3.5" />}
                   <span>{bc.label}</span>
                 </a>
               ) : (
-                <span className="text-[#1d1d1f] font-semibold">{bc.label}</span>
+                <span className="text-[#1d1d1f] font-bold">{bc.label}</span>
               )}
               {i < breadcrumbs.length - 1 && (
                 <svg className="w-3 h-3 text-[#c7c7cc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,17 +125,17 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
       )}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
-          <div className="relative flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-[#fc3c44] to-[#e0323a] text-white flex items-center justify-center shadow-lg shadow-[#fc3c44]/20">
+          <div className="relative flex-shrink-0 w-13 h-13 rounded-2xl bg-gradient-to-br from-[#fc3c44] via-[#ff375f] to-[#e0323a] text-white flex items-center justify-center shadow-xl shadow-[#fc3c44]/25">
             {icon}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/25 to-transparent pointer-events-none" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-[24px] sm:text-[30px] font-extrabold text-[#1d1d1f] tracking-tight leading-tight">
+          <h1 className="text-[24px] sm:text-[30px] font-black text-[#1d1d1f] tracking-tight leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[14px] text-[#86868b] mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-[14px] text-[#6e6e73] mt-1.5 max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
@@ -249,17 +249,17 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
   );
 }
 
-/* ── Button ── */
+/* ── Button (Vivid) ── */
 export function Button({ children, onClick, variant = 'primary', disabled, className = '', size = 'md' }) {
-  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]';
+  const base = 'inline-flex items-center justify-center gap-2 font-bold rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.95]';
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
-    primary: 'bg-gradient-to-b from-[#fc3c44] to-[#e0323a] text-white hover:from-[#ff5c5c] hover:to-[#e84040] shadow-md shadow-[#fc3c44]/15 hover:shadow-lg hover:shadow-[#fc3c44]/25',
-    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f2f2f7] hover:border-black/[0.12] shadow-sm',
-    success: 'bg-gradient-to-b from-[#34c759] to-[#28a745] text-white hover:from-[#3de066] hover:to-[#2db84e] shadow-md shadow-[#34c759]/15',
-    danger: 'bg-gradient-to-b from-[#ff3b30] to-[#e0323a] text-white hover:from-[#ff5c5c] hover:to-[#e84040] shadow-md shadow-[#ff3b30]/15',
-    warning: 'bg-gradient-to-b from-[#ff9500] to-[#e88800] text-white hover:from-[#ffaa33] hover:to-[#f59e0b] shadow-md shadow-[#ff9500]/15',
-    ghost: 'bg-transparent text-[#86868b] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
+    primary: 'bg-gradient-to-b from-[#fc3c44] via-[#ff375f] to-[#e0323a] text-white hover:from-[#ff5c5c] hover:via-[#ff4d6a] hover:to-[#e84040] shadow-lg shadow-[#fc3c44]/20 hover:shadow-xl hover:shadow-[#fc3c44]/35 hover:-translate-y-0.5',
+    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f2f2f7] hover:border-black/[0.14] shadow-sm hover:shadow-md hover:-translate-y-0.5',
+    success: 'bg-gradient-to-b from-[#30d158] via-[#34c759] to-[#28a745] text-white hover:from-[#3de066] hover:to-[#2db84e] shadow-lg shadow-[#30d158]/20 hover:shadow-xl hover:shadow-[#30d158]/35 hover:-translate-y-0.5',
+    danger: 'bg-gradient-to-b from-[#ff453a] via-[#ff3b30] to-[#e0323a] text-white hover:from-[#ff5c5c] hover:to-[#e84040] shadow-lg shadow-[#ff453a]/20 hover:shadow-xl hover:shadow-[#ff453a]/35 hover:-translate-y-0.5',
+    warning: 'bg-gradient-to-b from-[#ff9f0a] via-[#ff9500] to-[#e88800] text-white hover:from-[#ffaa33] hover:to-[#f59e0b] shadow-lg shadow-[#ff9f0a]/20 hover:shadow-xl hover:shadow-[#ff9f0a]/35 hover:-translate-y-0.5',
+    ghost: 'bg-transparent text-[#6e6e73] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
   };
   return (
     <button onClick={onClick} disabled={disabled}
@@ -325,17 +325,22 @@ export function CopyButton({ text, onCopied, label = 'コピー' }) {
   );
 }
 
-/* ── SectionCard ── */
-export function SectionCard({ title, subtitle, icon, children, className = '' }) {
+/* ── SectionCard (Vivid) ── */
+export function SectionCard({ title, subtitle, icon, children, className = '', accentColor }) {
   return (
-    <div className={`card-premium p-5 sm:p-6 ${className}`}>
+    <div className={`card-premium card-glow p-5 sm:p-6 ${className}`}>
       {(title || icon) && (
         <div className="mb-5">
           <div className="flex items-center gap-2.5">
-            {icon && <span className="text-[#fc3c44]">{icon}</span>}
+            {icon && (
+              <span className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300"
+                    style={{ background: `${accentColor || '#fc3c44'}12`, color: accentColor || '#fc3c44' }}>
+                {icon}
+              </span>
+            )}
             {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[12px] text-[#aeaeb2] mt-1 ml-[26px]">{subtitle}</p>}
+          {subtitle && <p className="text-[12px] text-[#aeaeb2] mt-1 ml-[42px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -354,16 +359,16 @@ export function EmptyState({ icon, title, description }) {
   );
 }
 
-/* ── Tabs ── */
+/* ── Tabs (Vivid) ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px] border border-black/[0.04]">
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.05] rounded-[14px] border border-black/[0.04]">
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3.5 py-[8px] rounded-[11px] text-[13px] font-bold transition-all duration-300
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f] shadow-sm'
-              : 'text-[#86868b] hover:text-[#1d1d1f]'
+              ? 'bg-white text-[#1d1d1f] shadow-md'
+              : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/50'
             }`}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
           {tab.label}
