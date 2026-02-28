@@ -57,10 +57,11 @@ function extractJson(text) {
    ═══════════════════════════════════════════════════════ */
 
 function Dropdown({ label, value, onChange, options, placeholder, className = '', onAdd, addLabel, disabled }) {
+  const hasValue = value !== '' && value !== undefined;
   return (
     <div className={className}>
       {label && (
-        <label className="block text-xs font-semibold text-[#86868b] mb-1.5">
+        <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">
           {label}
         </label>
       )}
@@ -70,10 +71,11 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className="w-full px-4 py-3 rounded-lg border border-black/[0.06] bg-white shadow-sm text-sm
-                      text-[#1d1d1f] transition-all cursor-pointer appearance-none
-                      hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20
-                      outline-none pr-10  font-medium
+            className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                      text-[#1d1d1f] transition-all duration-300 cursor-pointer appearance-none
+                      hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                      focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                      outline-none font-semibold shadow-sm
                       disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {placeholder && <option value="">{placeholder}</option>}
@@ -83,20 +85,23 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
                 : <option key={opt.value} value={opt.value}>{opt.label}</option>
             )}
           </select>
-          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#c7c7cc] transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none transition-all duration-300 group-hover:text-[#fc3c44] text-[#c7c7cc]">
+            <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </div>
+          {hasValue && (
+            <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#fc3c44] opacity-60" />
+          )}
         </div>
         {onAdd && (
           <button
             type="button"
             onClick={onAdd}
             title={addLabel || '追加'}
-            className="flex items-center justify-center w-10 rounded-lg border border-dashed border-black/[0.06]
-                       text-[#c7c7cc] hover:border-[#fc3c44] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.08]
-                       transition-all duration-200 flex-shrink-0 active:scale-95"
+            className="flex items-center justify-center w-11 rounded-2xl border border-dashed border-black/[0.06]
+                       text-[#c7c7cc] hover:border-[#fc3c44] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.06]
+                       transition-all duration-300 flex-shrink-0 active:scale-90 hover:shadow-md"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -139,50 +144,66 @@ function SelectedTag({ label, value, color = 'red', onClear }) {
 
 function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick }) {
   const total = textWeight + diffWeight + trickWeight || 1;
-  const pcts = [
-    { label: '類似度', value: textWeight, color: 'bg-[#007aff]', onChange: onText },
-    { label: '難易度', value: diffWeight, color: 'bg-[#34c759]', onChange: onDiff },
-    { label: 'ひっかけ', value: trickWeight, color: 'bg-[#ff9500]', onChange: onTrick },
+  const axes = [
+    { label: '類似度', value: textWeight, color: '#0a84ff', bgClass: 'bg-[#0a84ff]', onChange: onText },
+    { label: '難易度', value: diffWeight, color: '#30d158', bgClass: 'bg-[#30d158]', onChange: onDiff },
+    { label: 'ひっかけ', value: trickWeight, color: '#ff9f0a', bgClass: 'bg-[#ff9f0a]', onChange: onTrick },
   ];
   return (
-    <div className="space-y-4">
-      <div className="space-y-1">
+    <div className="space-y-5">
+      {/* Balance bar */}
+      <div className="space-y-2">
         <div className="text-[10px] font-bold text-[#c7c7cc] uppercase tracking-wider">バランス</div>
-        <div className="flex h-3 rounded-full overflow-hidden bg-black/[0.04]">
-          {pcts.map((p, i) => {
+        <div className="flex h-3.5 rounded-full overflow-hidden bg-black/[0.04] shadow-inner">
+          {axes.map((p, i) => {
             const w = (p.value / total) * 100;
             return w > 0 ? (
-              <div key={i} className={`${p.color} transition-all duration-500`} style={{ width: `${w}%` }} />
+              <div key={i} className={`${p.bgClass} transition-all duration-500 ease-out`}
+                   style={{ width: `${w}%` }} />
             ) : null;
           })}
         </div>
-        <div className="flex justify-between text-[10px] text-[#c7c7cc] font-medium">
-          {pcts.map((p, i) => (
-            <span key={i}>{p.label} {Math.round((p.value / total) * 100)}%</span>
+        <div className="flex justify-between text-[10px] font-semibold">
+          {axes.map((p, i) => (
+            <span key={i} style={{ color: p.color }}>
+              {p.label} {Math.round((p.value / total) * 100)}%
+            </span>
           ))}
         </div>
       </div>
-      <div className="space-y-2">
-        {pcts.map((p, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${p.color} flex-shrink-0`} />
-            <span className="text-xs font-medium text-[#86868b] w-16 flex-shrink-0">{p.label}</span>
-            <input
-              type="range" min={0} max={2} step={0.1} value={p.value}
-              onChange={(e) => p.onChange(Number(e.target.value))}
-              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-black/[0.04] accent-[#fc3c44]
-                [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fc3c44]
-                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
-              style={{
-                background: `linear-gradient(to right, #fc3c44 0%, #fc3c44 ${(p.value / 2) * 100}%, rgba(0,0,0,0.04) ${(p.value / 2) * 100}%, rgba(0,0,0,0.04) 100%)`,
-              }}
-            />
-            <span className="text-xs font-bold text-[#fc3c44] w-8 text-right tabular-nums">
-              {p.value.toFixed(1)}
-            </span>
-          </div>
-        ))}
+      {/* Sliders */}
+      <div className="space-y-3">
+        {axes.map((p, i) => {
+          const pct = (p.value / 2) * 100;
+          return (
+            <div key={i} className="flex items-center gap-3 group">
+              <div className={`w-2.5 h-2.5 rounded-full ${p.bgClass} flex-shrink-0 shadow-sm`}
+                   style={{ boxShadow: `0 0 6px ${p.color}40` }} />
+              <span className="text-[11px] font-bold w-16 flex-shrink-0" style={{ color: p.color }}>{p.label}</span>
+              <div className="flex-1 relative h-6 flex items-center">
+                <div className="absolute inset-x-0 h-[5px] rounded-full bg-black/[0.04]" />
+                <div className="absolute left-0 h-[5px] rounded-full transition-all duration-150"
+                     style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${p.color}, ${p.color}bb)` }} />
+                <input
+                  type="range" min={0} max={2} step={0.1} value={p.value}
+                  onChange={(e) => p.onChange(Number(e.target.value))}
+                  className="relative w-full h-[5px] rounded-full appearance-none cursor-pointer bg-transparent z-10
+                    [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+                    [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
+                    [&::-webkit-slider-thumb]:appearance-none
+                    [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)]
+                    [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200
+                    [&::-webkit-slider-thumb]:hover:scale-125
+                    [&::-webkit-slider-thumb]:active:scale-110"
+                />
+              </div>
+              <span className="min-w-[2.2rem] text-right text-[12px] font-bold tabular-nums px-1.5 py-0.5 rounded-lg"
+                    style={{ color: p.color, background: `${p.color}10` }}>
+                {p.value.toFixed(1)}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -1057,17 +1078,17 @@ export default function TuningPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#c7c7cc] mb-1.5">メモ</label>
+                  <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">メモ</label>
                   <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f]
-                      transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 outline-none shadow-sm font-medium"
+                    className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm text-[#1d1d1f]
+                      transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
                     placeholder="例: 難易度は適切だが解説が冗長" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#c7c7cc] mb-1.5">期待していた出力（任意）</label>
+                  <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">期待していた出力 <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
                   <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f]
-                      transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 outline-none shadow-sm font-medium"
+                    className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm text-[#1d1d1f]
+                      transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
                     placeholder="期待される出力の要約" />
                 </div>
               </div>

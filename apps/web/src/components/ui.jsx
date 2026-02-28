@@ -167,19 +167,28 @@ export function StatusBar({ message }) {
   );
 }
 
-/* ── SelectField ── */
+/* ── SelectField (Apple Music Frosted) ── */
 export function SelectField({ label, value, onChange, options, className = '' }) {
+  const selectedLabel = (() => {
+    const opt = options.find(o => (typeof o === 'string' ? o : o.value) === value);
+    if (!opt) return '';
+    return typeof opt === 'string' ? opt : opt.label;
+  })();
+  const hasValue = value !== '' && value !== undefined;
   return (
     <div className={className}>
-      {label && <label className="block text-xs font-semibold text-[#86868b] mb-1.5">{label}</label>}
+      {label && (
+        <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>
+      )}
       <div className="relative group">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm
-                    text-[#1d1d1f] transition-all duration-200 cursor-pointer appearance-none
-                    hover:border-black/[0.12] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/12
-                    outline-none pr-9 shadow-sm"
+          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+                    text-[#1d1d1f] transition-all duration-300 cursor-pointer appearance-none
+                    hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                    focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                    outline-none font-semibold shadow-sm"
         >
           {options.map((opt) =>
             typeof opt === 'string' ? (
@@ -189,28 +198,92 @@ export function SelectField({ label, value, onChange, options, className = '' })
             )
           )}
         </select>
-        <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-[#aeaeb2]">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        {/* Animated chevron */}
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none transition-all duration-300 group-hover:text-[#fc3c44] text-[#c7c7cc]">
+          <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
+        {/* Active indicator dot */}
+        {hasValue && (
+          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#fc3c44] opacity-60" />
+        )}
       </div>
     </div>
   );
 }
 
-/* ── NumberField ── */
-export function NumberField({ label, value, onChange, min = 1, max, step, className = '' }) {
+/* ── NumberField (Apple Music Stepper) ── */
+export function NumberField({ label, value, onChange, min = 1, max, step = 1, className = '' }) {
+  const handleDecrement = () => {
+    const next = value - step;
+    if (min !== undefined && next < min) return;
+    onChange(next);
+  };
+  const handleIncrement = () => {
+    const next = value + step;
+    if (max !== undefined && next > max) return;
+    onChange(next);
+  };
+  const atMin = min !== undefined && value <= min;
+  const atMax = max !== undefined && value >= max;
   return (
     <div className={className}>
-      {label && <label className="block text-xs font-semibold text-[#86868b] mb-1.5">{label}</label>}
-      <input
-        type="number" value={value} onChange={(e) => onChange(Number(e.target.value))}
-        min={min} max={max} step={step}
-        className="w-24 px-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm text-[#1d1d1f]
-                   transition-all duration-200 hover:border-black/[0.12] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/12
-                   outline-none shadow-sm [&::-webkit-inner-spin-button]:opacity-100"
-      />
+      {label && (
+        <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>
+      )}
+      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm
+                      hover:shadow-md hover:border-black/[0.10] transition-all duration-300 overflow-hidden">
+        {/* Minus button */}
+        <button
+          type="button"
+          onClick={handleDecrement}
+          disabled={atMin}
+          className="flex items-center justify-center w-11 border-r border-black/[0.06] text-[#6e6e73]
+                     hover:bg-[#fc3c44]/[0.06] hover:text-[#fc3c44] active:bg-[#fc3c44]/[0.12]
+                     disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-[#6e6e73]
+                     transition-all duration-200 active:scale-90"
+          aria-label="減らす"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
+          </svg>
+        </button>
+        {/* Value display */}
+        <div className="flex items-center justify-center min-w-[3.5rem] px-3 py-2.5">
+          <input
+            type="number"
+            value={value}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              if (min !== undefined && v < min) return;
+              if (max !== undefined && v > max) return;
+              onChange(v);
+            }}
+            min={min}
+            max={max}
+            step={step}
+            className="w-12 text-center text-[17px] font-bold text-[#1d1d1f] bg-transparent outline-none tabular-nums
+                       [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden
+                       [-moz-appearance:textfield]"
+          />
+        </div>
+        {/* Plus button */}
+        <button
+          type="button"
+          onClick={handleIncrement}
+          disabled={atMax}
+          className="flex items-center justify-center w-11 border-l border-black/[0.06] text-[#6e6e73]
+                     hover:bg-[#fc3c44]/[0.06] hover:text-[#fc3c44] active:bg-[#fc3c44]/[0.12]
+                     disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-[#6e6e73]
+                     transition-all duration-200 active:scale-90"
+          aria-label="増やす"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -219,14 +292,15 @@ export function NumberField({ label, value, onChange, min = 1, max, step, classN
 export function TextArea({ label, value, onChange, rows = 6, placeholder, readOnly, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-xs font-semibold text-[#86868b] mb-1.5">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>}
       <textarea
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         rows={rows} placeholder={placeholder} readOnly={readOnly}
-        className="w-full px-3.5 py-3 rounded-xl border border-black/[0.08] bg-white font-mono text-sm
-                   leading-relaxed resize-y text-[#1d1d1f] transition-all duration-200
-                   hover:border-black/[0.12] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/12
+        className="w-full px-4 py-3.5 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm font-mono text-sm
+                   leading-relaxed resize-y text-[#1d1d1f] transition-all duration-300
+                   hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                   focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
                    outline-none placeholder:text-[#c7c7cc] shadow-sm
                    read-only:bg-[#f2f2f7] read-only:text-[#86868b] read-only:border-black/[0.04]"
       />
@@ -238,12 +312,13 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
 export function TextField({ label, value, onChange, placeholder, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-xs font-semibold text-[#86868b] mb-1.5">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>}
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full px-3.5 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm text-[#1d1d1f]
-                   transition-all duration-200 hover:border-black/[0.12] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/12
-                   outline-none placeholder:text-[#c7c7cc] shadow-sm"
+        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f]
+                   transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                   focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                   outline-none placeholder:text-[#c7c7cc] shadow-sm font-medium"
       />
     </div>
   );
@@ -289,25 +364,34 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
   );
 }
 
-/* ── Slider ── */
-export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1 }) {
+/* ── Slider (Apple Music Vivid) ── */
+export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#fc3c44' }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
-    <label className="flex items-center gap-3 text-xs text-[#86868b] py-1 group">
-      <span className="min-w-[5rem] font-semibold text-[#1d1d1f]">{label}</span>
-      <div className="flex-1 relative">
+    <label className="flex items-center gap-4 py-2 group cursor-pointer">
+      <span className="min-w-[5rem] text-[12px] font-bold text-[#1d1d1f] tracking-tight">{label}</span>
+      <div className="flex-1 relative h-6 flex items-center">
+        {/* Track background */}
+        <div className="absolute inset-x-0 h-[6px] rounded-full bg-black/[0.05]" />
+        {/* Active fill */}
+        <div className="absolute left-0 h-[6px] rounded-full transition-all duration-150"
+             style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}cc)` }} />
         <input type="range" min={min} max={max} step={step} value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-black/[0.06]
-                     [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fc3c44]
-                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-md
-                     [&::-webkit-slider-thumb]:shadow-[#fc3c44]/20
-                     [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
-          style={{ background: `linear-gradient(to right, #fc3c44 0%, #fc3c44 ${pct}%, rgba(0,0,0,0.06) ${pct}%, rgba(0,0,0,0.06) 100%)` }}
+          className="relative w-full h-[6px] rounded-full appearance-none cursor-pointer bg-transparent z-10
+                     [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
+                     [&::-webkit-slider-thumb]:appearance-none
+                     [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)]
+                     [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200
+                     [&::-webkit-slider-thumb]:hover:scale-125
+                     [&::-webkit-slider-thumb]:active:scale-110"
         />
       </div>
-      <span className="font-bold text-[#fc3c44] w-10 text-right tabular-nums">{Number(value).toFixed(1)}</span>
+      <span className="min-w-[2.5rem] text-right text-[13px] font-bold tabular-nums px-2 py-0.5 rounded-lg"
+            style={{ color, background: `${color}10` }}>
+        {Number(value).toFixed(1)}
+      </span>
     </label>
   );
 }

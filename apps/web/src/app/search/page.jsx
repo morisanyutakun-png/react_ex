@@ -146,20 +146,20 @@ export default function SearchPage() {
         {/* キーワード入力行 */}
         <div className="flex items-end gap-3 mb-4">
           <div className="flex-1 min-w-0">
-            <label className="block text-xs font-semibold text-[#86868b] mb-1.5">
+            <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">
               キーワード
             </label>
             <div className="relative">
-              <Icons.Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#d2d2d7] pointer-events-none" />
+              <Icons.Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#aeaeb2] pointer-events-none" />
               <input
                 ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-black/[0.06] bg-white shadow-sm text-sm
-                           text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-red-600
-                           focus:ring-2 focus:ring-red-600/40 outline-none placeholder:text-[#c7c7cc]"
+                className="w-full pl-10 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm
+                           text-[#1d1d1f] transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44]
+                           focus:ring-2 focus:ring-[#fc3c44]/30 outline-none placeholder:text-[#c7c7cc]"
                 placeholder="二次関数、微分、確率 ..."
                 autoFocus
               />
@@ -193,8 +193,8 @@ export default function SearchPage() {
 
           {hasActiveFilters && (
             <button onClick={clearFilters}
-              className="mb-1 text-xs text-[#c7c7cc] hover:text-rose-600 transition-colors font-medium
-                         flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-rose-50">
+              className="mb-1 text-xs text-[#aeaeb2] hover:text-[#fc3c44] transition-all font-semibold
+                         flex items-center gap-1 px-3.5 py-2 rounded-2xl hover:bg-[#fc3c44]/5">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>

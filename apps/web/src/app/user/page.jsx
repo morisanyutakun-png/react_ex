@@ -702,12 +702,14 @@ export default function UserModePage() {
                 {/* カスタム教科入力 */}
                 {newTplSubject === '__custom' && (
                   <div>
-                    <label className="block text-xs font-semibold text-[#86868b] mb-1.5">教科名（入力）</label>
+                    <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">教科名（入力）</label>
                     <input
                       value={newTplCustomSubject}
                       onChange={(e) => setNewTplCustomSubject(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f] outline-none
-                        hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 transition-all placeholder:text-[#c7c7cc]"
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f] font-medium
+                        transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                        focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                        outline-none placeholder:text-[#c7c7cc] shadow-sm"
                       placeholder="例: 地学"
                       autoFocus
                     />
@@ -717,19 +719,19 @@ export default function UserModePage() {
                 {/* 分野 */}
                 {effectiveNewSubject && (
                   <div>
-                    <label className="block text-xs font-semibold text-[#86868b] mb-1.5">
+                    <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">
                       分野
-                      <span className="text-[10px] font-normal text-[#1d1d1f]0 ml-1">（任意）</span>
+                      <span className="text-[10px] font-normal text-[#aeaeb2] ml-1 normal-case tracking-normal">（任意）</span>
                     </label>
                     {newTplFieldOptions.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-2">
+                      <div className="flex flex-wrap gap-1.5 mb-2.5">
                         {newTplFieldOptions.slice(0, 15).map((f) => (
                           <button key={f} type="button"
                             onClick={() => setNewTplField(newTplField === f ? '' : f)}
-                            className={`px-2.5 py-1 text-xs rounded-xl border transition-all ${
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-300 ${
                               newTplField === f
-                                ? 'bg-[#fc3c44] text-white border-red-600'
-                                : 'bg-black/[0.04] text-[#86868b] border-black/[0.06] hover:border-[#fc3c44] hover:text-[#fc3c44]'
+                                ? 'bg-gradient-to-b from-[#fc3c44] to-[#e0323a] text-white border-transparent shadow-md shadow-[#fc3c44]/20'
+                                : 'bg-white/80 text-[#6e6e73] border-black/[0.06] hover:border-[#fc3c44]/30 hover:text-[#fc3c44] hover:shadow-sm'
                             }`}>
                             {f}
                           </button>
@@ -741,8 +743,10 @@ export default function UserModePage() {
                       value={newTplField}
                       onChange={(e) => setNewTplField(e.target.value)}
                       placeholder={newTplFieldOptions.length > 0 ? '候補から選択 or 自由入力' : '分野名を入力（例: 微分法）'}
-                      className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f] outline-none
-                        hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 transition-all placeholder:text-[#c7c7cc]"
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f] font-medium
+                        transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                        focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                        outline-none placeholder:text-[#c7c7cc] shadow-sm"
                     />
                   </div>
                 )}
@@ -750,17 +754,19 @@ export default function UserModePage() {
                 {/* テーマ */}
                 {effectiveNewSubject && (
                   <div>
-                    <label className="block text-xs font-semibold text-[#86868b] mb-1.5">
+                    <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">
                       テーマ
-                      <span className="text-[10px] font-normal text-[#1d1d1f]0 ml-1">（任意・さらに細かい分類）</span>
+                      <span className="text-[10px] font-normal text-[#aeaeb2] ml-1 normal-case tracking-normal">（任意・さらに細かい分類）</span>
                     </label>
                     <input
                       type="text"
                       value={newTplTheme}
                       onChange={(e) => setNewTplTheme(e.target.value)}
                       placeholder="例: 置換積分、三角関数の合成、運動方程式の立式"
-                      className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f] outline-none
-                        hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 transition-all placeholder:text-[#c7c7cc]"
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f] font-medium
+                        transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                        focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                        outline-none placeholder:text-[#c7c7cc] shadow-sm"
                     />
                   </div>
                 )}
@@ -770,10 +776,11 @@ export default function UserModePage() {
                   <button
                     onClick={handleCreateTemplate}
                     disabled={creatingTemplate || !effectiveNewSubject || !newTplDifficulty}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold
-                               bg-[#fc3c44] text-white
-                               hover:bg-red-700
-                               disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold
+                               bg-gradient-to-b from-[#fc3c44] via-[#ff375f] to-[#e0323a] text-white
+                               hover:from-[#ff5c5c] hover:to-[#e84040] shadow-lg shadow-[#fc3c44]/20
+                               hover:shadow-xl hover:shadow-[#fc3c44]/35 hover:-translate-y-0.5
+                               disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 active:scale-[0.95]"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -876,10 +883,10 @@ export default function UserModePage() {
             {/* ── ベース過去問選択（DB検索） ── */}
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <label className="block text-xs font-semibold text-[#86868b]">
+                <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider">
                   ベース過去問を選択
                 </label>
-                <span className="text-[10px] text-[#1d1d1f]0">（任意）</span>
+                <span className="text-[10px] text-[#aeaeb2] normal-case tracking-normal">（任意）</span>
               </div>
               <p className="text-xs text-[#86868b] mb-2">
                 DBから過去問を検索して選択すると、その問題に沿った類題を生成します。
@@ -1012,7 +1019,7 @@ export default function UserModePage() {
 
             {/* モード選択 */}
             <div>
-              <label className="block text-xs font-semibold text-[#86868b] mb-2">
+              <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">
                 生成方法
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1146,7 +1153,7 @@ export default function UserModePage() {
           {/* ── 問題形式選択 ── */}
           <div className="mt-6 border-t border-black/[0.06] pt-5">
             <div className="flex items-center gap-2 mb-1">
-              <label className="block text-xs font-semibold text-[#86868b]">
+              <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider">
                 問題形式
               </label>
             </div>
@@ -1177,10 +1184,10 @@ export default function UserModePage() {
           {/* ── 図表パッケージ選択 ── */}
           <div className="mt-6 border-t border-black/[0.06] pt-5">
             <div className="flex items-center gap-2 mb-1">
-              <label className="block text-xs font-semibold text-[#86868b]">
+              <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider">
                 LaTeX 図表パッケージ
               </label>
-              <span className="text-[10px] text-[#1d1d1f]0">（任意）</span>
+              <span className="text-[10px] text-[#aeaeb2] normal-case tracking-normal">（任意）</span>
             </div>
             <p className="text-xs text-[#86868b] mb-3">
               図・グラフ・コードが必要な場合に選択してください。不要なら選ばなくてOKです。
