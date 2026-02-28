@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, DIAGRAM_PACKAGE_DEFS } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -241,6 +241,16 @@ export default function UserModePage() {
       setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplDifficulty('');
     } catch (e) { setStatus(`作成失敗: ${e.message}`); }
     setCreatingTemplate(false);
+  };
+
+  const handleDeleteTemplate = async (id) => {
+    if (!confirm('このテンプレートを削除しますか？')) return;
+    try {
+      await deleteTemplate(id);
+      await refresh();
+      if (templateId === id) setTemplateId('');
+      setStatus('テンプレートを削除しました');
+    } catch (e) { setStatus(`削除失敗: ${e.message}`); }
   };
 
   /* ── フォーム状態 ── */
@@ -592,48 +602,61 @@ export default function UserModePage() {
             ) : !showCreateTemplate ? (
               <div className="grid gap-2">
                 {templates.map((t) => (
-                  <button
+                  <div
                     key={t.id}
-                    onClick={() => onSelectTemplate(t.id)}
-                    className={`w-full text-left p-4 rounded-xl border transition-all ${
+                    className={`relative w-full text-left p-4 rounded-xl border transition-all ${
                       templateId === t.id
                         ? 'border-red-600 bg-red-50'
                         : 'border-black/[0.06] bg-white hover:border-red-600/50 hover:bg-black/[0.04]'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-bold text-[#1d1d1f]">
-                          {t.name || t.id}
+                    <button
+                      onClick={() => onSelectTemplate(t.id)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-bold text-[#1d1d1f]">
+                            {t.name || t.id}
+                          </div>
+                          {t.description && (
+                            <div className="text-xs text-[#6e6e73] mt-0.5">{t.description}</div>
+                          )}
                         </div>
-                        {t.description && (
-                          <div className="text-xs text-[#6e6e73] mt-0.5">{t.description}</div>
-                        )}
+                        <div className="flex gap-1.5 flex-shrink-0 ml-2">
+                          {t.metadata?.subject && (
+                            <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-bold">
+                              {t.metadata.subject}
+                            </span>
+                          )}
+                          {t.metadata?.field && (
+                            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold">
+                              {t.metadata.field}
+                            </span>
+                          )}
+                          {t.metadata?.theme && (
+                            <span className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full text-[10px] font-bold">
+                              {t.metadata.theme}
+                            </span>
+                          )}
+                          {t.metadata?.difficulty && (
+                            <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
+                              {t.metadata.difficulty}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex gap-1.5">
-                        {t.metadata?.subject && (
-                          <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded-full text-[10px] font-bold">
-                            {t.metadata.subject}
-                          </span>
-                        )}
-                        {t.metadata?.field && (
-                          <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold">
-                            {t.metadata.field}
-                          </span>
-                        )}
-                        {t.metadata?.theme && (
-                          <span className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full text-[10px] font-bold">
-                            {t.metadata.theme}
-                          </span>
-                        )}
-                        {t.metadata?.difficulty && (
-                          <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
-                            {t.metadata.difficulty}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </button>
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }}
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-[#6e6e73] hover:text-red-600 hover:bg-red-50 transition-colors"
+                      title="テンプレートを削除"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
                 ))}
               </div>
             ) : null}

@@ -234,10 +234,10 @@ export function buildReferencePromptSection(referenceStem, referenceAnswer) {
  */
 export function buildTemplateId(subject, field) {
   const base = field ? `${subject}_${field}` : subject;
-  return (
-    base
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/[^a-z0-9_\u3040-\u9fff\-]/g, '') || `tpl_${Date.now()}`
-  );
+  const ts = Date.now().toString(36);
+  const cleaned = base
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_\u3040-\u9fff\-]/g, '');
+  return cleaned ? `${cleaned}_${ts}` : `tpl_${ts}`;
 }

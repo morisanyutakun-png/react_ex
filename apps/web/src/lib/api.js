@@ -108,6 +108,12 @@ export async function createTemplate(body) {
   });
 }
 
+export async function deleteTemplate(templateId) {
+  return apiFetch(`/api/template/${encodeURIComponent(templateId)}`, {
+    method: 'DELETE',
+  });
+}
+
 // ── Template Rendering ─────────────────────────────
 
 export async function renderTemplate(params) {

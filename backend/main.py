@@ -5598,3 +5598,46 @@ def api_save_template(req: TemplateSaveRequest = Body(...)):
     except Exception as e:
         logger.exception('failed to save template')
         return _dev_error_response('template_save_failed', e, status_code=500)
+
+
+@app.delete('/api/template/{template_id}')
+def api_delete_template(template_id: str):
+    """Delete a template by ID from DB and JSON file."""
+    if not template_id:
+        return JSONResponse({'error': 'invalid_id'}, status_code=400)
+    db_deleted = False
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+        if is_sqlite:
+            cur.execute("DELETE FROM templates WHERE id = %s", (template_id,))
+        else:
+            cur.execute("DELETE FROM templates WHERE id = %s", (template_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        db_deleted = True
+    except Exception as e:
+        logger.warning('Failed to delete template from DB: %s', e)
+
+    # Also remove from JSON file
+    try:
+        target = os.path.join(THIS_DIR, 'templates.json')
+        if os.path.exists(target):
+            with open(target, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if template_id in data:
+                del data[template_id]
+                with open(target, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.warning('Failed to remove template from JSON: %s', e)
+
+    # Update in-memory cache
+    tpls = globals().get('TEMPLATES') or {}
+    if template_id in tpls:
+        del tpls[template_id]
+    globals()['TEMPLATES'] = tpls
+
+    return JSONResponse({'deleted': True, 'id': template_id, 'db_deleted': db_deleted})
