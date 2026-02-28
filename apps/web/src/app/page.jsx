@@ -256,8 +256,34 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* ── ヘルプ ── */}
+        <div className="mb-12 stagger-item" style={{ animationDelay: '380ms' }}>
+          <Link href="/help" className="group block">
+            <div className="relative flex items-center gap-4 card-premium card-glow px-5 py-4 transition-all duration-500 hover:shadow-lg active:scale-[0.97] overflow-hidden">
+              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full opacity-0 group-hover:opacity-[0.08] blur-2xl transition-all duration-700"
+                   style={{ background: '#5856d6' }} />
+              <div className="icon-vivid flex-shrink-0 w-11 h-11 rounded-xl transition-all duration-500 group-hover:scale-110"
+                   style={{ background: 'linear-gradient(135deg, #5856d615, #5856d608)' }}>
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#5856d6" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[15px] font-semibold text-[#1d1d1f]">はじめてガイド</div>
+                <div className="text-[12px] text-[#6e6e73] mt-0.5">使い方・ワークフロー・用語集</div>
+              </div>
+              <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-400 group-hover:scale-110"
+                   style={{ background: '#5856d610' }}>
+                <svg className="w-3.5 h-3.5 transition-all duration-400 text-[#5856d6]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </div>
+            </div>
+          </Link>
+        </div>
+
         {/* ── ステータス ── */}
-        <div className="text-center stagger-item" style={{ animationDelay: '420ms' }}>
+        <div className="text-center stagger-item" style={{ animationDelay: '440ms' }}>
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/60 backdrop-blur-xl border border-black/[0.04] shadow-sm">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-75"></span>

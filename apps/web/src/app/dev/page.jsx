@@ -10,6 +10,7 @@ import {
   generatePdf,
   searchProblems,
   fetchTuningFeedback,
+  fetchEvaluationHistory,
 } from '@/lib/api';
 import {
   DIFFICULTY_MAP,
@@ -148,66 +149,109 @@ function SelectedTag({ label, value, color = 'red', onClear }) {
 
 function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick }) {
   const total = textWeight + diffWeight + trickWeight || 1;
+  const presets = [
+    { label: 'バランス', icon: '⚖️', text: 0.5, diff: 0.6, trick: 0.0, desc: '標準的なバランス配分' },
+    { label: '類似重視', icon: '🎯', text: 1.5, diff: 0.3, trick: 0.0, desc: '似た問題を多く参照' },
+    { label: '難易度重視', icon: '📊', text: 0.3, diff: 1.5, trick: 0.0, desc: '同じ難易度帯を重視' },
+    { label: 'ひっかけ強化', icon: '🪤', text: 0.3, diff: 0.3, trick: 1.5, desc: '巧妙な問題を参照' },
+  ];
   const axes = [
-    { label: '類似度', value: textWeight, color: '#0a84ff', bgClass: 'bg-[#0a84ff]', onChange: onText },
-    { label: '難易度', value: diffWeight, color: '#30d158', bgClass: 'bg-[#30d158]', onChange: onDiff },
-    { label: 'ひっかけ', value: trickWeight, color: '#ff9f0a', bgClass: 'bg-[#ff9f0a]', onChange: onTrick },
+    { label: '類似度', value: textWeight, color: '#0a84ff', onChange: onText, desc: 'プロンプトと似た内容の過去問を重視' },
+    { label: '難易度', value: diffWeight, color: '#30d158', onChange: onDiff, desc: '指定難易度に近い過去問を重視' },
+    { label: 'ひっかけ', value: trickWeight, color: '#ff9f0a', onChange: onTrick, desc: 'ひっかけ要素のある過去問を重視' },
   ];
   return (
-    <div className="space-y-5">
-      {/* Balance bar */}
-      <div className="space-y-2">
-        <div className="text-[10px] font-bold text-[#c7c7cc] uppercase tracking-wider">バランス</div>
-        <div className="flex h-3.5 rounded-full overflow-hidden bg-black/[0.04] shadow-inner">
-          {axes.map((p, i) => {
-            const w = (p.value / total) * 100;
-            return w > 0 ? (
-              <div key={i} className={`${p.bgClass} transition-all duration-500 ease-out`}
-                   style={{ width: `${w}%` }} />
-            ) : null;
+    <div className="space-y-6">
+      {/* プリセット */}
+      <div>
+        <div className="text-[10px] font-bold text-[#c7c7cc] uppercase tracking-wider mb-2.5">プリセット — ワンクリックで設定</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {presets.map((p) => {
+            const isActive = Math.abs(textWeight - p.text) < 0.05 && Math.abs(diffWeight - p.diff) < 0.05 && Math.abs(trickWeight - p.trick) < 0.05;
+            return (
+              <button key={p.label} onClick={() => { onText(p.text); onDiff(p.diff); onTrick(p.trick); }}
+                className={`group relative rounded-2xl p-3 text-center transition-all duration-300 active:scale-[0.96]
+                  ${isActive
+                    ? 'bg-white shadow-md shadow-black/[0.06] ring-2 ring-[#fc3c44]/30'
+                    : 'bg-white/50 shadow-sm ring-1 ring-black/[0.04] hover:ring-black/[0.08] hover:shadow-md hover:bg-white/80'
+                  }`}
+              >
+                {isActive && <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-gradient-to-r from-[#fc3c44] to-[#ff6b6b]" />}
+                <span className="text-xl block mb-1">{p.icon}</span>
+                <span className={`text-[11px] font-bold block ${isActive ? 'text-[#fc3c44]' : 'text-[#1d1d1f]'}`}>{p.label}</span>
+                <span className="text-[9px] text-[#aeaeb2] block mt-0.5 leading-tight">{p.desc}</span>
+              </button>
+            );
           })}
         </div>
-        <div className="flex justify-between text-[10px] font-semibold">
-          {axes.map((p, i) => (
-            <span key={i} style={{ color: p.color }}>
-              {p.label} {Math.round((p.value / total) * 100)}%
-            </span>
-          ))}
-        </div>
       </div>
-      {/* Sliders */}
-      <div className="space-y-3">
-        {axes.map((p, i) => {
-          const pct = (p.value / 2) * 100;
-          return (
-            <div key={i} className="flex items-center gap-3 group">
-              <div className={`w-2.5 h-2.5 rounded-full ${p.bgClass} flex-shrink-0 shadow-sm`}
-                   style={{ boxShadow: `0 0 6px ${p.color}40` }} />
-              <span className="text-[11px] font-bold w-16 flex-shrink-0" style={{ color: p.color }}>{p.label}</span>
-              <div className="flex-1 relative h-6 flex items-center">
-                <div className="absolute inset-x-0 h-[5px] rounded-full bg-black/[0.04]" />
-                <div className="absolute left-0 h-[5px] rounded-full transition-all duration-150"
-                     style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${p.color}, ${p.color}bb)` }} />
-                <input
-                  type="range" min={0} max={2} step={0.1} value={p.value}
-                  onChange={(e) => p.onChange(Number(e.target.value))}
-                  className="relative w-full h-[5px] rounded-full appearance-none cursor-pointer bg-transparent z-10
-                    [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
-                    [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
-                    [&::-webkit-slider-thumb]:appearance-none
-                    [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)]
-                    [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200
-                    [&::-webkit-slider-thumb]:hover:scale-125
-                    [&::-webkit-slider-thumb]:active:scale-110"
-                />
+
+      {/* ビジュアルバランスメーター */}
+      <div className="p-5 bg-white/60 backdrop-blur-sm rounded-2xl border border-black/[0.04] shadow-sm">
+        {/* 円グラフ風バランス表示 */}
+        <div className="flex items-center justify-center gap-6 sm:gap-10 mb-6">
+          {axes.map((p) => {
+            const pct = Math.round((p.value / total) * 100);
+            const circumference = 2 * Math.PI * 14;
+            const dashLen = (pct / 100) * circumference;
+            return (
+              <div key={p.label} className="flex flex-col items-center gap-1.5">
+                <div className="relative w-[68px] h-[68px]">
+                  <svg className="w-[68px] h-[68px] -rotate-90" viewBox="0 0 36 36">
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#f0f0f0" strokeWidth="2.5" />
+                    <circle cx="18" cy="18" r="14" fill="none" stroke={p.color} strokeWidth="2.5"
+                      strokeDasharray={`${dashLen} ${circumference}`} strokeLinecap="round"
+                      className="transition-all duration-500 ease-out"
+                      style={{ filter: `drop-shadow(0 0 4px ${p.color}40)` }} />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-[14px] font-bold tabular-nums" style={{ color: p.color }}>{pct}%</span>
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold" style={{ color: p.color }}>{p.label}</span>
               </div>
-              <span className="min-w-[2.2rem] text-right text-[12px] font-bold tabular-nums px-1.5 py-0.5 rounded-lg"
-                    style={{ color: p.color, background: `${p.color}10` }}>
-                {p.value.toFixed(1)}
-              </span>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        {/* スライダー */}
+        <div className="space-y-4">
+          {axes.map((p) => {
+            const pct = (p.value / 2) * 100;
+            return (
+              <div key={p.label}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                         style={{ background: p.color, boxShadow: `0 0 6px ${p.color}40` }} />
+                    <span className="text-[12px] font-bold" style={{ color: p.color }}>{p.label}</span>
+                  </div>
+                  <span className="text-[12px] font-bold tabular-nums px-2 py-0.5 rounded-lg"
+                        style={{ color: p.color, background: `${p.color}10` }}>
+                    {p.value.toFixed(1)}
+                  </span>
+                </div>
+                <div className="relative h-7 flex items-center">
+                  <div className="absolute inset-x-0 h-[5px] rounded-full bg-black/[0.04]" />
+                  <div className="absolute left-0 h-[5px] rounded-full transition-all duration-200"
+                       style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${p.color}, ${p.color}bb)` }} />
+                  <input
+                    type="range" min={0} max={2} step={0.1} value={p.value}
+                    onChange={(e) => p.onChange(Number(e.target.value))}
+                    className="relative w-full h-[5px] rounded-full appearance-none cursor-pointer bg-transparent z-10
+                      [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
+                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
+                      [&::-webkit-slider-thumb]:appearance-none
+                      [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)]
+                      [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200
+                      [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:active:scale-110"
+                  />
+                </div>
+                <p className="text-[10px] text-[#aeaeb2] mt-0.5 ml-4">{p.desc}</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -219,24 +263,33 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
 
 function QualityRating({ score, onChange }) {
   const levels = [
-    { value: 0.2, emoji: '😕', label: '低い' },
-    { value: 0.4, emoji: '🤔', label: 'いまいち' },
-    { value: 0.6, emoji: '🙂', label: 'まあまあ' },
-    { value: 0.8, emoji: '😊', label: '良い' },
-    { value: 1.0, emoji: '🎯', label: '最高' },
+    { value: 0.2, emoji: '😕', label: '低い', color: '#ff3b30' },
+    { value: 0.4, emoji: '🤔', label: 'いまいち', color: '#ff9500' },
+    { value: 0.6, emoji: '🙂', label: 'まあまあ', color: '#ffcc00' },
+    { value: 0.8, emoji: '😊', label: '良い', color: '#34c759' },
+    { value: 1.0, emoji: '🎯', label: '最高', color: '#007aff' },
   ];
   return (
-    <div className="flex items-center gap-1.5">
-      {levels.map((l) => (
-        <button key={l.value} onClick={() => onChange(l.value)}
-          className={`selection-card !p-0 flex flex-col items-center gap-0.5 px-3 py-2.5
-            ${score === l.value ? 'active' : ''}`}>
-          <span className="text-xl relative z-10">{l.emoji}</span>
-          <span className={`text-[10px] font-bold relative z-10 ${score === l.value ? 'text-[#fc3c44]' : 'text-[#c7c7cc]'}`}>
-            {l.label}
-          </span>
-        </button>
-      ))}
+    <div className="flex items-stretch gap-2">
+      {levels.map((l) => {
+        const isActive = score === l.value;
+        return (
+          <button key={l.value} onClick={() => onChange(l.value)}
+            className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl transition-all duration-300 active:scale-95 relative overflow-hidden
+              ${isActive
+                ? 'bg-white shadow-md shadow-black/[0.06] ring-2 scale-105'
+                : 'bg-white/50 ring-1 ring-black/[0.04] hover:ring-black/[0.08] hover:bg-white/80 hover:shadow-sm'
+              }`}
+            style={isActive ? { ringColor: `${l.color}40`, '--tw-ring-color': `${l.color}40` } : undefined}>
+            {isActive && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: l.color }} />}
+            <span className={`text-2xl transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>{l.emoji}</span>
+            <span className={`text-[10px] font-bold transition-colors ${isActive ? '' : 'text-[#aeaeb2]'}`}
+                  style={isActive ? { color: l.color } : undefined}>
+              {l.label}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -306,6 +359,10 @@ export default function TuningPage() {
   // フィードバックループ
   const [feedbackData, setFeedbackData] = useState(null); // { feedback: [...], stats: {...} }
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  // 評価履歴（包括的分析）
+  const [evalHistory, setEvalHistory] = useState(null); // { evaluations: [...], analytics: {...} }
+  const [evalHistoryLoading, setEvalHistoryLoading] = useState(false);
+  const [showEvalHistory, setShowEvalHistory] = useState(false);
 
   /* ── フィードバック取得 ── */
   const loadFeedback = useCallback(async (subj, tplId) => {
@@ -319,12 +376,25 @@ export default function TuningPage() {
     setFeedbackLoading(false);
   }, []);
 
+  /* ── 評価履歴取得 ── */
+  const loadEvalHistory = useCallback(async (subj) => {
+    setEvalHistoryLoading(true);
+    try {
+      const data = await fetchEvaluationHistory({ subject: subj || undefined, limit: 50 });
+      setEvalHistory(data);
+    } catch {
+      setEvalHistory(null);
+    }
+    setEvalHistoryLoading(false);
+  }, []);
+
   // テンプレートや教科変更時にフィードバックを自動取得
   useEffect(() => {
     if (subject || templateId) {
       loadFeedback(subject, templateId);
+      loadEvalHistory(subject);
     }
-  }, [subject, templateId, loadFeedback]);
+  }, [subject, templateId, loadFeedback, loadEvalHistory]);
 
   /* ── テンプレート合致の参考問題を自動取得 ── */
   useEffect(() => {
@@ -548,6 +618,7 @@ export default function TuningPage() {
       // 少し待ってからリロード（DBへの書き込みが完了するのを待つ）
       await new Promise((r) => setTimeout(r, 500));
       await loadFeedback(subject, templateId);
+      await loadEvalHistory(subject);
     } catch (e) { setStatus(`保存エラー: ${e.message}`); }
   };
 
@@ -581,80 +652,310 @@ export default function TuningPage() {
 
       <StatusBar message={status} />
 
-      {/* ── フィードバック統計（常時表示） ── */}
+      {/* ── フィードバックダッシュボード（常時表示） ── */}
       {feedbackData && (
-        <div className="p-4 bg-black/[0.04] rounded-lg border border-black/[0.06]">
-          <div className="flex items-center gap-2 mb-3">
-            <Icons.Chart className="w-4 h-4 text-[#fc3c44]" />
-            <span className="text-sm font-bold text-[#1d1d1f]">改善フィードバック</span>
-            {feedbackLoading && <span className="text-[10px] text-[#c7c7cc] animate-pulse">更新中...</span>}
-          </div>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
-            <div className="p-2 sm:p-3 bg-black/[0.04] rounded-lg border border-[#fc3c44]/20 text-center">
-              <div className="text-base sm:text-lg font-bold text-[#fc3c44]">{feedbackData.stats?.total_evaluations ?? 0}</div>
-              <div className="text-[9px] sm:text-[10px] text-[#fc3c44] font-bold">総評価数</div>
-            </div>
-            <div className="p-2 sm:p-3 bg-black/[0.04] rounded-lg border border-[#34c759]/20 text-center">
-              <div className="text-base sm:text-lg font-bold text-[#34c759]">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
-              <div className="text-[9px] sm:text-[10px] text-emerald-500 font-bold">平均スコア</div>
-            </div>
-            <div className="p-2 sm:p-3 bg-black/[0.04] rounded-lg border border-[#ff9500]/20 text-center">
-              <div className="text-base sm:text-lg font-bold text-[#ff9500]">{feedbackData.stats?.high_score_count ?? 0}</div>
-              <div className="text-[9px] sm:text-[10px] text-amber-500 font-bold">高評価 (4+)</div>
-            </div>
-          </div>
-          {feedbackData.feedback?.length > 0 ? (
-            <details className="rounded-lg">
-              <summary className="cursor-pointer text-xs font-bold text-[#fc3c44] hover:text-red-300 select-none flex items-center gap-1">
-                <svg className="w-3 h-3 transition-transform details-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-                高評価例を表示 ({feedbackData.feedback.length}件)
-              </summary>
-              <div className="mt-2 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
-                {feedbackData.feedback.map((fb, idx) => (
-                  <div key={fb.id || idx} className="p-2 bg-black/[0.04] rounded-lg border border-black/[0.06] text-xs">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="px-1.5 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded text-[9px] font-bold">★ {fb.score}</span>
-                        {fb.metadata?.subject && (
-                          <span className="px-1.5 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded text-[9px] font-bold">{fb.metadata.subject}</span>
-                        )}
-                      </div>
-                      <span className="text-[9px] text-[#c7c7cc]">{fb.timestamp?.slice(0, 10)}</span>
-                    </div>
-                    {fb.notes && <div className="text-[#86868b] text-[10px]">💬 {fb.notes}</div>}
-                    <div className="text-[#424245] line-clamp-1 text-[10px]">{fb.model_output_excerpt?.slice(0, 120)}</div>
-                  </div>
-                ))}
+        <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#ff9500] via-[#fc3c44] to-[#af52de] opacity-80" />
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ff9500] to-[#fc3c44] text-white shadow-lg shadow-[#fc3c44]/20">
+                <Icons.Chart className="w-5 h-5" />
               </div>
-            </details>
-          ) : (
-            <div className="text-xs text-[#86868b] text-center py-1">
-              評価を記録すると次回のプロンプトに自動反映されます
+              <div className="flex-1">
+                <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">改善フィードバック</h3>
+                <p className="text-[11px] text-[#86868b]">過去の評価データから品質向上に活用</p>
+              </div>
+              {feedbackLoading && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fc3c44]/[0.06] rounded-full">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#fc3c44] animate-pulse" />
+                  <span className="text-[10px] text-[#fc3c44] font-bold">更新中</span>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* 統計カード */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#fc3c44]/[0.06] to-[#fc3c44]/[0.02] border border-[#fc3c44]/10 p-4 text-center">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#fc3c44] to-transparent opacity-40" />
+                <div className="text-2xl font-bold text-[#fc3c44] tabular-nums">{feedbackData.stats?.total_evaluations ?? 0}</div>
+                <div className="text-[10px] text-[#fc3c44]/70 font-bold mt-0.5 uppercase tracking-wider">総評価数</div>
+              </div>
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#34c759]/[0.06] to-[#34c759]/[0.02] border border-[#34c759]/10 p-4 text-center">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#34c759] to-transparent opacity-40" />
+                <div className="text-2xl font-bold text-[#34c759] tabular-nums">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
+                <div className="text-[10px] text-[#34c759]/70 font-bold mt-0.5 uppercase tracking-wider">平均スコア</div>
+                {/* スコアバー */}
+                {feedbackData.stats?.avg_score != null && (
+                  <div className="mt-2 h-1.5 bg-black/[0.04] rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#34c759] to-[#30d158] transition-all duration-700"
+                         style={{ width: `${(feedbackData.stats.avg_score / 5) * 100}%` }} />
+                  </div>
+                )}
+              </div>
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#ff9500]/[0.06] to-[#ff9500]/[0.02] border border-[#ff9500]/10 p-4 text-center">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#ff9500] to-transparent opacity-40" />
+                <div className="text-2xl font-bold text-[#ff9500] tabular-nums">{feedbackData.stats?.high_score_count ?? 0}</div>
+                <div className="text-[10px] text-[#ff9500]/70 font-bold mt-0.5 uppercase tracking-wider">高評価 (4+)</div>
+              </div>
+            </div>
+
+            {/* 高評価例 */}
+            {feedbackData.feedback?.length > 0 ? (
+              <details className="group rounded-2xl bg-black/[0.02] border border-black/[0.04] overflow-hidden">
+                <summary className="cursor-pointer px-4 py-3 text-xs font-bold text-[#fc3c44] hover:bg-black/[0.02] select-none flex items-center gap-2 transition-all">
+                  <svg className="w-3.5 h-3.5 transition-transform duration-200 group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <span>高評価の出力例を表示</span>
+                  <span className="ml-auto px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">{feedbackData.feedback.length}件</span>
+                </summary>
+                <div className="px-4 pb-4 space-y-2 max-h-52 overflow-y-auto custom-scrollbar">
+                  {feedbackData.feedback.map((fb, idx) => (
+                    <div key={fb.id || idx} className="p-3 bg-white/80 rounded-xl border border-black/[0.04] shadow-sm">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-lg text-[10px] font-bold">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            {fb.score}
+                          </span>
+                          {fb.metadata?.subject && (
+                            <span className="px-2 py-0.5 bg-[#fc3c44]/[0.06] text-[#fc3c44] rounded-lg text-[9px] font-bold">{fb.metadata.subject}</span>
+                          )}
+                          {fb.metadata?.field && (
+                            <span className="px-2 py-0.5 bg-[#34c759]/[0.06] text-[#34c759] rounded-lg text-[9px] font-bold">{fb.metadata.field}</span>
+                          )}
+                        </div>
+                        <span className="text-[9px] text-[#c7c7cc] font-medium">{fb.timestamp?.slice(0, 10)}</span>
+                      </div>
+                      {fb.notes && (
+                        <div className="text-[11px] text-[#86868b] flex items-start gap-1.5 mb-1">
+                          <span className="text-[#ff9500] flex-shrink-0">💬</span>
+                          <span>{fb.notes}</span>
+                        </div>
+                      )}
+                      <div className="text-[11px] text-[#424245] line-clamp-2 leading-relaxed bg-black/[0.02] rounded-lg p-2 mt-1 font-mono">
+                        {fb.model_output_excerpt?.slice(0, 200)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : (
+              <div className="text-center py-4 bg-black/[0.02] rounded-2xl border border-black/[0.04]">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-black/[0.04] mb-2">
+                  <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-[#86868b] font-medium">評価を記録すると次回のプロンプトに自動反映されます</p>
+                <p className="text-[10px] text-[#aeaeb2] mt-0.5">データはDBに永続保存されます</p>
+              </div>
+            )}
+
+            {/* 評価履歴ボタン */}
+            <div className="mt-4 pt-4 border-t border-black/[0.04] flex items-center justify-between">
+              <button
+                onClick={() => { setShowEvalHistory(!showEvalHistory); if (!evalHistory) loadEvalHistory(subject); }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[#86868b] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.06] transition-all border border-black/[0.04] hover:border-[#fc3c44]/20"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {showEvalHistory ? '履歴を閉じる' : '評価履歴を表示'}
+              </button>
+              <button
+                onClick={() => { loadFeedback(subject, templateId); loadEvalHistory(subject); }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-[#aeaeb2] hover:text-[#fc3c44] transition-all"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
+                </svg>
+                更新
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ── セクションナビ (ステップ風) ── */}
-      <div className="flex items-center gap-1 sm:gap-1.5 bg-black/[0.04] p-1 sm:p-1.5 rounded-xl border border-black/[0.06] overflow-x-auto no-scrollbar">
+      {/* ── 評価履歴パネル ── */}
+      {showEvalHistory && evalHistory && (
+        <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#5856d6] via-[#007aff] to-[#5856d6] opacity-80" />
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#5856d6] to-[#007aff] text-white shadow-lg shadow-[#5856d6]/20">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">評価履歴 & 分析</h3>
+                <p className="text-[11px] text-[#86868b]">全{evalHistory.analytics?.total || 0}件のDB永続評価データ</p>
+              </div>
+              {evalHistoryLoading && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#5856d6]/[0.06] rounded-full">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#5856d6] animate-pulse" />
+                  <span className="text-[10px] text-[#5856d6] font-bold">読込中</span>
+                </div>
+              )}
+            </div>
+
+            {/* 分析サマリー */}
+            {evalHistory.analytics && (
+              <div className="mb-5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-[#fc3c44]/[0.06] to-transparent border border-[#fc3c44]/10 text-center">
+                    <div className="text-lg font-bold text-[#fc3c44] tabular-nums">{evalHistory.analytics.total}</div>
+                    <div className="text-[9px] text-[#fc3c44]/60 font-bold uppercase tracking-wider">総評価数</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-[#34c759]/[0.06] to-transparent border border-[#34c759]/10 text-center">
+                    <div className="text-lg font-bold text-[#34c759] tabular-nums">{evalHistory.analytics.avg_score ?? '—'}</div>
+                    <div className="text-[9px] text-[#34c759]/60 font-bold uppercase tracking-wider">平均スコア</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-[#007aff]/[0.06] to-transparent border border-[#007aff]/10 text-center">
+                    <div className="text-lg font-bold text-[#007aff] tabular-nums">{evalHistory.analytics.high_count}</div>
+                    <div className="text-[9px] text-[#007aff]/60 font-bold uppercase tracking-wider">高評価</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-[#ff9500]/[0.06] to-transparent border border-[#ff9500]/10 text-center">
+                    <div className="text-lg font-bold text-[#ff9500] tabular-nums">{evalHistory.analytics.low_count}</div>
+                    <div className="text-[9px] text-[#ff9500]/60 font-bold uppercase tracking-wider">要改善</div>
+                  </div>
+                </div>
+
+                {/* スコア分布バー */}
+                {Object.keys(evalHistory.analytics.score_distribution || {}).length > 0 && (
+                  <div className="p-4 bg-black/[0.02] rounded-xl border border-black/[0.04] mb-4">
+                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">スコア分布</div>
+                    <div className="flex items-end gap-1 h-16">
+                      {[0.2, 0.4, 0.6, 0.8, 1.0].map((score) => {
+                        const count = evalHistory.analytics.score_distribution[score] || 0;
+                        const maxCount = Math.max(...Object.values(evalHistory.analytics.score_distribution), 1);
+                        const height = (count / maxCount) * 100;
+                        const colors = { 0.2: '#ff3b30', 0.4: '#ff9500', 0.6: '#ffcc00', 0.8: '#34c759', 1.0: '#007aff' };
+                        const labels = { 0.2: '低い', 0.4: 'いまいち', 0.6: 'まあまあ', 0.8: '良い', 1.0: '最高' };
+                        return (
+                          <div key={score} className="flex-1 flex flex-col items-center gap-1">
+                            <span className="text-[10px] font-bold tabular-nums" style={{ color: colors[score] }}>{count}</span>
+                            <div className="w-full rounded-t-lg transition-all duration-500"
+                                 style={{ height: `${Math.max(height, 4)}%`, background: `linear-gradient(to top, ${colors[score]}40, ${colors[score]})` }} />
+                            <span className="text-[8px] text-[#aeaeb2] font-bold">{labels[score]}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 科目別スコア */}
+                {Object.keys(evalHistory.analytics.per_subject || {}).length > 0 && (
+                  <div className="p-4 bg-black/[0.02] rounded-xl border border-black/[0.04] mb-4">
+                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">科目別スコア</div>
+                    <div className="space-y-2">
+                      {Object.entries(evalHistory.analytics.per_subject).map(([subj, data]) => {
+                        const scoreColor = data.avg >= 0.8 ? '#34c759' : data.avg >= 0.6 ? '#ffcc00' : data.avg >= 0.4 ? '#ff9500' : '#ff3b30';
+                        return (
+                          <div key={subj} className="flex items-center gap-3">
+                            <span className="text-[12px] font-bold text-[#1d1d1f] min-w-[3rem]">{subj}</span>
+                            <div className="flex-1 h-2 bg-black/[0.04] rounded-full overflow-hidden">
+                              <div className="h-full rounded-full transition-all duration-500"
+                                   style={{ width: `${(data.avg || 0) * 100}%`, background: scoreColor }} />
+                            </div>
+                            <span className="text-[11px] font-bold tabular-nums min-w-[2.5rem] text-right" style={{ color: scoreColor }}>
+                              {data.avg ?? '—'}
+                            </span>
+                            <span className="text-[9px] text-[#aeaeb2] font-medium">{data.count}件</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* トレンドラインスパークライン */}
+                {evalHistory.analytics.recent_trend?.length > 1 && (
+                  <div className="p-4 bg-black/[0.02] rounded-xl border border-black/[0.04] mb-4">
+                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">最近のトレンド</div>
+                    <div className="flex items-end gap-1 h-12">
+                      {evalHistory.analytics.recent_trend.map((pt, idx) => {
+                        const height = ((pt.score || 0) / 1.0) * 100;
+                        const scoreColor = pt.score >= 0.8 ? '#34c759' : pt.score >= 0.6 ? '#ffcc00' : pt.score >= 0.4 ? '#ff9500' : '#ff3b30';
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-0.5" title={`${pt.timestamp?.slice(0, 10)} — ${pt.score}`}>
+                            <div className="w-full rounded-sm transition-all duration-300"
+                                 style={{ height: `${Math.max(height, 8)}%`, background: scoreColor, opacity: 0.7 + (idx / evalHistory.analytics.recent_trend.length) * 0.3 }} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-[8px] text-[#c7c7cc]">{evalHistory.analytics.recent_trend[0]?.timestamp?.slice(5, 10)}</span>
+                      <span className="text-[8px] text-[#c7c7cc]">{evalHistory.analytics.recent_trend[evalHistory.analytics.recent_trend.length - 1]?.timestamp?.slice(5, 10)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 評価履歴リスト */}
+            {evalHistory.evaluations?.length > 0 ? (
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider mb-1">最近の評価</div>
+                {evalHistory.evaluations.map((ev, idx) => {
+                  const scoreEmoji = { 0.2: '😕', 0.4: '🤔', 0.6: '🙂', 0.8: '😊', 1.0: '🎯' };
+                  const scoreColor = ev.score >= 0.8 ? '#34c759' : ev.score >= 0.6 ? '#ffcc00' : ev.score >= 0.4 ? '#ff9500' : '#ff3b30';
+                  return (
+                    <div key={ev.id || idx} className="p-3 bg-white/60 rounded-xl border border-black/[0.04] shadow-sm hover:shadow-md transition-all">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{scoreEmoji[ev.score] || '📝'}</span>
+                          <span className="text-[12px] font-bold tabular-nums" style={{ color: scoreColor }}>
+                            {ev.score}
+                          </span>
+                          {ev.metadata?.subject && (
+                            <span className="px-2 py-0.5 bg-[#fc3c44]/[0.06] text-[#fc3c44] rounded-lg text-[9px] font-bold">{ev.metadata.subject}</span>
+                          )}
+                          {ev.metadata?.field && (
+                            <span className="px-2 py-0.5 bg-[#34c759]/[0.06] text-[#34c759] rounded-lg text-[9px] font-bold">{ev.metadata.field}</span>
+                          )}
+                        </div>
+                        <span className="text-[9px] text-[#c7c7cc] font-medium">{ev.timestamp?.slice(0, 10)}</span>
+                      </div>
+                      {ev.notes && <div className="text-[11px] text-[#86868b] ml-8 mb-1">{ev.notes}</div>}
+                      {ev.model_output_excerpt && (
+                        <div className="text-[10px] text-[#aeaeb2] ml-8 line-clamp-1 font-mono">{ev.model_output_excerpt.slice(0, 150)}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-xs text-[#aeaeb2]">まだ評価データがありません</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── セクションナビ (Apple風ステップバー) ── */}
+      <div className="relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] p-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1.5">
         {sections.map((s, idx) => (
           <button key={s.id} onClick={() => s.enabled && setActiveSection(s.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 sm:py-3.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 relative whitespace-nowrap
+            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 relative whitespace-nowrap
               ${activeSection === s.id
-                ? 'bg-[#fc3c44] text-white'
+                ? 'bg-gradient-to-r from-[#fc3c44] to-[#e0323a] text-white shadow-md shadow-[#fc3c44]/20'
                 : s.enabled
-                  ? 'text-[#86868b] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.08]'
+                  ? 'text-[#86868b] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.06]'
                   : 'text-[#d2d2d7] cursor-not-allowed'
               }`}
             disabled={!s.enabled}>
-            <span className={`flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold
+            <span className={`flex items-center justify-center w-6 h-6 rounded-lg text-[10px] font-bold transition-all
               ${activeSection === s.id
-                ? 'bg-white/30 text-white'
+                ? 'bg-white/25 text-white'
                 : s.enabled
-                  ? 'bg-black/[0.04] text-[#c7c7cc]'
-                  : 'bg-black/[0.04] text-[#d2d2d7]'
+                  ? 'bg-black/[0.04] text-[#aeaeb2]'
+                  : 'bg-black/[0.02] text-[#d2d2d7]'
               }`}>
               {idx + 1}
             </span>
@@ -672,6 +973,7 @@ export default function TuningPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
           </svg>
         </button>
+        </div>
       </div>
 
       {/* ════════════════════════════════════════════════════════
@@ -680,71 +982,132 @@ export default function TuningPage() {
       {activeSection === 'configure' && (
         <div className="space-y-6">
 
-          {/* ── 条件設定（テンプレート＋問数のみ） ── */}
-          <SectionCard title="条件を選ぶ" icon={<Icons.File />}
-            subtitle="テンプレートを選択してください — 教科・分野・難易度はテンプレートに含まれます">
-
-            {/* 選択中サマリータグ */}
-            {templateId && (
-              <div className="flex flex-wrap gap-2 mb-5 pb-4 border-b border-black/[0.06]">
-                {(() => {
-                  const sel = templates.find((t) => t.id === templateId);
-                  return <SelectedTag label="テンプレート" value={sel?.name || templateId} color="violet" onClear={() => setTemplateId('')} />;
-                })()}
-                <SelectedTag label="問数" value={`${numQuestions}問`} color="sky" />
+          {/* ── 条件設定（テンプレート＋問数） ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            {/* ヘッダー */}
+            <div className="relative px-6 pt-6 pb-4">
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44] opacity-80" />
+              <div className="flex items-center gap-3 mb-1">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#fc3c44] to-[#e0323a] text-white shadow-lg shadow-[#fc3c44]/20">
+                  <Icons.File className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">テンプレートを選ぶ</h3>
+                  <p className="text-[11px] text-[#86868b]">教科・分野・難易度はテンプレートに含まれます</p>
+                </div>
               </div>
-            )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-              {/* テンプレート */}
-              <Dropdown
-                label="テンプレート"
-                value={templateId}
-                onChange={onSelectTemplate}
-                placeholder="— 選択してください —"
-                options={templateOptions}
-              />
-
-              {/* 問数 */}
-              <NumberField label="問数" value={numQuestions} onChange={setNumQuestions} min={1} />
+              {/* 選択中サマリータグ */}
+              {templateId && (
+                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-black/[0.04]">
+                  {(() => {
+                    const sel = templates.find((t) => t.id === templateId);
+                    return <SelectedTag label="テンプレート" value={sel?.name || templateId} color="violet" onClear={() => { setTemplateId(''); setSubject(''); setField(''); }} />;
+                  })()}
+                  <SelectedTag label="問数" value={`${numQuestions}問`} color="sky" />
+                </div>
+              )}
             </div>
 
-            {/* 選択中テンプレート詳細 */}
-            {templateId && (() => {
-              const sel = templates.find((t) => t.id === templateId);
-              return sel ? (
-                <div className="p-4 bg-[#fc3c44]/[0.08] rounded-lg border border-[#fc3c44]/20">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#fc3c44]/10 text-[#fc3c44] flex items-center justify-center flex-shrink-0">
-                      <Icons.File className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-[#1d1d1f] truncate">{sel.name || sel.id}</div>
-                      {sel.description && <div className="text-xs text-[#86868b] mt-0.5 truncate">{sel.description}</div>}
-                    </div>
+            {/* テンプレートカードグリッド */}
+            <div className="px-5 pb-3">
+              {templates.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-black/[0.04] mb-3">
+                    <svg className="w-7 h-7 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
                   </div>
-                  <div className="flex gap-2 mt-3 flex-wrap">
-                    {sel.metadata?.subject && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fc3c44]/[0.08] text-[#fc3c44]">{sel.metadata.subject}</span>}
-                    {sel.metadata?.field && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#34c759]/[0.08] text-[#34c759]">{sel.metadata.field}</span>}
-                    {sel.metadata?.difficulty && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff9500]/[0.08] text-[#ff9500]">{sel.metadata.difficulty}</span>}
-                  </div>
+                  <p className="text-sm font-bold text-[#1d1d1f]">テンプレートがありません</p>
+                  <p className="text-xs text-[#86868b] mt-1">作るモードでテンプレートを作成してください</p>
                 </div>
-              ) : null;
-            })()}
+              ) : (
+                <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+                  {templates.map((t) => {
+                    const isActive = templateId === t.id;
+                    const subjectColors = {
+                      '数学': { bg: 'from-[#007aff] to-[#5856d6]', icon: '∑' },
+                      '物理': { bg: 'from-[#ff9500] to-[#ff6723]', icon: '⚛' },
+                      '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: '🧪' },
+                      '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: '🌐' },
+                      '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: '🧬' },
+                      '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: '💻' },
+                    };
+                    const sc = subjectColors[t.metadata?.subject] || { bg: 'from-[#fc3c44] to-[#e0323a]', icon: '📝' };
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => onSelectTemplate(t.id)}
+                        className={`group relative w-full text-left rounded-2xl overflow-hidden transition-all duration-300 active:scale-[0.98]
+                          ${isActive
+                            ? 'bg-white shadow-md shadow-black/[0.06] ring-2 ring-[#fc3c44]/30'
+                            : 'bg-white/60 shadow-sm shadow-black/[0.03] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
+                          }`}
+                      >
+                        {isActive && (
+                          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44]" />
+                        )}
+                        <div className="p-3.5 flex items-center gap-3.5">
+                          <div className={`flex items-center justify-center w-11 h-11 rounded-[14px] flex-shrink-0 text-lg
+                            bg-gradient-to-br ${sc.bg} text-white shadow-lg shadow-black/[0.08]
+                            transition-transform duration-300 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}>
+                            {sc.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[14px] font-bold text-[#1d1d1f] truncate">{t.name || t.id}</span>
+                              {isActive && (
+                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-[#fc3c44] to-[#e0323a] flex-shrink-0">
+                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            {t.description && (
+                              <div className="text-[11px] text-[#86868b] mt-0.5 truncate">{t.description}</div>
+                            )}
+                            <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                              {t.metadata?.subject && (
+                                <span className="px-2 py-0.5 bg-[#fc3c44]/[0.06] text-[#fc3c44] rounded-full text-[9px] font-bold border border-[#fc3c44]/10">{t.metadata.subject}</span>
+                              )}
+                              {t.metadata?.field && (
+                                <span className="px-2 py-0.5 bg-[#34c759]/[0.06] text-[#34c759] rounded-full text-[9px] font-bold border border-[#34c759]/10">{t.metadata.field}</span>
+                              )}
+                              {t.metadata?.difficulty && (
+                                <span className="px-2 py-0.5 bg-[#ff9500]/[0.06] text-[#ff9500] rounded-full text-[9px] font-bold border border-[#ff9500]/10">{difficultyLabel(t.metadata.difficulty)}</span>
+                              )}
+                            </div>
+                          </div>
+                          {!isActive && (
+                            <svg className="w-4 h-4 text-[#c7c7cc] flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
-            {/* リフレッシュボタン */}
-            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-black/[0.06]">
+            {/* 問数 + リフレッシュ */}
+            <div className="px-5 pb-5 flex items-end gap-4 border-t border-black/[0.04] pt-4 mx-5">
+              <div className="flex-1">
+                <NumberField label="問数" value={numQuestions} onChange={setNumQuestions} min={1} />
+              </div>
               <button onClick={async () => { await refresh(); setStatus('テンプレート一覧を再読み込みしました'); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-[#86868b] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.08] transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#86868b] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.08] transition-all border border-black/[0.04] hover:border-[#fc3c44]/20"
                 title="テンプレートを再読込">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
                 </svg>
-                再読み込み
+                <span className="hidden sm:inline">再読み込み</span>
+                <span className="text-[10px] text-[#c7c7cc] font-normal ml-1">{templates.length}件</span>
               </button>
-              <span className="text-[10px] text-gray-300">{templates.length}件のテンプレート</span>
             </div>
-          </SectionCard>
+          </div>
 
           {/* ── 参考問題（テンプレート合致で自動取得） ── */}
           <SectionCard title="参考問題を選択" icon={<Icons.Search />}
@@ -915,34 +1278,29 @@ export default function TuningPage() {
           </SectionCard>
 
           {/* ── RAG ミキサー ── */}
-          <SectionCard title="RAG ミキサー" icon={<Icons.Search />}
-            subtitle="過去問データベースからの情報注入バランスを調整">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <RagMixer
-                  textWeight={textWeight} diffWeight={difficultyMatchWeight} trickWeight={trickinessWeight}
-                  onText={setTextWeight} onDiff={setDifficultyMatchWeight} onTrick={setTrickinessWeight}
-                />
-                <div className="mt-4">
-                  <NumberField label="参照件数 (Top-K)" value={topK} onChange={setTopK} min={1} max={20} />
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0a84ff] via-[#30d158] to-[#ff9f0a] opacity-70" />
+            <div className="px-6 pt-6 pb-2">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0a84ff] to-[#5856d6] text-white shadow-lg shadow-[#0a84ff]/20">
+                  <Icons.Search className="w-5 h-5" />
                 </div>
-              </div>
-              <div className="space-y-3 text-xs text-[#aeaeb2]">
-                <div className="p-3 bg-[#007aff]/[0.08] rounded-lg border border-blue-100/40">
-                  <span className="font-bold text-[#007aff]">類似度</span>
-                  <p className="mt-1 text-blue-500">プロンプトと似た内容の過去問を重視</p>
-                </div>
-                <div className="p-3 bg-[#34c759]/[0.08] rounded-lg border border-emerald-100/40">
-                  <span className="font-bold text-[#34c759]">難易度</span>
-                  <p className="mt-1 text-emerald-500">指定難易度に近い過去問を重視</p>
-                </div>
-                <div className="p-3 bg-[#ff9500]/[0.08] rounded-lg border border-amber-100/40">
-                  <span className="font-bold text-[#ff9500]">ひっかけ</span>
-                  <p className="mt-1 text-amber-500">ひっかけ要素のある過去問を重視</p>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">RAG ミキサー</h3>
+                  <p className="text-[11px] text-[#86868b]">過去問データベースからの情報注入バランスを調整</p>
                 </div>
               </div>
             </div>
-          </SectionCard>
+            <div className="px-6 pb-6">
+              <RagMixer
+                textWeight={textWeight} diffWeight={difficultyMatchWeight} trickWeight={trickinessWeight}
+                onText={setTextWeight} onDiff={setDifficultyMatchWeight} onTrick={setTrickinessWeight}
+              />
+              <div className="mt-5 pt-4 border-t border-black/[0.04]">
+                <NumberField label="参照件数 (Top-K)" value={topK} onChange={setTopK} min={1} max={20} />
+              </div>
+            </div>
+          </div>
 
           {/* ── プロンプト生成 ── */}
           <div className="flex flex-wrap items-center gap-3">
@@ -1116,39 +1474,70 @@ export default function TuningPage() {
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'evaluate' && (
         <div className="space-y-6">
-          <SectionCard title="品質を評価" icon={<Icons.Chart />}
-            subtitle="出力の品質を評価して記録（次回の改善に活用）">
-            <div className="space-y-5">
-              <div>
-                <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">品質スコア</label>
-                <QualityRating score={tuningScore ? Number(tuningScore) : ''} onChange={(v) => setTuningScore(String(v))} />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">メモ</label>
-                  <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm text-[#1d1d1f]
-                      transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
-                    placeholder="例: 難易度は適切だが解説が冗長" />
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#ff9500] via-[#fc3c44] to-[#af52de] opacity-80" />
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ff9500] to-[#fc3c44] text-white shadow-lg shadow-[#fc3c44]/20">
+                  <Icons.Chart className="w-5 h-5" />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">期待していた出力 <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
-                  <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
-                    className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm text-[#1d1d1f]
-                      transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
-                    placeholder="期待される出力の要約" />
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">品質を評価</h3>
+                  <p className="text-[11px] text-[#86868b]">出力の品質を評価して記録 — 次回の改善に活用・DBに永続保存</p>
                 </div>
               </div>
-              <Button onClick={saveLog} disabled={!llmOutput}>
-                <Icons.Success className="w-4 h-4" /> 評価を記録する
-              </Button>
+
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-3">品質スコア</label>
+                  <QualityRating score={tuningScore ? Number(tuningScore) : ''} onChange={(v) => setTuningScore(String(v))} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">メモ</label>
+                    <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm text-[#1d1d1f]
+                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
+                      placeholder="例: 難易度は適切だが解説が冗長" />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">期待していた出力 <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
+                    <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
+                      className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm text-[#1d1d1f]
+                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
+                      placeholder="期待される出力の要約" />
+                  </div>
+                </div>
+
+                {/* 保存先情報 */}
+                <div className="flex items-center gap-2 p-3 bg-[#34c759]/[0.04] rounded-xl border border-[#34c759]/10">
+                  <svg className="w-4 h-4 text-[#34c759] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75" />
+                  </svg>
+                  <span className="text-[11px] text-[#34c759] font-medium">評価はDB (tuning_logs) に永続保存されます。ブラウザを閉じても保持されます。</span>
+                </div>
+
+                <Button onClick={saveLog} disabled={!llmOutput}>
+                  <Icons.Success className="w-4 h-4" /> 評価を記録する
+                </Button>
+              </div>
             </div>
-          </SectionCard>
+          </div>
 
 
 
-          <SectionCard title="問題をDBに保存" icon={<Icons.Data />}
-            subtitle="パースした問題データをDBに保存（検算を自動実行）">
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#34c759] via-[#30d158] to-[#34c759] opacity-80" />
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#34c759] to-[#30d158] text-white shadow-lg shadow-[#34c759]/20">
+                  <Icons.Data className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">問題をDBに保存</h3>
+                  <p className="text-[11px] text-[#86868b]">パースした問題データをDBに保存（検算を自動実行）</p>
+                </div>
+              </div>
             {parsedProblem ? (
               <div className="space-y-4">
                 <div className="p-4 bg-black/[0.04] rounded-lg border border-black/[0.06] text-xs space-y-1.5">
@@ -1204,7 +1593,8 @@ export default function TuningPage() {
             ) : (
               <EmptyState title="パース済みデータがありません" description="「実行」タブでLLM出力をパースしてください" />
             )}
-          </SectionCard>
+            </div>
+          </div>
 
           <div className="flex items-center justify-center gap-4 py-4">
             <Button variant="ghost" onClick={() => setActiveSection('configure')}>

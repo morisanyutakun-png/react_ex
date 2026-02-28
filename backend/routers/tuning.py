@@ -512,6 +512,178 @@ def get_tuning_feedback(
     return {'feedback': results, 'stats': stats}
 
 
+@router.get('/api/tuning/evaluation_history')
+def get_evaluation_history(
+    subject: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
+):
+    """Return full evaluation history with comprehensive analytics.
+
+    Returns all evaluations (with pagination) plus detailed stats:
+    - per-subject score distribution
+    - recent trend (last N evaluations)
+    - score histogram data
+    """
+    evaluations = []
+    analytics = {
+        'total': 0,
+        'avg_score': None,
+        'high_count': 0,
+        'low_count': 0,
+        'per_subject': {},
+        'score_distribution': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+        'recent_trend': [],
+    }
+
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+
+        # Build WHERE clause
+        conditions = ["score IS NOT NULL"]
+        params: list = []
+        if subject:
+            conditions.append("metadata LIKE %s")
+            params.append(f'%{subject}%')
+        where = " AND ".join(conditions)
+
+        # Get total count
+        cur.execute(f"SELECT COUNT(*) FROM tuning_logs WHERE {where}", tuple(params))
+        row = cur.fetchone()
+        analytics['total'] = row[0] if row else 0
+
+        # Get avg, min, max
+        cur.execute(f"SELECT AVG(score), MIN(score), MAX(score) FROM tuning_logs WHERE {where}", tuple(params))
+        row = cur.fetchone()
+        if row and row[0] is not None:
+            analytics['avg_score'] = round(float(row[0]), 2)
+            analytics['min_score'] = round(float(row[1]), 2) if row[1] is not None else None
+            analytics['max_score'] = round(float(row[2]), 2) if row[2] is not None else None
+
+        # High/low counts (score mapped: 0.2->1, 0.4->2, 0.6->3, 0.8->4, 1.0->5)
+        cur.execute(f"SELECT COUNT(*) FROM tuning_logs WHERE {where} AND score >= 0.8", tuple(params))
+        row = cur.fetchone()
+        analytics['high_count'] = row[0] if row else 0
+
+        cur.execute(f"SELECT COUNT(*) FROM tuning_logs WHERE {where} AND score <= 0.4", tuple(params))
+        row = cur.fetchone()
+        analytics['low_count'] = row[0] if row else 0
+
+        # Score distribution (bucket by score value)
+        cur.execute(f"SELECT score, COUNT(*) FROM tuning_logs WHERE {where} GROUP BY score ORDER BY score", tuple(params))
+        rows = cur.fetchall()
+        dist = {}
+        for r in rows:
+            if r[0] is not None:
+                # Map score to label
+                score_val = round(float(r[0]), 1)
+                dist[score_val] = r[1]
+        analytics['score_distribution'] = dist
+
+        # Per-subject breakdown
+        cur.execute(f"SELECT metadata, score FROM tuning_logs WHERE score IS NOT NULL")
+        rows = cur.fetchall()
+        subject_data: dict = {}
+        for r in rows:
+            md = {}
+            try:
+                md = json.loads(r[0]) if isinstance(r[0], str) and r[0] else {}
+            except Exception:
+                pass
+            subj = md.get('subject', '不明')
+            if subj not in subject_data:
+                subject_data[subj] = {'scores': [], 'count': 0}
+            subject_data[subj]['scores'].append(float(r[1]))
+            subject_data[subj]['count'] += 1
+        for subj, data in subject_data.items():
+            analytics['per_subject'][subj] = {
+                'count': data['count'],
+                'avg': round(sum(data['scores']) / len(data['scores']), 2) if data['scores'] else None,
+            }
+
+        # Recent evaluations (with pagination)
+        eval_params = list(params)
+        eval_params.extend([limit, offset])
+        cur.execute(
+            f"SELECT id, COALESCE(timestamp, created_at) as ts, score, notes, model_output, metadata FROM tuning_logs WHERE {where} ORDER BY ts DESC LIMIT %s OFFSET %s",
+            tuple(eval_params)
+        )
+        rows = cur.fetchall()
+        for r in rows:
+            md = {}
+            if r[5]:
+                try:
+                    md = json.loads(r[5]) if isinstance(r[5], str) else r[5]
+                except Exception:
+                    pass
+            evaluations.append({
+                'id': r[0],
+                'timestamp': r[1],
+                'score': r[2],
+                'notes': r[3],
+                'model_output_excerpt': (r[4] or '')[:300],
+                'metadata': md,
+            })
+
+        # Recent trend (last 10 scores for sparkline)
+        trend_params = list(params)
+        trend_params.append(10)
+        cur.execute(
+            f"SELECT COALESCE(timestamp, created_at) as ts, score FROM tuning_logs WHERE {where} ORDER BY ts DESC LIMIT %s",
+            tuple(trend_params)
+        )
+        rows = cur.fetchall()
+        analytics['recent_trend'] = [{'timestamp': r[0], 'score': r[1]} for r in reversed(rows)]
+
+        try:
+            cur.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+    except Exception as e:
+        # Fallback to JSONL
+        if os.path.exists(LOG_PATH):
+            try:
+                all_entries = []
+                with open(LOG_PATH, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        try:
+                            entry = json.loads(line)
+                        except Exception:
+                            continue
+                        s = entry.get('score')
+                        if s is None:
+                            continue
+                        md = entry.get('metadata') or {}
+                        if subject and md.get('subject') != subject:
+                            continue
+                        all_entries.append(entry)
+                all_entries.sort(key=lambda e: e.get('timestamp', ''), reverse=True)
+                analytics['total'] = len(all_entries)
+                scores = [e['score'] for e in all_entries]
+                if scores:
+                    analytics['avg_score'] = round(sum(scores) / len(scores), 2)
+                    analytics['high_count'] = sum(1 for s in scores if s >= 0.8)
+                    analytics['low_count'] = sum(1 for s in scores if s <= 0.4)
+                for entry in all_entries[offset:offset + limit]:
+                    evaluations.append({
+                        'id': entry.get('id'),
+                        'timestamp': entry.get('timestamp'),
+                        'score': entry.get('score'),
+                        'notes': entry.get('notes'),
+                        'model_output_excerpt': (entry.get('model_output') or '')[:300],
+                        'metadata': entry.get('metadata') or {},
+                    })
+            except Exception:
+                pass
+
+    return {'evaluations': evaluations, 'analytics': analytics}
+
+
 @router.post('/api/tuning/save_problem')
 def save_parsed_problem(payload: SaveProblemRequest = Body(...)):
     """Save a single parsed model output into the `problems` table.

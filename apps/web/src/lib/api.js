@@ -164,6 +164,18 @@ export async function fetchTuningFeedback({ subject, templateId, minScore = 4.0,
 }
 
 /**
+ * 評価履歴を包括的に取得（分析データ付き）
+ * subject, limit, offset で絞り込み可能
+ */
+export async function fetchEvaluationHistory({ subject, limit = 50, offset = 0 } = {}) {
+  const params = new URLSearchParams();
+  if (subject) params.set('subject', subject);
+  if (limit != null) params.set('limit', String(limit));
+  if (offset != null) params.set('offset', String(offset));
+  return apiFetch(`/api/tuning/evaluation_history?${params.toString()}`);
+}
+
+/**
  * Parse された問題データを problems テーブルに保存
  * parsed_output には最低限 stem フィールドが必要。
  * final_answer, checks (2件以上) も含めるとバリデーション通過。

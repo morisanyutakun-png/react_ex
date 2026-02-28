@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/dev',       label: '高める',   icon: <Icons.Dev className="w-[15px] h-[15px]" />,  mobileIcon: <Icons.Dev className="w-[22px] h-[22px]" />, color: '#bf5af2' },
   { href: '/search',    label: '検索',     icon: <Icons.Search className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Search className="w-[22px] h-[22px]" />, color: '#ff9f0a' },
   { href: '/db-editor', label: 'DB編集',   icon: <Icons.Table className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Table className="w-[22px] h-[22px]" />, color: '#30d158' },
+  { href: '/help',      label: 'ヘルプ',   icon: <Icons.Book className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Book className="w-[22px] h-[22px]" />, color: '#5856d6' },
 ];
 
 export default function Header() {
