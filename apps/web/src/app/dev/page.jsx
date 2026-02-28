@@ -121,18 +121,22 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
 function SelectedTag({ label, value, color = 'red', onClear }) {
   if (!value) return null;
   const colors = {
-    red: 'bg-[#fc3c44]/[0.08] text-[#fc3c44] border-[#fc3c44]/20',
-    emerald: 'bg-[#34c759]/[0.08] text-[#34c759] border-[#34c759]/20',
-    amber: 'bg-[#ff9500]/[0.08] text-[#ff9500] border-[#ff9500]/20',
-    violet: 'bg-[#af52de]/[0.08] text-[#af52de] border-[#af52de]/20',
-    sky: 'bg-[#007aff]/[0.08] text-[#007aff] border-[#007aff]/20',
+    red: 'bg-[#fc3c44]/[0.06] text-[#fc3c44] border-[#fc3c44]/15',
+    emerald: 'bg-[#34c759]/[0.06] text-[#34c759] border-[#34c759]/15',
+    amber: 'bg-[#ff9500]/[0.06] text-[#ff9500] border-[#ff9500]/15',
+    violet: 'bg-[#af52de]/[0.06] text-[#af52de] border-[#af52de]/15',
+    sky: 'bg-[#007aff]/[0.06] text-[#007aff] border-[#007aff]/15',
   };
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border ${colors[color] || colors.red}`}>
-      <span className="opacity-60">{label}:</span>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${colors[color] || colors.red} transition-all hover:shadow-sm`}>
+      <span className="opacity-50 font-medium">{label}:</span>
       <span>{value}</span>
       {onClear && (
-        <button onClick={onClear} className="ml-0.5 opacity-40 hover:opacity-100 transition-opacity">×</button>
+        <button onClick={onClear} className="ml-0.5 w-4 h-4 rounded-full bg-black/[0.06] hover:bg-black/[0.10] flex items-center justify-center transition-all">
+          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       )}
     </span>
   );
@@ -222,16 +226,13 @@ function QualityRating({ score, onChange }) {
     { value: 1.0, emoji: '🎯', label: '最高' },
   ];
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       {levels.map((l) => (
         <button key={l.value} onClick={() => onChange(l.value)}
-          className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-all duration-200
-            ${score === l.value
-              ? 'bg-[#fc3c44]/[0.08] border-2 border-[#fc3c44]/40 scale-105'
-              : 'bg-black/[0.04] border border-black/[0.06] hover:bg-black/[0.04] hover:border-black/[0.08]'
-            }`}>
-          <span className="text-xl">{l.emoji}</span>
-          <span className={`text-[10px] font-bold ${score === l.value ? 'text-[#fc3c44]' : 'text-[#c7c7cc]'}`}>
+          className={`selection-card !p-0 flex flex-col items-center gap-0.5 px-3 py-2.5
+            ${score === l.value ? 'active' : ''}`}>
+          <span className="text-xl relative z-10">{l.emoji}</span>
+          <span className={`text-[10px] font-bold relative z-10 ${score === l.value ? 'text-[#fc3c44]' : 'text-[#c7c7cc]'}`}>
             {l.label}
           </span>
         </button>
@@ -653,7 +654,7 @@ export default function TuningPage() {
           </button>
         ))}
         <button onClick={resetAll} title="リセット"
-          className="px-3 py-3 rounded-lg text-[#d2d2d7] hover:text-rose-600 hover:bg-rose-50 transition-all flex-shrink-0">
+          className="px-3 py-3 rounded-xl text-[#c7c7cc] hover:text-[#ff3b30] hover:bg-[#ff3b30]/[0.06] transition-all flex-shrink-0 active:scale-90">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
           </svg>
@@ -1073,7 +1074,7 @@ export default function TuningPage() {
             subtitle="出力の品質を評価して記録（次回の改善に活用）">
             <div className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-[#aeaeb2] mb-1.5">品質スコア</label>
+                <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">品質スコア</label>
                 <QualityRating score={tuningScore ? Number(tuningScore) : ''} onChange={(v) => setTuningScore(String(v))} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

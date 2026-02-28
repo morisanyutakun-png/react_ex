@@ -465,26 +465,26 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
 /* ── ProgressSteps ── */
 export function ProgressSteps({ steps, current }) {
   return (
-    <div className="flex items-center gap-1 sm:gap-3 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
+    <div className="flex items-center gap-1.5 sm:gap-3 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
       {steps.map((s, i) => (
-        <div key={i} className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all
+        <div key={i} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300
                 ${i + 1 <= current
-                  ? 'bg-gradient-to-b from-[#fc3c44] to-[#e0323a] text-white shadow-sm shadow-[#fc3c44]/15'
+                  ? 'bg-gradient-to-br from-[#fc3c44] to-[#e0323a] text-white shadow-md shadow-[#fc3c44]/20'
                   : i + 1 === current + 1
-                  ? 'bg-[#fc3c44]/[0.08] text-[#fc3c44] border border-[#fc3c44]/20'
-                  : 'bg-black/[0.04] text-[#c7c7cc]'
+                  ? 'bg-[#fc3c44]/[0.06] text-[#fc3c44] border-[1.5px] border-[#fc3c44]/20'
+                  : 'bg-black/[0.03] text-[#c7c7cc] border border-black/[0.04]'
                 }`}>
-              {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
+              {i + 1 < current ? <Icons.Success className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : i + 1}
             </div>
-            <span className={`text-[10px] sm:text-xs font-semibold transition-colors whitespace-nowrap
-                ${i + 1 <= current ? 'text-[#1d1d1f]' : 'text-[#c7c7cc]'}`}>
+            <span className={`text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap
+                ${i + 1 <= current ? 'text-[#1d1d1f]' : i + 1 === current + 1 ? 'text-[#86868b]' : 'text-[#c7c7cc]'}`}>
               {s}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-px ${i + 1 < current ? 'bg-[#fc3c44]' : 'bg-black/[0.08]'}`} />
+            <div className={`w-4 sm:w-8 h-[1.5px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#fc3c44]' : 'bg-black/[0.06]'}`} />
           )}
         </div>
       ))}

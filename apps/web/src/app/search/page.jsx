@@ -218,7 +218,7 @@ export default function SearchPage() {
       {searching && (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-black/[0.04] rounded-lg border border-black/[0.06] p-5">
+            <div key={i} className="card-premium p-5" style={{ animationDelay: `${i * 0.08}s` }}>
               <div className="flex gap-3">
                 <Skeleton className="w-10 h-5" />
                 <div className="flex-1 space-y-2">
@@ -235,22 +235,21 @@ export default function SearchPage() {
       {/* ── 検索結果 ── */}
       {!searching && results.length > 0 && (
         <div className="space-y-3">
-          <div className="text-xs text-[#c7c7cc] font-medium px-1">{totalCount} 件の結果</div>
+          <div className="text-[11px] text-[#aeaeb2] font-bold uppercase tracking-wider px-1">{totalCount} 件の結果</div>
           {results.map((item, idx) => {
             const isOpen = expandedId === (item.id ?? idx);
             const subj = item.subject || item.metadata?.subject || '';
             const field = item.topic || item.metadata?.field || '';
             return (
               <div key={item.id ?? idx}
-                className={`bg-black/[0.04] rounded-lg border transition-all duration-200 cursor-pointer 
-                  ${isOpen ? 'border-red-600 ring-1 ring-red-600/40'
-                           : 'border-black/[0.06] hover:-hover hover:border-black/[0.08]'}`}
+                className={`result-item transition-all duration-300 
+                  ${isOpen ? '!border-[#fc3c44]/30 ring-1 ring-[#fc3c44]/10 !bg-white shadow-lg' : ''}`}
                 onClick={() => setExpandedId(isOpen ? null : (item.id ?? idx))}>
                 <div className="p-5">
                   <div className="flex items-start gap-3">
-                    <span className="text-xs text-[#d2d2d7] font-mono mt-0.5 flex-shrink-0 w-8 text-right">#{item.id ?? idx + 1}</span>
+                    <span className="text-[10px] text-[#aeaeb2] font-mono mt-0.5 flex-shrink-0 w-8 text-right">#{item.id ?? idx + 1}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-[#1d1d1f] leading-relaxed">
+                      <div className="text-[13px] text-[#1d1d1f] leading-relaxed">
                         <LatexText>{(item.stem || item.text || '').slice(0, 200)}</LatexText>
                         {(item.stem || item.text || '').length > 200 ? <span className="text-[#c7c7cc]">...</span> : ''}
                       </div>
@@ -266,9 +265,9 @@ export default function SearchPage() {
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {item.score != null && (
-                        <span className="text-[10px] text-[#d2d2d7] font-mono tabular-nums">{Number(item.score).toFixed(3)}</span>
+                        <span className="text-[10px] text-[#aeaeb2] font-mono tabular-nums px-1.5 py-0.5 rounded-lg bg-black/[0.03]">{Number(item.score).toFixed(3)}</span>
                       )}
-                      <svg className={`w-4 h-4 text-[#d2d2d7] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      <svg className={`w-4 h-4 text-[#c7c7cc] transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#fc3c44]' : ''}`}
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
@@ -278,7 +277,7 @@ export default function SearchPage() {
 
                 {/* ── 展開コンテンツ ── */}
                 {isOpen && (
-                  <div className="px-5 pb-5 space-y-3 border-t border-black/[0.06]" onClick={(e) => e.stopPropagation()}>
+                  <div className="px-5 pb-5 space-y-3 border-t border-black/[0.06] animate-expand" onClick={(e) => e.stopPropagation()}>
                     <div className="pt-4" />
                     {item.stem && <DetailBlock label="問題文">{item.stem}</DetailBlock>}
                     {item.solution_outline && <DetailBlock label="解法概要" color="blue">{item.solution_outline}</DetailBlock>}
@@ -289,10 +288,11 @@ export default function SearchPage() {
                     <div className="flex items-center gap-3 pt-2">
                       <button onClick={() => handleGenerateSimilar(item)}
                         disabled={generatingId === (item.id ?? idx)}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold
-                                   bg-gradient-to-r from-violet-600 to-[#e0323a] text-[#1d1d1f]
-                                   hover:from-violet-700 hover:to-red-700 transition-all
-                                   disabled:opacity-50 disabled:cursor-not-allowed">
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold
+                                   bg-gradient-to-b from-[#af52de] to-[#8944ab] text-white
+                                   shadow-lg shadow-[#af52de]/20 hover:shadow-xl hover:shadow-[#af52de]/30
+                                   hover:-translate-y-0.5 transition-all
+                                   disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none active:scale-95">
                         {generatingId === (item.id ?? idx) ? (
                           <>
                             <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
@@ -311,8 +311,9 @@ export default function SearchPage() {
                         )}
                       </button>
                       <button onClick={() => { navigator.clipboard.writeText(item.stem || item.text || ''); setStatus('問題文をコピーしました'); }}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium
-                                   text-[#86868b] bg-black/[0.04] hover:bg-black/[0.03] transition-colors">
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold
+                                   text-[#6e6e73] bg-white/80 backdrop-blur-sm border border-black/[0.06]
+                                   hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -352,11 +353,12 @@ export default function SearchPage() {
 
       {/* ── 初回表示 ── */}
       {!searching && !hasSearched && (
-        <div className="text-center py-16">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-br from-red-50 to-violet-50 mb-4 border border-black/[0.06]">
+        <div className="text-center py-20">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#fc3c44]/10 to-[#af52de]/10 mb-5 shadow-sm">
             <Icons.Search className="w-7 h-7 text-[#fc3c44]" />
           </div>
-          <p className="text-sm text-[#c7c7cc] max-w-md mx-auto leading-relaxed">
+          <h3 className="text-[15px] font-bold text-[#1d1d1f] mb-2">過去問を検索</h3>
+          <p className="text-[12px] text-[#aeaeb2] max-w-sm mx-auto leading-relaxed">
             キーワードや科目・分野で問題を検索できます。<br />
             検索結果から類題の自動生成も可能です。
           </p>
