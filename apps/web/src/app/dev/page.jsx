@@ -60,7 +60,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
   return (
     <div className={className}>
       {label && (
-        <label className="block text-xs font-semibold text-[#a1a1a6] mb-1.5">
+        <label className="block text-xs font-semibold text-[#98989d] mb-1.5">
           {label}
         </label>
       )}
@@ -70,9 +70,9 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className="w-full px-4 py-3 rounded-lg border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm text-sm
+            className="w-full px-4 py-3 rounded-lg border border-white/[0.08] bg-white/[0.08] backdrop-blur-sm text-sm
                       text-[#f5f5f7] transition-all cursor-pointer appearance-none
-                      hover:border-white/[0.12] focus:border-[#fa2d48]/50 focus:ring-2 focus:ring-[#fa2d48]/20
+                      hover:border-white/[0.12] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/20
                       outline-none pr-10  font-medium
                       disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -83,7 +83,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
                 : <option key={opt.value} value={opt.value}>{opt.label}</option>
             )}
           </select>
-          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#48484a] transition-colors">
+          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#545456] transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
@@ -95,7 +95,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             onClick={onAdd}
             title={addLabel || '追加'}
             className="flex items-center justify-center w-10 rounded-lg border border-dashed border-white/[0.08]
-                       text-[#48484a] hover:border-[#fa2d48] hover:text-[#fa2d48] hover:bg-[#fa2d48]/[0.08]
+                       text-[#545456] hover:border-[#ff375f] hover:text-[#ff375f] hover:bg-[#ff375f]/[0.08]
                        transition-all duration-200 flex-shrink-0 active:scale-95"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -116,10 +116,10 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
 function SelectedTag({ label, value, color = 'red', onClear }) {
   if (!value) return null;
   const colors = {
-    red: 'bg-[#fa2d48]/[0.08] text-[#fa2d48] border-[#fa2d48]/20',
+    red: 'bg-[#ff375f]/[0.08] text-[#ff375f] border-[#ff375f]/20',
     emerald: 'bg-[#30d158]/[0.08] text-[#30d158] border-[#30d158]/20',
     amber: 'bg-[#ffd60a]/[0.08] text-[#ffd60a] border-[#ffd60a]/20',
-    violet: 'bg-[#bf5af2]/[0.08] text-[#bf5af2] border-[#bf5af2]/20',
+    violet: 'bg-[#af52de]/[0.08] text-[#af52de] border-[#af52de]/20',
     sky: 'bg-[#64d2ff]/[0.08] text-[#64d2ff] border-[#64d2ff]/20',
   };
   return (
@@ -147,8 +147,8 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
   return (
     <div className="space-y-4">
       <div className="space-y-1">
-        <div className="text-[10px] font-bold text-[#48484a] uppercase tracking-wider">バランス</div>
-        <div className="flex h-3 rounded-full overflow-hidden bg-white/[0.04]">
+        <div className="text-[10px] font-bold text-[#545456] uppercase tracking-wider">バランス</div>
+        <div className="flex h-3 rounded-full overflow-hidden bg-white/[0.08]">
           {pcts.map((p, i) => {
             const w = (p.value / total) * 100;
             return w > 0 ? (
@@ -156,7 +156,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
             ) : null;
           })}
         </div>
-        <div className="flex justify-between text-[10px] text-[#48484a] font-medium">
+        <div className="flex justify-between text-[10px] text-[#545456] font-medium">
           {pcts.map((p, i) => (
             <span key={i}>{p.label} {Math.round((p.value / total) * 100)}%</span>
           ))}
@@ -166,19 +166,19 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
         {pcts.map((p, i) => (
           <div key={i} className="flex items-center gap-3">
             <div className={`w-2 h-2 rounded-full ${p.color} flex-shrink-0`} />
-            <span className="text-xs font-medium text-[#a1a1a6] w-16 flex-shrink-0">{p.label}</span>
+            <span className="text-xs font-medium text-[#98989d] w-16 flex-shrink-0">{p.label}</span>
             <input
               type="range" min={0} max={2} step={0.1} value={p.value}
               onChange={(e) => p.onChange(Number(e.target.value))}
-              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-white/[0.04] accent-[#fa2d48]
+              className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer bg-white/[0.08] accent-[#ff375f]
                 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fa2d48]
+                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#ff375f]
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-sm"
               style={{
-                background: `linear-gradient(to right, #fa2d48 0%, #fa2d48 ${(p.value / 2) * 100}%, rgba(255,255,255,0.06) ${(p.value / 2) * 100}%, rgba(255,255,255,0.06) 100%)`,
+                background: `linear-gradient(to right, #ff375f 0%, #ff375f ${(p.value / 2) * 100}%, rgba(255,255,255,0.08) ${(p.value / 2) * 100}%, rgba(255,255,255,0.08) 100%)`,
               }}
             />
-            <span className="text-xs font-bold text-[#fa2d48] w-8 text-right tabular-nums">
+            <span className="text-xs font-bold text-[#ff375f] w-8 text-right tabular-nums">
               {p.value.toFixed(1)}
             </span>
           </div>
@@ -206,11 +206,11 @@ function QualityRating({ score, onChange }) {
         <button key={l.value} onClick={() => onChange(l.value)}
           className={`flex flex-col items-center gap-0.5 px-3 py-2 rounded-lg transition-all duration-200
             ${score === l.value
-              ? 'bg-[#fa2d48]/[0.08] border-2 border-[#fa2d48]/40 scale-105'
-              : 'bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1]'
+              ? 'bg-[#ff375f]/[0.08] border-2 border-[#ff375f]/40 scale-105'
+              : 'bg-white/[0.08] border border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.1]'
             }`}>
           <span className="text-xl">{l.emoji}</span>
-          <span className={`text-[10px] font-bold ${score === l.value ? 'text-[#fa2d48]' : 'text-[#48484a]'}`}>
+          <span className={`text-[10px] font-bold ${score === l.value ? 'text-[#ff375f]' : 'text-[#545456]'}`}>
             {l.label}
           </span>
         </button>
@@ -548,29 +548,29 @@ export default function TuningPage() {
 
       {/* ── フィードバック統計（常時表示） ── */}
       {feedbackData && (
-        <div className="p-4 bg-white/[0.04] rounded-lg border border-white/[0.06]">
+        <div className="p-4 bg-white/[0.08] rounded-lg border border-white/[0.08]">
           <div className="flex items-center gap-2 mb-3">
-            <Icons.Chart className="w-4 h-4 text-[#fa2d48]" />
+            <Icons.Chart className="w-4 h-4 text-[#ff375f]" />
             <span className="text-sm font-bold text-[#f5f5f7]">改善フィードバック</span>
-            {feedbackLoading && <span className="text-[10px] text-[#48484a] animate-pulse">更新中...</span>}
+            {feedbackLoading && <span className="text-[10px] text-[#545456] animate-pulse">更新中...</span>}
           </div>
           <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3">
-            <div className="p-2 sm:p-3 bg-white/[0.04] rounded-lg border border-[#fa2d48]/20 text-center">
-              <div className="text-base sm:text-lg font-bold text-[#fa2d48]">{feedbackData.stats?.total_evaluations ?? 0}</div>
-              <div className="text-[9px] sm:text-[10px] text-[#fa2d48] font-bold">総評価数</div>
+            <div className="p-2 sm:p-3 bg-white/[0.08] rounded-lg border border-[#ff375f]/20 text-center">
+              <div className="text-base sm:text-lg font-bold text-[#ff375f]">{feedbackData.stats?.total_evaluations ?? 0}</div>
+              <div className="text-[9px] sm:text-[10px] text-[#ff375f] font-bold">総評価数</div>
             </div>
-            <div className="p-2 sm:p-3 bg-white/[0.04] rounded-lg border border-[#30d158]/20 text-center">
+            <div className="p-2 sm:p-3 bg-white/[0.08] rounded-lg border border-[#30d158]/20 text-center">
               <div className="text-base sm:text-lg font-bold text-[#30d158]">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
               <div className="text-[9px] sm:text-[10px] text-emerald-500 font-bold">平均スコア</div>
             </div>
-            <div className="p-2 sm:p-3 bg-white/[0.04] rounded-lg border border-[#ffd60a]/20 text-center">
+            <div className="p-2 sm:p-3 bg-white/[0.08] rounded-lg border border-[#ffd60a]/20 text-center">
               <div className="text-base sm:text-lg font-bold text-[#ffd60a]">{feedbackData.stats?.high_score_count ?? 0}</div>
               <div className="text-[9px] sm:text-[10px] text-amber-500 font-bold">高評価 (4+)</div>
             </div>
           </div>
           {feedbackData.feedback?.length > 0 ? (
             <details className="rounded-lg">
-              <summary className="cursor-pointer text-xs font-bold text-[#fa2d48] hover:text-red-300 select-none flex items-center gap-1">
+              <summary className="cursor-pointer text-xs font-bold text-[#ff375f] hover:text-red-300 select-none flex items-center gap-1">
                 <svg className="w-3 h-3 transition-transform details-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
@@ -578,24 +578,24 @@ export default function TuningPage() {
               </summary>
               <div className="mt-2 space-y-1.5 max-h-40 overflow-y-auto custom-scrollbar">
                 {feedbackData.feedback.map((fb, idx) => (
-                  <div key={fb.id || idx} className="p-2 bg-white/[0.04] rounded-lg border border-white/[0.06] text-xs">
+                  <div key={fb.id || idx} className="p-2 bg-white/[0.08] rounded-lg border border-white/[0.08] text-xs">
                     <div className="flex items-center justify-between mb-0.5">
                       <div className="flex items-center gap-1.5">
                         <span className="px-1.5 py-0.5 bg-[#ffd60a]/[0.08] text-[#ffd60a] rounded text-[9px] font-bold">★ {fb.score}</span>
                         {fb.metadata?.subject && (
-                          <span className="px-1.5 py-0.5 bg-[#fa2d48]/[0.08] text-[#fa2d48] rounded text-[9px] font-bold">{fb.metadata.subject}</span>
+                          <span className="px-1.5 py-0.5 bg-[#ff375f]/[0.08] text-[#ff375f] rounded text-[9px] font-bold">{fb.metadata.subject}</span>
                         )}
                       </div>
-                      <span className="text-[9px] text-[#48484a]">{fb.timestamp?.slice(0, 10)}</span>
+                      <span className="text-[9px] text-[#545456]">{fb.timestamp?.slice(0, 10)}</span>
                     </div>
-                    {fb.notes && <div className="text-[#a1a1a6] text-[10px]">💬 {fb.notes}</div>}
+                    {fb.notes && <div className="text-[#98989d] text-[10px]">💬 {fb.notes}</div>}
                     <div className="text-[#424245] line-clamp-1 text-[10px]">{fb.model_output_excerpt?.slice(0, 120)}</div>
                   </div>
                 ))}
               </div>
             </details>
           ) : (
-            <div className="text-xs text-[#a1a1a6] text-center py-1">
+            <div className="text-xs text-[#98989d] text-center py-1">
               評価を記録すると次回のプロンプトに自動反映されます
             </div>
           )}
@@ -603,14 +603,14 @@ export default function TuningPage() {
       )}
 
       {/* ── セクションナビ (ステップ風) ── */}
-      <div className="flex items-center gap-1 sm:gap-1.5 bg-white/[0.04] p-1 sm:p-1.5 rounded-xl border border-white/[0.06] overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-1 sm:gap-1.5 bg-white/[0.08] p-1 sm:p-1.5 rounded-xl border border-white/[0.08] overflow-x-auto no-scrollbar">
         {sections.map((s, idx) => (
           <button key={s.id} onClick={() => s.enabled && setActiveSection(s.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 sm:py-3.5 rounded-lg text-xs sm:text-sm font-bold transition-all duration-300 relative whitespace-nowrap
               ${activeSection === s.id
-                ? 'bg-[#fa2d48] text-white'
+                ? 'bg-[#ff375f] text-white'
                 : s.enabled
-                  ? 'text-[#a1a1a6] hover:text-[#fa2d48] hover:bg-[#fa2d48]/[0.08]'
+                  ? 'text-[#98989d] hover:text-[#ff375f] hover:bg-[#ff375f]/[0.08]'
                   : 'text-[#d2d2d7] cursor-not-allowed'
               }`}
             disabled={!s.enabled}>
@@ -618,14 +618,14 @@ export default function TuningPage() {
               ${activeSection === s.id
                 ? 'bg-white/20 text-white'
                 : s.enabled
-                  ? 'bg-white/[0.04] text-[#48484a]'
-                  : 'bg-white/[0.04] text-[#d2d2d7]'
+                  ? 'bg-white/[0.08] text-[#545456]'
+                  : 'bg-white/[0.08] text-[#d2d2d7]'
               }`}>
               {idx + 1}
             </span>
             <span>{s.icon} {s.label}</span>
             {!s.enabled && s.id !== 'configure' && (
-              <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[9px] bg-white/[0.04] text-[#48484a] px-2 py-0.5 rounded-full whitespace-nowrap">
+              <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[9px] bg-white/[0.08] text-[#545456] px-2 py-0.5 rounded-full whitespace-nowrap">
                 {s.id === 'execute' ? 'プロンプト生成後' : '出力貼付後'}
               </span>
             )}
@@ -651,7 +651,7 @@ export default function TuningPage() {
 
             {/* 選択中サマリータグ */}
             {templateId && (
-              <div className="flex flex-wrap gap-2 mb-5 pb-4 border-b border-white/[0.06]">
+              <div className="flex flex-wrap gap-2 mb-5 pb-4 border-b border-white/[0.08]">
                 {(() => {
                   const sel = templates.find((t) => t.id === templateId);
                   return <SelectedTag label="テンプレート" value={sel?.name || templateId} color="violet" onClear={() => setTemplateId('')} />;
@@ -678,18 +678,18 @@ export default function TuningPage() {
             {templateId && (() => {
               const sel = templates.find((t) => t.id === templateId);
               return sel ? (
-                <div className="p-4 bg-[#fa2d48]/[0.08] rounded-lg border border-[#fa2d48]/20">
+                <div className="p-4 bg-[#ff375f]/[0.08] rounded-lg border border-[#ff375f]/20">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-[#fa2d48]/10 text-[#fa2d48] flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#ff375f]/10 text-[#ff375f] flex items-center justify-center flex-shrink-0">
                       <Icons.File className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-bold text-[#a1a1a6] truncate">{sel.name || sel.id}</div>
-                      {sel.description && <div className="text-xs text-[#48484a] mt-0.5 truncate">{sel.description}</div>}
+                      <div className="text-sm font-bold text-[#98989d] truncate">{sel.name || sel.id}</div>
+                      {sel.description && <div className="text-xs text-[#545456] mt-0.5 truncate">{sel.description}</div>}
                     </div>
                   </div>
                   <div className="flex gap-2 mt-3 flex-wrap">
-                    {sel.metadata?.subject && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fa2d48]/[0.08] text-[#fa2d48]">{sel.metadata.subject}</span>}
+                    {sel.metadata?.subject && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ff375f]/[0.08] text-[#ff375f]">{sel.metadata.subject}</span>}
                     {sel.metadata?.field && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#30d158]/[0.08] text-[#30d158]">{sel.metadata.field}</span>}
                     {sel.metadata?.difficulty && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ffd60a]/[0.08] text-[#ffd60a]">{sel.metadata.difficulty}</span>}
                   </div>
@@ -698,9 +698,9 @@ export default function TuningPage() {
             })()}
 
             {/* リフレッシュボタン */}
-            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/[0.06]">
+            <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/[0.08]">
               <button onClick={async () => { await refresh(); setStatus('テンプレート一覧を再読み込みしました'); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-[#a1a1a6] hover:text-[#fa2d48] hover:bg-[#fa2d48]/[0.08] transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold text-[#98989d] hover:text-[#ff375f] hover:bg-[#ff375f]/[0.08] transition-all"
                 title="テンプレートを再読込">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -727,12 +727,12 @@ export default function TuningPage() {
                         <span className="text-[10px] text-[#ffd60a] font-mono">#{selectedRefProblem.id}</span>
                       )}
                     </div>
-                    <div className="text-xs text-[#a1a1a6] leading-relaxed line-clamp-3">
+                    <div className="text-xs text-[#98989d] leading-relaxed line-clamp-3">
                       <LatexText>{(selectedRefProblem.stem || selectedRefProblem.text || '').slice(0, 200)}</LatexText>
                     </div>
                     <div className="flex gap-1 mt-1.5 flex-wrap">
                       {selectedRefProblem.subject && (
-                        <span className="px-1.5 py-0.5 bg-[#fa2d48]/[0.08] text-[#fa2d48] rounded text-[9px] font-bold">{selectedRefProblem.subject}</span>
+                        <span className="px-1.5 py-0.5 bg-[#ff375f]/[0.08] text-[#ff375f] rounded text-[9px] font-bold">{selectedRefProblem.subject}</span>
                       )}
                       {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
                         <span className="px-1.5 py-0.5 bg-emerald-100 text-[#30d158] rounded text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
@@ -755,7 +755,7 @@ export default function TuningPage() {
             {/* DB検索フォーム */}
             <div className="mb-3">
               <div className="flex items-center gap-2 mb-2">
-                <label className="block text-xs font-semibold text-[#636366]">
+                <label className="block text-xs font-semibold text-[#6c6c70]">
                   キーワードでDBから検索
                 </label>
                 <span className="text-[10px] text-gray-300">（任意）</span>
@@ -772,16 +772,16 @@ export default function TuningPage() {
                     onChange={(e) => setRefSearchQuery(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') doRefSearch(); }}
                     placeholder="キーワードで過去問を検索..."
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.04] text-xs
-                               text-[#f5f5f7] transition-all hover:border-white/[0.12] focus:border-[#fa2d48]/50
-                               focus:ring-2 focus:ring-[#fa2d48]/20 outline-none placeholder:text-[#48484a]"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-white/[0.08] bg-white/[0.08] text-xs
+                               text-[#f5f5f7] transition-all hover:border-white/[0.12] focus:border-[#ff375f]/50
+                               focus:ring-2 focus:ring-[#ff375f]/20 outline-none placeholder:text-[#545456]"
                   />
                 </div>
                 <button
                   onClick={doRefSearch}
                   disabled={refSearching || !refSearchQuery.trim()}
-                  className="px-4 py-2.5 rounded-lg text-xs font-bold bg-[#fa2d48]/[0.08] text-[#fa2d48]
-                             hover:bg-[#fa2d48] hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                  className="px-4 py-2.5 rounded-lg text-xs font-bold bg-[#ff375f]/[0.08] text-[#ff375f]
+                             hover:bg-[#ff375f] hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed
                              flex items-center gap-1.5"
                 >
                   {refSearching ? (
@@ -799,13 +799,13 @@ export default function TuningPage() {
 
             {/* 検索結果一覧 */}
             {refSearchResults.length > 0 && (
-              <div className="border border-white/[0.06] rounded-lg overflow-hidden max-h-64 overflow-y-auto mb-3">
+              <div className="border border-white/[0.08] rounded-lg overflow-hidden max-h-64 overflow-y-auto mb-3">
                 {refSearchResults.map((item, idx) => (
                   <button
                     key={item.id ?? idx}
                     onClick={() => selectRefProblem(item)}
-                    className="w-full text-left px-3 py-2.5 border-b border-white/[0.06] last:border-b-0
-                               transition-all hover:bg-black/[0.04] bg-white/[0.04]"
+                    className="w-full text-left px-3 py-2.5 border-b border-white/[0.08] last:border-b-0
+                               transition-all hover:bg-[#1c1c1e]/[0.04] bg-white/[0.08]"
                   >
                     <div className="flex items-start gap-2">
                       <span className="text-[10px] text-[#d2d2d7] font-mono mt-0.5 flex-shrink-0">#{item.id ?? idx + 1}</span>
@@ -815,7 +815,7 @@ export default function TuningPage() {
                         </div>
                         <div className="flex gap-1 mt-1 flex-wrap">
                           {item.subject && (
-                            <span className="px-1.5 py-0.5 bg-[#fa2d48]/[0.08] text-[#fa2d48] rounded text-[9px] font-bold">{item.subject}</span>
+                            <span className="px-1.5 py-0.5 bg-[#ff375f]/[0.08] text-[#ff375f] rounded text-[9px] font-bold">{item.subject}</span>
                           )}
                           {(item.topic || item.metadata?.field) && (
                             <span className="px-1.5 py-0.5 bg-[#30d158]/[0.08] text-emerald-500 rounded text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
@@ -833,7 +833,7 @@ export default function TuningPage() {
 
             {/* 検索結果が0件の場合 */}
             {refSearchResults.length === 0 && refSearchQuery && !refSearching && (
-              <div className="text-center py-3 text-xs text-[#48484a] mb-3">
+              <div className="text-center py-3 text-xs text-[#545456] mb-3">
                 該当する問題が見つかりません
               </div>
             )}
@@ -859,7 +859,7 @@ export default function TuningPage() {
                   <NumberField label="参照件数 (Top-K)" value={topK} onChange={setTopK} min={1} max={20} />
                 </div>
               </div>
-              <div className="space-y-3 text-xs text-[#636366]">
+              <div className="space-y-3 text-xs text-[#6c6c70]">
                 <div className="p-3 bg-[#0a84ff]/[0.08] rounded-lg border border-blue-100/40">
                   <span className="font-bold text-[#0a84ff]">類似度</span>
                   <p className="mt-1 text-blue-500">プロンプトと似た内容の過去問を重視</p>
@@ -898,14 +898,14 @@ export default function TuningPage() {
           )}
 
           {retrievedChunks.length > 0 && (
-            <div className="p-4 bg-white/[0.04] rounded-lg border border-white/[0.06] max-h-56 overflow-y-auto custom-scrollbar">
-              <div className="text-xs font-semibold text-[#636366] mb-2 uppercase tracking-wide flex items-center gap-2">
+            <div className="p-4 bg-white/[0.08] rounded-lg border border-white/[0.08] max-h-56 overflow-y-auto custom-scrollbar">
+              <div className="text-xs font-semibold text-[#6c6c70] mb-2 uppercase tracking-wide flex items-center gap-2">
                 参照データ ({retrievedChunks.length}件)
                 {retrievedChunks[0]?.search_tier && (
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                     retrievedChunks[0].search_tier === 'subject+field' ? 'bg-emerald-100 text-emerald-700' :
                     retrievedChunks[0].search_tier === 'subject-only' ? 'bg-amber-100 text-amber-700' :
-                    'bg-gray-200 text-[#636366]'
+                    'bg-gray-200 text-[#6c6c70]'
                   }`}>
                     {retrievedChunks[0].search_tier === 'subject+field' ? '科目+分野' :
                      retrievedChunks[0].search_tier === 'subject-only' ? '科目のみ' : 'グローバル'}
@@ -913,17 +913,17 @@ export default function TuningPage() {
                 )}
               </div>
               {retrievedChunks.map((c, i) => (
-                <div key={i} className="py-2 border-b border-white/[0.06] last:border-0 text-xs flex items-start gap-2">
+                <div key={i} className="py-2 border-b border-white/[0.08] last:border-0 text-xs flex items-start gap-2">
                   <span className="text-gray-300 font-mono flex-shrink-0">#{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     {c.subject && (
-                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[#fa2d48]/[0.08] text-[#fa2d48] mr-1">{c.subject}</span>
+                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[#ff375f]/[0.08] text-[#ff375f] mr-1">{c.subject}</span>
                     )}
-                    <span className="text-[#636366] leading-relaxed">
+                    <span className="text-[#6c6c70] leading-relaxed">
                       {(c.text || '').slice(0, 150).replace(/\n/g, ' ')}{(c.text || '').length > 150 ? '...' : ''}
                     </span>
                   </div>
-                  <span className="text-[#48484a] flex-shrink-0 tabular-nums">
+                  <span className="text-[#545456] flex-shrink-0 tabular-nums">
                     {c.final_score !== undefined ? Number(c.final_score).toFixed(2) : c.score !== undefined ? Number(c.score).toFixed(2) : '—'}
                   </span>
                 </div>
@@ -953,14 +953,14 @@ export default function TuningPage() {
         <div className="space-y-6">
           <SectionCard title="LLMにプロンプトを送る" icon={<Icons.Prompt />}
             subtitle="プロンプトをコピーして、お好みのLLMに貼り付けて実行">
-            <div className="p-4 bg-[#fa2d48]/[0.08] rounded-lg border border-[#fa2d48]/20">
+            <div className="p-4 bg-[#ff375f]/[0.08] rounded-lg border border-[#ff375f]/20">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-[#fa2d48] text-white flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-[#ff375f] text-white flex items-center justify-center">
                   <Icons.Copy className="w-4 h-4" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-sm font-bold text-[#a1a1a6]">送信用プロンプト</div>
-                  <div className="text-xs text-[#48484a]">
+                  <div className="text-sm font-bold text-[#98989d]">送信用プロンプト</div>
+                  <div className="text-xs text-[#545456]">
                     {finalPrompt.length.toLocaleString()} 文字
                     {ragSkipped && ' （RAG なし）'}
                     {ragPrompt && ' （RAG 注入済み）'}
@@ -968,7 +968,7 @@ export default function TuningPage() {
                 </div>
                 <CopyButton text={finalPrompt} onCopied={setStatus} label="コピー" />
               </div>
-              <pre className="text-xs text-[#a1a1a6] bg-white/[0.04] rounded-lg p-3 max-h-32 overflow-auto custom-scrollbar font-mono leading-relaxed">
+              <pre className="text-xs text-[#98989d] bg-white/[0.08] rounded-lg p-3 max-h-32 overflow-auto custom-scrollbar font-mono leading-relaxed">
                 {finalPrompt.slice(0, 500)}{finalPrompt.length > 500 ? '\n...' : ''}
               </pre>
             </div>
@@ -1031,7 +1031,7 @@ export default function TuningPage() {
                   ].filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => (
                     <div key={k} className="flex gap-2 items-start">
                       <span className="font-medium text-[#30d158] flex-shrink-0 min-w-[80px]">{k}:</span>
-                      <span className="text-[#636366] break-all">
+                      <span className="text-[#6c6c70] break-all">
                         {typeof v === 'object' ? JSON.stringify(v) : String(v).slice(0, 200)}{String(v).length > 200 ? '...' : ''}
                       </span>
                     </div>
@@ -1052,22 +1052,22 @@ export default function TuningPage() {
             subtitle="出力の品質を評価して記録（次回の改善に活用）">
             <div className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-[#636366] mb-1.5">品質スコア</label>
+                <label className="block text-xs font-semibold text-[#6c6c70] mb-1.5">品質スコア</label>
                 <QualityRating score={tuningScore ? Number(tuningScore) : ''} onChange={(v) => setTuningScore(String(v))} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#48484a] mb-1.5">メモ</label>
+                  <label className="block text-xs font-semibold text-[#545456] mb-1.5">メモ</label>
                   <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-white/[0.06] bg-white/[0.04] backdrop-blur-sm text-sm text-[#f5f5f7]
-                      transition-all hover:border-white/[0.12] focus:border-[#fa2d48]/50 focus:ring-2 focus:ring-[#fa2d48]/20 outline-none shadow-sm font-medium"
+                    className="w-full px-4 py-3 rounded-lg border border-white/[0.08] bg-white/[0.08] backdrop-blur-sm text-sm text-[#f5f5f7]
+                      transition-all hover:border-white/[0.12] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/20 outline-none shadow-sm font-medium"
                     placeholder="例: 難易度は適切だが解説が冗長" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#48484a] mb-1.5">期待していた出力（任意）</label>
+                  <label className="block text-xs font-semibold text-[#545456] mb-1.5">期待していた出力（任意）</label>
                   <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-white/[0.06] bg-white/[0.04] backdrop-blur-sm text-sm text-[#f5f5f7]
-                      transition-all hover:border-white/[0.12] focus:border-[#fa2d48]/50 focus:ring-2 focus:ring-[#fa2d48]/20 outline-none shadow-sm font-medium"
+                    className="w-full px-4 py-3 rounded-lg border border-white/[0.08] bg-white/[0.08] backdrop-blur-sm text-sm text-[#f5f5f7]
+                      transition-all hover:border-white/[0.12] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/20 outline-none shadow-sm font-medium"
                     placeholder="期待される出力の要約" />
                 </div>
               </div>
@@ -1083,12 +1083,12 @@ export default function TuningPage() {
             subtitle="パースした問題データをDBに保存（検算を自動実行）">
             {parsedProblem ? (
               <div className="space-y-4">
-                <div className="p-4 bg-white/[0.04] rounded-lg border border-white/[0.06] text-xs space-y-1.5">
+                <div className="p-4 bg-white/[0.08] rounded-lg border border-white/[0.08] text-xs space-y-1.5">
                   {parsedProblem.stem && (
-                    <div><span className="font-bold text-[#636366]">問題:</span> <span className="text-[#a1a1a6]">{parsedProblem.stem.slice(0, 200)}{parsedProblem.stem.length > 200 ? '...' : ''}</span></div>
+                    <div><span className="font-bold text-[#6c6c70]">問題:</span> <span className="text-[#98989d]">{parsedProblem.stem.slice(0, 200)}{parsedProblem.stem.length > 200 ? '...' : ''}</span></div>
                   )}
                   {parsedProblem.final_answer && (
-                    <div><span className="font-bold text-[#a1a1a6]">解答:</span> <span className="text-[#fa2d48] font-bold">{parsedProblem.final_answer}</span></div>
+                    <div><span className="font-bold text-[#98989d]">解答:</span> <span className="text-[#ff375f] font-bold">{parsedProblem.final_answer}</span></div>
                   )}
                   {parsedProblem.checks && (
                     <div className="flex gap-3 mt-1">

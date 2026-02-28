@@ -30,11 +30,11 @@ const IconSearch = () => (
 
 /* ─── ダークテーマカラー ─── */
 const themes = {
-  red:     { bg: 'bg-[#fa2d48]/[0.12]', text: 'text-[#ff6b81]', glow: 'shadow-[#fa2d48]/10', border: 'border-[#fa2d48]/10' },
-  violet:  { bg: 'bg-[#bf5af2]/[0.12]', text: 'text-[#bf5af2]', glow: 'shadow-[#bf5af2]/10', border: 'border-[#bf5af2]/10' },
-  emerald: { bg: 'bg-[#30d158]/[0.12]', text: 'text-[#30d158]', glow: 'shadow-[#30d158]/10', border: 'border-[#30d158]/10' },
-  amber:   { bg: 'bg-[#ffd60a]/[0.12]', text: 'text-[#ffd60a]', glow: 'shadow-[#ffd60a]/10', border: 'border-[#ffd60a]/10' },
-  sky:     { bg: 'bg-[#64d2ff]/[0.12]', text: 'text-[#64d2ff]', glow: 'shadow-[#64d2ff]/10', border: 'border-[#64d2ff]/10' },
+  red:     { bg: 'bg-[#ff375f]/[0.10]', text: 'text-[#ff6b81]', glow: 'shadow-[#ff375f]/8', border: 'border-[#ff375f]/10' },
+  violet:  { bg: 'bg-[#af52de]/[0.10]', text: 'text-[#c77dff]', glow: 'shadow-[#af52de]/8', border: 'border-[#af52de]/10' },
+  emerald: { bg: 'bg-[#30d158]/[0.10]', text: 'text-[#30d158]', glow: 'shadow-[#30d158]/8', border: 'border-[#30d158]/10' },
+  amber:   { bg: 'bg-[#ffd60a]/[0.10]', text: 'text-[#ffd60a]', glow: 'shadow-[#ffd60a]/8', border: 'border-[#ffd60a]/10' },
+  sky:     { bg: 'bg-[#64d2ff]/[0.10]', text: 'text-[#64d2ff]', glow: 'shadow-[#64d2ff]/8', border: 'border-[#64d2ff]/10' },
 };
 
 /* ─── メイン機能 ─── */
@@ -81,7 +81,7 @@ function FeatureCard({ href, icon, label, description, theme, badge }) {
         </div>
         {/* テキスト */}
         <h3 className="text-[17px] font-bold text-[#f5f5f7] mb-1.5 tracking-tight">{label}</h3>
-        <p className="text-[13px] text-[#636366] leading-[1.6] whitespace-pre-line">{description}</p>
+        <p className="text-[13px] text-[#6c6c70] leading-[1.6] whitespace-pre-line">{description}</p>
         {/* 矢印 */}
         <div className={`absolute right-5 bottom-5 ${t.text} opacity-0 group-hover:opacity-60 transition-all duration-500 translate-x-0 group-hover:translate-x-0.5`}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -104,7 +104,7 @@ function CompactCard({ href, icon, label, description, theme }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[15px] font-semibold text-[#f5f5f7]">{label}</div>
-          <div className="text-[12px] text-[#636366] mt-0.5">{description}</div>
+          <div className="text-[12px] text-[#6c6c70] mt-0.5">{description}</div>
         </div>
         <div className={`flex-shrink-0 ${t.text} opacity-0 group-hover:opacity-40 transition-all duration-500`}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -125,7 +125,7 @@ export default function HomePage() {
         {/* ── ヒーロー ── */}
         <div className="text-center mb-12 sm:mb-14">
           {/* ロゴマーク */}
-          <div className="inline-flex items-center justify-center w-[72px] h-[72px] rounded-[22px] bg-gradient-to-br from-[#fa2d48] to-[#c0162b] text-white mb-6 shadow-lg shadow-[#fa2d48]/25">
+          <div className="inline-flex items-center justify-center w-[72px] h-[72px] rounded-[22px] bg-gradient-to-br from-[#ff375f] to-[#d42040] text-white mb-6 shadow-lg shadow-[#ff375f]/20">
             <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
@@ -137,7 +137,7 @@ export default function HomePage() {
           <p className="text-[17px] gradient-text font-semibold">
             Rapid Exam Maker
           </p>
-          <p className="text-[15px] text-[#636366] mt-2 leading-relaxed">
+          <p className="text-[15px] text-[#6c6c70] mt-2 leading-relaxed">
             AIと過去問データで、試験問題を賢くつくる
           </p>
         </div>
@@ -145,8 +145,8 @@ export default function HomePage() {
         {/* ── メイン機能 ── */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-3.5 px-0.5">
-            <h2 className="text-[13px] font-semibold text-[#636366] uppercase tracking-wider">はじめる</h2>
-            <div className="flex-1 h-px bg-white/[0.06]" />
+            <h2 className="text-[13px] font-semibold text-[#6c6c70] uppercase tracking-wider">はじめる</h2>
+            <div className="flex-1 h-px bg-white/[0.08]" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {MAIN_ACTIONS.map((a) => (
@@ -158,8 +158,8 @@ export default function HomePage() {
         {/* ── ツール ── */}
         <div>
           <div className="flex items-center gap-3 mb-3.5 px-0.5">
-            <h2 className="text-[13px] font-semibold text-[#636366] uppercase tracking-wider">ツール</h2>
-            <div className="flex-1 h-px bg-white/[0.06]" />
+            <h2 className="text-[13px] font-semibold text-[#6c6c70] uppercase tracking-wider">ツール</h2>
+            <div className="flex-1 h-px bg-white/[0.08]" />
           </div>
           <div className="space-y-2.5">
             {SUB_ACTIONS.map((a) => (
@@ -170,7 +170,7 @@ export default function HomePage() {
 
         {/* ── フッター ── */}
         <div className="text-center mt-12 sm:mt-16">
-          <div className="inline-flex items-center gap-2 text-[11px] text-[#48484a]">
+          <div className="inline-flex items-center gap-2 text-[11px] text-[#545456]">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#30d158]"></span>

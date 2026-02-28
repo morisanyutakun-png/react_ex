@@ -1,7 +1,7 @@
 'use client';
 
 /* ─────────────────────────────────────────────────
-   共通UIコンポーネント群 (Apple Music Dark Premium)
+   共通UIコンポーネント群 (Apple Music Warm Dark)
    ───────────────────────────────────────────────── */
 
 export const Icons = {
@@ -46,7 +46,7 @@ export const Icons = {
     </svg>
   ),
   Empty: (props) => (
-    <svg className="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+    <svg className="w-12 h-12 opacity-25" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
     </svg>
   ),
@@ -106,7 +106,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="flex items-center gap-1 text-[#636366] hover:text-[#fa2d48] transition-colors duration-300">
+                <a href={bc.href} className="flex items-center gap-1 text-[#6c6c70] hover:text-[#ff375f] transition-colors duration-300">
                   {i === 0 && bc.label === 'Home' && <Icons.Home className="w-3.5 h-3.5" />}
                   <span>{bc.label}</span>
                 </a>
@@ -114,7 +114,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
                 <span className="text-[#f5f5f7] font-semibold">{bc.label}</span>
               )}
               {i < breadcrumbs.length - 1 && (
-                <svg className="w-3 h-3 text-[#48484a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-[#545456]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               )}
@@ -124,7 +124,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
       )}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
-          <div className="relative flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-[#fa2d48] to-[#c0162b] text-white flex items-center justify-center shadow-lg shadow-[#fa2d48]/20">
+          <div className="relative flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-[#ff375f] to-[#c0162b] text-white flex items-center justify-center shadow-lg shadow-[#ff375f]/15">
             {icon}
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
           </div>
@@ -134,7 +134,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#636366] mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-[13px] text-[#6c6c70] mt-1.5 max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
@@ -154,7 +154,7 @@ export function StatusBar({ message }) {
     ? 'bg-[#ff453a]/[0.08] text-[#ff6961] border-[#ff453a]/[0.12]'
     : isSuccess
     ? 'bg-[#30d158]/[0.08] text-[#30d158] border-[#30d158]/[0.12]'
-    : 'bg-white/[0.04] text-[#a1a1a6] border-white/[0.06]';
+    : 'bg-white/[0.05] text-[#98989d] border-white/[0.08]';
 
   return (
     <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-semibold mb-4 border backdrop-blur-sm transition-all duration-500 animate-in ${styles}`}>
@@ -170,14 +170,14 @@ export function StatusBar({ message }) {
 export function SelectField({ label, value, onChange, options, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-xs font-medium text-[#a1a1a6] mb-1.5">{label}</label>}
+      {label && <label className="block text-xs font-medium text-[#98989d] mb-1.5">{label}</label>}
       <div className="relative group">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm text-sm
+          className="w-full px-3 py-2.5 rounded-xl border border-white/[0.10] bg-white/[0.06] backdrop-blur-sm text-sm
                     text-[#f5f5f7] transition-all duration-200 cursor-pointer appearance-none
-                    hover:border-white/[0.14] focus:border-[#fa2d48]/50 focus:ring-2 focus:ring-[#fa2d48]/20
+                    hover:border-white/[0.16] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/15
                     outline-none pr-9"
         >
           {options.map((opt) =>
@@ -188,7 +188,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
             )
           )}
         </select>
-        <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-[#636366]">
+        <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none text-[#6c6c70]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -202,12 +202,12 @@ export function SelectField({ label, value, onChange, options, className = '' })
 export function NumberField({ label, value, onChange, min = 1, max, step, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-xs font-medium text-[#a1a1a6] mb-1.5">{label}</label>}
+      {label && <label className="block text-xs font-medium text-[#98989d] mb-1.5">{label}</label>}
       <input
         type="number" value={value} onChange={(e) => onChange(Number(e.target.value))}
         min={min} max={max} step={step}
-        className="w-24 px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm text-sm text-[#f5f5f7]
-                   transition-all duration-200 hover:border-white/[0.14] focus:border-[#fa2d48]/50 focus:ring-2 focus:ring-[#fa2d48]/20
+        className="w-24 px-3 py-2.5 rounded-xl border border-white/[0.10] bg-white/[0.06] backdrop-blur-sm text-sm text-[#f5f5f7]
+                   transition-all duration-200 hover:border-white/[0.16] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/15
                    outline-none [&::-webkit-inner-spin-button]:opacity-100"
       />
     </div>
@@ -218,16 +218,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step, classN
 export function TextArea({ label, value, onChange, rows = 6, placeholder, readOnly, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-xs font-medium text-[#a1a1a6] mb-1.5">{label}</label>}
+      {label && <label className="block text-xs font-medium text-[#98989d] mb-1.5">{label}</label>}
       <textarea
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         rows={rows} placeholder={placeholder} readOnly={readOnly}
-        className="w-full px-3.5 py-3 rounded-xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm font-mono text-sm
+        className="w-full px-3.5 py-3 rounded-xl border border-white/[0.10] bg-white/[0.06] backdrop-blur-sm font-mono text-sm
                    leading-relaxed resize-y text-[#f5f5f7] transition-all duration-200
-                   hover:border-white/[0.14] focus:border-[#fa2d48]/50 focus:ring-2 focus:ring-[#fa2d48]/20
-                   outline-none placeholder:text-[#48484a]
-                   read-only:bg-white/[0.02] read-only:text-[#636366] read-only:border-white/[0.04]"
+                   hover:border-white/[0.16] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/15
+                   outline-none placeholder:text-[#545456]
+                   read-only:bg-white/[0.03] read-only:text-[#6c6c70] read-only:border-white/[0.05]"
       />
     </div>
   );
@@ -237,12 +237,12 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
 export function TextField({ label, value, onChange, placeholder, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-xs font-medium text-[#a1a1a6] mb-1.5">{label}</label>}
+      {label && <label className="block text-xs font-medium text-[#98989d] mb-1.5">{label}</label>}
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-sm text-sm text-[#f5f5f7]
-                   transition-all duration-200 hover:border-white/[0.14] focus:border-[#fa2d48]/50 focus:ring-2 focus:ring-[#fa2d48]/20
-                   outline-none placeholder:text-[#48484a]"
+        className="w-full px-3 py-2.5 rounded-xl border border-white/[0.10] bg-white/[0.06] backdrop-blur-sm text-sm text-[#f5f5f7]
+                   transition-all duration-200 hover:border-white/[0.16] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/15
+                   outline-none placeholder:text-[#545456]"
       />
     </div>
   );
@@ -253,12 +253,12 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
   const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]';
   const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2.5 text-sm', lg: 'px-5 py-3 text-sm' };
   const variants = {
-    primary: 'btn-glow bg-gradient-to-b from-[#fa2d48] to-[#c0162b] text-white hover:from-[#ff4d63] hover:to-[#d42535] shadow-lg shadow-[#fa2d48]/20 hover:shadow-xl hover:shadow-[#fa2d48]/30',
-    secondary: 'bg-white/[0.06] backdrop-blur-sm text-[#f5f5f7] border border-white/[0.08] hover:bg-white/[0.1] hover:border-white/[0.14]',
-    success: 'btn-glow bg-gradient-to-b from-[#30d158] to-[#28a745] text-white hover:from-[#3de066] hover:to-[#2db84e] shadow-lg shadow-[#30d158]/15',
-    danger: 'btn-glow bg-gradient-to-b from-[#ff453a] to-[#c0162b] text-white hover:from-[#ff6961] hover:to-[#d42535] shadow-lg shadow-[#ff453a]/15',
-    warning: 'btn-glow bg-gradient-to-b from-[#ff9f0a] to-[#e8890a] text-white hover:from-[#ffb340] hover:to-[#f59e0b] shadow-lg shadow-[#ff9f0a]/15',
-    ghost: 'bg-transparent text-[#a1a1a6] hover:bg-white/[0.06] hover:text-[#f5f5f7]',
+    primary: 'btn-glow bg-gradient-to-b from-[#ff375f] to-[#d42040] text-white hover:from-[#ff5c7c] hover:to-[#e02848] shadow-lg shadow-[#ff375f]/15 hover:shadow-xl hover:shadow-[#ff375f]/25',
+    secondary: 'bg-white/[0.07] backdrop-blur-sm text-[#f5f5f7] border border-white/[0.10] hover:bg-white/[0.12] hover:border-white/[0.16]',
+    success: 'btn-glow bg-gradient-to-b from-[#30d158] to-[#28a745] text-white hover:from-[#3de066] hover:to-[#2db84e] shadow-lg shadow-[#30d158]/12',
+    danger: 'btn-glow bg-gradient-to-b from-[#ff453a] to-[#c0162b] text-white hover:from-[#ff6961] hover:to-[#d42535] shadow-lg shadow-[#ff453a]/12',
+    warning: 'btn-glow bg-gradient-to-b from-[#ff9f0a] to-[#e8890a] text-white hover:from-[#ffb340] hover:to-[#f59e0b] shadow-lg shadow-[#ff9f0a]/12',
+    ghost: 'bg-transparent text-[#98989d] hover:bg-white/[0.07] hover:text-[#f5f5f7]',
   };
   return (
     <button onClick={onClick} disabled={disabled}
@@ -272,12 +272,12 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
 export function MetaTag({ icon, label, value, color = 'slate' }) {
   if (!value) return null;
   const colorMap = {
-    slate: 'bg-white/[0.06] text-[#a1a1a6]',
-    neutral: 'bg-white/[0.06] text-[#a1a1a6]',
-    indigo: 'bg-[#fa2d48]/[0.1] text-[#ff6b81]',
-    emerald: 'bg-[#30d158]/[0.1] text-[#30d158]',
-    amber: 'bg-[#ffd60a]/[0.1] text-[#ffd60a]',
-    rose: 'bg-[#ff453a]/[0.1] text-[#ff6961]',
+    slate: 'bg-white/[0.07] text-[#98989d]',
+    neutral: 'bg-white/[0.07] text-[#98989d]',
+    indigo: 'bg-[#ff375f]/[0.10] text-[#ff6b81]',
+    emerald: 'bg-[#30d158]/[0.10] text-[#30d158]',
+    amber: 'bg-[#ffd60a]/[0.10] text-[#ffd60a]',
+    rose: 'bg-[#ff453a]/[0.10] text-[#ff6961]',
   };
   return (
     <span className={`badge ${colorMap[color] || colorMap.slate}`}>
@@ -292,21 +292,21 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
 export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1 }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
-    <label className="flex items-center gap-3 text-xs text-[#a1a1a6] py-1 group">
+    <label className="flex items-center gap-3 text-xs text-[#98989d] py-1 group">
       <span className="min-w-[5rem] font-semibold">{label}</span>
       <div className="flex-1 relative">
         <input type="range" min={min} max={max} step={step} value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/[0.06]
+          className="w-full h-1.5 rounded-full appearance-none cursor-pointer bg-white/[0.08]
                      [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5
-                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fa2d48]
+                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#ff375f]
                      [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:shadow-md
-                     [&::-webkit-slider-thumb]:shadow-[#fa2d48]/30
+                     [&::-webkit-slider-thumb]:shadow-[#ff375f]/25
                      [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
-          style={{ background: `linear-gradient(to right, #fa2d48 0%, #fa2d48 ${pct}%, rgba(255,255,255,0.06) ${pct}%, rgba(255,255,255,0.06) 100%)` }}
+          style={{ background: `linear-gradient(to right, #ff375f 0%, #ff375f ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)` }}
         />
       </div>
-      <span className="font-semibold text-[#fa2d48] w-10 text-right tabular-nums">{Number(value).toFixed(1)}</span>
+      <span className="font-semibold text-[#ff375f] w-10 text-right tabular-nums">{Number(value).toFixed(1)}</span>
     </label>
   );
 }
@@ -331,10 +331,10 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
       {(title || icon) && (
         <div className="mb-5">
           <div className="flex items-center gap-2.5">
-            {icon && <span className="text-[#fa2d48]">{icon}</span>}
+            {icon && <span className="text-[#ff375f]">{icon}</span>}
             {title && <h2 className="text-[15px] font-bold text-[#f5f5f7] tracking-tight">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[12px] text-[#636366] mt-1 ml-[26px]">{subtitle}</p>}
+          {subtitle && <p className="text-[12px] text-[#6c6c70] mt-1 ml-[26px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -345,10 +345,10 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
 /* ── EmptyState ── */
 export function EmptyState({ icon, title, description }) {
   return (
-    <div className="text-center py-20 card-premium border-dashed !border-white/[0.08]">
-      <div className="flex justify-center mb-5 text-[#48484a]">{icon || <Icons.Empty />}</div>
-      {title && <div className="text-[15px] font-bold text-[#636366] mb-1.5">{title}</div>}
-      {description && <div className="text-[13px] text-[#48484a] leading-relaxed max-w-sm mx-auto">{description}</div>}
+    <div className="text-center py-20 card-premium border-dashed !border-white/[0.10]">
+      <div className="flex justify-center mb-5 text-[#545456]">{icon || <Icons.Empty />}</div>
+      {title && <div className="text-[15px] font-bold text-[#6c6c70] mb-1.5">{title}</div>}
+      {description && <div className="text-[13px] text-[#545456] leading-relaxed max-w-sm mx-auto">{description}</div>}
     </div>
   );
 }
@@ -356,13 +356,13 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-white/[0.04] rounded-[14px] backdrop-blur-sm border border-white/[0.06]">
+    <div className="flex gap-0.5 p-[3px] bg-white/[0.05] rounded-[14px] backdrop-blur-sm border border-white/[0.08]">
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3.5 py-[8px] rounded-[11px] text-[13px] font-bold transition-all duration-300
             ${activeTab === tab.id
-              ? 'bg-white/[0.1] text-[#f5f5f7] shadow-sm'
-              : 'text-[#636366] hover:text-[#a1a1a6]'
+              ? 'bg-white/[0.12] text-[#f5f5f7] shadow-sm'
+              : 'text-[#6c6c70] hover:text-[#98989d]'
             }`}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
           {tab.label}
@@ -381,20 +381,20 @@ export function ProgressSteps({ steps, current }) {
           <div className="flex items-center gap-1 sm:gap-2">
             <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-lg text-[10px] sm:text-xs font-bold transition-all
                 ${i + 1 <= current
-                  ? 'bg-gradient-to-b from-[#fa2d48] to-[#c0162b] text-white shadow-sm shadow-[#fa2d48]/20'
+                  ? 'bg-gradient-to-b from-[#ff375f] to-[#d42040] text-white shadow-sm shadow-[#ff375f]/15'
                   : i + 1 === current + 1
-                  ? 'bg-white/[0.06] text-[#fa2d48] border border-[#fa2d48]/30'
-                  : 'bg-white/[0.04] text-[#48484a]'
+                  ? 'bg-white/[0.07] text-[#ff375f] border border-[#ff375f]/25'
+                  : 'bg-white/[0.05] text-[#545456]'
                 }`}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>
             <span className={`text-[10px] sm:text-xs font-semibold transition-colors whitespace-nowrap
-                ${i + 1 <= current ? 'text-[#f5f5f7]' : 'text-[#48484a]'}`}>
+                ${i + 1 <= current ? 'text-[#f5f5f7]' : 'text-[#545456]'}`}>
               {s}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-px ${i + 1 < current ? 'bg-[#fa2d48]' : 'bg-white/[0.06]'}`} />
+            <div className={`w-3 sm:w-6 h-px ${i + 1 < current ? 'bg-[#ff375f]' : 'bg-white/[0.08]'}`} />
           )}
         </div>
       ))}

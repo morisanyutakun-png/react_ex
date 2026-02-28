@@ -27,7 +27,7 @@ export default function Header() {
               href="/"
               className="flex items-center gap-2.5 group"
             >
-              <div className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] bg-gradient-to-br from-red-500 to-red-600 text-white">
+              <div className="flex items-center justify-center w-[26px] h-[26px] rounded-[7px] bg-gradient-to-br from-[#ff375f] to-[#d42040] text-white">
                 <Icons.Book className="w-3.5 h-3.5" />
               </div>
               <span className="text-[15px] font-bold tracking-tight text-white/90">
@@ -80,7 +80,7 @@ export default function Header() {
 
         {/* モバイルドロップダウンメニュー (Dark) */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-white/[0.08] bg-[#1d1d1f]/95 backdrop-blur-xl animate-in">
+          <div className="sm:hidden border-t border-white/[0.08] bg-[#2c2c2e]/95 backdrop-blur-xl animate-in">
             <nav className="px-3 py-2 space-y-0.5">
               {NAV_ITEMS.map(({ href, label, icon }) => {
                 const active =
@@ -101,7 +101,7 @@ export default function Header() {
                     {icon}
                     {label}
                     {active && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#fa2d48]" />
+                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#ff375f]" />
                     )}
                   </Link>
                 );
@@ -112,7 +112,7 @@ export default function Header() {
       </header>
 
       {/* ── モバイルボトムナビバー (Apple Music style - frosted dark) ── */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-2xl border-t border-white/[0.06] safe-area-bottom">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#1c1c1e]/90 backdrop-blur-2xl border-t border-white/[0.08] safe-area-bottom">
         <div className="flex items-center justify-around px-2 py-1.5">
           {NAV_ITEMS.map(({ href, label, mobileIcon }) => {
             const active =
@@ -125,12 +125,12 @@ export default function Header() {
                 href={href}
                 className={`flex flex-col items-center gap-0.5 py-1 px-2 min-w-[3.5rem] transition-all active:scale-95
                   ${active
-                    ? 'text-[#fa2d48]'
-                    : 'text-[#636366]'
+                    ? 'text-[#ff375f]'
+                    : 'text-[#6c6c70]'
                   }`}
               >
                 {mobileIcon}
-                <span className={`text-[10px] font-medium leading-none ${active ? 'text-[#fa2d48]' : 'text-[#636366]'}`}>
+                <span className={`text-[10px] font-medium leading-none ${active ? 'text-[#ff375f]' : 'text-[#6c6c70]'}`}>
                   {label}
                 </span>
               </Link>

@@ -21,7 +21,8 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-black text-[#f5f5f7] selection:bg-[#fa2d48]/20 selection:text-white">
+      <body className="min-h-screen bg-[#1c1c1e] text-[#f5f5f7] selection:bg-[#ff375f]/20 selection:text-white">
+        <div className="accent-strip" />
         <Header />
         {children}
       </body>
