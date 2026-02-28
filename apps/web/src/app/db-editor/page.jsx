@@ -146,7 +146,7 @@ const COLUMN_GROUPS = {
 };
 
 // 一覧表のデフォルト表示カラム（見やすい最小セット）
-const DEFAULT_VISIBLE_COLS = ['id', 'subject', 'topic', 'stem', 'answer_brief', 'difficulty', 'difficulty_level'];
+const DEFAULT_VISIBLE_COLS = ['id', 'subject', 'topic', 'subtopic', 'stem', 'answer_brief', 'difficulty', 'difficulty_level'];
 
 // 非表示推奨（embedding等の巨大カラム）
 const HIDDEN_COLS = new Set([

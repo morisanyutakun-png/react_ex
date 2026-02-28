@@ -595,6 +595,19 @@ def save_parsed_problem(payload: SaveProblemRequest = Body(...)):
     if _subj_val and not merged['metadata'].get('subject'):
         merged['metadata']['subject'] = _subj_val
 
+    # Also propagate 'subtopic' / 'sub_topic' into metadata for DB storage
+    _subtopic_val = (
+        merged['metadata'].get('subtopic')
+        or merged['metadata'].get('sub_topic')
+        or problem_obj.get('subtopic')
+        or problem_obj.get('sub_topic')
+        or parsed.get('subtopic')
+        or parsed.get('sub_topic')
+        or None
+    )
+    if _subtopic_val and not merged['metadata'].get('subtopic'):
+        merged['metadata']['subtopic'] = _subtopic_val
+
     # set source/page if provided
     merged['source'] = payload.overwrite_source or problem_obj.get('source') or parsed.get('source')
     merged['page'] = problem_obj.get('page') or parsed.get('page')

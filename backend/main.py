@@ -1444,6 +1444,10 @@ class RenderTemplateRequest(BaseModel):
     latex_preset: Optional[str] = 'exam'
     # Optional extra LaTeX packages to include (e.g. ['tikz', 'circuitikz', 'pgfplots'])
     extra_packages: Optional[List[str]] = []
+    # Question format: 'standard' | 'fill_in_blank' | 'choice' | 'true_false'
+    question_format: Optional[str] = 'standard'
+    # Sub-topic / theme (maps to DB subtopic column)
+    sub_topic: Optional[str] = None
 
 
 @app.post('/api/render_template')
@@ -1476,6 +1480,8 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
         # reflect user-provided numeric hints in context
         'user_difficulty': req.user_difficulty if hasattr(req, 'user_difficulty') else None,
         'user_trickiness': req.user_trickiness if hasattr(req, 'user_trickiness') else None,
+        # sub_topic / subtopic for DB storage
+        'subtopic': req.sub_topic or '',
     }
 
     # If RAG injection requested, prepare snippets/summary and difficulty metrics.
@@ -2148,6 +2154,13 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     )
                     latex_instr += pkg_hints
 
+                # --- Inject question format instructions ---
+                q_format = getattr(req, 'question_format', 'standard') or 'standard'
+                if q_format != 'standard':
+                    fmt_instr = _QUESTION_FORMAT_INSTRUCTIONS.get(q_format, '')
+                    if fmt_instr:
+                        latex_instr += fmt_instr
+
                 # Assemble: skeleton (target structure) + instructions + user prompt body
                 prompt = f"以下のLaTeXスケルトンを完成させてください:\n\n{latex_skeleton}\n\n{latex_instr}{source_block}\n\n【指示内容】\n{orig_prompt_body}"
     except Exception as e:
@@ -2236,6 +2249,31 @@ def api_list_latex_presets():
 
 # ── 科目分類 & モジュラー・プロンプト部品 ────────────────────────────────────
 # 科目ごとに数式ルールの要否を判定し、プロンプトを柔軟に構成する。
+
+# ── 出題形式ごとのプロンプト追加指示 ──────────────────────────────────────
+_QUESTION_FORMAT_INSTRUCTIONS: Dict[str, str] = {
+    'fill_in_blank': (
+        "\n=== 出題形式: 穴埋め問題 ===\n"
+        "- 問題文中の重要な語句・数値・式を \\underline{\\hspace{3cm}} で空欄にする。\n"
+        "- 空欄番号を (\\,\\textcircled{1}\\,), (\\,\\textcircled{2}\\,) のように付ける。\n"
+        "- 解答欄には空欄番号と正解を対応させて記載する。\n"
+        "- 空欄は1問あたり3〜6個程度が望ましい。\n"
+        "- 文脈から答えが一意に決まるように出題すること。\n\n"
+    ),
+    'choice': (
+        "\n=== 出題形式: 選択肢問題 ===\n"
+        "- 各問に4〜5個の選択肢を \\begin{enumerate}[(ア)] で列挙する。\n"
+        "- 正解は1つ。紛らわしい誤答（ディストラクター）を含めること。\n"
+        "- 解答欄には正解の記号と簡潔な解説を記載する。\n\n"
+    ),
+    'true_false': (
+        "\n=== 出題形式: 正誤問題 ===\n"
+        "- 各問に文（命題）を提示し、正しいか誤りかを判断させる。\n"
+        "- 「○（正しい）」「×（誤り）」で解答させる形式にする。\n"
+        "- 誤りの文には典型的な誤解や紛らわしい内容を含めること。\n"
+        "- 解答欄には正誤の判定と、誤りの場合はどこが間違いかを解説する。\n\n"
+    ),
+}
 
 _STEM_SUBJECTS = frozenset({
     '数学', '数学IA', '数学IIB', '数学III', '数学I', '数学II', '数学A', '数学B', '数学C',
@@ -3290,6 +3328,10 @@ class LlmGenerateRequest(BaseModel):
     extra_packages: Optional[List[str]] = []
     subject: Optional[str] = ''
     field: Optional[str] = ''
+    # Question format: 'standard' | 'fill_in_blank' | 'choice' | 'true_false'
+    question_format: Optional[str] = 'standard'
+    # Sub-topic / theme (maps to DB subtopic column)
+    sub_topic: Optional[str] = None
 
 
 @app.post('/api/generate_with_llm')
@@ -3330,6 +3372,13 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
                 system_instruction += f'- {pkg_def["name"]}: {pkg_def["prompt_hint"]}\n'
             else:
                 system_instruction += f'- \\usepackage{{{pkg_id}}} が利用可能。\n'
+
+    # Append question format instructions if not standard
+    q_format = req.question_format or 'standard'
+    if q_format != 'standard':
+        fmt_instr = _QUESTION_FORMAT_INSTRUCTIONS.get(q_format, '')
+        if fmt_instr:
+            system_instruction += fmt_instr
 
     # Call Groq Cloud API (OpenAI-compatible)
     groq_url = 'https://api.groq.com/openai/v1/chat/completions'

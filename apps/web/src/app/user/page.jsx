@@ -208,7 +208,6 @@ export default function UserModePage() {
   const [newTplCustomSubject, setNewTplCustomSubject] = useState('');
   const [newTplField, setNewTplField] = useState('');
   const [newTplTheme, setNewTplTheme] = useState('');
-  const [newTplFormat, setNewTplFormat] = useState('standard');
   const [newTplDifficulty, setNewTplDifficulty] = useState('');
   const [creatingTemplate, setCreatingTemplate] = useState(false);
 
@@ -229,8 +228,8 @@ export default function UserModePage() {
         id,
         name: `${label} テンプレート`,
         description: `${label} の問題を生成するテンプレート`,
-        prompt: buildTemplatePrompt(effectiveNewSubject, f, { questionFormat: newTplFormat, theme: newTplTheme }),
-        metadata: { subject: effectiveNewSubject, field: f || null, theme: newTplTheme || null, questionFormat: newTplFormat, difficulty: newTplDifficulty, auto_generated: true },
+        prompt: buildTemplatePrompt(effectiveNewSubject, f, { theme: newTplTheme }),
+        metadata: { subject: effectiveNewSubject, field: f || null, theme: newTplTheme || null, subtopic: newTplTheme || null, difficulty: newTplDifficulty, auto_generated: true },
       });
       await refresh();
       setTemplateId(id);
@@ -239,7 +238,7 @@ export default function UserModePage() {
       setDifficulty(newTplDifficulty);
       setStatus(`テンプレート「${label}」を作成しました`);
       setShowCreateTemplate(false);
-      setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplFormat('standard'); setNewTplDifficulty('');
+      setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplDifficulty('');
     } catch (e) { setStatus(`作成失敗: ${e.message}`); }
     setCreatingTemplate(false);
   };
@@ -254,6 +253,7 @@ export default function UserModePage() {
   const [topK, setTopK] = useState(5);
   const [latexPresets, setLatexPresets] = useState([]);
   const [latexPreset, setLatexPreset] = useState('exam');
+  const [questionFormat, setQuestionFormat] = useState('standard');
 
   /* ── 生成結果 ── */
   const [prompt, setPrompt] = useState('');
@@ -376,6 +376,8 @@ export default function UserModePage() {
         top_k: topK,
         latex_preset: latexPreset,
         extra_packages: extraPackages,
+        question_format: questionFormat,
+        sub_topic: theme || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
       generatedPrompt = data.rendered_prompt || data.rendered || '';
@@ -414,6 +416,8 @@ export default function UserModePage() {
         extra_packages: extraPackages,
         subject: subject || '',
         field: field || '',
+        question_format: questionFormat,
+        sub_topic: theme || '',
       });
 
       if (data?.error) {
@@ -465,6 +469,8 @@ export default function UserModePage() {
         top_k: topK,
         latex_preset: latexPreset,
         extra_packages: extraPackages,
+        question_format: questionFormat,
+        sub_topic: theme || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
       setRenderContext(data.context || null);
@@ -540,6 +546,7 @@ export default function UserModePage() {
     setSelectedBaseProblem(null);
     setBaseSearchQuery('');
     setBaseSearchResults([]);
+    setQuestionFormat('standard');
   };
 
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
@@ -617,11 +624,6 @@ export default function UserModePage() {
                         {t.metadata?.theme && (
                           <span className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full text-[10px] font-bold">
                             {t.metadata.theme}
-                          </span>
-                        )}
-                        {t.metadata?.questionFormat && t.metadata.questionFormat !== 'standard' && (
-                          <span className="px-2 py-0.5 bg-cyan-50 text-cyan-600 rounded-full text-[10px] font-bold">
-                            {QUESTION_FORMATS.find(f => f.value === t.metadata.questionFormat)?.label || t.metadata.questionFormat}
                           </span>
                         )}
                         {t.metadata?.difficulty && (
@@ -740,32 +742,6 @@ export default function UserModePage() {
                   </div>
                 )}
 
-                {/* 問題形式 */}
-                <div>
-                  <label className="block text-xs font-semibold text-[#6e6e73] mb-1.5">
-                    問題形式
-                  </label>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {QUESTION_FORMATS.map((fmt) => (
-                      <button
-                        key={fmt.value}
-                        type="button"
-                        onClick={() => setNewTplFormat(fmt.value)}
-                        className={`p-2.5 rounded-xl border text-left transition-all ${
-                          newTplFormat === fmt.value
-                            ? 'border-red-600 bg-red-50'
-                            : 'border-black/[0.08] bg-white hover:border-red-600/50'
-                        }`}
-                      >
-                        <div className={`text-xs font-bold ${newTplFormat === fmt.value ? 'text-red-600' : 'text-[#1d1d1f]'}`}>
-                          {fmt.label}
-                        </div>
-                        <div className="text-[10px] text-[#6e6e73] mt-0.5">{fmt.description}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* 作成ボタン */}
                 <div className="flex items-center gap-3 pt-1">
                   <button
@@ -782,7 +758,7 @@ export default function UserModePage() {
                     {creatingTemplate ? '作成中...' : 'テンプレートを作成'}
                   </button>
                   <button
-                    onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplFormat('standard'); setNewTplDifficulty(''); }}
+                    onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplDifficulty(''); }}
                     className="px-4 py-3 rounded-xl text-sm font-medium text-[#6e6e73] hover:text-[#424245] hover:bg-black/[0.04] transition-all"
                   >
                     キャンセル
@@ -1143,6 +1119,37 @@ export default function UserModePage() {
               <span className="text-xs text-red-600">{selectedPreset.description}</span>
             </div>
           )}
+
+          {/* ── 問題形式選択 ── */}
+          <div className="mt-6 border-t border-black/[0.06] pt-5">
+            <div className="flex items-center gap-2 mb-1">
+              <label className="block text-xs font-semibold text-[#6e6e73]">
+                問題形式
+              </label>
+            </div>
+            <p className="text-xs text-[#6e6e73] mb-3">
+              出題する問題の解答形式を選んでください。
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {QUESTION_FORMATS.map((fmt) => (
+                <button
+                  key={fmt.value}
+                  type="button"
+                  onClick={() => setQuestionFormat(fmt.value)}
+                  className={`p-2.5 rounded-xl border text-left transition-all ${
+                    questionFormat === fmt.value
+                      ? 'border-red-600 bg-red-50'
+                      : 'border-black/[0.06] bg-white hover:border-red-600/50 hover:bg-black/[0.04]'
+                  }`}
+                >
+                  <div className={`text-xs font-bold ${questionFormat === fmt.value ? 'text-red-600' : 'text-[#1d1d1f]'}`}>
+                    {fmt.label}
+                  </div>
+                  <div className="text-[10px] text-[#6e6e73] mt-0.5">{fmt.description}</div>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* ── 図表パッケージ選択 ── */}
           <div className="mt-6 border-t border-black/[0.06] pt-5">
