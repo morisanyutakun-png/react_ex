@@ -248,6 +248,91 @@ export default function HomePage() {
 
           {/* ══════ 巨大タイポグラフィ・ウォーターマーク ══════ */}
 
+          {/* ═══ 左上コーナー — ボールド・アクセント ═══ */}
+          {/* 巨大グラデーション円弧 */}
+          <circle cx="0" cy="0" r="280" fill="none" stroke="url(#ringG1)" strokeWidth="2.5" opacity="0.25" />
+          <circle cx="0" cy="0" r="220" fill="none" stroke="url(#textGrad1)" strokeWidth="1.5" strokeDasharray="20 10" opacity="0.18" />
+          <circle cx="0" cy="0" r="160" fill="none" stroke="#e8457a" strokeWidth="1" opacity="0.15" />
+          {/* 放射状グロー — 左上 */}
+          <circle cx="-30" cy="-30" r="200" fill="url(#glow1)" opacity="0.6" />
+          {/* 大きな "∑" — 左上に堂々と */}
+          <text x="3%" y="22%" fontFamily="'Times New Roman', Georgia, serif"
+                fontSize="200" fontWeight="700" fill="url(#textGrad1)" opacity="0.10">
+            ∑
+          </text>
+          {/* "CREATE" テキスト — 左上 斜め */}
+          <text x="2%" y="8%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="48" fontWeight="900" letterSpacing="0.3em" fill="url(#textGrad1)" opacity="0.08"
+                transform="rotate(-15, 50, 50)">
+            CREATE
+          </text>
+          {/* 装飾ライン群 — 左上から放射 */}
+          <line x1="0" y1="80" x2="180" y2="80" stroke="#e8457a" strokeWidth="2" opacity="0.15" />
+          <line x1="0" y1="120" x2="140" y2="120" stroke="#c084fc" strokeWidth="1.5" opacity="0.12" />
+          <line x1="0" y1="160" x2="100" y2="160" stroke="#818cf8" strokeWidth="1" opacity="0.10" />
+          <line x1="80" y1="0" x2="80" y2="180" stroke="#e8457a" strokeWidth="2" opacity="0.12" />
+          <line x1="120" y1="0" x2="120" y2="140" stroke="#f472b6" strokeWidth="1.5" opacity="0.10" />
+          {/* 左上ドットクラスター */}
+          <circle cx="50" cy="50" r="6" fill="#e8457a" opacity="0.20" />
+          <circle cx="90" cy="35" r="4" fill="#c084fc" opacity="0.18" />
+          <circle cx="35" cy="95" r="5" fill="#f472b6" opacity="0.15" />
+          <circle cx="140" cy="60" r="3" fill="#818cf8" opacity="0.20" />
+          <circle cx="60" cy="140" r="3.5" fill="#c084fc" opacity="0.16" />
+          {/* 左上ダイヤモンド */}
+          <g transform="rotate(45, 160, 40)">
+            <rect x="130" y="10" width="60" height="60" fill="none" stroke="url(#ringG1)" strokeWidth="1.8" opacity="0.18" />
+          </g>
+          {/* 左上十字 — 大きめ */}
+          <g stroke="#e8457a" strokeWidth="2" opacity="0.20">
+            <line x1="200" y1="20" x2="200" y2="60" />
+            <line x1="180" y1="40" x2="220" y2="40" />
+          </g>
+
+          {/* ═══ 右上コーナー — ボールド・アクセント ═══ */}
+          {/* 巨大グラデーション円弧 */}
+          <circle cx="100%" cy="0" r="250" fill="none" stroke="url(#ringG2)" strokeWidth="2.5" opacity="0.22" />
+          <circle cx="100%" cy="0" r="190" fill="none" stroke="url(#textGrad2)" strokeWidth="1.5" strokeDasharray="16 12" opacity="0.16" />
+          <circle cx="100%" cy="0" r="130" fill="none" stroke="#818cf8" strokeWidth="1.2" opacity="0.14" />
+          {/* 放射状グロー — 右上 */}
+          <circle cx="105%" cy="-30" r="180" fill="url(#glow2)" opacity="0.5" />
+          {/* 大きな "∫" — 右上に堂々と */}
+          <text x="82%" y="25%" fontFamily="'Times New Roman', Georgia, serif"
+                fontSize="220" fontWeight="700" fill="url(#textGrad2)" opacity="0.09"
+                transform="rotate(10, 700, 100)">
+            ∫
+          </text>
+          {/* "SOLVE" テキスト — 右上 斜め */}
+          <text x="72%" y="6%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="44" fontWeight="900" letterSpacing="0.35em" fill="url(#textGrad2)" opacity="0.08"
+                transform="rotate(12, 650, 40)">
+            SOLVE
+          </text>
+          {/* 装飾ライン群 — 右上から放射 */}
+          <line x1="100%" y1="70" x2="75%" y2="70" stroke="#818cf8" strokeWidth="2" opacity="0.15" />
+          <line x1="100%" y1="110" x2="80%" y2="110" stroke="#c084fc" strokeWidth="1.5" opacity="0.12" />
+          <line x1="100%" y1="150" x2="85%" y2="150" stroke="#f472b6" strokeWidth="1" opacity="0.10" />
+          <line x1="92%" y1="0" x2="92%" y2="180" stroke="#818cf8" strokeWidth="2" opacity="0.12" />
+          <line x1="88%" y1="0" x2="88%" y2="130" stroke="#c084fc" strokeWidth="1.5" opacity="0.10" />
+          {/* 右上ドットクラスター */}
+          <circle cx="93%" cy="45" r="6" fill="#818cf8" opacity="0.20" />
+          <circle cx="89%" cy="30" r="4" fill="#c084fc" opacity="0.18" />
+          <circle cx="95%" cy="90" r="5" fill="#e8457a" opacity="0.15" />
+          <circle cx="85%" cy="55" r="3.5" fill="#f472b6" opacity="0.18" />
+          <circle cx="91%" cy="130" r="3" fill="#818cf8" opacity="0.16" />
+          {/* 右上ダイヤモンド */}
+          <g transform="rotate(45, 88%, 50)">
+            <rect x="84%" y="20" width="55" height="55" fill="none" stroke="url(#ringG2)" strokeWidth="1.8" opacity="0.16" />
+          </g>
+          {/* 右上十字 — 大きめ */}
+          <g stroke="#818cf8" strokeWidth="2" opacity="0.20">
+            <line x1="78%" y1="25" x2="78%" y2="65" />
+            <line x1="75.5%" y1="45" x2="80.5%" y2="45" />
+          </g>
+          {/* 右上三角形 */}
+          <polygon points="95%,170 100%,170 100%,130" fill="none" stroke="url(#ringG2)" strokeWidth="1.5" opacity="0.14" />
+
+          {/* ═══ 中央タイポグラフィ ═══ */}
+
           {/* "EXAM" — 画面上部に超大文字 */}
           <text x="50%" y="18%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
                 fontSize="180" fontWeight="900" letterSpacing="0.15em" fill="url(#textGrad1)" opacity="0.04">
@@ -261,36 +346,31 @@ export default function HomePage() {
             REM
           </text>
 
-          {/* 数式シンボル群 — 大きく配置 */}
-          <text x="8%" y="40%" fontFamily="'Times New Roman', serif"
-                fontSize="120" fontWeight="400" fill="#c084fc" opacity="0.05">
-            ∑
-          </text>
-          <text x="88%" y="28%" fontFamily="'Times New Roman', serif"
-                fontSize="100" fontWeight="400" fill="#e8457a" opacity="0.04"
-                transform="rotate(15, 700, 200)">
-            ∫
-          </text>
-          <text x="15%" y="78%" fontFamily="'Times New Roman', serif"
-                fontSize="80" fontWeight="400" fill="#818cf8" opacity="0.04">
+          {/* 数式シンボル群 — 大きく・くっきり */}
+          <text x="15%" y="78%" fontFamily="'Times New Roman', Georgia, serif"
+                fontSize="110" fontWeight="700" fill="url(#textGrad1)" opacity="0.08">
             π
           </text>
-          <text x="75%" y="88%" fontFamily="'Times New Roman', serif"
-                fontSize="90" fontWeight="400" fill="#f472b6" opacity="0.04">
+          <text x="75%" y="88%" fontFamily="'Times New Roman', Georgia, serif"
+                fontSize="120" fontWeight="700" fill="url(#textGrad2)" opacity="0.07">
             Δ
           </text>
-          <text x="5%" y="15%" fontFamily="'Times New Roman', serif"
-                fontSize="60" fontWeight="400" fill="#c084fc" opacity="0.05">
-            α
+          <text x="45%" y="65%" fontFamily="'Times New Roman', Georgia, serif"
+                fontSize="80" fontWeight="400" fill="#c084fc" opacity="0.06">
+            ∞
           </text>
-          <text x="92%" y="65%" fontFamily="'Times New Roman', serif"
-                fontSize="70" fontWeight="400" fill="#e8457a" opacity="0.035">
+          <text x="30%" y="85%" fontFamily="'Times New Roman', Georgia, serif"
+                fontSize="70" fontWeight="400" fill="#e8457a" opacity="0.06">
             θ
+          </text>
+          <text x="60%" y="75%" fontFamily="'Times New Roman', Georgia, serif"
+                fontSize="90" fontWeight="400" fill="#818cf8" opacity="0.05">
+            φ
           </text>
 
           {/* "RAPID EXAM MAKER" — 下部に横書き */}
           <text x="50%" y="92%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="28" fontWeight="800" letterSpacing="0.5em" fill="url(#textGrad1)" opacity="0.05">
+                fontSize="32" fontWeight="900" letterSpacing="0.5em" fill="url(#textGrad1)" opacity="0.08">
             RAPID EXAM MAKER
           </text>
 
@@ -312,11 +392,7 @@ export default function HomePage() {
             </circle>
           </g>
 
-          {/* 大きなコーナー装飾弧 */}
-          <path d="M0 200 Q100 100 200 0" fill="none" stroke="url(#ringG1)" strokeWidth="1.5" opacity="0.12">
-            <animate attributeName="opacity" values="0.12;0.22;0.12" dur="5s" repeatCount="indefinite" />
-          </path>
-          <path d="M0 350 Q175 175 350 0" fill="none" stroke="url(#ringG2)" strokeWidth="0.8" opacity="0.06" />
+          {/* 大きなコーナー装飾弧（左上は上のセクションで対応済み） */}
 
           {/* 右下コーナー */}
           <g opacity="0.1">
@@ -372,8 +448,9 @@ export default function HomePage() {
           </g>
         </svg>
 
-        {/* ソフトグラス・オーバーレイ — コンテンツを読みやすくする */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#f5f5f7]/20 via-transparent to-[#f5f5f7]/50" />
+        {/* ソフトグラス・オーバーレイ — 中央のコンテンツ部分だけ読みやすく */}
+        <div className="absolute inset-x-[15%] inset-y-[20%] bg-[#f5f5f7]/40 blur-3xl rounded-full" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f5f5f7]/15 to-[#f5f5f7]/40" />
       </div>
 
       <div className="relative z-10 max-w-[540px] w-full mx-auto">
