@@ -2255,8 +2255,9 @@ _QUESTION_FORMAT_INSTRUCTIONS: Dict[str, str] = {
     'fill_in_blank': (
         "\n=== 出題形式: 穴埋め問題 ===\n"
         "- 問題文中の重要な語句・数値・式を \\underline{\\hspace{3cm}} で空欄にする。\n"
-        "- 空欄番号を (\\,\\textcircled{1}\\,), (\\,\\textcircled{2}\\,) のように付ける。\n"
-        "- 解答欄には空欄番号と正解を対応させて記載する。\n"
+        "- 空欄には（ア）（イ）（ウ）（エ）（オ）（カ）（キ）（ク）（ケ）（コ）の順で記号を振る。\n"
+        "  表記: \\textbf{（ア）} のように太字で目立たせる。\n"
+        "- 解答欄には（ア）＝○○ のように記号と正解を対応させて記載する。\n"
         "- 空欄は1問あたり3〜6個程度が望ましい。\n"
         "- 文脈から答えが一意に決まるように出題すること。\n\n"
     ),
@@ -2357,24 +2358,20 @@ _LATEX_CORE_RULES = (
     "9. 装飾用の記号行（===, ---, ***, ~~~ 等）は絶対に出力しない。\n"
     "   区切りには \\vspace{1em} や \\hrulefill を使う。\n"
     "\n"
-    "=== ネスト・改行ルール（厳守） ===\n"
-    "N1. \\begin{} と \\end{} は必ず対応させる。\n"
-    "N2. enumerate, itemize の入れ子は最大 2 階層。\n"
-    "N3. 各環境の開始・終了はそれぞれ単独の行に書く。\n"
+    "=== ネスト・環境ルール（厳守） ===\n"
+    "N1. \\begin{env} と \\end{env} は必ず 1対1 で対応させる。\n"
+    "    対応の確認手順: 出力完了後に begin と end の数を数え、一致しない場合は修正する。\n"
+    "N2. enumerate / itemize の入れ子は最大 2 階層まで。\n"
+    "    ○ 許可: enumerate の中に enumerate（2階層目）\n"
+    "    × 禁止: enumerate の中の enumerate の中にさらに enumerate（3階層目以上）\n"
+    "N3. 各環境の \\begin / \\end はそれぞれ単独の行に書く。\n"
     "N4. 改行のタイミング:\n"
     "    - 大問と大問: \\vspace{1em}\n"
     "    - 問題文と選択肢: \\vspace{0.5em}\n"
     "    - 本文と問題: \\vspace{1em} + \\noindent\n"
-    "N5. インデントはネスト深さに応じて一貫する。\n"
-    "\n"
-    "=== 数式関数の記述ルール（厳守） ===\n"
-    "F1. 三角関数・逆三角関数・双曲線関数・対数等は必ずバックスラッシュ付きで書く:\n"
-    "    \\sin, \\cos, \\tan, \\arcsin, \\arccos, \\arctan,\n"
-    "    \\sinh, \\cosh, \\tanh, \\log, \\ln, \\exp, \\lim,\n"
-    "    \\max, \\min, \\sup, \\inf, \\det, \\gcd, \\deg, \\arg\n"
-    "    × 誤: $arctan(x)$  ○ 正: $\\arctan(x)$\n"
-    "F2. \\frac{分子}{分母} は必ず分子・分母の両方を記述する。\n"
-    "    空の分子 \\frac{}{x} や空の分母 \\frac{x}{} は禁止。\n"
+    "N5. インデントはネスト深さに応じて一貫させる（ソースの可読性のため）。\n"
+    "N6. tikzpicture, axis, circuitikz, forest 等の描画環境は\n"
+    "    enumerate/itemize のカウントに含めない（描画環境は自由にネスト可）。\n"
     "\n"
     "=== テキスト折り返し・行間ルール ===\n"
     "W1. 長いテキストは LaTeX の自動折り返しに任せる。\n"
@@ -2385,7 +2382,7 @@ _LATEX_CORE_RULES = (
 
 # --- プロンプト部品: 数式ルール（理系科目のみ追加）---
 _LATEX_MATH_RULES = (
-    "\n=== 数式の記述ルール（理系科目用） ===\n"
+    "\n=== 数式の記述ルール（理系科目用・厳守） ===\n"
     "M1. 分数: \\frac{分子}{分母}。必ず {分子}{分母} の2つの中括弧を書く。\n"
     "    分子・分母が空の \\frac{}{} は絶対禁止。\n"
     "    入れ子: \\frac{\\frac{a}{b}}{c} のように中括弧を完全に対応。\n"
@@ -2393,10 +2390,13 @@ _LATEX_MATH_RULES = (
     "M3. 根号: \\sqrt{x}。\n"
     "M4. 関数: 必ずバックスラッシュ付き。\n"
     "    \\sin, \\cos, \\tan, \\arcsin, \\arccos, \\arctan,\n"
-    "    \\log, \\ln, \\exp, \\lim, \\max, \\min\n"
+    "    \\log, \\ln, \\exp, \\lim, \\max, \\min,\n"
+    "    \\sup, \\inf, \\det, \\gcd, \\deg, \\arg\n"
     "    × 誤: arctan x  ○ 正: \\arctan x\n"
     "M5. 添字2文字以上は中括弧: $x_{10}$, $a_{ij}$\n"
     "M6. 区間は数式内: $[0,1)$, $[a,b]$\n"
+    "M7. \\frac{分子}{分母} は必ず分子・分母の両方を記述する。\n"
+    "    空の分子 \\frac{}{x} や空の分母 \\frac{x}{} は禁止。\n"
 )
 
 # --- プロンプト部品: 品質ルール ---
@@ -2448,8 +2448,8 @@ _LATEX_HUMANITIES_HINTS = (
     "\n=== 文系科目向けの注意事項 ===\n"
     "H1. 問題文・解説は自然な日本語で記述する。\n"
     "H2. 数式コマンド（\\frac, \\sqrt 等）は必要な場合のみ使用する。\n"
+    "    文系科目で数式が不要なら $...$ や \\[...\\] は使わない。\n"
     "H3. 長文の説明には \\paragraph{} や itemize 環境を活用する。\n"
-    "H4. 英語科目の場合、\\textit{} は使わない。英文はそのままローマン体（デフォルト）で記述する。\n"
 )
 
 # --- プロンプト部品: 英語科目専用ルール ---
@@ -2463,6 +2463,9 @@ _LATEX_ENGLISH_RULES = (
     "    - 本文は \\begin{quotation} ... \\end{quotation} で囲む。\n"
     "E3. 英文の下線部:\n"
     "    - \\underline{word} を使用。\\textit{} は使わない。\n"
+    "    - \\underline の入れ子は絶対禁止:\n"
+    "      × \\underline{\\underline{text}} や \\underline{...\\underline{...}...}\n"
+    "      ○ \\underline{This is the underlined part} のようにフラットに書く。\n"
     "E4. 英文問題の解答選択肢:\n"
     "    - \\begin{enumerate}[(A)] または \\begin{enumerate}[(1)] で番号付きリスト。\n"
     "    - 各選択肢は \\item で記述。\n"
@@ -2721,6 +2724,14 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '4. \\draw (0,0) -- (3,0) -- (3,4) -- cycle; のように閉路を明記。\n'
             '5. ノード間の配線では、接続元と接続先の座標が一致しているか必ず確認する。\n'
             '6. 座標の一覧表を先にコメントで書いてから描画コードを書く（例: % A=(0,0), B=(3,0), C=(3,4)）。\n'
+            '\n'
+            '【リアルで美しい図のための描画指針】\n'
+            '7. 線の太さ: 主要な図形は thick、補助線は thin、寸法線は very thin を使い分ける。\n'
+            '8. 矢印: -{Stealth[length=3mm]} で統一。力・速度などのベクトル量は太い矢印 [very thick] を使う。\n'
+            '9. 塗りつぶし: 強調部分は fill=gray!20 や pattern=north east lines 等で視覚的に区別する。\n'
+            '10. ラベル配置: node[above], node[below right] 等で重なりを避ける。ラベルは数式モード $...$ で。\n'
+            '11. 点線・破線の使い分け: 補助線 [dashed]、延長線 [dotted]、力の分解成分 [dashed,->]。\n'
+            '12. 角度の弧: \\draw (orig) arc (start:end:radius) で描き、ラベル $\\theta$ を弧の中央に配置。\n'
         ),
     },
     'circuitikz': {
@@ -2760,10 +2771,19 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '\\pgfplotsset{compat=1.18}'
         ),
         'prompt_hint': (
-            'PGFPlots が利用可能。\\begin{tikzpicture}\\begin{axis}[...options...]...\\end{axis}\\end{tikzpicture} でグラフを描く。'
-            '関数プロット: \\addplot[domain=-3:3,samples=100,blue]{x^2};'
-            'データプロット: \\addplot coordinates {(0,0)(1,1)(2,4)};'
-            'axis options: xlabel={$x$}, ylabel={$y$}, xmin=-3, xmax=3, grid=both 等。'
+            'PGFPlots が利用可能。\\begin{tikzpicture}\\begin{axis}[...]...\\end{axis}\\end{tikzpicture} でグラフを描く。\n'
+            '\n'
+            '【美しいグラフ描画の指針 — 厳守】\n'
+            '1. 関数プロット: \\addplot[domain=-3:3,samples=200,thick,blue]{x^2}; (samples は 100 以上)\n'
+            '2. データプロット: \\addplot[only marks,mark=*,mark size=2pt] coordinates {(0,0)(1,1)(2,4)};\n'
+            '3. 軸ラベル: xlabel={$x$}, ylabel={$y$} を必ず付ける。物理量の場合は単位も: ylabel={$v$ [m/s]}\n'
+            '4. 軸範囲: xmin, xmax, ymin, ymax を明示的に指定して余白を適切に確保。\n'
+            '5. グリッド: grid=both で目盛り線を表示。major grid style={gray!30} で薄く。\n'
+            '6. 凡例: 複数のプロットがある場合 legend pos=north west 等で凡例を配置。\n'
+            '7. 特殊点（頂点・交点・極値等）: \\addplot[only marks,mark=*,red] coordinates {(x,y)};\n'
+            '   node[above right]{$(x_0, y_0)$} でラベルを付ける。\n'
+            '8. 漸近線: \\draw[dashed,gray] (axis cs:x,ymin) -- (axis cs:x,ymax);\n'
+            '9. 面積の塗りつぶし: \\addplot[fill=blue!15,draw=none,domain=a:b]{f(x)} \\closedcycle;\n'
         ),
     },
     'tikz-cd': {
