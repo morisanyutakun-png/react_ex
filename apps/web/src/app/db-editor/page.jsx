@@ -507,8 +507,8 @@ export default function DbEditorPage() {
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="キーワード検索..."
-                className="px-3 py-2 rounded-lg border border-white/[0.08] bg-white/[0.08] backdrop-blur-sm text-sm
-                           text-[#f5f5f7] transition-all hover:border-white/[0.12] focus:border-red-600
+                className="px-3 py-2 rounded-lg border border-black/[0.06] bg-white shadow-sm text-sm
+                           text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-red-600
                            focus:ring-2 focus:ring-red-600/40 outline-none w-48"
               />
               <Button variant="secondary" size="sm" onClick={handleSearch}>
@@ -519,8 +519,8 @@ export default function DbEditorPage() {
             {/* カラム選択ボタン */}
             <button
               onClick={() => setShowColPicker(!showColPicker)}
-              className="px-3 py-2 text-xs font-semibold text-[#98989d] bg-white/[0.08] border border-white/[0.08]
-                         rounded-lg hover:border-white/[0.12] transition-all flex items-center gap-1.5"
+              className="px-3 py-2 text-xs font-semibold text-[#86868b] bg-black/[0.04] border border-black/[0.06]
+                         rounded-lg hover:border-black/[0.08] transition-all flex items-center gap-1.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -580,7 +580,7 @@ export default function DbEditorPage() {
           )}
 
           {/* ページネーション */}
-          <div className="flex items-center gap-4 text-sm text-[#98989d]">
+          <div className="flex items-center gap-4 text-sm text-[#86868b]">
             <span>{total}件中 {Math.min(page * PAGE_SIZE + 1, total)}〜{Math.min((page + 1) * PAGE_SIZE, total)}件</span>
             <div className="flex gap-1">
               <Button variant="ghost" size="sm" onClick={() => handlePageChange(page - 1)} disabled={page === 0}>
@@ -594,27 +594,27 @@ export default function DbEditorPage() {
           </div>
 
           {/* テーブル */}
-          <div className="bg-white/[0.08] backdrop-blur-md rounded-lg border border-white/[0.08]  overflow-hidden">
+          <div className="bg-black/[0.04] backdrop-blur-md rounded-lg border border-black/[0.06]  overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="bg-white/[0.08] border-b border-white/[0.08]">
-                    <th className="px-2 py-3 text-left font-bold text-[#98989d] uppercase tracking-wider sticky left-0 bg-white/[0.08] z-10 w-10">
+                  <tr className="bg-black/[0.04] border-b border-black/[0.06]">
+                    <th className="px-2 py-3 text-left font-bold text-[#86868b] uppercase tracking-wider sticky left-0 bg-black/[0.04] z-10 w-10">
                       #
                     </th>
                     {displayCols.map((col) => (
                       <th key={col.name}
-                        className="px-3 py-3 text-left font-bold text-[#98989d] tracking-wider whitespace-nowrap border-l border-white/[0.08]"
+                        className="px-3 py-3 text-left font-bold text-[#86868b] tracking-wider whitespace-nowrap border-l border-black/[0.06]"
                         title={`${col.name} (${col.type})${col.notnull ? ' NOT NULL' : ''}`}
                       >
                         <div className="flex items-center gap-1">
                           {colLabel(col.name)}
-                          {col.pk && <span className="text-[9px] bg-[#ff375f]/[0.08] text-[#ff375f] px-1 rounded">PK</span>}
+                          {col.pk && <span className="text-[9px] bg-[#fc3c44]/[0.08] text-[#fc3c44] px-1 rounded">PK</span>}
                         </div>
                         <div className="text-[9px] font-normal text-[#d2d2d7] mt-0.5">{col.name}</div>
                       </th>
                     ))}
-                    <th className="px-2 py-3 text-center font-bold text-[#98989d] uppercase tracking-wider border-l border-white/[0.08] w-20">
+                    <th className="px-2 py-3 text-center font-bold text-[#86868b] uppercase tracking-wider border-l border-black/[0.06] w-20">
                       操作
                     </th>
                   </tr>
@@ -625,11 +625,11 @@ export default function DbEditorPage() {
                     const rowDirty = !!edits[rowPk];
                     return (
                       <tr key={rowPk ?? idx}
-                        className={`border-b border-white/[0.08] hover:bg-white/[0.08] transition-colors
-                          ${rowDirty ? 'bg-[#ffd60a]/[0.08]' : idx % 2 === 0 ? 'bg-white/[0.08]' : 'bg-white/[0.08]'}`}
+                        className={`border-b border-black/[0.06] hover:bg-black/[0.04] transition-colors
+                          ${rowDirty ? 'bg-[#ff9500]/[0.08]' : idx % 2 === 0 ? 'bg-black/[0.04]' : 'bg-black/[0.04]'}`}
                       >
-                        <td className={`px-2 py-2 font-mono text-[#545456] sticky left-0 z-10
-                          ${rowDirty ? 'bg-[#ffd60a]/[0.08]' : idx % 2 === 0 ? 'bg-white/[0.08]' : 'bg-white/[0.08]'}`}>
+                        <td className={`px-2 py-2 font-mono text-[#c7c7cc] sticky left-0 z-10
+                          ${rowDirty ? 'bg-[#ff9500]/[0.08]' : idx % 2 === 0 ? 'bg-black/[0.04]' : 'bg-black/[0.04]'}`}>
                           {page * PAGE_SIZE + idx + 1}
                         </td>
                         {displayCols.map((col) => {
@@ -640,7 +640,7 @@ export default function DbEditorPage() {
 
                           if (isPkCol) {
                             return (
-                              <td key={col.name} className="px-3 py-2 border-l border-white/[0.08] font-mono text-[#ff375f] font-bold">
+                              <td key={col.name} className="px-3 py-2 border-l border-black/[0.06] font-mono text-[#fc3c44] font-bold">
                                 {formatCellValue(cellVal)}
                               </td>
                             );
@@ -648,8 +648,8 @@ export default function DbEditorPage() {
 
                           return (
                             <td key={col.name}
-                              className={`px-1 py-1 border-l border-white/[0.08] cursor-pointer
-                                ${dirty ? 'bg-[#ffd60a]/[0.08] ring-1 ring-amber-500/30' : ''}
+                              className={`px-1 py-1 border-l border-black/[0.06] cursor-pointer
+                                ${dirty ? 'bg-[#ff9500]/[0.08] ring-1 ring-amber-500/30' : ''}
                                 ${isEditing ? 'p-0' : ''}`}
                               onClick={() => !isEditing && startEdit(rowPk, col.name)}
                               title={formatCellValue(cellVal)}
@@ -663,7 +663,7 @@ export default function DbEditorPage() {
                                   onFinish={finishEdit}
                                 />
                               ) : (
-                                <span className={`block px-2 py-1 text-[#f5f5f7] max-w-[300px] truncate ${
+                                <span className={`block px-2 py-1 text-[#1d1d1f] max-w-[300px] truncate ${
                                   typeof cellVal === 'object' && cellVal !== null ? 'font-mono text-[10px] text-[#af52de]' : ''
                                 }`}>
                                   {cellVal === null || cellVal === undefined
@@ -674,11 +674,11 @@ export default function DbEditorPage() {
                             </td>
                           );
                         })}
-                        <td className="px-2 py-2 border-l border-white/[0.08] text-center">
+                        <td className="px-2 py-2 border-l border-black/[0.06] text-center">
                           <div className="flex gap-1 justify-center">
                             <button
                               onClick={() => setDetailRow(row)}
-                              className="text-[#d2d2d7] hover:text-[#ff375f] transition-colors p-1"
+                              className="text-[#d2d2d7] hover:text-[#fc3c44] transition-colors p-1"
                               title="詳細"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -705,7 +705,7 @@ export default function DbEditorPage() {
                   })}
                   {rows.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={displayCols.length + 2} className="text-center py-12 text-[#545456]">
+                      <td colSpan={displayCols.length + 2} className="text-center py-12 text-[#c7c7cc]">
                         データがありません
                       </td>
                     </tr>
@@ -714,7 +714,7 @@ export default function DbEditorPage() {
               </table>
             </div>
             {loading && (
-              <div className="flex items-center justify-center py-8 text-[#545456]">
+              <div className="flex items-center justify-center py-8 text-[#c7c7cc]">
                 <Icons.Info className="w-5 h-5 animate-pulse mr-2" /> 読み込み中...
               </div>
             )}
@@ -746,9 +746,9 @@ export default function DbEditorPage() {
 
       {/* ── 削除確認 ── */}
       {deleteConfirm !== null && (
-        <div className="fixed inset-0 bg-[#1c1c1e]/30 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white/[0.08] rounded-lg p-6 shadow-xl max-w-sm mx-4 border border-white/[0.08]">
-            <div className="text-lg font-bold text-[#f5f5f7] mb-2">削除確認</div>
+        <div className="fixed inset-0 bg-[#f5f5f7]/30 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-black/[0.04] rounded-lg p-6 shadow-xl max-w-sm mx-4 border border-black/[0.06]">
+            <div className="text-lg font-bold text-[#1d1d1f] mb-2">削除確認</div>
             <p className="text-sm text-[#424245] mb-4">
               ID: <strong>{deleteConfirm}</strong> を削除しますか？この操作は取り消せません。
             </p>
@@ -774,8 +774,8 @@ function TabButton({ active, onClick, children }) {
       onClick={onClick}
       className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all
         ${active
-          ? 'bg-[#ff375f] text-white'
-          : 'bg-white/[0.08] text-[#98989d] border border-white/[0.08] hover:border-white/[0.12] hover:text-[#ff375f]'
+          ? 'bg-[#fc3c44] text-white'
+          : 'bg-black/[0.04] text-[#86868b] border border-black/[0.06] hover:border-black/[0.08] hover:text-[#fc3c44]'
         }`}
     >
       {children}
@@ -797,7 +797,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         onBlur={onFinish}
         onKeyDown={(e) => { if (e.key === 'Escape') onFinish(); }}
         className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-red-600
-                   rounded-lg bg-white/[0.08] font-mono resize-y outline-none shadow-inner"
+                   rounded-lg bg-black/[0.04] font-mono resize-y outline-none shadow-inner"
         rows={4}
       />
     );
@@ -809,7 +809,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         value={String(value ?? '')}
         onChange={(e) => { onChange(e.target.value); onFinish(); }}
         onBlur={onFinish}
-        className="px-2 py-1.5 text-xs border border-red-600 rounded-lg bg-white/[0.08]"
+        className="px-2 py-1.5 text-xs border border-red-600 rounded-lg bg-black/[0.04]"
       >
         <option value="">—</option>
         <option value="true">true</option>
@@ -830,7 +830,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
       }}
       step={isNumericColumn(col.type) ? 'any' : undefined}
       className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-red-600
-                 rounded-lg bg-white/[0.08] outline-none shadow-inner"
+                 rounded-lg bg-black/[0.04] outline-none shadow-inner"
     />
   );
 });
@@ -860,16 +860,16 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
   };
 
   return (
-    <div className="bg-white/[0.08] rounded-lg border border-white/[0.08] shadow-lg p-5">
+    <div className="bg-black/[0.04] rounded-lg border border-black/[0.06] shadow-lg p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-[#f5f5f7]">表示カラムを選択</h3>
+        <h3 className="text-sm font-bold text-[#1d1d1f]">表示カラムを選択</h3>
         <div className="flex gap-2">
           <button onClick={() => setVisibleCols(DEFAULT_VISIBLE_COLS)}
-            className="text-xs text-[#ff375f] hover:text-[#ff375f] font-semibold">デフォルト</button>
+            className="text-xs text-[#fc3c44] hover:text-[#fc3c44] font-semibold">デフォルト</button>
           <button onClick={() => setVisibleCols(colNames)}
-            className="text-xs text-[#d2d2d7] hover:text-[#98989d] font-semibold">全選択</button>
+            className="text-xs text-[#d2d2d7] hover:text-[#86868b] font-semibold">全選択</button>
           <button onClick={onClose}
-            className="text-xs text-[#d2d2d7] hover:text-[#98989d] font-semibold ml-2">閉じる</button>
+            className="text-xs text-[#d2d2d7] hover:text-[#86868b] font-semibold ml-2">閉じる</button>
         </div>
       </div>
 
@@ -877,8 +877,8 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="flex gap-2 mb-3">
         {Object.entries(COLUMN_GROUPS).map(([key, group]) => (
           <button key={key} onClick={() => selectGroup(key)}
-            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/[0.08] text-[#98989d]
-                       hover:bg-[#ff375f]/[0.08] hover:text-[#ff375f] transition-colors border border-white/[0.08]">
+            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-black/[0.04] text-[#86868b]
+                       hover:bg-[#fc3c44]/[0.08] hover:text-[#fc3c44] transition-colors border border-black/[0.06]">
             {group.label}
           </button>
         ))}
@@ -887,9 +887,9 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5">
         {allCols.map((col) => (
           <label key={col.name} className={`flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer text-[11px]
-            transition-colors ${visibleCols.includes(col.name) ? 'bg-[#ff375f]/[0.08] text-[#ff375f]' : 'text-[#545456] hover:bg-[#1c1c1e]/[0.04]'}`}>
+            transition-colors ${visibleCols.includes(col.name) ? 'bg-[#fc3c44]/[0.08] text-[#fc3c44]' : 'text-[#c7c7cc] hover:bg-black/[0.03]'}`}>
             <input type="checkbox" checked={visibleCols.includes(col.name)}
-              onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-[#ff375f]" />
+              onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-[#fc3c44]" />
             <span className="truncate">{colLabel(col.name)}</span>
           </label>
         ))}
@@ -902,14 +902,14 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
 // ── 行詳細モーダル ──
 function RowDetailModal({ row, schema, pk, onClose }) {
   return (
-    <div className="fixed inset-0 bg-[#1c1c1e]/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    <div className="fixed inset-0 bg-[#f5f5f7]/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white/[0.08] rounded-lg shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col border border-white/[0.08]">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.08]">
-          <h2 className="text-lg font-bold text-[#f5f5f7]">
+      <div className="bg-black/[0.04] rounded-lg shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col border border-black/[0.06]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06]">
+          <h2 className="text-lg font-bold text-[#1d1d1f]">
             行詳細 — ID: {row[pk]}
           </h2>
-          <button onClick={onClose} className="text-[#545456] hover:text-[#424245] text-xl font-bold p-1">
+          <button onClick={onClose} className="text-[#c7c7cc] hover:text-[#424245] text-xl font-bold p-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -920,7 +920,7 @@ function RowDetailModal({ row, schema, pk, onClose }) {
             const val = row[col.name];
             const isEmpty = val === null || val === undefined || val === '';
             return (
-              <div key={col.name} className="flex gap-3 py-2 border-b border-white/[0.08]">
+              <div key={col.name} className="flex gap-3 py-2 border-b border-black/[0.06]">
                 <div className="w-44 flex-shrink-0">
                   <span className="text-xs font-bold text-[#424245]">{colLabel(col.name)}</span>
                   <span className="text-[9px] text-[#d2d2d7] block">{col.name} · {col.type}</span>
@@ -929,11 +929,11 @@ function RowDetailModal({ row, schema, pk, onClose }) {
                   {isEmpty ? (
                     <span className="text-xs text-[#d2d2d7] italic">null</span>
                   ) : typeof val === 'object' ? (
-                    <pre className="text-xs text-[#af52de] font-mono bg-white/[0.08] rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
+                    <pre className="text-xs text-[#af52de] font-mono bg-black/[0.04] rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
                       {JSON.stringify(val, null, 2)}
                     </pre>
                   ) : (
-                    <span className="text-xs text-[#f5f5f7] whitespace-pre-wrap break-all">{String(val)}</span>
+                    <span className="text-xs text-[#1d1d1f] whitespace-pre-wrap break-all">{String(val)}</span>
                   )}
                 </div>
               </div>
@@ -988,19 +988,19 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
   return (
     <div className="space-y-4">
       {/* プログレスバー */}
-      <div className="bg-white/[0.08] backdrop-blur-md rounded-lg border border-white/[0.08] p-4">
+      <div className="bg-black/[0.04] backdrop-blur-md rounded-lg border border-black/[0.06] p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-bold text-[#f5f5f7]">入力進捗</span>
-          <span className="text-xs text-[#545456]">{filledCount}/{totalFieldCount} フィールド入力済み</span>
+          <span className="text-sm font-bold text-[#1d1d1f]">入力進捗</span>
+          <span className="text-xs text-[#c7c7cc]">{filledCount}/{totalFieldCount} フィールド入力済み</span>
         </div>
-        <div className="h-2 bg-white/[0.08] rounded-full overflow-hidden">
+        <div className="h-2 bg-black/[0.04] rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${requiredFilled ? 'bg-[#30d158]/[0.08]0' : 'bg-[#ff375f]'}`}
+            className={`h-full rounded-full transition-all duration-500 ${requiredFilled ? 'bg-[#34c759]' : 'bg-[#fc3c44]'}`}
             style={{ width: `${Math.min(100, (filledCount / totalFieldCount) * 100)}%` }}
           />
         </div>
         {!requiredFilled && (
-          <p className="text-xs text-[#ffd60a] mt-2 flex items-center gap-1">
+          <p className="text-xs text-[#ff9500] mt-2 flex items-center gap-1">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -1123,28 +1123,28 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
 function DifficultyEstimatePanel({ result, estimating, onApply }) {
   if (estimating) {
     return (
-      <div className="bg-[#ff375f]/[0.08] border border-white/[0.08] rounded-lg p-4 flex items-center gap-3">
-        <svg className="w-5 h-5 animate-spin text-[#ff375f]" fill="none" viewBox="0 0 24 24">
+      <div className="bg-[#fc3c44]/[0.08] border border-black/[0.06] rounded-lg p-4 flex items-center gap-3">
+        <svg className="w-5 h-5 animate-spin text-[#fc3c44]" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <span className="text-sm font-semibold text-[#ff375f]">難易度を推定中...</span>
+        <span className="text-sm font-semibold text-[#fc3c44]">難易度を推定中...</span>
       </div>
     );
   }
   if (!result) return null;
 
   const levelColors = {
-    1: 'bg-[#30d158]/[0.08] text-[#30d158]',
-    2: 'bg-[#0a84ff]/[0.08] text-[#0a84ff]',
-    3: 'bg-[#ffd60a]/[0.08] text-[#ffd60a]',
+    1: 'bg-[#34c759]/[0.08] text-[#34c759]',
+    2: 'bg-[#007aff]/[0.08] text-[#007aff]',
+    3: 'bg-[#ff9500]/[0.08] text-[#ff9500]',
     4: 'bg-orange-50 text-orange-600',
     5: 'bg-rose-50 text-rose-600',
   };
   const levelLabels = { 1: '基礎', 2: '標準', 3: '応用', 4: '発展', 5: '難問' };
 
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-red-50 border border-white/[0.08] rounded-lg p-4">
+    <div className="bg-gradient-to-r from-violet-50 to-red-50 border border-black/[0.06] rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-[#af52de]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1155,31 +1155,31 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
         </div>
         <button
           onClick={onApply}
-          className="px-3 py-1.5 text-xs font-bold bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors"
+          className="px-3 py-1.5 text-xs font-bold bg-violet-600 text-[#1d1d1f] rounded-lg hover:bg-violet-700 transition-colors"
         >
           推定値を適用
         </button>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white/[0.08] rounded-lg p-3 text-center border border-white/[0.08]">
-          <div className="text-[10px] font-bold text-[#545456] mb-1">難易度スコア</div>
+        <div className="bg-black/[0.04] rounded-lg p-3 text-center border border-black/[0.06]">
+          <div className="text-[10px] font-bold text-[#c7c7cc] mb-1">難易度スコア</div>
           <div className="text-xl font-bold text-[#af52de]">{result.difficulty.toFixed(3)}</div>
-          <div className="h-1.5 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
-            <div className="h-full bg-[#af52de]/[0.08]0 rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
+          <div className="h-1.5 bg-black/[0.04] rounded-full mt-1.5 overflow-hidden">
+            <div className="h-full bg-[#af52de] rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
           </div>
         </div>
-        <div className="bg-white/[0.08] rounded-lg p-3 text-center border border-white/[0.08]">
-          <div className="text-[10px] font-bold text-[#545456] mb-1">レベル</div>
-          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-bold ${levelColors[result.difficulty_level] || 'bg-white/[0.08] text-[#98989d]'}`}>
+        <div className="bg-black/[0.04] rounded-lg p-3 text-center border border-black/[0.06]">
+          <div className="text-[10px] font-bold text-[#c7c7cc] mb-1">レベル</div>
+          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-bold ${levelColors[result.difficulty_level] || 'bg-black/[0.04] text-[#86868b]'}`}>
             Lv.{result.difficulty_level}
           </div>
-          <div className="text-[10px] text-[#545456] mt-1">{levelLabels[result.difficulty_level] || ''}</div>
+          <div className="text-[10px] text-[#c7c7cc] mt-1">{levelLabels[result.difficulty_level] || ''}</div>
         </div>
-        <div className="bg-white/[0.08] rounded-lg p-3 text-center border border-white/[0.08]">
-          <div className="text-[10px] font-bold text-[#545456] mb-1">ひっかけ度</div>
-          <div className="text-xl font-bold text-[#ffd60a]">{result.trickiness.toFixed(3)}</div>
-          <div className="h-1.5 bg-white/[0.08] rounded-full mt-1.5 overflow-hidden">
-            <div className="h-full bg-[#ffd60a]/[0.08]0 rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
+        <div className="bg-black/[0.04] rounded-lg p-3 text-center border border-black/[0.06]">
+          <div className="text-[10px] font-bold text-[#c7c7cc] mb-1">ひっかけ度</div>
+          <div className="text-xl font-bold text-[#ff9500]">{result.trickiness.toFixed(3)}</div>
+          <div className="h-1.5 bg-black/[0.04] rounded-full mt-1.5 overflow-hidden">
+            <div className="h-full bg-[#ff9500] rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
           </div>
         </div>
       </div>
@@ -1210,8 +1210,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
     !['created_at', 'updated_at'].includes(c.name)
   );
 
-  const baseInputClass = `w-full px-3 py-2 text-sm border border-white/[0.08] rounded-lg bg-white
-    text-[#f5f5f7] transition-all hover:border-white/[0.12] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/20 outline-none placeholder:text-[#545456]`;
+  const baseInputClass = `w-full px-3 py-2 text-sm border border-black/[0.06] rounded-lg bg-white
+    text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 outline-none placeholder:text-[#c7c7cc]`;
 
   const handleStemBlur = () => {
     if (data.stem?.trim()) {
@@ -1230,18 +1230,18 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
   const hasPriority = data.subject && data.stem;
 
   return (
-    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-white/[0.08] rounded-lg p-5 space-y-4">
+    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-black/[0.06] rounded-lg p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-[#30d158]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#34c759]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          <span className="text-sm font-bold text-[#30d158]">新しい行を追加</span>
-          <span className="text-[10px] bg-[#30d158]/[0.08] text-[#30d158] px-2 py-0.5 rounded-lg font-bold">
+          <span className="text-sm font-bold text-[#34c759]">新しい行を追加</span>
+          <span className="text-[10px] bg-[#34c759]/[0.08] text-[#34c759] px-2 py-0.5 rounded-lg font-bold">
             {table}
           </span>
         </div>
-        <button onClick={onCancel} className="text-[#545456] hover:text-[#424245] transition-colors p-1">
+        <button onClick={onCancel} className="text-[#c7c7cc] hover:text-[#424245] transition-colors p-1">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -1252,7 +1252,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* 教科 */}
         <div>
-          <label className="block text-[11px] font-bold text-[#30d158] mb-1">
+          <label className="block text-[11px] font-bold text-[#34c759] mb-1">
             教科 <span className="text-rose-600">*</span>
           </label>
           <select
@@ -1267,7 +1267,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* トピック */}
         <div>
-          <label className="block text-[11px] font-bold text-[#30d158] mb-1">
+          <label className="block text-[11px] font-bold text-[#34c759] mb-1">
             トピック <span className="text-rose-600">*</span>
           </label>
           {topicOptions.length > 0 && (
@@ -1276,8 +1276,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
                 <button key={t} type="button" onClick={() => onChange('topic', t)}
                   className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
                     data.topic === t
-                      ? 'bg-emerald-600 text-white border-emerald-600'
-                      : 'bg-white/[0.08] text-[#98989d] border-white/[0.08] hover:border-emerald-600'
+                      ? 'bg-emerald-600 text-[#1d1d1f] border-emerald-600'
+                      : 'bg-black/[0.04] text-[#86868b] border-black/[0.06] hover:border-emerald-600'
                   }`}>
                   {t}
                 </button>
@@ -1295,7 +1295,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* 問題文 */}
         <div className="md:col-span-2">
-          <label className="block text-[11px] font-bold text-[#30d158] mb-1">
+          <label className="block text-[11px] font-bold text-[#34c759] mb-1">
             問題文 <span className="text-rose-600">*</span>
             <span className="text-[10px] font-normal text-[#d2d2d7] ml-2">数式は $...$ で囲んで入力</span>
           </label>
@@ -1311,7 +1311,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* 答え */}
         <div className="md:col-span-2">
-          <label className="block text-[11px] font-bold text-[#30d158] mb-1">
+          <label className="block text-[11px] font-bold text-[#34c759] mb-1">
             答え
           </label>
           <input
@@ -1345,7 +1345,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
         <button
           type="button"
           onClick={() => setShowMore(!showMore)}
-          className="text-xs text-[#d2d2d7] hover:text-[#98989d] font-semibold flex items-center gap-1"
+          className="text-xs text-[#d2d2d7] hover:text-[#86868b] font-semibold flex items-center gap-1"
         >
           <svg className={`w-3.5 h-3.5 transition-transform ${showMore ? 'rotate-180' : ''}`}
             fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1358,7 +1358,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
             {otherCols.map((col) => (
               <div key={col.name}>
                 <label className="block text-[10px] font-bold text-[#d2d2d7] mb-1">
-                  {colLabel(col.name)} <span className="text-[9px] text-[#545456]">{col.name}</span>
+                  {colLabel(col.name)} <span className="text-[9px] text-[#c7c7cc]">{col.name}</span>
                 </label>
                 {isJsonColumn(col.type) ? (
                   <textarea
@@ -1397,7 +1397,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
       {/* 追加ボタン */}
       <div className="flex gap-3 justify-end pt-1">
         <button onClick={onCancel}
-          className="px-4 py-2 text-sm text-[#d2d2d7] hover:text-[#98989d] transition-colors font-semibold">
+          className="px-4 py-2 text-sm text-[#d2d2d7] hover:text-[#86868b] transition-colors font-semibold">
           キャンセル
         </button>
         <button
@@ -1405,8 +1405,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
           disabled={!hasPriority || saving}
           className={`px-6 py-2.5 text-sm font-bold rounded-lg  transition-all flex items-center gap-1.5
             ${hasPriority && !saving
-              ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200'
-              : 'bg-white/[0.08] text-[#d2d2d7] cursor-not-allowed'
+              ? 'bg-emerald-600 text-[#1d1d1f] hover:bg-emerald-700 shadow-emerald-200'
+              : 'bg-black/[0.04] text-[#d2d2d7] cursor-not-allowed'
             }`}
         >
           {saving ? (
@@ -1436,8 +1436,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 function FieldSection({ title, subtitle, color, open, onToggle, badge, children }) {
   const colorMap = {
     rose: { bg: 'bg-rose-50', border: 'border-rose-200', badge: 'bg-rose-100 text-rose-600', icon: 'text-rose-600' },
-    amber: { bg: 'bg-[#ffd60a]/[0.08]', border: 'border-[#ffd60a]/20', badge: 'bg-amber-100 text-[#ffd60a]', icon: 'text-[#ffd60a]' },
-    slate: { bg: 'bg-white/[0.08]', border: 'border-white/[0.08]', badge: 'bg-white/[0.08] text-[#98989d]', icon: 'text-[#d2d2d7]' },
+    amber: { bg: 'bg-[#ff9500]/[0.08]', border: 'border-[#ff9500]/20', badge: 'bg-amber-100 text-[#ff9500]', icon: 'text-[#ff9500]' },
+    slate: { bg: 'bg-black/[0.04]', border: 'border-black/[0.06]', badge: 'bg-black/[0.04] text-[#86868b]', icon: 'text-[#d2d2d7]' },
   };
   const c = colorMap[color] || colorMap.slate;
 
@@ -1450,8 +1450,8 @@ function FieldSection({ title, subtitle, color, open, onToggle, badge, children 
             {badge}
           </span>
           <div className="text-left">
-            <div className="text-sm font-bold text-[#f5f5f7]">{title}</div>
-            <div className="text-[11px] text-[#545456]">{subtitle}</div>
+            <div className="text-sm font-bold text-[#1d1d1f]">{title}</div>
+            <div className="text-[11px] text-[#c7c7cc]">{subtitle}</div>
           </div>
         </div>
         <svg className={`w-5 h-5 ${c.icon} transition-transform ${open ? 'rotate-180' : ''}`}
@@ -1460,7 +1460,7 @@ function FieldSection({ title, subtitle, color, open, onToggle, badge, children 
         </svg>
       </button>
       {open && (
-        <div className="px-5 py-5 bg-white/[0.08]">
+        <div className="px-5 py-5 bg-black/[0.04]">
           {children}
         </div>
       )}
@@ -1548,26 +1548,26 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
     }
   };
 
-  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-white/[0.08] rounded-lg bg-white
-    text-[#f5f5f7] transition-all hover:border-white/[0.12] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/20 outline-none`;
+  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-black/[0.06] rounded-lg bg-white
+    text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 outline-none`;
 
   return (
     <div className="md:col-span-2">
       {/* モード切替タブ */}
-      <div className="flex items-center gap-0 mb-2 bg-white/[0.08] rounded-lg p-0.5 w-fit">
+      <div className="flex items-center gap-0 mb-2 bg-black/[0.04] rounded-lg p-0.5 w-fit">
         <button type="button" onClick={() => setMode('simple')}
           className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
             mode === 'simple'
-              ? 'bg-white/[0.08] text-[#f5f5f7] '
-              : 'text-[#d2d2d7] hover:text-[#98989d]'
+              ? 'bg-white text-[#1d1d1f] '
+              : 'text-[#d2d2d7] hover:text-[#86868b]'
           }`}>
           📝 テキスト入力
         </button>
         <button type="button" onClick={() => setMode('math')}
           className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
             mode === 'math'
-              ? 'bg-white/[0.08] text-[#ff375f] '
-              : 'text-[#d2d2d7] hover:text-[#98989d]'
+              ? 'bg-black/[0.04] text-[#fc3c44] '
+              : 'text-[#d2d2d7] hover:text-[#86868b]'
           }`}>
           🔢 数式入力
         </button>
@@ -1577,13 +1577,13 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
       {mode === 'math' && (
         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
           <button type="button" onClick={wrapWithDollar}
-            className="px-2 py-1 text-[11px] font-bold bg-[#ff375f]/[0.08] text-[#ff375f] rounded-lg hover:bg-[#ff375f]/[0.12] transition-colors border border-[#ff375f]/20"
+            className="px-2 py-1 text-[11px] font-bold bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-lg hover:bg-[#fc3c44]/[0.12] transition-colors border border-[#fc3c44]/20"
             title="選択テキストを数式$...$で囲む">
             $ 数式 $
           </button>
           <button type="button" onClick={() => setShowPalette(!showPalette)}
             className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-colors border ${
-              showPalette ? 'bg-[#ff375f] text-white border-red-600' : 'bg-white/[0.08] text-[#545456] border-white/[0.08] hover:bg-[#1c1c1e]/[0.04]'
+              showPalette ? 'bg-[#fc3c44] text-white border-red-600' : 'bg-black/[0.04] text-[#c7c7cc] border-black/[0.06] hover:bg-black/[0.03]'
             }`}>
             {showPalette ? '▼ パレット閉じる' : '▶ 数式パレット'}
           </button>
@@ -1593,15 +1593,15 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
 
       {/* 数式パレット */}
       {mode === 'math' && showPalette && (
-        <div className="mb-2 p-3 bg-gradient-to-b from-red-50 to-white rounded-lg border border-[#ff375f]/20 space-y-2">
+        <div className="mb-2 p-3 bg-gradient-to-b from-red-50 to-white rounded-lg border border-[#fc3c44]/20 space-y-2">
           {MATH_SYMBOLS.map((g) => (
             <div key={g.group}>
-              <div className="text-[9px] font-bold text-[#ff375f] mb-1 tracking-wider">{g.group}</div>
+              <div className="text-[9px] font-bold text-[#fc3c44] mb-1 tracking-wider">{g.group}</div>
               <div className="flex flex-wrap gap-1">
                 {g.items.map((sym) => (
                   <button key={sym.insert} type="button"
                     onClick={() => insertAtCursor(sym.insert)}
-                    className="px-2 py-1 text-xs bg-white/[0.08] border border-[#ff375f]/20 rounded-md hover:bg-[#ff375f]/[0.08] hover:border-red-700 transition-colors text-[#f5f5f7] font-mono"
+                    className="px-2 py-1 text-xs bg-black/[0.04] border border-[#fc3c44]/20 rounded-md hover:bg-[#fc3c44]/[0.08] hover:border-red-700 transition-colors text-[#1d1d1f] font-mono"
                     title={`${sym.label}: ${sym.insert}`}>
                     {sym.display || sym.label}
                   </button>
@@ -1642,8 +1642,8 @@ function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
 function SmartField({ field, value, onChange, allValues, onBlur }) {
   const { name, label, type, help, options, rows, min, max, step, depends_on } = field;
 
-  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-white/[0.08] rounded-lg bg-white
-    text-[#f5f5f7] transition-all hover:border-white/[0.12] focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/20 outline-none`;
+  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-black/[0.06] rounded-lg bg-white
+    text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 outline-none`;
 
   const isWide = type === 'textarea' || type === 'json' || type === 'rich_textarea';
 
@@ -1655,9 +1655,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
 
     return (
       <div className={isWide ? 'md:col-span-2' : ''}>
-        <label className="block text-[11px] font-bold text-[#98989d] mb-1.5 tracking-[0.08em]">
+        <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
           {label}
-          <span className="text-[10px] font-normal text-[#545456] ml-2 normal-case tracking-normal">{name}</span>
+          <span className="text-[10px] font-normal text-[#c7c7cc] ml-2 normal-case tracking-normal">{name}</span>
         </label>
 
         {/* 候補チップ（親が選択済みのとき表示） */}
@@ -1668,8 +1668,8 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
                 onClick={() => onChange(opt)}
                 className={`px-2 py-0.5 text-[11px] rounded-lg border transition-all ${
                   value === opt
-                    ? 'bg-[#ff375f] text-white border-red-600'
-                    : 'bg-white/[0.08] text-[#545456] border-white/[0.08] hover:border-red-700 hover:text-[#ff375f]'
+                    ? 'bg-[#fc3c44] text-white border-red-600'
+                    : 'bg-black/[0.04] text-[#c7c7cc] border-black/[0.06] hover:border-red-700 hover:text-[#fc3c44]'
                 }`}>
                 {opt}
               </button>
@@ -1683,16 +1683,16 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={parentVal ? `候補から選択 or 新しい分野を自由入力` : '先に教科を選択してください'}
-          className={`${baseInputClass} ${isCustom ? 'border-emerald-300 bg-[#30d158]/[0.08]/30' : ''}`}
+          className={`${baseInputClass} ${isCustom ? 'border-emerald-300 bg-[#34c759]/[0.08]/30' : ''}`}
         />
         {isCustom && (
-          <p className="text-[10px] text-[#30d158] mt-0.5 flex items-center gap-1">
+          <p className="text-[10px] text-[#34c759] mt-0.5 flex items-center gap-1">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
             新しい分野「{value}」を追加します
           </p>
         )}
         {!parentVal && depends_on && (
-          <p className="text-[10px] text-[#ffd60a] mt-1">⬆ 教科を先に選択すると候補が表示されます</p>
+          <p className="text-[10px] text-[#ff9500] mt-1">⬆ 教科を先に選択すると候補が表示されます</p>
         )}
       </div>
     );
@@ -1702,9 +1702,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
   if (type === 'rich_textarea') {
     return (
       <div className="md:col-span-2">
-        <label className="block text-[11px] font-bold text-[#98989d] mb-1.5 tracking-[0.08em]">
+        <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
           {label}
-          <span className="text-[10px] font-normal text-[#545456] ml-2 normal-case tracking-normal">{name}</span>
+          <span className="text-[10px] font-normal text-[#c7c7cc] ml-2 normal-case tracking-normal">{name}</span>
         </label>
         <RichTextArea value={value} onChange={onChange} rows={rows} help={help} name={name} onBlur={onBlur} />
       </div>
@@ -1713,9 +1713,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
 
   return (
     <div className={isWide ? 'md:col-span-2' : ''}>
-      <label className="block text-[11px] font-bold text-[#98989d] mb-1.5 tracking-[0.08em]">
+      <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
         {label}
-        <span className="text-[10px] font-normal text-[#545456] ml-2 normal-case tracking-normal">{name}</span>
+        <span className="text-[10px] font-normal text-[#c7c7cc] ml-2 normal-case tracking-normal">{name}</span>
       </label>
 
       {type === 'select' && options ? (
@@ -1750,9 +1750,9 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
             step={step ?? 0.05}
             value={value || min || 0}
             onChange={(e) => onChange(e.target.value)}
-            className="flex-1 h-2 bg-white/[0.08] rounded-full appearance-none accent-red-500"
+            className="flex-1 h-2 bg-black/[0.04] rounded-full appearance-none accent-red-500"
           />
-          <span className="text-sm font-mono text-[#ff375f] font-bold w-12 text-right">
+          <span className="text-sm font-mono text-[#fc3c44] font-bold w-12 text-right">
             {Number(value || 0).toFixed(2)}
           </span>
         </div>
