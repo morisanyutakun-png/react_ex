@@ -177,317 +177,143 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-20 pb-28 sm:pb-20 overflow-hidden">
 
-      {/* ── 背景パターン: ボールド・タイポグラフィック・メッシュ ── */}
+      {/* ── 背景: Apple-inspired Ambient Canvas ── */}
+      {/*
+        心理学・人間工学に基づく設計:
+        ・色彩心理: ローズ(温かみ・安心) + ラベンダー(創造性) + ソフトブルー(信頼・集中)
+        ・ヒックの法則: 要素数を絞り認知負荷を最小化
+        ・有機的形状: 角のないブロブで親しみやすさと高級感を両立
+        ・呼吸アニメーション: ゆっくりした膨張収縮で心拍を落ち着かせフロー状態を誘導
+        ・Von Restorff効果: 1つだけ記憶に残るウォーターマーク
+      */}
       <div className="absolute inset-0 pointer-events-none z-0 select-none" aria-hidden="true">
+
+        {/* ── 大型グラデーション・オーブ群（Apple macOS風） ── */}
+        {/* 左上: ウォームローズ */}
+        <div className="absolute -top-[20%] -left-[15%] w-[70vw] h-[70vw] max-w-[700px] max-h-[700px] rounded-full opacity-[0.18]"
+             style={{
+               background: 'radial-gradient(circle, #f472b6 0%, #e8457a 30%, #c084fc 60%, transparent 80%)',
+               animation: 'orbBreathe1 12s ease-in-out infinite',
+             }} />
+        {/* 右上: クールインディゴ */}
+        <div className="absolute -top-[10%] -right-[20%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full opacity-[0.14]"
+             style={{
+               background: 'radial-gradient(circle, #818cf8 0%, #6366f1 30%, #c084fc 55%, transparent 80%)',
+               animation: 'orbBreathe2 15s ease-in-out infinite',
+             }} />
+        {/* 中央下: ゴールド・アンバー（温かみ・達成感） */}
+        <div className="absolute -bottom-[15%] left-[20%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.10]"
+             style={{
+               background: 'radial-gradient(circle, #fbbf24 0%, #f59e0b 25%, #f472b6 50%, transparent 78%)',
+               animation: 'orbBreathe3 18s ease-in-out infinite',
+             }} />
+        {/* 右下: ソフトティール（成長・学び） */}
+        <div className="absolute -bottom-[8%] -right-[10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full opacity-[0.08]"
+             style={{
+               background: 'radial-gradient(circle, #34d399 0%, #818cf8 40%, transparent 75%)',
+               animation: 'orbBreathe1 20s ease-in-out infinite',
+             }} />
+
+        {/* ── SVGレイヤー ── */}
         <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
           <defs>
-            {/* ── グリッドパターン（大きめ・くっきり） ── */}
-            <pattern id="bgGrid" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
-              <line x1="0" y1="60" x2="60" y2="60" stroke="#c084fc" strokeWidth="0.5" opacity="0.08" />
-              <line x1="60" y1="0" x2="60" y2="60" stroke="#c084fc" strokeWidth="0.5" opacity="0.08" />
-              <circle cx="60" cy="60" r="1.5" fill="#e8457a" opacity="0.12" />
-            </pattern>
-            {/* ── 大きな六角形パターン ── */}
-            <pattern id="bgHexLarge" x="0" y="0" width="120" height="104" patternUnits="userSpaceOnUse">
-              <path d="M60 0 L120 26 L120 78 L60 104 L0 78 L0 26 Z" fill="none" stroke="#e8457a" strokeWidth="0.8" opacity="0.07" />
-            </pattern>
-            {/* ── グラデーション群 ── */}
-            <radialGradient id="glow1" cx="20%" cy="20%" r="50%">
-              <stop offset="0%" stopColor="#f472b6" stopOpacity="0.18" />
-              <stop offset="60%" stopColor="#c084fc" stopOpacity="0.08" />
-              <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
-            </radialGradient>
-            <radialGradient id="glow2" cx="80%" cy="75%" r="45%">
-              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.15" />
-              <stop offset="60%" stopColor="#c084fc" stopOpacity="0.06" />
-              <stop offset="100%" stopColor="#f472b6" stopOpacity="0" />
-            </radialGradient>
-            <radialGradient id="glow3" cx="60%" cy="30%" r="35%">
-              <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.08" />
-              <stop offset="100%" stopColor="transparent" stopOpacity="0" />
-            </radialGradient>
-            <linearGradient id="ringG1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#e8457a" stopOpacity="0.22" />
-              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.15" />
-              <stop offset="100%" stopColor="#818cf8" stopOpacity="0.08" />
+            <linearGradient id="orbRing1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#e8457a" stopOpacity="0.18" />
+              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="0.06" />
             </linearGradient>
-            <linearGradient id="ringG2" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.18" />
-              <stop offset="100%" stopColor="#e8457a" stopOpacity="0.06" />
+            <linearGradient id="orbRing2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.14" />
+              <stop offset="100%" stopColor="#f472b6" stopOpacity="0.05" />
             </linearGradient>
-            <linearGradient id="textGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#e8457a" />
-              <stop offset="50%" stopColor="#c084fc" />
-              <stop offset="100%" stopColor="#818cf8" />
+            <linearGradient id="wmGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#e8457a" stopOpacity="1" />
+              <stop offset="40%" stopColor="#c084fc" stopOpacity="1" />
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="1" />
             </linearGradient>
-            <linearGradient id="textGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#f472b6" />
-              <stop offset="100%" stopColor="#818cf8" />
-            </linearGradient>
-            {/* フェード用マスク */}
-            <radialGradient id="fadeMask" cx="50%" cy="42%" r="65%">
-              <stop offset="0%" stopColor="white" stopOpacity="1" />
-              <stop offset="60%" stopColor="white" stopOpacity="0.7" />
-              <stop offset="100%" stopColor="white" stopOpacity="0" />
-            </radialGradient>
-            <mask id="centerFade">
-              <rect width="100%" height="100%" fill="url(#fadeMask)" />
-            </mask>
           </defs>
 
-          {/* ── グラデーションオーブ（大きめ） ── */}
-          <rect width="100%" height="100%" fill="url(#glow1)" />
-          <rect width="100%" height="100%" fill="url(#glow2)" />
-          <rect width="100%" height="100%" fill="url(#glow3)" />
-
-          {/* ── グリッドライン ── */}
-          <rect width="100%" height="100%" fill="url(#bgGrid)" mask="url(#centerFade)" />
-
-          {/* ── 大六角メッシュ ── */}
-          <rect width="100%" height="100%" fill="url(#bgHexLarge)" mask="url(#centerFade)" />
-
-          {/* ══════ 巨大タイポグラフィ・ウォーターマーク ══════ */}
-
-          {/* ═══ 左上コーナー — ボールド・アクセント ═══ */}
-          {/* 巨大グラデーション円弧 */}
-          <circle cx="0" cy="0" r="280" fill="none" stroke="url(#ringG1)" strokeWidth="2.5" opacity="0.25" />
-          <circle cx="0" cy="0" r="220" fill="none" stroke="url(#textGrad1)" strokeWidth="1.5" strokeDasharray="20 10" opacity="0.18" />
-          <circle cx="0" cy="0" r="160" fill="none" stroke="#e8457a" strokeWidth="1" opacity="0.15" />
-          {/* 放射状グロー — 左上 */}
-          <circle cx="-30" cy="-30" r="200" fill="url(#glow1)" opacity="0.6" />
-          {/* 左上大文字 — AI */}
-          <text x="-1%" y="24%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="240" fontWeight="900" fill="url(#textGrad1)" opacity="0.07" letterSpacing="-0.02em">
-            AI
+          {/* ── ウォーターマーク: "REM" — 画面中央にひとつだけ大きく ── */}
+          <text x="50%" y="48%" textAnchor="middle" dominantBaseline="central"
+                fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="320" fontWeight="900" letterSpacing="-0.02em"
+                fill="url(#wmGrad)" opacity="0.035">
+            REM
           </text>
-          {/* "GENERATE" テキスト — 左上 斜め */}
-          <text x="2%" y="8%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="44" fontWeight="900" letterSpacing="0.25em" fill="url(#textGrad1)" opacity="0.08"
-                transform="rotate(-15, 50, 50)">
-            GENERATE
+
+          {/* ── サブテキスト: タグライン ── */}
+          <text x="50%" y="60%" textAnchor="middle"
+                fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="18" fontWeight="700" letterSpacing="0.55em"
+                fill="url(#wmGrad)" opacity="0.06">
+            AI-POWERED EXAM CREATION
           </text>
-          {/* サブテキスト */}
-          <text x="1%" y="34%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="18" fontWeight="700" letterSpacing="0.4em" fill="#c084fc" opacity="0.12">
-            RETRIEVAL
-          </text>
-          {/* 装飾ライン群 — 左上から放射 */}
-          <line x1="0" y1="80" x2="180" y2="80" stroke="#e8457a" strokeWidth="2" opacity="0.15" />
-          <line x1="0" y1="120" x2="140" y2="120" stroke="#c084fc" strokeWidth="1.5" opacity="0.12" />
-          <line x1="0" y1="160" x2="100" y2="160" stroke="#818cf8" strokeWidth="1" opacity="0.10" />
-          <line x1="80" y1="0" x2="80" y2="180" stroke="#e8457a" strokeWidth="2" opacity="0.12" />
-          <line x1="120" y1="0" x2="120" y2="140" stroke="#f472b6" strokeWidth="1.5" opacity="0.10" />
-          {/* 左上ドットクラスター */}
-          <circle cx="50" cy="50" r="6" fill="#e8457a" opacity="0.20" />
-          <circle cx="90" cy="35" r="4" fill="#c084fc" opacity="0.18" />
-          <circle cx="35" cy="95" r="5" fill="#f472b6" opacity="0.15" />
-          <circle cx="140" cy="60" r="3" fill="#818cf8" opacity="0.20" />
-          <circle cx="60" cy="140" r="3.5" fill="#c084fc" opacity="0.16" />
-          {/* 左上ダイヤモンド */}
-          <g transform="rotate(45, 160, 40)">
-            <rect x="130" y="10" width="60" height="60" fill="none" stroke="url(#ringG1)" strokeWidth="1.8" opacity="0.18" />
-          </g>
-          {/* 左上十字 — 大きめ */}
-          <g stroke="#e8457a" strokeWidth="2" opacity="0.20">
-            <line x1="200" y1="20" x2="200" y2="60" />
-            <line x1="180" y1="40" x2="220" y2="40" />
+
+          {/* ── ソフト・オービットリング（呼吸アニメーション） ── */}
+          <g opacity="0.5">
+            {/* 内側リング — 穏やかな呼吸 */}
+            <ellipse cx="50%" cy="46%" rx="180" ry="160" fill="none"
+                     stroke="url(#orbRing1)" strokeWidth="0.8">
+              <animate attributeName="rx" values="180;195;180" dur="10s" repeatCount="indefinite" />
+              <animate attributeName="ry" values="160;172;160" dur="10s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.5;0.7;0.5" dur="10s" repeatCount="indefinite" />
+            </ellipse>
+            {/* 中間リング — 逆位相の呼吸 */}
+            <ellipse cx="50%" cy="46%" rx="280" ry="240" fill="none"
+                     stroke="url(#orbRing2)" strokeWidth="0.5" strokeDasharray="16 24">
+              <animate attributeName="rx" values="280;265;280" dur="13s" repeatCount="indefinite" />
+              <animate attributeName="ry" values="240;228;240" dur="13s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.4;0.6;0.4" dur="13s" repeatCount="indefinite" />
+            </ellipse>
+            {/* 外側リング — ゆったり */}
+            <ellipse cx="50%" cy="46%" rx="400" ry="340" fill="none"
+                     stroke="url(#orbRing1)" strokeWidth="0.3" strokeDasharray="8 32">
+              <animate attributeName="rx" values="400;412;400" dur="18s" repeatCount="indefinite" />
+              <animate attributeName="ry" values="340;350;340" dur="18s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.25;0.4;0.25" dur="18s" repeatCount="indefinite" />
+            </ellipse>
           </g>
 
-          {/* ═══ 右上コーナー — ボールド・アクセント ═══ */}
-          {/* 巨大グラデーション円弧 */}
-          <circle cx="100%" cy="0" r="250" fill="none" stroke="url(#ringG2)" strokeWidth="2.5" opacity="0.22" />
-          <circle cx="100%" cy="0" r="190" fill="none" stroke="url(#textGrad2)" strokeWidth="1.5" strokeDasharray="16 12" opacity="0.16" />
-          <circle cx="100%" cy="0" r="130" fill="none" stroke="#818cf8" strokeWidth="1.2" opacity="0.14" />
-          {/* 放射状グロー — 右上 */}
-          <circle cx="105%" cy="-30" r="180" fill="url(#glow2)" opacity="0.5" />
-          {/* 右上大文字 — RAG */}
-          <text x="68%" y="26%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="200" fontWeight="900" fill="url(#textGrad2)" opacity="0.06" letterSpacing="0.05em"
-                transform="rotate(8, 700, 100)">
-            RAG
-          </text>
-          {/* "AUGMENTED" テキスト — 右上 斜め */}
-          <text x="74%" y="6%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="40" fontWeight="900" letterSpacing="0.3em" fill="url(#textGrad2)" opacity="0.08"
-                transform="rotate(12, 650, 40)">
-            SMART
-          </text>
-          {/* サブテキスト */}
-          <text x="78%" y="35%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="16" fontWeight="700" letterSpacing="0.35em" fill="#818cf8" opacity="0.11"
-                textAnchor="end"
-                transform="rotate(8, 700, 200)">
-            AUGMENTED
-          </text>
-          {/* 装飾ライン群 — 右上から放射 */}
-          <line x1="100%" y1="70" x2="75%" y2="70" stroke="#818cf8" strokeWidth="2" opacity="0.15" />
-          <line x1="100%" y1="110" x2="80%" y2="110" stroke="#c084fc" strokeWidth="1.5" opacity="0.12" />
-          <line x1="100%" y1="150" x2="85%" y2="150" stroke="#f472b6" strokeWidth="1" opacity="0.10" />
-          <line x1="92%" y1="0" x2="92%" y2="180" stroke="#818cf8" strokeWidth="2" opacity="0.12" />
-          <line x1="88%" y1="0" x2="88%" y2="130" stroke="#c084fc" strokeWidth="1.5" opacity="0.10" />
-          {/* 右上ドットクラスター */}
-          <circle cx="93%" cy="45" r="6" fill="#818cf8" opacity="0.20" />
-          <circle cx="89%" cy="30" r="4" fill="#c084fc" opacity="0.18" />
-          <circle cx="95%" cy="90" r="5" fill="#e8457a" opacity="0.15" />
-          <circle cx="85%" cy="55" r="3.5" fill="#f472b6" opacity="0.18" />
-          <circle cx="91%" cy="130" r="3" fill="#818cf8" opacity="0.16" />
-          {/* 右上ダイヤモンド */}
-          <g transform="rotate(45, 88%, 50)">
-            <rect x="84%" y="20" width="55" height="55" fill="none" stroke="url(#ringG2)" strokeWidth="1.8" opacity="0.16" />
+          {/* ── 左上アクセント: 優しいカーブ + テキスト ── */}
+          <g opacity="0.5">
+            <path d="M0 180 Q90 90 180 0" fill="none" stroke="url(#orbRing1)" strokeWidth="1.2">
+              <animate attributeName="opacity" values="0.5;0.75;0.5" dur="8s" repeatCount="indefinite" />
+            </path>
+            <path d="M0 280 Q140 140 280 0" fill="none" stroke="url(#orbRing1)" strokeWidth="0.6" opacity="0.5" />
           </g>
-          {/* 右上十字 — 大きめ */}
-          <g stroke="#818cf8" strokeWidth="2" opacity="0.20">
-            <line x1="78%" y1="25" x2="78%" y2="65" />
-            <line x1="75.5%" y1="45" x2="80.5%" y2="45" />
+          <text x="3%" y="5.5%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="13" fontWeight="700" letterSpacing="0.35em" fill="#c084fc" opacity="0.15">
+            AI · GENERATE
+          </text>
+
+          {/* ── 右上アクセント: 優しいカーブ + テキスト ── */}
+          <g opacity="0.5">
+            <path d="M100%,180 Q calc(100% - 90px),90 calc(100% - 180px),0" fill="none" stroke="url(#orbRing2)" strokeWidth="1.2">
+              <animate attributeName="opacity" values="0.5;0.7;0.5" dur="9s" repeatCount="indefinite" />
+            </path>
+            <path d="M100%,260 Q calc(100% - 130px),130 calc(100% - 260px),0" fill="none" stroke="url(#orbRing2)" strokeWidth="0.5" opacity="0.4" />
           </g>
-          {/* 右上三角形 */}
-          <polygon points="95%,170 100%,170 100%,130" fill="none" stroke="url(#ringG2)" strokeWidth="1.5" opacity="0.14" />
-
-          {/* ═══ 中央タイポグラフィ ═══ */}
-
-          {/* "EXAM" — 画面上部 */}
-          <text x="50%" y="16%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="160" fontWeight="900" letterSpacing="0.18em" fill="url(#textGrad1)" opacity="0.04">
-            EXAM
+          <text x="97%" y="5.5%" textAnchor="end" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="13" fontWeight="700" letterSpacing="0.35em" fill="#818cf8" opacity="0.15">
+            RAG · RETRIEVAL
           </text>
 
-          {/* "POWERED" — 中央右 斜め */}
-          <text x="78%" y="52%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="100" fontWeight="900" letterSpacing="0.1em" fill="url(#textGrad2)" opacity="0.035"
-                transform="rotate(-10, 600, 380)">
-            POWERED
-          </text>
-
-          {/* ── 散りばめキーワード — AI / 勉強 / 試験テーマ ── */}
-
-          {/* 左中段 — ニューラルネット風ノード記号 */}
-          <text x="5%" y="50%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="60" fontWeight="800" fill="url(#textGrad1)" opacity="0.06">
-            ◇
-          </text>
-          <text x="3%" y="62%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="14" fontWeight="700" letterSpacing="0.3em" fill="#c084fc" opacity="0.10">
-            NEURAL
-          </text>
-
-          {/* 右下 — 学習テーマ */}
-          <text x="72%" y="82%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="80" fontWeight="900" fill="url(#textGrad2)" opacity="0.05">
-            Q&amp;A
-          </text>
-
-          {/* 左下 — 知識グラフ風 */}
-          <text x="8%" y="80%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="50" fontWeight="800" fill="url(#textGrad1)" opacity="0.06">
-            ⬡
-          </text>
-          <text x="4%" y="88%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="16" fontWeight="700" letterSpacing="0.2em" fill="#e8457a" opacity="0.09">
-            KNOWLEDGE
-          </text>
-
-          {/* 中央下 — PDF */}
-          <text x="38%" y="70%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="36" fontWeight="800" letterSpacing="0.15em" fill="#c084fc" opacity="0.06">
-            .pdf
-          </text>
-
-          {/* 右中段 — テンプレート */}
-          <text x="88%" y="58%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="14" fontWeight="700" letterSpacing="0.25em" fill="#818cf8" opacity="0.10"
-                transform="rotate(90, 92%, 58%)">
-            TEMPLATE
-          </text>
-
-          {/* 分数やΣは1つだけ — 数学のアクセントとして残す */}
-          <text x="25%" y="72%" fontFamily="'Times New Roman', Georgia, serif"
-                fontSize="70" fontWeight="400" fill="#c084fc" opacity="0.05">
-            Σ
-          </text>
-
-          {/* "RAPID · EXAM · MAKER" — 下部フッター */}
-          <text x="50%" y="95%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="24" fontWeight="900" letterSpacing="0.6em" fill="url(#textGrad1)" opacity="0.07">
-            RAPID · EXAM · MAKER
-          </text>
-
-          {/* ══════ 大きな幾何学装飾 ══════ */}
-
-          {/* 巨大リング群 — 太めストローク */}
-          <g opacity="0.7">
-            <circle cx="50%" cy="42%" r="160" fill="none" stroke="url(#ringG1)" strokeWidth="1.5">
-              <animateTransform attributeName="transform" type="rotate" from="0 50% 42%" to="360 50% 42%" dur="80s" repeatCount="indefinite" />
+          {/* ── フローティング・ライトパーティクル ── */}
+          <g opacity="0.55">
+            <circle r="2.5" fill="#e8457a" opacity="0.25">
+              <animateMotion dur="22s" repeatCount="indefinite" path="M120,200 C250,100 450,350 550,180 C650,60 200,380 120,200" />
             </circle>
-            <circle cx="50%" cy="42%" r="240" fill="none" stroke="url(#ringG2)" strokeWidth="1" strokeDasharray="12 8">
-              <animateTransform attributeName="transform" type="rotate" from="360 50% 42%" to="0 50% 42%" dur="100s" repeatCount="indefinite" />
+            <circle r="2" fill="#c084fc" opacity="0.20">
+              <animateMotion dur="28s" repeatCount="indefinite" path="M520,300 C400,150 200,280 140,420 C80,520 480,370 520,300" />
             </circle>
-            <circle cx="50%" cy="42%" r="340" fill="none" stroke="url(#ringG1)" strokeWidth="0.8" strokeDasharray="6 18">
-              <animateTransform attributeName="transform" type="rotate" from="0 50% 42%" to="360 50% 42%" dur="130s" repeatCount="indefinite" />
+            <circle r="1.8" fill="#818cf8" opacity="0.18">
+              <animateMotion dur="32s" repeatCount="indefinite" path="M300,100 C440,260 100,380 250,480 C400,520 350,140 300,100" />
             </circle>
-            <circle cx="50%" cy="42%" r="460" fill="none" stroke="url(#ringG2)" strokeWidth="0.5" strokeDasharray="4 24">
-              <animateTransform attributeName="transform" type="rotate" from="360 50% 42%" to="0 50% 42%" dur="160s" repeatCount="indefinite" />
-            </circle>
-          </g>
-
-          {/* 大きなコーナー装飾弧（左上は上のセクションで対応済み） */}
-
-          {/* 右下コーナー */}
-          <g opacity="0.1">
-            <line x1="100%" y1="70%" x2="70%" y2="100%" stroke="#c084fc" strokeWidth="0.6" />
-            <line x1="100%" y1="80%" x2="80%" y2="100%" stroke="#e8457a" strokeWidth="0.4" />
-            <line x1="100%" y1="90%" x2="90%" y2="100%" stroke="#818cf8" strokeWidth="0.3" />
-          </g>
-
-          {/* 左下コーナー — 幾何学ドット群 */}
-          <g opacity="0.15">
-            <circle cx="8%" cy="85%" r="3" fill="#e8457a" />
-            <circle cx="12%" cy="88%" r="2" fill="#c084fc" />
-            <circle cx="6%" cy="90%" r="1.5" fill="#818cf8" />
-            <circle cx="14%" cy="84%" r="1" fill="#f472b6" />
-            <circle cx="10%" cy="92%" r="2.5" fill="#c084fc" />
-          </g>
-
-          {/* ── フローティング・パーティクル（大きめ） ── */}
-          <g opacity="0.7">
-            <circle r="3.5" fill="#e8457a" opacity="0.2">
-              <animateMotion dur="16s" repeatCount="indefinite" path="M100,180 C250,80 450,320 550,130 C650,40 180,380 100,180" />
-            </circle>
-            <circle r="2.5" fill="#c084fc" opacity="0.18">
-              <animateMotion dur="20s" repeatCount="indefinite" path="M520,280 C380,130 180,260 130,420 C80,520 470,370 520,280" />
-            </circle>
-            <circle r="3" fill="#818cf8" opacity="0.15">
-              <animateMotion dur="24s" repeatCount="indefinite" path="M280,80 C430,240 80,360 230,470 C380,520 340,130 280,80" />
-            </circle>
-            <circle r="2" fill="#f472b6" opacity="0.2">
-              <animateMotion dur="18s" repeatCount="indefinite" path="M620,340 C500,180 280,400 180,230 C80,80 520,460 620,340" />
-            </circle>
-            <circle r="4" fill="#fbbf24" opacity="0.08">
-              <animateMotion dur="30s" repeatCount="indefinite" path="M350,150 C500,300 150,400 300,500 C450,550 400,100 350,150" />
-            </circle>
-          </g>
-
-          {/* 十字マーカー */}
-          <g opacity="0.12" stroke="#c084fc" strokeWidth="1">
-            <line x1="25%" y1="28%" x2="25%" y2="34%" />
-            <line x1="22%" y1="31%" x2="28%" y2="31%" />
-          </g>
-          <g opacity="0.10" stroke="#e8457a" strokeWidth="1">
-            <line x1="78%" y1="72%" x2="78%" y2="78%" />
-            <line x1="75%" y1="75%" x2="81%" y2="75%" />
-          </g>
-
-          {/* ダイヤモンド装飾 */}
-          <g opacity="0.08" transform="rotate(45, 120, 500)">
-            <rect x="100" y="480" width="40" height="40" fill="none" stroke="url(#ringG1)" strokeWidth="1" />
-          </g>
-          <g opacity="0.06" transform="rotate(45, 680, 120)">
-            <rect x="660" y="100" width="50" height="50" fill="none" stroke="url(#ringG2)" strokeWidth="0.8" />
           </g>
         </svg>
 
-        {/* ソフトグラス・オーバーレイ — 中央のコンテンツ部分だけ読みやすく */}
-        <div className="absolute inset-x-[15%] inset-y-[20%] bg-[#f5f5f7]/40 blur-3xl rounded-full" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#f5f5f7]/15 to-[#f5f5f7]/40" />
+        {/* ── コンテンツ領域のソフトフォグ ── */}
+        <div className="absolute inset-x-[10%] inset-y-[22%] bg-[#f5f5f7]/50 blur-[80px] rounded-full" />
       </div>
 
       <div className="relative z-10 max-w-[540px] w-full mx-auto">
