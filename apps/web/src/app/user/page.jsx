@@ -278,37 +278,26 @@ export default function UserModePage() {
   const [mode, setMode] = useState('auto'); // 'auto' | 'manual'
 
   /* ── ベース問題DB検索 ── */
-  const [baseSearchQuery, setBaseSearchQuery] = useState('');
-  const [baseSearchResults, setBaseSearchResults] = useState([]);
-  const [baseSearching, setBaseSearching] = useState(false);
+  const [baseFilterQuery, setBaseFilterQuery] = useState('');
   const [selectedBaseProblem, setSelectedBaseProblem] = useState(null);
   const baseSearchInputRef = useRef(null);
 
   /* ── テンプレート合致問題（自動取得） ── */
   const [matchedProblems, setMatchedProblems] = useState([]);
   const [matchedLoading, setMatchedLoading] = useState(false);
-  const [baseProblemTab, setBaseProblemTab] = useState('matched'); // 'matched' | 'search'
+
+  /* ── フィルタ済み問題リスト ── */
+  const filteredProblems = baseFilterQuery.trim()
+    ? matchedProblems.filter((item) => {
+        const q = baseFilterQuery.trim().toLowerCase();
+        const text = (item.stem || item.text || '').toLowerCase();
+        const topic = (item.topic || item.metadata?.field || '').toLowerCase();
+        return text.includes(q) || topic.includes(q);
+      })
+    : matchedProblems;
 
   /* ── ベース問題（過去問）参照: 選択された問題のテキストを sourceText として使う ── */
   const sourceText = selectedBaseProblem?.stem || selectedBaseProblem?.text || '';
-
-  /* ── DB検索関数 ── */
-  const doBaseSearch = useCallback(async () => {
-    const q = baseSearchQuery.trim();
-    if (!q) return;
-    setBaseSearching(true);
-    try {
-      const params = { q, limit: 10 };
-      // テンプレートの科目でフィルタ
-      if (subject) params.subject = subject;
-      const data = await searchProblems(params);
-      const items = data.results || data.problems || data || [];
-      setBaseSearchResults(Array.isArray(items) ? items : []);
-    } catch {
-      setBaseSearchResults([]);
-    }
-    setBaseSearching(false);
-  }, [baseSearchQuery, subject]);
 
   /* ── テンプレート合致問題を自動取得 ── */
   useEffect(() => {
@@ -581,10 +570,8 @@ export default function UserModePage() {
     setLlmOutput('');
     setStatus('');
     setSelectedBaseProblem(null);
-    setBaseSearchQuery('');
-    setBaseSearchResults([]);
+    setBaseFilterQuery('');
     setMatchedProblems([]);
-    setBaseProblemTab('matched');
     setQuestionFormat('standard');
   };
 
@@ -930,7 +917,7 @@ export default function UserModePage() {
                 <span className="text-[10px] text-[#aeaeb2] font-medium">（任意）</span>
               </div>
               <p className="text-[11px] text-[#86868b] mb-3 ml-8 leading-relaxed">
-                テンプレートに合った過去問を自動取得します。キーワード検索も可能です。
+                選択中のテンプレートに合致する過去問が表示されます
               </p>
 
               {/* 選択済み問題の表示 */}
@@ -982,232 +969,112 @@ export default function UserModePage() {
                 </div>
               ) : null}
 
-              {/* Apple-style セグメントタブ */}
-              <div className="flex p-0.5 rounded-xl bg-black/[0.04] mb-3">
-                <button
-                  onClick={() => setBaseProblemTab('matched')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-bold transition-all duration-300
-                    ${baseProblemTab === 'matched'
-                      ? 'bg-white text-[#1d1d1f] shadow-sm shadow-black/[0.06]'
-                      : 'text-[#86868b] hover:text-[#6e6e73]'
-                    }`}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                  </svg>
-                  おすすめ
-                  {matchedProblems.length > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-[#ff9500]/10 text-[#ff9500] text-[9px] font-bold min-w-[18px] text-center">
-                      {matchedProblems.length}
-                    </span>
+              {/* フィルタバー（科目ラベル + 絞り込み検索） */}
+              <div className="flex items-center gap-2 mb-3">
+                {/* 科目・分野ラベル */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  {subject && (
+                    <span className="px-2.5 py-1 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">{subject}</span>
                   )}
-                </button>
-                <button
-                  onClick={() => setBaseProblemTab('search')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-[10px] text-xs font-bold transition-all duration-300
-                    ${baseProblemTab === 'search'
-                      ? 'bg-white text-[#1d1d1f] shadow-sm shadow-black/[0.06]'
-                      : 'text-[#86868b] hover:text-[#6e6e73]'
-                    }`}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  キーワード検索
-                </button>
-              </div>
-
-              {/* ── おすすめタブ: テンプレート合致問題 ── */}
-              {baseProblemTab === 'matched' && (
-                <div className="animate-expand">
-                  {matchedLoading ? (
-                    <div className="flex flex-col items-center justify-center py-8 gap-2">
-                      <svg className="animate-spin h-5 w-5 text-[#ff9500]" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      <p className="text-[11px] text-[#aeaeb2]">テンプレートに合った過去問を取得中...</p>
-                    </div>
-                  ) : matchedProblems.length > 0 ? (
-                    <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
-                      <div className="flex items-center gap-2 px-1 mb-1">
-                        <span className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider">
-                          {subject && <span className="text-[#fc3c44]">{subject}</span>}
-                          {field && <span className="text-[#34c759]">{' / '}{field}</span>}
-                          {' — '}{matchedProblems.length} 件
-                        </span>
-                      </div>
-                      {matchedProblems.map((item, idx) => {
-                        const isSelected = selectedBaseProblem?.id === item.id;
-                        return (
-                          <button
-                            key={item.id ?? idx}
-                            onClick={() => setSelectedBaseProblem(item)}
-                            className={`result-item w-full text-left px-4 py-3 ${isSelected ? 'selected' : ''}`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className={`check-circle mt-0.5 ${isSelected ? 'checked' : ''}`}>
-                                {isSelected && (
-                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  <span className="text-[10px] text-[#aeaeb2] font-mono">#{item.id ?? idx + 1}</span>
-                                </div>
-                                <div className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-2">
-                                  <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
-                                </div>
-                                <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                                  {item.subject && (
-                                    <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{item.subject}</span>
-                                  )}
-                                  {(item.topic || item.metadata?.field) && (
-                                    <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
-                                  )}
-                                  {item.difficulty != null && (
-                                    <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-black/[0.04] mb-2">
-                        <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-                        </svg>
-                      </div>
-                      <p className="text-xs text-[#aeaeb2]">合致する過去問がまだ登録されていません</p>
-                      <button
-                        onClick={() => setBaseProblemTab('search')}
-                        className="mt-2 text-[11px] text-[#007aff] font-semibold hover:underline"
-                      >
-                        キーワードで検索する →
-                      </button>
-                    </div>
+                  {field && (
+                    <span className="px-2.5 py-1 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold">{field}</span>
                   )}
                 </div>
-              )}
+                {/* インライン絞り込み検索 */}
+                <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/[0.03] border border-black/[0.04]
+                                focus-within:bg-white focus-within:border-[#ff9500]/30 focus-within:shadow-sm transition-all duration-200">
+                  <svg className="w-3.5 h-3.5 text-[#c7c7cc] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    ref={baseSearchInputRef}
+                    type="text"
+                    value={baseFilterQuery}
+                    onChange={(e) => setBaseFilterQuery(e.target.value)}
+                    placeholder="絞り込み..."
+                    className="flex-1 bg-transparent text-xs text-[#1d1d1f] outline-none placeholder:text-[#c7c7cc]"
+                  />
+                  {baseFilterQuery && (
+                    <button onClick={() => setBaseFilterQuery('')} className="text-[#aeaeb2] hover:text-[#ff3b30] transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
 
-              {/* ── 検索タブ: キーワード検索 ── */}
-              {baseProblemTab === 'search' && (
-                <div className="animate-expand">
-                  {/* DB検索フォーム */}
-                  <div className="search-bar-apple px-3 py-1 mb-3">
-                    <svg className="w-4 h-4 text-[#aeaeb2] flex-shrink-0 ml-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              {/* 問題一覧 */}
+              {matchedLoading ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-2">
+                  <svg className="animate-spin h-5 w-5 text-[#ff9500]" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <p className="text-[11px] text-[#aeaeb2]">過去問を取得中...</p>
+                </div>
+              ) : filteredProblems.length > 0 ? (
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                  <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider px-1 mb-1">
+                    {filteredProblems.length} 件{baseFilterQuery.trim() ? ` / ${matchedProblems.length} 件中` : ''}
+                  </div>
+                  {filteredProblems.map((item, idx) => {
+                    const isSelected = selectedBaseProblem?.id === item.id;
+                    return (
+                      <button
+                        key={item.id ?? idx}
+                        onClick={() => setSelectedBaseProblem(item)}
+                        className={`result-item w-full text-left px-4 py-3 ${isSelected ? 'selected' : ''}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`check-circle mt-0.5 ${isSelected ? 'checked' : ''}`}>
+                            {isSelected && (
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <span className="text-[10px] text-[#aeaeb2] font-mono">#{item.id ?? idx + 1}</span>
+                            </div>
+                            <div className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-2">
+                              <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
+                            </div>
+                            <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                              {item.subject && (
+                                <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{item.subject}</span>
+                              )}
+                              {(item.topic || item.metadata?.field) && (
+                                <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
+                              )}
+                              {item.difficulty != null && (
+                                <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : matchedProblems.length > 0 && baseFilterQuery.trim() ? (
+                <div className="text-center py-6">
+                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-black/[0.04] mb-2">
+                    <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <input
-                      ref={baseSearchInputRef}
-                      type="text"
-                      value={baseSearchQuery}
-                      onChange={(e) => setBaseSearchQuery(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') doBaseSearch(); }}
-                      placeholder="キーワードで過去問を検索..."
-                      className="flex-1 px-3 py-2.5 bg-transparent text-sm text-[#1d1d1f] outline-none placeholder:text-[#c7c7cc]"
-                    />
-                    <button
-                      onClick={doBaseSearch}
-                      disabled={baseSearching || !baseSearchQuery.trim()}
-                      className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold
-                                 bg-gradient-to-b from-[#fc3c44] to-[#e0323a] text-white shadow-sm shadow-[#fc3c44]/15
-                                 hover:shadow-md hover:shadow-[#fc3c44]/25 transition-all duration-300
-                                 disabled:opacity-30 disabled:cursor-not-allowed disabled:shadow-none
-                                 active:scale-95 flex-shrink-0"
-                    >
-                      {baseSearching ? (
-                        <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      )}
-                      {baseSearching ? '検索中' : '検索'}
-                    </button>
                   </div>
-
-                  {/* 検索結果一覧 */}
-                  {baseSearchResults.length > 0 && (
-                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-                      <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider px-1 mb-1">
-                        {baseSearchResults.length} 件の結果
-                      </div>
-                      {baseSearchResults.map((item, idx) => {
-                        const isSelected = selectedBaseProblem?.id === item.id;
-                        return (
-                          <button
-                            key={item.id ?? idx}
-                            onClick={() => {
-                              setSelectedBaseProblem(item);
-                              setBaseSearchResults([]);
-                              setBaseSearchQuery('');
-                            }}
-                            className={`result-item w-full text-left px-4 py-3 ${isSelected ? 'selected' : ''}`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className={`check-circle mt-0.5 ${isSelected ? 'checked' : ''}`}>
-                                {isSelected && (
-                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                  <span className="text-[10px] text-[#aeaeb2] font-mono">#{item.id ?? idx + 1}</span>
-                                </div>
-                                <div className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-2">
-                                  <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
-                                </div>
-                                <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                                  {item.subject && (
-                                    <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{item.subject}</span>
-                                  )}
-                                  {(item.topic || item.metadata?.field) && (
-                                    <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
-                                  )}
-                                  {item.difficulty != null && (
-                                    <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* 検索結果が0件の場合 */}
-                  {baseSearchResults.length === 0 && baseSearchQuery && !baseSearching && baseSearchResults !== null && (
-                    <div className="text-center py-6">
-                      <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-black/[0.04] mb-2">
-                        <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </div>
-                      <p className="text-xs text-[#aeaeb2]">該当する問題が見つかりません</p>
-                    </div>
-                  )}
-
-                  {/* 初期状態の案内 */}
-                  {baseSearchResults.length === 0 && !baseSearchQuery && !baseSearching && (
-                    <div className="text-center py-6">
-                      <p className="text-[11px] text-[#aeaeb2] leading-relaxed">
-                        科目名・キーワードなどで過去問を検索できます
-                      </p>
-                    </div>
-                  )}
+                  <p className="text-xs text-[#aeaeb2]">「{baseFilterQuery}」に一致する問題はありません</p>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-black/[0.04] mb-2">
+                    <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                    </svg>
+                  </div>
+                  <p className="text-xs text-[#aeaeb2]">この科目・分野の過去問はまだ登録されていません</p>
                 </div>
               )}
             </div>
@@ -1395,44 +1262,101 @@ export default function UserModePage() {
             </div>
           )}
 
-          {/* ── 問題形式選択 ── */}
-          <div className="mt-6 border-t border-black/[0.06] pt-5">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-[#af52de]/10">
-                <svg className="w-3.5 h-3.5 text-[#af52de]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
-              </div>
-              <label className="text-[13px] font-bold text-[#1d1d1f] tracking-tight">
-                問題形式
-              </label>
-            </div>
-            <p className="text-[11px] text-[#86868b] mb-3 ml-8">
-              出題する問題の解答形式を選んでください
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {QUESTION_FORMATS.map((fmt) => (
-                <button
-                  key={fmt.value}
-                  type="button"
-                  onClick={() => setQuestionFormat(fmt.value)}
-                  className={`selection-card !p-3 text-left ${
-                    questionFormat === fmt.value ? 'active' : ''
-                  }`}
-                >
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-1.5">
-                      <div className={`text-xs font-bold transition-colors ${questionFormat === fmt.value ? 'text-[#fc3c44]' : 'text-[#1d1d1f]'}`}>
-                        {fmt.label}
-                      </div>
-                      {questionFormat === fmt.value && (
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#fc3c44]" />
-                      )}
-                    </div>
-                    <div className="text-[10px] text-[#86868b] mt-0.5 leading-tight">{fmt.description}</div>
+          {/* ── 問題形式選択（必須・目立つUI） ── */}
+          <div className="mt-6 relative">
+            {/* 注意バナー */}
+            <div className="relative overflow-hidden rounded-2xl border-2 border-[#af52de]/20 bg-white shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#af52de] via-[#da70d6] to-[#af52de]" />
+              <div className="p-4 pb-3">
+                <div className="flex items-center gap-2.5 mb-1">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-[#af52de] to-[#8944ab] shadow-lg shadow-[#af52de]/20">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                    </svg>
                   </div>
-                </button>
-              ))}
+                  <div>
+                    <div className="text-[13px] font-extrabold text-[#1d1d1f] tracking-tight">
+                      問題形式を選択してください
+                    </div>
+                    <div className="text-[10px] text-[#af52de] font-bold mt-0.5">
+                      選択中: {QUESTION_FORMATS.find(f => f.value === questionFormat)?.label || '通常形式'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 形式カード一覧 */}
+              <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+                {QUESTION_FORMATS.map((fmt) => {
+                  const active = questionFormat === fmt.value;
+                  // 各形式のイメージアイコン
+                  const icons = {
+                    standard: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                    ),
+                    fill_in_blank: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" />
+                        <rect x="3.5" y="15" width="6" height="4.5" rx="1.5" strokeDasharray="3 2" />
+                      </svg>
+                    ),
+                    choice: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12" />
+                        <circle cx="4.5" cy="6.75" r="1.5" />
+                        <circle cx="4.5" cy="12" r="1.5" fill="currentColor" />
+                        <circle cx="4.5" cy="17.25" r="1.5" />
+                      </svg>
+                    ),
+                    true_false: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    ),
+                  };
+                  return (
+                    <button
+                      key={fmt.value}
+                      type="button"
+                      onClick={() => setQuestionFormat(fmt.value)}
+                      className={`relative overflow-hidden rounded-xl p-3.5 text-left transition-all duration-300 active:scale-[0.97]
+                        ${active
+                          ? 'bg-gradient-to-br from-[#af52de]/[0.12] to-[#af52de]/[0.04] border-2 border-[#af52de]/40 shadow-sm shadow-[#af52de]/10'
+                          : 'bg-black/[0.02] border-2 border-transparent hover:bg-black/[0.04] hover:border-black/[0.06]'
+                        }`}
+                    >
+                      <div className="flex items-start gap-2.5">
+                        <div className={`flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0 transition-all duration-300
+                          ${active
+                            ? 'bg-gradient-to-br from-[#af52de] to-[#8944ab] text-white shadow-md shadow-[#af52de]/25'
+                            : 'bg-black/[0.05] text-[#86868b]'
+                          }`}
+                        >
+                          {icons[fmt.value] || icons.standard}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-[13px] font-bold transition-colors ${active ? 'text-[#af52de]' : 'text-[#1d1d1f]'}`}>
+                              {fmt.label}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-[#86868b] mt-0.5 leading-snug">{fmt.description}</div>
+                        </div>
+                        {/* チェックマーク */}
+                        {active && (
+                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-[#af52de] to-[#8944ab] flex-shrink-0 mt-0.5">
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
