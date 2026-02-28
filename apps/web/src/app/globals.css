@@ -219,7 +219,7 @@ body::after {
 
 .gradient-text {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #fc3c44 0%, #ff375f 30%, #bf5af2 70%, #5e5ce6 100%);
+  background-image: linear-gradient(135deg, #e8457a 0%, #f472b6 25%, #c084fc 55%, #818cf8 100%);
   background-size: 200% auto;
   animation: gradientShift 4s ease-in-out infinite alternate;
 }
@@ -420,8 +420,43 @@ body::after {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* ── Mobile-first overrides ── */
 @media (max-width: 639px) {
-  main { padding-bottom: 5rem !important; }
+  main { padding-bottom: 5.5rem !important; }
+
+  /* Reduce GPU-heavy animations on mobile for performance */
+  body::before, body::after, .ambient-layer-3 {
+    animation-duration: 30s !important;
+    filter: blur(90px) !important;
+    opacity: 0.7;
+  }
+
+  /* Larger touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Prevent horizontal overflow */
+  .card-premium, .card-glow {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Card hover lift disabled on touch (causes jank) */
+  .card-premium:hover {
+    transform: none;
+  }
+  .card-premium:active {
+    transform: scale(0.98);
+  }
+  .hover-lift:hover {
+    transform: none;
+  }
+}
+
+/* Ensure minimum readable font size on mobile */
+@media (max-width: 375px) {
+  html { font-size: 15px; }
 }
 
 /* ── Apple-style Frosted Search Bar ── */

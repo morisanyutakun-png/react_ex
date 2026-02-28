@@ -456,7 +456,7 @@ export default function DbEditorPage() {
   const displayCols = allCols.filter((c) => visibleCols.includes(c.name));
 
   return (
-    <div className="max-w-[100rem] mx-auto space-y-5 px-4 pb-12">
+    <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-3 sm:px-4 pb-24 sm:pb-12">
       <PageHeader
         title="DB エディタ"
         description="問題データの閲覧・編集・新規登録"
@@ -593,8 +593,8 @@ export default function DbEditorPage() {
             </div>
           </div>
 
-          {/* テーブル */}
-          <div className="bg-black/[0.04] backdrop-blur-md rounded-lg border border-black/[0.06]  overflow-hidden">
+          {/* テーブル (デスクトップ) */}
+          <div className="hidden sm:block bg-black/[0.04] backdrop-blur-md rounded-lg border border-black/[0.06]  overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
@@ -717,6 +717,82 @@ export default function DbEditorPage() {
               <div className="flex items-center justify-center py-8 text-[#c7c7cc]">
                 <Icons.Info className="w-5 h-5 animate-pulse mr-2" /> 読み込み中...
               </div>
+            )}
+          </div>
+
+          {/* モバイルカードビュー */}
+          <div className="sm:hidden space-y-3">
+            {loading && (
+              <div className="flex items-center justify-center py-8 text-[#c7c7cc]">
+                <Icons.Info className="w-5 h-5 animate-pulse mr-2" /> 読み込み中...
+              </div>
+            )}
+            {rows.map((row, idx) => {
+              const rowPk = row[pk];
+              const rowDirty = !!edits[rowPk];
+              return (
+                <div key={rowPk ?? idx}
+                  className={`rounded-2xl border p-4 transition-all ${
+                    rowDirty
+                      ? 'bg-[#ff9500]/[0.06] border-[#ff9500]/20'
+                      : 'bg-white/70 border-black/[0.06]'
+                  }`}
+                >
+                  {/* Card header with PK and actions */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-[#aeaeb2]">#{page * PAGE_SIZE + idx + 1}</span>
+                      <span className="text-sm font-bold text-[#e8457a] font-mono">{rowPk}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setDetailRow(row)}
+                        className="p-2 rounded-xl text-[#aeaeb2] hover:text-[#e8457a] hover:bg-[#e8457a]/5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        title="詳細">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </button>
+                      <button onClick={() => setDeleteConfirm(rowPk)}
+                        className="p-2 rounded-xl text-[#aeaeb2] hover:text-rose-500 hover:bg-rose-50 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        title="削除">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  {/* Key fields as stacked list */}
+                  <div className="space-y-1.5">
+                    {displayCols.filter(c => c.name !== pk).slice(0, 5).map((col) => {
+                      const cellVal = getCellValue(row, col.name);
+                      const dirty = isCellDirty(row, col.name);
+                      return (
+                        <div key={col.name}
+                          className={`flex items-start gap-2 py-1.5 px-2 rounded-lg ${dirty ? 'bg-[#ff9500]/[0.08]' : ''}`}
+                          onClick={() => startEdit(rowPk, col.name)}
+                        >
+                          <span className="text-[10px] font-bold text-[#aeaeb2] uppercase min-w-[4.5rem] flex-shrink-0 pt-0.5">{colLabel(col.name)}</span>
+                          <span className="text-[13px] text-[#1d1d1f] break-all line-clamp-2 min-w-0">
+                            {cellVal === null || cellVal === undefined
+                              ? <span className="text-[#d2d2d7] italic text-xs">null</span>
+                              : truncateDisplay(cellVal)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {displayCols.filter(c => c.name !== pk).length > 5 && (
+                      <button onClick={() => setDetailRow(row)}
+                        className="text-[11px] text-[#e8457a] font-semibold px-2 py-1">
+                        + {displayCols.filter(c => c.name !== pk).length - 5} 項目を表示...
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {rows.length === 0 && !loading && (
+              <div className="text-center py-12 text-[#c7c7cc] text-sm">データがありません</div>
             )}
           </div>
         </>
@@ -884,7 +960,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
         ))}
       </div>
 
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-1.5">
         {allCols.map((col) => (
           <label key={col.name} className={`flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer text-[11px]
             transition-colors ${visibleCols.includes(col.name) ? 'bg-[#fc3c44]/[0.08] text-[#fc3c44]' : 'text-[#c7c7cc] hover:bg-black/[0.03]'}`}>
@@ -902,11 +978,11 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
 // ── 行詳細モーダル ──
 function RowDetailModal({ row, schema, pk, onClose }) {
   return (
-    <div className="fixed inset-0 bg-[#f5f5f7]/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    <div className="fixed inset-0 bg-[#f5f5f7]/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-black/[0.04] rounded-lg shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col border border-black/[0.06]">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-black/[0.06]">
-          <h2 className="text-lg font-bold text-[#1d1d1f]">
+      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-black/[0.06]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/[0.06]">
+          <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f]">
             行詳細 — ID: {row[pk]}
           </h2>
           <button onClick={onClose} className="text-[#c7c7cc] hover:text-[#424245] text-xl font-bold p-1">
@@ -915,15 +991,15 @@ function RowDetailModal({ row, schema, pk, onClose }) {
             </svg>
           </button>
         </div>
-        <div className="overflow-y-auto flex-1 p-6 space-y-2">
+        <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-2">
           {schema.map((col) => {
             const val = row[col.name];
             const isEmpty = val === null || val === undefined || val === '';
             return (
-              <div key={col.name} className="flex gap-3 py-2 border-b border-black/[0.06]">
-                <div className="w-44 flex-shrink-0">
+              <div key={col.name} className="flex flex-col sm:flex-row sm:gap-3 py-2 border-b border-black/[0.06]">
+                <div className="sm:w-44 flex-shrink-0 mb-0.5 sm:mb-0">
                   <span className="text-xs font-bold text-[#424245]">{colLabel(col.name)}</span>
-                  <span className="text-[9px] text-[#d2d2d7] block">{col.name} · {col.type}</span>
+                  <span className="text-[10px] text-[#d2d2d7] block sm:inline sm:ml-1">{col.name} · {col.type}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   {isEmpty ? (

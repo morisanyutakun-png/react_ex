@@ -452,7 +452,7 @@ export default function HelpPage() {
   }, []);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-14 pb-28 sm:pb-14">
+<div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-14 pb-28 sm:pb-14">
 
       {/* ── ヒーロー ── */}
       <div className="text-center mb-12">
@@ -461,10 +461,10 @@ export default function HelpPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
         </div>
-        <h1 className="text-[36px] sm:text-[48px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
+        <h1 className="text-[30px] sm:text-[48px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
           はじめてガイド
         </h1>
-        <p className="text-[15px] sm:text-[17px] text-[#86868b] max-w-sm mx-auto leading-relaxed">
+        <p className="text-[14px] sm:text-[17px] text-[#86868b] max-w-[280px] sm:max-w-sm mx-auto leading-relaxed">
           REM の使い方をかんたんにご案内します。
         </p>
         <Link href="/" className="inline-flex items-center gap-2 mt-5 px-5 py-2 rounded-full bg-white/60 backdrop-blur-lg border border-black/[0.04] shadow-sm text-[13px] font-bold text-[#86868b] hover:text-[#fc3c44] hover:border-[#fc3c44]/20 transition-all">
@@ -474,7 +474,7 @@ export default function HelpPage() {
       </div>
 
       {/* ── 2カラム ── */}
-      <div className="flex gap-8">
+      <div className="flex gap-6 sm:gap-8">
         <aside className="hidden lg:block w-[160px] flex-shrink-0">
           <div className="sticky top-20">
             <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-[0.2em] mb-3 px-3">目次</div>
@@ -486,8 +486,8 @@ export default function HelpPage() {
 
           {/* ═══ 概要 ═══ */}
           <section id="overview" className="scroll-mt-24">
-            <div className="relative overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg p-6 sm:p-8">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#bf5af2] to-[#0a84ff] opacity-70" />
+            <div className="relative overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg p-4 sm:p-8">
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#e8457a] via-[#c084fc] to-[#818cf8] opacity-70" />
 
               <h2 className="text-[20px] font-black text-[#1d1d1f] tracking-tight mb-2">REM とは？</h2>
               <p className="text-[14px] text-[#6e6e73] leading-relaxed mb-5">

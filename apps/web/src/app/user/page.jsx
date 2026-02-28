@@ -578,10 +578,10 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div className="max-w-2xl mx-auto py-4 sm:py-8 px-1 sm:px-4">
+    <div className="max-w-2xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
       {/* ヘッダー */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-xs font-bold mb-3 sm:mb-4 border border-black/[0.06]">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#e8457a]/[0.08] text-[#e8457a] rounded-full text-xs font-bold mb-3 sm:mb-4 border border-[#e8457a]/[0.12]">
           <Icons.User className="w-4 h-4" />
           ユーザモード
         </div>
@@ -1333,7 +1333,7 @@ export default function UserModePage() {
               </div>
 
               {/* 形式カード一覧 */}
-              <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+              <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {QUESTION_FORMATS.map((fmt) => {
                   const active = questionFormat === fmt.value;
                   // 各形式のイメージアイコン
@@ -1459,7 +1459,7 @@ export default function UserModePage() {
                     {illustration && (
                       <div className={`px-3 pt-2.5 pb-2 ${active ? 'bg-[#af52de]/[0.06]' : 'bg-black/[0.03]'}`}>
                         <pre
-                          className={`text-[8px] leading-[1.35] font-mono select-none transition-colors ${active ? 'text-[#af52de]' : 'text-[#c7c7cc]'}`}
+                          className={`text-[9px] sm:text-[8px] leading-[1.35] font-mono select-none transition-colors ${active ? 'text-[#af52de]' : 'text-[#c7c7cc]'}`}
                           style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
                         >
                           {illustration}

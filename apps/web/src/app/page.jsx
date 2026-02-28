@@ -115,7 +115,7 @@ function DbIcon() {
 function ActionCard({ href, icon, label, hint, description, gradient, glowColor, delay }) {
   return (
     <Link href={href} className="group block stagger-item" style={{ animationDelay: `${delay}ms` }}>
-      <div className="relative card-premium card-glow p-6 transition-all duration-500 ease-out hover:shadow-xl active:scale-[0.97] overflow-hidden">
+      <div className="relative card-premium card-glow p-5 sm:p-6 transition-all duration-500 ease-out hover:shadow-xl active:scale-[0.97] overflow-hidden">
         {/* 背景グラデーション装飾 */}
         <div className={`absolute -top-8 -right-8 w-28 h-28 rounded-full ${gradient} opacity-[0.07] blur-2xl group-hover:opacity-[0.14] transition-all duration-700 group-hover:scale-125`} />
 
@@ -175,25 +175,25 @@ function ToolCard({ href, icon, label, description, glowColor, delay }) {
 /* ─── ページ本体 ─── */
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-5 py-10 sm:px-6 sm:py-20 pb-28 sm:pb-20">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-20 pb-28 sm:pb-20">
       <div className="relative z-10 max-w-[540px] w-full mx-auto">
 
         {/* ── ヒーロー ── */}
         <div className="text-center mb-14 stagger-item" style={{ animationDelay: '0ms' }}>
           {/* ロゴマーク — パルスグロー */}
-          <div className="inline-flex items-center justify-center w-[80px] h-[80px] rounded-[24px] bg-gradient-to-br from-[#fc3c44] via-[#ff375f] to-[#e0323a] text-white mb-6 shadow-xl shadow-[#fc3c44]/25 animate-glow-pulse">
+          <div className="inline-flex items-center justify-center w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] rounded-[22px] sm:rounded-[24px] bg-gradient-to-br from-[#e8457a] via-[#f472b6] to-[#c084fc] text-white mb-5 sm:mb-6 shadow-xl shadow-[#e8457a]/25 animate-glow-pulse">
             <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
 
-          <h1 className="text-[52px] sm:text-[60px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
+          <h1 className="text-[44px] sm:text-[60px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
             REM
           </h1>
           <p className="text-[18px] gradient-text font-bold mb-3">
             Rapid Exam Maker
           </p>
-          <p className="text-[15px] text-[#6e6e73] leading-relaxed max-w-sm mx-auto">
+          <p className="text-[14px] sm:text-[15px] text-[#6e6e73] leading-relaxed max-w-[280px] sm:max-w-sm mx-auto">
             過去問データとAIで、試験問題を賢くつくる。
           </p>
         </div>
@@ -205,7 +205,7 @@ export default function HomePage() {
             <h2 className="text-[12px] font-bold text-[#6e6e73] uppercase tracking-[0.2em]">はじめる</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-black/[0.06] to-transparent" />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <ActionCard
               href="/user"
               icon={<CreateIcon />}

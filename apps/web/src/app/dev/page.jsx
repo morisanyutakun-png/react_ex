@@ -642,7 +642,7 @@ export default function TuningPage() {
   ];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 px-1 sm:px-4">
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
       <PageHeader
         title="チューニング"
         description="プロンプトとRAGの設定を調整して、生成される問題の品質を高めるワークスペース"
@@ -674,7 +674,7 @@ export default function TuningPage() {
             </div>
 
             {/* 統計カード */}
-            <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#fc3c44]/[0.06] to-[#fc3c44]/[0.02] border border-[#fc3c44]/10 p-4 text-center">
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#fc3c44] to-transparent opacity-40" />
                 <div className="text-2xl font-bold text-[#fc3c44] tabular-nums">{feedbackData.stats?.total_evaluations ?? 0}</div>
@@ -838,7 +838,7 @@ export default function TuningPage() {
                             <span className="text-[10px] font-bold tabular-nums" style={{ color: colors[score] }}>{count}</span>
                             <div className="w-full rounded-t-lg transition-all duration-500"
                                  style={{ height: `${Math.max(height, 4)}%`, background: `linear-gradient(to top, ${colors[score]}40, ${colors[score]})` }} />
-                            <span className="text-[8px] text-[#aeaeb2] font-bold">{labels[score]}</span>
+                            <span className="text-[10px] text-[#aeaeb2] font-bold">{labels[score]}</span>
                           </div>
                         );
                       })}
@@ -888,8 +888,8 @@ export default function TuningPage() {
                       })}
                     </div>
                     <div className="flex justify-between mt-1">
-                      <span className="text-[8px] text-[#c7c7cc]">{evalHistory.analytics.recent_trend[0]?.timestamp?.slice(5, 10)}</span>
-                      <span className="text-[8px] text-[#c7c7cc]">{evalHistory.analytics.recent_trend[evalHistory.analytics.recent_trend.length - 1]?.timestamp?.slice(5, 10)}</span>
+                      <span className="text-[10px] text-[#c7c7cc]">{evalHistory.analytics.recent_trend[0]?.timestamp?.slice(5, 10)}</span>
+                      <span className="text-[10px] text-[#c7c7cc]">{evalHistory.analytics.recent_trend[evalHistory.analytics.recent_trend.length - 1]?.timestamp?.slice(5, 10)}</span>
                     </div>
                   </div>
                 )}
@@ -938,11 +938,11 @@ export default function TuningPage() {
       )}
 
       {/* ── セクションナビ (Apple風ステップバー) ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] p-1.5 overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1.5">
+      <div className="relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] p-1 sm:p-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1">
         {sections.map((s, idx) => (
           <button key={s.id} onClick={() => s.enabled && setActiveSection(s.id)}
-            className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-3 sm:py-3.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 relative whitespace-nowrap
+            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3.5 rounded-xl text-[11px] sm:text-sm font-bold transition-all duration-300 relative whitespace-nowrap min-h-[44px]
               ${activeSection === s.id
                 ? 'bg-gradient-to-r from-[#fc3c44] to-[#e0323a] text-white shadow-md shadow-[#fc3c44]/20'
                 : s.enabled
@@ -1408,7 +1408,7 @@ export default function TuningPage() {
                 <Button onClick={skipRag} variant="ghost" size="sm">スキップ</Button>
               </div>
             )}
-            <div className="grid grid-cols-3 gap-3 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
               {[
                 { name: 'ChatGPT', url: 'https://chat.openai.com', color: 'from-green-500 to-emerald-600' },
                 { name: 'Claude', url: 'https://claude.ai', color: 'from-amber-500 to-orange-500' },
