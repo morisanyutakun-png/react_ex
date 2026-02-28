@@ -286,12 +286,22 @@ export default function TuningPage() {
   const [referenceStem, setReferenceStem] = useState('');
   const [referenceAnswer, setReferenceAnswer] = useState('');
 
-  // 参考問題DB検索
-  const [refSearchQuery, setRefSearchQuery] = useState('');
-  const [refSearchResults, setRefSearchResults] = useState([]);
-  const [refSearching, setRefSearching] = useState(false);
+  // 参考問題DB（テンプレート合致で自動取得）
+  const [matchedRefProblems, setMatchedRefProblems] = useState([]);
+  const [matchedRefLoading, setMatchedRefLoading] = useState(false);
+  const [refFilterQuery, setRefFilterQuery] = useState('');
   const [selectedRefProblem, setSelectedRefProblem] = useState(null);
   const refSearchInputRef = useRef(null);
+
+  /* ── フィルタ済み参考問題リスト ── */
+  const filteredRefProblems = refFilterQuery.trim()
+    ? matchedRefProblems.filter((item) => {
+        const q = refFilterQuery.trim().toLowerCase();
+        const text = (item.stem || item.text || '').toLowerCase();
+        const topic = (item.topic || item.metadata?.field || '').toLowerCase();
+        return text.includes(q) || topic.includes(q);
+      })
+    : matchedRefProblems;
 
   // フィードバックループ
   const [feedbackData, setFeedbackData] = useState(null); // { feedback: [...], stats: {...} }
@@ -316,29 +326,32 @@ export default function TuningPage() {
     }
   }, [subject, templateId, loadFeedback]);
 
-  /* ── 参考問題DB検索関数 ── */
-  const doRefSearch = useCallback(async () => {
-    const q = refSearchQuery.trim();
-    if (!q) return;
-    setRefSearching(true);
-    try {
-      const params = { q, limit: 10 };
-      if (subject) params.subject = subject;
-      const data = await searchProblems(params);
-      const items = data.results || data.problems || data || [];
-      setRefSearchResults(Array.isArray(items) ? items : []);
-    } catch {
-      setRefSearchResults([]);
-    }
-    setRefSearching(false);
-  }, [refSearchQuery, subject]);
+  /* ── テンプレート合致の参考問題を自動取得 ── */
+  useEffect(() => {
+    if (!subject) return;
+    let cancelled = false;
+    const fetchMatched = async () => {
+      setMatchedRefLoading(true);
+      try {
+        const params = { limit: 15 };
+        if (subject) params.subject = subject;
+        if (field) params.topic = field;
+        const data = await searchProblems(params);
+        const items = data.results || data.problems || data || [];
+        if (!cancelled) setMatchedRefProblems(Array.isArray(items) ? items : []);
+      } catch {
+        if (!cancelled) setMatchedRefProblems([]);
+      }
+      if (!cancelled) setMatchedRefLoading(false);
+    };
+    fetchMatched();
+    return () => { cancelled = true; };
+  }, [subject, field]);
 
   const selectRefProblem = (item) => {
     setSelectedRefProblem(item);
     setReferenceStem(item.stem || item.text || '');
     setReferenceAnswer(item.final_answer || item.answer || '');
-    setRefSearchResults([]);
-    setRefSearchQuery('');
   };
 
   const clearRefProblem = () => {
@@ -733,134 +746,167 @@ export default function TuningPage() {
             </div>
           </SectionCard>
 
-          {/* ── 参考問題（DB検索ベース） ── */}
+          {/* ── 参考問題（テンプレート合致で自動取得） ── */}
           <SectionCard title="参考問題を選択" icon={<Icons.Search />}
-            subtitle="DBから参考問題を検索して選択できます。選択した問題に沿った類題を生成します。">
+            subtitle="テンプレートに合致する過去問が表示されます">
 
             {/* 選択済み問題の表示 */}
             {selectedRefProblem && (
-              <div className="mb-4 p-3 bg-[#ff9500]/[0.08] rounded-lg border-2 border-[#ff9500]/20">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
-                      <span className="text-[10px] text-[#ff9500] font-bold">選択中の参考問題</span>
-                      {selectedRefProblem.id && (
-                        <span className="text-[10px] text-[#ff9500] font-mono">#{selectedRefProblem.id}</span>
-                      )}
+              <div className="mb-3 relative overflow-hidden rounded-2xl border border-[#ff9500]/25 bg-gradient-to-br from-[#ff9500]/[0.06] to-[#ff9500]/[0.02]
+                              shadow-sm transition-all duration-300 hover:shadow-md">
+                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#ff9500] via-[#ffcc00] to-[#ff9500] opacity-60" />
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="check-circle checked">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <span className="text-[11px] font-bold text-[#ff9500] uppercase tracking-wider">選択中</span>
+                        {selectedRefProblem.id && (
+                          <span className="text-[10px] text-[#ff9500]/60 font-mono">#{selectedRefProblem.id}</span>
+                        )}
+                      </div>
+                      <div className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-3 ml-[30px]">
+                        <LatexText>{(selectedRefProblem.stem || selectedRefProblem.text || '').slice(0, 200)}</LatexText>
+                      </div>
+                      <div className="flex gap-1.5 mt-2 ml-[30px] flex-wrap">
+                        {selectedRefProblem.subject && (
+                          <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{selectedRefProblem.subject}</span>
+                        )}
+                        {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
+                          <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
+                        )}
+                        {selectedRefProblem.difficulty != null && (
+                          <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[9px] font-bold">{difficultyLabel(selectedRefProblem.difficulty)}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-xs text-[#86868b] leading-relaxed line-clamp-3">
-                      <LatexText>{(selectedRefProblem.stem || selectedRefProblem.text || '').slice(0, 200)}</LatexText>
-                    </div>
-                    <div className="flex gap-1 mt-1.5 flex-wrap">
-                      {selectedRefProblem.subject && (
-                        <span className="px-1.5 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded text-[9px] font-bold">{selectedRefProblem.subject}</span>
-                      )}
-                      {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
-                        <span className="px-1.5 py-0.5 bg-emerald-100 text-[#34c759] rounded text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
-                      )}
-                      {selectedRefProblem.difficulty != null && (
-                        <span className="px-1.5 py-0.5 bg-amber-100 text-[#ff9500] rounded text-[9px] font-bold">{difficultyLabel(selectedRefProblem.difficulty)}</span>
-                      )}
-                    </div>
+                    <button
+                      onClick={clearRefProblem}
+                      className="flex items-center justify-center w-8 h-8 rounded-xl bg-black/[0.04] hover:bg-[#ff3b30]/10
+                                 text-[#aeaeb2] hover:text-[#ff3b30] transition-all duration-200 flex-shrink-0 active:scale-90"
+                      title="選択を解除"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                  <button
-                    onClick={clearRefProblem}
-                    className="px-2 py-1 text-[10px] text-amber-500 hover:text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg font-bold transition-colors flex-shrink-0"
-                  >
-                    解除
-                  </button>
                 </div>
               </div>
             )}
 
-            {/* DB検索フォーム */}
-            <div className="mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <label className="block text-xs font-semibold text-[#aeaeb2]">
-                  キーワードでDBから検索
-                </label>
-                <span className="text-[10px] text-gray-300">（任意）</span>
+            {/* フィルタバー（科目ラベル + 絞り込み検索） */}
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                {subject && (
+                  <span className="px-2.5 py-1 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">{subject}</span>
+                )}
+                {field && (
+                  <span className="px-2.5 py-1 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold">{field}</span>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    ref={refSearchInputRef}
-                    type="text"
-                    value={refSearchQuery}
-                    onChange={(e) => setRefSearchQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') doRefSearch(); }}
-                    placeholder="キーワードで過去問を検索..."
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-black/[0.06] bg-black/[0.04] text-xs
-                               text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50
-                               focus:ring-2 focus:ring-[#fc3c44]/20 outline-none placeholder:text-[#c7c7cc]"
-                  />
-                </div>
-                <button
-                  onClick={doRefSearch}
-                  disabled={refSearching || !refSearchQuery.trim()}
-                  className="px-4 py-2.5 rounded-lg text-xs font-bold bg-[#fc3c44]/[0.08] text-[#fc3c44]
-                             hover:bg-[#fc3c44] hover:text-[#1d1d1f] transition-all disabled:opacity-40 disabled:cursor-not-allowed
-                             flex items-center gap-1.5"
-                >
-                  {refSearching ? (
-                    <>
-                      <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      検索中
-                    </>
-                  ) : '検索'}
-                </button>
+              <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/[0.03] border border-black/[0.04]
+                              focus-within:bg-white focus-within:border-[#ff9500]/30 focus-within:shadow-sm transition-all duration-200">
+                <svg className="w-3.5 h-3.5 text-[#c7c7cc] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  ref={refSearchInputRef}
+                  type="text"
+                  value={refFilterQuery}
+                  onChange={(e) => setRefFilterQuery(e.target.value)}
+                  placeholder="絞り込み..."
+                  className="flex-1 bg-transparent text-xs text-[#1d1d1f] outline-none placeholder:text-[#c7c7cc]"
+                />
+                {refFilterQuery && (
+                  <button onClick={() => setRefFilterQuery('')} className="text-[#aeaeb2] hover:text-[#ff3b30] transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* 検索結果一覧 */}
-            {refSearchResults.length > 0 && (
-              <div className="border border-black/[0.06] rounded-lg overflow-hidden max-h-64 overflow-y-auto mb-3">
-                {refSearchResults.map((item, idx) => (
-                  <button
-                    key={item.id ?? idx}
-                    onClick={() => selectRefProblem(item)}
-                    className="w-full text-left px-3 py-2.5 border-b border-black/[0.06] last:border-b-0
-                               transition-all hover:bg-black/[0.03] bg-black/[0.04]"
-                  >
-                    <div className="flex items-start gap-2">
-                      <span className="text-[10px] text-[#d2d2d7] font-mono mt-0.5 flex-shrink-0">#{item.id ?? idx + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-xs text-[#1d1d1f] leading-relaxed line-clamp-2">
-                          <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
+            {/* 問題一覧 */}
+            {matchedRefLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
+                <svg className="animate-spin h-5 w-5 text-[#ff9500]" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <p className="text-[11px] text-[#aeaeb2]">過去問を取得中...</p>
+              </div>
+            ) : filteredRefProblems.length > 0 ? (
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider px-1 mb-1">
+                  {filteredRefProblems.length} 件{refFilterQuery.trim() ? ` / ${matchedRefProblems.length} 件中` : ''}
+                </div>
+                {filteredRefProblems.map((item, idx) => {
+                  const isSelected = selectedRefProblem?.id === item.id;
+                  return (
+                    <button
+                      key={item.id ?? idx}
+                      onClick={() => selectRefProblem(item)}
+                      className={`result-item w-full text-left px-4 py-3 ${isSelected ? 'selected' : ''}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`check-circle mt-0.5 ${isSelected ? 'checked' : ''}`}>
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
                         </div>
-                        <div className="flex gap-1 mt-1 flex-wrap">
-                          {item.subject && (
-                            <span className="px-1.5 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded text-[9px] font-bold">{item.subject}</span>
-                          )}
-                          {(item.topic || item.metadata?.field) && (
-                            <span className="px-1.5 py-0.5 bg-[#34c759]/[0.08] text-emerald-500 rounded text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
-                          )}
-                          {item.difficulty != null && (
-                            <span className="px-1.5 py-0.5 bg-[#ff9500]/[0.08] text-amber-500 rounded text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] text-[#aeaeb2] font-mono">#{item.id ?? idx + 1}</span>
+                          </div>
+                          <div className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-2">
+                            <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
+                          </div>
+                          <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                            {item.subject && (
+                              <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{item.subject}</span>
+                            )}
+                            {(item.topic || item.metadata?.field) && (
+                              <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
+                            )}
+                            {item.difficulty != null && (
+                              <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : matchedRefProblems.length > 0 && refFilterQuery.trim() ? (
+              <div className="text-center py-6">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-black/[0.04] mb-2">
+                  <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-[#aeaeb2]">「{refFilterQuery}」に一致する問題はありません</p>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-black/[0.04] mb-2">
+                  <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                  </svg>
+                </div>
+                <p className="text-xs text-[#aeaeb2]">この科目・分野の過去問はまだ登録されていません</p>
               </div>
             )}
 
-            {/* 検索結果が0件の場合 */}
-            {refSearchResults.length === 0 && refSearchQuery && !refSearching && (
-              <div className="text-center py-3 text-xs text-[#c7c7cc] mb-3">
-                該当する問題が見つかりません
-              </div>
-            )}
-
-            {referenceStem && (
+            {referenceStem && !selectedRefProblem && (
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#34c759] flex-shrink-0" />
                 <span className="text-[10px] text-[#34c759] font-bold">参考問題が設定されています</span>

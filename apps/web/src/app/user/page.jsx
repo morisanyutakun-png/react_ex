@@ -610,70 +610,117 @@ export default function UserModePage() {
           <div className="space-y-3">
             {/* テンプレート一覧 */}
             {templates.length === 0 && !showCreateTemplate ? (
-              <div className="text-center py-8 text-[#1d1d1f]0">
-                <Icons.Empty className="mx-auto mb-2" />
-                <p className="text-sm">テンプレートがありません</p>
-                <p className="text-xs mt-1">下の「+ 新規作成」ボタンからテンプレートを作成してください</p>
+              <div className="text-center py-12">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-black/[0.04] mb-3">
+                  <svg className="w-7 h-7 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
+                <p className="text-sm font-bold text-[#1d1d1f]">テンプレートがありません</p>
+                <p className="text-xs text-[#86868b] mt-1">下の「+ 新規作成」ボタンからテンプレートを作成してください</p>
               </div>
             ) : !showCreateTemplate ? (
-              <div className="grid gap-2">
-                {templates.map((t) => (
-                  <div
-                    key={t.id}
-                    className={`relative w-full text-left p-4 rounded-xl border transition-all ${
-                      templateId === t.id
-                        ? 'border-red-600 bg-[#fc3c44]/[0.08]'
-                        : 'border-black/[0.06] bg-black/[0.04] hover:border-[#fc3c44]/50 hover:bg-black/[0.03]'
-                    }`}
-                  >
+              <div className="space-y-2.5">
+                {templates.map((t) => {
+                  const isActive = templateId === t.id;
+                  // 科目に応じたカラーとアイコン
+                  const subjectColors = {
+                    '数学': { bg: 'from-[#007aff] to-[#5856d6]', icon: '∑' },
+                    '物理': { bg: 'from-[#ff9500] to-[#ff6723]', icon: '⚛' },
+                    '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: '🧪' },
+                    '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: '🌐' },
+                    '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: '🧬' },
+                    '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: '💻' },
+                  };
+                  const sc = subjectColors[t.metadata?.subject] || { bg: 'from-[#fc3c44] to-[#e0323a]', icon: '📝' };
+                  return (
                     <button
+                      key={t.id}
                       onClick={() => onSelectTemplate(t.id)}
-                      className="w-full text-left"
+                      className={`group relative w-full text-left rounded-2xl overflow-hidden transition-all duration-300 active:scale-[0.98]
+                        ${isActive
+                          ? 'bg-white shadow-md shadow-black/[0.06] ring-2 ring-[#fc3c44]/30'
+                          : 'bg-white/60 shadow-sm shadow-black/[0.03] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
+                        }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-sm font-bold text-[#1d1d1f]">
-                            {t.name || t.id}
+                      {/* アクティブ時のトップアクセント */}
+                      {isActive && (
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44]" />
+                      )}
+
+                      <div className="p-4 flex items-center gap-3.5">
+                        {/* 科目アイコン */}
+                        <div className={`flex items-center justify-center w-11 h-11 rounded-[14px] flex-shrink-0 text-lg
+                          bg-gradient-to-br ${sc.bg} text-white shadow-lg shadow-black/[0.08]
+                          transition-transform duration-300 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}
+                        >
+                          {sc.icon}
+                        </div>
+
+                        {/* テンプレート情報 */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[14px] font-bold text-[#1d1d1f] truncate">
+                              {t.name || t.id}
+                            </span>
+                            {isActive && (
+                              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-[#fc3c44] to-[#e0323a] flex-shrink-0">
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
                           </div>
                           {t.description && (
-                            <div className="text-xs text-[#86868b] mt-0.5">{t.description}</div>
+                            <div className="text-[11px] text-[#86868b] mt-0.5 truncate">{t.description}</div>
                           )}
+                          {/* メタデータタグ */}
+                          <div className="flex gap-1.5 mt-2 flex-wrap">
+                            {t.metadata?.subject && (
+                              <span className="px-2 py-0.5 bg-[#fc3c44]/[0.06] text-[#fc3c44] rounded-full text-[9px] font-bold border border-[#fc3c44]/10">
+                                {t.metadata.subject}
+                              </span>
+                            )}
+                            {t.metadata?.field && (
+                              <span className="px-2 py-0.5 bg-[#34c759]/[0.06] text-[#34c759] rounded-full text-[9px] font-bold border border-[#34c759]/10">
+                                {t.metadata.field}
+                              </span>
+                            )}
+                            {t.metadata?.theme && (
+                              <span className="px-2 py-0.5 bg-[#af52de]/[0.06] text-[#af52de] rounded-full text-[9px] font-bold border border-[#af52de]/10">
+                                {t.metadata.theme}
+                              </span>
+                            )}
+                            {t.metadata?.difficulty && (
+                              <span className="px-2 py-0.5 bg-[#ff9500]/[0.06] text-[#ff9500] rounded-full text-[9px] font-bold border border-[#ff9500]/10">
+                                {difficultyLabel(t.metadata.difficulty)}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex gap-1.5 flex-shrink-0 ml-2">
-                          {t.metadata?.subject && (
-                            <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">
-                              {t.metadata.subject}
-                            </span>
-                          )}
-                          {t.metadata?.field && (
-                            <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold">
-                              {t.metadata.field}
-                            </span>
-                          )}
-                          {t.metadata?.theme && (
-                            <span className="px-2 py-0.5 bg-[#af52de]/[0.08] text-[#af52de] rounded-full text-[10px] font-bold">
-                              {t.metadata.theme}
-                            </span>
-                          )}
-                          {t.metadata?.difficulty && (
-                            <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[10px] font-bold">
-                              {t.metadata.difficulty}
-                            </span>
+
+                        {/* 右矢印 / 削除ボタン */}
+                        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                          <div
+                            onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-[#c7c7cc]
+                                       hover:text-[#ff3b30] hover:bg-[#ff3b30]/[0.08] transition-all duration-200 cursor-pointer opacity-0 group-hover:opacity-100"
+                            title="テンプレートを削除"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                          </div>
+                          {!isActive && (
+                            <svg className="w-4 h-4 text-[#c7c7cc] transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
                           )}
                         </div>
                       </div>
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }}
-                      className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center text-[#86868b] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.08] transition-colors"
-                      title="テンプレートを削除"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : null}
 
