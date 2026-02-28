@@ -29,7 +29,7 @@ export default function TemplateSelector({
   const [showNewForm, setShowNewForm] = useState(false);
   const [newSubject, setNewSubject] = useState('');
   const [newField, setNewField] = useState('');
-  const [newDifficulty, setNewDifficulty] = useState('普通');
+  const [newDifficulty, setNewDifficulty] = useState('標準');
   const [saving, setSaving] = useState(false);
 
   const subjects = allSubjects || SUBJECTS;
@@ -74,7 +74,7 @@ export default function TemplateSelector({
       if (f && onFieldChange) onFieldChange(f);
       setNewSubject('');
       setNewField('');
-      setNewDifficulty('普通');
+      setNewDifficulty('標準');
       setShowNewForm(false);
     } catch (e) {
       setStatus?.(`保存失敗: ${e.message}`);
@@ -127,7 +127,7 @@ export default function TemplateSelector({
           label="難易度"
           value={difficulty}
           onChange={onDifficultyChange}
-          options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
+          options={DIFFICULTIES.map((d) => ({ value: d.value, label: `${d.label}（${d.description}）` }))}
         />
 
         <NumberField
@@ -256,7 +256,7 @@ export default function TemplateSelector({
               label="難易度"
               value={newDifficulty}
               onChange={setNewDifficulty}
-              options={DIFFICULTIES.map((d) => ({ value: d, label: d }))}
+              options={DIFFICULTIES.map((d) => ({ value: d.value, label: `${d.label}（${d.description}）` }))}
             />
             <Button variant="success" size="sm" onClick={handleSaveTemplate} disabled={saving || !newSubject}>
               {saving ? '保存中...' : '作成'}

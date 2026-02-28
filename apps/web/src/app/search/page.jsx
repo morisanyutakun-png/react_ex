@@ -189,7 +189,7 @@ export default function SearchPage() {
             options={[{ value: '', label: subjectFilter ? '全分野' : '科目を先に選択' }, ...fieldOptions]} />
 
           <SelectField label="難易度" value={difficultyFilter} onChange={setDifficultyFilter}
-            options={[{ value: '', label: '全て' }, ...DIFFICULTIES.map((d) => ({ value: d, label: d }))]} />
+            options={[{ value: '', label: '全て' }, ...DIFFICULTIES.map((d) => ({ value: d.value, label: `${d.label}（${d.description}）` }))]} />
 
           {hasActiveFilters && (
             <button onClick={clearFilters}

@@ -231,7 +231,7 @@ export default function TuningPage() {
   const [templateId, setTemplateId] = useState('');
   const [subject, setSubject] = useState('');
   const [field, setField] = useState('');
-  const [difficulty, setDifficulty] = useState('普通');
+  const [difficulty, setDifficulty] = useState('標準');
   const [numQuestions, setNumQuestions] = useState(1);
 
 
