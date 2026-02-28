@@ -3,8 +3,15 @@
  */
 
 export const SUBJECTS = ['数学', '物理', '英語', '化学', '生物', '情報'];
-export const DIFFICULTIES = ['易', '普通', '難'];
-export const DIFFICULTY_MAP = { '易': 0.2, '普通': 0.5, '難': 0.8 };
+export const DIFFICULTIES = [
+  { value: '基礎', label: '基礎', description: '教科書の例題レベル', numeric: 0.1 },
+  { value: '標準', label: '標準', description: '教科書の章末問題・定期テストレベル', numeric: 0.3 },
+  { value: '応用', label: '応用', description: '入試基礎・共通テストレベル', numeric: 0.5 },
+  { value: '発展', label: '発展', description: '一般入試・中堅大レベル', numeric: 0.7 },
+  { value: '難関', label: '難関', description: '難関大・旧帝大レベル', numeric: 0.85 },
+  { value: '最難関', label: '最難関', description: '東大・京大・数学オリンピックレベル', numeric: 0.95 },
+];
+export const DIFFICULTY_MAP = Object.fromEntries(DIFFICULTIES.map(d => [d.value, d.numeric]));
 
 /**
  * 教科 → 分野（トピック） マッピング
@@ -68,35 +75,84 @@ export const SUBJECT_TOPICS = {
  */
 export function difficultyLabel(v) {
   if (v === null || v === undefined || v === '') return '—';
+  // 文字列ラベルがそのまま渡された場合
+  const found = DIFFICULTIES.find(d => d.value === v);
+  if (found) return found.label;
   const n = Number(v);
   if (Number.isNaN(n)) return String(v);
-  if (n < 0.18) return '非常に易い';
-  if (n < 0.36) return '易い';
-  if (n < 0.55) return '普通';
-  if (n < 0.75) return '難しい';
-  return '非常に難しい';
+  if (n < 0.15) return '基礎';
+  if (n < 0.25) return '標準';
+  if (n < 0.45) return '応用';
+  if (n < 0.65) return '発展';
+  if (n < 0.9) return '難関';
+  return '最難関';
 }
+
+/**
+ * 問題形式の定義
+ */
+export const QUESTION_FORMATS = [
+  { value: 'standard', label: '通常形式', description: '記述式の問題と解答' },
+  { value: 'fill_in_blank', label: '穴埋め形式', description: '空欄補充・穴埋め問題' },
+  { value: 'choice', label: '選択肢形式', description: '四択・多肢選択問題' },
+  { value: 'true_false', label: '正誤判定', description: '正しいか誤りか判定する問題' },
+];
 
 /**
  * テンプレート追加用のプロンプト本文を自動生成
  */
-export function buildTemplatePrompt(subject, field) {
+export function buildTemplatePrompt(subject, field, options = {}) {
+  const { questionFormat, theme } = options;
   const label = field ? `${subject}（${field}）` : subject;
+  const formatDef = QUESTION_FORMATS.find(f => f.value === questionFormat);
+  const formatLabel = formatDef ? formatDef.label : null;
+
   const lines = [
     '科目: {subject}',
     field ? `分野: ${field}` : null,
+    theme ? `テーマ: ${theme}` : null,
     '難易度: {difficulty}',
     '出題数: {num_questions}',
+    formatLabel ? `問題形式: ${formatLabel}` : null,
     '',
     '指示:',
     `以下の条件で${label}の問題を出題してください。`,
     field ? `特に「${field}」の範囲を重点的に扱ってください。` : null,
+    theme ? `テーマは「${theme}」に焦点を当ててください。` : null,
     '',
     '- 問題と解答・解説を必ず含めること',
     '- 問題数は {num_questions} 問とする',
     '- 難易度は「{difficulty}」レベルに合わせること',
-  ].filter((l) => l !== null);
-  return lines.join('\n');
+  ];
+
+  // 問題形式別の追加指示
+  if (questionFormat === 'fill_in_blank') {
+    lines.push(
+      '',
+      '【穴埋め形式の指示】',
+      '- 問題文中の重要な語句・数式・用語を空欄（ \\\\fbox{\\\\phantom{ア}} 等 ）に置き換えてください',
+      '- 空欄は ア, イ, ウ, ... で番号を振ってください',
+      '- 各空欄の正答を解答欄にまとめてください',
+      '- 文脈から答えが一意に定まるようにしてください',
+    );
+  } else if (questionFormat === 'choice') {
+    lines.push(
+      '',
+      '【選択肢形式の指示】',
+      '- 各問に4つの選択肢（① ② ③ ④）を用意してください',
+      '- 紛らわしい誤答（ディストラクター）を含めてください',
+      '- 正解は1つとし、解説で各選択肢が正誤である理由を説明してください',
+    );
+  } else if (questionFormat === 'true_false') {
+    lines.push(
+      '',
+      '【正誤判定の指示】',
+      '- 各問は文を提示し、正しいか誤りかを判定させてください',
+      '- 誤りの場合は正しい内容も解説に含めてください',
+    );
+  }
+
+  return lines.filter((l) => l !== null).join('\n');
 }
 
 /**

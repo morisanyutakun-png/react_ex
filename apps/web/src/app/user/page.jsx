@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
 import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, DIAGRAM_PACKAGE_DEFS } from '@/lib/api';
 import {
@@ -14,7 +14,7 @@ import {
   ProgressSteps,
   Icons,
 } from '@/components/ui';
-import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
+import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
 import { LatexText } from '@/components/LatexRenderer';
 
 /* ── ウィザードステップ定義 ── */
@@ -62,57 +62,137 @@ C ──k──► D`,
 └──────┴─────┘`,
 };
 
-/* ── 各PDF形式のASCIIアートレイアウト図 ── */
-const PRESET_ILLUSTRATIONS = {
-  exam: `┌─────────────────┐
-│  第1問 [10点]   │
-│  問題文...      │
-│                 │
-│  第2問 [15点]   │
-│  問題文...      │
-│  ─── 解答 ─── │
-│  1. 解答...     │
-└─────────────────┘`,
-  worksheet: `┌─────────────────┐
-│名前:____ 日付:__│
-│  学習プリント   │
-│  1. 問題文...   │
-│  解答:          │
-│  _____________  │
-│  2. 問題文...   │
-└─────────────────┘`,
-  flashcard: `┌─────────────────┐
-│  問題  │  解答  │
-│────────┼────── │
-│  Q1... │  A1.. │
-│  Q2... │  A2.. │
-│  Q3... │  A3.. │
-│  Q4... │  A4.. │
-└─────────────────┘`,
-  mock_exam: `┌─────────────────┐
-│  模擬試験  60分 │
-│ 【注意事項】    │
-│ ・解答欄に記入  │
-│ 第1問  (30点)   │
-│  (1) 問題...    │
-│  (2) 問題...    │
-└─────────────────┘`,
-  report: `┌─────────────────┐
-│ 第1問           │
-│【問題】問題文.. │
-│【解法】         │
-│  途中式...      │
-│【ポイント】     │
-│  重要公式...    │
-└─────────────────┘`,
-  minimal: `┌─────────────────┐
-│                 │
-│ 問1. 問題文...  │
-│                 │
-│ 問2. 問題文...  │
-│                 │
-│ 解答: ...       │
-└─────────────────┘`,
+/* ── 各PDF形式のビジュアルサムネイルコンポーネント ── */
+const PresetThumbnail = ({ id, active }) => {
+  const base = active ? 'text-red-500' : 'text-[#8e8e93]';
+  const bg = active ? 'bg-red-50' : 'bg-[#f5f5f7]';
+  const accent = active ? 'bg-red-200' : 'bg-[#d1d1d6]';
+  const accentStrong = active ? 'bg-red-400' : 'bg-[#aeaeb2]';
+  const borderC = active ? 'border-red-200' : 'border-[#e5e5ea]';
+
+  const thumbnails = {
+    exam: (
+      <div className={`${bg} rounded-lg p-3 h-28 flex flex-col gap-1.5 border ${borderC}`}>
+        <div className="flex items-center justify-between">
+          <div className={`h-2.5 w-16 rounded ${accentStrong}`} />
+          <div className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${active ? 'bg-red-100 text-red-500' : 'bg-[#e5e5ea] text-[#8e8e93]'}`}>100点</div>
+        </div>
+        <div className={`h-1 w-full rounded ${accent} opacity-40`} />
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <div className={`w-4 h-4 rounded-full ${accentStrong} flex items-center justify-center text-white text-[7px] font-bold`}>1</div>
+              <div className={`h-1.5 flex-1 rounded ${accent}`} />
+            </div>
+            <div className={`ml-5.5 h-1 w-3/4 rounded ${accent} opacity-60`} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5">
+              <div className={`w-4 h-4 rounded-full ${accentStrong} flex items-center justify-center text-white text-[7px] font-bold`}>2</div>
+              <div className={`h-1.5 flex-1 rounded ${accent}`} />
+            </div>
+            <div className={`ml-5.5 h-1 w-2/3 rounded ${accent} opacity-60`} />
+          </div>
+        </div>
+        <div className={`h-1 w-full rounded ${accent} opacity-20`} />
+        <div className={`h-1 w-1/2 rounded ${accent} opacity-40`} />
+      </div>
+    ),
+    worksheet: (
+      <div className={`${bg} rounded-lg p-3 h-28 flex flex-col gap-1.5 border ${borderC}`}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1">
+            <span className={`text-[7px] font-bold ${base}`}>名前</span>
+            <div className={`h-0.5 w-12 ${accent} rounded`} />
+          </div>
+          <div className="flex items-center gap-1">
+            <span className={`text-[7px] font-bold ${base}`}>日付</span>
+            <div className={`h-0.5 w-8 ${accent} rounded`} />
+          </div>
+        </div>
+        <div className={`text-center text-[8px] font-bold ${base} py-0.5`}>学習プリント</div>
+        <div className="flex-1 space-y-2">
+          {[1, 2].map(n => (
+            <div key={n} className="space-y-0.5">
+              <div className="flex items-center gap-1">
+                <span className={`text-[7px] font-bold ${base}`}>{n}.</span>
+                <div className={`h-1.5 flex-1 rounded ${accent}`} />
+              </div>
+              <div className={`ml-3 h-3 rounded border-b-2 ${borderC}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    flashcard: (
+      <div className={`${bg} rounded-lg p-3 h-28 flex flex-col border ${borderC}`}>
+        <div className="grid grid-cols-2 gap-0 flex-1 rounded overflow-hidden border" style={{ borderColor: active ? '#fca5a5' : '#d1d1d6' }}>
+          <div className={`text-[7px] font-bold text-center py-1 ${active ? 'bg-red-100 text-red-500' : 'bg-[#e5e5ea] text-[#8e8e93]'} border-r ${borderC}`}>問題</div>
+          <div className={`text-[7px] font-bold text-center py-1 ${active ? 'bg-red-100 text-red-500' : 'bg-[#e5e5ea] text-[#8e8e93]'}`}>解答</div>
+          {[1, 2, 3].map(n => (
+            <React.Fragment key={n}>
+              <div className={`px-2 py-1.5 border-t border-r ${borderC} flex items-center`}>
+                <div className={`h-1 w-full rounded ${accent}`} />
+              </div>
+              <div className={`px-2 py-1.5 border-t ${borderC} flex items-center`}>
+                <div className={`h-1 w-3/4 rounded ${accent} opacity-60`} />
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    ),
+    mock_exam: (
+      <div className={`${bg} rounded-lg p-3 h-28 flex flex-col gap-1 border ${borderC}`}>
+        <div className="flex items-center justify-between">
+          <div className={`text-[8px] font-bold ${base}`}>模擬試験</div>
+          <div className={`text-[7px] px-1.5 py-0.5 rounded ${active ? 'bg-red-100 text-red-500' : 'bg-[#e5e5ea] text-[#8e8e93]'} font-bold`}>60分</div>
+        </div>
+        <div className={`p-1.5 rounded ${active ? 'bg-red-100/50' : 'bg-[#e5e5ea]/50'} text-[6px] ${base}`}>
+          【注意事項】解答用紙に記入
+        </div>
+        <div className="flex-1 space-y-1.5">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1">
+              <span className={`text-[7px] font-bold ${base}`}>第1問</span>
+              <span className={`text-[6px] ${base} opacity-60`}>(30点)</span>
+            </div>
+            <div className="ml-2 space-y-0.5">
+              <div className={`h-1 w-full rounded ${accent}`} />
+              <div className={`h-1 w-4/5 rounded ${accent} opacity-60`} />
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+    report: (
+      <div className={`${bg} rounded-lg p-3 h-28 flex flex-col gap-1 border ${borderC}`}>
+        <div className={`h-2 w-12 rounded ${accentStrong}`} />
+        <div className="flex-1 space-y-1.5">
+          {['問題', '解法', 'ポイント'].map((label, i) => (
+            <div key={label} className="space-y-0.5">
+              <div className={`text-[6px] font-bold px-1 py-0.5 rounded ${active ? 'bg-red-100 text-red-500' : 'bg-[#e5e5ea] text-[#8e8e93]'} inline-block`}>
+                {label}
+              </div>
+              <div className={`h-1 rounded ${accent} ${i === 1 ? 'w-full' : 'w-3/4'}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+    minimal: (
+      <div className={`${bg} rounded-lg p-3 h-28 flex flex-col justify-center gap-3 border ${borderC}`}>
+        {[1, 2, 3].map(n => (
+          <div key={n} className="flex items-center gap-1.5">
+            <span className={`text-[7px] font-bold ${base}`}>問{n}.</span>
+            <div className={`h-1.5 flex-1 rounded ${accent}`} />
+          </div>
+        ))}
+      </div>
+    ),
+  };
+
+  return thumbnails[id] || null;
 };
 
 export default function UserModePage() {
@@ -127,6 +207,8 @@ export default function UserModePage() {
   const [newTplSubject, setNewTplSubject] = useState('');
   const [newTplCustomSubject, setNewTplCustomSubject] = useState('');
   const [newTplField, setNewTplField] = useState('');
+  const [newTplTheme, setNewTplTheme] = useState('');
+  const [newTplFormat, setNewTplFormat] = useState('standard');
   const [newTplDifficulty, setNewTplDifficulty] = useState('');
   const [creatingTemplate, setCreatingTemplate] = useState(false);
 
@@ -147,8 +229,8 @@ export default function UserModePage() {
         id,
         name: `${label} テンプレート`,
         description: `${label} の問題を生成するテンプレート`,
-        prompt: buildTemplatePrompt(effectiveNewSubject, f),
-        metadata: { subject: effectiveNewSubject, field: f || null, difficulty: newTplDifficulty, auto_generated: true },
+        prompt: buildTemplatePrompt(effectiveNewSubject, f, { questionFormat: newTplFormat, theme: newTplTheme }),
+        metadata: { subject: effectiveNewSubject, field: f || null, theme: newTplTheme || null, questionFormat: newTplFormat, difficulty: newTplDifficulty, auto_generated: true },
       });
       await refresh();
       setTemplateId(id);
@@ -157,7 +239,7 @@ export default function UserModePage() {
       setDifficulty(newTplDifficulty);
       setStatus(`テンプレート「${label}」を作成しました`);
       setShowCreateTemplate(false);
-      setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty('');
+      setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplFormat('standard'); setNewTplDifficulty('');
     } catch (e) { setStatus(`作成失敗: ${e.message}`); }
     setCreatingTemplate(false);
   };
@@ -166,7 +248,8 @@ export default function UserModePage() {
   const [templateId, setTemplateId] = useState('');
   const [subject, setSubject] = useState('');
   const [field, setField] = useState('');
-  const [difficulty, setDifficulty] = useState('普通');
+  const [theme, setTheme] = useState('');
+  const [difficulty, setDifficulty] = useState('標準');
   const [numQuestions, setNumQuestions] = useState(1);
   const [topK, setTopK] = useState(5);
   const [latexPresets, setLatexPresets] = useState([]);
@@ -260,6 +343,7 @@ export default function UserModePage() {
     if (tpl?.metadata) {
       if (tpl.metadata.subject) setSubject(tpl.metadata.subject);
       if (tpl.metadata.field) setField(tpl.metadata.field);
+      if (tpl.metadata.theme) setTheme(tpl.metadata.theme);
       if (tpl.metadata.difficulty) setDifficulty(tpl.metadata.difficulty);
     }
   };
@@ -530,6 +614,16 @@ export default function UserModePage() {
                             {t.metadata.field}
                           </span>
                         )}
+                        {t.metadata?.theme && (
+                          <span className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full text-[10px] font-bold">
+                            {t.metadata.theme}
+                          </span>
+                        )}
+                        {t.metadata?.questionFormat && t.metadata.questionFormat !== 'standard' && (
+                          <span className="px-2 py-0.5 bg-cyan-50 text-cyan-600 rounded-full text-[10px] font-bold">
+                            {QUESTION_FORMATS.find(f => f.value === t.metadata.questionFormat)?.label || t.metadata.questionFormat}
+                          </span>
+                        )}
                         {t.metadata?.difficulty && (
                           <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
                             {t.metadata.difficulty}
@@ -575,7 +669,7 @@ export default function UserModePage() {
                     onChange={setNewTplDifficulty}
                     options={[
                       { value: '', label: '— 選択してください —' },
-                      ...DIFFICULTIES.map((d) => ({ value: d, label: d })),
+                      ...DIFFICULTIES.map((d) => ({ value: d.value, label: `${d.label}（${d.description}）` })),
                     ]}
                   />
                 </div>
@@ -596,35 +690,81 @@ export default function UserModePage() {
                 )}
 
                 {/* 分野 */}
-                {newTplFieldOptions.length > 0 && (
+                {effectiveNewSubject && (
                   <div>
                     <label className="block text-xs font-semibold text-[#6e6e73] mb-1.5">
                       分野
                       <span className="text-[10px] font-normal text-[#1d1d1f]0 ml-1">（任意）</span>
                     </label>
-                    <div className="flex flex-wrap gap-1.5 mb-2">
-                      {newTplFieldOptions.slice(0, 15).map((f) => (
-                        <button key={f} type="button"
-                          onClick={() => setNewTplField(newTplField === f ? '' : f)}
-                          className={`px-2.5 py-1 text-xs rounded-xl border transition-all ${
-                            newTplField === f
-                              ? 'bg-red-600 text-white border-red-600'
-                              : 'bg-white text-[#6e6e73] border-black/[0.08] hover:border-red-600 hover:text-red-600'
-                          }`}>
-                          {f}
-                        </button>
-                      ))}
-                    </div>
+                    {newTplFieldOptions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {newTplFieldOptions.slice(0, 15).map((f) => (
+                          <button key={f} type="button"
+                            onClick={() => setNewTplField(newTplField === f ? '' : f)}
+                            className={`px-2.5 py-1 text-xs rounded-xl border transition-all ${
+                              newTplField === f
+                                ? 'bg-red-600 text-white border-red-600'
+                                : 'bg-white text-[#6e6e73] border-black/[0.08] hover:border-red-600 hover:text-red-600'
+                            }`}>
+                            {f}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <input
                       type="text"
                       value={newTplField}
                       onChange={(e) => setNewTplField(e.target.value)}
-                      placeholder="候補から選択 or 自由入力"
+                      placeholder={newTplFieldOptions.length > 0 ? '候補から選択 or 自由入力' : '分野名を入力（例: 微分法）'}
                       className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm text-[#1d1d1f] outline-none
                         hover:border-black/[0.12] focus:border-red-500 focus:ring-4 focus:ring-red-600/10 transition-all placeholder:text-[#aeaeb2]"
                     />
                   </div>
                 )}
+
+                {/* テーマ */}
+                {effectiveNewSubject && (
+                  <div>
+                    <label className="block text-xs font-semibold text-[#6e6e73] mb-1.5">
+                      テーマ
+                      <span className="text-[10px] font-normal text-[#1d1d1f]0 ml-1">（任意・さらに細かい分類）</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newTplTheme}
+                      onChange={(e) => setNewTplTheme(e.target.value)}
+                      placeholder="例: 置換積分、三角関数の合成、運動方程式の立式"
+                      className="w-full px-3 py-2.5 rounded-xl border border-black/[0.08] bg-white text-sm text-[#1d1d1f] outline-none
+                        hover:border-black/[0.12] focus:border-red-500 focus:ring-4 focus:ring-red-600/10 transition-all placeholder:text-[#aeaeb2]"
+                    />
+                  </div>
+                )}
+
+                {/* 問題形式 */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#6e6e73] mb-1.5">
+                    問題形式
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {QUESTION_FORMATS.map((fmt) => (
+                      <button
+                        key={fmt.value}
+                        type="button"
+                        onClick={() => setNewTplFormat(fmt.value)}
+                        className={`p-2.5 rounded-xl border text-left transition-all ${
+                          newTplFormat === fmt.value
+                            ? 'border-red-600 bg-red-50'
+                            : 'border-black/[0.08] bg-white hover:border-red-600/50'
+                        }`}
+                      >
+                        <div className={`text-xs font-bold ${newTplFormat === fmt.value ? 'text-red-600' : 'text-[#1d1d1f]'}`}>
+                          {fmt.label}
+                        </div>
+                        <div className="text-[10px] text-[#6e6e73] mt-0.5">{fmt.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 {/* 作成ボタン */}
                 <div className="flex items-center gap-3 pt-1">
@@ -642,7 +782,7 @@ export default function UserModePage() {
                     {creatingTemplate ? '作成中...' : 'テンプレートを作成'}
                   </button>
                   <button
-                    onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplDifficulty(''); }}
+                    onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplFormat('standard'); setNewTplDifficulty(''); }}
                     className="px-4 py-3 rounded-xl text-sm font-medium text-[#6e6e73] hover:text-[#424245] hover:bg-black/[0.04] transition-all"
                   >
                     キャンセル
@@ -694,6 +834,11 @@ export default function UserModePage() {
                   {field && (
                     <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold">
                       分野: {field}
+                    </span>
+                  )}
+                  {theme && (
+                    <span className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full text-[10px] font-bold">
+                      テーマ: {theme}
                     </span>
                   )}
                   {difficulty && (
@@ -928,6 +1073,11 @@ export default function UserModePage() {
                     分野: {field}
                   </span>
                 )}
+                {theme && (
+                  <span className="px-2 py-0.5 bg-violet-50 text-violet-600 rounded-full text-[10px] font-bold">
+                    テーマ: {theme}
+                  </span>
+                )}
                 {difficulty && (
                   <span className="px-2 py-0.5 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold">
                     難易度: {difficulty}
@@ -966,21 +1116,8 @@ export default function UserModePage() {
                       : 'border-black/[0.06] bg-white hover:border-red-600/50 hover:bg-black/[0.04]'
                   }`}
                 >
-                  {/* ASCIIアートイラスト */}
-                  <div
-                    className={`px-3 pt-3 pb-2 rounded-t-lg ${
-                      latexPreset === p.id ? 'bg-red-50' : 'bg-[#f5f5f7]'
-                    }`}
-                  >
-                    <pre
-                      className={`text-[9px] leading-[1.4] font-mono select-none ${
-                        latexPreset === p.id ? 'text-red-600' : 'text-[#1d1d1f]0'
-                      }`}
-                      style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
-                    >
-                      {PRESET_ILLUSTRATIONS[p.id] || ''}
-                    </pre>
-                  </div>
+                  {/* ビジュアルサムネイル */}
+                  <PresetThumbnail id={p.id} active={latexPreset === p.id} />
                   {/* ラベル */}
                   <div className="px-3 py-2">
                     <div className="flex items-center gap-1.5">
