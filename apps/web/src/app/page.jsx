@@ -255,16 +255,21 @@ export default function HomePage() {
           <circle cx="0" cy="0" r="160" fill="none" stroke="#e8457a" strokeWidth="1" opacity="0.15" />
           {/* 放射状グロー — 左上 */}
           <circle cx="-30" cy="-30" r="200" fill="url(#glow1)" opacity="0.6" />
-          {/* 大きな "∑" — 左上に堂々と */}
-          <text x="3%" y="22%" fontFamily="'Times New Roman', Georgia, serif"
-                fontSize="200" fontWeight="700" fill="url(#textGrad1)" opacity="0.10">
-            ∑
+          {/* 左上大文字 — AI */}
+          <text x="-1%" y="24%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="240" fontWeight="900" fill="url(#textGrad1)" opacity="0.07" letterSpacing="-0.02em">
+            AI
           </text>
-          {/* "CREATE" テキスト — 左上 斜め */}
+          {/* "GENERATE" テキスト — 左上 斜め */}
           <text x="2%" y="8%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="48" fontWeight="900" letterSpacing="0.3em" fill="url(#textGrad1)" opacity="0.08"
+                fontSize="44" fontWeight="900" letterSpacing="0.25em" fill="url(#textGrad1)" opacity="0.08"
                 transform="rotate(-15, 50, 50)">
-            CREATE
+            GENERATE
+          </text>
+          {/* サブテキスト */}
+          <text x="1%" y="34%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="18" fontWeight="700" letterSpacing="0.4em" fill="#c084fc" opacity="0.12">
+            RETRIEVAL
           </text>
           {/* 装飾ライン群 — 左上から放射 */}
           <line x1="0" y1="80" x2="180" y2="80" stroke="#e8457a" strokeWidth="2" opacity="0.15" />
@@ -295,17 +300,24 @@ export default function HomePage() {
           <circle cx="100%" cy="0" r="130" fill="none" stroke="#818cf8" strokeWidth="1.2" opacity="0.14" />
           {/* 放射状グロー — 右上 */}
           <circle cx="105%" cy="-30" r="180" fill="url(#glow2)" opacity="0.5" />
-          {/* 大きな "∫" — 右上に堂々と */}
-          <text x="82%" y="25%" fontFamily="'Times New Roman', Georgia, serif"
-                fontSize="220" fontWeight="700" fill="url(#textGrad2)" opacity="0.09"
-                transform="rotate(10, 700, 100)">
-            ∫
+          {/* 右上大文字 — RAG */}
+          <text x="68%" y="26%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="200" fontWeight="900" fill="url(#textGrad2)" opacity="0.06" letterSpacing="0.05em"
+                transform="rotate(8, 700, 100)">
+            RAG
           </text>
-          {/* "SOLVE" テキスト — 右上 斜め */}
-          <text x="72%" y="6%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="44" fontWeight="900" letterSpacing="0.35em" fill="url(#textGrad2)" opacity="0.08"
+          {/* "AUGMENTED" テキスト — 右上 斜め */}
+          <text x="74%" y="6%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="40" fontWeight="900" letterSpacing="0.3em" fill="url(#textGrad2)" opacity="0.08"
                 transform="rotate(12, 650, 40)">
-            SOLVE
+            SMART
+          </text>
+          {/* サブテキスト */}
+          <text x="78%" y="35%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="16" fontWeight="700" letterSpacing="0.35em" fill="#818cf8" opacity="0.11"
+                textAnchor="end"
+                transform="rotate(8, 700, 200)">
+            AUGMENTED
           </text>
           {/* 装飾ライン群 — 右上から放射 */}
           <line x1="100%" y1="70" x2="75%" y2="70" stroke="#818cf8" strokeWidth="2" opacity="0.15" />
@@ -333,45 +345,70 @@ export default function HomePage() {
 
           {/* ═══ 中央タイポグラフィ ═══ */}
 
-          {/* "EXAM" — 画面上部に超大文字 */}
-          <text x="50%" y="18%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="180" fontWeight="900" letterSpacing="0.15em" fill="url(#textGrad1)" opacity="0.04">
+          {/* "EXAM" — 画面上部 */}
+          <text x="50%" y="16%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="160" fontWeight="900" letterSpacing="0.18em" fill="url(#textGrad1)" opacity="0.04">
             EXAM
           </text>
 
-          {/* "REM" — 右側に斜めで配置 */}
-          <text x="82%" y="55%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="220" fontWeight="900" letterSpacing="0.05em" fill="url(#textGrad2)" opacity="0.03"
-                transform="rotate(-12, 600, 400)">
-            REM
+          {/* "POWERED" — 中央右 斜め */}
+          <text x="78%" y="52%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="100" fontWeight="900" letterSpacing="0.1em" fill="url(#textGrad2)" opacity="0.035"
+                transform="rotate(-10, 600, 380)">
+            POWERED
           </text>
 
-          {/* 数式シンボル群 — 大きく・くっきり */}
-          <text x="15%" y="78%" fontFamily="'Times New Roman', Georgia, serif"
-                fontSize="110" fontWeight="700" fill="url(#textGrad1)" opacity="0.08">
-            π
+          {/* ── 散りばめキーワード — AI / 勉強 / 試験テーマ ── */}
+
+          {/* 左中段 — ニューラルネット風ノード記号 */}
+          <text x="5%" y="50%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="60" fontWeight="800" fill="url(#textGrad1)" opacity="0.06">
+            ◇
           </text>
-          <text x="75%" y="88%" fontFamily="'Times New Roman', Georgia, serif"
-                fontSize="120" fontWeight="700" fill="url(#textGrad2)" opacity="0.07">
-            Δ
-          </text>
-          <text x="45%" y="65%" fontFamily="'Times New Roman', Georgia, serif"
-                fontSize="80" fontWeight="400" fill="#c084fc" opacity="0.06">
-            ∞
-          </text>
-          <text x="30%" y="85%" fontFamily="'Times New Roman', Georgia, serif"
-                fontSize="70" fontWeight="400" fill="#e8457a" opacity="0.06">
-            θ
-          </text>
-          <text x="60%" y="75%" fontFamily="'Times New Roman', Georgia, serif"
-                fontSize="90" fontWeight="400" fill="#818cf8" opacity="0.05">
-            φ
+          <text x="3%" y="62%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="14" fontWeight="700" letterSpacing="0.3em" fill="#c084fc" opacity="0.10">
+            NEURAL
           </text>
 
-          {/* "RAPID EXAM MAKER" — 下部に横書き */}
-          <text x="50%" y="92%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="32" fontWeight="900" letterSpacing="0.5em" fill="url(#textGrad1)" opacity="0.08">
-            RAPID EXAM MAKER
+          {/* 右下 — 学習テーマ */}
+          <text x="72%" y="82%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="80" fontWeight="900" fill="url(#textGrad2)" opacity="0.05">
+            Q&amp;A
+          </text>
+
+          {/* 左下 — 知識グラフ風 */}
+          <text x="8%" y="80%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="50" fontWeight="800" fill="url(#textGrad1)" opacity="0.06">
+            ⬡
+          </text>
+          <text x="4%" y="88%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="16" fontWeight="700" letterSpacing="0.2em" fill="#e8457a" opacity="0.09">
+            KNOWLEDGE
+          </text>
+
+          {/* 中央下 — PDF */}
+          <text x="38%" y="70%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="36" fontWeight="800" letterSpacing="0.15em" fill="#c084fc" opacity="0.06">
+            .pdf
+          </text>
+
+          {/* 右中段 — テンプレート */}
+          <text x="88%" y="58%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="14" fontWeight="700" letterSpacing="0.25em" fill="#818cf8" opacity="0.10"
+                transform="rotate(90, 92%, 58%)">
+            TEMPLATE
+          </text>
+
+          {/* 分数やΣは1つだけ — 数学のアクセントとして残す */}
+          <text x="25%" y="72%" fontFamily="'Times New Roman', Georgia, serif"
+                fontSize="70" fontWeight="400" fill="#c084fc" opacity="0.05">
+            Σ
+          </text>
+
+          {/* "RAPID · EXAM · MAKER" — 下部フッター */}
+          <text x="50%" y="95%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="24" fontWeight="900" letterSpacing="0.6em" fill="url(#textGrad1)" opacity="0.07">
+            RAPID · EXAM · MAKER
           </text>
 
           {/* ══════ 大きな幾何学装飾 ══════ */}
