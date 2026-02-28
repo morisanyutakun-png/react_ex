@@ -175,7 +175,111 @@ function ToolCard({ href, icon, label, description, glowColor, delay }) {
 /* ─── ページ本体 ─── */
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-20 pb-28 sm:pb-20">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-20 pb-28 sm:pb-20 overflow-hidden">
+
+      {/* ── 背景パターン: トポグラフィック・メッシュ ── */}
+      <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
+        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            {/* グリッドドット */}
+            <pattern id="heroGrid" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
+              <circle cx="24" cy="24" r="0.8" fill="#c084fc" opacity="0.18" />
+            </pattern>
+            {/* 六角ハニカム */}
+            <pattern id="heroHex" x="0" y="0" width="56" height="48" patternUnits="userSpaceOnUse">
+              <path d="M28 0 L42 8 L42 24 L28 32 L14 24 L14 8 Z" fill="none" stroke="#e8457a" strokeWidth="0.5" opacity="0.06" />
+              <path d="M0 16 L14 24 L14 40 L0 48 L-14 40 L-14 24 Z" fill="none" stroke="#c084fc" strokeWidth="0.5" opacity="0.04" />
+              <path d="M56 16 L70 24 L70 40 L56 48 L42 40 L42 24 Z" fill="none" stroke="#818cf8" strokeWidth="0.5" opacity="0.04" />
+            </pattern>
+            {/* グラデーション定義 */}
+            <radialGradient id="heroGlow1" cx="30%" cy="25%" r="45%">
+              <stop offset="0%" stopColor="#f472b6" stopOpacity="0.12" />
+              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.06" />
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="heroGlow2" cx="75%" cy="70%" r="40%">
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.10" />
+              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#f472b6" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="heroGlow3" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#e8457a" stopOpacity="0.15" />
+              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.10" />
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="0.05" />
+            </linearGradient>
+            <linearGradient id="ringGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#e8457a" stopOpacity="0.04" />
+            </linearGradient>
+            {/* フェード用マスク */}
+            <radialGradient id="fadeMask" cx="50%" cy="45%" r="60%">
+              <stop offset="0%" stopColor="white" stopOpacity="1" />
+              <stop offset="70%" stopColor="white" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
+            <mask id="centerFade">
+              <rect width="100%" height="100%" fill="url(#fadeMask)" />
+            </mask>
+          </defs>
+
+          {/* グラデーションオーブ */}
+          <rect width="100%" height="100%" fill="url(#heroGlow1)" />
+          <rect width="100%" height="100%" fill="url(#heroGlow2)" />
+          <rect width="100%" height="100%" fill="url(#heroGlow3)" />
+
+          {/* グリッドドットレイヤー */}
+          <rect width="100%" height="100%" fill="url(#heroGrid)" mask="url(#centerFade)" />
+
+          {/* 六角メッシュレイヤー */}
+          <rect width="100%" height="100%" fill="url(#heroHex)" mask="url(#centerFade)" />
+
+          {/* コンセントリック・リング群 */}
+          <g opacity="0.5">
+            <circle cx="50%" cy="42%" r="140" fill="none" stroke="url(#ringGrad1)" strokeWidth="0.8">
+              <animateTransform attributeName="transform" type="rotate" from="0 50% 42%" to="360 50% 42%" dur="90s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="50%" cy="42%" r="200" fill="none" stroke="url(#ringGrad2)" strokeWidth="0.5" strokeDasharray="8 12">
+              <animateTransform attributeName="transform" type="rotate" from="360 50% 42%" to="0 50% 42%" dur="120s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="50%" cy="42%" r="280" fill="none" stroke="url(#ringGrad1)" strokeWidth="0.4" strokeDasharray="4 20">
+              <animateTransform attributeName="transform" type="rotate" from="0 50% 42%" to="360 50% 42%" dur="150s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="50%" cy="42%" r="380" fill="none" stroke="url(#ringGrad2)" strokeWidth="0.3" strokeDasharray="2 30">
+              <animateTransform attributeName="transform" type="rotate" from="360 50% 42%" to="0 50% 42%" dur="180s" repeatCount="indefinite" />
+            </circle>
+          </g>
+
+          {/* フローティング・パーティクル */}
+          <g opacity="0.6">
+            <circle r="2" fill="#e8457a" opacity="0.25">
+              <animateMotion dur="18s" repeatCount="indefinite" path="M120,200 C200,100 400,300 500,150 C600,50 200,350 120,200" />
+            </circle>
+            <circle r="1.5" fill="#c084fc" opacity="0.2">
+              <animateMotion dur="22s" repeatCount="indefinite" path="M500,300 C380,150 200,250 150,400 C100,500 450,350 500,300" />
+            </circle>
+            <circle r="1.8" fill="#818cf8" opacity="0.18">
+              <animateMotion dur="26s" repeatCount="indefinite" path="M300,100 C450,250 100,350 250,450 C400,500 350,150 300,100" />
+            </circle>
+            <circle r="1.2" fill="#f472b6" opacity="0.22">
+              <animateMotion dur="20s" repeatCount="indefinite" path="M600,350 C500,200 300,400 200,250 C100,100 500,450 600,350" />
+            </circle>
+          </g>
+
+          {/* コーナーアクセント弧 */}
+          <path d="M0 120 Q60 60 120 0" fill="none" stroke="#e8457a" strokeWidth="0.6" opacity="0.1">
+            <animate attributeName="opacity" values="0.1;0.18;0.1" dur="6s" repeatCount="indefinite" />
+          </path>
+          <path d="M100% 100% Q calc(100% - 80px) calc(100% - 80px) calc(100% - 160px) 100%" fill="none" stroke="#818cf8" strokeWidth="0.6" opacity="0.08" />
+        </svg>
+
+        {/* ソフトバイナルグラス・オーバーレイ */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#f5f5f7]/30 via-transparent to-[#f5f5f7]/60" />
+      </div>
+
       <div className="relative z-10 max-w-[540px] w-full mx-auto">
 
         {/* ── ヒーロー ── */}

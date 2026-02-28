@@ -431,6 +431,11 @@ body::after {
     opacity: 0.7;
   }
 
+  /* Hide heavy SVG animations on mobile to save GPU */
+  svg animateTransform, svg animateMotion {
+    animation-play-state: paused;
+  }
+
   /* Larger touch targets */
   button, a, [role="button"] {
     min-height: 44px;
@@ -457,6 +462,13 @@ body::after {
 /* Ensure minimum readable font size on mobile */
 @media (max-width: 375px) {
   html { font-size: 15px; }
+}
+
+/* ── Reduced motion: pause all SVG animations ── */
+@media (prefers-reduced-motion: reduce) {
+  svg animateTransform, svg animateMotion, svg animate {
+    animation: none !important;
+  }
 }
 
 /* ── Apple-style Frosted Search Bar ── */
