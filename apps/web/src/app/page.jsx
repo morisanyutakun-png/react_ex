@@ -177,48 +177,57 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-20 pb-28 sm:pb-20 overflow-hidden">
 
-      {/* ── 背景パターン: トポグラフィック・メッシュ ── */}
-      <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
+      {/* ── 背景パターン: ボールド・タイポグラフィック・メッシュ ── */}
+      <div className="absolute inset-0 pointer-events-none z-0 select-none" aria-hidden="true">
         <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
           <defs>
-            {/* グリッドドット */}
-            <pattern id="heroGrid" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
-              <circle cx="24" cy="24" r="0.8" fill="#c084fc" opacity="0.18" />
+            {/* ── グリッドパターン（大きめ・くっきり） ── */}
+            <pattern id="bgGrid" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="60" x2="60" y2="60" stroke="#c084fc" strokeWidth="0.5" opacity="0.08" />
+              <line x1="60" y1="0" x2="60" y2="60" stroke="#c084fc" strokeWidth="0.5" opacity="0.08" />
+              <circle cx="60" cy="60" r="1.5" fill="#e8457a" opacity="0.12" />
             </pattern>
-            {/* 六角ハニカム */}
-            <pattern id="heroHex" x="0" y="0" width="56" height="48" patternUnits="userSpaceOnUse">
-              <path d="M28 0 L42 8 L42 24 L28 32 L14 24 L14 8 Z" fill="none" stroke="#e8457a" strokeWidth="0.5" opacity="0.06" />
-              <path d="M0 16 L14 24 L14 40 L0 48 L-14 40 L-14 24 Z" fill="none" stroke="#c084fc" strokeWidth="0.5" opacity="0.04" />
-              <path d="M56 16 L70 24 L70 40 L56 48 L42 40 L42 24 Z" fill="none" stroke="#818cf8" strokeWidth="0.5" opacity="0.04" />
+            {/* ── 大きな六角形パターン ── */}
+            <pattern id="bgHexLarge" x="0" y="0" width="120" height="104" patternUnits="userSpaceOnUse">
+              <path d="M60 0 L120 26 L120 78 L60 104 L0 78 L0 26 Z" fill="none" stroke="#e8457a" strokeWidth="0.8" opacity="0.07" />
             </pattern>
-            {/* グラデーション定義 */}
-            <radialGradient id="heroGlow1" cx="30%" cy="25%" r="45%">
-              <stop offset="0%" stopColor="#f472b6" stopOpacity="0.12" />
-              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.06" />
+            {/* ── グラデーション群 ── */}
+            <radialGradient id="glow1" cx="20%" cy="20%" r="50%">
+              <stop offset="0%" stopColor="#f472b6" stopOpacity="0.18" />
+              <stop offset="60%" stopColor="#c084fc" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#818cf8" stopOpacity="0" />
             </radialGradient>
-            <radialGradient id="heroGlow2" cx="75%" cy="70%" r="40%">
-              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.10" />
-              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.04" />
+            <radialGradient id="glow2" cx="80%" cy="75%" r="45%">
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.15" />
+              <stop offset="60%" stopColor="#c084fc" stopOpacity="0.06" />
               <stop offset="100%" stopColor="#f472b6" stopOpacity="0" />
             </radialGradient>
-            <radialGradient id="heroGlow3" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.04" />
+            <radialGradient id="glow3" cx="60%" cy="30%" r="35%">
+              <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.08" />
               <stop offset="100%" stopColor="transparent" stopOpacity="0" />
             </radialGradient>
-            <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#e8457a" stopOpacity="0.15" />
-              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.10" />
-              <stop offset="100%" stopColor="#818cf8" stopOpacity="0.05" />
+            <linearGradient id="ringG1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#e8457a" stopOpacity="0.22" />
+              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#818cf8" stopOpacity="0.08" />
             </linearGradient>
-            <linearGradient id="ringGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="#e8457a" stopOpacity="0.04" />
+            <linearGradient id="ringG2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.18" />
+              <stop offset="100%" stopColor="#e8457a" stopOpacity="0.06" />
+            </linearGradient>
+            <linearGradient id="textGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#e8457a" />
+              <stop offset="50%" stopColor="#c084fc" />
+              <stop offset="100%" stopColor="#818cf8" />
+            </linearGradient>
+            <linearGradient id="textGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#f472b6" />
+              <stop offset="100%" stopColor="#818cf8" />
             </linearGradient>
             {/* フェード用マスク */}
-            <radialGradient id="fadeMask" cx="50%" cy="45%" r="60%">
+            <radialGradient id="fadeMask" cx="50%" cy="42%" r="65%">
               <stop offset="0%" stopColor="white" stopOpacity="1" />
-              <stop offset="70%" stopColor="white" stopOpacity="0.6" />
+              <stop offset="60%" stopColor="white" stopOpacity="0.7" />
               <stop offset="100%" stopColor="white" stopOpacity="0" />
             </radialGradient>
             <mask id="centerFade">
@@ -226,58 +235,145 @@ export default function HomePage() {
             </mask>
           </defs>
 
-          {/* グラデーションオーブ */}
-          <rect width="100%" height="100%" fill="url(#heroGlow1)" />
-          <rect width="100%" height="100%" fill="url(#heroGlow2)" />
-          <rect width="100%" height="100%" fill="url(#heroGlow3)" />
+          {/* ── グラデーションオーブ（大きめ） ── */}
+          <rect width="100%" height="100%" fill="url(#glow1)" />
+          <rect width="100%" height="100%" fill="url(#glow2)" />
+          <rect width="100%" height="100%" fill="url(#glow3)" />
 
-          {/* グリッドドットレイヤー */}
-          <rect width="100%" height="100%" fill="url(#heroGrid)" mask="url(#centerFade)" />
+          {/* ── グリッドライン ── */}
+          <rect width="100%" height="100%" fill="url(#bgGrid)" mask="url(#centerFade)" />
 
-          {/* 六角メッシュレイヤー */}
-          <rect width="100%" height="100%" fill="url(#heroHex)" mask="url(#centerFade)" />
+          {/* ── 大六角メッシュ ── */}
+          <rect width="100%" height="100%" fill="url(#bgHexLarge)" mask="url(#centerFade)" />
 
-          {/* コンセントリック・リング群 */}
-          <g opacity="0.5">
-            <circle cx="50%" cy="42%" r="140" fill="none" stroke="url(#ringGrad1)" strokeWidth="0.8">
-              <animateTransform attributeName="transform" type="rotate" from="0 50% 42%" to="360 50% 42%" dur="90s" repeatCount="indefinite" />
+          {/* ══════ 巨大タイポグラフィ・ウォーターマーク ══════ */}
+
+          {/* "EXAM" — 画面上部に超大文字 */}
+          <text x="50%" y="18%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="180" fontWeight="900" letterSpacing="0.15em" fill="url(#textGrad1)" opacity="0.04">
+            EXAM
+          </text>
+
+          {/* "REM" — 右側に斜めで配置 */}
+          <text x="82%" y="55%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="220" fontWeight="900" letterSpacing="0.05em" fill="url(#textGrad2)" opacity="0.03"
+                transform="rotate(-12, 600, 400)">
+            REM
+          </text>
+
+          {/* 数式シンボル群 — 大きく配置 */}
+          <text x="8%" y="40%" fontFamily="'Times New Roman', serif"
+                fontSize="120" fontWeight="400" fill="#c084fc" opacity="0.05">
+            ∑
+          </text>
+          <text x="88%" y="28%" fontFamily="'Times New Roman', serif"
+                fontSize="100" fontWeight="400" fill="#e8457a" opacity="0.04"
+                transform="rotate(15, 700, 200)">
+            ∫
+          </text>
+          <text x="15%" y="78%" fontFamily="'Times New Roman', serif"
+                fontSize="80" fontWeight="400" fill="#818cf8" opacity="0.04">
+            π
+          </text>
+          <text x="75%" y="88%" fontFamily="'Times New Roman', serif"
+                fontSize="90" fontWeight="400" fill="#f472b6" opacity="0.04">
+            Δ
+          </text>
+          <text x="5%" y="15%" fontFamily="'Times New Roman', serif"
+                fontSize="60" fontWeight="400" fill="#c084fc" opacity="0.05">
+            α
+          </text>
+          <text x="92%" y="65%" fontFamily="'Times New Roman', serif"
+                fontSize="70" fontWeight="400" fill="#e8457a" opacity="0.035">
+            θ
+          </text>
+
+          {/* "RAPID EXAM MAKER" — 下部に横書き */}
+          <text x="50%" y="92%" textAnchor="middle" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
+                fontSize="28" fontWeight="800" letterSpacing="0.5em" fill="url(#textGrad1)" opacity="0.05">
+            RAPID EXAM MAKER
+          </text>
+
+          {/* ══════ 大きな幾何学装飾 ══════ */}
+
+          {/* 巨大リング群 — 太めストローク */}
+          <g opacity="0.7">
+            <circle cx="50%" cy="42%" r="160" fill="none" stroke="url(#ringG1)" strokeWidth="1.5">
+              <animateTransform attributeName="transform" type="rotate" from="0 50% 42%" to="360 50% 42%" dur="80s" repeatCount="indefinite" />
             </circle>
-            <circle cx="50%" cy="42%" r="200" fill="none" stroke="url(#ringGrad2)" strokeWidth="0.5" strokeDasharray="8 12">
-              <animateTransform attributeName="transform" type="rotate" from="360 50% 42%" to="0 50% 42%" dur="120s" repeatCount="indefinite" />
+            <circle cx="50%" cy="42%" r="240" fill="none" stroke="url(#ringG2)" strokeWidth="1" strokeDasharray="12 8">
+              <animateTransform attributeName="transform" type="rotate" from="360 50% 42%" to="0 50% 42%" dur="100s" repeatCount="indefinite" />
             </circle>
-            <circle cx="50%" cy="42%" r="280" fill="none" stroke="url(#ringGrad1)" strokeWidth="0.4" strokeDasharray="4 20">
-              <animateTransform attributeName="transform" type="rotate" from="0 50% 42%" to="360 50% 42%" dur="150s" repeatCount="indefinite" />
+            <circle cx="50%" cy="42%" r="340" fill="none" stroke="url(#ringG1)" strokeWidth="0.8" strokeDasharray="6 18">
+              <animateTransform attributeName="transform" type="rotate" from="0 50% 42%" to="360 50% 42%" dur="130s" repeatCount="indefinite" />
             </circle>
-            <circle cx="50%" cy="42%" r="380" fill="none" stroke="url(#ringGrad2)" strokeWidth="0.3" strokeDasharray="2 30">
-              <animateTransform attributeName="transform" type="rotate" from="360 50% 42%" to="0 50% 42%" dur="180s" repeatCount="indefinite" />
+            <circle cx="50%" cy="42%" r="460" fill="none" stroke="url(#ringG2)" strokeWidth="0.5" strokeDasharray="4 24">
+              <animateTransform attributeName="transform" type="rotate" from="360 50% 42%" to="0 50% 42%" dur="160s" repeatCount="indefinite" />
             </circle>
           </g>
 
-          {/* フローティング・パーティクル */}
-          <g opacity="0.6">
-            <circle r="2" fill="#e8457a" opacity="0.25">
-              <animateMotion dur="18s" repeatCount="indefinite" path="M120,200 C200,100 400,300 500,150 C600,50 200,350 120,200" />
-            </circle>
-            <circle r="1.5" fill="#c084fc" opacity="0.2">
-              <animateMotion dur="22s" repeatCount="indefinite" path="M500,300 C380,150 200,250 150,400 C100,500 450,350 500,300" />
-            </circle>
-            <circle r="1.8" fill="#818cf8" opacity="0.18">
-              <animateMotion dur="26s" repeatCount="indefinite" path="M300,100 C450,250 100,350 250,450 C400,500 350,150 300,100" />
-            </circle>
-            <circle r="1.2" fill="#f472b6" opacity="0.22">
-              <animateMotion dur="20s" repeatCount="indefinite" path="M600,350 C500,200 300,400 200,250 C100,100 500,450 600,350" />
-            </circle>
-          </g>
-
-          {/* コーナーアクセント弧 */}
-          <path d="M0 120 Q60 60 120 0" fill="none" stroke="#e8457a" strokeWidth="0.6" opacity="0.1">
-            <animate attributeName="opacity" values="0.1;0.18;0.1" dur="6s" repeatCount="indefinite" />
+          {/* 大きなコーナー装飾弧 */}
+          <path d="M0 200 Q100 100 200 0" fill="none" stroke="url(#ringG1)" strokeWidth="1.5" opacity="0.12">
+            <animate attributeName="opacity" values="0.12;0.22;0.12" dur="5s" repeatCount="indefinite" />
           </path>
-          <path d="M100% 100% Q calc(100% - 80px) calc(100% - 80px) calc(100% - 160px) 100%" fill="none" stroke="#818cf8" strokeWidth="0.6" opacity="0.08" />
+          <path d="M0 350 Q175 175 350 0" fill="none" stroke="url(#ringG2)" strokeWidth="0.8" opacity="0.06" />
+
+          {/* 右下コーナー */}
+          <g opacity="0.1">
+            <line x1="100%" y1="70%" x2="70%" y2="100%" stroke="#c084fc" strokeWidth="0.6" />
+            <line x1="100%" y1="80%" x2="80%" y2="100%" stroke="#e8457a" strokeWidth="0.4" />
+            <line x1="100%" y1="90%" x2="90%" y2="100%" stroke="#818cf8" strokeWidth="0.3" />
+          </g>
+
+          {/* 左下コーナー — 幾何学ドット群 */}
+          <g opacity="0.15">
+            <circle cx="8%" cy="85%" r="3" fill="#e8457a" />
+            <circle cx="12%" cy="88%" r="2" fill="#c084fc" />
+            <circle cx="6%" cy="90%" r="1.5" fill="#818cf8" />
+            <circle cx="14%" cy="84%" r="1" fill="#f472b6" />
+            <circle cx="10%" cy="92%" r="2.5" fill="#c084fc" />
+          </g>
+
+          {/* ── フローティング・パーティクル（大きめ） ── */}
+          <g opacity="0.7">
+            <circle r="3.5" fill="#e8457a" opacity="0.2">
+              <animateMotion dur="16s" repeatCount="indefinite" path="M100,180 C250,80 450,320 550,130 C650,40 180,380 100,180" />
+            </circle>
+            <circle r="2.5" fill="#c084fc" opacity="0.18">
+              <animateMotion dur="20s" repeatCount="indefinite" path="M520,280 C380,130 180,260 130,420 C80,520 470,370 520,280" />
+            </circle>
+            <circle r="3" fill="#818cf8" opacity="0.15">
+              <animateMotion dur="24s" repeatCount="indefinite" path="M280,80 C430,240 80,360 230,470 C380,520 340,130 280,80" />
+            </circle>
+            <circle r="2" fill="#f472b6" opacity="0.2">
+              <animateMotion dur="18s" repeatCount="indefinite" path="M620,340 C500,180 280,400 180,230 C80,80 520,460 620,340" />
+            </circle>
+            <circle r="4" fill="#fbbf24" opacity="0.08">
+              <animateMotion dur="30s" repeatCount="indefinite" path="M350,150 C500,300 150,400 300,500 C450,550 400,100 350,150" />
+            </circle>
+          </g>
+
+          {/* 十字マーカー */}
+          <g opacity="0.12" stroke="#c084fc" strokeWidth="1">
+            <line x1="25%" y1="28%" x2="25%" y2="34%" />
+            <line x1="22%" y1="31%" x2="28%" y2="31%" />
+          </g>
+          <g opacity="0.10" stroke="#e8457a" strokeWidth="1">
+            <line x1="78%" y1="72%" x2="78%" y2="78%" />
+            <line x1="75%" y1="75%" x2="81%" y2="75%" />
+          </g>
+
+          {/* ダイヤモンド装飾 */}
+          <g opacity="0.08" transform="rotate(45, 120, 500)">
+            <rect x="100" y="480" width="40" height="40" fill="none" stroke="url(#ringG1)" strokeWidth="1" />
+          </g>
+          <g opacity="0.06" transform="rotate(45, 680, 120)">
+            <rect x="660" y="100" width="50" height="50" fill="none" stroke="url(#ringG2)" strokeWidth="0.8" />
+          </g>
         </svg>
 
-        {/* ソフトバイナルグラス・オーバーレイ */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#f5f5f7]/30 via-transparent to-[#f5f5f7]/60" />
+        {/* ソフトグラス・オーバーレイ — コンテンツを読みやすくする */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#f5f5f7]/20 via-transparent to-[#f5f5f7]/50" />
       </div>
 
       <div className="relative z-10 max-w-[540px] w-full mx-auto">
