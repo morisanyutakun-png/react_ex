@@ -538,3 +538,44 @@ html {
   position: relative;
   overflow: hidden;
 }
+
+/* ══════════════════════════════════════════════════
+   Endroll Scrolling Background (Stripe-inspired)
+   ══════════════════════════════════════════════════ */
+
+/* Column container */
+.endroll-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Continuous upward scroll */
+@keyframes endroll-up {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+
+/* Continuous downward scroll */
+@keyframes endroll-down {
+  from { transform: translateY(-50%); }
+  to   { transform: translateY(0); }
+}
+
+.endroll-scroll-up {
+  animation: endroll-up linear infinite;
+  will-change: transform;
+}
+
+.endroll-scroll-down {
+  animation: endroll-down linear infinite;
+  will-change: transform;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .endroll-scroll-up,
+  .endroll-scroll-down {
+    animation: none;
+  }
+}
