@@ -350,8 +350,8 @@ export default function HomePage() {
               href="/user"
               icon={<CreateIcon />}
               label="問題をつくる"
-              description="テンプレートを選んで、AIが試験問題を自動生成"
-              hint="テンプレート → 生成 → PDF"
+              description="出題パターンを選んで、AIが試験問題を自動生成"
+              hint="パターン選択 → 生成 → PDF"
               gradient="bg-gradient-to-br from-[#fc3c44] to-[#ff375f]"
               glowColor="#fc3c44"
               delay={120}
@@ -359,8 +359,8 @@ export default function HomePage() {
             <ActionCard
               href="/dev"
               icon={<TuneIcon />}
-              label="品質を高める"
-              description="RAGとプロンプトを調整して出力品質を改善"
+              label="品質を磨く"
+              description="過去問の傾向やプロンプトを参考に、出題の精度を向上"
               hint="調整 → テスト → 評価"
               gradient="bg-gradient-to-br from-[#bf5af2] to-[#5e5ce6]"
               glowColor="#bf5af2"
@@ -380,16 +380,16 @@ export default function HomePage() {
             <ToolCard
               href="/search"
               icon={<SearchIcon />}
-              label="問題を検索"
-              description="キーワードや科目でスマート検索"
+              label="問題をさがす"
+              description="キーワードや科目でかんたん検索"
               glowColor="#ff9f0a"
               delay={300}
             />
             <ToolCard
               href="/db-editor"
               icon={<DbIcon />}
-              label="DB編集"
-              description="問題データを直接編集・管理"
+              label="データ管理"
+              description="過去問データを確認・編集"
               glowColor="#30d158"
               delay={360}
             />

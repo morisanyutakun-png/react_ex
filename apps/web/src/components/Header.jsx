@@ -8,9 +8,9 @@ import { Icons } from '@/components/ui';
 const NAV_ITEMS = [
   { href: '/',          label: 'ホーム',   icon: <Icons.Home className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Home className="w-[22px] h-[22px]" />, color: '#fc3c44' },
   { href: '/user',      label: 'つくる',   icon: <Icons.User className="w-[15px] h-[15px]" />, mobileIcon: <Icons.User className="w-[22px] h-[22px]" />, color: '#e8457a' },
-  { href: '/dev',       label: '高める',   icon: <Icons.Dev className="w-[15px] h-[15px]" />,  mobileIcon: <Icons.Dev className="w-[22px] h-[22px]" />, color: '#c084fc' },
-  { href: '/search',    label: '検索',     icon: <Icons.Search className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Search className="w-[22px] h-[22px]" />, color: '#f472b6' },
-  { href: '/db-editor', label: 'DB',       icon: <Icons.Table className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Table className="w-[22px] h-[22px]" />, color: '#34d399' },
+  { href: '/dev',       label: '磨く',     icon: <Icons.Dev className="w-[15px] h-[15px]" />,  mobileIcon: <Icons.Dev className="w-[22px] h-[22px]" />, color: '#c084fc' },
+  { href: '/search',    label: 'さがす',   icon: <Icons.Search className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Search className="w-[22px] h-[22px]" />, color: '#f472b6' },
+  { href: '/db-editor', label: 'データ',   icon: <Icons.Table className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Table className="w-[22px] h-[22px]" />, color: '#34d399' },
   { href: '/help',      label: 'ヘルプ',   icon: <Icons.Book className="w-[15px] h-[15px]" />, mobileIcon: <Icons.Book className="w-[22px] h-[22px]" />, color: '#818cf8' },
 ];
 

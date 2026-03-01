@@ -18,7 +18,7 @@ import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLab
 import { LatexText } from '@/components/LatexRenderer';
 
 /* ── ウィザードステップ定義 ── */
-const STEPS = ['テンプレート選択', '設定', 'PDF形式', '生成', '結果'];
+const STEPS = ['出題パターン', '詳細設定', 'レイアウト', '生成', '完成'];
 
 /* ── 各LaTeX図表パッケージのASCIIアートプレビュー ── */
 const PACKAGE_ILLUSTRATIONS = {
@@ -222,12 +222,12 @@ export default function UserModePage() {
     const label = f ? `${effectiveNewSubject}（${f}）` : effectiveNewSubject;
     const id = buildTemplateId(effectiveNewSubject, f);
     setCreatingTemplate(true);
-    setStatus(`テンプレート「${label}」を作成中...`);
+    setStatus(`出題パターン「${label}」を作成中...`);
     try {
       await createTemplate({
         id,
-        name: `${label} テンプレート`,
-        description: `${label} の問題を生成するテンプレート`,
+        name: `${label} 出題パターン`,
+        description: `${label} の問題を生成する出題パターン`,
         prompt: buildTemplatePrompt(effectiveNewSubject, f, { theme: newTplTheme }),
         metadata: { subject: effectiveNewSubject, field: f || null, theme: newTplTheme || null, subtopic: newTplTheme || null, difficulty: newTplDifficulty, auto_generated: true },
       });
@@ -236,7 +236,7 @@ export default function UserModePage() {
       setSubject(effectiveNewSubject);
       if (f) setField(f);
       setDifficulty(newTplDifficulty);
-      setStatus(`テンプレート「${label}」を作成しました`);
+      setStatus(`出題パターン「${label}」を作成しました`);
       setShowCreateTemplate(false);
       setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplDifficulty('');
     } catch (e) { setStatus(`作成失敗: ${e.message}`); }
@@ -244,12 +244,12 @@ export default function UserModePage() {
   };
 
   const handleDeleteTemplate = async (id) => {
-    if (!confirm('このテンプレートを削除しますか？')) return;
+    if (!confirm('この出題パターンを削除しますか？')) return;
     try {
       await deleteTemplate(id);
       await refresh();
       if (templateId === id) setTemplateId('');
-      setStatus('テンプレートを削除しました');
+      setStatus('出題パターンを削除しました');
     } catch (e) { setStatus(`削除失敗: ${e.message}`); }
   };
 
@@ -264,6 +264,9 @@ export default function UserModePage() {
   const [latexPresets, setLatexPresets] = useState([]);
   const [latexPreset, setLatexPreset] = useState('exam');
   const [questionFormat, setQuestionFormat] = useState('standard');
+  const [includeDiagramPerQuestion, setIncludeDiagramPerQuestion] = useState(false);
+  const [customRequest, setCustomRequest] = useState('');
+  const CUSTOM_REQUEST_MAX_LENGTH = 200;
 
   /* ── 生成結果 ── */
   const [prompt, setPrompt] = useState('');
@@ -281,6 +284,10 @@ export default function UserModePage() {
   const [baseFilterQuery, setBaseFilterQuery] = useState('');
   const [selectedBaseProblem, setSelectedBaseProblem] = useState(null);
   const baseSearchInputRef = useRef(null);
+
+  /* ── スクロール用refs ── */
+  const wizardTopRef = useRef(null);
+  const nextActionRef = useRef(null);
 
   /* ── テンプレート合致問題（自動取得） ── */
   const [matchedProblems, setMatchedProblems] = useState([]);
@@ -363,6 +370,11 @@ export default function UserModePage() {
     }
   }, [templates, templateId]);
 
+  /* ── Step変更時: ページトップへスムーズスクロール ── */
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
+
   const onSelectTemplate = (id) => {
     setTemplateId(id);
     const tpl = templates.find((t) => t.id === id);
@@ -372,6 +384,10 @@ export default function UserModePage() {
       if (tpl.metadata.theme) setTheme(tpl.metadata.theme);
       if (tpl.metadata.difficulty) setDifficulty(tpl.metadata.difficulty);
     }
+    // 選択後「次へ」ボタンへスムーズスクロール
+    setTimeout(() => {
+      nextActionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 400);
   };
 
   const selectedTemplate = templates.find((t) => t.id === templateId) || null;
@@ -379,7 +395,7 @@ export default function UserModePage() {
   /* ── AI自動生成: プロンプト→Groq→LaTeX→PDF ── */
   const handleAutoGenerate = async () => {
     if (!templateId) {
-      setStatus('テンプレートを選択してください');
+      setStatus('出題パターンを選んでください');
       return;
     }
     setGenerating(true);
@@ -404,6 +420,8 @@ export default function UserModePage() {
         extra_packages: extraPackages,
         question_format: questionFormat,
         sub_topic: theme || undefined,
+        include_diagram_per_question: subject === '物理' && includeDiagramPerQuestion,
+        custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
       generatedPrompt = data.rendered_prompt || data.rendered || '';
@@ -415,7 +433,7 @@ export default function UserModePage() {
       if (ctx?.rag_status === 'ok' && ctx?.rag_retrieved > 0) {
         setStatus(`Step 1/3 完了: 過去問 ${ctx.rag_retrieved}件を参照`);
       } else if (ctx?.rag_status === 'no_data') {
-        setStatus('Step 1/3 完了: AIのみで生成（DB登録で精度UP）');
+        setStatus('Step 1/3 完了: AIのみで生成（過去問登録で精度UP）');
       } else if (ctx?.rag_status === 'fallback') {
         setStatus(`Step 1/3 完了: 過去問 ${ctx?.rag_retrieved || ctx?.chunk_count || 0}件を参照`);
       } else {
@@ -444,6 +462,8 @@ export default function UserModePage() {
         field: field || '',
         question_format: questionFormat,
         sub_topic: theme || '',
+        include_diagram_per_question: subject === '物理' && includeDiagramPerQuestion,
+        custom_request: customRequest.trim() || undefined,
       });
 
       if (data?.error) {
@@ -478,10 +498,10 @@ export default function UserModePage() {
   /* ── 手動: プロンプト生成のみ ── */
   const generatePrompt = async () => {
     if (!templateId) {
-      setStatus('テンプレートを選択してください');
+      setStatus('出題パターンを選んでください');
       return;
     }
-    setStatus('プロンプトを生成中（RAG含む）...');
+    setStatus('プロンプトを生成中（過去問を参照中）...');
     try {
       const data = await renderTemplate({
         template_id: templateId,
@@ -497,13 +517,15 @@ export default function UserModePage() {
         extra_packages: extraPackages,
         question_format: questionFormat,
         sub_topic: theme || undefined,
+        include_diagram_per_question: subject === '物理' && includeDiagramPerQuestion,
+        custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
       setRenderContext(data.context || null);
       setPrompt(data.rendered_prompt || data.rendered || '');
       setStatus(
         data.context?.chunk_count
-          ? `プロンプト生成完了（RAG: ${data.context.chunk_count}件参照）`
+          ? `プロンプト生成完了（過去問 ${data.context.chunk_count}件を参照）`
           : 'プロンプト生成完了'
       );
       setStep(5);
@@ -573,17 +595,19 @@ export default function UserModePage() {
     setBaseFilterQuery('');
     setMatchedProblems([]);
     setQuestionFormat('standard');
+    setIncludeDiagramPerQuestion(false);
+    setCustomRequest('');
   };
 
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div className="max-w-2xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
+    <div ref={wizardTopRef} className="max-w-2xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
       {/* ヘッダー */}
       <div className="text-center mb-6 sm:mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#e8457a]/[0.08] text-[#e8457a] rounded-full text-xs font-bold mb-3 sm:mb-4 border border-[#e8457a]/[0.12]">
           <Icons.User className="w-4 h-4" />
-          ユーザモード
+          かんたんモード
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f]">
           問題を生成する
@@ -600,11 +624,11 @@ export default function UserModePage() {
 
       <StatusBar message={status} />
 
-      {/* ═══════ Step 1: テンプレート選択 ═══════ */}
+      {/* ═══════ Step 1: 出題パターン選択 ═══════ */}
       {step === 1 && (
-        <SectionCard title="Step 1: テンプレートを選ぶ" icon={<Icons.File />}>
+        <SectionCard title="Step 1: 出題パターンを選ぶ" icon={<Icons.File />} className="wizard-section-enter">
           <p className="text-xs text-[#86868b] mb-4">
-            問題の元となるテンプレートを選んでください。科目・分野・難易度はテンプレートに含まれています。
+            どんな問題を作りたいですか？ 科目・分野・レベルが設定済みのパターンから選ぶだけでOKです。
           </p>
 
           <div className="space-y-3">
@@ -616,8 +640,8 @@ export default function UserModePage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
                 </div>
-                <p className="text-sm font-bold text-[#1d1d1f]">テンプレートがありません</p>
-                <p className="text-xs text-[#86868b] mt-1">下の「+ 新規作成」ボタンからテンプレートを作成してください</p>
+                <p className="text-sm font-bold text-[#1d1d1f]">出題パターンがまだありません</p>
+                <p className="text-xs text-[#86868b] mt-1">下の「＋ 新しく作る」ボタンから出題パターンを作成しましょう</p>
               </div>
             ) : !showCreateTemplate ? (
               <div className="space-y-2.5">
@@ -639,7 +663,7 @@ export default function UserModePage() {
                       onClick={() => onSelectTemplate(t.id)}
                       className={`group relative w-full text-left rounded-2xl overflow-hidden transition-all duration-300 active:scale-[0.98]
                         ${isActive
-                          ? 'bg-white shadow-md shadow-black/[0.06] ring-2 ring-[#fc3c44]/30'
+                          ? 'bg-white shadow-md shadow-black/[0.06] ring-2 ring-[#fc3c44]/30 select-bounce'
                           : 'bg-white/60 shadow-sm shadow-black/[0.03] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
                         }`}
                     >
@@ -705,7 +729,7 @@ export default function UserModePage() {
                             onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }}
                             className="w-7 h-7 rounded-lg flex items-center justify-center text-[#c7c7cc]
                                        hover:text-[#ff3b30] hover:bg-[#ff3b30]/[0.08] transition-all duration-200 cursor-pointer opacity-0 group-hover:opacity-100"
-                            title="テンプレートを削除"
+                            title="この出題パターンを削除"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
@@ -733,10 +757,10 @@ export default function UserModePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-bold text-[#1d1d1f]">テンプレートを新規作成</h3>
+                  <h3 className="text-sm font-bold text-[#1d1d1f]">出題パターンを新しく作る</h3>
                 </div>
                 <p className="text-xs text-[#86868b]">
-                  教科と分野を選ぶだけで、テンプレートが自動生成されます。
+                  教科と分野を選ぶだけで、出題パターンが自動で作られます。
                 </p>
 
                 {/* 教科 + 難易度 */}
@@ -848,7 +872,7 @@ export default function UserModePage() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
-                    {creatingTemplate ? '作成中...' : 'テンプレートを作成'}
+                    {creatingTemplate ? '作成中...' : '出題パターンを作成'}
                   </button>
                   <button
                     onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplDifficulty(''); }}
@@ -869,7 +893,7 @@ export default function UserModePage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                <span className="text-sm font-bold">テンプレートを新規作成</span>
+                <span className="text-sm font-bold">＋ 出題パターンを新しく作る</span>
               </button>
             )}
           </div>
@@ -878,9 +902,9 @@ export default function UserModePage() {
 
       {/* ═══════ Step 2: 設定 ═══════ */}
       {step === 2 && (
-        <SectionCard title="Step 2: 生成設定" icon={<Icons.Prompt />}>
+        <SectionCard title="Step 2: こまかい設定" icon={<Icons.Prompt />} className="wizard-section-enter">
           <p className="text-xs text-[#86868b] mb-5">
-            問題数やRAG参照数を設定し、必要に応じてベースにする過去問をDBから選択してください。
+            問題の数や、参考にする過去問を設定できます。そのまま進んでもOKです。
           </p>
 
           <div className="space-y-4">
@@ -925,14 +949,14 @@ export default function UserModePage() {
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
-              <NumberField label="参照する過去問数（RAG）" value={topK} onChange={setTopK} min={1} max={20} />
+              <NumberField label="参照する過去問の数" value={topK} onChange={setTopK} min={1} max={20} />
             </div>
 
             {/* RAG の仕組み説明（折りたたみ） */}
             <details className="tip-card">
               <summary>
                 <span className="text-sm">💡</span>
-                <span>「過去問参照（RAG）」の仕組みを見る</span>
+                <span>「過去問を参考にする」仕組みについて</span>
                 <svg className="w-3.5 h-3.5 ml-auto transition-transform duration-300 group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
@@ -940,7 +964,7 @@ export default function UserModePage() {
               <div className="px-4 pb-4 text-xs text-[#86868b] leading-relaxed space-y-1.5 animate-expand">
                 <p>このシステムは、DBに登録された過去問を参考にして新しい問題を作ります。</p>
                 <div className="bg-black/[0.04] rounded-xl p-2 border border-black/[0.06] space-y-1">
-                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">1.</span> <span>テンプレートの科目・分野を基にDBから関連する過去問を検索</span></div>
+                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">1.</span> <span>出題パターンの科目・分野を基に関連する過去問を自動検索</span></div>
                   <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">2.</span> <span>最も似ている問題を自動でランク付け（難易度も考慮）</span></div>
                   <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">3.</span> <span>上位の過去問をAIに参考資料として渡し、類題を生成</span></div>
                 </div>
@@ -964,7 +988,7 @@ export default function UserModePage() {
                 <span className="text-[10px] text-[#aeaeb2] font-medium">（任意）</span>
               </div>
               <p className="text-[11px] text-[#86868b] mb-3 ml-8 leading-relaxed">
-                選択中のテンプレートに合致する過去問が表示されます
+                選択中の出題パターンに合致する過去問が表示されます
               </p>
 
               {/* 選択済み問題の表示 */}
@@ -1199,13 +1223,123 @@ export default function UserModePage() {
                 </button>
               </div>
             </div>
+
+            {/* ── 物理科目: 大問ごとに図を含める ── */}
+            {subject === '物理' && (
+              <div className="mt-5 pt-5 border-t border-black/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => setIncludeDiagramPerQuestion((v) => !v)}
+                  className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
+                    ${includeDiagramPerQuestion
+                      ? 'bg-gradient-to-br from-[#007aff]/[0.08] to-[#5856d6]/[0.04] border-2 border-[#007aff]/30 shadow-sm'
+                      : 'bg-black/[0.02] border-2 border-transparent hover:bg-black/[0.04] hover:border-black/[0.06]'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
+                      ${includeDiagramPerQuestion
+                        ? 'bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white shadow-lg shadow-[#007aff]/20'
+                        : 'bg-black/[0.05] text-[#86868b]'
+                      }`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-[#1d1d1f]">大問ごとに図を含める</div>
+                      <div className="text-[11px] text-[#86868b] mt-0.5 leading-relaxed">
+                        各大問に TikZ で描いた物理図（力の図示、回路図等）を自動追加します
+                      </div>
+                    </div>
+                    {/* トグルスイッチ */}
+                    <div className={`relative w-12 h-7 rounded-full flex-shrink-0 transition-all duration-300
+                      ${includeDiagramPerQuestion
+                        ? 'bg-gradient-to-r from-[#007aff] to-[#5856d6]'
+                        : 'bg-[#e5e5ea]'
+                      }`}>
+                      <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
+                        ${includeDiagramPerQuestion ? 'left-[22px]' : 'left-0.5'}`} />
+                    </div>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* ── カスタム要望（全科目共通） ── */}
+            <div className="mt-5 pt-5 border-t border-black/[0.06]">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-[#34c759]/10">
+                  <svg className="w-3.5 h-3.5 text-[#34c759]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                  </svg>
+                </div>
+                <label className="text-[13px] font-bold text-[#1d1d1f] tracking-tight">
+                  問題へのカスタム要望
+                </label>
+                <span className="text-[10px] text-[#aeaeb2] font-medium">（任意）</span>
+              </div>
+              <p className="text-[11px] text-[#86868b] mb-3 ml-8 leading-relaxed">
+                問題の内容・形式についての要望を自由に記入できます
+              </p>
+              <div className="relative">
+                <textarea
+                  value={customRequest}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val.length <= CUSTOM_REQUEST_MAX_LENGTH) setCustomRequest(val);
+                  }}
+                  placeholder="例: 数値ではなく文字式で出題してほしい、具体的な数値は使わず一般的な変数で表してほしい ..."
+                  rows={3}
+                  maxLength={CUSTOM_REQUEST_MAX_LENGTH}
+                  className="w-full px-4 py-3 text-[13px] leading-relaxed border border-black/[0.06] bg-white/80 backdrop-blur-sm rounded-2xl
+                    focus:outline-none focus:border-[#34c759] focus:ring-2 focus:ring-[#34c759]/20
+                    placeholder:text-[#c7c7cc] transition-all hover:border-black/[0.10] hover:shadow-sm
+                    resize-none"
+                />
+                <div className="flex items-center justify-between mt-1.5 px-1">
+                  <div className="flex items-center gap-1.5">
+                    {customRequest.trim() && (
+                      <button
+                        onClick={() => setCustomRequest('')}
+                        className="text-[10px] text-[#aeaeb2] hover:text-[#ff3b30] transition-colors flex items-center gap-0.5"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        クリア
+                      </button>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-medium tabular-nums transition-colors duration-200 ${
+                    customRequest.length >= CUSTOM_REQUEST_MAX_LENGTH
+                      ? 'text-[#ff3b30]'
+                      : customRequest.length >= CUSTOM_REQUEST_MAX_LENGTH * 0.8
+                        ? 'text-[#ff9500]'
+                        : 'text-[#aeaeb2]'
+                  }`}>
+                    {customRequest.length} / {CUSTOM_REQUEST_MAX_LENGTH}
+                  </span>
+                </div>
+              </div>
+              {customRequest.trim() && (
+                <div className="mt-2 flex items-start gap-2 px-3 py-2 bg-[#34c759]/[0.06] rounded-xl border border-[#34c759]/10">
+                  <svg className="w-3.5 h-3.5 text-[#34c759] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-[10px] text-[#34c759] leading-relaxed">
+                    この要望が生成時に AI に伝えられます
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </SectionCard>
       )}
 
       {/* ═══════ Step 3: PDF形式選択 ═══════ */}
       {step === 3 && (
-        <SectionCard title="Step 3: PDF の出力形式を選ぶ" icon={<Icons.Pdf />}>
+        <SectionCard title="Step 3: レイアウトを選ぶ" icon={<Icons.Pdf />} className="wizard-section-enter">
           {/* 選択中テンプレート情報 */}
           {selectedTemplate && (
             <div className="mb-5 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-sm shadow-sm">
@@ -1216,7 +1350,7 @@ export default function UserModePage() {
                     <Icons.File className="w-4 h-4 text-[#fc3c44]" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider mb-0.5">選択中のテンプレート</div>
+                    <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider mb-0.5">選択中の出題パターン</div>
                     <div className="text-sm font-bold text-[#1d1d1f]">{selectedTemplate.name}</div>
                   </div>
                 </div>
@@ -1252,10 +1386,10 @@ export default function UserModePage() {
           )}
 
           <p className="text-[11px] text-[#86868b] mb-5">
-            生成する PDF のレイアウト形式を選んでください。
+            完成する PDF の見た目を選んでください。
             {mode === 'auto'
-              ? ' 選択後、「PDF を生成」ボタンで自動生成が始まります。'
-              : ' 選択後、「プロンプトを生成」ボタンでプロンプトが作成されます。'}
+              ? ' 選んだら「PDF を生成」ボタンを押すだけで完成します。'
+              : ' 選んだら「プロンプトを生成」ボタンでプロンプトが作られます。'}
           </p>
 
           {latexPresets.length === 0 ? (
@@ -1268,9 +1402,15 @@ export default function UserModePage() {
               {latexPresets.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => setLatexPreset(p.id)}
+                  onClick={() => {
+                    setLatexPreset(p.id);
+                    // レイアウト選択後に「生成」ボタンへスクロール
+                    setTimeout(() => {
+                      nextActionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 400);
+                  }}
                   className={`selection-card !p-0 text-left ${
-                    latexPreset === p.id ? 'active' : ''
+                    latexPreset === p.id ? 'active card-select-ripple' : ''
                   }`}
                 >
                   {/* ビジュアルサムネイル */}
@@ -1367,7 +1507,13 @@ export default function UserModePage() {
                     <button
                       key={fmt.value}
                       type="button"
-                      onClick={() => setQuestionFormat(fmt.value)}
+                      onClick={() => {
+                        setQuestionFormat(fmt.value);
+                        // 選択後に生成ボタンエリアへスクロール
+                        setTimeout(() => {
+                          nextActionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 400);
+                      }}
                       className={`relative overflow-hidden rounded-xl p-3.5 text-left transition-all duration-300 active:scale-[0.97]
                         ${active
                           ? 'bg-gradient-to-br from-[#af52de]/[0.12] to-[#af52de]/[0.04] border-2 border-[#af52de]/40 shadow-sm shadow-[#af52de]/10'
@@ -1550,7 +1696,7 @@ export default function UserModePage() {
 
       {/* ═══════ Step 4: 生成中 ═══════ */}
       {step === 4 && generating && (
-        <SectionCard>
+        <SectionCard className="wizard-section-enter">
           <div className="flex flex-col items-center justify-center py-16">
             <svg className="animate-spin h-10 w-10 text-[#fc3c44] mb-4" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -1592,13 +1738,13 @@ export default function UserModePage() {
                       <span className="font-bold text-[#34c759]">
                         過去問 {renderContext.rag_retrieved}件を参照して生成しました
                       </span>
-                      <span className="text-[#34c759] ml-1">（DB {renderContext.chunk_count}件中）</span>
+                      <span className="text-[#34c759] ml-1">（データ {renderContext.chunk_count}件中）</span>
                     </div>
                   ) : renderContext.rag_status === 'no_data' ? (
                     <div>
                       <span className="font-bold text-blue-400">AIのみで問題を生成しました</span>
                       <p className="text-blue-500 mt-0.5">
-                        💡 DB に問題を登録すると、過去問を参照してより精度の高い問題を生成できます
+                        💡 過去問を登録すると、それを参考にしてより精度の高い問題を生成できます
                       </p>
                     </div>
                   ) : renderContext.rag_status === 'empty' ? (
@@ -1610,9 +1756,9 @@ export default function UserModePage() {
                     </div>
                   ) : renderContext.rag_status === 'fallback' ? (
                     <div>
-                      <span className="font-bold text-[#424245]">過去問を参照して生成しました</span>
+                      <span className="font-bold text-[#424245]">過去問が見つからず、AIのみで生成しました</span>
                       <p className="text-[#86868b] mt-0.5">
-                        DB内の問題をベースに生成しています（{renderContext.rag_retrieved || renderContext.chunk_count || 0}件参照）
+                        この条件に合う過去問がデータ内に見つかりませんでした（{renderContext.chunk_count}件を検索）
                       </p>
                     </div>
                   ) : renderContext.chunk_count > 0 ? (
@@ -1620,7 +1766,7 @@ export default function UserModePage() {
                       {renderContext.chunk_count}件を参照して生成
                     </span>
                   ) : (
-                    <span className="text-[#1d1d1f]0">RAG未使用 — AIのみで生成</span>
+                    <span className="text-[#1d1d1f]0">過去問未参照 — AIのみで生成</span>
                   )}
                 </div>
 
@@ -1698,7 +1844,7 @@ export default function UserModePage() {
                         <CopyButton text={prompt} onCopied={setStatus} />
                         {renderContext?.chunk_count > 0 && (
                           <span className="text-xs text-[#fc3c44] font-medium">
-                            RAG {renderContext.chunk_count}件参照
+                            過去問 {renderContext.chunk_count}件を参照
                           </span>
                         )}
                       </div>
@@ -1717,7 +1863,7 @@ export default function UserModePage() {
                 <div className="flex items-center justify-between gap-3">
                   {renderContext?.chunk_count > 0 && (
                     <span className="text-xs text-[#fc3c44] font-medium px-3 py-1 bg-[#fc3c44]/[0.08] rounded-full">
-                      RAG {renderContext.chunk_count}件参照
+                      過去問 {renderContext.chunk_count}件を参照
                     </span>
                   )}
                   <CopyButton text={prompt} onCopied={setStatus} />
@@ -1771,7 +1917,7 @@ export default function UserModePage() {
       )}
 
       {/* ═══════ ナビゲーションボタン ═══════ */}
-      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4 sm:mt-6 mb-4 sm:mb-0">
+      <div ref={nextActionRef} className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-6 sm:mt-8 mb-4 sm:mb-0 nav-glow-in">
         <div>
           {step > 1 && step < 4 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
@@ -1780,7 +1926,7 @@ export default function UserModePage() {
           )}
           {step === 5 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
-              ← PDF形式を変更
+              ← レイアウトを変更
             </Button>
           )}
         </div>
@@ -1792,20 +1938,20 @@ export default function UserModePage() {
             </Button>
           )}
           {step === 1 && (
-            <Button onClick={goNext} disabled={!canNext()} className="w-full sm:w-auto">
-              次へ →
+            <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${canNext() ? 'cta-breathe !py-3.5 !text-base' : ''}`}>
+              {canNext() ? '次のステップへ →' : 'パターンを選んでください'}
             </Button>
           )}
           {step === 2 && (
-            <Button onClick={goNext} className="w-full sm:w-auto">
-              次へ →
+            <Button onClick={goNext} className="w-full sm:w-auto cta-breathe !py-3.5 !text-base">
+              次のステップへ →
             </Button>
           )}
           {step === 3 && mode === 'auto' && (
             <Button
               onClick={goNext}
               disabled={!templateId || generating}
-              className="w-full sm:w-auto bg-[#fc3c44] hover:bg-red-700 text-[#1d1d1f] px-6 py-3"
+              className={`w-full sm:w-auto px-6 py-3 !text-base ${!generating ? 'cta-breathe' : ''}`}
             >
               {generating ? (
                 <span className="flex items-center justify-center gap-2">
@@ -1845,11 +1991,11 @@ export default function UserModePage() {
             </div>
             <ol className="text-[12px] text-[#6e6e73] space-y-2.5 ml-1">
               {[
-                'テンプレートを選択（科目・分野・難易度が含まれています）',
-                '問題数・RAG参照数・参考問題・生成方法を設定',
-                'PDF の出力形式（試験問題・プリント・模試など）を選択',
+                '出題パターンを選ぶ（科目・分野・レベルが設定済み）',
+                '問題数や参考にする過去問を設定',
+                'PDF の見た目（試験・プリント・模試など）を選ぶ',
                 '「AI 自動生成」ならボタン1つで PDF 完成',
-                '「手動」ならプロンプトをコピーしてお好きな LLM へ',
+                '「手動」ならプロンプトをコピーしてお好きな AI へ',
               ].map((text, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-b from-[#fc3c44] to-[#e0323a] text-white text-[9px] font-bold flex-shrink-0 mt-0.5 shadow-sm shadow-[#fc3c44]/15">

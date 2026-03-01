@@ -469,11 +469,11 @@ export function ProgressSteps({ steps, current }) {
       {steps.map((s, i) => (
         <div key={i} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300
+            <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-500
                 ${i + 1 <= current
                   ? 'bg-gradient-to-br from-[#fc3c44] to-[#e0323a] text-white shadow-md shadow-[#fc3c44]/20'
                   : i + 1 === current + 1
-                  ? 'bg-[#fc3c44]/[0.06] text-[#fc3c44] border-[1.5px] border-[#fc3c44]/20'
+                  ? 'bg-[#fc3c44]/[0.06] text-[#fc3c44] border-[1.5px] border-[#fc3c44]/20 step-indicator-glow'
                   : 'bg-black/[0.03] text-[#c7c7cc] border border-black/[0.04]'
                 }`}>
               {i + 1 < current ? <Icons.Success className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : i + 1}

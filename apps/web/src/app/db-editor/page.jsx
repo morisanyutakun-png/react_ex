@@ -458,10 +458,10 @@ export default function DbEditorPage() {
   return (
     <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-3 sm:px-4 pb-24 sm:pb-12">
       <PageHeader
-        title="DB エディタ"
-        description="問題データの閲覧・編集・新規登録"
+        title="データ管理"
+        description="過去問データの閲覧・編集・新規登録"
         icon={<Icons.Data />}
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'DB Editor' }]}
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'データ管理' }]}
       />
 
       <StatusBar message={status} />

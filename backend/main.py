@@ -1448,6 +1448,10 @@ class RenderTemplateRequest(BaseModel):
     question_format: Optional[str] = 'standard'
     # Sub-topic / theme (maps to DB subtopic column)
     sub_topic: Optional[str] = None
+    # Physics: include a TikZ diagram for each major question
+    include_diagram_per_question: Optional[bool] = False
+    # User custom request (free text, max 200 chars, sanitised)
+    custom_request: Optional[str] = None
 
 
 @app.post('/api/render_template')
@@ -2161,6 +2165,30 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     if fmt_instr:
                         latex_instr += fmt_instr
 
+                # --- Inject physics diagram-per-question instruction ---
+                _inc_diag = getattr(req, 'include_diagram_per_question', False)
+                _subj_for_diag = getattr(req, 'subject', '') or ctx.get('subject', '') or ''
+                if _inc_diag and _is_physics_subject(_subj_for_diag, orig_prompt_body):
+                    latex_instr += (
+                        '\n【物理図の必須ルール（厳守）】\n'
+                        '- 大問（\\section* / \\problem 等で区切られた各問題）ごとに必ず1つ TikZ 図を含めること。\n'
+                        '- 図は問題文の直後に \\begin{tikzpicture}...\\end{tikzpicture} で配置する。\n'
+                        '- 力の図示、物体の配置、回路図、グラフなど問題内容に適した図を描くこと。\n'
+                        '- テキストのみの大問は不可。\n'
+                    )
+
+                # --- Inject user custom request ---
+                _cust_req = getattr(req, 'custom_request', '') or ''
+                if _cust_req:
+                    import re as _re
+                    _sanitised = _cust_req[:200].strip()
+                    _sanitised = _re.sub(r'(ignore|forget|disregard|override)\s+(all|previous|above|system)', '', _sanitised, flags=_re.IGNORECASE)
+                    _sanitised = _re.sub(r'<[^>]+>', '', _sanitised)
+                    _sanitised = _re.sub(r'```.*?```', '', _sanitised, flags=_re.DOTALL)
+                    _sanitised = _sanitised.strip()
+                    if _sanitised:
+                        latex_instr += f'\n【ユーザーからの追加要望】\n{_sanitised}\n'
+
                 # Assemble: skeleton (target structure) + instructions + user prompt body
                 prompt = f"以下のLaTeXスケルトンを完成させてください:\n\n{latex_skeleton}\n\n{latex_instr}{source_block}\n\n【指示内容】\n{orig_prompt_body}"
     except Exception as e:
@@ -2524,7 +2552,9 @@ def _build_latex_instructions(subject: str = '', prompt_text: str = '', struct_r
 
 
 def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
-                               preset_instr: str = '') -> str:
+                               preset_instr: str = '',
+                               include_diagram_per_question: bool = False,
+                               custom_request: str = '') -> str:
     """Groq API 用のシステムプロンプトを科目に応じて構築する。"""
     is_stem = _is_stem_subject(subject, prompt_text)
 
@@ -2606,6 +2636,31 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
 
     if preset_instr:
         parts.append(f'{preset_instr}\n')
+
+    # Physics: require a diagram for each major question (大問)
+    if include_diagram_per_question and _is_physics_subject(subject, prompt_text):
+        parts.append(
+            '【物理図の必須ルール（厳守）】\n'
+            '- 大問（\\section* / \\problem 等で区切られた各問題）ごとに必ず1つ TikZ 図を含めること。\n'
+            '- 図は問題文の直後に \\begin{tikzpicture}...\\end{tikzpicture} で配置する。\n'
+            '- 力の図示、物体の配置、回路図、グラフなど問題内容に適した図を描くこと。\n'
+            '- 図を省略してはならない。テキストのみの大問は不可。\n\n'
+        )
+
+    # User custom request (sanitised, max 200 chars)
+    if custom_request:
+        import re as _re
+        sanitised = custom_request[:200].strip()
+        # Remove potential prompt-injection patterns
+        sanitised = _re.sub(r'(ignore|forget|disregard|override)\s+(all|previous|above|system)', '', sanitised, flags=_re.IGNORECASE)
+        sanitised = _re.sub(r'<[^>]+>', '', sanitised)  # strip HTML tags
+        sanitised = _re.sub(r'```.*?```', '', sanitised, flags=_re.DOTALL)  # strip code fences
+        sanitised = sanitised.strip()
+        if sanitised:
+            parts.append(
+                f'【ユーザからの追加要望】\n'
+                f'{sanitised}\n\n'
+            )
 
     return ''.join(parts)
 
@@ -3416,6 +3471,10 @@ class LlmGenerateRequest(BaseModel):
     question_format: Optional[str] = 'standard'
     # Sub-topic / theme (maps to DB subtopic column)
     sub_topic: Optional[str] = None
+    # Physics: include a TikZ diagram for each major question
+    include_diagram_per_question: Optional[bool] = False
+    # User custom request (free text, max 200 chars, sanitised)
+    custom_request: Optional[str] = None
 
 
 @app.post('/api/generate_with_llm')
@@ -3444,6 +3503,8 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         subject=req.subject or '',
         prompt_text=req.prompt,
         preset_instr=preset_instr,
+        include_diagram_per_question=bool(req.include_diagram_per_question),
+        custom_request=req.custom_request or '',
     )
 
     # Append extra package usage hints so Groq knows what's available
