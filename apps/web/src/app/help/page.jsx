@@ -89,7 +89,7 @@ const TOC = [
   { id: 'create',     label: 'つくる',       emoji: '📝' },
   { id: 'tune',       label: '高める',       emoji: '⚙️' },
   { id: 'search',     label: '検索',        emoji: '🔍' },
-  { id: 'db',         label: 'DB編集',      emoji: '🗄️' },
+  { id: 'db',         label: 'データ管理',   emoji: '🗄️' },
   { id: 'faq',        label: 'FAQ',         emoji: '❓' },
 ];
 
@@ -213,7 +213,7 @@ function DiagramSearchPage() {
 
 function DiagramDbEditor() {
   return (
-    <ScreenFrame title="DB編集" color="#30d158">
+    <ScreenFrame title="データ管理" color="#30d158">
       <div className="flex gap-1 mb-2.5">
         {['📋 データ一覧', '➕ かんたん登録'].map((t, i) => (
           <div key={i} className={`flex-1 text-center py-1.5 rounded-lg text-[9px] font-bold ${i === 0 ? 'bg-[#30d158] text-white' : 'bg-[#f5f5f7] text-[#86868b]'}`}>{t}</div>
@@ -378,7 +378,7 @@ const FAQ_DATA = [
       { q: '検索のフィルターは？', a: 'キーワード・科目・分野（科目連動）・難易度の4条件で絞り込めます。' },
       { q: '検索結果から類題を作れる？', a: 'はい。結果カードの「類題を生成」ボタンで、その場でAIが類題を作成します。' },
       { q: 'データを誤削除した場合は？', a: '削除前に確認ダイアログが表示されます。万一の場合は管理者にお問い合わせください。' },
-      { q: 'かんたん登録とは？', a: 'DB編集ページの登録フォーム。必須項目を入力するだけで問題を追加でき、難易度も自動推定されます。' },
+      { q: 'かんたん登録とは？', a: 'データ管理ページの登録フォーム。必須項目を入力するだけで問題を追加でき、難易度も自動推定されます。' },
     ],
   },
 ];
@@ -419,11 +419,11 @@ function FaqCategory({ category, color, icon, items }) {
 
 const GLOSSARY = [
   { term: 'テンプレート', def: '教科・分野・難易度が定義された問題生成の設計図。繰り返し使えます。', color: '#fc3c44' },
-  { term: 'RAG', ruby: 'ラグ', def: '過去問データを参照して、AI生成の品質を高める仕組み。', color: '#bf5af2' },
+  { term: '過去問参照', def: '過去問データを参照して、AI生成の品質を高める仕組み。', color: '#bf5af2' },
   { term: 'プリセット', def: 'PDF出力や生成バランスの事前設定。ワンタップで切り替え可能。', color: '#ff9f0a' },
   { term: 'フィードバック', def: '生成問題への評価。保存すると次回の生成に自動反映されます。', color: '#30d158' },
-  { term: 'チューニング', def: '生成バランスを調整して品質を改善するプロセス。', color: '#5856d6' },
-  { term: 'LaTeX', ruby: 'ラテフ', def: '数式を美しく表現するための記述形式。PDF出力に使用されます。', color: '#0a84ff' },
+  { term: '品質調整', def: '生成バランスを調整して品質を改善するプロセス。', color: '#5856d6' },
+  { term: 'ソースコード', def: '数式を美しく表現するための記述形式。PDF出力に使用されます。', color: '#0a84ff' },
 ];
 
 
@@ -521,7 +521,7 @@ export default function HelpPage() {
                     { icon: <IcoCreate />, label: '問題をつくる', href: '/user', color: '#fc3c44' },
                     { icon: <IcoTune />,   label: '品質を高める', href: '/dev', color: '#bf5af2' },
                     { icon: <IcoSearch />, label: '問題を検索',   href: '/search', color: '#ff9f0a' },
-                    { icon: <IcoDb />,     label: 'DB編集',      href: '/db-editor', color: '#30d158' },
+                    { icon: <IcoDb />,     label: 'データ管理',   href: '/db-editor', color: '#30d158' },
                   ].map((item) => (
                     <Link key={item.href} href={item.href}
                       className="group flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/80 border border-black/[0.04] shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
@@ -606,7 +606,7 @@ export default function HelpPage() {
             ]}
           />
 
-          <FeatureSection id="db" icon={<IcoDb />} title="DB編集" subtitle="データの閲覧・編集・かんたん登録" color="#30d158" href="/db-editor"
+          <FeatureSection id="db" icon={<IcoDb />} title="データ管理" subtitle="データの閲覧・編集・かんたん登録" color="#30d158" href="/db-editor"
             diagram={<DiagramDbEditor />}
             steps={[
               { title: 'テーブルを選んで閲覧', desc: 'プルダウンで切替。テーブルビューで一覧表示。' },

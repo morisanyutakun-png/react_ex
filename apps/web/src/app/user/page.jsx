@@ -18,9 +18,9 @@ import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLab
 import { LatexText } from '@/components/LatexRenderer';
 
 /* ── ウィザードステップ定義 ── */
-const STEPS = ['出題パターン', '詳細設定', 'レイアウト', '生成', '完成'];
+const STEPS = ['出題パターン', '詳細設定', 'レイアウト・図表', '生成', '完成'];
 
-/* ── 各LaTeX図表パッケージのASCIIアートプレビュー ── */
+/* ── 各図表タイプのASCIIアートプレビュー ── */
 const PACKAGE_ILLUSTRATIONS = {
   tikz: ` A ──► B
  │       │
@@ -420,7 +420,7 @@ export default function UserModePage() {
         extra_packages: extraPackages,
         question_format: questionFormat,
         sub_topic: theme || undefined,
-        include_diagram_per_question: subject === '物理' && includeDiagramPerQuestion,
+        include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
@@ -462,7 +462,7 @@ export default function UserModePage() {
         field: field || '',
         question_format: questionFormat,
         sub_topic: theme || '',
-        include_diagram_per_question: subject === '物理' && includeDiagramPerQuestion,
+        include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         custom_request: customRequest.trim() || undefined,
       });
 
@@ -483,10 +483,10 @@ export default function UserModePage() {
         setStatus('PDF を生成・表示しました');
         setStep(5);
       } else if (data?.pdf_error) {
-        setStatus(`LaTeX 生成成功 / PDF 変換失敗: ${data.pdf_error}`);
+        setStatus(`問題の生成は成功 / PDF 変換失敗: ${data.pdf_error}`);
         setStep(5);
       } else {
-        setStatus('LaTeX 生成完了（PDF エンジン未設定）');
+        setStatus('問題の生成完了（PDF エンジン未設定）');
         setStep(5);
       }
     } catch (e) {
@@ -517,7 +517,7 @@ export default function UserModePage() {
         extra_packages: extraPackages,
         question_format: questionFormat,
         sub_topic: theme || undefined,
-        include_diagram_per_question: subject === '物理' && includeDiagramPerQuestion,
+        include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
@@ -538,7 +538,7 @@ export default function UserModePage() {
   const compilePdf = async (latex) => {
     const src = latex || llmOutput;
     if (!src?.trim()) {
-      setStatus('LaTeX を入力してください');
+      setStatus('内容を入力してください');
       return;
     }
     setPdfWorking(true);
@@ -552,7 +552,7 @@ export default function UserModePage() {
       } else if (data?.error) {
         setStatus(`PDF 生成失敗: ${data.error}`);
       } else {
-        setStatus('PDF 生成失敗: サーバーに LaTeX エンジンがインストールされていません');
+        setStatus('PDF 生成失敗: サーバーの設定を確認してください');
       }
     } catch (e) {
       setStatus(`PDF 生成失敗: ${e.message}`);
@@ -610,10 +610,10 @@ export default function UserModePage() {
           かんたんモード
         </div>
         <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f]">
-          問題を生成する
+          問題をつくる
         </h1>
         <p className="text-xs sm:text-sm text-[#86868b] mt-1">
-          ステップに沿って操作するだけで、試験問題の PDF が完成します
+          ステップに沿って進むだけで、試験問題の PDF が完成します
         </p>
       </div>
 
@@ -628,7 +628,7 @@ export default function UserModePage() {
       {step === 1 && (
         <SectionCard title="Step 1: 出題パターンを選ぶ" icon={<Icons.File />} className="wizard-section-enter">
           <p className="text-xs text-[#86868b] mb-4">
-            どんな問題を作りたいですか？ 科目・分野・レベルが設定済みのパターンから選ぶだけでOKです。
+            どんな問題を作りたいですか？科目・分野・レベルが設定済みのパターンから選ぶだけでOKです。
           </p>
 
           <div className="space-y-3">
@@ -952,7 +952,7 @@ export default function UserModePage() {
               <NumberField label="参照する過去問の数" value={topK} onChange={setTopK} min={1} max={20} />
             </div>
 
-            {/* RAG の仕組み説明（折りたたみ） */}
+            {/* 過去問参照の仕組み説明（折りたたみ） */}
             <details className="tip-card">
               <summary>
                 <span className="text-sm">💡</span>
@@ -962,14 +962,14 @@ export default function UserModePage() {
                 </svg>
               </summary>
               <div className="px-4 pb-4 text-xs text-[#86868b] leading-relaxed space-y-1.5 animate-expand">
-                <p>このシステムは、DBに登録された過去問を参考にして新しい問題を作ります。</p>
+                <p>登録されている過去問を参考にして、新しい問題を自動で作ります。</p>
                 <div className="bg-black/[0.04] rounded-xl p-2 border border-black/[0.06] space-y-1">
-                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">1.</span> <span>出題パターンの科目・分野を基に関連する過去問を自動検索</span></div>
-                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">2.</span> <span>最も似ている問題を自動でランク付け（難易度も考慮）</span></div>
-                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">3.</span> <span>上位の過去問をAIに参考資料として渡し、類題を生成</span></div>
+                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">1.</span> <span>選んだ科目・分野をもとに関連する過去問を自動検索</span></div>
+                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">2.</span> <span>似ている問題を自動で見つけ出し、難易度も考慮</span></div>
+                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">3.</span> <span>見つかった過去問を参考に、AIが類似の問題を新しく生成</span></div>
                 </div>
                 <p className="text-[#86868b]">
-                  下の「参考問題」を選択すると、その問題に沿った類題をさらに正確に生成できます。
+                  下の「参考問題」を選ぶと、その問題に似た類題をより正確に生成できます。
                 </p>
               </div>
             </details>
@@ -1209,7 +1209,7 @@ export default function UserModePage() {
                     <div className="flex-1">
                       <div className="text-sm font-bold text-[#1d1d1f]">手動</div>
                       <div className="text-[11px] text-[#86868b] mt-0.5 leading-relaxed">
-                        プロンプトを取得して自分で LLM に送る
+                        プロンプトを取得して自分で AI に送る
                       </div>
                     </div>
                     {mode === 'manual' && (
@@ -1223,48 +1223,6 @@ export default function UserModePage() {
                 </button>
               </div>
             </div>
-
-            {/* ── 物理科目: 大問ごとに図を含める ── */}
-            {subject === '物理' && (
-              <div className="mt-5 pt-5 border-t border-black/[0.06]">
-                <button
-                  type="button"
-                  onClick={() => setIncludeDiagramPerQuestion((v) => !v)}
-                  className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
-                    ${includeDiagramPerQuestion
-                      ? 'bg-gradient-to-br from-[#007aff]/[0.08] to-[#5856d6]/[0.04] border-2 border-[#007aff]/30 shadow-sm'
-                      : 'bg-black/[0.02] border-2 border-transparent hover:bg-black/[0.04] hover:border-black/[0.06]'
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
-                      ${includeDiagramPerQuestion
-                        ? 'bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white shadow-lg shadow-[#007aff]/20'
-                        : 'bg-black/[0.05] text-[#86868b]'
-                      }`}>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-[#1d1d1f]">大問ごとに図を含める</div>
-                      <div className="text-[11px] text-[#86868b] mt-0.5 leading-relaxed">
-                        各大問に TikZ で描いた物理図（力の図示、回路図等）を自動追加します
-                      </div>
-                    </div>
-                    {/* トグルスイッチ */}
-                    <div className={`relative w-12 h-7 rounded-full flex-shrink-0 transition-all duration-300
-                      ${includeDiagramPerQuestion
-                        ? 'bg-gradient-to-r from-[#007aff] to-[#5856d6]'
-                        : 'bg-[#e5e5ea]'
-                      }`}>
-                      <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
-                        ${includeDiagramPerQuestion ? 'left-[22px]' : 'left-0.5'}`} />
-                    </div>
-                  </div>
-                </button>
-              </div>
-            )}
 
             {/* ── カスタム要望（全科目共通） ── */}
             <div className="mt-5 pt-5 border-t border-black/[0.06]">
@@ -1339,7 +1297,7 @@ export default function UserModePage() {
 
       {/* ═══════ Step 3: PDF形式選択 ═══════ */}
       {step === 3 && (
-        <SectionCard title="Step 3: レイアウトを選ぶ" icon={<Icons.Pdf />} className="wizard-section-enter">
+        <SectionCard title="Step 3: レイアウト・図表を選ぶ" icon={<Icons.Pdf />} className="wizard-section-enter">
           {/* 選択中テンプレート情報 */}
           {selectedTemplate && (
             <div className="mb-5 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-sm shadow-sm">
@@ -1646,14 +1604,56 @@ export default function UserModePage() {
               })}
             </div>
 
-            {/* カスタムパッケージ入力 */}
+            {/* ── 「図形・図解」選択時のサブオプション: 大問ごとに図を含める ── */}
+            {extraPackages.includes('tikz') && (
+              <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                <button
+                  type="button"
+                  onClick={() => setIncludeDiagramPerQuestion((v) => !v)}
+                  className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
+                    ${includeDiagramPerQuestion
+                      ? 'bg-gradient-to-br from-[#007aff]/[0.08] to-[#5856d6]/[0.04] border-2 border-[#007aff]/30 shadow-sm'
+                      : 'bg-black/[0.02] border-2 border-transparent hover:bg-black/[0.04] hover:border-black/[0.06]'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
+                      ${includeDiagramPerQuestion
+                        ? 'bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white shadow-lg shadow-[#007aff]/20'
+                        : 'bg-black/[0.05] text-[#86868b]'
+                      }`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-[#1d1d1f]">大問ごとに図を自動挿入</div>
+                      <div className="text-[11px] text-[#86868b] mt-0.5 leading-relaxed">
+                        各大問に物理図（力の図示、回路図など）を自動で追加します
+                      </div>
+                    </div>
+                    {/* トグルスイッチ */}
+                    <div className={`relative w-12 h-7 rounded-full flex-shrink-0 transition-all duration-300
+                      ${includeDiagramPerQuestion
+                        ? 'bg-gradient-to-r from-[#007aff] to-[#5856d6]'
+                        : 'bg-[#e5e5ea]'
+                      }`}>
+                      <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
+                        ${includeDiagramPerQuestion ? 'left-[22px]' : 'left-0.5'}`} />
+                    </div>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {/* その他の図表タイプを追加 */}
             <div className="mt-3 flex gap-2">
               <input
                 type="text"
                 value={customPackage}
                 onChange={(e) => setCustomPackage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addCustomPackage()}
-                placeholder="カスタムパッケージ名（例: chemfig）"
+                placeholder="その他の図表タイプ名（例: 化学式）"
                 className="flex-1 px-4 py-2.5 text-xs border border-black/[0.06] bg-white/80 backdrop-blur-sm rounded-2xl
                            focus:outline-none focus:border-[#af52de] focus:ring-2 focus:ring-[#af52de]/20
                            placeholder:text-[#c7c7cc] transition-all hover:border-black/[0.10] hover:shadow-sm"
@@ -1744,14 +1744,13 @@ export default function UserModePage() {
                     <div>
                       <span className="font-bold text-blue-400">AIのみで問題を生成しました</span>
                       <p className="text-blue-500 mt-0.5">
-                        💡 過去問を登録すると、それを参考にしてより精度の高い問題を生成できます
-                      </p>
+                        💡 過去問を登録すると、それを参考にしてより精度の高い問題を生成できます                      </p>
                     </div>
                   ) : renderContext.rag_status === 'empty' ? (
                     <div>
                       <span className="font-bold text-[#424245]">AIのみで問題を生成しました</span>
                       <p className="text-[#86868b] mt-0.5">
-                        この条件に合う過去問がDB内に見つかりませんでした（{renderContext.chunk_count}件を検索）
+                        この条件に合う過去問がデータ内に見つかりませんでした（{renderContext.chunk_count}件を検索）
                       </p>
                     </div>
                   ) : renderContext.rag_status === 'fallback' ? (
@@ -1773,7 +1772,7 @@ export default function UserModePage() {
                 {/* 検索方式バッジ */}
                 {renderContext.rag_method && (
                   <span className="px-1.5 py-0.5 rounded bg-white text-[#1d1d1f]0 text-[9px] font-bold uppercase">
-                    {renderContext.rag_method}
+                    {renderContext.rag_method === 'hybrid' ? '統合検索' : renderContext.rag_method === 'semantic' ? 'AI検索' : renderContext.rag_method}
                   </span>
                 )}
               </div>
@@ -1781,7 +1780,7 @@ export default function UserModePage() {
               {sourceText.trim() && (
                 <div className="mt-2 pt-2 border-t border-black/[0.06] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
-                  <span className="text-[10px] text-[#ff9500] font-bold">ベース問題を参照して類題を生成</span>
+                  <span className="text-[10px] text-[#ff9500] font-bold">参考問題をもとに類題を生成</span>
                   <span className="text-[10px] text-amber-500 truncate max-w-[200px]">
                     — {sourceText.trim().slice(0, 50)}{sourceText.trim().length > 50 ? '...' : ''}
                   </span>
@@ -1810,7 +1809,7 @@ export default function UserModePage() {
                     <span className="w-4 h-4 rounded bg-black/[0.04] flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
                       ▸
                     </span>
-                    LaTeX を表示・編集
+                    ソースを表示・編集
                   </summary>
                   <div className="mt-3">
                     <TextArea
@@ -1871,14 +1870,14 @@ export default function UserModePage() {
 
                 <div className="border-t border-black/[0.06] pt-4">
                   <p className="text-xs text-[#86868b] mb-3">
-                    上のプロンプトを ChatGPT 等に送って、得られた LaTeX を下に貼り付けてください。
+                    上のプロンプトを ChatGPT 等に送って、得られた出力を下に貼り付けてください。
                   </p>
                   <TextArea
-                    label="LLM の出力（LaTeX）"
+                    label="AI の出力"
                     value={llmOutput}
                     onChange={setLlmOutput}
                     rows={8}
-                    placeholder="LaTeX コードをここに貼り付け..."
+                    placeholder="AI の出力をここに貼り付け..."
                   />
                   <div className="mt-3">
                     <Button

@@ -74,7 +74,7 @@ const COL_LABELS = {
   origin: '登録元',
   format: '形式',
   stem: '問題文',
-  stem_latex: '問題文(LaTeX)',
+  stem_latex: '問題文(ソース)',
   choices_json: '選択肢',
   answer_json: '正解データ',
   answer_brief: '答え',
@@ -1119,7 +1119,7 @@ function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded
       {/* 推奨フィールド */}
       <FieldSection
         title="推奨フィールド"
-        subtitle="入力するとRAG精度が向上します"
+        subtitle="入力すると検索精度が向上します"
         color="amber"
         open={expanded.recommended}
         onToggle={() => toggleSection('recommended')}

@@ -496,7 +496,7 @@ export default function TuningPage() {
   // ── RAG 注入 ──
   const injectRag = async () => {
     if (!basePrompt) { setStatus('まずプロンプトを生成してください'); return; }
-    setStatus('RAGで関連データを取得中...');
+    setStatus('過去問を参照中...');
     try {
       const body = {
         question: basePrompt, top_k: topK, use_vector: true,
@@ -509,27 +509,27 @@ export default function TuningPage() {
       setRagPrompt(data.prompt_summarized || data.prompt || '');
       setRetrievedChunks(data.retrieved || []);
       setRagSkipped(false);
-      setStatus(`RAG注入完了（${(data.retrieved || []).length}件参照）`);
+      setStatus(`過去問参照完了（${(data.retrieved || []).length}件参照）`);
     } catch (e) {
       const msg = e.message || '';
       if (msg.includes('empty vocabulary') || msg.includes('retrieval failed')) {
-        setStatus('RAGデータが未登録です。「スキップ」で進めます。');
+        setStatus('参照できる過去問がまだ登録されていません。「スキップ」で進めます。');
       } else if (msg.includes('502') || msg.includes('504') || msg.includes('backend_timeout') || msg.includes('backend_unavailable')) {
-        setStatus('RAGエラー: バックエンド一時利用不可。数秒後に再試行してください。');
+        setStatus('過去問参照エラー: サーバーが一時的に利用できません。数秒後に再試行してください。');
       } else {
-        setStatus(`RAGエラー: ${msg}`);
+        setStatus(`過去問参照エラー: ${msg}`);
       }
     }
   };
 
   const skipRag = () => {
     setRagSkipped(true); setRagPrompt(''); setRetrievedChunks([]);
-    setStatus('RAGをスキップ');
+    setStatus('過去問参照をスキップ');
   };
 
-  // ── LLM 出力パース ──
+  // ── AI 出力パース ──
   const parseLlmOutput = () => {
-    if (!llmOutput.trim()) { setParseError('LLM出力が空です'); return; }
+    if (!llmOutput.trim()) { setParseError('AI出力が空です'); return; }
     setParseError('');
     const parsed = extractJson(llmOutput);
     if (parsed) {
@@ -558,9 +558,10 @@ export default function TuningPage() {
     }
   };
 
-  // ── DB 保存 ──
+  // ── 保存 ──
   const saveToProblemsDb = async () => {
-    if (!parsedProblem) { setStatus('まずパースしてください'); return; }
+    if (!parsedProblem) { setStatus('まずパースしてください'); return;
+    }
     setStatus('検算して保存中...');
     setVerificationResult(null);
     try {
@@ -590,14 +591,14 @@ export default function TuningPage() {
     try {
       const data = await generatePdf(llmOutput);
       if (data?.pdf_url) { setPdfUrl(data.pdf_url); window.open(data.pdf_url, '_blank'); setStatus('PDF を開きました'); }
-      else setStatus(`PDF 生成失敗: ${data?.error || 'LaTeXエンジン未検出'}`);
+      else setStatus(`PDF 生成失敗: ${data?.error || 'サーバー設定を確認してください'}`);
     } catch (e) { setStatus(`PDF 生成失敗: ${e.message}`); }
     setPdfWorking(false);
   };
 
-  // ── チューニングログ ──
+  // ── 評価ログ ──
   const saveLog = async () => {
-    if (!llmOutput) { setStatus('LLM出力がありません'); return; }
+    if (!llmOutput) { setStatus('AI出力がありません'); return; }
     setStatus('評価を記録中...');
     try {
       const tpl = templates.find((t) => t.id === templateId) || {};
@@ -644,10 +645,10 @@ export default function TuningPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
       <PageHeader
-        title="チューニング"
-        description="プロンプトとRAGの設定を調整して、生成される問題の品質を高めるワークスペース"
+        title="品質をみがく"
+        description="過去問の参照やプロンプトの調整を通じて、生成される問題の品質を高めるワークスペース"
         icon={<Icons.Dev />}
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: '高める' }]}
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'みがく' }]}
       />
 
       <StatusBar message={status} />
@@ -748,7 +749,7 @@ export default function TuningPage() {
                   </svg>
                 </div>
                 <p className="text-xs text-[#86868b] font-medium">評価を記録すると次回のプロンプトに自動反映されます</p>
-                <p className="text-[10px] text-[#aeaeb2] mt-0.5">データはDBに永続保存されます</p>
+                <p className="text-[10px] text-[#aeaeb2] mt-0.5">データは自動的に保存されます</p>
               </div>
             )}
 
@@ -790,7 +791,7 @@ export default function TuningPage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">評価履歴 & 分析</h3>
-                <p className="text-[11px] text-[#86868b]">全{evalHistory.analytics?.total || 0}件のDB永続評価データ</p>
+                <p className="text-[11px] text-[#86868b]">全{evalHistory.analytics?.total || 0}件の評価データ</p>
               </div>
               {evalHistoryLoading && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#5856d6]/[0.06] rounded-full">
@@ -1286,8 +1287,8 @@ export default function TuningPage() {
                   <Icons.Search className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">RAG ミキサー</h3>
-                  <p className="text-[11px] text-[#86868b]">過去問データベースからの情報注入バランスを調整</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">過去問ミキサー</h3>
+                  <p className="text-[11px] text-[#86868b]">過去問からの参照バランスを調整</p>
                 </div>
               </div>
             </div>
@@ -1310,16 +1311,16 @@ export default function TuningPage() {
             {basePrompt && (
               <>
                 <Button onClick={injectRag} variant="secondary">
-                  <Icons.Search className="w-4 h-4" /> RAGを注入
+                  <Icons.Search className="w-4 h-4" /> 過去問を参照
                 </Button>
-                <Button onClick={skipRag} variant="ghost">RAGをスキップ</Button>
+                <Button onClick={skipRag} variant="ghost">参照をスキップ</Button>
               </>
             )}
           </div>
 
           {ragSkipped && (
             <div className="p-3 bg-[#ff9500]/[0.08] rounded-lg border border-[#ff9500]/20/40 text-xs text-amber-700 flex items-center gap-2">
-              <Icons.Info className="w-3.5 h-3.5 flex-shrink-0" /> RAGスキップ中
+              <Icons.Info className="w-3.5 h-3.5 flex-shrink-0" /> 過去問参照をスキップ中
             </div>
           )}
 
@@ -1359,7 +1360,7 @@ export default function TuningPage() {
 
           {basePrompt && (
             <SectionCard title="生成されたプロンプト"
-              subtitle={`${finalPrompt.length.toLocaleString()} 文字${ragSkipped ? '（RAGなし）' : ragPrompt ? '（RAG注入済み）' : ''}`}>
+              subtitle={`${finalPrompt.length.toLocaleString()} 文字${ragSkipped ? '（参照なし）' : ragPrompt ? '（参照済み）' : ''}`}>
               <TextArea value={finalPrompt} onChange={ragPrompt ? setRagPrompt : setBasePrompt} rows={6} />
               <div className="flex items-center gap-3 mt-3">
                 <CopyButton text={finalPrompt} onCopied={setStatus} />
@@ -1377,8 +1378,8 @@ export default function TuningPage() {
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'execute' && (
         <div className="space-y-6">
-          <SectionCard title="LLMにプロンプトを送る" icon={<Icons.Prompt />}
-            subtitle="プロンプトをコピーして、お好みのLLMに貼り付けて実行">
+          <SectionCard title="AIにプロンプトを送る" icon={<Icons.Prompt />}
+            subtitle="プロンプトをコピーして、お好みのAIに貼り付けて実行">
             <div className="p-4 bg-[#fc3c44]/[0.08] rounded-lg border border-[#fc3c44]/20">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-[#fc3c44] text-white flex items-center justify-center">
@@ -1388,8 +1389,8 @@ export default function TuningPage() {
                   <div className="text-sm font-bold text-[#86868b]">送信用プロンプト</div>
                   <div className="text-xs text-[#c7c7cc]">
                     {finalPrompt.length.toLocaleString()} 文字
-                    {ragSkipped && ' （RAG なし）'}
-                    {ragPrompt && ' （RAG 注入済み）'}
+                    {ragSkipped && ' （参照なし）'}
+                    {ragPrompt && ' （参照済み）'}
                   </div>
                 </div>
                 <CopyButton text={finalPrompt} onCopied={setStatus} label="コピー" />
@@ -1401,9 +1402,9 @@ export default function TuningPage() {
             {/* RAG 注入ボタン（未注入の場合に表示） */}
             {!ragPrompt && !ragSkipped && (
               <div className="flex flex-wrap items-center gap-2 mt-3 p-3 bg-[#ff9500]/[0.08] rounded-lg border border-amber-100/40">
-                <span className="text-xs text-[#ff9500] font-bold">RAG未注入:</span>
+                <span className="text-xs text-[#ff9500] font-bold">過去問未参照:</span>
                 <Button onClick={injectRag} variant="secondary" size="sm">
-                  <Icons.Search className="w-3.5 h-3.5" /> RAGを注入
+                  <Icons.Search className="w-3.5 h-3.5" /> 過去問を参照
                 </Button>
                 <Button onClick={skipRag} variant="ghost" size="sm">スキップ</Button>
               </div>
@@ -1422,11 +1423,11 @@ export default function TuningPage() {
             </div>
           </SectionCard>
 
-          <SectionCard title="LLMの出力を貼り付け" icon={<Icons.File />}
-            subtitle="LLMが生成した結果をここに貼り付けてください">
+          <SectionCard title="AIの出力を貼り付け" icon={<Icons.File />}
+            subtitle="AIが生成した結果をここに貼り付けてください">
             <TextArea value={llmOutput}
               onChange={(v) => { setLlmOutput(v); setParsedProblem(null); setParseError(''); setSavedProblemId(null); }}
-              rows={10} placeholder="LLM の出力（JSON / LaTeX / テキスト）をここに貼り付け" />
+              rows={10} placeholder="AI の出力（JSON / テキスト）をここに貼り付け" />
             <div className="flex flex-wrap items-center gap-3 mt-4">
               <Button onClick={parseLlmOutput} disabled={!llmOutput}>
                 <Icons.Search className="w-4 h-4" /> パースする
@@ -1447,7 +1448,7 @@ export default function TuningPage() {
                     ['科目', parsedProblem.subject],
                     ['分野', parsedProblem.field],
                     ['問題文', parsedProblem.stem],
-                    ['LaTeX', parsedProblem.stem_latex],
+                    ['ソース', parsedProblem.stem_latex],
                     ['解法', parsedProblem.solution_outline],
                     ['最終解答', parsedProblem.final_answer],
                     ['難易度', parsedProblem.difficulty],
@@ -1483,7 +1484,7 @@ export default function TuningPage() {
                 </div>
                 <div>
                   <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">品質を評価</h3>
-                  <p className="text-[11px] text-[#86868b]">出力の品質を評価して記録 — 次回の改善に活用・DBに永続保存</p>
+                  <p className="text-[11px] text-[#86868b]">出力の品質を評価して記録 — 次回の改善に活用</p>
                 </div>
               </div>
 
@@ -1514,7 +1515,7 @@ export default function TuningPage() {
                   <svg className="w-4 h-4 text-[#34c759] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75" />
                   </svg>
-                  <span className="text-[11px] text-[#34c759] font-medium">評価はDB (tuning_logs) に永続保存されます。ブラウザを閉じても保持されます。</span>
+                  <span className="text-[11px] text-[#34c759] font-medium">評価は自動的に保存されます。ブラウザを閉じても保持されます。</span>
                 </div>
 
                 <Button onClick={saveLog} disabled={!llmOutput}>
@@ -1534,8 +1535,8 @@ export default function TuningPage() {
                   <Icons.Data className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">問題をDBに保存</h3>
-                  <p className="text-[11px] text-[#86868b]">パースした問題データをDBに保存（検算を自動実行）</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">問題を保存</h3>
+                  <p className="text-[11px] text-[#86868b]">パースした問題データを保存（検算を自動実行）</p>
                 </div>
               </div>
             {parsedProblem ? (
@@ -1559,7 +1560,7 @@ export default function TuningPage() {
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <Button variant="success" onClick={saveToProblemsDb}>
-                    <Icons.Data className="w-4 h-4" /> DBに保存する
+                    <Icons.Data className="w-4 h-4" /> 保存する
                   </Button>
                   <Button variant="ghost" onClick={compilePdf} disabled={!llmOutput || pdfWorking}>
                     {pdfWorking
@@ -1591,7 +1592,7 @@ export default function TuningPage() {
                 )}
               </div>
             ) : (
-              <EmptyState title="パース済みデータがありません" description="「実行」タブでLLM出力をパースしてください" />
+              <EmptyState title="パース済みデータがありません" description="「実行」タブでAI出力をパースしてください" />
             )}
             </div>
           </div>

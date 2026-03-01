@@ -254,7 +254,7 @@ export default function SearchPage() {
     <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
       <PageHeader
         title="問題検索"
-        description="DBに保存された問題を検索・閲覧。科目・分野・難易度での絞り込みや類題生成も可能です。"
+        description="保存された問題を検索・閲覧。科目・分野・難易度での絞り込みや類題生成も可能です。"
         icon={<Icons.Search />}
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Search' }]}
       />

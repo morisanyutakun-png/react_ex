@@ -33,7 +33,7 @@ function CreateIcon() {
   );
 }
 
-/* 品質を高める — スパークル + チューニングダイヤル */
+/* 品質を高める — スパークル + 調整ダイヤル */
 function TuneIcon() {
   return (
     <svg className="w-8 h-8" viewBox="0 0 40 40" fill="none">
@@ -41,7 +41,7 @@ function TuneIcon() {
       <circle cx="18" cy="20" r="10" stroke="#bf5af2" strokeWidth="1.5" opacity="0.25"/>
       <circle cx="18" cy="20" r="6" stroke="#bf5af2" strokeWidth="1.8" opacity="0.5"/>
       <circle cx="18" cy="20" r="2.5" fill="url(#dialGrad)"/>
-      {/* チューニング目盛り */}
+      {/* 調整目盛り */}
       <line x1="18" y1="8" x2="18" y2="11" stroke="#bf5af2" strokeWidth="1.2" opacity="0.4" strokeLinecap="round"/>
       <line x1="18" y1="29" x2="18" y2="32" stroke="#bf5af2" strokeWidth="1.2" opacity="0.4" strokeLinecap="round"/>
       <line x1="6" y1="20" x2="9" y2="20" stroke="#bf5af2" strokeWidth="1.2" opacity="0.4" strokeLinecap="round"/>
@@ -84,7 +84,7 @@ function SearchIcon() {
   );
 }
 
-/* DB編集 — データベースシリンダー + 歯車 */
+/* データ管理 — データベースシリンダー + 歯車 */
 function DbIcon() {
   return (
     <svg className="w-7 h-7" viewBox="0 0 36 36" fill="none">
@@ -295,7 +295,7 @@ export default function HomePage() {
           </g>
           <text x="97%" y="5.5%" textAnchor="end" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
                 fontSize="13" fontWeight="700" letterSpacing="0.35em" fill="#818cf8" opacity="0.15">
-            RAG · RETRIEVAL
+            SMART · CREATION
           </text>
 
           {/* ── フローティング・ライトパーティクル ── */}
@@ -360,7 +360,7 @@ export default function HomePage() {
               href="/dev"
               icon={<TuneIcon />}
               label="品質を磨く"
-              description="過去問の傾向やプロンプトを参考に、出題の精度を向上"
+              description="過去問の傾向やプロンプトを参考に、出題の精度をさらに向上"
               hint="調整 → テスト → 評価"
               gradient="bg-gradient-to-br from-[#bf5af2] to-[#5e5ce6]"
               glowColor="#bf5af2"
@@ -429,7 +429,7 @@ export default function HomePage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#30d158]"></span>
             </span>
-            <span className="text-[11px] font-bold text-[#6e6e73] tracking-wider uppercase">RAG-Powered</span>
+            <span className="text-[11px] font-bold text-[#6e6e73] tracking-wider uppercase">AI活用中</span>
           </div>
         </div>
       </div>
