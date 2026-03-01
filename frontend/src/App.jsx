@@ -122,7 +122,7 @@ export default function App() {
   /* ── Step 1 → 2 : Generate prompt ── */
   const generatePrompt = async () => {
     if (!form.templateId) return notify('テンプレートを選んでください', 'error')
-    setLoading(true); setLoadingMsg('プロンプトを生成中...')
+    setLoading(true); setLoadingMsg('指示文を作成中...')
     try {
       const body = {
         template_id: form.templateId,
@@ -144,7 +144,7 @@ export default function App() {
         setPrompt(d.rendered_prompt || d.rendered)
         setRagCtx(d.context)
         setStep(2)
-        notify('プロンプト生成完了', 'success')
+        notify('指示文の作成完了', 'success')
       } else {
         notify('エラー: ' + (d.detail || r.statusText), 'error')
       }
@@ -271,13 +271,13 @@ export default function App() {
                 <h3>4つのステップ</h3>
                 <ol>
                   <li><strong>条件設定</strong> - テンプレート・問題数・出力形式を選びます。</li>
-                  <li><strong>プロンプト生成</strong> - システムが類似問題を検索し、AIへの指示文を自動作成します。</li>
-                  <li><strong>外部AIで生成</strong> - ChatGPTやClaudeにプロンプトを貼り付け、LaTeXコードを生成してもらいます。</li>
+                  <li><strong>指示文の作成</strong> - システムが類似問題を検索し、AIへの指示文を自動作成します。</li>
+                  <li><strong>外部AIで生成</strong> - ChatGPTやClaudeに指示文を貼り付け、LaTeXコードを生成してもらいます。</li>
                   <li><strong>PDF化</strong> - 生成されたLaTeXコードを貼り付けると、きれいなPDFに変換されます。</li>
                 </ol>
 
                 <h3>なぜ外部AIを使うの？</h3>
-                <p>このシステムは「問題データベース（RAG）」と「PDF生成エンジン」を提供します。
+                <p>このシステムは「問題データベース（類似問題の検索）」と「PDF生成エンジン」を提供します。
                    AI生成は外部の高性能AIサービスに任せることで、常に最新・最高品質の問題生成が可能です。</p>
               </div>
             </details>
@@ -286,7 +286,7 @@ export default function App() {
             <div className="flow-overview">
               <span>条件設定</span>
               <span className="flow-arrow">→</span>
-              <span>プロンプトコピー</span>
+              <span>指示文をコピー</span>
               <span className="flow-arrow">→</span>
               <span className="flow-external">ChatGPT / Claude に貼付</span>
               <span className="flow-arrow">→</span>
@@ -327,12 +327,12 @@ export default function App() {
                 <div className="card-header">
                   <span className="card-emoji">📝</span>
                   <div className="card-title">問題の条件を設定</div>
-                  <div className="card-desc">AIへ送るプロンプトを自動作成します。下の項目を選択してください。</div>
+                  <div className="card-desc">AIへ送る指示文を自動作成します。下の項目を選択してください。</div>
                 </div>
 
                 <div className="tip">
                   <span className="tip-icon">💡</span>
-                  <div>初めての方：テンプレートを選び、問題数を決めて<strong>「プロンプトを生成」</strong>ボタンを押すだけ！</div>
+                  <div>初めての方：テンプレートを選び、問題数を決めて<strong>「指示文を作成」</strong>ボタンを押すだけ！</div>
                 </div>
 
                 {/* Row 1: テンプレート */}
@@ -403,27 +403,27 @@ export default function App() {
                 </div>
 
                 <button className="btn btn-primary btn-block" style={{marginTop:8}} onClick={generatePrompt} disabled={loading || !form.templateId}>
-                  プロンプトを生成 <Ico.ArrowRight />
+                  指示文を作成 <Ico.ArrowRight />
                 </button>
               </div>
             )}
 
             {/* ══════════════════════════════════
-                STEP 2 — プロンプトをコピー
+                STEP 2 — 指示文をコピー
                ══════════════════════════════════ */}
             {step === 2 && (
               <div className="card anim-fade-up">
                 <div className="card-header">
                   <span className="card-emoji">📋</span>
-                  <div className="card-title">プロンプトをコピーしてAIに依頼</div>
-                  <div className="card-desc">外部のAI（ChatGPT・Claude等）にプロンプトを渡してLaTeXコードを生成してもらいます</div>
+                  <div className="card-title">指示文をコピーしてAIに依頼</div>
+                  <div className="card-desc">外部のAI（ChatGPT・Claude等）に指示文を渡してLaTeXコードを生成してもらいます</div>
                 </div>
 
                 <div className="instruction-steps">
                   <div className="instruction-step">
                     <span className="instruction-num">1</span>
                     <div>
-                      <strong>「プロンプトをコピー」ボタンを押す</strong>
+                      <strong>「指示文をコピー」ボタンを押す</strong>
                       <div className="step-detail">指示文がクリップボードにコピーされます</div>
                     </div>
                   </div>
@@ -437,7 +437,7 @@ export default function App() {
                   <div className="instruction-step">
                     <span className="instruction-num">3</span>
                     <div>
-                      <strong>コピーしたプロンプトを貼り付けて送信</strong>
+                      <strong>コピーした指示文を貼り付けて送信</strong>
                       <div className="step-detail">AIが数秒〜数十秒でLaTeXコードを生成します</div>
                     </div>
                   </div>
@@ -463,7 +463,7 @@ export default function App() {
 
                 <div style={{marginBottom:16}}>
                   <button className="btn btn-primary btn-block" onClick={copyPrompt}>
-                    <Ico.Copy /> プロンプトをコピー
+                    <Ico.Copy /> 指示文をコピー
                   </button>
                 </div>
 
@@ -584,7 +584,7 @@ export default function App() {
             <div className="card-header">
               <span className="card-emoji">🛠️</span>
               <div className="card-title">開発者モード</div>
-              <div className="card-desc">RAGパイプラインの詳細テストとチューニング</div>
+              <div className="card-desc">問題検索の詳細テストと調整</div>
             </div>
             <div className="dev-notice">
               従来の多機能ダッシュボードは現在メンテナンス中です。<br />
@@ -641,7 +641,7 @@ export default function App() {
 
                 <dt>Q: 分野フィルタは何のためですか？</dt>
                 <dd>分野を指定すると、データベースからその分野の類似問題だけを検索します。
-                    これにより、より的確な参考問題がプロンプトに含まれ、生成品質が向上します。</dd>
+                    これにより、より的確な参考問題が指示文に含まれ、生成品質が向上します。</dd>
 
                 <dt>Q: ファイルアップロードは必須ですか？</dt>
                 <dd>いいえ、任意です。似た形式の問題を作りたい場合にアップロードすると、

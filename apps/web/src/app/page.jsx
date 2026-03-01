@@ -360,7 +360,7 @@ export default function HomePage() {
               href="/dev"
               icon={<TuneIcon />}
               label="品質を磨く"
-              description="過去問の傾向やプロンプトを参考に、出題の精度をさらに向上"
+              description="過去問の傾向や指示文を参考に、出題の精度をさらに向上"
               hint="調整 → テスト → 評価"
               gradient="bg-gradient-to-br from-[#bf5af2] to-[#5e5ce6]"
               glowColor="#bf5af2"

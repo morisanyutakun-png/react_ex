@@ -403,7 +403,7 @@ export default function UserModePage() {
     setPdfUrl('');
     setStep(4);
 
-    setStatus('Step 1/3: プロンプトを生成中...');
+    setStatus('Step 1/3: AIへの指示文を作成中...');
     let generatedPrompt = '';
     try {
       const data = await renderTemplate({
@@ -440,13 +440,13 @@ export default function UserModePage() {
         setStatus('Step 1/3 完了');
       }
     } catch (e) {
-      setStatus(`プロンプト生成エラー: ${e.message}`);
+      setStatus(`指示文の作成に失敗しました: ${e.message}`);
       setGenerating(false);
       return;
     }
 
     if (!generatedPrompt?.trim()) {
-      setStatus('プロンプトの生成に失敗しました');
+      setStatus('指示文の作成に失敗しました');
       setGenerating(false);
       return;
     }
@@ -501,7 +501,7 @@ export default function UserModePage() {
       setStatus('出題パターンを選んでください');
       return;
     }
-    setStatus('プロンプトを生成中（過去問を参照中）...');
+    setStatus('AIへの指示文を作成中（過去問を参考にしています）...');
     try {
       const data = await renderTemplate({
         template_id: templateId,
@@ -525,8 +525,8 @@ export default function UserModePage() {
       setPrompt(data.rendered_prompt || data.rendered || '');
       setStatus(
         data.context?.chunk_count
-          ? `プロンプト生成完了（過去問 ${data.context.chunk_count}件を参照）`
-          : 'プロンプト生成完了'
+          ? `指示文が完成しました（過去問 ${data.context.chunk_count}件を参考）`
+          : '指示文が完成しました'
       );
       setStep(5);
     } catch (e) {
@@ -1237,7 +1237,7 @@ export default function UserModePage() {
                 </div>
                 <div>
                   <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">生成方法</h3>
-                  <p className="text-[11px] text-[#86868b]">自動生成 or 手動でプロンプトを使う</p>
+                  <p className="text-[11px] text-[#86868b]">自動生成 or 手動で指示文を使う</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1287,7 +1287,7 @@ export default function UserModePage() {
                     <div className="flex-1">
                       <div className="text-sm font-bold text-[#1d1d1f]">手動</div>
                       <div className="text-[11px] text-[#86868b] mt-0.5 leading-relaxed">
-                        プロンプトを取得して自分で AI に送る
+                        AIへの指示文を取得して自分で AI に送る
                       </div>
                     </div>
                     {mode === 'manual' && (
@@ -1435,7 +1435,7 @@ export default function UserModePage() {
                   <p className="text-[11px] text-[#86868b]">
                     {mode === 'auto'
                       ? '選んだら「PDF を生成」ボタンを押すだけで完成します'
-                      : '選んだら「プロンプトを生成」ボタンでプロンプトが作られます'}
+                      : '選んだら「指示文を作成」ボタンを押すとAIへの指示文が作られます'}
                   </p>
                 </div>
               </div>
@@ -1938,7 +1938,7 @@ export default function UserModePage() {
                     <div className="mt-2 flex gap-2">
                       <CopyButton text={generatedLatex} onCopied={setStatus} />
                       <Button variant="ghost" size="sm" onClick={() => compilePdf(generatedLatex)} disabled={pdfWorking}>
-                        <Icons.Pdf className="w-4 h-4 mr-1" /> 再コンパイル
+                        <Icons.Pdf className="w-4 h-4 mr-1" /> PDFを再作成
                       </Button>
                     </div>
                   </div>
@@ -1950,7 +1950,7 @@ export default function UserModePage() {
                       <span className="w-4 h-4 rounded bg-black/[0.04] flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
                         ▸
                       </span>
-                      使用されたプロンプトを確認
+                      使用された指示文を確認
                     </summary>
                     <div className="mt-3">
                       <TextArea value={prompt} rows={8} readOnly />
@@ -1982,7 +1982,7 @@ export default function UserModePage() {
                     <Icons.Prompt className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">生成されたプロンプト</h3>
+                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIへの指示文</h3>
                     <p className="text-[11px] text-[#86868b]">ChatGPT等に送信してください</p>
                   </div>
                 </div>
@@ -1999,7 +1999,7 @@ export default function UserModePage() {
 
                 <div className="border-t border-black/[0.06] pt-4">
                   <p className="text-xs text-[#86868b] mb-3">
-                    上のプロンプトを ChatGPT 等に送って、得られた出力を下に貼り付けてください。
+                    上の指示文を ChatGPT 等に送って、得られた出力を下に貼り付けてください。
                   </p>
                   <TextArea
                     label="AI の出力"
@@ -2099,7 +2099,7 @@ export default function UserModePage() {
           )}
           {step === 3 && mode === 'manual' && (
             <Button onClick={goNext} disabled={!templateId} className="w-full sm:w-auto">
-              <Icons.Prompt className="w-4 h-4 mr-1" /> プロンプトを生成
+              <Icons.Prompt className="w-4 h-4 mr-1" /> 指示文を作成
             </Button>
           )}
         </div>
@@ -2124,7 +2124,7 @@ export default function UserModePage() {
                 '問題数や参考にする過去問を設定',
                 'PDF の見た目（試験・プリント・模試など）を選ぶ',
                 '「AI 自動生成」ならボタン1つで PDF 完成',
-                '「手動」ならプロンプトをコピーしてお好きな AI へ',
+                '「手動」なら指示文をコピーしてお好きな AI へ',
               ].map((text, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-b from-[#fc3c44] to-[#e0323a] text-white text-[9px] font-bold flex-shrink-0 mt-0.5 shadow-sm shadow-[#fc3c44]/15">

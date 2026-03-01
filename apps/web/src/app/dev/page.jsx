@@ -155,9 +155,9 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
     { label: 'ひっかけ強化', icon: '🪤', text: 0.3, diff: 0.3, trick: 1.5, desc: '巧妙な問題を参照' },
   ];
   const axes = [
-    { label: '類似度', value: textWeight, color: '#0a84ff', onChange: onText, desc: 'プロンプトと似た内容の過去問を重視' },
-    { label: '難易度', value: diffWeight, color: '#30d158', onChange: onDiff, desc: '指定難易度に近い過去問を重視' },
-    { label: 'ひっかけ', value: trickWeight, color: '#ff9f0a', onChange: onTrick, desc: 'ひっかけ要素のある過去問を重視' },
+    { label: '類似度', value: textWeight, color: '#0a84ff', onChange: onText, desc: '作りたい問題に似た過去問を重視します' },
+    { label: '難易度', value: diffWeight, color: '#30d158', onChange: onDiff, desc: '指定した難しさに近い過去問を重視します' },
+    { label: 'ひっかけ', value: trickWeight, color: '#ff9f0a', onChange: onTrick, desc: 'ひっかけ要素のある過去問を重視します' },
   ];
   return (
     <div className="space-y-6">
@@ -456,7 +456,7 @@ export default function TuningPage() {
   // ── ベースプロンプト生成 ──
   const generateBasePrompt = async () => {
     if (!templateId) { setStatus('テンプレートを選択してください'); return; }
-    setStatus('プロンプトを生成中...');
+    setStatus('AIへの指示文を作成中...');
     try {
       const data = await renderTemplate({
         template_id: templateId, subject, difficulty,
@@ -486,7 +486,7 @@ export default function TuningPage() {
       setRagPrompt('');
       setRetrievedChunks([]);
       setRagSkipped(false);
-      setStatus('プロンプト生成完了 → 実行へ移動');
+      setStatus('指示文の作成完了！ → 次のステップへ進みます');
       // 自動的に「実行」ステップへ遷移
       setActiveSection('execute');
     } catch (e) { setStatus(`エラー: ${e.message}`); }
@@ -494,8 +494,8 @@ export default function TuningPage() {
 
   // ── RAG 注入 ──
   const injectRag = async () => {
-    if (!basePrompt) { setStatus('まずプロンプトを生成してください'); return; }
-    setStatus('過去問を参照中...');
+    if (!basePrompt) { setStatus('まず指示文を作成してください'); return; }
+    setStatus('過去問を参考にしています...');
     try {
       const body = {
         question: basePrompt, top_k: topK, use_vector: true,
@@ -508,27 +508,27 @@ export default function TuningPage() {
       setRagPrompt(data.prompt_summarized || data.prompt || '');
       setRetrievedChunks(data.retrieved || []);
       setRagSkipped(false);
-      setStatus(`過去問参照完了（${(data.retrieved || []).length}件参照）`);
+      setStatus(`過去問の参考が完了しました（${(data.retrieved || []).length}件）`);
     } catch (e) {
       const msg = e.message || '';
       if (msg.includes('empty vocabulary') || msg.includes('retrieval failed')) {
-        setStatus('参照できる過去問がまだ登録されていません。「スキップ」で進めます。');
+        setStatus('参考にできる過去問がまだありません。「過去問なしで進む」をクリックしてください。');
       } else if (msg.includes('502') || msg.includes('504') || msg.includes('backend_timeout') || msg.includes('backend_unavailable')) {
-        setStatus('過去問参照エラー: サーバーが一時的に利用できません。数秒後に再試行してください。');
+        setStatus('過去問の取得に失敗しました。数秒後にもう一度お試しください。');
       } else {
-        setStatus(`過去問参照エラー: ${msg}`);
+        setStatus(`過去問の取得エラー: ${msg}`);
       }
     }
   };
 
   const skipRag = () => {
     setRagSkipped(true); setRagPrompt(''); setRetrievedChunks([]);
-    setStatus('過去問参照をスキップ');
+    setStatus('過去問なしで進めます');
   };
 
   // ── AI 出力パース ──
   const parseLlmOutput = () => {
-    if (!llmOutput.trim()) { setParseError('AI出力が空です'); return; }
+    if (!llmOutput.trim()) { setParseError('AIの回答がまだ入力されていません'); return; }
     setParseError('');
     const parsed = extractJson(llmOutput);
     if (parsed) {
@@ -543,7 +543,7 @@ export default function TuningPage() {
         while (parsed.checks.length < 2) parsed.checks.push({ desc: '自動補完 — 未検証', ok: false });
       }
       setParsedProblem(parsed);
-      setStatus('パース成功 → 評価・保存へ移動');
+      setStatus('読み取り成功！ → 確認・保存へ移動します');
       // 自動的に「評価・保存」ステップへ遷移
       setActiveSection('evaluate');
     } else {
@@ -551,7 +551,7 @@ export default function TuningPage() {
         stem: llmOutput.trim(), stem_latex: llmOutput.trim(), final_answer: '',
         checks: [{ desc: '自動生成 — 未検証', ok: false }, { desc: '自動生成 — 未検証', ok: false }],
       });
-      setStatus('テキストとして読み取りました → 評価・保存へ移動');
+      setStatus('テキストとして読み取りました → 確認画面へ移動します');
       // テキスト読み取りでも自動遷移
       setActiveSection('evaluate');
     }
@@ -559,9 +559,9 @@ export default function TuningPage() {
 
   // ── 保存 ──
   const saveToProblemsDb = async () => {
-    if (!parsedProblem) { setStatus('まずパースしてください'); return;
+    if (!parsedProblem) { setStatus('まずAIの回答を読み取ってください'); return;
     }
-    setStatus('検算して保存中...');
+    setStatus('答えを確認して保存しています...');
     setVerificationResult(null);
     try {
       const data = await saveProblem(parsedProblem, {
@@ -576,7 +576,7 @@ export default function TuningPage() {
       const errData = e.data || {};
       if (errData.error === 'verification_failed' && errData.verification) {
         setVerificationResult(errData.verification);
-        setStatus('検算不一致 — 保存をブロック');
+        setStatus('答え合わせで不一致が見つかりました — 内容を確認してください');
         return;
       }
       setStatus(`保存エラー: ${e.message}`);
@@ -597,8 +597,8 @@ export default function TuningPage() {
 
   // ── 評価ログ ──
   const saveLog = async () => {
-    if (!llmOutput) { setStatus('AI出力がありません'); return; }
-    setStatus('評価を記録中...');
+    if (!llmOutput) { setStatus('AIの回答がまだありません'); return; }
+    setStatus('出来栄えを記録しています...');
     try {
       const tpl = templates.find((t) => t.id === templateId) || {};
       await saveTuningLog({
@@ -612,7 +612,7 @@ export default function TuningPage() {
           saved_problem_id: savedProblemId || null,
         },
       });
-      setStatus('評価を記録しました');
+      setStatus('出来栄えの記録が完了しました');
       setTuningScore(''); setTuningNotes(''); setExpectedOutput('');
       // フィードバックデータを再読み込み（今の評価を即座に反映）
       // 少し待ってからリロード（DBへの書き込みが完了するのを待つ）
@@ -636,16 +636,16 @@ export default function TuningPage() {
   const hasOutput = !!llmOutput.trim();
 
   const sections = [
-    { id: 'configure', label: '設定', icon: '⚙️', enabled: true },
-    { id: 'execute', label: '実行', icon: '▶️', enabled: hasPrompt },
-    { id: 'evaluate', label: '評価・保存', icon: '✅', enabled: hasOutput },
+    { id: 'configure', label: 'テンプレート', icon: '⚙️', enabled: true },
+    { id: 'execute', label: 'AIに送る', icon: '▶️', enabled: hasPrompt },
+    { id: 'evaluate', label: '確認・保存', icon: '✅', enabled: hasOutput },
   ];
 
   return (
     <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
       <PageHeader
         title="品質をみがく"
-        description="過去問の参照やプロンプトの調整を通じて、生成される問題の品質を高めるワークスペース"
+        description="テンプレートを選んで → AIに指示を出し → 出来栄えを確認する、3ステップの作業スペースです"
         icon={<Icons.Dev />}
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'みがく' }]}
       />
@@ -662,8 +662,8 @@ export default function TuningPage() {
                 <Icons.Chart className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">改善フィードバック</h3>
-                <p className="text-[11px] text-[#86868b]">過去の評価データから品質向上に活用</p>
+                <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">あなたの評価データ</h3>
+                <p className="text-[11px] text-[#86868b]">過去の記録をもとに、AIへの指示に自動反映します</p>
               </div>
               {feedbackLoading && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fc3c44]/[0.06] rounded-full">
@@ -678,7 +678,7 @@ export default function TuningPage() {
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#fc3c44]/[0.06] to-[#fc3c44]/[0.02] border border-[#fc3c44]/10 p-4 text-center">
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#fc3c44] to-transparent opacity-40" />
                 <div className="text-2xl font-bold text-[#fc3c44] tabular-nums">{feedbackData.stats?.total_evaluations ?? 0}</div>
-                <div className="text-[10px] text-[#fc3c44]/70 font-bold mt-0.5 uppercase tracking-wider">総評価数</div>
+                <div className="text-[10px] text-[#fc3c44]/70 font-bold mt-0.5 uppercase tracking-wider">累計記録</div>
               </div>
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#34c759]/[0.06] to-[#34c759]/[0.02] border border-[#34c759]/10 p-4 text-center">
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#34c759] to-transparent opacity-40" />
@@ -706,7 +706,7 @@ export default function TuningPage() {
                   <svg className="w-3.5 h-3.5 transition-transform duration-200 group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
-                  <span>高評価の出力例を表示</span>
+                  <span>うまくいった例を見る</span>
                   <span className="ml-auto px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">{feedbackData.feedback.length}件</span>
                 </summary>
                 <div className="px-4 pb-4 space-y-2 max-h-52 overflow-y-auto custom-scrollbar">
@@ -747,7 +747,7 @@ export default function TuningPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                   </svg>
                 </div>
-                <p className="text-xs text-[#86868b] font-medium">評価を記録すると次回のプロンプトに自動反映されます</p>
+                <p className="text-xs text-[#86868b] font-medium">出来栄えを記録すると、次回の指示文に自動反映されます</p>
                 <p className="text-[10px] text-[#aeaeb2] mt-0.5">データは自動的に保存されます</p>
               </div>
             )}
@@ -761,7 +761,7 @@ export default function TuningPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {showEvalHistory ? '履歴を閉じる' : '評価履歴を表示'}
+                {showEvalHistory ? '記録を閉じる' : 'これまでの記録を見る'}
               </button>
               <button
                 onClick={() => { loadFeedback(subject, templateId); loadEvalHistory(subject); }}
@@ -789,7 +789,7 @@ export default function TuningPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">評価履歴 & 分析</h3>
+                <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">これまでの記録</h3>
                 <p className="text-[11px] text-[#86868b]">全{evalHistory.analytics?.total || 0}件の評価データ</p>
               </div>
               {evalHistoryLoading && (
@@ -806,7 +806,7 @@ export default function TuningPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
                   <div className="p-3 rounded-xl bg-gradient-to-br from-[#fc3c44]/[0.06] to-transparent border border-[#fc3c44]/10 text-center">
                     <div className="text-lg font-bold text-[#fc3c44] tabular-nums">{evalHistory.analytics.total}</div>
-                    <div className="text-[9px] text-[#fc3c44]/60 font-bold uppercase tracking-wider">総評価数</div>
+                    <div className="text-[9px] text-[#fc3c44]/60 font-bold uppercase tracking-wider">累計記録</div>
                   </div>
                   <div className="p-3 rounded-xl bg-gradient-to-br from-[#34c759]/[0.06] to-transparent border border-[#34c759]/10 text-center">
                     <div className="text-lg font-bold text-[#34c759] tabular-nums">{evalHistory.analytics.avg_score ?? '—'}</div>
@@ -818,14 +818,14 @@ export default function TuningPage() {
                   </div>
                   <div className="p-3 rounded-xl bg-gradient-to-br from-[#ff9500]/[0.06] to-transparent border border-[#ff9500]/10 text-center">
                     <div className="text-lg font-bold text-[#ff9500] tabular-nums">{evalHistory.analytics.low_count}</div>
-                    <div className="text-[9px] text-[#ff9500]/60 font-bold uppercase tracking-wider">要改善</div>
+                    <div className="text-[9px] text-[#ff9500]/60 font-bold uppercase tracking-wider">もう少し</div>
                   </div>
                 </div>
 
                 {/* スコア分布バー */}
                 {Object.keys(evalHistory.analytics.score_distribution || {}).length > 0 && (
                   <div className="p-4 bg-black/[0.02] rounded-xl border border-black/[0.04] mb-4">
-                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">スコア分布</div>
+                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">評価の分布</div>
                     <div className="flex items-end gap-1 h-16">
                       {[0.2, 0.4, 0.6, 0.8, 1.0].map((score) => {
                         const count = evalHistory.analytics.score_distribution[score] || 0;
@@ -849,7 +849,7 @@ export default function TuningPage() {
                 {/* 科目別スコア */}
                 {Object.keys(evalHistory.analytics.per_subject || {}).length > 0 && (
                   <div className="p-4 bg-black/[0.02] rounded-xl border border-black/[0.04] mb-4">
-                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">科目別スコア</div>
+                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">科目ごとの評価</div>
                     <div className="space-y-2">
                       {Object.entries(evalHistory.analytics.per_subject).map(([subj, data]) => {
                         const scoreColor = data.avg >= 0.8 ? '#34c759' : data.avg >= 0.6 ? '#ffcc00' : data.avg >= 0.4 ? '#ff9500' : '#ff3b30';
@@ -874,7 +874,7 @@ export default function TuningPage() {
                 {/* トレンドラインスパークライン */}
                 {evalHistory.analytics.recent_trend?.length > 1 && (
                   <div className="p-4 bg-black/[0.02] rounded-xl border border-black/[0.04] mb-4">
-                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">最近のトレンド</div>
+                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">最近の傾向</div>
                     <div className="flex items-end gap-1 h-12">
                       {evalHistory.analytics.recent_trend.map((pt, idx) => {
                         const height = ((pt.score || 0) / 1.0) * 100;
@@ -930,7 +930,7 @@ export default function TuningPage() {
               </div>
             ) : (
               <div className="text-center py-6">
-                <p className="text-xs text-[#aeaeb2]">まだ評価データがありません</p>
+                <p className="text-xs text-[#aeaeb2]">まだ記録がありません</p>
               </div>
             )}
           </div>
@@ -966,7 +966,7 @@ export default function TuningPage() {
             )}
             {!s.enabled && s.id !== 'configure' && (
               <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-[#c7c7cc] px-2 py-0.5 rounded-full whitespace-nowrap">
-                {s.id === 'execute' ? 'プロンプト後' : '出力後'}
+                {s.id === 'execute' ? '指示文の作成後' : 'AI結果の入力後'}
               </span>
             )}
           </button>
@@ -982,10 +982,45 @@ export default function TuningPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════
-         ⚙️ 設定
+         ⚙️ テンプレート選択
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'configure' && (
         <div className="space-y-6">
+
+          {/* ── はじめにガイド ── */}
+          {!templateId && (
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#007aff]/[0.04] to-[#5856d6]/[0.04] backdrop-blur-xl border border-[#007aff]/10 shadow-lg shadow-black/[0.03]">
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#007aff] via-[#5856d6] to-[#007aff] opacity-60" />
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white shadow-lg shadow-[#007aff]/20">
+                    <span className="text-lg">💡</span>
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">使い方ガイド</h3>
+                    <p className="text-[11px] text-[#86868b]">3ステップで問題の品質を改善できます</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { step: '1', icon: '⚙️', title: 'テンプレートを選ぶ', desc: '科目や分野のテンプレートを選んで、AIへの指示文を作成します', color: '#007aff' },
+                    { step: '2', icon: '▶️', title: 'AIに送る', desc: '指示文をコピーしてChatGPT等に貼り付け、結果をここに戻します', color: '#ff9500' },
+                    { step: '3', icon: '✅', title: '確認・保存', desc: '出来栄えを確認・記録すると、次回の指示に自動反映されます', color: '#34c759' },
+                  ].map((s) => (
+                    <div key={s.step} className="relative p-4 rounded-2xl bg-white/60 border border-black/[0.04]">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black text-white" style={{ background: s.color }}>
+                          {s.step}
+                        </div>
+                        <span className="text-sm font-bold text-[#1d1d1f]">{s.title}</span>
+                      </div>
+                      <p className="text-[11px] text-[#86868b] leading-relaxed">{s.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── 条件設定（テンプレート＋問数） ── */}
           <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
@@ -1320,8 +1355,8 @@ export default function TuningPage() {
                   <Icons.Search className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">過去問ミキサー</h3>
-                  <p className="text-[11px] text-[#86868b]">過去問からの参照バランスを調整</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">過去問の参考バランス</h3>
+                  <p className="text-[11px] text-[#86868b]">過去問をどう参考にするか、バランスを調整できます</p>
                 </div>
               </div>
             </div>
@@ -1331,29 +1366,49 @@ export default function TuningPage() {
                 onText={setTextWeight} onDiff={setDifficultyMatchWeight} onTrick={setTrickinessWeight}
               />
               <div className="mt-5 pt-4 border-t border-black/[0.04]">
-                <NumberField label="参照件数 (Top-K)" value={topK} onChange={setTopK} min={1} max={20} />
+                <NumberField label="参考にする問題の数" value={topK} onChange={setTopK} min={1} max={20} />
               </div>
             </div>
           </div>
 
-          {/* ── プロンプト生成 ── */}
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={generateBasePrompt} disabled={!templateId}>
-              <Icons.Prompt className="w-4 h-4" /> プロンプトを生成
-            </Button>
-            {basePrompt && (
-              <>
-                <Button onClick={injectRag} variant="secondary">
-                  <Icons.Search className="w-4 h-4" /> 過去問を参照
+          {/* ── 指示文作成 ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#af52de] via-[#bf5af2] to-[#af52de] opacity-70" />
+            <div className="px-6 pt-6 pb-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#af52de] to-[#bf5af2] text-white shadow-lg shadow-[#af52de]/20">
+                  <Icons.Prompt className="w-5 h-5" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIへの指示文を作成</h3>
+                  <p className="text-[11px] text-[#86868b]">
+                    {!templateId
+                      ? '↑ まず上のテンプレートを選んでください'
+                      : !basePrompt
+                        ? 'ボタンを押すと、選んだテンプレートからAIへの指示文が自動生成されます'
+                        : '指示文が完成しました。次のステップへ進めます。'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button onClick={generateBasePrompt} disabled={!templateId}>
+                  <Icons.Prompt className="w-4 h-4" /> {basePrompt ? '指示文を再作成' : '指示文を作成する'}
                 </Button>
-                <Button onClick={skipRag} variant="ghost">参照をスキップ</Button>
-              </>
-            )}
+                {basePrompt && (
+                  <>
+                    <Button onClick={injectRag} variant="secondary">
+                      <Icons.Search className="w-4 h-4" /> 過去問を参考にする
+                    </Button>
+                    <Button onClick={skipRag} variant="ghost">過去問なしで進む</Button>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
           {ragSkipped && (
             <div className="p-3 bg-[#ff9500]/[0.08] rounded-lg border border-[#ff9500]/20/40 text-xs text-amber-700 flex items-center gap-2">
-              <Icons.Info className="w-3.5 h-3.5 flex-shrink-0" /> 過去問参照をスキップ中
+              <Icons.Info className="w-3.5 h-3.5 flex-shrink-0" /> 過去問なしで進めています
             </div>
           )}
 
@@ -1400,7 +1455,7 @@ export default function TuningPage() {
                     <Icons.Prompt className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">生成されたプロンプト</h3>
+                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">作成された指示文</h3>
                     <p className="text-[11px] text-[#86868b]">{finalPrompt.length.toLocaleString()} 文字{ragSkipped ? '（参照なし）' : ragPrompt ? '（参照済み）' : ''}</p>
                   </div>
                 </div>
@@ -1408,7 +1463,7 @@ export default function TuningPage() {
                 <div className="flex items-center gap-3 mt-3">
                   <CopyButton text={finalPrompt} onCopied={setStatus} />
                   <Button variant="secondary" size="sm" onClick={() => setActiveSection('execute')}>
-                    実行へ進む <Icons.ArrowRight className="w-3 h-3" />
+                    次へ進む <Icons.ArrowRight className="w-3 h-3" />
                   </Button>
                 </div>
               </div>
@@ -1430,40 +1485,39 @@ export default function TuningPage() {
                   <Icons.Prompt className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIにプロンプトを送る</h3>
-                  <p className="text-[11px] text-[#86868b]">プロンプトをコピーして、お好みのAIに貼り付けて実行</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIに指示文を送る</h3>
+                  <p className="text-[11px] text-[#86868b]">① コピー → ② AIを開く → ③ 貼り付けて実行</p>
                 </div>
               </div>
-            <div className="p-4 bg-[#fc3c44]/[0.08] rounded-lg border border-[#fc3c44]/20">
+            <div className="p-4 bg-[#fc3c44]/[0.08] rounded-2xl border border-[#fc3c44]/20">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-[#fc3c44] text-white flex items-center justify-center">
-                  <Icons.Copy className="w-4 h-4" />
-                </div>
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#fc3c44] text-white text-xs font-black">1</div>
                 <div className="flex-1">
-                  <div className="text-sm font-bold text-[#86868b]">送信用プロンプト</div>
-                  <div className="text-xs text-[#c7c7cc]">
-                    {finalPrompt.length.toLocaleString()} 文字
-                    {ragSkipped && ' （参照なし）'}
-                    {ragPrompt && ' （参照済み）'}
-                  </div>
+                  <div className="text-sm font-bold text-[#1d1d1f]">まず指示文をコピー</div>
+                  <div className="text-[11px] text-[#86868b]">{finalPrompt.length.toLocaleString()} 文字</div>
                 </div>
                 <CopyButton text={finalPrompt} onCopied={setStatus} label="コピー" />
               </div>
-              <pre className="text-xs text-[#86868b] bg-black/[0.04] rounded-lg p-3 max-h-32 overflow-auto custom-scrollbar font-mono leading-relaxed">
+              <pre className="text-xs text-[#86868b] bg-black/[0.04] rounded-xl p-3 max-h-32 overflow-auto custom-scrollbar font-mono leading-relaxed">
                 {finalPrompt.slice(0, 500)}{finalPrompt.length > 500 ? '\n...' : ''}
               </pre>
             </div>
             {/* RAG 注入ボタン（未注入の場合に表示） */}
             {!ragPrompt && !ragSkipped && (
               <div className="flex flex-wrap items-center gap-2 mt-3 p-3 bg-[#ff9500]/[0.08] rounded-lg border border-amber-100/40">
-                <span className="text-xs text-[#ff9500] font-bold">過去問未参照:</span>
+                <span className="text-xs text-[#ff9500] font-bold">過去問未参考:</span>
                 <Button onClick={injectRag} variant="secondary" size="sm">
-                  <Icons.Search className="w-3.5 h-3.5" /> 過去問を参照
+                  <Icons.Search className="w-3.5 h-3.5" /> 過去問を参考にする
                 </Button>
-                <Button onClick={skipRag} variant="ghost" size="sm">スキップ</Button>
+                <Button onClick={skipRag} variant="ghost" size="sm">過去問なしで進む</Button>
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+            <div className="mt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#ff9500] text-white text-xs font-black">2</div>
+                <span className="text-sm font-bold text-[#1d1d1f]">AIを開いて貼り付け</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 { name: 'ChatGPT', url: 'https://chat.openai.com', color: 'from-green-500 to-emerald-600' },
                 { name: 'Claude', url: 'https://claude.ai', color: 'from-amber-500 to-orange-500' },
@@ -1474,6 +1528,7 @@ export default function TuningPage() {
                   {name}
                 </a>
               ))}
+              </div>
             </div>
             </div>
           </div>
@@ -1486,16 +1541,16 @@ export default function TuningPage() {
                   <Icons.File className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIの出力を貼り付け</h3>
-                  <p className="text-[11px] text-[#86868b]">AIが生成した結果をここに貼り付けてください</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIの回答を貼り付け</h3>
+                  <p className="text-[11px] text-[#86868b]">AIが返した文章をそのままここに貼り付けてください</p>
                 </div>
               </div>
             <TextArea value={llmOutput}
               onChange={(v) => { setLlmOutput(v); setParsedProblem(null); setParseError(''); setSavedProblemId(null); }}
-              rows={10} placeholder="AI の出力（JSON / テキスト）をここに貼り付け" />
+              rows={10} placeholder="AIが返した文章をそのままここに貼り付けてください" />
             <div className="flex flex-wrap items-center gap-3 mt-4">
               <Button onClick={parseLlmOutput} disabled={!llmOutput}>
-                <Icons.Search className="w-4 h-4" /> パースする
+                <Icons.Search className="w-4 h-4" /> 内容を読み取る
               </Button>
             </div>
             {parseError && (
@@ -1506,7 +1561,7 @@ export default function TuningPage() {
             {parsedProblem && (
               <div className="mt-4 p-4 bg-[#34c759]/[0.08] rounded-lg border border-[#34c759]/20/40 space-y-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                  <Icons.Success className="w-4 h-4" /> パース結果
+                  <Icons.Success className="w-4 h-4" /> 読み取り結果
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {[
@@ -1549,14 +1604,14 @@ export default function TuningPage() {
                   <Icons.Chart className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">品質を評価</h3>
-                  <p className="text-[11px] text-[#86868b]">出力の品質を評価して記録 — 次回の改善に活用</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">出来栄えを確認</h3>
+                  <p className="text-[11px] text-[#86868b]">生成された問題の出来を確認して、次回のために記録します</p>
                 </div>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-3">品質スコア</label>
+                  <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-3">出来栄え</label>
                   <QualityRating score={tuningScore ? Number(tuningScore) : ''} onChange={(v) => setTuningScore(String(v))} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1565,14 +1620,14 @@ export default function TuningPage() {
                     <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
                       className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm text-[#1d1d1f]
                         transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
-                      placeholder="例: 難易度は適切だが解説が冗長" />
+                      placeholder="例: 難しさ♪　でも解説がもう少し欲しい" />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">期待していた出力 <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
+                    <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">こうなって欲しかった <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
                     <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
                       className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm text-sm text-[#1d1d1f]
                         transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
-                      placeholder="期待される出力の要約" />
+                      placeholder="こんな問題が作られたら良かった、というイメージ" />
                   </div>
                 </div>
 
@@ -1581,11 +1636,11 @@ export default function TuningPage() {
                   <svg className="w-4 h-4 text-[#34c759] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75" />
                   </svg>
-                  <span className="text-[11px] text-[#34c759] font-medium">評価は自動的に保存されます。ブラウザを閉じても保持されます。</span>
+                  <span className="text-[11px] text-[#34c759] font-medium">記録は自動保存されます。ブラウザを閉じても失われません。</span>
                 </div>
 
                 <Button onClick={saveLog} disabled={!llmOutput}>
-                  <Icons.Success className="w-4 h-4" /> 評価を記録する
+                  <Icons.Success className="w-4 h-4" /> 出来栄えを記録する
                 </Button>
               </div>
             </div>
@@ -1602,7 +1657,7 @@ export default function TuningPage() {
                 </div>
                 <div>
                   <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">問題を保存</h3>
-                  <p className="text-[11px] text-[#86868b]">パースした問題データを保存（検算を自動実行）</p>
+                  <p className="text-[11px] text-[#86868b]">AIの回答を保存します（答え合わせも自動で行います）</p>
                 </div>
               </div>
             {parsedProblem ? (
@@ -1641,8 +1696,8 @@ export default function TuningPage() {
                       : 'bg-rose-50 border-rose-200 text-rose-700'
                   }`}>
                     {verificationResult.verified
-                      ? <><Icons.Success className="w-4 h-4" /> 検算OK: {verificationResult.expected} = {verificationResult.computed}</>
-                      : <><Icons.Info className="w-4 h-4" /> 検算NG: 期待={verificationResult.expected}, 計算={verificationResult.computed}</>}
+                      ? <><Icons.Success className="w-4 h-4" /> 答え合わせ OK: {verificationResult.expected} = {verificationResult.computed}</>
+                      : <><Icons.Info className="w-4 h-4" /> 答えが一致しません: 期待={verificationResult.expected}, 実際={verificationResult.computed}</>}
                   </div>
                 )}
                 {savedProblemId && (
@@ -1658,7 +1713,7 @@ export default function TuningPage() {
                 )}
               </div>
             ) : (
-              <EmptyState title="パース済みデータがありません" description="「実行」タブでAI出力をパースしてください" />
+              <EmptyState title="まだ読み取ったデータがありません" description="「AIに送る」タブでAIの回答を貼り付け、「内容を読み取る」を押してください" />
             )}
             </div>
           </div>
@@ -1668,7 +1723,7 @@ export default function TuningPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
-              設定に戻って再調整
+              テンプレート選択に戻る
             </Button>
             <span className="text-xs text-gray-300">|</span>
             <Button variant="ghost" onClick={resetAll}>最初からやり直す</Button>
