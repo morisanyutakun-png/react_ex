@@ -259,29 +259,6 @@ export default function App() {
 
         {mode === 'user' ? (
           <>
-            {/* ── HOW IT WORKS (collapsible, beginner-friendly) ── */}
-            <details className="how-it-works">
-              <summary className="how-summary">
-                初めての方へ：このシステムの使い方
-              </summary>
-              <div className="how-content">
-                <h3>このシステムでできること</h3>
-                <p>過去問や類似問題のデータベースをもとに、AIが新しい問題を自動生成し、PDFとしてダウンロードできます。</p>
-
-                <h3>4つのステップ</h3>
-                <ol>
-                  <li><strong>条件設定</strong> - テンプレート・問題数・出力形式を選びます。</li>
-                  <li><strong>指示文の作成</strong> - システムが類似問題を検索し、AIへの指示文を自動作成します。</li>
-                  <li><strong>外部AIで生成</strong> - ChatGPTやClaudeに指示文を貼り付け、LaTeXコードを生成してもらいます。</li>
-                  <li><strong>PDF化</strong> - 生成されたLaTeXコードを貼り付けると、きれいなPDFに変換されます。</li>
-                </ol>
-
-                <h3>なぜ外部AIを使うの？</h3>
-                <p>このシステムは「問題データベース（類似問題の検索）」と「PDF生成エンジン」を提供します。
-                   AI生成は外部の高性能AIサービスに任せることで、常に最新・最高品質の問題生成が可能です。</p>
-              </div>
-            </details>
-
             {/* ── FLOW OVERVIEW ── */}
             <div className="flow-overview">
               <span>条件設定</span>

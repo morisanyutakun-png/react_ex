@@ -122,6 +122,21 @@ function colLabel(name) {
   return COL_LABELS[name] || name;
 }
 
+// テーブル名日本語マッピング
+const TABLE_LABELS = {
+  problems: '問題データ',
+  templates: 'テンプレート',
+  generations: '生成履歴',
+  generation_runs: '生成バッチ',
+  annotations: '評価データ',
+  generation_evals: '生成評価',
+  users: 'ユーザー',
+};
+
+function tableLabel(name) {
+  return TABLE_LABELS[name] || name;
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // カラムグループ定義 (一覧表示用)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -461,39 +476,42 @@ export default function DbEditorPage() {
         title="データ管理"
         description="過去問データの閲覧・編集・新規登録"
         icon={<Icons.Data />}
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'データ管理' }]}
+        breadcrumbs={[{ label: 'ホーム', href: '/' }, { label: 'データ管理' }]}
       />
 
       <StatusBar message={status} />
 
       {/* テーブル選択 + タブ切り替え */}
-      <SectionCard>
-        <div className="flex flex-wrap items-end gap-4">
-          <SelectField
-            label="テーブル"
-            value={selectedTable}
-            onChange={(v) => setSelectedTable(v)}
-            options={tables.map((t) => ({ value: t.name, label: `${t.name} (PK: ${t.pk})` }))}
-            className="min-w-[200px]"
-          />
-          <div className="flex gap-1 ml-auto">
-            <TabButton active={activeTab === 'browse'} onClick={() => setActiveTab('browse')}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              データ一覧
-            </TabButton>
-            <TabButton active={activeTab === 'add'} onClick={() => setActiveTab('add')}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M12 4v16m8-8H4" />
-              </svg>
-              かんたん登録
-            </TabButton>
+      <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44] opacity-60" />
+        <div className="p-5">
+          <div className="flex flex-wrap items-end gap-4">
+            <SelectField
+              label="テーブル"
+              value={selectedTable}
+              onChange={(v) => setSelectedTable(v)}
+              options={tables.map((t) => ({ value: t.name, label: tableLabel(t.name) }))}
+              className="min-w-[200px]"
+            />
+            <div className="flex gap-1 ml-auto bg-black/[0.04] rounded-xl p-1 border border-black/[0.04]">
+              <TabButton active={activeTab === 'browse'} onClick={() => setActiveTab('browse')}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                データ一覧
+              </TabButton>
+              <TabButton active={activeTab === 'add'} onClick={() => setActiveTab('add')}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M12 4v16m8-8H4" />
+                </svg>
+                かんたん登録
+              </TabButton>
+            </div>
           </div>
         </div>
-      </SectionCard>
+      </div>
 
       {/* ━━ データ一覧タブ ━━ */}
       {activeTab === 'browse' && (
@@ -605,13 +623,12 @@ export default function DbEditorPage() {
                     {displayCols.map((col) => (
                       <th key={col.name}
                         className="px-3 py-3 text-left font-bold text-[#86868b] tracking-wider whitespace-nowrap border-l border-black/[0.06]"
-                        title={`${col.name} (${col.type})${col.notnull ? ' NOT NULL' : ''}`}
+                        title={colLabel(col.name)}
                       >
                         <div className="flex items-center gap-1">
                           {colLabel(col.name)}
-                          {col.pk && <span className="text-[9px] bg-[#fc3c44]/[0.08] text-[#fc3c44] px-1 rounded">PK</span>}
+                          {col.pk && <span className="text-[9px] bg-[#fc3c44]/[0.08] text-[#fc3c44] px-1 rounded">主キー</span>}
                         </div>
-                        <div className="text-[9px] font-normal text-[#d2d2d7] mt-0.5">{col.name}</div>
                       </th>
                     ))}
                     <th className="px-2 py-3 text-center font-bold text-[#86868b] uppercase tracking-wider border-l border-black/[0.06] w-20">
@@ -667,7 +684,7 @@ export default function DbEditorPage() {
                                   typeof cellVal === 'object' && cellVal !== null ? 'font-mono text-[10px] text-[#af52de]' : ''
                                 }`}>
                                   {cellVal === null || cellVal === undefined
-                                    ? <span className="text-[#d2d2d7] italic">null</span>
+                                    ? <span className="text-[#d2d2d7] italic">—</span>
                                     : truncateDisplay(cellVal)}
                                 </span>
                               )}
@@ -775,7 +792,7 @@ export default function DbEditorPage() {
                           <span className="text-[10px] font-bold text-[#aeaeb2] uppercase min-w-[4.5rem] flex-shrink-0 pt-0.5">{colLabel(col.name)}</span>
                           <span className="text-[13px] text-[#1d1d1f] break-all line-clamp-2 min-w-0">
                             {cellVal === null || cellVal === undefined
-                              ? <span className="text-[#d2d2d7] italic text-xs">null</span>
+                              ? <span className="text-[#d2d2d7] italic text-xs">—</span>
                               : truncateDisplay(cellVal)}
                           </span>
                         </div>
@@ -888,8 +905,8 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         className="px-2 py-1.5 text-xs border border-red-600 rounded-lg bg-black/[0.04]"
       >
         <option value="">—</option>
-        <option value="true">true</option>
-        <option value="false">false</option>
+        <option value="true">はい</option>
+        <option value="false">いいえ</option>
       </select>
     );
   }
@@ -980,10 +997,11 @@ function RowDetailModal({ row, schema, pk, onClose }) {
   return (
     <div className="fixed inset-0 bg-[#f5f5f7]/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-t-2xl sm:rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-black/[0.06]">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/[0.06]">
+      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-black/[0.06]">
+        <div className="relative flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/[0.06]">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44] opacity-50" />
           <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f]">
-            行詳細 — ID: {row[pk]}
+            データ詳細
           </h2>
           <button onClick={onClose} className="text-[#c7c7cc] hover:text-[#424245] text-xl font-bold p-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -999,11 +1017,10 @@ function RowDetailModal({ row, schema, pk, onClose }) {
               <div key={col.name} className="flex flex-col sm:flex-row sm:gap-3 py-2 border-b border-black/[0.06]">
                 <div className="sm:w-44 flex-shrink-0 mb-0.5 sm:mb-0">
                   <span className="text-xs font-bold text-[#424245]">{colLabel(col.name)}</span>
-                  <span className="text-[10px] text-[#d2d2d7] block sm:inline sm:ml-1">{col.name} · {col.type}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   {isEmpty ? (
-                    <span className="text-xs text-[#d2d2d7] italic">null</span>
+                    <span className="text-xs text-[#d2d2d7] italic">—</span>
                   ) : typeof val === 'object' ? (
                     <pre className="text-xs text-[#af52de] font-mono bg-black/[0.04] rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
                       {JSON.stringify(val, null, 2)}
@@ -1434,7 +1451,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
             {otherCols.map((col) => (
               <div key={col.name}>
                 <label className="block text-[10px] font-bold text-[#d2d2d7] mb-1">
-                  {colLabel(col.name)} <span className="text-[9px] text-[#c7c7cc]">{col.name}</span>
+                  {colLabel(col.name)}
                 </label>
                 {isJsonColumn(col.type) ? (
                   <textarea
@@ -1451,8 +1468,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
                     className={baseInputClass}
                   >
                     <option value="">—</option>
-                    <option value="true">true</option>
-                    <option value="false">false</option>
+                    <option value="true">はい</option>
+                    <option value="false">いいえ</option>
                   </select>
                 ) : (
                   <input
@@ -1733,7 +1750,6 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
       <div className={isWide ? 'md:col-span-2' : ''}>
         <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
           {label}
-          <span className="text-[10px] font-normal text-[#c7c7cc] ml-2 normal-case tracking-normal">{name}</span>
         </label>
 
         {/* 候補チップ（親が選択済みのとき表示） */}
@@ -1780,7 +1796,6 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
       <div className="md:col-span-2">
         <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
           {label}
-          <span className="text-[10px] font-normal text-[#c7c7cc] ml-2 normal-case tracking-normal">{name}</span>
         </label>
         <RichTextArea value={value} onChange={onChange} rows={rows} help={help} name={name} onBlur={onBlur} />
       </div>
@@ -1791,7 +1806,6 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
     <div className={isWide ? 'md:col-span-2' : ''}>
       <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
         {label}
-        <span className="text-[10px] font-normal text-[#c7c7cc] ml-2 normal-case tracking-normal">{name}</span>
       </label>
 
       {type === 'select' && options ? (
@@ -1844,8 +1858,8 @@ function SmartField({ field, value, onChange, allValues, onBlur }) {
       ) : type === 'boolean' ? (
         <select value={String(value)} onChange={(e) => onChange(e.target.value)} className={baseInputClass}>
           <option value="">— 選択 —</option>
-          <option value="true">true</option>
-          <option value="false">false</option>
+          <option value="true">はい</option>
+          <option value="false">いいえ</option>
         </select>
       ) : (
         <input

@@ -647,7 +647,7 @@ export default function TuningPage() {
         title="品質をみがく"
         description="テンプレートを選んで → AIに指示を出し → 出来栄えを確認する、3ステップの作業スペースです"
         icon={<Icons.Dev />}
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'みがく' }]}
+        breadcrumbs={[{ label: 'ホーム', href: '/' }, { label: 'みがく' }]}
       />
 
       <StatusBar message={status} />
@@ -981,46 +981,32 @@ export default function TuningPage() {
         </div>
       </div>
 
+      {/* ── ウィザードアシスト ── */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#007aff]/[0.05] via-[#5856d6]/[0.04] to-[#af52de]/[0.05] border border-[#007aff]/[0.08]">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className={`flex items-center justify-center w-8 h-8 rounded-xl text-white text-xs font-black flex-shrink-0 shadow-sm ${
+            activeSection === 'configure' ? 'bg-gradient-to-br from-[#007aff] to-[#5856d6] shadow-[#007aff]/20'
+              : activeSection === 'execute' ? 'bg-gradient-to-br from-[#ff9500] to-[#ff6723] shadow-[#ff9500]/20'
+              : 'bg-gradient-to-br from-[#34c759] to-[#30d158] shadow-[#34c759]/20'
+          }`}>
+            {activeSection === 'configure' ? '1' : activeSection === 'execute' ? '2' : '3'}
+          </div>
+          <p className="text-[13px] font-bold text-[#1d1d1f] leading-snug">
+            {activeSection === 'configure' && !templateId && 'テンプレートを選んで、指示文を作成しましょう'}
+            {activeSection === 'configure' && templateId && !hasPrompt && '設定ができました。「指示文を作成」ボタンを押してください'}
+            {activeSection === 'configure' && hasPrompt && '指示文ができました。「AIに送る」タブへ進みましょう'}
+            {activeSection === 'execute' && !hasOutput && '指示文をコピーして外部AIに送り、結果を貼り付けてください'}
+            {activeSection === 'execute' && hasOutput && '結果が入力されました。「確認・保存」タブへ進みましょう'}
+            {activeSection === 'evaluate' && '出来栄えを確認して、評価を記録しましょう'}
+          </p>
+        </div>
+      </div>
+
       {/* ════════════════════════════════════════════════════════
          ⚙️ テンプレート選択
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'configure' && (
         <div className="space-y-6">
-
-          {/* ── はじめにガイド ── */}
-          {!templateId && (
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#007aff]/[0.04] to-[#5856d6]/[0.04] backdrop-blur-xl border border-[#007aff]/10 shadow-lg shadow-black/[0.03]">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#007aff] via-[#5856d6] to-[#007aff] opacity-60" />
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white shadow-lg shadow-[#007aff]/20">
-                    <span className="text-lg">💡</span>
-                  </div>
-                  <div>
-                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">使い方ガイド</h3>
-                    <p className="text-[11px] text-[#86868b]">3ステップで問題の品質を改善できます</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {[
-                    { step: '1', icon: '⚙️', title: 'テンプレートを選ぶ', desc: '科目や分野のテンプレートを選んで、AIへの指示文を作成します', color: '#007aff' },
-                    { step: '2', icon: '▶️', title: 'AIに送る', desc: '指示文をコピーしてChatGPT等に貼り付け、結果をここに戻します', color: '#ff9500' },
-                    { step: '3', icon: '✅', title: '確認・保存', desc: '出来栄えを確認・記録すると、次回の指示に自動反映されます', color: '#34c759' },
-                  ].map((s) => (
-                    <div key={s.step} className="relative p-4 rounded-2xl bg-white/60 border border-black/[0.04]">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="flex items-center justify-center w-7 h-7 rounded-lg text-xs font-black text-white" style={{ background: s.color }}>
-                          {s.step}
-                        </div>
-                        <span className="text-sm font-bold text-[#1d1d1f]">{s.title}</span>
-                      </div>
-                      <p className="text-[11px] text-[#86868b] leading-relaxed">{s.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ── 条件設定（テンプレート＋問数） ── */}
           <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">

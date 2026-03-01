@@ -256,7 +256,7 @@ export default function SearchPage() {
         title="問題検索"
         description="保存された問題を検索・閲覧。科目・分野・難易度での絞り込みや類題生成も可能です。"
         icon={<Icons.Search />}
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Search' }]}
+        breadcrumbs={[{ label: 'ホーム', href: '/' }, { label: '検索' }]}
       />
 
       <StatusBar message={status} />

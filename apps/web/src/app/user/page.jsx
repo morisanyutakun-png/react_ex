@@ -403,7 +403,7 @@ export default function UserModePage() {
     setPdfUrl('');
     setStep(4);
 
-    setStatus('Step 1/3: AIへの指示文を作成中...');
+    setStatus('ステップ 1/3: AIへの指示文を作成中...');
     let generatedPrompt = '';
     try {
       const data = await renderTemplate({
@@ -431,13 +431,13 @@ export default function UserModePage() {
       // RAGフィードバックをステータスに反映
       const ctx = data.context;
       if (ctx?.rag_status === 'ok' && ctx?.rag_retrieved > 0) {
-        setStatus(`Step 1/3 完了: 過去問 ${ctx.rag_retrieved}件を参照`);
+        setStatus(`ステップ 1/3 完了: 過去問 ${ctx.rag_retrieved}件を参照`);
       } else if (ctx?.rag_status === 'no_data') {
-        setStatus('Step 1/3 完了: AIのみで生成（過去問登録で精度UP）');
+        setStatus('ステップ 1/3 完了: AIのみで生成（過去問登録で精度UP）');
       } else if (ctx?.rag_status === 'fallback') {
-        setStatus(`Step 1/3 完了: 過去問 ${ctx?.rag_retrieved || ctx?.chunk_count || 0}件を参照`);
+        setStatus(`ステップ 1/3 完了: 過去問 ${ctx?.rag_retrieved || ctx?.chunk_count || 0}件を参照`);
       } else {
-        setStatus('Step 1/3 完了');
+        setStatus('ステップ 1/3 完了');
       }
     } catch (e) {
       setStatus(`指示文の作成に失敗しました: ${e.message}`);
@@ -451,7 +451,7 @@ export default function UserModePage() {
       return;
     }
 
-    setStatus('Step 2/3: AI が問題を生成中...');
+    setStatus('ステップ 2/3: AI が問題を生成中...');
     try {
       const data = await generateWithLlm({
         prompt: generatedPrompt,
@@ -624,9 +624,32 @@ export default function UserModePage() {
 
       <StatusBar message={status} />
 
+      {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
+      {step <= 3 && (
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#007aff]/[0.05] via-[#5856d6]/[0.04] to-[#af52de]/[0.05] border border-[#007aff]/[0.08] mb-1">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white text-xs font-black flex-shrink-0 shadow-sm shadow-[#007aff]/20">
+              {step}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-[#1d1d1f] leading-snug">
+                {step === 1 && (templateId ? '出題パターンを選びました — 次のステップへ進めます' : 'まず、作りたい問題のパターンを選んでください')}
+                {step === 2 && '問題数や参照数はそのままでもOK。お好みで調整してください'}
+                {step === 3 && (mode === 'auto' ? 'PDFの見た目を選んだら「PDF を生成」で完成！' : 'レイアウトを選んだら「指示文を作成」で次へ')}
+              </p>
+              <p className="text-[11px] text-[#86868b] mt-0.5">
+                ステップ {step} / {STEPS.length}
+                {step === 1 && !templateId && ' — 下のカードをタップするだけ'}
+                {step === 1 && templateId && ' — 右下の「次のステップへ」をタップ'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══════ Step 1: 出題パターン選択 ═══════ */}
       {step === 1 && (
-        <SectionCard title="Step 1: 出題パターンを選ぶ" icon={<Icons.File />} className="wizard-section-enter">
+        <SectionCard title="出題パターンを選ぶ" icon={<Icons.File />} className="wizard-section-enter">
           <p className="text-xs text-[#86868b] mb-4">
             どんな問題を作りたいですか？科目・分野・レベルが設定済みのパターンから選ぶだけでOKです。
           </p>
@@ -2105,38 +2128,6 @@ export default function UserModePage() {
         </div>
       </div>
 
-      {/* ヘルプ */}
-      {step === 1 && (
-        <div className="mt-8 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#007aff] via-[#5e5ce6] to-[#af52de] opacity-40" />
-          <div className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#007aff]/10">
-                <svg className="w-4 h-4 text-[#007aff]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                </svg>
-              </div>
-              <h3 className="text-[13px] font-bold text-[#1d1d1f]">使い方ガイド</h3>
-            </div>
-            <ol className="text-[12px] text-[#6e6e73] space-y-2.5 ml-1">
-              {[
-                '出題パターンを選ぶ（科目・分野・レベルが設定済み）',
-                '問題数や参考にする過去問を設定',
-                'PDF の見た目（試験・プリント・模試など）を選ぶ',
-                '「AI 自動生成」ならボタン1つで PDF 完成',
-                '「手動」なら指示文をコピーしてお好きな AI へ',
-              ].map((text, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-b from-[#fc3c44] to-[#e0323a] text-white text-[9px] font-bold flex-shrink-0 mt-0.5 shadow-sm shadow-[#fc3c44]/15">
-                    {i + 1}
-                  </span>
-                  <span className="leading-relaxed">{text}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      )}
-    </div>
+</div>
   );
 }
