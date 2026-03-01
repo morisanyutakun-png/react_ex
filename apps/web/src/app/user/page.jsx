@@ -902,12 +902,7 @@ export default function UserModePage() {
 
       {/* ═══════ Step 2: 設定 ═══════ */}
       {step === 2 && (
-        <SectionCard title="Step 2: こまかい設定" icon={<Icons.Prompt />} className="wizard-section-enter">
-          <p className="text-xs text-[#86868b] mb-5">
-            問題の数や、参考にする過去問を設定できます。そのまま進んでもOKです。
-          </p>
-
-          <div className="space-y-4">
+        <div className="space-y-5 wizard-section-enter">
             {/* 選択中テンプレート表示（科目・分野・難易度もここに表示） */}
             {selectedTemplate && (
               <div className="relative overflow-hidden rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-sm shadow-sm">
@@ -947,10 +942,27 @@ export default function UserModePage() {
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
-              <NumberField label="参照する過去問の数" value={topK} onChange={setTopK} min={1} max={20} />
+          {/* ── 問題数・参照設定カード ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#007aff] via-[#5ac8fa] to-[#007aff] opacity-70" />
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white shadow-lg shadow-[#007aff]/20">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5l-3.9 19.5m-2.1-19.5l-3.9 19.5" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">問題数・参照設定</h3>
+                  <p className="text-[11px] text-[#86868b]">何問つくるか、過去問を何件参考にするか</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
+                <NumberField label="参照する過去問の数" value={topK} onChange={setTopK} min={1} max={20} />
+              </div>
             </div>
+          </div>
 
             {/* 過去問参照の仕組み説明（折りたたみ） */}
             <details className="tip-card">
@@ -974,22 +986,22 @@ export default function UserModePage() {
               </div>
             </details>
 
-            {/* ── ベース過去問選択（DB自動取得 + 検索） ── */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-[#ff9500]/10">
-                  <svg className="w-3.5 h-3.5 text-[#ff9500]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          {/* ── 参考問題カード ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#ff9500] via-[#ffcc00] to-[#ff9500] opacity-70" />
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ff9500] to-[#ff6723] text-white shadow-lg shadow-[#ff9500]/20">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                   </svg>
                 </div>
-                <label className="text-[13px] font-bold text-[#1d1d1f] tracking-tight">
-                  参考問題を選択
-                </label>
-                <span className="text-[10px] text-[#aeaeb2] font-medium">（任意）</span>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">参考問題を選択</h3>
+                  <p className="text-[11px] text-[#86868b]">選択中のパターンに合致する過去問が表示されます</p>
+                </div>
+                <span className="ml-auto px-2.5 py-1 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[10px] font-bold border border-[#ff9500]/[0.12]">任意</span>
               </div>
-              <p className="text-[11px] text-[#86868b] mb-3 ml-8 leading-relaxed">
-                選択中の出題パターンに合致する過去問が表示されます
-              </p>
 
               {/* 選択済み問題の表示 */}
               {selectedBaseProblem ? (
@@ -1149,18 +1161,22 @@ export default function UserModePage() {
                 </div>
               )}
             </div>
+          </div>
 
-            {/* モード選択 */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-[#007aff]/10">
-                  <svg className="w-3.5 h-3.5 text-[#007aff]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          {/* ── 生成方法カード ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#5856d6] via-[#af52de] to-[#5856d6] opacity-70" />
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#5856d6] to-[#af52de] text-white shadow-lg shadow-[#5856d6]/20">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                   </svg>
                 </div>
-                <label className="text-[13px] font-bold text-[#1d1d1f] tracking-tight">
-                  生成方法
-                </label>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">生成方法</h3>
+                  <p className="text-[11px] text-[#86868b]">自動生成 or 手動でプロンプトを使う</p>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
@@ -1223,23 +1239,24 @@ export default function UserModePage() {
                 </button>
               </div>
             </div>
+          </div>
 
-            {/* ── カスタム要望（全科目共通） ── */}
-            <div className="mt-5 pt-5 border-t border-black/[0.06]">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-[#34c759]/10">
-                  <svg className="w-3.5 h-3.5 text-[#34c759]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          {/* ── カスタム要望カード ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#34c759] via-[#30d158] to-[#34c759] opacity-70" />
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#34c759] to-[#30d158] text-white shadow-lg shadow-[#34c759]/20">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
                   </svg>
                 </div>
-                <label className="text-[13px] font-bold text-[#1d1d1f] tracking-tight">
-                  問題へのカスタム要望
-                </label>
-                <span className="text-[10px] text-[#aeaeb2] font-medium">（任意）</span>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">カスタム要望</h3>
+                  <p className="text-[11px] text-[#86868b]">問題の内容・形式についての要望を自由に記入</p>
+                </div>
+                <span className="ml-auto px-2.5 py-1 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold border border-[#34c759]/[0.12]">任意</span>
               </div>
-              <p className="text-[11px] text-[#86868b] mb-3 ml-8 leading-relaxed">
-                問題の内容・形式についての要望を自由に記入できます
-              </p>
               <div className="relative">
                 <textarea
                   value={customRequest}
@@ -1292,12 +1309,12 @@ export default function UserModePage() {
               )}
             </div>
           </div>
-        </SectionCard>
+        </div>
       )}
 
       {/* ═══════ Step 3: PDF形式選択 ═══════ */}
       {step === 3 && (
-        <SectionCard title="Step 3: レイアウト・図表を選ぶ" icon={<Icons.Pdf />} className="wizard-section-enter">
+        <div className="space-y-5 wizard-section-enter">
           {/* 選択中テンプレート情報 */}
           {selectedTemplate && (
             <div className="mb-5 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-sm shadow-sm">
@@ -1343,15 +1360,26 @@ export default function UserModePage() {
             </div>
           )}
 
-          <p className="text-[11px] text-[#86868b] mb-5">
-            完成する PDF の見た目を選んでください。
-            {mode === 'auto'
-              ? ' 選んだら「PDF を生成」ボタンを押すだけで完成します。'
-              : ' 選んだら「プロンプトを生成」ボタンでプロンプトが作られます。'}
-          </p>
+          {/* ── PDF形式カード ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44] opacity-70" />
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#fc3c44] to-[#e0323a] text-white shadow-lg shadow-[#fc3c44]/20">
+                  <Icons.Pdf className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">PDF の見た目を選ぶ</h3>
+                  <p className="text-[11px] text-[#86868b]">
+                    {mode === 'auto'
+                      ? '選んだら「PDF を生成」ボタンを押すだけで完成します'
+                      : '選んだら「プロンプトを生成」ボタンでプロンプトが作られます'}
+                  </p>
+                </div>
+              </div>
 
           {latexPresets.length === 0 ? (
-            <div className="text-center py-8 text-[#1d1d1f]0">
+            <div className="text-center py-8 text-[#86868b]">
               <Icons.Empty className="mx-auto mb-2" />
               <p className="text-sm">形式を読み込み中...</p>
             </div>
@@ -1407,12 +1435,13 @@ export default function UserModePage() {
             </div>
           )}
 
-          {/* ── 問題形式選択（必須・目立つUI） ── */}
-          <div className="mt-6 relative">
-            {/* 注意バナー */}
-            <div className="relative overflow-hidden rounded-2xl border-2 border-[#af52de]/20 bg-white shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#af52de] via-[#da70d6] to-[#af52de]" />
-              <div className="p-4 pb-3">
+            </div>
+          </div>
+
+          {/* ── 問題形式カード ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#af52de] via-[#da70d6] to-[#af52de] opacity-70" />
+            <div className="p-5">
                 <div className="flex items-center gap-2.5 mb-1">
                   <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-[#af52de] to-[#8944ab] shadow-lg shadow-[#af52de]/20">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1428,7 +1457,6 @@ export default function UserModePage() {
                     </div>
                   </div>
                 </div>
-              </div>
 
               {/* 形式カード一覧 */}
               <div className="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1511,22 +1539,22 @@ export default function UserModePage() {
             </div>
           </div>
 
-          {/* ── 図表パッケージ選択 ── */}
-          <div className="mt-6 border-t border-black/[0.06] pt-5">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-[#5e5ce6]/10">
-                <svg className="w-3.5 h-3.5 text-[#5e5ce6]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
-                </svg>
+          {/* ── 図表パッケージカード ── */}
+          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#5e5ce6] via-[#8e8ce6] to-[#5e5ce6] opacity-70" />
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#5e5ce6] to-[#3634a3] text-white shadow-lg shadow-[#5e5ce6]/20">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">図表・イラスト</h3>
+                  <p className="text-[11px] text-[#86868b]">図・グラフ・コードが必要な場合に選択。不要なら選ばなくてOK</p>
+                </div>
+                <span className="ml-auto px-2.5 py-1 bg-[#5e5ce6]/[0.08] text-[#5e5ce6] rounded-full text-[10px] font-bold border border-[#5e5ce6]/[0.12]">任意</span>
               </div>
-              <label className="text-[13px] font-bold text-[#1d1d1f] tracking-tight">
-                LaTeX 図表パッケージ
-              </label>
-              <span className="text-[10px] text-[#aeaeb2] font-medium">（任意）</span>
-            </div>
-            <p className="text-[11px] text-[#86868b] mb-3 ml-8">
-              図・グラフ・コードが必要な場合に選択。不要なら選ばなくてOK
-            </p>
 
             {/* どれを選ぶ？ガイダンス */}
             <details className="tip-card mb-3 group">
@@ -1690,30 +1718,42 @@ export default function UserModePage() {
                 })}
               </div>
             )}
+            </div>
           </div>
-        </SectionCard>
+        </div>
       )}
 
       {/* ═══════ Step 4: 生成中 ═══════ */}
       {step === 4 && generating && (
-        <SectionCard className="wizard-section-enter">
-          <div className="flex flex-col items-center justify-center py-16">
-            <svg className="animate-spin h-10 w-10 text-[#fc3c44] mb-4" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            <p className="text-sm font-semibold text-[#fc3c44]">{status}</p>
-            <p className="text-xs text-[#1d1d1f]0 mt-2">しばらくお待ちください...</p>
+        <div className="wizard-section-enter">
+          <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] overflow-hidden">
+            {/* アクセントライン */}
+            <div className="h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6723] to-[#ff9500]" />
+            <div className="flex flex-col items-center justify-center py-20 px-6">
+              {/* パルスリング */}
+              <div className="relative mb-6">
+                <div className="absolute inset-0 w-16 h-16 rounded-full bg-[#fc3c44]/10 animate-ping" />
+                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[#fc3c44] to-[#ff6723] flex items-center justify-center shadow-lg shadow-[#fc3c44]/20">
+                  <svg className="animate-spin h-7 w-7 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-base font-bold text-[#1d1d1f] mb-1">問題を生成しています</p>
+              <p className="text-sm text-[#fc3c44] font-medium">{status}</p>
+              <p className="text-xs text-[#86868b] mt-3">しばらくお待ちください...</p>
+            </div>
           </div>
-        </SectionCard>
+        </div>
       )}
 
       {/* ═══════ Step 5: 結果表示 ═══════ */}
       {step === 5 && (
-        <div className="space-y-4">
+        <div className="space-y-5 wizard-section-enter">
           {/* RAG フィードバックカード */}
           {renderContext && (
-            <div className={`px-4 py-3 rounded-xl border text-xs ${
+            <div className={`rounded-2xl backdrop-blur-xl border text-xs px-5 py-4 shadow-sm ${
               renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0
                 ? 'bg-[#34c759]/[0.08] border-[#34c759]/20'
                 : renderContext.rag_status === 'no_data'
@@ -1765,13 +1805,13 @@ export default function UserModePage() {
                       {renderContext.chunk_count}件を参照して生成
                     </span>
                   ) : (
-                    <span className="text-[#1d1d1f]0">過去問未参照 — AIのみで生成</span>
+                    <span className="text-[#86868b]">過去問未参照 — AIのみで生成</span>
                   )}
                 </div>
 
                 {/* 検索方式バッジ */}
                 {renderContext.rag_method && (
-                  <span className="px-1.5 py-0.5 rounded bg-white text-[#1d1d1f]0 text-[9px] font-bold uppercase">
+                  <span className="px-1.5 py-0.5 rounded bg-white text-[#86868b] text-[9px] font-bold uppercase">
                     {renderContext.rag_method === 'hybrid' ? '統合検索' : renderContext.rag_method === 'semantic' ? 'AI検索' : renderContext.rag_method}
                   </span>
                 )}
@@ -1791,7 +1831,20 @@ export default function UserModePage() {
 
           {/* AI自動生成の結果 */}
           {mode === 'auto' && generatedLatex && (
-            <SectionCard title="生成結果" icon={<Icons.Success />}>
+            <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] overflow-hidden">
+              {/* アクセントライン */}
+              <div className="h-[3px] bg-gradient-to-r from-[#34c759] to-[#30d158]" />
+              <div className="p-5">
+                {/* ヘッダー */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#34c759] to-[#30d158] flex items-center justify-center shadow-md shadow-[#34c759]/20">
+                    <Icons.Success className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">生成結果</h3>
+                    <p className="text-[11px] text-[#86868b]">AIが生成した問題のプレビュー</p>
+                  </div>
+                </div>
               <div className="space-y-4">
                 {pdfUrl && (
                   <a
@@ -1851,12 +1904,26 @@ export default function UserModePage() {
                   </details>
                 )}
               </div>
-            </SectionCard>
+              </div>
+            </div>
           )}
 
           {/* 手動モードの結果 */}
           {mode === 'manual' && prompt && (
-            <SectionCard title="生成されたプロンプト" icon={<Icons.Prompt />}>
+            <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] overflow-hidden">
+              {/* アクセントライン */}
+              <div className="h-[3px] bg-gradient-to-r from-[#5856d6] to-[#af52de]" />
+              <div className="p-5">
+                {/* ヘッダー */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5856d6] to-[#af52de] flex items-center justify-center shadow-md shadow-[#5856d6]/20">
+                    <Icons.Prompt className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">生成されたプロンプト</h3>
+                    <p className="text-[11px] text-[#86868b]">ChatGPT等に送信してください</p>
+                  </div>
+                </div>
               <div className="space-y-4">
                 <TextArea value={prompt} onChange={setPrompt} rows={12} />
                 <div className="flex items-center justify-between gap-3">
@@ -1910,7 +1977,8 @@ export default function UserModePage() {
                   )}
                 </div>
               </div>
-            </SectionCard>
+              </div>
+            </div>
           )}
         </div>
       )}
