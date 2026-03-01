@@ -446,7 +446,49 @@ html {
   animation: wizard-section-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* (Removed: cta-breathe, step-indicator-glow, select-bounce, next-highlight, nav-glow-in, card-select-ripple) */
+/* (Restored: Apple-style micro-interactions) */
+
+/* ── CTA Breathe — subtle pulse to draw attention ── */
+@keyframes cta-breathe-pulse {
+  0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.10), 0 2px 8px rgba(0,113,227,0.20); }
+  50%      { box-shadow: 0 2px 4px rgba(0,0,0,0.10), 0 4px 18px rgba(0,113,227,0.32); }
+}
+.cta-breathe {
+  background: linear-gradient(180deg, #0077ed 0%, #0071e3 100%);
+  color: white;
+  font-weight: 700;
+  animation: cta-breathe-pulse 2.4s cubic-bezier(0.4,0,0.2,1) infinite;
+  transition: all 0.25s cubic-bezier(0.25,0.1,0.25,1);
+}
+.cta-breathe:hover {
+  animation: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.10), 0 6px 20px rgba(0,113,227,0.35);
+  transform: translateY(-1px);
+}
+.cta-breathe:active {
+  animation: none;
+  transform: scale(0.97) translateY(0);
+}
+
+/* ── Select Bounce — card selection feedback ── */
+@keyframes select-bounce-kf {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.015); }
+  100% { transform: scale(1); }
+}
+.select-bounce {
+  animation: select-bounce-kf 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* ── Nav Glow — fade-in for navigation area ── */
+@keyframes nav-glow-kf {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.nav-glow-in {
+  animation: nav-glow-kf 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  animation-delay: 0.15s;
+}
 
 /* ── Apple Surface Utilities ── */
 

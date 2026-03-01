@@ -123,20 +123,20 @@ function colLabel(name) {
 
 // テーブル名日本語マッピング（メタ情報付き）
 const TABLE_META = {
-  problems:        { label: '問題データ',  desc: '過去問・オリジナル問題の一覧',           icon: '📝', color: '#fc3c44' },
-  templates:       { label: '出題パターン', desc: '教科・分野・難易度の組み合わせ',   icon: '🗂️', color: '#bf5af2' },
-  generations:     { label: '生成履歴',      desc: 'AIが作った問題の履歴',               icon: '✨',  color: '#ff9f0a' },
-  generation_runs: { label: '生成バッチ',    desc: 'まとめて生成した記録',               icon: '📦', color: '#30d158' },
-  annotations:     { label: '評価データ',    desc: '生成結果の品質評価記録',           icon: '⭐',  color: '#5856d6' },
-  generation_evals:{ label: '生成評価',      desc: '生成の自動評価スコア',             icon: '📊', color: '#007aff' },
-  users:           { label: 'ユーザー',      desc: 'ユーザーアカウント情報',             icon: '👤', color: '#64d2ff' },
+  problems:        { label: '問題データ',  desc: '過去問・オリジナル問題の一覧',           icon: 'P', color: '#0071e3' },
+  templates:       { label: '出題パターン', desc: '教科・分野・難易度の組み合わせ',   icon: 'T', color: '#bf5af2' },
+  generations:     { label: '生成履歴',      desc: 'AIが作った問題の履歴',               icon: 'G',  color: '#ff9f0a' },
+  generation_runs: { label: '生成バッチ',    desc: 'まとめて生成した記録',               icon: 'R', color: '#30d158' },
+  annotations:     { label: '評価データ',    desc: '生成結果の品質評価記録',           icon: 'A',  color: '#5856d6' },
+  generation_evals:{ label: '生成評価',      desc: '生成の自動評価スコア',             icon: 'E', color: '#007aff' },
+  users:           { label: 'ユーザー',      desc: 'ユーザーアカウント情報',             icon: 'U', color: '#64d2ff' },
 };
 
 function tableLabel(name) {
   return TABLE_META[name]?.label || name;
 }
 function tableMeta(name) {
-  return TABLE_META[name] || { label: name, desc: '', icon: '🗃️', color: '#86868b' };
+  return TABLE_META[name] || { label: name, desc: '', icon: '—', color: '#86868b' };
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -632,7 +632,7 @@ export default function DbEditorPage() {
                           <div className="flex gap-1 justify-center">
                             <button
                               onClick={() => setDetailRow(row)}
-                              className="text-[#d2d2d7] hover:text-[#fc3c44] transition-colors p-1"
+                              className="text-[#d2d2d7] hover:text-[#0071e3] transition-colors p-1"
                               title="詳細"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -870,7 +870,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
         <h3 className="text-sm font-bold text-[#1d1d1f]">表示カラムを選択</h3>
         <div className="flex gap-2">
           <button onClick={() => setVisibleCols(DEFAULT_VISIBLE_COLS)}
-            className="text-xs text-[#fc3c44] hover:text-[#fc3c44] font-semibold">デフォルト</button>
+            className="text-xs text-[#0071e3] hover:text-[#0071e3] font-semibold">デフォルト</button>
           <button onClick={() => setVisibleCols(colNames)}
             className="text-xs text-[#d2d2d7] hover:text-[#86868b] font-semibold">全選択</button>
           <button onClick={onClose}
@@ -883,7 +883,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
         {Object.entries(COLUMN_GROUPS).map(([key, group]) => (
           <button key={key} onClick={() => selectGroup(key)}
             className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-black/[0.04] text-[#86868b]
-                       hover:bg-[#fc3c44]/[0.08] hover:text-[#fc3c44] transition-colors border border-black/[0.06]">
+                       hover:bg-[#0071e3]/[0.08] hover:text-[#0071e3] transition-colors border border-black/[0.06]">
             {group.label}
           </button>
         ))}
@@ -892,9 +892,9 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-1.5">
         {allCols.map((col) => (
           <label key={col.name} className={`flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer text-[11px]
-            transition-colors ${visibleCols.includes(col.name) ? 'bg-[#fc3c44]/[0.08] text-[#fc3c44]' : 'text-[#c7c7cc] hover:bg-black/[0.03]'}`}>
+            transition-colors ${visibleCols.includes(col.name) ? 'bg-[#0071e3]/[0.08] text-[#0071e3]' : 'text-[#c7c7cc] hover:bg-black/[0.03]'}`}>
             <input type="checkbox" checked={visibleCols.includes(col.name)}
-              onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-[#fc3c44]" />
+              onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-[#0071e3]" />
             <span className="truncate">{colLabel(col.name)}</span>
           </label>
         ))}
@@ -954,12 +954,12 @@ function RowDetailModal({ row, schema, pk, onClose }) {
 function DifficultyEstimatePanel({ result, estimating, onApply }) {
   if (estimating) {
     return (
-      <div className="bg-[#fc3c44]/[0.08] border border-black/[0.06] rounded-lg p-4 flex items-center gap-3">
-        <svg className="w-5 h-5 animate-spin text-[#fc3c44]" fill="none" viewBox="0 0 24 24">
+      <div className="bg-[#0071e3]/[0.08] border border-black/[0.06] rounded-lg p-4 flex items-center gap-3">
+        <svg className="w-5 h-5 animate-spin text-[#0071e3]" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <span className="text-sm font-semibold text-[#fc3c44]">難易度を推定中...</span>
+        <span className="text-sm font-semibold text-[#0071e3]">難易度を推定中...</span>
       </div>
     );
   }
@@ -1042,7 +1042,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
   );
 
   const baseInputClass = `w-full px-3 py-2 text-sm border border-black/[0.06] rounded-lg bg-white
-    text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 outline-none placeholder:text-[#c7c7cc]`;
+    text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#0071e3]/50 focus:ring-2 focus:ring-[#0071e3]/20 outline-none placeholder:text-[#c7c7cc]`;
 
   const handleStemBlur = () => {
     if (data.stem?.trim()) {

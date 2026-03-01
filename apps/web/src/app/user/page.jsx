@@ -64,18 +64,18 @@ C ──k──► D`,
 
 /* ── 各PDF形式のビジュアルサムネイルコンポーネント ── */
 const PresetThumbnail = ({ id, active }) => {
-  const base = active ? 'text-[#fc3c44]' : 'text-[#86868b]';
-  const bg = active ? 'bg-[#fc3c44]/[0.08]' : 'bg-black/[0.04]';
+  const base = active ? 'text-[#0071e3]' : 'text-[#86868b]';
+  const bg = active ? 'bg-[#0071e3]/[0.08]' : 'bg-black/[0.04]';
   const accent = active ? 'bg-red-200' : 'bg-[#c7c7cc]';
   const accentStrong = active ? 'bg-red-400' : 'bg-[#aeaeb2]';
-  const borderC = active ? 'border-[#fc3c44]/20' : 'border-[#e5e5ea]';
+  const borderC = active ? 'border-[#0071e3]/20' : 'border-[#e5e5ea]';
 
   const thumbnails = {
     exam: (
       <div className={`${bg} rounded-lg p-3 h-28 flex flex-col gap-1.5 border ${borderC}`}>
         <div className="flex items-center justify-between">
           <div className={`h-2.5 w-16 rounded ${accentStrong}`} />
-          <div className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${active ? 'bg-[#fc3c44]/[0.12] text-[#fc3c44]' : 'bg-[#e5e5ea] text-[#86868b]'}`}>100点</div>
+          <div className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${active ? 'bg-[#0071e3]/[0.12] text-[#0071e3]' : 'bg-[#e5e5ea] text-[#86868b]'}`}>100点</div>
         </div>
         <div className={`h-1 w-full rounded ${accent} opacity-40`} />
         <div className="flex-1 flex flex-col justify-between">
@@ -127,8 +127,8 @@ const PresetThumbnail = ({ id, active }) => {
     flashcard: (
       <div className={`${bg} rounded-lg p-3 h-28 flex flex-col border ${borderC}`}>
         <div className="grid grid-cols-2 gap-0 flex-1 rounded overflow-hidden border" style={{ borderColor: active ? '#fca5a5' : '#c7c7cc' }}>
-          <div className={`text-[7px] font-bold text-center py-1 ${active ? 'bg-[#fc3c44]/[0.12] text-[#fc3c44]' : 'bg-[#e5e5ea] text-[#86868b]'} border-r ${borderC}`}>問題</div>
-          <div className={`text-[7px] font-bold text-center py-1 ${active ? 'bg-[#fc3c44]/[0.12] text-[#fc3c44]' : 'bg-[#e5e5ea] text-[#86868b]'}`}>解答</div>
+          <div className={`text-[7px] font-bold text-center py-1 ${active ? 'bg-[#0071e3]/[0.12] text-[#0071e3]' : 'bg-[#e5e5ea] text-[#86868b]'} border-r ${borderC}`}>問題</div>
+          <div className={`text-[7px] font-bold text-center py-1 ${active ? 'bg-[#0071e3]/[0.12] text-[#0071e3]' : 'bg-[#e5e5ea] text-[#86868b]'}`}>解答</div>
           {[1, 2, 3].map(n => (
             <React.Fragment key={n}>
               <div className={`px-2 py-1.5 border-t border-r ${borderC} flex items-center`}>
@@ -146,9 +146,9 @@ const PresetThumbnail = ({ id, active }) => {
       <div className={`${bg} rounded-lg p-3 h-28 flex flex-col gap-1 border ${borderC}`}>
         <div className="flex items-center justify-between">
           <div className={`text-[8px] font-bold ${base}`}>模擬試験</div>
-          <div className={`text-[7px] px-1.5 py-0.5 rounded ${active ? 'bg-[#fc3c44]/[0.12] text-[#fc3c44]' : 'bg-[#e5e5ea] text-[#86868b]'} font-bold`}>60分</div>
+          <div className={`text-[7px] px-1.5 py-0.5 rounded ${active ? 'bg-[#0071e3]/[0.12] text-[#0071e3]' : 'bg-[#e5e5ea] text-[#86868b]'} font-bold`}>60分</div>
         </div>
-        <div className={`p-1.5 rounded ${active ? 'bg-[#fc3c44]/[0.12]/50' : 'bg-[#e5e5ea]/50'} text-[6px] ${base}`}>
+        <div className={`p-1.5 rounded ${active ? 'bg-[#0071e3]/[0.12]/50' : 'bg-[#e5e5ea]/50'} text-[6px] ${base}`}>
           【注意事項】解答用紙に記入
         </div>
         <div className="flex-1 space-y-1.5">
@@ -171,7 +171,7 @@ const PresetThumbnail = ({ id, active }) => {
         <div className="flex-1 space-y-1.5">
           {['問題', '解法', 'ポイント'].map((label, i) => (
             <div key={label} className="space-y-0.5">
-              <div className={`text-[6px] font-bold px-1 py-0.5 rounded ${active ? 'bg-[#fc3c44]/[0.12] text-[#fc3c44]' : 'bg-[#e5e5ea] text-[#86868b]'} inline-block`}>
+              <div className={`text-[6px] font-bold px-1 py-0.5 rounded ${active ? 'bg-[#0071e3]/[0.12] text-[#0071e3]' : 'bg-[#e5e5ea] text-[#86868b]'} inline-block`}>
                 {label}
               </div>
               <div className={`h-1 rounded ${accent} ${i === 1 ? 'w-full' : 'w-3/4'}`} />
@@ -626,9 +626,10 @@ export default function UserModePage() {
 
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
       {step <= 3 && (
-        <div className="relative overflow-hidden rounded-2xl bg-black/[0.02] border border-black/[0.06] mb-1">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="icon-premium w-8 h-8 text-white text-xs font-black flex-shrink-0">
+        <div className="relative overflow-hidden rounded-2xl surface-glass mb-4">
+          <div className="flex items-center gap-3 px-4 py-3.5">
+            <div className="flex items-center justify-center w-8 h-8 rounded-xl text-white text-xs font-black flex-shrink-0 shadow-sm"
+              style={{ background: 'linear-gradient(145deg, #0077ed 0%, #0071e3 100%)' }}>
               {step}
             </div>
             <div className="flex-1 min-w-0">
@@ -680,16 +681,16 @@ export default function UserModePage() {
                   const subjectColors = {
                     '数学': { bg: 'from-[#007aff] to-[#5856d6]', light: '#007aff', icon: '∑' },
                     '物理': { bg: 'from-[#ff9500] to-[#ff6723]', light: '#ff9500', icon: '⚛' },
-                    '化学': { bg: 'from-[#34c759] to-[#30d158]', light: '#34c759', icon: '🧪' },
-                    '英語': { bg: 'from-[#af52de] to-[#bf5af2]', light: '#af52de', icon: '🌐' },
-                    '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', light: '#00c7be', icon: '🧬' },
-                    '情報': { bg: 'from-[#5856d6] to-[#007aff]', light: '#5856d6', icon: '💻' },
-                    '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', light: '#ff2d55', icon: '📖' },
-                    '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', light: '#ff9500', icon: '🌍' },
-                    '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', light: '#64d2ff', icon: '🌏' },
-                    '理科': { bg: 'from-[#30d158] to-[#00c7be]', light: '#30d158', icon: '🔬' },
+                    '化学': { bg: 'from-[#34c759] to-[#30d158]', light: '#34c759', icon: 'Ch' },
+                    '英語': { bg: 'from-[#af52de] to-[#bf5af2]', light: '#af52de', icon: 'En' },
+                    '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', light: '#00c7be', icon: 'Bi' },
+                    '情報': { bg: 'from-[#5856d6] to-[#007aff]', light: '#5856d6', icon: 'CS' },
+                    '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', light: '#ff2d55', icon: '国' },
+                    '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', light: '#ff9500', icon: '社' },
+                    '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', light: '#64d2ff', icon: '地' },
+                    '理科': { bg: 'from-[#30d158] to-[#00c7be]', light: '#30d158', icon: 'Sc' },
                   };
-                  const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', light: '#8e8e93', icon: '📝' };
+                  const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', light: '#8e8e93', icon: '—' };
 
                   // 難易度ドット数（6段階）
                   const diffLevels = { '基礎': 1, '標準': 2, '応用': 3, '発展': 4, '難関': 5, '最難関': 6 };
@@ -709,7 +710,7 @@ export default function UserModePage() {
                       onClick={() => onSelectTemplate(t.id)}
                       className={`group relative w-full text-left rounded-2xl overflow-hidden transition-all duration-300 active:scale-[0.98]
                         ${isActive
-                          ? 'bg-white shadow-lg shadow-black/[0.08] ring-2 ring-[#fc3c44]/30 select-bounce'
+                          ? 'bg-white shadow-lg shadow-black/[0.08] ring-2 ring-[#0071e3]/30 select-bounce'
                           : 'bg-white/60 shadow-sm shadow-black/[0.02] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
                         }`}
                     >
@@ -735,7 +736,7 @@ export default function UserModePage() {
                               {subj || t.name || t.id}
                             </span>
                             {isActive && (
-                              <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#1d1d1f] flex-shrink-0">
+                              <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#0071e3] flex-shrink-0 shadow-sm shadow-[#0071e3]/30">
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
@@ -824,7 +825,7 @@ export default function UserModePage() {
                     options={[
                       { value: '', label: '— 選択してください —' },
                       ...(subjects.length ? subjects : SUBJECTS).map((s) => ({ value: s, label: s })),
-                      { value: '__custom', label: '✏️ その他（入力）' },
+                      { value: '__custom', label: 'その他（入力）' },
                     ]}
                   />
                   <SelectField
@@ -870,7 +871,7 @@ export default function UserModePage() {
                             className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-300 ${
                               newTplField === f
                                 ? 'bg-[#1d1d1f] text-white border-transparent shadow-md'
-                                : 'bg-white/80 text-[#6e6e73] border-black/[0.06] hover:border-[#fc3c44]/30 hover:text-[#fc3c44] hover:shadow-sm'
+                                : 'bg-white/80 text-[#6e6e73] border-black/[0.06] hover:border-[#0071e3]/30 hover:text-[#0071e3] hover:shadow-sm'
                             }`}>
                             {f}
                           </button>
@@ -948,14 +949,14 @@ export default function UserModePage() {
               /* ── 新規作成ボタン ── */
               <button
                 onClick={() => setShowCreateTemplate(true)}
-                className="w-full p-4 rounded-xl border border-dashed border-black/[0.06] text-[#86868b]
-                           hover:border-[#fc3c44] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.08]
-                           transition-all flex items-center justify-center gap-2"
+                className="w-full p-4 rounded-2xl border border-black/[0.06] text-[#86868b]
+                           hover:border-[#0071e3]/30 hover:text-[#0071e3] hover:bg-[#0071e3]/[0.04]
+                           transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                <span className="text-sm font-bold">＋ 出題パターンを新しく作る</span>
+                <span className="text-sm font-bold">出題パターンを新しく作る</span>
               </button>
             )}
           </div>
@@ -975,16 +976,16 @@ export default function UserModePage() {
               const subjectColors = {
                 '数学': { bg: 'from-[#007aff] to-[#5856d6]', icon: '∑' },
                 '物理': { bg: 'from-[#ff9500] to-[#ff6723]', icon: '⚛' },
-                '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: '🧪' },
-                '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: '🌐' },
-                '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: '🧬' },
-                '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: '💻' },
-                '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', icon: '📖' },
-                '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', icon: '🌍' },
-                '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', icon: '🌏' },
-                '理科': { bg: 'from-[#30d158] to-[#00c7be]', icon: '🔬' },
+                '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: 'Ch' },
+                '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: 'En' },
+                '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: 'Bi' },
+                '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: 'CS' },
+                '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', icon: '国' },
+                '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', icon: '社' },
+                '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', icon: '地' },
+                '理科': { bg: 'from-[#30d158] to-[#00c7be]', icon: 'Sc' },
               };
-              const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', icon: '📝' };
+              const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', icon: '—' };
               const breadcrumb = [fld, thm].filter(Boolean).join(' › ');
               const diffLevels = { '基礎': 1, '標準': 2, '応用': 3, '発展': 4, '難関': 5, '最難関': 6 };
               const diffLevel = diffLevels[diff] || 0;
@@ -1001,7 +1002,7 @@ export default function UserModePage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-[15px] font-bold text-[#1d1d1f]">{subj || selectedTemplate.name}</span>
-                        <span className="px-1.5 py-0.5 bg-[#fc3c44]/[0.06] text-[#fc3c44] rounded-full text-[9px] font-bold">選択中</span>
+                        <span className="px-1.5 py-0.5 bg-[#0071e3]/[0.06] text-[#0071e3] rounded-full text-[9px] font-bold">選択中</span>
                       </div>
                       {breadcrumb && (
                         <p className="text-[12px] text-[#6e6e73] mt-0.5 truncate">
@@ -1050,7 +1051,7 @@ export default function UserModePage() {
             {/* 過去問参照の仕組み説明（折りたたみ） */}
             <details className="tip-card">
               <summary>
-                <span className="text-sm">💡</span>
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" /></svg>
                 <span>「過去問を参考にする」仕組みについて</span>
                 <svg className="w-3.5 h-3.5 ml-auto transition-transform duration-300 group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -1059,9 +1060,9 @@ export default function UserModePage() {
               <div className="px-4 pb-4 text-xs text-[#86868b] leading-relaxed space-y-1.5 animate-expand">
                 <p>登録されている過去問を参考にして、新しい問題を自動で作ります。</p>
                 <div className="bg-black/[0.04] rounded-xl p-2 border border-black/[0.06] space-y-1">
-                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">1.</span> <span>選んだ科目・分野をもとに関連する過去問を自動検索</span></div>
-                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">2.</span> <span>似ている問題を自動で見つけ出し、難易度も考慮</span></div>
-                  <div className="flex gap-2"><span className="text-[#fc3c44] font-bold">3.</span> <span>見つかった過去問を参考に、AIが類似の問題を新しく生成</span></div>
+                  <div className="flex gap-2"><span className="text-[#0071e3] font-bold">1.</span> <span>選んだ科目・分野をもとに関連する過去問を自動検索</span></div>
+                  <div className="flex gap-2"><span className="text-[#0071e3] font-bold">2.</span> <span>似ている問題を自動で見つけ出し、難易度も考慮</span></div>
+                  <div className="flex gap-2"><span className="text-[#0071e3] font-bold">3.</span> <span>見つかった過去問を参考に、AIが類似の問題を新しく生成</span></div>
                 </div>
                 <p className="text-[#86868b]">
                   下の「参考問題」を選ぶと、その問題に似た類題をより正確に生成できます。
@@ -1109,7 +1110,7 @@ export default function UserModePage() {
                         </div>
                         <div className="flex gap-1.5 mt-2 ml-[30px] flex-wrap">
                           {selectedBaseProblem.subject && (
-                            <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{selectedBaseProblem.subject}</span>
+                            <span className="px-2 py-0.5 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[9px] font-bold">{selectedBaseProblem.subject}</span>
                           )}
                           {(selectedBaseProblem.topic || selectedBaseProblem.metadata?.field) && (
                             <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{selectedBaseProblem.topic || selectedBaseProblem.metadata?.field}</span>
@@ -1139,7 +1140,7 @@ export default function UserModePage() {
                 {/* 科目・分野ラベル */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   {subject && (
-                    <span className="px-2.5 py-1 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">{subject}</span>
+                    <span className="px-2.5 py-1 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[10px] font-bold">{subject}</span>
                   )}
                   {field && (
                     <span className="px-2.5 py-1 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold">{field}</span>
@@ -1208,7 +1209,7 @@ export default function UserModePage() {
                             </div>
                             <div className="flex gap-1.5 mt-1.5 flex-wrap">
                               {item.subject && (
-                                <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{item.subject}</span>
+                                <span className="px-2 py-0.5 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[9px] font-bold">{item.subject}</span>
                               )}
                               {(item.topic || item.metadata?.field) && (
                                 <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
@@ -1402,7 +1403,7 @@ export default function UserModePage() {
               <div className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-black/[0.04]">
-                    <Icons.File className="w-4 h-4 text-[#fc3c44]" />
+                    <Icons.File className="w-4 h-4 text-[#0071e3]" />
                   </div>
                   <div className="flex-1">
                     <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider mb-0.5">選択中の出題パターン</div>
@@ -1411,7 +1412,7 @@ export default function UserModePage() {
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-3 ml-12">
                 {subject && (
-                  <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">
+                  <span className="px-2 py-0.5 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[10px] font-bold">
                     科目: {subject}
                   </span>
                 )}
@@ -1509,7 +1510,7 @@ export default function UserModePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <span className="text-xs font-bold text-[#fc3c44]">{selectedPreset.name}</span>
+              <span className="text-xs font-bold text-[#0071e3]">{selectedPreset.name}</span>
               <span className="text-[11px] text-[#86868b]">{selectedPreset.description}</span>
             </div>
           )}
@@ -1530,7 +1531,7 @@ export default function UserModePage() {
                     <div className="text-[13px] font-extrabold text-[#1d1d1f] tracking-tight">
                       問題形式を選択してください
                     </div>
-                    <div className="text-[10px] text-[#af52de] font-bold mt-0.5">
+                    <div className="text-[10px] text-[#0071e3] font-bold mt-0.5">
                       選択中: {QUESTION_FORMATS.find(f => f.value === questionFormat)?.label || '通常形式'}
                     </div>
                   </div>
@@ -1636,7 +1637,7 @@ export default function UserModePage() {
             {/* どれを選ぶ？ガイダンス */}
             <details className="tip-card mb-3 group">
               <summary>
-                <span className="text-sm">💡</span>
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" /></svg>
                 <span>どれを選べばいい？（初めての方はここを確認）</span>
                 <svg className="w-3.5 h-3.5 ml-auto transition-transform duration-300 group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -1807,7 +1808,7 @@ export default function UserModePage() {
             <div className="flex flex-col items-center justify-center py-20 px-6">
               {/* パルスリング */}
               <div className="relative mb-6">
-                <div className="absolute inset-0 w-16 h-16 rounded-full bg-[#fc3c44]/10 animate-ping" />
+                <div className="absolute inset-0 w-16 h-16 rounded-full bg-[#0071e3]/10 animate-ping" />
                 <div className="icon-premium relative w-16 h-16">
                   <svg className="animate-spin h-7 w-7 text-white" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -1816,7 +1817,7 @@ export default function UserModePage() {
                 </div>
               </div>
               <p className="text-base font-bold text-[#1d1d1f] mb-1">問題を生成しています</p>
-              <p className="text-sm text-[#fc3c44] font-medium">{status}</p>
+              <p className="text-sm text-[#0071e3] font-medium">{status}</p>
               <p className="text-xs text-[#86868b] mt-3">しばらくお待ちください...</p>
             </div>
           </div>
@@ -1859,7 +1860,7 @@ export default function UserModePage() {
                     <div>
                       <span className="font-bold text-blue-400">AIのみで問題を生成しました</span>
                       <p className="text-blue-500 mt-0.5">
-                        💡 過去問を登録すると、それを参考にしてより精度の高い問題を生成できます                      </p>
+                        過去問を登録すると、それを参考にしてより精度の高い問題を生成できます                      </p>
                     </div>
                   ) : renderContext.rag_status === 'empty' ? (
                     <div>
@@ -1931,7 +1932,7 @@ export default function UserModePage() {
                 )}
 
                 <details className="group">
-                  <summary className="cursor-pointer text-[#86868b] text-xs font-bold hover:text-[#fc3c44] transition-colors list-none flex items-center gap-2">
+                  <summary className="cursor-pointer text-[#86868b] text-xs font-bold hover:text-[#0071e3] transition-colors list-none flex items-center gap-2">
                     <span className="w-4 h-4 rounded bg-black/[0.04] flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
                       ▸
                     </span>
@@ -1957,7 +1958,7 @@ export default function UserModePage() {
 
                 {prompt && (
                   <details className="group">
-                    <summary className="cursor-pointer text-[#86868b] text-xs font-bold hover:text-[#fc3c44] transition-colors list-none flex items-center gap-2">
+                    <summary className="cursor-pointer text-[#86868b] text-xs font-bold hover:text-[#0071e3] transition-colors list-none flex items-center gap-2">
                       <span className="w-4 h-4 rounded bg-black/[0.04] flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
                         ▸
                       </span>
@@ -1968,7 +1969,7 @@ export default function UserModePage() {
                       <div className="mt-2 flex items-center gap-2">
                         <CopyButton text={prompt} onCopied={setStatus} />
                         {renderContext?.chunk_count > 0 && (
-                          <span className="text-xs text-[#fc3c44] font-medium">
+                          <span className="text-xs text-[#0071e3] font-medium">
                             過去問 {renderContext.chunk_count}件を参照
                           </span>
                         )}
@@ -1999,7 +2000,7 @@ export default function UserModePage() {
                 <TextArea value={prompt} onChange={setPrompt} rows={12} />
                 <div className="flex items-center justify-between gap-3">
                   {renderContext?.chunk_count > 0 && (
-                    <span className="text-xs text-[#fc3c44] font-medium px-3 py-1 bg-[#fc3c44]/[0.08] rounded-full">
+                    <span className="text-xs text-[#0071e3] font-medium px-3 py-1 bg-[#0071e3]/[0.08] rounded-full">
                       過去問 {renderContext.chunk_count}件を参照
                     </span>
                   )}

@@ -121,7 +121,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
 function SelectedTag({ label, value, color = 'red', onClear }) {
   if (!value) return null;
   const colors = {
-    red: 'bg-[#fc3c44]/[0.06] text-[#fc3c44] border-[#fc3c44]/15',
+    red: 'bg-[#0071e3]/[0.06] text-[#0071e3] border-[#0071e3]/15',
     emerald: 'bg-[#34c759]/[0.06] text-[#34c759] border-[#34c759]/15',
     amber: 'bg-[#ff9500]/[0.06] text-[#ff9500] border-[#ff9500]/15',
     violet: 'bg-[#af52de]/[0.06] text-[#af52de] border-[#af52de]/15',
@@ -149,10 +149,10 @@ function SelectedTag({ label, value, color = 'red', onClear }) {
 function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick }) {
   const total = textWeight + diffWeight + trickWeight || 1;
   const presets = [
-    { label: 'バランス', icon: '⚖️', text: 0.5, diff: 0.6, trick: 0.0, desc: '標準的なバランス配分' },
-    { label: '類似重視', icon: '🎯', text: 1.5, diff: 0.3, trick: 0.0, desc: '似た問題を多く参照' },
-    { label: '難易度重視', icon: '📊', text: 0.3, diff: 1.5, trick: 0.0, desc: '同じ難易度帯を重視' },
-    { label: 'ひっかけ強化', icon: '🪤', text: 0.3, diff: 0.3, trick: 1.5, desc: '巧妙な問題を参照' },
+    { label: 'バランス', icon: '⇌', text: 0.5, diff: 0.6, trick: 0.0, desc: '標準的なバランス配分' },
+    { label: '類似重視', icon: '≈', text: 1.5, diff: 0.3, trick: 0.0, desc: '似た問題を多く参照' },
+    { label: '難易度重視', icon: '▸▸', text: 0.3, diff: 1.5, trick: 0.0, desc: '同じ難易度帯を重視' },
+    { label: 'ひっかけ強化', icon: '⁇', text: 0.3, diff: 0.3, trick: 1.5, desc: '巧妙な問題を参照' },
   ];
   const axes = [
     { label: '類似度', value: textWeight, color: '#0a84ff', onChange: onText, desc: '作りたい問題に似た過去問を重視します' },
@@ -262,11 +262,11 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
 
 function QualityRating({ score, onChange }) {
   const levels = [
-    { value: 0.2, emoji: '😕', label: '低い', color: '#ff3b30' },
-    { value: 0.4, emoji: '🤔', label: 'いまいち', color: '#ff9500' },
-    { value: 0.6, emoji: '🙂', label: 'まあまあ', color: '#ffcc00' },
-    { value: 0.8, emoji: '😊', label: '良い', color: '#34c759' },
-    { value: 1.0, emoji: '🎯', label: '最高', color: '#007aff' },
+    { value: 0.2, icon: '×', label: '低い', color: '#ff3b30' },
+    { value: 0.4, icon: '△', label: 'いまいち', color: '#ff9500' },
+    { value: 0.6, icon: '○', label: 'まあまあ', color: '#ffcc00' },
+    { value: 0.8, icon: '◎', label: '良い', color: '#34c759' },
+    { value: 1.0, icon: '◉', label: '最高', color: '#007aff' },
   ];
   return (
     <div className="flex items-stretch gap-2">
@@ -281,7 +281,7 @@ function QualityRating({ score, onChange }) {
               }`}
             style={isActive ? { ringColor: `${l.color}40`, '--tw-ring-color': `${l.color}40` } : undefined}>
             {isActive && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: l.color }} />}
-            <span className={`text-2xl transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>{l.emoji}</span>
+            <span className={`text-2xl transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>{l.icon}</span>
             <span className={`text-[10px] font-bold transition-colors ${isActive ? '' : 'text-[#aeaeb2]'}`}
                   style={isActive ? { color: l.color } : undefined}>
               {l.label}
@@ -636,9 +636,9 @@ export default function TuningPage() {
   const hasOutput = !!llmOutput.trim();
 
   const sections = [
-    { id: 'configure', label: '出題パターン', icon: '⚙️', enabled: true },
-    { id: 'execute', label: 'AIに送る', icon: '▶️', enabled: hasPrompt },
-    { id: 'evaluate', label: '確認・保存', icon: '✅', enabled: hasOutput },
+    { id: 'configure', label: '出題パターン', icon: '◆', enabled: true },
+    { id: 'execute', label: 'AIに送る', icon: '▷', enabled: hasPrompt },
+    { id: 'evaluate', label: '確認・保存', icon: '◇', enabled: hasOutput },
   ];
 
   return (
@@ -725,7 +725,7 @@ export default function TuningPage() {
                       </div>
                       {fb.notes && (
                         <div className="text-[11px] text-[#86868b] flex items-start gap-1.5 mb-1">
-                          <span className="text-[#ff9500] flex-shrink-0">💬</span>
+                          <svg className="w-3.5 h-3.5 text-[#ff9500] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
                           <span>{fb.notes}</span>
                         </div>
                       )}
@@ -896,13 +896,13 @@ export default function TuningPage() {
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
                 <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider mb-1">最近の評価</div>
                 {evalHistory.evaluations.map((ev, idx) => {
-                  const scoreEmoji = { 0.2: '😕', 0.4: '🤔', 0.6: '🙂', 0.8: '😊', 1.0: '🎯' };
+                  const scoreIcon = { 0.2: '×', 0.4: '△', 0.6: '○', 0.8: '◎', 1.0: '◉' };
                   const scoreColor = ev.score >= 0.8 ? '#34c759' : ev.score >= 0.6 ? '#ffcc00' : ev.score >= 0.4 ? '#ff9500' : '#ff3b30';
                   return (
                     <div key={ev.id || idx} className="p-3 bg-white rounded-xl border border-black/[0.04] shadow-sm hover:shadow-md transition-all">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{scoreEmoji[ev.score] || '📝'}</span>
+                          <span className="text-lg">{scoreIcon[ev.score] || '—'}</span>
                           <span className="text-[12px] font-bold tabular-nums" style={{ color: scoreColor }}>
                             {ev.score}
                           </span>
@@ -994,7 +994,7 @@ export default function TuningPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════
-         ⚙️ 出題パターン選択
+         出題パターン選択
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'configure' && (
         <div className="space-y-6">
@@ -1049,16 +1049,16 @@ export default function TuningPage() {
                     const subjectColors = {
                       '数学': { bg: 'from-[#007aff] to-[#5856d6]', icon: '∑' },
                       '物理': { bg: 'from-[#ff9500] to-[#ff6723]', icon: '⚛' },
-                      '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: '🧪' },
-                      '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: '🌐' },
-                      '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: '🧬' },
-                      '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: '💻' },
-                      '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', icon: '📖' },
-                      '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', icon: '🌍' },
-                      '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', icon: '🌏' },
-                      '理科': { bg: 'from-[#30d158] to-[#00c7be]', icon: '🔬' },
+                      '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: 'Ch' },
+                      '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: 'En' },
+                      '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: 'Bi' },
+                      '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: 'CS' },
+                      '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', icon: '国' },
+                      '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', icon: '社' },
+                      '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', icon: '地' },
+                      '理科': { bg: 'from-[#30d158] to-[#00c7be]', icon: 'Sc' },
                     };
-                    const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', icon: '📝' };
+                    const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', icon: '—' };
                     const breadcrumb = [fld, thm].filter(Boolean).join(' › ');
                     const diffLevels = { '基礎': 1, '標準': 2, '応用': 3, '発展': 4, '難関': 5, '最難関': 6 };
                     const diffLevel = diffLevels[diff] || 0;
@@ -1070,7 +1070,7 @@ export default function TuningPage() {
                         onClick={() => onSelectTemplate(t.id)}
                         className={`group relative w-full text-left rounded-2xl overflow-hidden transition-all duration-300 active:scale-[0.98]
                           ${isActive
-                            ? 'bg-white shadow-lg shadow-black/[0.08] ring-2 ring-[#fc3c44]/30'
+                            ? 'bg-white shadow-lg shadow-black/[0.08] ring-2 ring-[#0071e3]/30'
                             : 'bg-white/60 shadow-sm shadow-black/[0.02] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
                           }`}
                       >
@@ -1132,7 +1132,7 @@ export default function TuningPage() {
                 <NumberField label="問数" value={numQuestions} onChange={setNumQuestions} min={1} />
               </div>
               <button onClick={async () => { await refresh(); setStatus('一覧を再読み込みしました'); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#86868b] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.08] transition-all border border-black/[0.04] hover:border-[#fc3c44]/20"
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#86868b] hover:text-[#0071e3] hover:bg-[#0071e3]/[0.08] transition-all border border-black/[0.04] hover:border-[#0071e3]/20"
                 title="一覧を再読込">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -1180,7 +1180,7 @@ export default function TuningPage() {
                       </div>
                       <div className="flex gap-1.5 mt-2 ml-[30px] flex-wrap">
                         {selectedRefProblem.subject && (
-                          <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{selectedRefProblem.subject}</span>
+                          <span className="px-2 py-0.5 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[9px] font-bold">{selectedRefProblem.subject}</span>
                         )}
                         {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
                           <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
@@ -1209,7 +1209,7 @@ export default function TuningPage() {
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {subject && (
-                  <span className="px-2.5 py-1 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">{subject}</span>
+                  <span className="px-2.5 py-1 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[10px] font-bold">{subject}</span>
                 )}
                 {field && (
                   <span className="px-2.5 py-1 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold">{field}</span>
@@ -1277,7 +1277,7 @@ export default function TuningPage() {
                           </div>
                           <div className="flex gap-1.5 mt-1.5 flex-wrap">
                             {item.subject && (
-                              <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[9px] font-bold">{item.subject}</span>
+                              <span className="px-2 py-0.5 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[9px] font-bold">{item.subject}</span>
                             )}
                             {(item.topic || item.metadata?.field) && (
                               <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
@@ -1405,7 +1405,7 @@ export default function TuningPage() {
                   <span className="text-gray-300 font-mono flex-shrink-0">#{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     {c.subject && (
-                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[#fc3c44]/[0.08] text-[#fc3c44] mr-1">{c.subject}</span>
+                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[#0071e3]/[0.08] text-[#0071e3] mr-1">{c.subject}</span>
                     )}
                     <span className="text-[#aeaeb2] leading-relaxed">
                       {(c.text || '').slice(0, 150).replace(/\n/g, ' ')}{(c.text || '').length > 150 ? '...' : ''}
@@ -1445,7 +1445,7 @@ export default function TuningPage() {
       )}
 
       {/* ════════════════════════════════════════════════════════
-         ▶️ 実行
+         実行
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'execute' && (
         <div className="space-y-6">
@@ -1460,9 +1460,9 @@ export default function TuningPage() {
                   <p className="text-[11px] text-[#86868b]">① コピー → ② AIを開く → ③ 貼り付けて実行</p>
                 </div>
               </div>
-            <div className="p-4 bg-[#fc3c44]/[0.08] rounded-2xl border border-[#fc3c44]/20">
+            <div className="p-4 bg-[#0071e3]/[0.08] rounded-2xl border border-[#0071e3]/20">
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#fc3c44] text-white text-xs font-black">1</div>
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0071e3] text-white text-xs font-black">1</div>
                 <div className="flex-1">
                   <div className="text-sm font-bold text-[#1d1d1f]">まず指示文をコピー</div>
                   <div className="text-[11px] text-[#86868b]">{finalPrompt.length.toLocaleString()} 文字</div>
@@ -1562,7 +1562,7 @@ export default function TuningPage() {
       )}
 
       {/* ════════════════════════════════════════════════════════
-         ✅ 評価・保存
+         評価・保存
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'evaluate' && (
         <div className="space-y-6">
@@ -1588,14 +1588,14 @@ export default function TuningPage() {
                     <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">メモ</label>
                     <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
                       className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f]
-                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
-                      placeholder="例: 難しさ♪　でも解説がもう少し欲しい" />
+                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 outline-none font-medium"
+                      placeholder="例: 難しさは良い。でも解説がもう少し欲しい。" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">こうなって欲しかった <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
                     <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
                       className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f]
-                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#fc3c44] focus:ring-2 focus:ring-[#fc3c44]/30 outline-none font-medium"
+                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 outline-none font-medium"
                       placeholder="こんな問題が作られたら良かった、というイメージ" />
                   </div>
                 </div>
@@ -1635,7 +1635,7 @@ export default function TuningPage() {
                     <div><span className="font-bold text-[#aeaeb2]">問題:</span> <span className="text-[#86868b]">{parsedProblem.stem.slice(0, 200)}{parsedProblem.stem.length > 200 ? '...' : ''}</span></div>
                   )}
                   {parsedProblem.final_answer && (
-                    <div><span className="font-bold text-[#86868b]">解答:</span> <span className="text-[#fc3c44] font-bold">{parsedProblem.final_answer}</span></div>
+                    <div><span className="font-bold text-[#86868b]">解答:</span> <span className="text-[#0071e3] font-bold">{parsedProblem.final_answer}</span></div>
                   )}
                   {parsedProblem.checks && (
                     <div className="flex gap-3 mt-1">

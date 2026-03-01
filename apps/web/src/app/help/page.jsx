@@ -10,19 +10,19 @@ import Link from 'next/link';
 function IcoCreate() {
   return (
     <svg className="w-10 h-10" viewBox="0 0 40 40" fill="none">
-      <rect x="6" y="3" width="22" height="30" rx="3" fill="white" stroke="#fc3c44" strokeWidth="1.8"/>
+      <rect x="6" y="3" width="22" height="30" rx="3" fill="white" stroke="#0071e3" strokeWidth="1.8"/>
       <rect x="6" y="3" width="22" height="30" rx="3" fill="url(#hD1)" opacity=".08"/>
-      <line x1="11" y1="10" x2="23" y2="10" stroke="#fc3c44" strokeWidth="1.2" opacity=".4" strokeLinecap="round"/>
-      <line x1="11" y1="14" x2="20" y2="14" stroke="#fc3c44" strokeWidth="1.2" opacity=".3" strokeLinecap="round"/>
-      <line x1="11" y1="18" x2="22" y2="18" stroke="#fc3c44" strokeWidth="1.2" opacity=".25" strokeLinecap="round"/>
-      <rect x="10" y="22" width="14" height="7" rx="2" fill="#fc3c44" opacity=".08"/>
-      <text x="13" y="27.5" fontSize="6" fontWeight="bold" fill="#fc3c44" fontFamily="serif" opacity=".7">∑ f(x)</text>
+      <line x1="11" y1="10" x2="23" y2="10" stroke="#0071e3" strokeWidth="1.2" opacity=".4" strokeLinecap="round"/>
+      <line x1="11" y1="14" x2="20" y2="14" stroke="#0071e3" strokeWidth="1.2" opacity=".3" strokeLinecap="round"/>
+      <line x1="11" y1="18" x2="22" y2="18" stroke="#0071e3" strokeWidth="1.2" opacity=".25" strokeLinecap="round"/>
+      <rect x="10" y="22" width="14" height="7" rx="2" fill="#0071e3" opacity=".08"/>
+      <text x="13" y="27.5" fontSize="6" fontWeight="bold" fill="#0071e3" fontFamily="serif" opacity=".7">∑ f(x)</text>
       <circle cx="30" cy="8" r="7" fill="url(#hP1)"/>
       <line x1="27" y1="8" x2="33" y2="8" stroke="white" strokeWidth="2" strokeLinecap="round"/>
       <line x1="30" y1="5" x2="30" y2="11" stroke="white" strokeWidth="2" strokeLinecap="round"/>
       <defs>
-        <linearGradient id="hD1" x1="6" y1="3" x2="28" y2="33"><stop stopColor="#fc3c44"/><stop offset="1" stopColor="#bf5af2"/></linearGradient>
-        <linearGradient id="hP1" x1="23" y1="1" x2="37" y2="15"><stop stopColor="#fc3c44"/><stop offset="1" stopColor="#ff375f"/></linearGradient>
+        <linearGradient id="hD1" x1="6" y1="3" x2="28" y2="33"><stop stopColor="#0071e3"/><stop offset="1" stopColor="#bf5af2"/></linearGradient>
+        <linearGradient id="hP1" x1="23" y1="1" x2="37" y2="15"><stop stopColor="#0071e3"/><stop offset="1" stopColor="#ff375f"/></linearGradient>
       </defs>
     </svg>
   );
@@ -43,7 +43,7 @@ function IcoTune() {
       <defs>
         <linearGradient id="hDi1" x1="15" y1="17" x2="21" y2="23"><stop stopColor="#bf5af2"/><stop offset="1" stopColor="#5e5ce6"/></linearGradient>
         <linearGradient id="hSp1" x1="27" y1="8" x2="37" y2="16"><stop stopColor="#ff9f0a"/><stop offset="1" stopColor="#ff375f"/></linearGradient>
-        <linearGradient id="hAr1" x1="18" y1="10" x2="28" y2="20"><stop stopColor="#fc3c44"/><stop offset="1" stopColor="#bf5af2"/></linearGradient>
+        <linearGradient id="hAr1" x1="18" y1="10" x2="28" y2="20"><stop stopColor="#0071e3"/><stop offset="1" stopColor="#bf5af2"/></linearGradient>
       </defs>
     </svg>
   );
@@ -84,13 +84,13 @@ function IcoDb() {
    ═══════════════════════════════════════════ */
 
 const TOC = [
-  { id: 'overview',   label: '概要',        emoji: '📖' },
-  { id: 'quickstart', label: 'はじめかた',    emoji: '🚀' },
-  { id: 'create',     label: 'つくる',       emoji: '📝' },
-  { id: 'tune',       label: '高める',       emoji: '⚙️' },
-  { id: 'search',     label: '検索',        emoji: '🔍' },
-  { id: 'db',         label: 'データ管理',   emoji: '🗄️' },
-  { id: 'faq',        label: 'FAQ',         emoji: '❓' },
+  { id: 'overview',   label: '概要',        emoji: '○' },
+  { id: 'quickstart', label: 'はじめかた',    emoji: '▷' },
+  { id: 'create',     label: 'つくる',       emoji: '◇' },
+  { id: 'tune',       label: '高める',       emoji: '◆' },
+  { id: 'search',     label: '検索',        emoji: '◎' },
+  { id: 'db',         label: 'データ管理',   emoji: '▣' },
+  { id: 'faq',        label: 'FAQ',         emoji: '?' },
 ];
 
 function TableOfContents({ activeId }) {
@@ -137,21 +137,21 @@ function DiagramCreateWizard() {
     { n: 5, label: '完成' },
   ];
   return (
-    <ScreenFrame title="問題をつくる" color="#fc3c44">
+    <ScreenFrame title="問題をつくる" color="#0071e3">
       <div className="flex items-center gap-1 mb-3">
         {steps.map((s, i) => (
           <div key={i} className="flex items-center gap-1 flex-1">
-            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ${s.active ? 'text-white bg-[#fc3c44]' : 'text-[#c7c7cc] border border-[#e5e5ea]'}`}>{s.n}</div>
-            {i < steps.length - 1 && <div className="flex-1 h-[2px] rounded-full" style={{ background: i === 0 ? '#fc3c44' : '#e5e5ea' }} />}
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold ${s.active ? 'text-white bg-[#0071e3]' : 'text-[#c7c7cc] border border-[#e5e5ea]'}`}>{s.n}</div>
+            {i < steps.length - 1 && <div className="flex-1 h-[2px] rounded-full" style={{ background: i === 0 ? '#0071e3' : '#e5e5ea' }} />}
           </div>
         ))}
       </div>
       <div className="space-y-1.5">
         {['数学 — 微分積分', '物理 — 力学', '化学 — 有機化学'].map((t, i) => (
           <div key={i} className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-[10px] font-semibold
-            ${i === 0 ? 'border-[#fc3c44]/30 bg-[#fc3c44]/[0.04] text-[#fc3c44]' : 'border-black/[0.04] text-[#86868b]'}`}>
-            <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${i === 0 ? 'border-[#fc3c44]' : 'border-[#d1d1d6]'}`}>
-              {i === 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#fc3c44]" />}
+            ${i === 0 ? 'border-[#0071e3]/30 bg-[#0071e3]/[0.04] text-[#0071e3]' : 'border-black/[0.04] text-[#86868b]'}`}>
+            <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${i === 0 ? 'border-[#0071e3]' : 'border-[#d1d1d6]'}`}>
+              {i === 0 && <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]" />}
             </div>
             {t}
           </div>
@@ -165,7 +165,7 @@ function DiagramTunePage() {
   return (
     <ScreenFrame title="品質を高める" color="#bf5af2">
       <div className="flex gap-1 mb-3">
-        {['⚙️ 設定', '▶️ 実行', '✅ 評価'].map((t, i) => (
+        {['設定', '実行', '評価'].map((t, i) => (
           <div key={i} className={`flex-1 text-center py-1.5 rounded-lg text-[9px] font-bold ${i === 0 ? 'bg-[#bf5af2] text-white' : 'bg-[#f5f5f7] text-[#86868b]'}`}>{t}</div>
         ))}
       </div>
@@ -215,7 +215,7 @@ function DiagramDbEditor() {
   return (
     <ScreenFrame title="データ管理" color="#30d158">
       <div className="flex gap-1 mb-2.5">
-        {['📋 データ一覧', '➕ かんたん登録'].map((t, i) => (
+        {['データ一覧', 'かんたん登録'].map((t, i) => (
           <div key={i} className={`flex-1 text-center py-1.5 rounded-lg text-[9px] font-bold ${i === 0 ? 'bg-[#30d158] text-white' : 'bg-[#f5f5f7] text-[#86868b]'}`}>{t}</div>
         ))}
       </div>
@@ -223,7 +223,7 @@ function DiagramDbEditor() {
         <div className="grid grid-cols-4 text-[7px] font-bold text-[#86868b] bg-[#f5f5f7] px-2 py-1.5"><span>ID</span><span>科目</span><span>難易度</span><span>操作</span></div>
         {[{ id: 1, s: '数学', d: '★3' }, { id: 2, s: '物理', d: '★4' }].map((r) => (
           <div key={r.id} className="grid grid-cols-4 text-[8px] text-[#6e6e73] px-2 py-1.5 border-t border-black/[0.03]">
-            <span className="font-bold text-[#30d158]">{r.id}</span><span>{r.s}</span><span>{r.d}</span><span className="text-[#0a84ff]">✏️</span>
+            <span className="font-bold text-[#30d158]">{r.id}</span><span>{r.s}</span><span>{r.d}</span><span className="text-[#0a84ff] font-bold">Edit</span>
           </div>
         ))}
       </div>
@@ -240,9 +240,9 @@ function FlowDiagram() {
   return (
     <svg viewBox="0 0 480 100" fill="none" className="w-full h-auto">
       {/* テンプレート */}
-      <rect x="0" y="20" width="120" height="60" rx="16" fill="white" stroke="#fc3c44" strokeWidth="1.5"/>
-      <rect x="0" y="20" width="120" height="60" rx="16" fill="#fc3c44" opacity=".04"/>
-      <text x="60" y="48" textAnchor="middle" fontSize="11" fontWeight="800" fill="#fc3c44">テンプレート</text>
+      <rect x="0" y="20" width="120" height="60" rx="16" fill="white" stroke="#0071e3" strokeWidth="1.5"/>
+      <rect x="0" y="20" width="120" height="60" rx="16" fill="#0071e3" opacity=".04"/>
+      <text x="60" y="48" textAnchor="middle" fontSize="11" fontWeight="800" fill="#0071e3">テンプレート</text>
       <text x="60" y="63" textAnchor="middle" fontSize="8" fill="#86868b">教科・分野・難易度</text>
 
       {/* 矢印 1 */}
@@ -251,7 +251,7 @@ function FlowDiagram() {
       {/* AI 生成 */}
       <rect x="175" y="10" width="130" height="80" rx="20" fill="white" stroke="url(#fGr1)" strokeWidth="1.8"/>
       <rect x="175" y="10" width="130" height="80" rx="20" fill="url(#fGr2)" opacity=".04"/>
-      <text x="240" y="40" textAnchor="middle" fontSize="18">🤖</text>
+      <text x="240" y="40" textAnchor="middle" fontSize="14" fontWeight="900" fill="#bf5af2">AI</text>
       <text x="240" y="57" textAnchor="middle" fontSize="11" fontWeight="800" fill="#bf5af2">REM が自動生成</text>
       <text x="240" y="72" textAnchor="middle" fontSize="8" fill="#86868b">AI × 過去問データ</text>
 
@@ -266,7 +266,7 @@ function FlowDiagram() {
 
       <defs>
         <linearGradient id="fGr1" x1="175" y1="10" x2="305" y2="90"><stop stopColor="#bf5af2"/><stop offset="1" stopColor="#5e5ce6"/></linearGradient>
-        <linearGradient id="fGr2" x1="175" y1="10" x2="305" y2="90"><stop stopColor="#bf5af2"/><stop offset="1" stopColor="#fc3c44"/></linearGradient>
+        <linearGradient id="fGr2" x1="175" y1="10" x2="305" y2="90"><stop stopColor="#bf5af2"/><stop offset="1" stopColor="#0071e3"/></linearGradient>
         <marker id="fArr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#d1d1d6"/></marker>
       </defs>
     </svg>
@@ -355,7 +355,7 @@ function FeatureSection({ id, icon, title, subtitle, color, href, diagram, steps
 
 const FAQ_DATA = [
   {
-    category: '基本', color: '#fc3c44', icon: '🎯',
+    category: '基本', color: '#0071e3', icon: '◎',
     items: [
       { q: 'テンプレートがない場合は？', a: '「問題をつくる」ページ下部から新規追加できます。教科・分野・難易度を設定するだけでOKです。' },
       { q: 'どの教科に対応している？', a: '数学・物理・化学・英語・生物・情報の6教科。カスタムテンプレートで他教科も設定できます。' },
@@ -364,7 +364,7 @@ const FAQ_DATA = [
     ],
   },
   {
-    category: '生成・PDF', color: '#bf5af2', icon: '📄',
+    category: '生成・PDF', color: '#bf5af2', icon: '◇',
     items: [
       { q: 'PDFプリセットとは？', a: '試験問題・ワークシート・フラッシュカード・模擬試験の4形式。用途に合わせて選ぶだけです。' },
       { q: '手動モードとは？', a: 'AIへの指示文をコピーして、お好みのAI(ChatGPT/Claude等)に貼り付けて使うモードです。' },
@@ -373,7 +373,7 @@ const FAQ_DATA = [
     ],
   },
   {
-    category: '検索・データ', color: '#0a84ff', icon: '🔍',
+    category: '検索・データ', color: '#0a84ff', icon: '◉',
     items: [
       { q: '検索のフィルターは？', a: 'キーワード・科目・分野（科目連動）・難易度の4条件で絞り込めます。' },
       { q: '検索結果から類題を作れる？', a: 'はい。結果カードの「類題を生成」ボタンで、その場でAIが類題を作成します。' },
@@ -418,7 +418,7 @@ function FaqCategory({ category, color, icon, items }) {
    ═══════════════════════════════════════════ */
 
 const GLOSSARY = [
-  { term: 'テンプレート', def: '教科・分野・難易度が定義された問題生成の設計図。繰り返し使えます。', color: '#fc3c44' },
+  { term: 'テンプレート', def: '教科・分野・難易度が定義された問題生成の設計図。繰り返し使えます。', color: '#0071e3' },
   { term: '過去問参照', def: '過去問データを参照して、AI生成の品質を高める仕組み。', color: '#bf5af2' },
   { term: 'プリセット', def: 'PDF出力や生成バランスの事前設定。ワンタップで切り替え可能。', color: '#ff9f0a' },
   { term: 'フィードバック', def: '生成問題への評価。保存すると次回の生成に自動反映されます。', color: '#30d158' },
@@ -467,7 +467,7 @@ export default function HelpPage() {
         <p className="text-[14px] sm:text-[17px] text-[#86868b] max-w-[280px] sm:max-w-sm mx-auto leading-relaxed">
           REM の使い方をかんたんにご案内します。
         </p>
-        <Link href="/" className="inline-flex items-center gap-2 mt-5 px-5 py-2 rounded-full bg-white/60 backdrop-blur-lg border border-black/[0.04] shadow-sm text-[13px] font-bold text-[#86868b] hover:text-[#fc3c44] hover:border-[#fc3c44]/20 transition-all">
+        <Link href="/" className="inline-flex items-center gap-2 mt-5 px-5 py-2 rounded-full bg-white/60 backdrop-blur-lg border border-black/[0.04] shadow-sm text-[13px] font-bold text-[#86868b] hover:text-[#0071e3] hover:border-[#0071e3]/20 transition-all">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
           ホームに戻る
         </Link>
@@ -495,7 +495,7 @@ export default function HelpPage() {
 
               <div className="flex flex-wrap gap-2 mb-6">
                 {[
-                  { tag: 'AI 問題生成', color: '#fc3c44' },
+                  { tag: 'AI 問題生成', color: '#0071e3' },
                   { tag: '過去問活用', color: '#bf5af2' },
                   { tag: 'PDF 出力', color: '#ff9f0a' },
                   { tag: '品質改善', color: '#30d158' },
@@ -517,7 +517,7 @@ export default function HelpPage() {
                 <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-[0.15em] mb-3">主な機能</div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
-                    { icon: <IcoCreate />, label: '問題をつくる', href: '/user', color: '#fc3c44' },
+                    { icon: <IcoCreate />, label: '問題をつくる', href: '/user', color: '#0071e3' },
                     { icon: <IcoTune />,   label: '品質を高める', href: '/dev', color: '#bf5af2' },
                     { icon: <IcoSearch />, label: '問題を検索',   href: '/search', color: '#ff9f0a' },
                     { icon: <IcoDb />,     label: 'データ管理',   href: '/db-editor', color: '#30d158' },
@@ -543,9 +543,9 @@ export default function HelpPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { n: '1', icon: '📝', title: 'テンプレートを選ぶ', desc: '教科・難易度が設定済みのカードから選択。', color: '#fc3c44' },
-                { n: '2', icon: '🚀', title: '生成する', desc: 'AIが過去問を参照しながら自動生成。数秒で完了。', color: '#bf5af2' },
-                { n: '3', icon: '📥', title: 'PDFをダウンロード', desc: '完成した試験問題をPDFで取得。そのまま印刷OK。', color: '#30d158' },
+                { n: '1', icon: '◇', title: 'テンプレートを選ぶ', desc: '教科・難易度が設定済みのカードから選択。', color: '#0071e3' },
+                { n: '2', icon: '▷', title: '生成する', desc: 'AIが過去問を参照しながら自動生成。数秒で完了。', color: '#bf5af2' },
+                { n: '3', icon: '↓', title: 'PDFをダウンロード', desc: '完成した試験問題をPDFで取得。そのまま印刷OK。', color: '#30d158' },
               ].map((s) => (
                 <div key={s.n} className="relative flex flex-col items-center gap-3 p-5 rounded-2xl bg-white/70 border border-black/[0.04] shadow-sm hover:shadow-md transition-all">
                   <div className="absolute top-0 left-5 right-5 h-[2px] rounded-b-full" style={{ background: `linear-gradient(90deg,${s.color},transparent)`, opacity: 0.3 }} />
@@ -561,12 +561,12 @@ export default function HelpPage() {
 
           {/* ═══ 機能ガイド ═══ */}
           <div className="flex items-center gap-3 mb-4 px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#fc3c44]" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#0071e3]" />
             <h2 className="text-[12px] font-bold text-[#6e6e73] uppercase tracking-[0.2em]">機能ガイド</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-black/[0.06] to-transparent" />
           </div>
 
-          <FeatureSection id="create" icon={<IcoCreate />} title="問題をつくる" subtitle="5ステップのウィザードで AI が試験問題を自動生成" color="#fc3c44" href="/user"
+          <FeatureSection id="create" icon={<IcoCreate />} title="問題をつくる" subtitle="5ステップのウィザードで AI が試験問題を自動生成" color="#0071e3" href="/user"
             diagram={<DiagramCreateWizard />}
             steps={[
               { title: 'テンプレート → 設定', desc: '教科カードを選択し、問題数や出題形式を設定します。' },
@@ -610,7 +610,7 @@ export default function HelpPage() {
             steps={[
               { title: 'テーブルを選んで閲覧', desc: 'プルダウンで切替。テーブルビューで一覧表示。' },
               { title: 'インライン編集', desc: 'セルをクリックしてその場で修正。保存で確定。' },
-              { title: 'かんたん登録', desc: '「➕ かんたん登録」タブから、フォーム入力で問題を追加。' },
+              { title: 'かんたん登録', desc: '「かんたん登録」タブから、フォーム入力で問題を追加。' },
             ]}
             tips={[
               '難易度は入力内容から自動推定されます',
@@ -634,7 +634,7 @@ export default function HelpPage() {
             {/* 用語集インライン */}
             <div className="mt-8 relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-sm p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-[16px]">📘</span>
+                <span className="text-[14px] font-black text-[#0a84ff]">Glossary</span>
                 <h4 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">用語集</h4>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

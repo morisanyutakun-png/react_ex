@@ -416,20 +416,15 @@ export function SectionCard({ title, subtitle, icon, children, className = '', a
     <div className={`card-premium p-5 sm:p-6 ${className}`}>
       {(title || icon) && (
         <div className="mb-5">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             {icon && (
-              <span className="flex items-center justify-center w-9 h-9 rounded-[11px] transition-all duration-400"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${accentColor || '#1d1d1f'}12, ${accentColor || '#1d1d1f'}06)`,
-                      color: accentColor || '#1d1d1f',
-                      boxShadow: `inset 0 0.5px 0 rgba(255,255,255,0.60)`
-                    }}>
+              <span className="icon-premium w-9 h-9 text-white flex-shrink-0">
                 {icon}
               </span>
             )}
             {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[12px] text-[#aeaeb2] mt-1 ml-[42px]">{subtitle}</p>}
+          {subtitle && <p className="text-[12px] text-[#aeaeb2] mt-1 ml-[48px]">{subtitle}</p>}
         </div>
       )}
       {children}
