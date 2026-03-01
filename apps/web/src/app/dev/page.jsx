@@ -455,7 +455,7 @@ export default function TuningPage() {
 
   // ── ベースプロンプト生成 ──
   const generateBasePrompt = async () => {
-    if (!templateId) { setStatus('テンプレートを選択してください'); return; }
+    if (!templateId) { setStatus('出題パターンを選択してください'); return; }
     setStatus('AIへの指示文を作成中...');
     try {
       const data = await renderTemplate({
@@ -636,7 +636,7 @@ export default function TuningPage() {
   const hasOutput = !!llmOutput.trim();
 
   const sections = [
-    { id: 'configure', label: 'テンプレート', icon: '⚙️', enabled: true },
+    { id: 'configure', label: '出題パターン', icon: '⚙️', enabled: true },
     { id: 'execute', label: 'AIに送る', icon: '▶️', enabled: hasPrompt },
     { id: 'evaluate', label: '確認・保存', icon: '✅', enabled: hasOutput },
   ];
@@ -645,7 +645,7 @@ export default function TuningPage() {
     <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
       <PageHeader
         title="品質をみがく"
-        description="テンプレートを選んで → AIに指示を出し → 出来栄えを確認する、3ステップの作業スペースです"
+        description="出題パターンを選んで → AIに指示を出し → 出来栄えを確認する、3ステップの作業スペースです"
         icon={<Icons.Dev />}
         breadcrumbs={[{ label: 'ホーム', href: '/' }, { label: 'みがく' }]}
       />
@@ -992,7 +992,7 @@ export default function TuningPage() {
             {activeSection === 'configure' ? '1' : activeSection === 'execute' ? '2' : '3'}
           </div>
           <p className="text-[13px] font-bold text-[#1d1d1f] leading-snug">
-            {activeSection === 'configure' && !templateId && 'テンプレートを選んで、指示文を作成しましょう'}
+            {activeSection === 'configure' && !templateId && '出題パターンを選んで、指示文を作成しましょう'}
             {activeSection === 'configure' && templateId && !hasPrompt && '設定ができました。「指示文を作成」ボタンを押してください'}
             {activeSection === 'configure' && hasPrompt && '指示文ができました。「AIに送る」タブへ進みましょう'}
             {activeSection === 'execute' && !hasOutput && '指示文をコピーして外部AIに送り、結果を貼り付けてください'}
@@ -1003,12 +1003,12 @@ export default function TuningPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════
-         ⚙️ テンプレート選択
+         ⚙️ 出題パターン選択
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'configure' && (
         <div className="space-y-6">
 
-          {/* ── 条件設定（テンプレート＋問数） ── */}
+          {/* ── 条件設定（出題パターン＋問数） ── */}
           <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
             {/* ヘッダー */}
             <div className="relative px-6 pt-6 pb-4">
@@ -1018,8 +1018,8 @@ export default function TuningPage() {
                   <Icons.File className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">テンプレートを選ぶ</h3>
-                  <p className="text-[11px] text-[#86868b]">教科・分野・難易度はテンプレートに含まれます</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">出題パターンを選ぶ</h3>
+                  <p className="text-[11px] text-[#86868b]">教科・分野・難易度がセットされたパターンから選べます</p>
                 </div>
               </div>
 
@@ -1028,14 +1028,14 @@ export default function TuningPage() {
                 <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-black/[0.04]">
                   {(() => {
                     const sel = templates.find((t) => t.id === templateId);
-                    return <SelectedTag label="テンプレート" value={sel?.name || templateId} color="violet" onClear={() => { setTemplateId(''); setSubject(''); setField(''); }} />;
+                    return <SelectedTag label="出題パターン" value={sel?.name || templateId} color="violet" onClear={() => { setTemplateId(''); setSubject(''); setField(''); }} />;
                   })()}
                   <SelectedTag label="問数" value={`${numQuestions}問`} color="sky" />
                 </div>
               )}
             </div>
 
-            {/* テンプレートカードグリッド */}
+            {/* 出題パターンカードグリッド */}
             <div className="px-5 pb-3">
               {templates.length === 0 ? (
                 <div className="text-center py-10">
@@ -1044,8 +1044,8 @@ export default function TuningPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                   </div>
-                  <p className="text-sm font-bold text-[#1d1d1f]">テンプレートがありません</p>
-                  <p className="text-xs text-[#86868b] mt-1">作るモードでテンプレートを作成してください</p>
+                  <p className="text-sm font-bold text-[#1d1d1f]">出題パターンがありません</p>
+                  <p className="text-xs text-[#86868b] mt-1">「問題をつくる」モードで作成してください</p>
                 </div>
               ) : (
                 <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
@@ -1141,9 +1141,9 @@ export default function TuningPage() {
               <div className="flex-1">
                 <NumberField label="問数" value={numQuestions} onChange={setNumQuestions} min={1} />
               </div>
-              <button onClick={async () => { await refresh(); setStatus('テンプレート一覧を再読み込みしました'); }}
+              <button onClick={async () => { await refresh(); setStatus('一覧を再読み込みしました'); }}
                 className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#86868b] hover:text-[#fc3c44] hover:bg-[#fc3c44]/[0.08] transition-all border border-black/[0.04] hover:border-[#fc3c44]/20"
-                title="テンプレートを再読込">
+                title="一覧を再読込">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
                 </svg>
@@ -1163,7 +1163,7 @@ export default function TuningPage() {
                 </div>
                 <div>
                   <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">参考問題を選択</h3>
-                  <p className="text-[11px] text-[#86868b]">テンプレートに合致する過去問が表示されます</p>
+                  <p className="text-[11px] text-[#86868b]">選択した出題パターンに合致する過去問が表示されます</p>
                 </div>
               </div>
 
@@ -1369,9 +1369,9 @@ export default function TuningPage() {
                   <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIへの指示文を作成</h3>
                   <p className="text-[11px] text-[#86868b]">
                     {!templateId
-                      ? '↑ まず上のテンプレートを選んでください'
+                      ? '↑ まず上の出題パターンを選んでください'
                       : !basePrompt
-                        ? 'ボタンを押すと、選んだテンプレートからAIへの指示文が自動生成されます'
+                        ? 'ボタンを押すと、選んだパターンからAIへの指示文が自動生成されます'
                         : '指示文が完成しました。次のステップへ進めます。'}
                   </p>
                 </div>
@@ -1709,7 +1709,7 @@ export default function TuningPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
               </svg>
-              テンプレート選択に戻る
+              出題パターンに戻る
             </Button>
             <span className="text-xs text-gray-300">|</span>
             <Button variant="ghost" onClick={resetAll}>最初からやり直す</Button>

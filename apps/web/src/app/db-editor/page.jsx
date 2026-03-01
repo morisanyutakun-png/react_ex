@@ -8,7 +8,6 @@ import {
   updateDbRow,
   createDbRow,
   deleteDbRow,
-  fetchSmartFields,
   estimateDifficulty,
   smartCreateDbRow,
 } from '@/lib/api';
@@ -187,9 +186,6 @@ export default function DbEditorPage() {
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // タブ: 'browse' | 'add'
-  const [activeTab, setActiveTab] = useState('browse');
-
   // カラム表示制御
   const [visibleCols, setVisibleCols] = useState(DEFAULT_VISIBLE_COLS);
   const [showColPicker, setShowColPicker] = useState(false);
@@ -204,12 +200,6 @@ export default function DbEditorPage() {
 
   // 行詳細表示
   const [detailRow, setDetailRow] = useState(null);
-
-  // スマート登録
-  const [smartFields, setSmartFields] = useState(null);
-  const [smartForm, setSmartForm] = useState({});
-  const [smartExpanded, setSmartExpanded] = useState({ required: true, recommended: false, optional: false });
-  const [saving, setSaving] = useState(false);
 
   // インライン行追加 (browseタブ)
   const [showInlineAdd, setShowInlineAdd] = useState(false);
@@ -227,7 +217,7 @@ export default function DbEditorPage() {
         setTables(data.tables || []);
         if (data.tables?.length > 0) setSelectedTable(data.tables[0].name);
       })
-      .catch((e) => setStatus(`テーブル一覧取得エラー: ${e.message}`));
+      .catch((e) => setStatus(`データ種類の取得エラー: ${e.message}`));
   }, []);
 
   // テーブル切替
@@ -254,33 +244,14 @@ export default function DbEditorPage() {
     setLoading(false);
   }, []);
 
-  // スマートフィールド取得
-  const loadSmartFields = useCallback(async (table) => {
-    if (!table) return;
-    try {
-      const res = await fetchSmartFields(table);
-      setSmartFields(res);
-      const defaults = {};
-      for (const group of ['required', 'recommended', 'optional']) {
-        for (const f of res[group] || []) {
-          if (f.default !== undefined) defaults[f.name] = f.default;
-        }
-      }
-      setSmartForm(defaults);
-    } catch {
-      setSmartFields(null);
-    }
-  }, []);
-
   useEffect(() => {
     if (selectedTable) {
       setPage(0);
       setSearch('');
       setSearchInput('');
       loadTableData(selectedTable, 0, '');
-      loadSmartFields(selectedTable);
     }
-  }, [selectedTable, loadTableData, loadSmartFields]);
+  }, [selectedTable, loadTableData]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -360,54 +331,6 @@ export default function DbEditorPage() {
     }
   };
 
-  // ── スマート登録 ──
-  const onSmartFieldChange = (name, value) => {
-    setSmartForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const submitSmartForm = async () => {
-    setSaving(true);
-    setStatus('登録中...');
-    try {
-      const data = {};
-      for (const [key, val] of Object.entries(smartForm)) {
-        if (val === '' || val === null || val === undefined) continue;
-        const fieldDef = [...(smartFields?.required || []), ...(smartFields?.recommended || []), ...(smartFields?.optional || [])]
-          .find((f) => f.name === key);
-
-        if (fieldDef?.type === 'json' && typeof val === 'string') {
-          try { data[key] = JSON.parse(val); } catch { data[key] = val; }
-        } else if (fieldDef?.type === 'number' || fieldDef?.type === 'slider') {
-          const num = Number(val);
-          data[key] = isNaN(num) ? val : num;
-        } else if (fieldDef?.type === 'boolean') {
-          data[key] = val === 'true' || val === true;
-        } else {
-          data[key] = val;
-        }
-      }
-      // smart-create を使用（難易度自動計算付き）
-      const res = await smartCreateDbRow(selectedTable, data, true);
-      const diffInfo = res.difficulty_auto
-        ? ` [難易度: ${res.difficulty_auto.difficulty} / Lv${res.difficulty_auto.difficulty_level}]`
-        : '';
-      setStatus(`登録完了! (ID: ${res.inserted_id || '—'})${diffInfo}`);
-      setDifficultyResult(null);
-      // フォームリセット
-      const defaults = {};
-      for (const group of ['required', 'recommended', 'optional']) {
-        for (const f of smartFields?.[group] || []) {
-          if (f.default !== undefined) defaults[f.name] = f.default;
-        }
-      }
-      setSmartForm(defaults);
-      loadTableData(selectedTable, page, search);
-    } catch (e) {
-      setStatus(`登録エラー: ${e.message}`);
-    }
-    setSaving(false);
-  };
-
   // ── 難易度自動推定 ──
   const triggerDifficultyEstimate = useCallback(async (stem, answer) => {
     if (!stem || !stem.trim()) return;
@@ -481,70 +404,56 @@ export default function DbEditorPage() {
 
       <StatusBar message={status} />
 
-      {/* テーブル選択 + タブ切り替え */}
-      <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44] opacity-60" />
-        <div className="p-5">
+      {/* データ種類選択 */}
+      <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-black/[0.04] shadow-sm">
+        <div className="px-5 py-4">
           <div className="flex flex-wrap items-end gap-4">
             <SelectField
-              label="テーブル"
+              label="データ種類"
               value={selectedTable}
               onChange={(v) => setSelectedTable(v)}
               options={tables.map((t) => ({ value: t.name, label: tableLabel(t.name) }))}
-              className="min-w-[200px]"
+              className="min-w-[220px]"
             />
-            <div className="flex gap-1 ml-auto bg-black/[0.04] rounded-xl p-1 border border-black/[0.04]">
-              <TabButton active={activeTab === 'browse'} onClick={() => setActiveTab('browse')}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-                データ一覧
-              </TabButton>
-              <TabButton active={activeTab === 'add'} onClick={() => setActiveTab('add')}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M12 4v16m8-8H4" />
-                </svg>
-                かんたん登録
-              </TabButton>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* ━━ データ一覧タブ ━━ */}
-      {activeTab === 'browse' && (
+      {/* ── データ一覧 ── */}
+      {selectedTable && (
         <>
           {/* ツールバー */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="キーワード検索..."
-                className="px-3 py-2 rounded-lg border border-black/[0.06] bg-white shadow-sm text-sm
-                           text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-red-600
-                           focus:ring-2 focus:ring-red-600/40 outline-none w-48"
-              />
-              <Button variant="secondary" size="sm" onClick={handleSearch}>
-                <Icons.Search className="w-4 h-4" />
-              </Button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex gap-1.5 items-center flex-1 min-w-[180px] max-w-xs">
+              <div className="relative flex-1">
+                <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#aeaeb2] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="検索..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/[0.03] text-sm
+                             text-[#1d1d1f] transition-all border border-transparent
+                             focus:bg-white focus:border-black/[0.08] focus:shadow-sm
+                             focus:ring-0 outline-none placeholder:text-[#c7c7cc]"
+                />
+              </div>
             </div>
 
             {/* カラム選択ボタン */}
             <button
               onClick={() => setShowColPicker(!showColPicker)}
-              className="px-3 py-2 text-xs font-semibold text-[#86868b] bg-black/[0.04] border border-black/[0.06]
-                         rounded-lg hover:border-black/[0.08] transition-all flex items-center gap-1.5"
+              className="px-3 py-2 text-xs font-medium text-[#86868b] bg-black/[0.03]
+                         rounded-xl hover:bg-black/[0.06] transition-all flex items-center gap-1.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
-              表示カラム ({visibleCols.length}/{allCols.length})
+              表示列 ({visibleCols.length}/{allCols.length})
             </button>
 
             <div className="flex gap-2 ml-auto">
@@ -556,7 +465,7 @@ export default function DbEditorPage() {
                 <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                {showInlineAdd ? '追加を閉じる' : '行を追加'}
+                {showInlineAdd ? '閉じる' : '行を追加'}
               </Button>
               {hasDirty && (
                 <Button variant="success" onClick={saveAll}>
@@ -611,27 +520,27 @@ export default function DbEditorPage() {
             </div>
           </div>
 
-          {/* テーブル (デスクトップ) */}
-          <div className="hidden sm:block bg-black/[0.04] backdrop-blur-md rounded-lg border border-black/[0.06]  overflow-hidden">
+          {/* データ一覧 (デスクトップ) */}
+          <div className="hidden sm:block rounded-2xl bg-white/80 backdrop-blur-xl border border-black/[0.04] shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="bg-black/[0.04] border-b border-black/[0.06]">
-                    <th className="px-2 py-3 text-left font-bold text-[#86868b] uppercase tracking-wider sticky left-0 bg-black/[0.04] z-10 w-10">
+                  <tr className="border-b border-black/[0.06]">
+                    <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#86868b] tracking-wide sticky left-0 bg-white/80 backdrop-blur-xl z-10 w-10">
                       #
                     </th>
                     {displayCols.map((col) => (
                       <th key={col.name}
-                        className="px-3 py-3 text-left font-bold text-[#86868b] tracking-wider whitespace-nowrap border-l border-black/[0.06]"
+                        className="px-3 py-3 text-left text-[11px] font-semibold text-[#86868b] tracking-wide whitespace-nowrap"
                         title={colLabel(col.name)}
                       >
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           {colLabel(col.name)}
-                          {col.pk && <span className="text-[9px] bg-[#fc3c44]/[0.08] text-[#fc3c44] px-1 rounded">主キー</span>}
+                          {col.pk && <span className="text-[9px] font-medium bg-[#007aff]/[0.08] text-[#007aff] px-1.5 py-0.5 rounded-full">主キー</span>}
                         </div>
                       </th>
                     ))}
-                    <th className="px-2 py-3 text-center font-bold text-[#86868b] uppercase tracking-wider border-l border-black/[0.06] w-20">
+                    <th className="px-3 py-3 text-center text-[11px] font-semibold text-[#86868b] tracking-wide w-20">
                       操作
                     </th>
                   </tr>
@@ -642,11 +551,11 @@ export default function DbEditorPage() {
                     const rowDirty = !!edits[rowPk];
                     return (
                       <tr key={rowPk ?? idx}
-                        className={`border-b border-black/[0.06] hover:bg-black/[0.04] transition-colors
-                          ${rowDirty ? 'bg-[#ff9500]/[0.08]' : idx % 2 === 0 ? 'bg-black/[0.04]' : 'bg-black/[0.04]'}`}
+                        className={`border-b border-black/[0.04] transition-colors
+                          ${rowDirty ? 'bg-[#ff9500]/[0.06]' : 'hover:bg-black/[0.02]'}`}
                       >
-                        <td className={`px-2 py-2 font-mono text-[#c7c7cc] sticky left-0 z-10
-                          ${rowDirty ? 'bg-[#ff9500]/[0.08]' : idx % 2 === 0 ? 'bg-black/[0.04]' : 'bg-black/[0.04]'}`}>
+                        <td className={`px-3 py-2.5 font-mono text-[11px] text-[#c7c7cc] sticky left-0 z-10 bg-white/80 backdrop-blur-xl
+                          ${rowDirty ? '!bg-[#ff9500]/[0.06]' : ''}`}>
                           {page * PAGE_SIZE + idx + 1}
                         </td>
                         {displayCols.map((col) => {
@@ -657,7 +566,7 @@ export default function DbEditorPage() {
 
                           if (isPkCol) {
                             return (
-                              <td key={col.name} className="px-3 py-2 border-l border-black/[0.06] font-mono text-[#fc3c44] font-bold">
+                              <td key={col.name} className="px-3 py-2.5 font-mono text-[#007aff] font-semibold text-[11px]">
                                 {formatCellValue(cellVal)}
                               </td>
                             );
@@ -665,8 +574,8 @@ export default function DbEditorPage() {
 
                           return (
                             <td key={col.name}
-                              className={`px-1 py-1 border-l border-black/[0.06] cursor-pointer
-                                ${dirty ? 'bg-[#ff9500]/[0.08] ring-1 ring-amber-500/30' : ''}
+                              className={`px-1 py-1 cursor-pointer
+                                ${dirty ? 'bg-[#ff9500]/[0.06]' : ''}
                                 ${isEditing ? 'p-0' : ''}`}
                               onClick={() => !isEditing && startEdit(rowPk, col.name)}
                               title={formatCellValue(cellVal)}
@@ -691,7 +600,7 @@ export default function DbEditorPage() {
                             </td>
                           );
                         })}
-                        <td className="px-2 py-2 border-l border-black/[0.06] text-center">
+                        <td className="px-2 py-2.5 text-center">
                           <div className="flex gap-1 justify-center">
                             <button
                               onClick={() => setDetailRow(row)}
@@ -815,23 +724,6 @@ export default function DbEditorPage() {
         </>
       )}
 
-      {/* ━━ かんたん登録タブ ━━ */}
-      {activeTab === 'add' && smartFields && (
-        <SmartRegistrationForm
-          smartFields={smartFields}
-          smartForm={smartForm}
-          onFieldChange={onSmartFieldChange}
-          expanded={smartExpanded}
-          setExpanded={setSmartExpanded}
-          onSubmit={submitSmartForm}
-          saving={saving}
-          table={selectedTable}
-          onEstimateDifficulty={triggerDifficultyEstimate}
-          difficultyEstimating={difficultyEstimating}
-          difficultyResult={difficultyResult}
-        />
-      )}
-
       {/* ── 行詳細モーダル ── */}
       {detailRow && (
         <RowDetailModal row={detailRow} schema={schema} pk={pk} onClose={() => setDetailRow(null)} />
@@ -839,13 +731,20 @@ export default function DbEditorPage() {
 
       {/* ── 削除確認 ── */}
       {deleteConfirm !== null && (
-        <div className="fixed inset-0 bg-[#f5f5f7]/30 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-black/[0.04] rounded-lg p-6 shadow-xl max-w-sm mx-4 border border-black/[0.06]">
-            <div className="text-lg font-bold text-[#1d1d1f] mb-2">削除確認</div>
-            <p className="text-sm text-[#424245] mb-4">
-              ID: <strong>{deleteConfirm}</strong> を削除しますか？この操作は取り消せません。
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center">
+          <div className="rounded-2xl bg-white/90 backdrop-blur-xl p-6 shadow-2xl max-w-sm mx-4 border border-white/60">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
+                <svg className="w-5 h-5 text-[#ff3b30]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div className="text-[17px] font-bold text-[#1d1d1f]">削除しますか？</div>
+            </div>
+            <p className="text-[13px] text-[#86868b] mb-5 pl-[52px]">
+              ID: <strong className="text-[#1d1d1f]">{deleteConfirm}</strong> のデータを削除します。この操作は取り消せません。
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className="flex gap-2.5 justify-end">
               <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>キャンセル</Button>
               <Button variant="danger" onClick={confirmDelete}>削除する</Button>
             </div>
@@ -860,21 +759,6 @@ export default function DbEditorPage() {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // サブコンポーネント
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-function TabButton({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all
-        ${active
-          ? 'bg-[#fc3c44] text-white'
-          : 'bg-black/[0.04] text-[#86868b] border border-black/[0.06] hover:border-black/[0.08] hover:text-[#fc3c44]'
-        }`}
-    >
-      {children}
-    </button>
-  );
-}
 
 
 // ── セルエディタ ──
@@ -995,11 +879,10 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
 // ── 行詳細モーダル ──
 function RowDetailModal({ row, schema, pk, onClose }) {
   return (
-    <div className="fixed inset-0 bg-[#f5f5f7]/30 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-black/[0.06]">
-        <div className="relative flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/[0.06]">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44] opacity-50" />
+      <div className="bg-white/95 backdrop-blur-xl rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-white/60">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/[0.06]">
           <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f]">
             データ詳細
           </h2>
@@ -1033,179 +916,6 @@ function RowDetailModal({ row, schema, pk, onClose }) {
             );
           })}
         </div>
-      </div>
-    </div>
-  );
-}
-
-
-// ── スマート登録フォーム ──
-function SmartRegistrationForm({ smartFields, smartForm, onFieldChange, expanded, setExpanded, onSubmit, saving, table, onEstimateDifficulty, difficultyEstimating, difficultyResult }) {
-  const toggleSection = (section) => {
-    setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const requiredFilled = (smartFields.required || []).every((f) => {
-    const val = smartForm[f.name];
-    return val !== undefined && val !== null && val !== '';
-  });
-
-  const filledCount = Object.values(smartForm).filter((v) => v !== undefined && v !== null && v !== '').length;
-  const totalFieldCount = [...(smartFields.required || []), ...(smartFields.recommended || []), ...(smartFields.optional || [])].length;
-
-  // 難易度推定トリガー: stem 入力後にBlurした時
-  const handleStemBlur = () => {
-    const stem = smartForm.stem || '';
-    const answer = smartForm.answer_brief || '';
-    if (stem.trim()) {
-      onEstimateDifficulty(stem, answer);
-    }
-  };
-
-  const handleAnswerBlur = () => {
-    const stem = smartForm.stem || '';
-    const answer = smartForm.answer_brief || '';
-    if (stem.trim()) {
-      onEstimateDifficulty(stem, answer);
-    }
-  };
-
-  // 推定結果を反映するボタン
-  const applyDifficultyResult = () => {
-    if (!difficultyResult) return;
-    onFieldChange('difficulty', difficultyResult.difficulty);
-    onFieldChange('difficulty_level', String(difficultyResult.difficulty_level));
-    onFieldChange('trickiness', difficultyResult.trickiness);
-  };
-
-  return (
-    <div className="space-y-4">
-      {/* プログレスバー */}
-      <div className="bg-black/[0.04] backdrop-blur-md rounded-lg border border-black/[0.06] p-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-bold text-[#1d1d1f]">入力進捗</span>
-          <span className="text-xs text-[#c7c7cc]">{filledCount}/{totalFieldCount} フィールド入力済み</span>
-        </div>
-        <div className="h-2 bg-black/[0.04] rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${requiredFilled ? 'bg-[#34c759]' : 'bg-[#fc3c44]'}`}
-            style={{ width: `${Math.min(100, (filledCount / totalFieldCount) * 100)}%` }}
-          />
-        </div>
-        {!requiredFilled && (
-          <p className="text-xs text-[#ff9500] mt-2 flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            必須フィールドを入力してください
-          </p>
-        )}
-      </div>
-
-      {/* 必須フィールド */}
-      <FieldSection
-        title="必須フィールド"
-        subtitle="教科・トピック・問題文・答えを優先入力"
-        color="rose"
-        open={expanded.required}
-        onToggle={() => toggleSection('required')}
-        badge="必須"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(smartFields.required || []).map((field) => (
-            <SmartField key={field.name} field={field}
-              value={smartForm[field.name] ?? ''}
-              onChange={(v) => onFieldChange(field.name, v)}
-              allValues={smartForm}
-              onBlur={field.name === 'stem' ? handleStemBlur : field.name === 'answer_brief' ? handleAnswerBlur : undefined}
-            />
-          ))}
-        </div>
-      </FieldSection>
-
-      {/* 難易度自動推定パネル */}
-      {(difficultyResult || difficultyEstimating) && (
-        <DifficultyEstimatePanel
-          result={difficultyResult}
-          estimating={difficultyEstimating}
-          onApply={applyDifficultyResult}
-        />
-      )}
-
-      {/* 推奨フィールド */}
-      <FieldSection
-        title="推奨フィールド"
-        subtitle="入力すると検索精度が向上します"
-        color="amber"
-        open={expanded.recommended}
-        onToggle={() => toggleSection('recommended')}
-        badge="推奨"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(smartFields.recommended || []).map((field) => (
-            <SmartField key={field.name} field={field}
-              value={smartForm[field.name] ?? ''}
-              onChange={(v) => onFieldChange(field.name, v)}
-              allValues={smartForm} />
-          ))}
-        </div>
-      </FieldSection>
-
-      {/* 任意フィールド */}
-      <FieldSection
-        title="その他"
-        subtitle="任意のメタデータ"
-        color="slate"
-        open={expanded.optional}
-        onToggle={() => toggleSection('optional')}
-        badge="任意"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(smartFields.optional || []).map((field) => (
-            <SmartField key={field.name} field={field}
-              value={smartForm[field.name] ?? ''}
-              onChange={(v) => onFieldChange(field.name, v)}
-              allValues={smartForm} />
-          ))}
-        </div>
-      </FieldSection>
-
-      {/* 登録ボタン */}
-      <div className="flex justify-end gap-3 pt-2">
-        <Button variant="ghost" onClick={() => {
-          const defaults = {};
-          for (const group of ['required', 'recommended', 'optional']) {
-            for (const f of smartFields?.[group] || []) {
-              onFieldChange(f.name, f.default ?? '');
-            }
-          }
-        }}>
-          クリア
-        </Button>
-        <Button
-          variant="success"
-          onClick={onSubmit}
-          disabled={!requiredFilled || saving}
-          className="px-8"
-        >
-          {saving ? (
-            <>
-              <svg className="w-4 h-4 animate-spin mr-2" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              登録中...
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              {table} に登録
-            </>
-          )}
-        </Button>
       </div>
     </div>
   );
@@ -1277,7 +987,7 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
         </div>
       </div>
       <p className="text-[10px] text-[#d2d2d7] mt-2 text-center">
-        登録時に自動で反映されます。「推定値を適用」で推奨フィールドにも即座に反映できます。
+        登録時に自動で反映されます。「推定値を適用」で推奨項目にも即座に反映できます。
       </p>
     </div>
   );
@@ -1444,7 +1154,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
             fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
-          {showMore ? 'その他のフィールドを閉じる' : `その他のフィールド (${otherCols.length}項目)`}
+          {showMore ? 'その他の項目を閉じる' : `その他の項目 (${otherCols.length}件)`}
         </button>
         {showMore && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
@@ -1520,361 +1230,6 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
           )}
         </button>
       </div>
-    </div>
-  );
-}
-
-
-// ── フィールドセクション (アコーディオン) ──
-function FieldSection({ title, subtitle, color, open, onToggle, badge, children }) {
-  const colorMap = {
-    rose: { bg: 'bg-rose-50', border: 'border-rose-200', badge: 'bg-rose-100 text-rose-600', icon: 'text-rose-600' },
-    amber: { bg: 'bg-[#ff9500]/[0.08]', border: 'border-[#ff9500]/20', badge: 'bg-amber-100 text-[#ff9500]', icon: 'text-[#ff9500]' },
-    slate: { bg: 'bg-black/[0.04]', border: 'border-black/[0.06]', badge: 'bg-black/[0.04] text-[#86868b]', icon: 'text-[#d2d2d7]' },
-  };
-  const c = colorMap[color] || colorMap.slate;
-
-  return (
-    <div className={`rounded-lg border ${c.border} overflow-hidden transition-all`}>
-      <button onClick={onToggle}
-        className={`w-full flex items-center justify-between px-5 py-4 ${c.bg} hover:brightness-95 transition-all`}>
-        <div className="flex items-center gap-3">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${c.badge}`}>
-            {badge}
-          </span>
-          <div className="text-left">
-            <div className="text-sm font-bold text-[#1d1d1f]">{title}</div>
-            <div className="text-[11px] text-[#c7c7cc]">{subtitle}</div>
-          </div>
-        </div>
-        <svg className={`w-5 h-5 ${c.icon} transition-transform ${open ? 'rotate-180' : ''}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {open && (
-        <div className="px-5 py-5 bg-black/[0.04]">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-// ── 数式パレット（リッチテキストエリア用） ──
-const MATH_SYMBOLS = [
-  { group: '基本', items: [
-    { label: '分数', insert: '\\frac{a}{b}', display: 'a/b' },
-    { label: '平方根', insert: '\\sqrt{x}', display: '√x' },
-    { label: 'n乗根', insert: '\\sqrt[n]{x}', display: 'ⁿ√x' },
-    { label: '上付き', insert: 'x^{n}', display: 'xⁿ' },
-    { label: '下付き', insert: 'x_{i}', display: 'xᵢ' },
-    { label: 'プラマイ', insert: '\\pm', display: '±' },
-    { label: '掛ける', insert: '\\times', display: '×' },
-    { label: '割る', insert: '\\div', display: '÷' },
-  ]},
-  { group: 'ギリシャ文字', items: [
-    { label: 'α', insert: '\\alpha' },
-    { label: 'β', insert: '\\beta' },
-    { label: 'θ', insert: '\\theta' },
-    { label: 'π', insert: '\\pi' },
-    { label: 'Σ', insert: '\\sum_{i=1}^{n}' },
-    { label: '∫', insert: '\\int_{a}^{b}' },
-    { label: 'lim', insert: '\\lim_{x \\to \\infty}' },
-    { label: '∞', insert: '\\infty' },
-  ]},
-  { group: '関数・記号', items: [
-    { label: 'sin', insert: '\\sin' },
-    { label: 'cos', insert: '\\cos' },
-    { label: 'tan', insert: '\\tan' },
-    { label: 'log', insert: '\\log' },
-    { label: 'ln', insert: '\\ln' },
-    { label: '≤', insert: '\\leq' },
-    { label: '≥', insert: '\\geq' },
-    { label: '≠', insert: '\\neq' },
-    { label: '→', insert: '\\rightarrow' },
-    { label: '⇒', insert: '\\Rightarrow' },
-  ]},
-  { group: '括弧', items: [
-    { label: '()', insert: '\\left( \\right)' },
-    { label: '{}', insert: '\\left\\{ \\right\\}' },
-    { label: '||', insert: '\\left| \\right|' },
-    { label: '[]', insert: '\\left[ \\right]' },
-  ]},
-];
-
-/** リッチテキストエリア — シンプル/数式モード切替付き */
-function RichTextArea({ value, onChange, rows, help, name, onBlur }) {
-  const textRef = useRef(null);
-  const [showPalette, setShowPalette] = useState(false);
-  const [mode, setMode] = useState('simple'); // 'simple' | 'math'
-
-  const insertAtCursor = (text) => {
-    const ta = textRef.current;
-    if (!ta) { onChange(value + text); return; }
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const before = value.slice(0, start);
-    const after = value.slice(end);
-    const newVal = before + text + after;
-    onChange(newVal);
-    requestAnimationFrame(() => {
-      ta.focus();
-      ta.selectionStart = ta.selectionEnd = start + text.length;
-    });
-  };
-
-  const wrapWithDollar = () => {
-    const ta = textRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    if (start !== end) {
-      const selected = value.slice(start, end);
-      const newVal = value.slice(0, start) + '$' + selected + '$' + value.slice(end);
-      onChange(newVal);
-      requestAnimationFrame(() => { ta.focus(); ta.selectionStart = start; ta.selectionEnd = end + 2; });
-    } else {
-      insertAtCursor('$$');
-      requestAnimationFrame(() => { ta.focus(); ta.selectionStart = ta.selectionEnd = start + 1; });
-    }
-  };
-
-  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-black/[0.06] rounded-lg bg-white
-    text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 outline-none`;
-
-  return (
-    <div className="md:col-span-2">
-      {/* モード切替タブ */}
-      <div className="flex items-center gap-0 mb-2 bg-black/[0.04] rounded-lg p-0.5 w-fit">
-        <button type="button" onClick={() => setMode('simple')}
-          className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
-            mode === 'simple'
-              ? 'bg-white text-[#1d1d1f] '
-              : 'text-[#d2d2d7] hover:text-[#86868b]'
-          }`}>
-          📝 テキスト入力
-        </button>
-        <button type="button" onClick={() => setMode('math')}
-          className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
-            mode === 'math'
-              ? 'bg-black/[0.04] text-[#fc3c44] '
-              : 'text-[#d2d2d7] hover:text-[#86868b]'
-          }`}>
-          🔢 数式入力
-        </button>
-      </div>
-
-      {/* 数式モード: ツールバー */}
-      {mode === 'math' && (
-        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-          <button type="button" onClick={wrapWithDollar}
-            className="px-2 py-1 text-[11px] font-bold bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-lg hover:bg-[#fc3c44]/[0.12] transition-colors border border-[#fc3c44]/20"
-            title="選択テキストを数式$...$で囲む">
-            $ 数式 $
-          </button>
-          <button type="button" onClick={() => setShowPalette(!showPalette)}
-            className={`px-2 py-1 text-[11px] font-bold rounded-lg transition-colors border ${
-              showPalette ? 'bg-[#fc3c44] text-white border-red-600' : 'bg-black/[0.04] text-[#c7c7cc] border-black/[0.06] hover:bg-black/[0.03]'
-            }`}>
-            {showPalette ? '▼ パレット閉じる' : '▶ 数式パレット'}
-          </button>
-          <span className="text-[10px] text-[#d2d2d7] ml-2">日本語テキスト + 数式は $ で囲んで入力</span>
-        </div>
-      )}
-
-      {/* 数式パレット */}
-      {mode === 'math' && showPalette && (
-        <div className="mb-2 p-3 bg-gradient-to-b from-red-50 to-white rounded-lg border border-[#fc3c44]/20 space-y-2">
-          {MATH_SYMBOLS.map((g) => (
-            <div key={g.group}>
-              <div className="text-[9px] font-bold text-[#fc3c44] mb-1 tracking-wider">{g.group}</div>
-              <div className="flex flex-wrap gap-1">
-                {g.items.map((sym) => (
-                  <button key={sym.insert} type="button"
-                    onClick={() => insertAtCursor(sym.insert)}
-                    className="px-2 py-1 text-xs bg-black/[0.04] border border-[#fc3c44]/20 rounded-md hover:bg-[#fc3c44]/[0.08] hover:border-red-700 transition-colors text-[#1d1d1f] font-mono"
-                    title={`${sym.label}: ${sym.insert}`}>
-                    {sym.display || sym.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* テキストエリア本体 */}
-      <textarea
-        ref={textRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={onBlur}
-        rows={rows || 6}
-        placeholder={mode === 'simple'
-          ? 'テキストをそのまま入力 or 貼り付け（コピペOK）'
-          : '日本語テキスト＋数式（$x^2+1$のように$で囲む）'}
-        className={`${baseInputClass} resize-y`}
-      />
-      {mode === 'simple' ? (
-        <p className="text-[10px] text-[#d2d2d7] mt-1">
-          テキストデータをそのままコピペできます。数式挿入が必要なら「🔢 数式入力」タブへ
-        </p>
-      ) : (
-        <p className="text-[10px] text-[#d2d2d7] mt-1">
-          例: 「$x^2 + 2x + 1 = 0$ を解け。」 — ふつうの文章の中に $...$ で数式を入れるだけ
-        </p>
-      )}
-    </div>
-  );
-}
-
-
-// ── 個別フィールド入力 ──
-function SmartField({ field, value, onChange, allValues, onBlur }) {
-  const { name, label, type, help, options, rows, min, max, step, depends_on } = field;
-
-  const baseInputClass = `w-full px-3 py-2.5 text-sm border border-black/[0.06] rounded-lg bg-white
-    text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#fc3c44]/50 focus:ring-2 focus:ring-[#fc3c44]/20 outline-none`;
-
-  const isWide = type === 'textarea' || type === 'json' || type === 'rich_textarea';
-
-  // dependent_select: 親の選択に応じた選択肢を動的生成 + 自由入力対応
-  if (type === 'dependent_select') {
-    const parentVal = depends_on ? allValues?.[depends_on] : null;
-    const dynamicOptions = parentVal ? (SUBJECT_TOPICS[parentVal] || []) : [];
-    const isCustom = value && dynamicOptions.length > 0 && !dynamicOptions.includes(value);
-
-    return (
-      <div className={isWide ? 'md:col-span-2' : ''}>
-        <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
-          {label}
-        </label>
-
-        {/* 候補チップ（親が選択済みのとき表示） */}
-        {parentVal && dynamicOptions.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-1.5">
-            {dynamicOptions.map((opt) => (
-              <button key={opt} type="button"
-                onClick={() => onChange(opt)}
-                className={`px-2 py-0.5 text-[11px] rounded-lg border transition-all ${
-                  value === opt
-                    ? 'bg-[#fc3c44] text-white border-red-600'
-                    : 'bg-black/[0.04] text-[#c7c7cc] border-black/[0.06] hover:border-red-700 hover:text-[#fc3c44]'
-                }`}>
-                {opt}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* 自由入力フィールド */}
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={parentVal ? `候補から選択 or 新しい分野を自由入力` : '先に教科を選択してください'}
-          className={`${baseInputClass} ${isCustom ? 'border-emerald-300 bg-[#34c759]/[0.08]/30' : ''}`}
-        />
-        {isCustom && (
-          <p className="text-[10px] text-[#34c759] mt-0.5 flex items-center gap-1">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-            新しい分野「{value}」を追加します
-          </p>
-        )}
-        {!parentVal && depends_on && (
-          <p className="text-[10px] text-[#ff9500] mt-1">⬆ 教科を先に選択すると候補が表示されます</p>
-        )}
-      </div>
-    );
-  }
-
-  // rich_textarea: 数式パレット付きテキストエリア
-  if (type === 'rich_textarea') {
-    return (
-      <div className="md:col-span-2">
-        <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
-          {label}
-        </label>
-        <RichTextArea value={value} onChange={onChange} rows={rows} help={help} name={name} onBlur={onBlur} />
-      </div>
-    );
-  }
-
-  return (
-    <div className={isWide ? 'md:col-span-2' : ''}>
-      <label className="block text-[11px] font-bold text-[#86868b] mb-1.5 tracking-[0.08em]">
-        {label}
-      </label>
-
-      {type === 'select' && options ? (
-        <select value={value} onChange={(e) => onChange(e.target.value)} className={baseInputClass}>
-          <option value="">— 選択 —</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
-      ) : type === 'textarea' ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={rows || 4}
-          placeholder={help}
-          className={`${baseInputClass} resize-y`}
-        />
-      ) : type === 'json' ? (
-        <textarea
-          value={typeof value === 'object' ? JSON.stringify(value, null, 2) : value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={rows || 3}
-          placeholder={help}
-          className={`${baseInputClass} resize-y font-mono text-xs`}
-        />
-      ) : type === 'slider' ? (
-        <div className="flex items-center gap-3">
-          <input
-            type="range"
-            min={min ?? 0}
-            max={max ?? 1}
-            step={step ?? 0.05}
-            value={value || min || 0}
-            onChange={(e) => onChange(e.target.value)}
-            className="flex-1 h-2 bg-black/[0.04] rounded-full appearance-none accent-red-500"
-          />
-          <span className="text-sm font-mono text-[#fc3c44] font-bold w-12 text-right">
-            {Number(value || 0).toFixed(2)}
-          </span>
-        </div>
-      ) : type === 'number' ? (
-        <input
-          type="number"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          step="any"
-          placeholder={help}
-          className={baseInputClass}
-        />
-      ) : type === 'boolean' ? (
-        <select value={String(value)} onChange={(e) => onChange(e.target.value)} className={baseInputClass}>
-          <option value="">— 選択 —</option>
-          <option value="true">はい</option>
-          <option value="false">いいえ</option>
-        </select>
-      ) : (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onBlur={onBlur}
-          placeholder={help}
-          className={baseInputClass}
-        />
-      )}
-
-      {help && type !== 'textarea' && type !== 'json' && (
-        <p className="text-[10px] text-[#d2d2d7] mt-1">{help}</p>
-      )}
     </div>
   );
 }
