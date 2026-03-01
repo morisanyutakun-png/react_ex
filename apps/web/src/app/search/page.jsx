@@ -251,7 +251,7 @@ export default function SearchPage() {
   const hasActiveFilters = query || subjectFilter || fieldFilter || difficultyFilter;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
       <PageHeader
         title="問題検索"
         description="保存された問題を検索・閲覧。科目・分野・難易度での絞り込みや類題生成も可能です。"
@@ -262,7 +262,8 @@ export default function SearchPage() {
       <StatusBar message={status} />
 
       {/* ── 検索パネル ── */}
-      <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.06] shadow-sm">
+      <div className="relative overflow-hidden rounded-[20px] bg-white border border-black/[0.04]"
+           style={{ boxShadow: 'var(--shadow-card)' }}>
 
         <div className="p-4 sm:p-7 space-y-4 sm:space-y-5">
 

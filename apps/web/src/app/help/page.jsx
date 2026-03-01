@@ -114,7 +114,7 @@ function TableOfContents({ activeId }) {
 
 function ScreenFrame({ children, title, color }) {
   return (
-    <div className="rounded-2xl border border-black/[0.06] bg-white shadow-lg overflow-hidden">
+    <div className="rounded-[20px] border border-black/[0.04] bg-white overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.04]" style={{ background: `linear-gradient(90deg,${color}08,${color}02)` }}>
         <div className="flex gap-1">
           <div className="w-2 h-2 rounded-full bg-[#ff5f57]" />
@@ -281,21 +281,21 @@ function FlowDiagram() {
 function FeatureSection({ id, icon, title, subtitle, color, href, diagram, steps, tips }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.04] shadow-sm transition-all duration-300 hover:shadow-xl">
-        <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
-        <div className="p-6 sm:p-8">
+      <div className="relative overflow-hidden rounded-[20px] bg-white border border-black/[0.04] transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:shadow-lg" style={{ boxShadow: 'var(--shadow-card)' }}>
+        <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
+        <div className="p-5 sm:p-7">
           {/* Header */}
           <div className="flex items-center gap-3.5 mb-2">
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl shadow-lg flex-shrink-0"
-                 style={{ background: `linear-gradient(135deg, ${color}18, ${color}06)`, boxShadow: `0 4px 20px ${color}18` }}>
+            <div className="flex items-center justify-center w-11 h-11 rounded-[13px] flex-shrink-0"
+                 style={{ background: `linear-gradient(135deg, ${color}18, ${color}06)`, boxShadow: `0 2px 10px ${color}12` }}>
               {icon}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-[18px] font-black text-[#1d1d1f] tracking-tight">{title}</h3>
-              <p className="text-[12px] text-[#86868b] mt-0.5">{subtitle}</p>
+              <h3 className="text-[17px] font-bold text-[#1d1d1f] tracking-tight">{title}</h3>
+              <p className="text-[12px] text-[#aeaeb2] mt-0.5">{subtitle}</p>
             </div>
-            <Link href={href} className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.03] active:scale-[0.97]"
-                  style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, boxShadow: `0 4px 12px ${color}30` }}>
+            <Link href={href} className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-[12px] text-[12px] font-semibold text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.97]"
+                  style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, boxShadow: `0 2px 8px ${color}20` }}>
               開く
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
             </Link>
@@ -320,7 +320,7 @@ function FeatureSection({ id, icon, title, subtitle, color, href, diagram, steps
 
           {/* Tips */}
           {tips && (
-            <div className="mt-5 p-4 rounded-2xl border border-black/[0.04]" style={{ background: `${color}04` }}>
+            <div className="mt-5 p-4 rounded-[16px] border border-black/[0.04]" style={{ background: `${color}04` }}>
               <div className="flex items-center gap-1.5 mb-2">
                 <svg className="w-3.5 h-3.5" style={{ color }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
@@ -338,8 +338,8 @@ function FeatureSection({ id, icon, title, subtitle, color, href, diagram, steps
           )}
 
           {/* Mobile CTA */}
-          <Link href={href} className="sm:hidden flex items-center justify-center gap-2 mt-4 px-4 py-3 rounded-2xl text-[14px] font-bold text-white shadow-lg active:scale-[0.97] transition-all"
-                style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }}>
+          <Link href={href} className="sm:hidden flex items-center justify-center gap-2 mt-4 px-4 py-3 rounded-[16px] text-[14px] font-semibold text-white active:scale-[0.97] transition-all"
+                style={{ background: `linear-gradient(135deg, ${color}, ${color}cc)`, boxShadow: `0 2px 8px ${color}20` }}>
             ページを開く →
           </Link>
         </div>
@@ -385,7 +385,7 @@ const FAQ_DATA = [
 
 function FaqCategory({ category, color, icon, items }) {
   return (
-    <div className="relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-sm">
+    <div className="relative overflow-hidden rounded-[20px] bg-white border border-black/[0.04]" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
       <div className="px-5 pt-5 pb-2">
         <div className="flex items-center gap-2.5">
@@ -452,7 +452,7 @@ export default function HelpPage() {
   }, []);
 
   return (
-<div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-14 pb-28 sm:pb-14">
+<div className="max-w-4xl mx-auto px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
 
       {/* ── ヒーロー ── */}
       <div className="text-center mb-12">
@@ -486,9 +486,9 @@ export default function HelpPage() {
 
           {/* ═══ 概要 ═══ */}
           <section id="overview" className="scroll-mt-24">
-            <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.04] shadow-sm p-4 sm:p-8">
+            <div className="relative overflow-hidden rounded-[20px] bg-white border border-black/[0.04] p-4 sm:p-7" style={{ boxShadow: 'var(--shadow-card)' }}>
 
-              <h2 className="text-[20px] font-black text-[#1d1d1f] tracking-tight mb-2">REM とは？</h2>
+              <h2 className="text-[19px] font-bold text-[#1d1d1f] tracking-tight mb-2">REM とは？</h2>
               <p className="text-[14px] text-[#6e6e73] leading-relaxed mb-5">
                 <strong className="text-[#1d1d1f]">Rapid Exam Maker</strong> — AIと過去問データを活用して、高品質な試験問題をかんたんに作成できるサービスです。
               </p>
@@ -507,7 +507,7 @@ export default function HelpPage() {
               </div>
 
               {/* 抽象フロー図 */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#fafafa] border border-black/[0.04]">
+              <div className="p-4 sm:p-5 rounded-[16px] bg-[#fafafa] border border-black/[0.04]">
                 <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-[0.15em] mb-3">しくみ</div>
                 <FlowDiagram />
               </div>
@@ -523,7 +523,7 @@ export default function HelpPage() {
                     { icon: <IcoDb />,     label: 'データ管理',   href: '/db-editor', color: '#30d158' },
                   ].map((item) => (
                     <Link key={item.href} href={item.href}
-                      className="group flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/80 border border-black/[0.04] shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
+                      className="group flex flex-col items-center gap-1.5 p-3 rounded-[16px] bg-white/80 border border-black/[0.04] transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:scale-[1.02] active:scale-[0.98]" style={{ boxShadow: 'var(--shadow-card)' }}>
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
                            style={{ background: `linear-gradient(135deg, ${item.color}12, ${item.color}05)` }}>{item.icon}</div>
                       <span className="text-[11px] font-bold text-[#1d1d1f]">{item.label}</span>
@@ -547,7 +547,7 @@ export default function HelpPage() {
                 { n: '2', icon: '▷', title: '生成する', desc: 'AIが過去問を参照しながら自動生成。数秒で完了。', color: '#bf5af2' },
                 { n: '3', icon: '↓', title: 'PDFをダウンロード', desc: '完成した試験問題をPDFで取得。そのまま印刷OK。', color: '#30d158' },
               ].map((s) => (
-                <div key={s.n} className="relative flex flex-col items-center gap-3 p-5 rounded-2xl bg-white/70 border border-black/[0.04] shadow-sm hover:shadow-md transition-all">
+                <div key={s.n} className="relative flex flex-col items-center gap-3 p-5 rounded-[20px] bg-white/70 border border-black/[0.04] transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:shadow-md" style={{ boxShadow: 'var(--shadow-card)' }}>
                   <div className="absolute top-0 left-5 right-5 h-[2px] rounded-b-full" style={{ background: `linear-gradient(90deg,${s.color},transparent)`, opacity: 0.3 }} />
                   <div className="flex items-center justify-center w-10 h-10 rounded-2xl text-white text-[14px] font-black shadow-md"
                        style={{ background: `linear-gradient(135deg, ${s.color}, ${s.color}cc)` }}>{s.n}</div>
@@ -632,7 +632,7 @@ export default function HelpPage() {
             </div>
 
             {/* 用語集インライン */}
-            <div className="mt-8 relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-sm p-5 sm:p-6">
+            <div className="mt-8 relative overflow-hidden rounded-[20px] bg-white border border-black/[0.04] p-5 sm:p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-[14px] font-black text-[#0a84ff]">Glossary</span>
                 <h4 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">用語集</h4>
@@ -657,7 +657,7 @@ export default function HelpPage() {
 
           {/* ═══ フッター ═══ */}
           <div className="text-center pt-6 pb-4">
-            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#1d1d1f] text-white text-[14px] font-bold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
+            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-[16px] bg-[#1d1d1f] text-white text-[14px] font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]" style={{ boxShadow: 'var(--shadow-card)' }}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>

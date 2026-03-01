@@ -397,7 +397,7 @@ export default function DbEditorPage() {
   const displayCols = allCols.filter((c) => visibleCols.includes(c.name));
 
   return (
-    <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-3 sm:px-4 pb-24 sm:pb-12">
+    <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
       <PageHeader
         title="データ管理"
         description="過去問データの閲覧・編集・新規登録"
@@ -416,12 +416,13 @@ export default function DbEditorPage() {
             <button
               key={t.name}
               onClick={() => setSelectedTable(t.name)}
-              className={`group relative text-left rounded-2xl p-3.5 transition-all duration-300 overflow-hidden
+              className={`group relative text-left rounded-[16px] p-3.5 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden
                 ${active
-                  ? 'bg-white shadow-lg shadow-black/[0.06] border-2 scale-[1.02]'
-                  : 'bg-white/60 backdrop-blur-sm border border-black/[0.04] hover:bg-white hover:shadow-md hover:scale-[1.01]'
+                  ? 'bg-white border-2 scale-[1.02]'
+                  : 'bg-white/60 backdrop-blur-sm border border-black/[0.04] hover:bg-white hover:scale-[1.01]'
                 }`}
-              style={active ? { borderColor: `${meta.color}40` } : {}}
+              style={active ? { borderColor: `${meta.color}40`, boxShadow: 'var(--shadow-card)' } : {}}
+
             >
               {/* アクティブ時の背景グロー */}
               {active && (
@@ -549,17 +550,17 @@ export default function DbEditorPage() {
           </div>
 
           {/* データ一覧 (デスクトップ) */}
-          <div className="hidden sm:block rounded-2xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
+          <div className="hidden sm:block rounded-[20px] bg-white border border-black/[0.04] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-black/[0.06]">
-                    <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#86868b] tracking-wide sticky left-0 bg-white z-10 w-10">
+                  <tr className="border-b border-black/[0.04]">
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium text-[#aeaeb2] tracking-wide sticky left-0 bg-white z-10 w-10">
                       #
                     </th>
                     {displayCols.map((col) => (
                       <th key={col.name}
-                        className="px-3 py-3 text-left text-[11px] font-semibold text-[#86868b] tracking-wide whitespace-nowrap"
+                        className="px-3 py-2.5 text-left text-[11px] font-medium text-[#aeaeb2] tracking-wide whitespace-nowrap"
                         title={colLabel(col.name)}
                       >
                         <div className="flex items-center gap-1.5">
@@ -568,7 +569,7 @@ export default function DbEditorPage() {
                         </div>
                       </th>
                     ))}
-                    <th className="px-3 py-3 text-center text-[11px] font-semibold text-[#86868b] tracking-wide w-20">
+                    <th className="px-3 py-2.5 text-center text-[11px] font-medium text-[#aeaeb2] tracking-wide w-20">
                       操作
                     </th>
                   </tr>
@@ -686,10 +687,10 @@ export default function DbEditorPage() {
               const rowDirty = !!edits[rowPk];
               return (
                 <div key={rowPk ?? idx}
-                  className={`rounded-2xl border p-4 transition-all ${
+                  className={`rounded-[20px] border p-4 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${
                     rowDirty
                       ? 'bg-[#ff9500]/[0.06] border-[#ff9500]/20'
-                      : 'bg-white/70 border-black/[0.06]'
+                      : 'bg-white/70 border-black/[0.04]'
                   }`}
                 >
                   {/* Card header with PK and actions */}
@@ -760,7 +761,7 @@ export default function DbEditorPage() {
       {/* ── 削除確認 ── */}
       {deleteConfirm !== null && (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-center justify-center">
-          <div className="rounded-2xl bg-white/90 backdrop-blur-xl p-6 shadow-2xl max-w-sm mx-4 border border-white/60">
+          <div className="rounded-[20px] bg-white/90 backdrop-blur-xl p-6 max-w-sm mx-4 border border-black/[0.04]" style={{ boxShadow: 'var(--shadow-premium)' }}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center">
                 <svg className="w-5 h-5 text-[#ff3b30]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -801,8 +802,8 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         onChange={(e) => onChange(e.target.value)}
         onBlur={onFinish}
         onKeyDown={(e) => { if (e.key === 'Escape') onFinish(); }}
-        className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-red-600
-                   rounded-lg bg-black/[0.04] font-mono resize-y outline-none shadow-inner"
+        className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-[#0071e3]
+                   rounded-[12px] bg-black/[0.03] font-mono resize-y outline-none"
         rows={4}
       />
     );
@@ -814,7 +815,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         value={String(value ?? '')}
         onChange={(e) => { onChange(e.target.value); onFinish(); }}
         onBlur={onFinish}
-        className="px-2 py-1.5 text-xs border border-red-600 rounded-lg bg-black/[0.04]"
+        className="px-2 py-1.5 text-xs border border-[#0071e3] rounded-[12px] bg-black/[0.03]"
       >
         <option value="">—</option>
         <option value="true">はい</option>
@@ -834,8 +835,8 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         if (e.key === 'Escape') onFinish();
       }}
       step={isNumericColumn(col.type) ? 'any' : undefined}
-      className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-red-600
-                 rounded-lg bg-black/[0.04] outline-none shadow-inner"
+      className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-[#0071e3]
+                 rounded-[12px] bg-black/[0.03] outline-none"
     />
   );
 });
@@ -865,7 +866,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
   };
 
   return (
-    <div className="bg-black/[0.04] rounded-lg border border-black/[0.06] shadow-lg p-5">
+    <div className="bg-black/[0.02] rounded-[16px] border border-black/[0.04] p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-[#1d1d1f]">表示カラムを選択</h3>
         <div className="flex gap-2">
@@ -883,7 +884,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
         {Object.entries(COLUMN_GROUPS).map(([key, group]) => (
           <button key={key} onClick={() => selectGroup(key)}
             className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-black/[0.04] text-[#86868b]
-                       hover:bg-[#0071e3]/[0.08] hover:text-[#0071e3] transition-colors border border-black/[0.06]">
+                       hover:bg-[#0071e3]/[0.08] hover:text-[#0071e3] transition-colors border border-black/[0.04]">
             {group.label}
           </button>
         ))}
@@ -909,8 +910,8 @@ function RowDetailModal({ row, schema, pk, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white/95 backdrop-blur-xl rounded-t-2xl sm:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-white/60">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/[0.06]">
+      <div className="bg-white/95 backdrop-blur-xl rounded-t-[20px] sm:rounded-[20px] max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-black/[0.04]" style={{ boxShadow: 'var(--shadow-premium)' }}>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/[0.04]">
           <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f]">
             データ詳細
           </h2>
@@ -925,7 +926,7 @@ function RowDetailModal({ row, schema, pk, onClose }) {
             const val = row[col.name];
             const isEmpty = val === null || val === undefined || val === '';
             return (
-              <div key={col.name} className="flex flex-col sm:flex-row sm:gap-3 py-2 border-b border-black/[0.06]">
+              <div key={col.name} className="flex flex-col sm:flex-row sm:gap-3 py-2 border-b border-black/[0.04]">
                 <div className="sm:w-44 flex-shrink-0 mb-0.5 sm:mb-0">
                   <span className="text-xs font-bold text-[#424245]">{colLabel(col.name)}</span>
                 </div>
@@ -954,7 +955,7 @@ function RowDetailModal({ row, schema, pk, onClose }) {
 function DifficultyEstimatePanel({ result, estimating, onApply }) {
   if (estimating) {
     return (
-      <div className="bg-[#0071e3]/[0.08] border border-black/[0.06] rounded-lg p-4 flex items-center gap-3">
+      <div className="bg-[#0071e3]/[0.06] border border-black/[0.04] rounded-[16px] p-4 flex items-center gap-3">
         <svg className="w-5 h-5 animate-spin text-[#0071e3]" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -975,7 +976,7 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
   const levelLabels = { 1: '基礎', 2: '標準', 3: '応用', 4: '発展', 5: '難問' };
 
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-red-50 border border-black/[0.06] rounded-lg p-4">
+    <div className="bg-gradient-to-r from-violet-50/60 to-rose-50/60 border border-black/[0.04] rounded-[16px] p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-[#af52de]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -992,22 +993,22 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
         </button>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-black/[0.04] rounded-lg p-3 text-center border border-black/[0.06]">
-          <div className="text-[10px] font-bold text-[#c7c7cc] mb-1">難易度スコア</div>
+        <div className="bg-black/[0.02] rounded-[12px] p-3 text-center border border-black/[0.04]">
+          <div className="text-[10px] font-semibold text-[#aeaeb2] mb-1">難易度スコア</div>
           <div className="text-xl font-bold text-[#af52de]">{result.difficulty.toFixed(3)}</div>
           <div className="h-1.5 bg-black/[0.04] rounded-full mt-1.5 overflow-hidden">
             <div className="h-full bg-[#af52de] rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
           </div>
         </div>
-        <div className="bg-black/[0.04] rounded-lg p-3 text-center border border-black/[0.06]">
-          <div className="text-[10px] font-bold text-[#c7c7cc] mb-1">レベル</div>
+        <div className="bg-black/[0.02] rounded-[12px] p-3 text-center border border-black/[0.04]">
+          <div className="text-[10px] font-semibold text-[#aeaeb2] mb-1">レベル</div>
           <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-bold ${levelColors[result.difficulty_level] || 'bg-black/[0.04] text-[#86868b]'}`}>
             Lv.{result.difficulty_level}
           </div>
           <div className="text-[10px] text-[#c7c7cc] mt-1">{levelLabels[result.difficulty_level] || ''}</div>
         </div>
-        <div className="bg-black/[0.04] rounded-lg p-3 text-center border border-black/[0.06]">
-          <div className="text-[10px] font-bold text-[#c7c7cc] mb-1">ひっかけ度</div>
+        <div className="bg-black/[0.02] rounded-[12px] p-3 text-center border border-black/[0.04]">
+          <div className="text-[10px] font-semibold text-[#aeaeb2] mb-1">ひっかけ度</div>
           <div className="text-xl font-bold text-[#ff9500]">{result.trickiness.toFixed(3)}</div>
           <div className="h-1.5 bg-black/[0.04] rounded-full mt-1.5 overflow-hidden">
             <div className="h-full bg-[#ff9500] rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
@@ -1041,8 +1042,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
     !['created_at', 'updated_at'].includes(c.name)
   );
 
-  const baseInputClass = `w-full px-3 py-2 text-sm border border-black/[0.06] rounded-lg bg-white
-    text-[#1d1d1f] transition-all hover:border-black/[0.08] focus:border-[#0071e3]/50 focus:ring-2 focus:ring-[#0071e3]/20 outline-none placeholder:text-[#c7c7cc]`;
+  const baseInputClass = `w-full px-3 py-2 text-sm border border-black/[0.04] rounded-[12px] bg-white
+    text-[#1d1d1f] transition-all hover:border-black/[0.06] focus:border-[#0071e3]/50 focus:ring-2 focus:ring-[#0071e3]/20 outline-none placeholder:text-[#c7c7cc]`;
 
   const handleStemBlur = () => {
     if (data.stem?.trim()) {
@@ -1061,7 +1062,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
   const hasPriority = data.subject && data.stem;
 
   return (
-    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-black/[0.06] rounded-lg p-5 space-y-4">
+    <div className="bg-gradient-to-r from-emerald-50/60 to-teal-50/60 border border-black/[0.04] rounded-[20px] p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <svg className="w-5 h-5 text-[#34c759]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1108,7 +1109,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
                   className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
                     data.topic === t
                       ? 'bg-emerald-600 text-[#1d1d1f] border-emerald-600'
-                      : 'bg-black/[0.04] text-[#86868b] border-black/[0.06] hover:border-emerald-600'
+                      : 'bg-black/[0.03] text-[#86868b] border-black/[0.04] hover:border-emerald-600'
                   }`}>
                   {t}
                 </button>

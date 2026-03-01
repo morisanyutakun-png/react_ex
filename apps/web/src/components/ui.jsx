@@ -101,20 +101,20 @@ export const Icons = {
 /* ── PageHeader (Premium) ── */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
-    <div className="mb-8 sm:mb-10 animate-fade-in-up">
+    <div className="mb-7 sm:mb-9 animate-fade-in-up">
       {breadcrumbs && (
-        <nav className="flex items-center gap-1.5 mb-5 sm:mb-6 text-[12px] font-medium tracking-wide">
+        <nav className="flex items-center gap-1.5 mb-4 sm:mb-5 text-[12px] font-medium tracking-wide">
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="text-[#86868b] hover:text-[#1d1d1f] transition-colors duration-200">
+                <a href={bc.href} className="text-[#aeaeb2] hover:text-[#1d1d1f] transition-colors duration-200">
                   <span>{bc.label}</span>
                 </a>
               ) : (
                 <span className="text-[#1d1d1f] font-semibold">{bc.label}</span>
               )}
               {i < breadcrumbs.length - 1 && (
-                <svg className="w-3 h-3 text-[#c7c7cc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-[#d2d2d7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               )}
@@ -122,18 +122,18 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           ))}
         </nav>
       )}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3.5">
         {icon && (
-          <div className="flex-shrink-0 w-12 h-12 rounded-2xl icon-premium text-white flex items-center justify-center">
+          <div className="flex-shrink-0 w-11 h-11 rounded-[13px] icon-premium text-white flex items-center justify-center">
             {icon}
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-[24px] sm:text-[30px] font-black text-[#1d1d1f] tracking-tight leading-tight">
+          <h1 className="text-[22px] sm:text-[28px] font-black text-[#1d1d1f] tracking-tight leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#86868b] mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-[13px] text-[#aeaeb2] mt-1 max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
@@ -150,13 +150,13 @@ export function StatusBar({ message }) {
   const isSuccess = message.includes('完了') || message.includes('成功') || message.includes('取得') || message.includes('作成') || message.includes('開きました') || /\d+件/.test(message);
 
   const styles = isError
-    ? 'bg-[#ff3b30]/[0.06] text-[#ff3b30] border-[#ff3b30]/[0.10]'
+    ? 'bg-[#ff3b30]/[0.04] text-[#ff3b30] border-[#ff3b30]/[0.08]'
     : isSuccess
-    ? 'bg-[#34c759]/[0.06] text-[#248a3d] border-[#34c759]/[0.10]'
-    : 'bg-black/[0.03] text-[#86868b] border-black/[0.06]';
+    ? 'bg-[#34c759]/[0.04] text-[#248a3d] border-[#34c759]/[0.08]'
+    : 'bg-black/[0.02] text-[#86868b] border-black/[0.04]';
 
   return (
-    <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-semibold mb-4 border backdrop-blur-sm transition-all duration-500 animate-in ${styles}`}>
+    <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border transition-all duration-400 animate-in ${styles}`}>
       <span className="flex-shrink-0">
         {isError ? <Icons.Error /> : isSuccess ? <Icons.Success /> : <Icons.Info />}
       </span>
@@ -415,16 +415,16 @@ export function SectionCard({ title, subtitle, icon, children, className = '', a
   return (
     <div className={`card-premium p-5 sm:p-6 ${className}`}>
       {(title || icon) && (
-        <div className="mb-5">
-          <div className="flex items-center gap-3">
+        <div className="mb-4">
+          <div className="flex items-center gap-2.5">
             {icon && (
-              <span className="icon-premium w-9 h-9 text-white flex-shrink-0">
+              <span className="icon-premium w-8 h-8 text-white flex-shrink-0">
                 {icon}
               </span>
             )}
-            {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">{title}</h2>}
+            {title && <h2 className="text-[14px] font-bold text-[#1d1d1f] tracking-tight">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[12px] text-[#aeaeb2] mt-1 ml-[48px]">{subtitle}</p>}
+          {subtitle && <p className="text-[11px] text-[#aeaeb2] mt-1 ml-[42px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -435,9 +435,9 @@ export function SectionCard({ title, subtitle, icon, children, className = '', a
 /* ── EmptyState ── */
 export function EmptyState({ icon, title, description }) {
   return (
-    <div className="text-center py-20 card-premium border-dashed !border-black/[0.08]">
-      <div className="flex justify-center mb-5 text-[#c7c7cc]">{icon || <Icons.Empty />}</div>
-      {title && <div className="text-[15px] font-bold text-[#86868b] mb-1.5">{title}</div>}
+    <div className="text-center py-16 card-premium border-dashed !border-black/[0.06]">
+      <div className="flex justify-center mb-4 text-[#d2d2d7]">{icon || <Icons.Empty />}</div>
+      {title && <div className="text-[14px] font-bold text-[#86868b] mb-1">{title}</div>}
       {description && <div className="text-[13px] text-[#aeaeb2] leading-relaxed max-w-sm mx-auto">{description}</div>}
     </div>
   );
@@ -446,14 +446,13 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs (Premium) ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.05] rounded-[14px]"
-         style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]">
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
-          className={`flex-1 px-3.5 py-[8px] rounded-[11px] text-[13px] font-bold transition-all duration-300
+          className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold transition-all duration-300
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.06),0_3px_8px_rgba(0,0,0,0.04)]'
-              : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/50'
+              ? 'bg-white text-[#1d1d1f] shadow-[0_0.5px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.03)]'
+              : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/40'
             }`}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
           {tab.label}
@@ -466,27 +465,27 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
 /* ── ProgressSteps ── */
 export function ProgressSteps({ steps, current }) {
   return (
-    <div className="flex items-center gap-1.5 sm:gap-3 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
+    <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
       {steps.map((s, i) => (
         <div key={i} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-400
+          <div className="flex items-center gap-1.5">
+            <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-[9px] text-[10px] sm:text-[11px] font-bold transition-all duration-300
                 ${i + 1 <= current
-                  ? 'text-white shadow-sm'
+                  ? 'text-white'
                   : i + 1 === current + 1
-                  ? 'bg-black/[0.06] text-[#1d1d1f]'
-                  : 'bg-black/[0.03] text-[#c7c7cc]'
+                  ? 'bg-black/[0.05] text-[#1d1d1f]'
+                  : 'bg-black/[0.03] text-[#d2d2d7]'
                 }`}
-              style={i + 1 <= current ? { background: 'linear-gradient(145deg, #2c2c2e 0%, #1d1d1f 100%)' } : {}}>
-              {i + 1 < current ? <Icons.Success className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : i + 1}
+              style={i + 1 <= current ? { background: 'linear-gradient(145deg, #3a3a3c 0%, #1d1d1f 100%)' } : {}}>
+              {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>
-            <span className={`text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap
-                ${i + 1 <= current ? 'text-[#1d1d1f]' : i + 1 === current + 1 ? 'text-[#6e6e73]' : 'text-[#c7c7cc]'}`}>
+            <span className={`text-[11px] sm:text-[12px] font-medium transition-colors whitespace-nowrap
+                ${i + 1 <= current ? 'text-[#1d1d1f]' : i + 1 === current + 1 ? 'text-[#86868b]' : 'text-[#d2d2d7]'}`}>
               {s}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-4 sm:w-8 h-[1.5px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#1d1d1f]' : 'bg-black/[0.06]'}`} />
+            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#1d1d1f]/40' : 'bg-black/[0.05]'}`} />
           )}
         </div>
       ))}

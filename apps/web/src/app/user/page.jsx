@@ -602,23 +602,24 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div ref={wizardTopRef} className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+    <div ref={wizardTopRef} className="max-w-2xl mx-auto px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
       {/* ヘッダー */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white text-[#6e6e73] rounded-full text-xs font-semibold mb-4 sm:mb-5 border border-black/[0.06]">
-          <Icons.User className="w-3.5 h-3.5" />
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-[#86868b] rounded-full text-[11px] font-semibold mb-3 sm:mb-4 border border-black/[0.04]"
+             style={{ boxShadow: '0 0.5px 1px rgba(0,0,0,0.02)' }}>
+          <Icons.User className="w-3 h-3" />
           かんたんモード
         </div>
-        <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-tight">
+        <h1 className="text-[22px] sm:text-[28px] font-black tracking-tight text-[#1d1d1f] mb-1.5 leading-tight">
           問題をつくる
         </h1>
-        <p className="text-[13px] sm:text-[14px] text-[#86868b] leading-relaxed max-w-sm mx-auto">
+        <p className="text-[13px] text-[#86868b] leading-relaxed max-w-sm mx-auto">
           ステップに沿って進むだけで、試験問題の PDF が完成します
         </p>
       </div>
 
       {/* プログレスバー */}
-      <div className="mb-6 sm:mb-8">
+      <div className="mb-5 sm:mb-7">
         <ProgressSteps steps={STEPS} current={step} />
       </div>
 
@@ -627,18 +628,18 @@ export default function UserModePage() {
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
       {step <= 3 && (
         <div className="relative overflow-hidden rounded-2xl surface-glass mb-4">
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-xl text-white text-xs font-black flex-shrink-0 shadow-sm"
-              style={{ background: 'linear-gradient(145deg, #0077ed 0%, #0071e3 100%)' }}>
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex items-center justify-center w-7 h-7 rounded-[10px] text-white text-[11px] font-bold flex-shrink-0"
+              style={{ background: 'linear-gradient(145deg, #0077ed 0%, #0071e3 100%)', boxShadow: '0 1px 3px rgba(0,113,227,0.20)' }}>
               {step}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-bold text-[#1d1d1f] leading-snug">
+              <p className="text-[13px] font-semibold text-[#1d1d1f] leading-snug">
                 {step === 1 && (templateId ? '出題パターンを選びました — 次のステップへ進めます' : 'まず、作りたい問題のパターンを選んでください')}
                 {step === 2 && '問題数や参照数はそのままでもOK。お好みで調整してください'}
                 {step === 3 && (mode === 'auto' ? 'PDFの見た目を選んだら「PDF を生成」で完成！' : 'レイアウトを選んだら「指示文を作成」で次へ')}
               </p>
-              <p className="text-[11px] text-[#86868b] mt-0.5">
+              <p className="text-[11px] text-[#aeaeb2] mt-0.5">
                 ステップ {step} / {STEPS.length}
                 {step === 1 && !templateId && ' — 下のカードをタップするだけ'}
                 {step === 1 && templateId && ' — 右下の「次のステップへ」をタップ'}

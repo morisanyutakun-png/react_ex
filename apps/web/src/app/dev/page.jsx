@@ -642,7 +642,7 @@ export default function TuningPage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
       <PageHeader
         title="品質をみがく"
         description="出題パターンを選んで → AIに指示を出し → 出来栄えを確認する、3ステップの作業スペースです"
@@ -654,20 +654,21 @@ export default function TuningPage() {
 
       {/* ── フィードバックダッシュボード（常時表示） ── */}
       {feedbackData && (
-        <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="icon-premium w-10 h-10 text-white">
-                <Icons.Chart className="w-5 h-5" />
+        <div className="relative overflow-hidden rounded-[20px] bg-white border border-black/[0.04] shadow-sm"
+             style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="p-5 sm:p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="icon-premium w-9 h-9 text-white">
+                <Icons.Chart className="w-4 h-4" />
               </div>
               <div className="flex-1">
-                <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">あなたの評価データ</h3>
-                <p className="text-[11px] text-[#86868b]">過去の記録をもとに、AIへの指示に自動反映します</p>
+                <h3 className="text-[14px] font-bold text-[#1d1d1f] tracking-tight">あなたの評価データ</h3>
+                <p className="text-[11px] text-[#aeaeb2]">過去の記録をもとに、AIへの指示に自動反映します</p>
               </div>
               {feedbackLoading && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/[0.04] rounded-full">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-black/[0.03] rounded-full">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#1d1d1f] animate-pulse" />
-                  <span className="text-[10px] text-[#6e6e73] font-bold">更新中</span>
+                  <span className="text-[10px] text-[#86868b] font-semibold">更新中</span>
                 </div>
               )}
             </div>
