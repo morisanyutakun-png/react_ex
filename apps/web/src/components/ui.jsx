@@ -98,7 +98,7 @@ export const Icons = {
   )
 };
 
-/* ── PageHeader (Clean) ── */
+/* ── PageHeader (Premium) ── */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
     <div className="mb-8 sm:mb-10 animate-fade-in-up">
@@ -124,7 +124,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
       )}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
-          <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-[#1d1d1f] text-white flex items-center justify-center shadow-md">
+          <div className="flex-shrink-0 w-12 h-12 rounded-2xl icon-premium text-white flex items-center justify-center">
             {icon}
           </div>
         )}
@@ -184,9 +184,10 @@ export function SelectField({ label, value, onChange, options, className = '' })
           onChange={(e) => onChange(e.target.value)}
           className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm
                     text-[#1d1d1f] transition-all duration-300 cursor-pointer appearance-none
-                    hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                    hover:border-black/[0.10] hover:shadow-md
                     focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
-                    outline-none font-semibold shadow-sm"
+                    outline-none font-semibold
+                    shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]"
         >
           {options.map((opt) =>
             typeof opt === 'string' ? (
@@ -230,7 +231,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
       {label && (
         <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>
       )}
-      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white shadow-sm
+      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white
+                      shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]
                       hover:shadow-md hover:border-black/[0.10] transition-all duration-300 overflow-hidden">
         {/* Minus button */}
         <button
@@ -297,9 +299,10 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
         rows={rows} placeholder={placeholder} readOnly={readOnly}
         className="w-full px-4 py-3.5 rounded-2xl border border-black/[0.06] bg-white font-mono text-sm
                    leading-relaxed resize-y text-[#1d1d1f] transition-all duration-300
-                   hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                   hover:border-black/[0.10] hover:shadow-md
                    focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
-                   outline-none placeholder:text-[#c7c7cc] shadow-sm
+                   outline-none placeholder:text-[#c7c7cc]
+                   shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]
                    read-only:bg-[#f2f2f7] read-only:text-[#86868b] read-only:border-black/[0.04]"
       />
     </div>
@@ -314,24 +317,25 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm text-[#1d1d1f]
-                   transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
+                   transition-all duration-300 hover:border-black/[0.10] hover:shadow-md
                    focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
-                   outline-none placeholder:text-[#c7c7cc] shadow-sm font-medium"
+                   outline-none placeholder:text-[#c7c7cc] font-medium
+                   shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]"
       />
     </div>
   );
 }
 
-/* ── Button (Clean) ── */
+/* ── Button (Premium) ── */
 export function Button({ children, onClick, variant = 'primary', disabled, className = '', size = 'md' }) {
   const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]';
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
-    primary: 'bg-[#1d1d1f] text-white hover:bg-[#3a3a3c] shadow-sm hover:shadow-md',
-    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f2f2f7] hover:border-black/[0.12] shadow-sm',
-    success: 'bg-[#248a3d] text-white hover:bg-[#30a04a] shadow-sm hover:shadow-md',
-    danger: 'bg-[#ff453a] text-white hover:bg-[#ff5c5c] shadow-sm hover:shadow-md',
-    warning: 'bg-[#ff9f0a] text-white hover:bg-[#ffaa33] shadow-sm hover:shadow-md',
+    primary: 'btn-premium',
+    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f2f2f7] hover:border-black/[0.12] shadow-sm hover:shadow-md',
+    success: 'bg-gradient-to-b from-[#34c759] to-[#248a3d] text-white border-0.5 border-white/10 shadow-sm hover:shadow-md hover:brightness-110',
+    danger: 'bg-gradient-to-b from-[#ff5c5c] to-[#ff453a] text-white border-0.5 border-white/10 shadow-sm hover:shadow-md hover:brightness-110',
+    warning: 'bg-gradient-to-b from-[#ffaa33] to-[#ff9f0a] text-white border-0.5 border-white/10 shadow-sm hover:shadow-md hover:brightness-110',
     ghost: 'bg-transparent text-[#6e6e73] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
   };
   return (
@@ -380,7 +384,7 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
                      [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:appearance-none
-                     [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.15),0_0_0_1px_rgba(0,0,0,0.05)]
+                     [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.15),0_0_0_0.5px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]
                      [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200
                      [&::-webkit-slider-thumb]:hover:scale-125
                      [&::-webkit-slider-thumb]:active:scale-110"
@@ -407,7 +411,7 @@ export function CopyButton({ text, onCopied, label = 'コピー' }) {
   );
 }
 
-/* ── SectionCard (Clean) ── */
+/* ── SectionCard (Premium) ── */
 export function SectionCard({ title, subtitle, icon, children, className = '', accentColor }) {
   return (
     <div className={`card-premium p-5 sm:p-6 ${className}`}>
@@ -416,7 +420,11 @@ export function SectionCard({ title, subtitle, icon, children, className = '', a
           <div className="flex items-center gap-2.5">
             {icon && (
               <span className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300"
-                    style={{ background: `${accentColor || '#1d1d1f'}12`, color: accentColor || '#1d1d1f' }}>
+                    style={{ 
+                      background: `linear-gradient(135deg, ${accentColor || '#1d1d1f'}10, ${accentColor || '#1d1d1f'}18)`,
+                      color: accentColor || '#1d1d1f',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.50)'
+                    }}>
                 {icon}
               </span>
             )}
@@ -441,15 +449,16 @@ export function EmptyState({ icon, title, description }) {
   );
 }
 
-/* ── Tabs (Vivid) ── */
+/* ── Tabs (Premium) ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.05] rounded-[14px] border border-black/[0.04]">
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px] border border-black/[0.04]"
+         style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)' }}>
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3.5 py-[8px] rounded-[11px] text-[13px] font-bold transition-all duration-300
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f] shadow-md'
+              ? 'bg-white text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]'
               : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/50'
             }`}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
@@ -469,11 +478,12 @@ export function ProgressSteps({ steps, current }) {
           <div className="flex items-center gap-1.5 sm:gap-2">
             <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300
                 ${i + 1 <= current
-                  ? 'bg-[#1d1d1f] text-white shadow-sm'
+                  ? 'text-white shadow-[0_1px_3px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.08)]'
                   : i + 1 === current + 1
                   ? 'bg-black/[0.06] text-[#1d1d1f] border border-black/[0.08]'
                   : 'bg-black/[0.03] text-[#c7c7cc] border border-black/[0.04]'
-                }`}>
+                }`}
+              style={i + 1 <= current ? { background: 'linear-gradient(180deg, #2c2c2e 0%, #1d1d1f 100%)' } : {}}>
               {i + 1 < current ? <Icons.Success className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap

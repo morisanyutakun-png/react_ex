@@ -549,7 +549,7 @@ export default function DbEditorPage() {
           </div>
 
           {/* データ一覧 (デスクトップ) */}
-          <div className="hidden sm:block rounded-2xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
+          <div className="hidden sm:block rounded-2xl bg-white border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>

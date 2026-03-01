@@ -111,14 +111,17 @@ function DbIcon() {
   );
 }
 
-/* ─── メイン機能カード (Clean) ─── */
+/* ─── メイン機能カード (Premium) ─── */
 function ActionCard({ href, icon, label, hint, description, accentColor, delay }) {
   return (
     <Link href={href} className="group block stagger-item" style={{ animationDelay: `${delay}ms` }}>
-      <div className="relative card-premium p-5 sm:p-6 transition-all duration-300 ease-out hover:shadow-lg active:scale-[0.98] overflow-hidden">
+      <div className="relative card-premium p-5 sm:p-6 transition-all duration-500 ease-out hover:shadow-lg active:scale-[0.98] overflow-hidden shine-overlay">
         {/* アイコン */}
-        <div className="w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
-             style={{ background: `${accentColor}0a` }}>
+        <div className="w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-all duration-500 group-hover:scale-105 group-hover:shadow-md"
+             style={{ 
+               background: `linear-gradient(135deg, ${accentColor}08, ${accentColor}14)`,
+               boxShadow: `inset 0 1px 0 rgba(255,255,255,0.50)`
+             }}>
           {icon}
         </div>
 
@@ -127,7 +130,7 @@ function ActionCard({ href, icon, label, hint, description, accentColor, delay }
         <p className="text-[13px] text-[#6e6e73] leading-relaxed mb-3">{description}</p>
 
         {/* ヒント */}
-        <div className="flex items-center gap-2 text-[12px] font-semibold transition-opacity duration-300 opacity-50 group-hover:opacity-100"
+        <div className="flex items-center gap-2 text-[12px] font-semibold transition-all duration-300 opacity-50 group-hover:opacity-100"
              style={{ color: accentColor }}>
           <span>{hint}</span>
           <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -139,13 +142,16 @@ function ActionCard({ href, icon, label, hint, description, accentColor, delay }
   );
 }
 
-/* ─── ツールカード (Clean) ─── */
+/* ─── ツールカード (Premium) ─── */
 function ToolCard({ href, icon, label, description, accentColor, delay }) {
   return (
     <Link href={href} className="group block stagger-item" style={{ animationDelay: `${delay}ms` }}>
-      <div className="relative flex items-center gap-4 card-premium px-5 py-4 transition-all duration-300 hover:shadow-lg active:scale-[0.98]">
-        <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
-             style={{ background: `${accentColor}0a` }}>
+      <div className="relative flex items-center gap-4 card-premium px-5 py-4 transition-all duration-500 hover:shadow-lg active:scale-[0.98]">
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 group-hover:scale-105"
+             style={{ 
+               background: `linear-gradient(135deg, ${accentColor}08, ${accentColor}12)`,
+               boxShadow: `inset 0 1px 0 rgba(255,255,255,0.50)`
+             }}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">
@@ -169,14 +175,14 @@ export default function HomePage() {
 
         {/* ── ヒーロー ── */}
         <div className="text-center mb-14 stagger-item" style={{ animationDelay: '0ms' }}>
-          {/* ロゴマーク */}
-          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-[20px] sm:rounded-[22px] bg-[#1d1d1f] text-white mb-5 sm:mb-6 shadow-lg">
+          {/* ロゴマーク — premium glass surface */}
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-[20px] sm:rounded-[22px] icon-premium text-white mb-5 sm:mb-6">
             <svg className="w-8 h-8 sm:w-9 sm:h-9" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
 
-          <h1 className="text-[42px] sm:text-[56px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
+          <h1 className="text-[42px] sm:text-[56px] font-black tracking-tight mb-2 leading-none gradient-text-dark">
             REM
           </h1>
           <p className="text-[16px] sm:text-[18px] font-bold text-[#6e6e73] mb-3">
@@ -263,7 +269,7 @@ export default function HomePage() {
 
         {/* ── ステータス ── */}
         <div className="text-center stagger-item" style={{ animationDelay: '440ms' }}>
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/70 backdrop-blur border border-black/[0.04]">
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full surface-glass">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#30d158]"></span>

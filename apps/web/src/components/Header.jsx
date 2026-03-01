@@ -24,7 +24,11 @@ export default function Header() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-[52px]">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-[#1d1d1f] text-white shadow-md transition-all duration-300 group-hover:shadow-lg group-hover:scale-105">
+              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] text-white transition-all duration-300 group-hover:shadow-lg group-hover:scale-105"
+                   style={{ 
+                     background: 'linear-gradient(145deg, #2c2c2e, #1d1d1f)',
+                     boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 3px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.06)'
+                   }}>
                 <Icons.Book className="w-3.5 h-3.5" />
               </div>
               <span className="text-[15px] font-bold tracking-tight text-[#1d1d1f] group-hover:text-[#e8457a] transition-colors duration-300">
@@ -46,8 +50,8 @@ export default function Header() {
                         : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.04]'
                       }`}
                     style={active ? {
-                      background: `linear-gradient(135deg, ${color}, ${color}dd)`,
-                      boxShadow: `0 2px 8px ${color}40`,
+                      background: `linear-gradient(180deg, ${color}, ${color}dd)`,
+                      boxShadow: `0 1px 2px ${color}30, 0 4px 12px ${color}25, inset 0 1px 0 rgba(255,255,255,0.15)`,
                     } : {}}
                   >
                     {icon}
@@ -61,7 +65,11 @@ export default function Header() {
       </header>
 
       {/* ── モバイルボトムナビバー (enhanced touch targets) ── */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/92 backdrop-blur-2xl border-t border-black/[0.06] safe-area-bottom">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-2xl border-t border-white/50 safe-area-bottom"
+           style={{ 
+             background: 'rgba(255,255,255,0.88)',
+             boxShadow: '0 -1px 0 rgba(255,255,255,0.50), 0 -4px 16px rgba(0,0,0,0.04)'
+           }}>
         <div className="flex items-center justify-around px-1">
           {NAV_ITEMS.map(({ href, label, mobileIcon, color }) => {
             const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
