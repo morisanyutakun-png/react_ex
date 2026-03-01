@@ -281,7 +281,7 @@ function FlowDiagram() {
 function FeatureSection({ id, icon, title, subtitle, color, href, diagram, steps, tips }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)] shine-overlay transition-all duration-300 hover:shadow-xl">
+      <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.04] shadow-sm transition-all duration-300 hover:shadow-xl">
         <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
         <div className="p-6 sm:p-8">
           {/* Header */}
@@ -385,7 +385,7 @@ const FAQ_DATA = [
 
 function FaqCategory({ category, color, icon, items }) {
   return (
-    <div className="relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)] shine-overlay">
+    <div className="relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-sm">
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
       <div className="px-5 pt-5 pb-2">
         <div className="flex items-center gap-2.5">
@@ -456,7 +456,7 @@ export default function HelpPage() {
 
       {/* ── ヒーロー ── */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-[72px] h-[72px] icon-premium text-white mb-5">
+        <div className="inline-flex items-center justify-center w-[72px] h-[72px] bg-[#1d1d1f] rounded-[14px] text-white mb-5">
           <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
@@ -486,7 +486,7 @@ export default function HelpPage() {
 
           {/* ═══ 概要 ═══ */}
           <section id="overview" className="scroll-mt-24">
-            <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)] shine-overlay p-4 sm:p-8">
+            <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.04] shadow-sm p-4 sm:p-8">
 
               <h2 className="text-[20px] font-black text-[#1d1d1f] tracking-tight mb-2">REM とは？</h2>
               <p className="text-[14px] text-[#6e6e73] leading-relaxed mb-5">
@@ -632,7 +632,7 @@ export default function HelpPage() {
             </div>
 
             {/* 用語集インライン */}
-            <div className="mt-8 relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)] shine-overlay p-5 sm:p-6">
+            <div className="mt-8 relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-sm p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-[16px]">📘</span>
                 <h4 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">用語集</h4>

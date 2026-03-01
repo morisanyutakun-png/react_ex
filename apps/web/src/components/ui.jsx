@@ -187,7 +187,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
                     hover:border-black/[0.10] hover:shadow-md
                     focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                     outline-none font-semibold
-                    shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]"
+                    shadow-sm"
         >
           {options.map((opt) =>
             typeof opt === 'string' ? (
@@ -232,8 +232,7 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
         <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>
       )}
       <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white
-                      shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]
-                      hover:shadow-md hover:border-black/[0.10] transition-all duration-300 overflow-hidden">
+                      shadow-sm hover:shadow-md hover:border-black/[0.10] transition-all duration-300 overflow-hidden">
         {/* Minus button */}
         <button
           type="button"
@@ -302,7 +301,7 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
                    hover:border-black/[0.10] hover:shadow-md
                    focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                    outline-none placeholder:text-[#c7c7cc]
-                   shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]
+                   shadow-sm
                    read-only:bg-[#f2f2f7] read-only:text-[#86868b] read-only:border-black/[0.04]"
       />
     </div>
@@ -320,7 +319,7 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
                    transition-all duration-300 hover:border-black/[0.10] hover:shadow-md
                    focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                    outline-none placeholder:text-[#c7c7cc] font-medium
-                   shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]"
+                   shadow-sm"
       />
     </div>
   );
@@ -333,9 +332,9 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
   const variants = {
     primary: 'btn-premium',
     secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f2f2f7] hover:border-black/[0.12] shadow-sm hover:shadow-md',
-    success: 'bg-gradient-to-b from-[#34c759] to-[#248a3d] text-white border-0.5 border-white/10 shadow-sm hover:shadow-md hover:brightness-110',
-    danger: 'bg-gradient-to-b from-[#ff5c5c] to-[#ff453a] text-white border-0.5 border-white/10 shadow-sm hover:shadow-md hover:brightness-110',
-    warning: 'bg-gradient-to-b from-[#ffaa33] to-[#ff9f0a] text-white border-0.5 border-white/10 shadow-sm hover:shadow-md hover:brightness-110',
+    success: 'bg-[#34c759] text-white shadow-sm hover:shadow-md hover:brightness-105',
+    danger: 'bg-[#ff3b30] text-white shadow-sm hover:shadow-md hover:brightness-105',
+    warning: 'bg-[#ff9f0a] text-white shadow-sm hover:shadow-md hover:brightness-105',
     ghost: 'bg-transparent text-[#6e6e73] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
   };
   return (
@@ -419,11 +418,10 @@ export function SectionCard({ title, subtitle, icon, children, className = '', a
         <div className="mb-5">
           <div className="flex items-center gap-2.5">
             {icon && (
-              <span className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300"
+              <span className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-300"
                     style={{ 
-                      background: `linear-gradient(135deg, ${accentColor || '#1d1d1f'}10, ${accentColor || '#1d1d1f'}18)`,
-                      color: accentColor || '#1d1d1f',
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.50)'
+                      background: `${accentColor || '#1d1d1f'}0d`,
+                      color: accentColor || '#1d1d1f'
                     }}>
                 {icon}
               </span>
@@ -452,13 +450,12 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs (Premium) ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px] border border-black/[0.04]"
-         style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)' }}>
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]">
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3.5 py-[8px] rounded-[11px] text-[13px] font-bold transition-all duration-300
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)]'
+              ? 'bg-white text-[#1d1d1f] shadow-sm'
               : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/50'
             }`}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
@@ -478,12 +475,11 @@ export function ProgressSteps({ steps, current }) {
           <div className="flex items-center gap-1.5 sm:gap-2">
             <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300
                 ${i + 1 <= current
-                  ? 'text-white shadow-[0_1px_3px_rgba(0,0,0,0.12),0_4px_8px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.08)]'
+                  ? 'bg-[#1d1d1f] text-white'
                   : i + 1 === current + 1
-                  ? 'bg-black/[0.06] text-[#1d1d1f] border border-black/[0.08]'
-                  : 'bg-black/[0.03] text-[#c7c7cc] border border-black/[0.04]'
-                }`}
-              style={i + 1 <= current ? { background: 'linear-gradient(180deg, #2c2c2e 0%, #1d1d1f 100%)' } : {}}>
+                  ? 'bg-black/[0.06] text-[#1d1d1f]'
+                  : 'bg-black/[0.03] text-[#c7c7cc]'
+                }`}>
               {i + 1 < current ? <Icons.Success className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap

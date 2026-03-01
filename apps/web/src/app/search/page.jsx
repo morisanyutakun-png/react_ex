@@ -262,7 +262,7 @@ export default function SearchPage() {
       <StatusBar message={status} />
 
       {/* ── 検索パネル ── */}
-      <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.80)] shine-overlay">
+      <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.06] shadow-sm">
 
         <div className="p-4 sm:p-7 space-y-4 sm:space-y-5">
 
