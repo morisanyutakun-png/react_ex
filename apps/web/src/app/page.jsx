@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 
-/* ─── Endroll Data (背景に流れるコンテンツ) ─── */
+/* ─── Endroll Data ─── */
 const ENDROLL_COLS = [
-  ['微分法', '積分法', '確率分布', '三角関数', 'ベクトル解析', '行列演算', '数列', '極限', '複素数', '統計学', '線形代数', '微分方程式', '集合論', '位相幾何'],
-  ['力学', '電磁気学', '波動', '光学', '熱力学', '量子力学', '流体力学', '相対性理論', '原子物理', '素粒子物理', '音響学', 'エネルギー保存', '運動方程式', '慣性モーメント'],
-  ['有機化学', '無機化学', '化学平衡', '反応速度', '電気化学', '高分子化合物', '酸化還元', '溶液化学', '結晶構造', '化学結合', '気体の法則', '熱化学', 'コロイド', '分析化学'],
-  ['Reading', 'Grammar', 'Writing', 'Vocabulary', 'Listening', 'Syntax', 'Semantics', 'Phonetics', 'Rhetoric', 'Composition', 'Literature', 'Translation', 'Idioms', 'Etymology'],
-  ['遺伝学', '細胞生物学', '生態学', '進化論', '神経科学', '免疫学', '発生学', '分子生物学', '植物学', '動物行動学', '微生物学', '解剖学', '生理学', '生化学'],
-  ['情報理論', 'アルゴリズム', 'データ構造', 'ネットワーク', '暗号理論', '機械学習', 'OS', 'データベース', 'コンパイラ', '計算量理論', 'AI', '並列計算', '信号処理', 'ロボティクス'],
+  ['Calculus', 'Linear Algebra', 'Probability', 'Trigonometry', 'Vector Analysis', 'Matrix Theory', 'Sequences', 'Limits', 'Complex Numbers', 'Statistics', 'Differential Eq.', 'Set Theory', 'Topology', 'Number Theory'],
+  ['Mechanics', 'Electromagnetism', 'Wave Theory', 'Optics', 'Thermodynamics', 'Quantum Physics', 'Fluid Dynamics', 'Relativity', 'Atomic Physics', 'Particle Physics', 'Acoustics', 'Conservation Laws', 'Kinematics', 'Rotational Inertia'],
+  ['Organic Chemistry', 'Inorganic Chemistry', 'Equilibrium', 'Reaction Kinetics', 'Electrochemistry', 'Polymers', 'Redox Reactions', 'Solution Chemistry', 'Crystal Structures', 'Chemical Bonding', 'Gas Laws', 'Thermochemistry', 'Colloids', 'Analytical Chemistry'],
+  ['Reading', 'Grammar', 'Composition', 'Vocabulary', 'Listening', 'Syntax', 'Semantics', 'Phonetics', 'Rhetoric', 'Creative Writing', 'Literature', 'Translation', 'Idioms', 'Etymology'],
+  ['Genetics', 'Cell Biology', 'Ecology', 'Evolution', 'Neuroscience', 'Immunology', 'Embryology', 'Molecular Biology', 'Botany', 'Ethology', 'Microbiology', 'Anatomy', 'Physiology', 'Biochemistry'],
+  ['Information Theory', 'Algorithms', 'Data Structures', 'Networks', 'Cryptography', 'Machine Learning', 'Operating Systems', 'Databases', 'Compilers', 'Complexity Theory', 'Deep Learning', 'Parallel Computing', 'Signal Processing', 'Robotics'],
 ];
 
 /* ─── Endroll Column Component ─── */
@@ -22,8 +22,9 @@ function EndrollColumn({ items, speed, direction = 'up', opacity = 0.08 }) {
         style={{ animationDuration: `${speed}s` }}
       >
         {doubled.map((text, i) => (
-          <div key={i} className="py-3 sm:py-4 text-center">
-            <span className="text-[11px] sm:text-[13px] font-semibold tracking-[0.05em] text-[#1d1d1f] whitespace-nowrap">
+          <div key={i} className="py-[14px] sm:py-[18px] text-center">
+            <span className="text-[10px] sm:text-[11px] font-medium tracking-[0.08em] text-[#1d1d1f]/80 whitespace-nowrap uppercase"
+                  style={{ fontFamily: '"SF Pro Text", -apple-system, "Helvetica Neue", sans-serif', letterSpacing: '0.1em' }}>
               {text}
             </span>
           </div>
