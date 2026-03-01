@@ -58,6 +58,11 @@
     0 24px 48px rgba(0,0,0,0.05);
   --shadow-focus: 0 0 0 4px rgba(0,113,227,0.20);
   --shadow-glow: 0 4px 20px rgba(0,0,0,0.06);
+
+  /* Apple easing */
+  --ease-apple: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ── Base ── */
@@ -87,7 +92,7 @@ body {
 /* ── Transitions ── */
 .transition-base {
   @apply transition-all duration-300;
-  transition-timing-function: cubic-bezier(0.25,0.1,0.25,1);
+  transition-timing-function: var(--ease-apple);
 }
 
 /* ── Cards ── */
@@ -106,14 +111,14 @@ body {
   border: 0.5px solid rgba(0,0,0,0.06);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
-  transition: box-shadow 0.4s cubic-bezier(0.25,0.1,0.25,1),
-              transform 0.4s cubic-bezier(0.25,0.1,0.25,1),
-              border-color 0.4s ease;
+  transition: box-shadow 0.5s var(--ease-apple),
+              transform 0.5s var(--ease-apple),
+              border-color 0.5s ease;
 }
 .card-premium:hover {
   box-shadow: var(--shadow-elevated);
   border-color: rgba(0,0,0,0.03);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 /* Subtle border on hover */
@@ -127,12 +132,12 @@ body {
 /* ── Header ── */
 
 .header-bar {
-  background: rgba(251,251,253,0.86);
-  backdrop-filter: saturate(200%) blur(28px);
-  -webkit-backdrop-filter: saturate(200%) blur(28px);
-  border-bottom: 0.5px solid rgba(0,0,0,0.05);
-  box-shadow: 0 0.5px 0 rgba(0,0,0,0.015);
-  transition: all 0.3s ease;
+  background: rgba(251,251,253,0.82);
+  backdrop-filter: saturate(200%) blur(32px);
+  -webkit-backdrop-filter: saturate(200%) blur(32px);
+  border-bottom: 0.5px solid rgba(0,0,0,0.04);
+  box-shadow: 0 0.5px 0 rgba(0,0,0,0.01);
+  transition: all 0.4s var(--ease-apple);
 }
 
 /* ── Gradient Text ── */
@@ -154,7 +159,7 @@ body {
 
 .hover-lift {
   @apply transition-all duration-300;
-  transition-timing-function: cubic-bezier(0.25,0.1,0.25,1);
+  transition-timing-function: var(--ease-apple);
 }
 .hover-lift:hover {
   transform: translateY(-2px);
@@ -191,7 +196,9 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-black/10 rounded-full; }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { @apply bg-black/20; }
 
-/* ── Core Animations ── */
+/* ══════════════════════════════════════════════
+   Core Animations
+   ══════════════════════════════════════════════ */
 
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
 .animate-pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
@@ -205,35 +212,59 @@ body {
 }
 
 @keyframes modal-in { from{opacity:0;transform:scale(0.96) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
-.animate-in { animation: modal-in 0.35s cubic-bezier(0.2,0.8,0.2,1); }
+.animate-in { animation: modal-in 0.35s var(--ease-spring); }
 
 @keyframes fade-in-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-.animate-fade-in-up { animation: fade-in-up 0.6s cubic-bezier(0.25,0.1,0.25,1) both; }
+.animate-fade-in-up { animation: fade-in-up 0.6s var(--ease-apple) both; }
 
 /* ── Staggered Entrance (use animation-delay inline) ── */
 @keyframes stagger-in {
-  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .stagger-item {
   opacity: 0;
-  animation: stagger-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: stagger-in 0.8s var(--ease-out-expo) forwards;
 }
 
-/* ── Float / Bob (removed — clean) ── */
-
-/* (Removed: gentle-rotate, scale-pulse, glow-pulse — no continuous loops) */
+/* ── Scroll-triggered reveal ── */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes reveal-scale {
+  from { opacity: 0; transform: scale(0.92) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes reveal-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s var(--ease-out-expo), transform 0.8s var(--ease-out-expo);
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.scroll-reveal-scale {
+  opacity: 0;
+  transform: scale(0.94) translateY(20px);
+  transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+}
+.scroll-reveal-scale.revealed {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
 
 /* ── Slide In from Left ── */
 @keyframes slide-in-left {
   from { opacity: 0; transform: translateX(-20px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-.animate-slide-left { animation: slide-in-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
-
-/* (Removed: border-spin) */
-
-/* (Accent strip removed — clean minimalism) */
+.animate-slide-left { animation: slide-in-left 0.5s var(--ease-spring) both; }
 
 /* ── Dividers ── */
 .section-divider { @apply border-t border-black/[0.06]; }
@@ -254,17 +285,15 @@ body {
 .card-accent-orange { --card-accent: #ff9f0a; --card-glow: rgba(255,159,10,0.12); }
 .card-accent-green  { --card-accent: #30d158; --card-glow: rgba(48,209,88,0.12); }
 
-/* ── Vivid Icon Container (simplified) ── */
+/* ── Vivid Icon Container ── */
 .icon-vivid {
   position: relative;
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.25,0.1,0.25,1);
+  transition: all 0.3s var(--ease-apple);
 }
-
-/* (Removed: ripple-out) */
 
 /* ── Safe Areas & Mobile ── */
 .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -311,6 +340,11 @@ body {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+  .scroll-reveal,
+  .scroll-reveal-scale {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* ── Apple-style Frosted Search Bar ── */
@@ -339,7 +373,7 @@ body {
   border: 1.5px solid rgba(0,0,0,0.05);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
-  transition: all 0.3s cubic-bezier(0.25,0.1,0.25,1);
+  transition: all 0.3s var(--ease-apple);
   cursor: pointer;
   background: #ffffff;
   box-shadow: var(--shadow-card);
@@ -360,7 +394,7 @@ body {
   border-radius: var(--radius-md);
   border: 0.5px solid rgba(0,0,0,0.05);
   background: #ffffff;
-  transition: all 0.3s cubic-bezier(0.25,0.1,0.25,1);
+  transition: all 0.3s var(--ease-apple);
   cursor: pointer;
   box-shadow: var(--shadow-card);
 }
@@ -403,7 +437,7 @@ body {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.animate-expand { animation: expandIn 0.3s cubic-bezier(0.25,0.1,0.25,1) both; }
+.animate-expand { animation: expandIn 0.3s var(--ease-apple) both; }
 
 /* ── Selected indicator checkmark ── */
 .check-circle {
@@ -414,7 +448,7 @@ body {
   height: 22px;
   border-radius: 50%;
   border: 2px solid rgba(0,0,0,0.10);
-  transition: all 0.25s cubic-bezier(0.25,0.1,0.25,1);
+  transition: all 0.25s var(--ease-apple);
   flex-shrink: 0;
 }
 .check-circle.checked {
@@ -423,7 +457,7 @@ body {
   box-shadow: 0 1px 4px rgba(0,113,227,0.25);
 }
 
-/* ── Option elements (dark text for light bg dropdowns) ── */
+/* ── Option elements ── */
 option {
   background: #ffffff;
   color: #1d1d1f;
@@ -433,7 +467,7 @@ option {
    Apple-style UX Enhancements
    ══════════════════════════════════════════════════ */
 
-/* ── Smooth scroll (全体) ── */
+/* ── Smooth scroll ── */
 html {
   scroll-behavior: smooth;
 }
@@ -444,12 +478,10 @@ html {
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .wizard-section-enter {
-  animation: wizard-section-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: wizard-section-enter 0.5s var(--ease-spring) both;
 }
 
-/* (Restored: Apple-style micro-interactions) */
-
-/* ── CTA Breathe — subtle pulse to draw attention ── */
+/* ── CTA Breathe — subtle pulse ── */
 @keyframes cta-breathe-pulse {
   0%, 100% { box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 2px 8px rgba(0,113,227,0.16); }
   50%      { box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,113,227,0.26); }
@@ -459,7 +491,7 @@ html {
   color: white;
   font-weight: 700;
   animation: cta-breathe-pulse 2.8s cubic-bezier(0.4,0,0.2,1) infinite;
-  transition: all 0.25s cubic-bezier(0.25,0.1,0.25,1);
+  transition: all 0.25s var(--ease-apple);
 }
 .cta-breathe:hover {
   animation: none;
@@ -471,29 +503,28 @@ html {
   transform: scale(0.97) translateY(0);
 }
 
-/* ── Select Bounce — card selection feedback ── */
+/* ── Select Bounce ── */
 @keyframes select-bounce-kf {
   0%   { transform: scale(1); }
   40%  { transform: scale(1.015); }
   100% { transform: scale(1); }
 }
 .select-bounce {
-  animation: select-bounce-kf 0.4s cubic-bezier(0.22,1,0.36,1);
+  animation: select-bounce-kf 0.4s var(--ease-spring);
 }
 
-/* ── Nav Glow — fade-in for navigation area ── */
+/* ── Nav Glow ── */
 @keyframes nav-glow-kf {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .nav-glow-in {
-  animation: nav-glow-kf 0.5s cubic-bezier(0.22,1,0.36,1) both;
+  animation: nav-glow-kf 0.5s var(--ease-spring) both;
   animation-delay: 0.15s;
 }
 
 /* ── Apple Surface Utilities ── */
 
-/* Frosted glass panel — depth + dimension */
 .surface-glass {
   background: rgba(255,255,255,0.82);
   backdrop-filter: saturate(180%) blur(24px);
@@ -502,25 +533,25 @@ html {
   box-shadow: var(--shadow-card);
 }
 
-/* Apple-style filled button — quiet confidence */
+/* Apple-style filled button */
 .btn-premium {
   background: linear-gradient(180deg, #0077ed 0%, #0071e3 100%);
   color: white;
   box-shadow: 0 1px 2px rgba(0,0,0,0.08), 0 2px 8px rgba(0,113,227,0.16), inset 0 0.5px 0 rgba(255,255,255,0.10);
-  transition: all 0.25s cubic-bezier(0.25,0.1,0.25,1);
+  transition: all 0.3s var(--ease-apple);
 }
 .btn-premium:hover {
   background: linear-gradient(180deg, #0081fc 0%, #0077ed 100%);
   box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 14px rgba(0,113,227,0.24), inset 0 0.5px 0 rgba(255,255,255,0.12);
-  transform: translateY(-0.5px);
+  transform: translateY(-1px);
 }
 .btn-premium:active {
   background: linear-gradient(180deg, #006edb 0%, #0066cc 100%);
   box-shadow: 0 1px 1px rgba(0,0,0,0.08), inset 0 1px 2px rgba(0,0,0,0.04);
-  transform: scale(0.98) translateY(0);
+  transform: scale(0.97) translateY(0);
 }
 
-/* Apple-style icon container — soft dark surface */
+/* Apple-style icon container */
 .icon-premium {
   display: flex;
   align-items: center;
@@ -528,7 +559,7 @@ html {
   background: linear-gradient(145deg, #3a3a3c 0%, #1d1d1f 100%);
   border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.10), 0 3px 8px rgba(0,0,0,0.06);
-  transition: transform 0.3s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.3s ease;
+  transition: transform 0.3s var(--ease-apple), box-shadow 0.3s ease;
 }
 .icon-premium:hover {
   box-shadow: 0 2px 4px rgba(0,0,0,0.12), 0 6px 16px rgba(0,0,0,0.06);
@@ -544,20 +575,17 @@ html {
    Endroll Scrolling Background (Stripe-inspired)
    ══════════════════════════════════════════════════ */
 
-/* Column container */
 .endroll-col {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-/* Continuous upward scroll */
 @keyframes endroll-up {
   from { transform: translateY(0); }
   to   { transform: translateY(-50%); }
 }
 
-/* Continuous downward scroll */
 @keyframes endroll-down {
   from { transform: translateY(-50%); }
   to   { transform: translateY(0); }
@@ -573,10 +601,41 @@ html {
   will-change: transform;
 }
 
-/* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
   .endroll-scroll-up,
   .endroll-scroll-down {
     animation: none;
   }
+}
+
+/* ══════════════════════════════════════════════════
+   Home page — Apple-style section transitions
+   ══════════════════════════════════════════════════ */
+
+/* Floating parallax depth layers */
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.float-gentle {
+  animation: float-gentle 6s var(--ease-apple) infinite;
+}
+
+/* Section label — refined */
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+.section-label::before {
+  content: '';
+  width: 16px;
+  height: 1.5px;
+  background: var(--color-text-quaternary);
+  border-radius: 1px;
 }

@@ -1,8 +1,8 @@
 'use client';
 
 /* ─────────────────────────────────────────────────
-   共通UIコンポーネント群 (Apple Music Light)
-   Clean whites • Confident typography • Warm accent
+   共通UIコンポーネント群 (Apple HIG · Refined)
+   Clean whites · Confident typography · Warm accent
    ───────────────────────────────────────────────── */
 
 export const Icons = {
@@ -101,7 +101,7 @@ export const Icons = {
 /* ── PageHeader (Premium) ── */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
-    <div className="mb-7 sm:mb-9 animate-fade-in-up">
+    <div className="mb-8 sm:mb-10 animate-fade-in-up">
       {breadcrumbs && (
         <nav className="flex items-center gap-1.5 mb-4 sm:mb-5 text-[12px] font-medium tracking-wide">
           {breadcrumbs.map((bc, i) => (
@@ -122,18 +122,18 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           ))}
         </nav>
       )}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3.5">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
           <div className="flex-shrink-0 w-11 h-11 rounded-[13px] icon-premium text-white flex items-center justify-center">
             {icon}
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-[22px] sm:text-[28px] font-black text-[#1d1d1f] tracking-tight leading-tight">
+          <h1 className="text-[24px] sm:text-[30px] font-black text-[#1d1d1f] tracking-[-0.03em] leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#aeaeb2] mt-1 max-w-2xl leading-relaxed">
+            <p className="text-[13px] text-[#aeaeb2] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
               {description}
             </p>
           )}
@@ -156,7 +156,7 @@ export function StatusBar({ message }) {
     : 'bg-black/[0.02] text-[#86868b] border-black/[0.04]';
 
   return (
-    <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border transition-all duration-400 animate-in ${styles}`}>
+    <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border transition-all duration-500 animate-in ${styles}`}>
       <span className="flex-shrink-0">
         {isError ? <Icons.Error /> : isSuccess ? <Icons.Success /> : <Icons.Info />}
       </span>
@@ -165,13 +165,8 @@ export function StatusBar({ message }) {
   );
 }
 
-/* ── SelectField (Apple Music Frosted) ── */
+/* ── SelectField ── */
 export function SelectField({ label, value, onChange, options, className = '' }) {
-  const selectedLabel = (() => {
-    const opt = options.find(o => (typeof o === 'string' ? o : o.value) === value);
-    if (!opt) return '';
-    return typeof opt === 'string' ? opt : opt.label;
-  })();
   const hasValue = value !== '' && value !== undefined;
   return (
     <div className={className}>
@@ -186,8 +181,8 @@ export function SelectField({ label, value, onChange, options, className = '' })
                     text-[#1d1d1f] transition-all duration-300 cursor-pointer appearance-none
                     hover:border-black/[0.10] hover:shadow-md
                     focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
-                    outline-none font-semibold
-                    shadow-sm"
+                    outline-none font-semibold shadow-sm"
+          style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
         >
           {options.map((opt) =>
             typeof opt === 'string' ? (
@@ -197,13 +192,11 @@ export function SelectField({ label, value, onChange, options, className = '' })
             )
           )}
         </select>
-        {/* Animated chevron */}
         <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none transition-all duration-300 group-hover:text-[#86868b] text-[#c7c7cc]">
           <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
-        {/* Active indicator dot */}
         {hasValue && (
           <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#1d1d1f] opacity-40" />
         )}
@@ -212,7 +205,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
   );
 }
 
-/* ── NumberField (Apple Music Stepper) ── */
+/* ── NumberField (Apple Stepper) ── */
 export function NumberField({ label, value, onChange, min = 1, max, step = 1, className = '' }) {
   const handleDecrement = () => {
     const next = value - step;
@@ -232,14 +225,14 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
         <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>
       )}
       <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white
-                      shadow-sm hover:shadow-md hover:border-black/[0.10] transition-all duration-300 overflow-hidden">
-        {/* Minus button */}
+                      shadow-sm hover:shadow-md hover:border-black/[0.10] transition-all duration-300 overflow-hidden"
+           style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}>
         <button
           type="button"
           onClick={handleDecrement}
           disabled={atMin}
           className="flex items-center justify-center w-11 border-r border-black/[0.06] text-[#6e6e73]
-                     hover:bg-black/[0.04] hover:text-[#1d1d1f] active:bg-black/[0.08]
+                     hover:bg-black/[0.03] hover:text-[#1d1d1f] active:bg-black/[0.06]
                      disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-[#6e6e73]
                      transition-all duration-200 active:scale-90"
           aria-label="減らす"
@@ -248,7 +241,6 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12h-15" />
           </svg>
         </button>
-        {/* Value display */}
         <div className="flex items-center justify-center min-w-[3.5rem] px-3 py-2.5">
           <input
             type="number"
@@ -267,13 +259,12 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
                        [-moz-appearance:textfield]"
           />
         </div>
-        {/* Plus button */}
         <button
           type="button"
           onClick={handleIncrement}
           disabled={atMax}
           className="flex items-center justify-center w-11 border-l border-black/[0.06] text-[#6e6e73]
-                     hover:bg-black/[0.04] hover:text-[#1d1d1f] active:bg-black/[0.08]
+                     hover:bg-black/[0.03] hover:text-[#1d1d1f] active:bg-black/[0.06]
                      disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-[#6e6e73]
                      transition-all duration-200 active:scale-90"
           aria-label="増やす"
@@ -303,6 +294,7 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
                    outline-none placeholder:text-[#c7c7cc]
                    shadow-sm
                    read-only:bg-[#f2f2f7] read-only:text-[#86868b] read-only:border-black/[0.04]"
+        style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
       />
     </div>
   );
@@ -318,8 +310,8 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
         className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm text-[#1d1d1f]
                    transition-all duration-300 hover:border-black/[0.10] hover:shadow-md
                    focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
-                   outline-none placeholder:text-[#c7c7cc] font-medium
-                   shadow-sm"
+                   outline-none placeholder:text-[#c7c7cc] font-medium shadow-sm"
+        style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
       />
     </div>
   );
@@ -327,19 +319,20 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
 
 /* ── Button (Premium) ── */
 export function Button({ children, onClick, variant = 'primary', disabled, className = '', size = 'md' }) {
-  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]';
+  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]';
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
     primary: 'btn-premium',
-    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f2f2f7] hover:border-black/[0.12] shadow-sm hover:shadow-md',
+    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f5f5f7] hover:border-black/[0.12] shadow-sm hover:shadow-md',
     success: 'bg-[#34c759] text-white shadow-sm hover:shadow-md hover:brightness-105',
     danger: 'bg-[#ff3b30] text-white shadow-sm hover:shadow-md hover:brightness-105',
     warning: 'bg-[#ff9f0a] text-white shadow-sm hover:shadow-md hover:brightness-105',
-    ghost: 'bg-transparent text-[#6e6e73] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
+    ghost: 'bg-transparent text-[#6e6e73] hover:bg-black/[0.03] hover:text-[#1d1d1f]',
   };
   return (
     <button onClick={onClick} disabled={disabled}
-      className={`${base} ${sizes[size] || sizes.md} ${variants[variant] || variants.primary} ${className}`}>
+      className={`${base} ${sizes[size] || sizes.md} ${variants[variant] || variants.primary} ${className}`}
+      style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}>
       {children}
     </button>
   );
@@ -370,16 +363,14 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <label className="flex items-center gap-4 py-2 group cursor-pointer">
-      <span className="min-w-[5rem] text-[12px] font-bold text-[#1d1d1f] tracking-tight">{label}</span>
+      <span className="min-w-[5rem] text-[12px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{label}</span>
       <div className="flex-1 relative h-6 flex items-center">
-        {/* Track background */}
-        <div className="absolute inset-x-0 h-[6px] rounded-full bg-black/[0.05]" />
-        {/* Active fill */}
-        <div className="absolute left-0 h-[6px] rounded-full transition-all duration-150"
+        <div className="absolute inset-x-0 h-[5px] rounded-full bg-black/[0.05]" />
+        <div className="absolute left-0 h-[5px] rounded-full transition-all duration-150"
              style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}cc)` }} />
         <input type="range" min={min} max={max} step={step} value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="relative w-full h-[6px] rounded-full appearance-none cursor-pointer bg-transparent z-10
+          className="relative w-full h-[5px] rounded-full appearance-none cursor-pointer bg-transparent z-10
                      [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:appearance-none
@@ -422,7 +413,7 @@ export function SectionCard({ title, subtitle, icon, children, className = '', a
                 {icon}
               </span>
             )}
-            {title && <h2 className="text-[14px] font-bold text-[#1d1d1f] tracking-tight">{title}</h2>}
+            {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{title}</h2>}
           </div>
           {subtitle && <p className="text-[11px] text-[#aeaeb2] mt-1 ml-[42px]">{subtitle}</p>}
         </div>
@@ -437,7 +428,7 @@ export function EmptyState({ icon, title, description }) {
   return (
     <div className="text-center py-16 card-premium border-dashed !border-black/[0.06]">
       <div className="flex justify-center mb-4 text-[#d2d2d7]">{icon || <Icons.Empty />}</div>
-      {title && <div className="text-[14px] font-bold text-[#86868b] mb-1">{title}</div>}
+      {title && <div className="text-[15px] font-bold text-[#86868b] mb-1.5 tracking-[-0.01em]">{title}</div>}
       {description && <div className="text-[13px] text-[#aeaeb2] leading-relaxed max-w-sm mx-auto">{description}</div>}
     </div>
   );
@@ -453,7 +444,8 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
             ${activeTab === tab.id
               ? 'bg-white text-[#1d1d1f] shadow-[0_0.5px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.03)]'
               : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/40'
-            }`}>
+            }`}
+          style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
           {tab.label}
         </button>
@@ -469,7 +461,7 @@ export function ProgressSteps({ steps, current }) {
       {steps.map((s, i) => (
         <div key={i} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <div className="flex items-center gap-1.5">
-            <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-[9px] text-[10px] sm:text-[11px] font-bold transition-all duration-300
+            <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-[9px] text-[10px] sm:text-[11px] font-bold transition-all duration-400
                 ${i + 1 <= current
                   ? 'text-white'
                   : i + 1 === current + 1
