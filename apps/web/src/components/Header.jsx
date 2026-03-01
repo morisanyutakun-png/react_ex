@@ -24,7 +24,7 @@ export default function Header() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-[52px]">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-[#1d1d1f] text-white transition-transform duration-300 group-hover:scale-105">
+              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] icon-premium text-white transition-transform duration-300 group-hover:scale-105">
                 <Icons.Book className="w-3.5 h-3.5" />
               </div>
               <span className="text-[15px] font-bold tracking-tight text-[#1d1d1f]">
@@ -42,8 +42,8 @@ export default function Header() {
                     href={href}
                     className={`relative px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-300 flex items-center gap-1.5
                       ${active
-                        ? 'bg-black/[0.06] text-[#1d1d1f]'
-                        : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
+                        ? 'bg-[#1d1d1f] text-white shadow-sm'
+                        : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.04]'
                       }`}
                   >
                     {icon}

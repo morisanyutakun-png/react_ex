@@ -418,10 +418,11 @@ export function SectionCard({ title, subtitle, icon, children, className = '', a
         <div className="mb-5">
           <div className="flex items-center gap-2.5">
             {icon && (
-              <span className="flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-300"
+              <span className="flex items-center justify-center w-9 h-9 rounded-[11px] transition-all duration-400"
                     style={{ 
-                      background: `${accentColor || '#1d1d1f'}0d`,
-                      color: accentColor || '#1d1d1f'
+                      background: `linear-gradient(135deg, ${accentColor || '#1d1d1f'}12, ${accentColor || '#1d1d1f'}06)`,
+                      color: accentColor || '#1d1d1f',
+                      boxShadow: `inset 0 0.5px 0 rgba(255,255,255,0.60)`
                     }}>
                 {icon}
               </span>
@@ -450,12 +451,13 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs (Premium) ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]">
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.05] rounded-[14px]"
+         style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3.5 py-[8px] rounded-[11px] text-[13px] font-bold transition-all duration-300
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f] shadow-sm'
+              ? 'bg-white text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.06),0_3px_8px_rgba(0,0,0,0.04)]'
               : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/50'
             }`}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
@@ -473,13 +475,14 @@ export function ProgressSteps({ steps, current }) {
       {steps.map((s, i) => (
         <div key={i} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300
+            <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-400
                 ${i + 1 <= current
-                  ? 'bg-[#1d1d1f] text-white'
+                  ? 'text-white shadow-sm'
                   : i + 1 === current + 1
                   ? 'bg-black/[0.06] text-[#1d1d1f]'
                   : 'bg-black/[0.03] text-[#c7c7cc]'
-                }`}>
+                }`}
+              style={i + 1 <= current ? { background: 'linear-gradient(145deg, #2c2c2e 0%, #1d1d1f 100%)' } : {}}>
               {i + 1 < current ? <Icons.Success className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap

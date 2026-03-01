@@ -657,7 +657,7 @@ export default function TuningPage() {
         <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-5">
-              <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+              <div className="icon-premium w-10 h-10 text-white">
                 <Icons.Chart className="w-5 h-5" />
               </div>
               <div className="flex-1">
@@ -778,7 +778,7 @@ export default function TuningPage() {
         <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-5">
-              <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+              <div className="icon-premium w-10 h-10 text-white">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                 </svg>
@@ -979,7 +979,7 @@ export default function TuningPage() {
       {/* ── ウィザードアシスト ── */}
       <div className="relative overflow-hidden rounded-2xl bg-black/[0.02] border border-black/[0.06]">
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className={`flex items-center justify-center w-8 h-8 bg-[#1d1d1f] rounded-[14px] text-white text-xs font-black flex-shrink-0`}>
+          <div className={`icon-premium w-8 h-8 text-white text-xs font-black flex-shrink-0`}>
             {activeSection === 'configure' ? '1' : activeSection === 'execute' ? '2' : '3'}
           </div>
           <p className="text-[13px] font-bold text-[#1d1d1f] leading-snug">
@@ -1004,7 +1004,7 @@ export default function TuningPage() {
             {/* ヘッダー */}
             <div className="relative px-6 pt-6 pb-4">
               <div className="flex items-center gap-3 mb-1">
-                <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+                <div className="icon-premium w-10 h-10 text-white">
                   <Icons.File className="w-5 h-5" />
                 </div>
                 <div>
@@ -1147,7 +1147,7 @@ export default function TuningPage() {
           <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+                <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Search className="w-5 h-5" />
                 </div>
                 <div>
@@ -1325,7 +1325,7 @@ export default function TuningPage() {
           <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="px-6 pt-6 pb-2">
               <div className="flex items-center gap-3 mb-1">
-                <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+                <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Search className="w-5 h-5" />
                 </div>
                 <div>
@@ -1349,7 +1349,7 @@ export default function TuningPage() {
           <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+                <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Prompt className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
@@ -1423,7 +1423,7 @@ export default function TuningPage() {
             <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
               <div className="px-6 pt-6 pb-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+                  <div className="icon-premium w-10 h-10 text-white">
                     <Icons.Prompt className="w-5 h-5" />
                   </div>
                   <div>
@@ -1452,7 +1452,7 @@ export default function TuningPage() {
           <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+                <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Prompt className="w-5 h-5" />
                 </div>
                 <div>
@@ -1507,7 +1507,7 @@ export default function TuningPage() {
           <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+                <div className="icon-premium w-10 h-10 text-white">
                   <Icons.File className="w-5 h-5" />
                 </div>
                 <div>
@@ -1569,7 +1569,7 @@ export default function TuningPage() {
           <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-5">
-                <div className="flex items-center justify-center w-10 h-10 bg-[#1d1d1f] rounded-[14px] text-white">
+                <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Chart className="w-5 h-5" />
                 </div>
                 <div>
