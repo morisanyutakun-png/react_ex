@@ -23,10 +23,11 @@ export default function Header() {
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <div className="flex items-center justify-between h-[48px]">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex items-center justify-center w-[28px] h-[28px] rounded-[8px] icon-premium text-white transition-transform duration-300 group-hover:scale-105">
-                <Icons.Book className="w-3 h-3" />
+              <div className="flex items-center justify-center w-[28px] h-[28px] rounded-[8px] icon-premium text-white"
+                   style={{ transition: 'transform 0.5s var(--ease-spring), box-shadow 0.4s ease' }}>
+                <Icons.Book className="w-3 h-3" style={{ transition: 'transform 0.5s var(--ease-spring)' }} />
               </div>
-              <span className="text-[14px] font-bold tracking-[-0.02em] text-[#1d1d1f]">
+              <span className="text-[14px] font-bold tracking-[-0.02em] text-[#1d1d1f]" style={{ transition: 'opacity 0.3s ease' }}>
                 REM
               </span>
             </Link>
@@ -39,12 +40,15 @@ export default function Header() {
                   <Link
                     key={href}
                     href={href}
-                    className={`relative px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-300 flex items-center gap-1.5
+                    className={`relative px-3 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5
                       ${active
                         ? 'bg-[#1d1d1f] text-white'
                         : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
                       }`}
-                    style={active ? { boxShadow: '0 1px 3px rgba(0,0,0,0.08)' } : {}}
+                    style={{
+                      transition: 'all 0.4s var(--ease-spring)',
+                      ...(active ? { boxShadow: '0 1px 4px rgba(0,0,0,0.1)' } : {}),
+                    }}
                   >
                     {icon}
                     {label}
@@ -71,10 +75,11 @@ export default function Header() {
               <Link
                 key={href}
                 href={href}
-                className={`flex flex-col items-center gap-0.5 py-2 px-2 min-w-[3.5rem] min-h-[52px] justify-center transition-all duration-300 active:scale-90
+                className={`flex flex-col items-center gap-0.5 py-2 px-2 min-w-[3.5rem] min-h-[52px] justify-center
                   ${active ? 'text-[#0071e3]' : 'text-[#c7c7cc]'}`}
+                style={{ transition: 'all 0.35s var(--ease-spring)' }}
               >
-                <div className="relative">
+                <div className="relative" style={{ transition: 'transform 0.35s var(--ease-spring)' }}>
                   {mobileIcon}
                   {active && (
                     <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#0071e3]" />

@@ -156,7 +156,8 @@ export function StatusBar({ message }) {
     : 'bg-black/[0.02] text-[#86868b] border-black/[0.04]';
 
   return (
-    <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border transition-all duration-500 animate-in ${styles}`}>
+    <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border ${styles}`}
+         style={{ animation: 'stagger-in 0.5s var(--ease-out-expo) both' }}>
       <span className="flex-shrink-0">
         {isError ? <Icons.Error /> : isSuccess ? <Icons.Success /> : <Icons.Info />}
       </span>
@@ -178,11 +179,10 @@ export function SelectField({ label, value, onChange, options, className = '' })
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm
-                    text-[#1d1d1f] transition-all duration-300 cursor-pointer appearance-none
-                    hover:border-black/[0.10] hover:shadow-md
-                    focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
-                    outline-none font-semibold shadow-sm"
-          style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
+                    text-[#1d1d1f] cursor-pointer appearance-none
+                    focus:ring-2 focus:ring-black/[0.05]
+                    outline-none font-semibold"
+          style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
         >
           {options.map((opt) =>
             typeof opt === 'string' ? (
@@ -192,8 +192,10 @@ export function SelectField({ label, value, onChange, options, className = '' })
             )
           )}
         </select>
-        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none transition-all duration-300 group-hover:text-[#86868b] text-[#c7c7cc]">
-          <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#c7c7cc]"
+             style={{ transition: 'color 0.35s var(--ease-spring)' }}>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+               style={{ transition: 'transform 0.4s var(--ease-spring)' }}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -224,9 +226,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
       {label && (
         <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>
       )}
-      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white
-                      shadow-sm hover:shadow-md hover:border-black/[0.10] transition-all duration-300 overflow-hidden"
-           style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}>
+      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white overflow-hidden"
+           style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}>
         <button
           type="button"
           onClick={handleDecrement}
@@ -234,7 +235,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
           className="flex items-center justify-center w-11 border-r border-black/[0.06] text-[#6e6e73]
                      hover:bg-black/[0.03] hover:text-[#1d1d1f] active:bg-black/[0.06]
                      disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-[#6e6e73]
-                     transition-all duration-200 active:scale-90"
+                     active:scale-90"
+          style={{ transition: 'all 0.3s var(--ease-spring)' }}
           aria-label="減らす"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -266,7 +268,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
           className="flex items-center justify-center w-11 border-l border-black/[0.06] text-[#6e6e73]
                      hover:bg-black/[0.03] hover:text-[#1d1d1f] active:bg-black/[0.06]
                      disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-[#6e6e73]
-                     transition-all duration-200 active:scale-90"
+                     active:scale-90"
+          style={{ transition: 'all 0.3s var(--ease-spring)' }}
           aria-label="増やす"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -288,13 +291,11 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         rows={rows} placeholder={placeholder} readOnly={readOnly}
         className="w-full px-4 py-3.5 rounded-2xl border border-black/[0.06] bg-white font-mono text-sm
-                   leading-relaxed resize-y text-[#1d1d1f] transition-all duration-300
-                   hover:border-black/[0.10] hover:shadow-md
-                   focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
+                   leading-relaxed resize-y text-[#1d1d1f]
+                   focus:ring-2 focus:ring-black/[0.05]
                    outline-none placeholder:text-[#c7c7cc]
-                   shadow-sm
                    read-only:bg-[#f2f2f7] read-only:text-[#86868b] read-only:border-black/[0.04]"
-        style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
+        style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
   );
@@ -308,10 +309,9 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm text-[#1d1d1f]
-                   transition-all duration-300 hover:border-black/[0.10] hover:shadow-md
-                   focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
-                   outline-none placeholder:text-[#c7c7cc] font-medium shadow-sm"
-        style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}
+                   focus:ring-2 focus:ring-black/[0.05]
+                   outline-none placeholder:text-[#c7c7cc] font-medium"
+        style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
   );
@@ -319,20 +319,20 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
 
 /* ── Button (Premium) ── */
 export function Button({ children, onClick, variant = 'primary', disabled, className = '', size = 'md' }) {
-  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]';
+  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed';
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
     primary: 'btn-premium',
-    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f5f5f7] hover:border-black/[0.12] shadow-sm hover:shadow-md',
-    success: 'bg-[#34c759] text-white shadow-sm hover:shadow-md hover:brightness-105',
-    danger: 'bg-[#ff3b30] text-white shadow-sm hover:shadow-md hover:brightness-105',
-    warning: 'bg-[#ff9f0a] text-white shadow-sm hover:shadow-md hover:brightness-105',
-    ghost: 'bg-transparent text-[#6e6e73] hover:bg-black/[0.03] hover:text-[#1d1d1f]',
+    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] shadow-sm',
+    success: 'bg-[#34c759] text-white shadow-sm',
+    danger: 'bg-[#ff3b30] text-white shadow-sm',
+    warning: 'bg-[#ff9f0a] text-white shadow-sm',
+    ghost: 'bg-transparent text-[#6e6e73]',
   };
   return (
     <button onClick={onClick} disabled={disabled}
       className={`${base} ${sizes[size] || sizes.md} ${variants[variant] || variants.primary} ${className}`}
-      style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}>
+      style={{ transition: 'all 0.35s var(--ease-spring)', transitionProperty: 'transform, box-shadow, background, border-color, opacity, color' }}>
       {children}
     </button>
   );
@@ -375,9 +375,10 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:appearance-none
                      [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(0,0,0,0.15),0_0_0_0.5px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]
-                     [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200
+                     [&::-webkit-slider-thumb]:transition-all
                      [&::-webkit-slider-thumb]:hover:scale-125
                      [&::-webkit-slider-thumb]:active:scale-110"
+          style={{ '--webkit-slider-thumb-transition-timing-function': 'var(--ease-spring)' }}
         />
       </div>
       <span className="min-w-[2.5rem] text-right text-[13px] font-bold tabular-nums px-2 py-0.5 rounded-lg"
@@ -409,7 +410,8 @@ export function SectionCard({ title, subtitle, icon, children, className = '', a
         <div className="mb-4">
           <div className="flex items-center gap-2.5">
             {icon && (
-              <span className="icon-premium w-8 h-8 text-white flex-shrink-0">
+              <span className="icon-premium w-8 h-8 text-white flex-shrink-0"
+                    style={{ transition: 'transform 0.4s var(--ease-spring)' }}>
                 {icon}
               </span>
             )}
@@ -440,12 +442,15 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
     <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]">
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
-          className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold transition-all duration-300
+          className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f] shadow-[0_0.5px_2px_rgba(0,0,0,0.04),0_2px_6px_rgba(0,0,0,0.03)]'
+              ? 'bg-white text-[#1d1d1f]'
               : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/40'
             }`}
-          style={{ transitionTimingFunction: 'cubic-bezier(0.25, 0.1, 0.25, 1)' }}>
+          style={{
+            transition: 'all 0.4s var(--ease-spring)',
+            ...(activeTab === tab.id ? { boxShadow: '0 0.5px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04)' } : {}),
+          }}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
           {tab.label}
         </button>
@@ -461,14 +466,17 @@ export function ProgressSteps({ steps, current }) {
       {steps.map((s, i) => (
         <div key={i} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <div className="flex items-center gap-1.5">
-            <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-[9px] text-[10px] sm:text-[11px] font-bold transition-all duration-400
+            <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-[9px] text-[10px] sm:text-[11px] font-bold
                 ${i + 1 <= current
                   ? 'text-white'
                   : i + 1 === current + 1
                   ? 'bg-black/[0.05] text-[#1d1d1f]'
                   : 'bg-black/[0.03] text-[#d2d2d7]'
                 }`}
-              style={i + 1 <= current ? { background: 'linear-gradient(145deg, #3a3a3c 0%, #1d1d1f 100%)' } : {}}>
+              style={{
+                transition: 'all 0.5s var(--ease-spring)',
+                ...(i + 1 <= current ? { background: 'linear-gradient(145deg, #3a3a3c 0%, #1d1d1f 100%)' } : {}),
+              }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-[12px] font-medium transition-colors whitespace-nowrap
