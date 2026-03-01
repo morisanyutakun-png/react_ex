@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* ====================================================
-   Design System — REM × Apple Music Vivid
-   Vibrant gradients / Bold motion / Living backgrounds
+   Design System — 賢くつくる
+   Clean whites · Bold typography · Quiet confidence
    ==================================================== */
 
 :root {
@@ -47,9 +47,7 @@
   --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03);
   --shadow-elevated: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
   --shadow-focus: 0 0 0 4px rgba(252,60,68,0.15);
-  --shadow-glow-red: 0 4px 20px rgba(252,60,68,0.25);
-  --shadow-glow-purple: 0 4px 20px rgba(175,82,222,0.20);
-  --shadow-glow-blue: 0 4px 20px rgba(0,122,255,0.20);
+  --shadow-glow: 0 4px 20px rgba(0,0,0,0.06);
 }
 
 /* ── Base ── */
@@ -57,7 +55,9 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
     'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
-  background: var(--color-bg);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(0,0,0,0.015) 0%, transparent 70%),
+    var(--color-bg);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -70,102 +70,7 @@ body {
   overflow-x: hidden;
 }
 
-/* ── Animated Ambient Gradient Mesh (3 layers — vivid) ── */
-body::before,
-body::after {
-  content: '';
-  position: fixed;
-  pointer-events: none;
-  z-index: 0;
-  border-radius: 50%;
-  filter: blur(70px);
-  will-change: transform;
-}
-body::before {
-  top: -18%;
-  left: -12%;
-  width: 65vw;
-  height: 55vh;
-  background: radial-gradient(ellipse at 30% 20%,
-    rgba(252, 60, 68, 0.12) 0%,
-    rgba(191, 90, 242, 0.08) 40%,
-    rgba(255, 55, 95, 0.04) 65%,
-    transparent 80%);
-  animation: meshDrift1 16s ease-in-out infinite alternate;
-}
-body::after {
-  bottom: -12%;
-  right: -12%;
-  width: 60vw;
-  height: 50vh;
-  background: radial-gradient(ellipse at 70% 80%,
-    rgba(10, 132, 255, 0.10) 0%,
-    rgba(100, 210, 255, 0.06) 30%,
-    rgba(48, 209, 88, 0.05) 55%,
-    transparent 80%);
-  animation: meshDrift2 20s ease-in-out infinite alternate;
-}
-
-/* Third animated layer via #app-bg-layer */
-.ambient-layer-3 {
-  position: fixed;
-  top: 30%;
-  left: 50%;
-  width: 50vw;
-  height: 40vh;
-  pointer-events: none;
-  z-index: 0;
-  border-radius: 50%;
-  filter: blur(80px);
-  will-change: transform;
-  background: radial-gradient(ellipse at 50% 50%,
-    rgba(191, 90, 242, 0.08) 0%,
-    rgba(94, 92, 230, 0.05) 40%,
-    rgba(255, 159, 10, 0.04) 70%,
-    transparent 90%);
-  animation: meshDrift3 22s ease-in-out infinite alternate;
-}
-
-@keyframes meshDrift1 {
-  0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
-  25%  { transform: translate(5vw, 4vh) scale(1.08) rotate(2deg); }
-  50%  { transform: translate(-2vw, 7vh) scale(0.95) rotate(-1deg); }
-  75%  { transform: translate(3vw, 2vh) scale(1.04) rotate(1deg); }
-  100% { transform: translate(-1vw, -3vh) scale(1.02) rotate(-2deg); }
-}
-@keyframes meshDrift2 {
-  0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
-  25%  { transform: translate(-4vw, -4vh) scale(1.06) rotate(-2deg); }
-  50%  { transform: translate(4vw, -3vh) scale(0.94) rotate(1deg); }
-  75%  { transform: translate(-2vw, 4vh) scale(1.03) rotate(-1deg); }
-  100% { transform: translate(3vw, 1vh) scale(1.01) rotate(2deg); }
-}
-@keyframes meshDrift3 {
-  0%   { transform: translate(-50%, 0) scale(1) rotate(0deg); }
-  33%  { transform: translate(-45%, 5vh) scale(1.1) rotate(3deg); }
-  66%  { transform: translate(-55%, -3vh) scale(0.92) rotate(-2deg); }
-  100% { transform: translate(-48%, 2vh) scale(1.05) rotate(1deg); }
-}
-
-/* ── Home Orb Breathing Animations ── */
-/* 心理学: 4-7-8呼吸法に近い緩やかなリズムで副交感神経を活性化 */
-@keyframes orbBreathe1 {
-  0%   { transform: scale(1) translate(0, 0); opacity: 0.18; }
-  40%  { transform: scale(1.08) translate(2vw, 1vh); opacity: 0.22; }
-  70%  { transform: scale(0.95) translate(-1vw, -1vh); opacity: 0.15; }
-  100% { transform: scale(1) translate(0, 0); opacity: 0.18; }
-}
-@keyframes orbBreathe2 {
-  0%   { transform: scale(1) translate(0, 0); opacity: 0.14; }
-  35%  { transform: scale(0.94) translate(-2vw, 1vh); opacity: 0.11; }
-  65%  { transform: scale(1.06) translate(1vw, -1vh); opacity: 0.17; }
-  100% { transform: scale(1) translate(0, 0); opacity: 0.14; }
-}
-@keyframes orbBreathe3 {
-  0%   { transform: scale(1) translate(0, 0); opacity: 0.10; }
-  50%  { transform: scale(1.1) translate(1vw, 2vh); opacity: 0.14; }
-  100% { transform: scale(1) translate(0, 0); opacity: 0.10; }
-}
+/* (Ambient layers removed — clean minimalism) */
 
 ::selection {
   background: rgba(252,60,68,0.18);
@@ -201,28 +106,12 @@ body::after {
   transform: translateY(-2px);
 }
 
-/* Gradient border effect on hover */
+/* Subtle border on hover */
 .card-glow {
   position: relative;
-  overflow: hidden;
 }
-.card-glow::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(252,60,68,0), rgba(252,60,68,0), rgba(252,60,68,0));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: all 0.5s ease;
-  pointer-events: none;
-}
-.card-glow:hover::before {
-  background: linear-gradient(135deg, #fc3c44, #bf5af2, #0a84ff);
-  opacity: 0.7;
+.card-glow:hover {
+  border-color: rgba(0,0,0,0.10);
 }
 
 /* ── Header ── */
@@ -239,27 +128,21 @@ body::after {
 
 .gradient-text {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #e8457a 0%, #f472b6 25%, #c084fc 55%, #818cf8 100%);
-  background-size: 200% auto;
-  animation: gradientShift 4s ease-in-out infinite alternate;
+  background-image: linear-gradient(135deg, #1d1d1f 0%, #6e6e73 100%);
 }
 .gradient-text-dark {
   @apply bg-clip-text text-transparent;
   background-image: linear-gradient(180deg, #1d1d1f 0%, #3a3a3c 100%);
 }
-@keyframes gradientShift {
-  0%   { background-position: 0% center; }
-  100% { background-position: 100% center; }
-}
 
 /* ── Hover Lift ── */
 
 .hover-lift {
-  @apply transition-all duration-500;
+  @apply transition-all duration-300;
   transition-timing-function: cubic-bezier(0.25,0.1,0.25,1);
 }
 .hover-lift:hover {
-  transform: translateY(-3px) scale(1.008);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-elevated);
 }
 
@@ -291,7 +174,7 @@ body::after {
 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-black/10 rounded-full; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { @apply bg-[#fc3c44]/30; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { @apply bg-black/20; }
 
 /* ── Core Animations ── */
 
@@ -322,33 +205,9 @@ body::after {
   animation: stagger-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-/* ── Float / Bob ── */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
-}
-.animate-float { animation: float 3s ease-in-out infinite; }
+/* ── Float / Bob (removed — clean) ── */
 
-/* ── Gentle Rotate (icons) ── */
-@keyframes gentle-rotate {
-  0%, 100% { transform: rotate(0deg); }
-  25%      { transform: rotate(3deg); }
-  75%      { transform: rotate(-3deg); }
-}
-
-/* ── Scale Pulse ── */
-@keyframes scale-pulse {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.05); }
-}
-.animate-scale-pulse { animation: scale-pulse 2s ease-in-out infinite; }
-
-/* ── Glow Pulse ── */
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(252,60,68,0.15); }
-  50%      { box-shadow: 0 0 35px rgba(252,60,68,0.30); }
-}
-.animate-glow-pulse { animation: glow-pulse 2.5s ease-in-out infinite; }
+/* (Removed: gentle-rotate, scale-pulse, glow-pulse — no continuous loops) */
 
 /* ── Slide In from Left ── */
 @keyframes slide-in-left {
@@ -357,32 +216,9 @@ body::after {
 }
 .animate-slide-left { animation: slide-in-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* ── Gradient Border Spin (for special elements) ── */
-@keyframes border-spin {
-  0%   { --border-angle: 0deg; }
-  100% { --border-angle: 360deg; }
-}
+/* (Removed: border-spin) */
 
-/* ── Accent strip (vivid rainbow bar at top) ── */
-.accent-strip {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg,
-    #fc3c44, #ff375f, #ff6b6b,
-    #bf5af2, #5e5ce6,
-    #0a84ff, #64d2ff,
-    #30d158, #ff9f0a,
-    #fc3c44);
-  background-size: 400% 100%;
-  animation: stripGlow 6s linear infinite;
-  z-index: 100;
-  opacity: 0.9;
-}
-@keyframes stripGlow {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 400% 50%; }
-}
+/* (Accent strip removed — clean minimalism) */
 
 /* ── Dividers ── */
 .section-divider { @apply border-t border-black/[0.06]; }
@@ -392,7 +228,7 @@ body::after {
   position: absolute;
   left: 0; top: 0;
   width: 3px; height: 100%;
-  background: linear-gradient(180deg, #fc3c44, #bf5af2);
+  background: #fc3c44;
   border-radius: 3px;
 }
 
@@ -403,35 +239,17 @@ body::after {
 .card-accent-orange { --card-accent: #ff9f0a; --card-glow: rgba(255,159,10,0.12); }
 .card-accent-green  { --card-accent: #30d158; --card-glow: rgba(48,209,88,0.12); }
 
-/* ── Vivid Icon Container ── */
+/* ── Vivid Icon Container (simplified) ── */
 .icon-vivid {
   position: relative;
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.4s cubic-bezier(0.25,0.1,0.25,1);
-}
-.icon-vivid::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: inherit;
-  filter: blur(12px);
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: -1;
-}
-.group:hover .icon-vivid::after,
-.icon-vivid:hover::after {
-  opacity: 0.5;
+  transition: all 0.3s cubic-bezier(0.25,0.1,0.25,1);
 }
 
-/* ── Ripple on Click ── */
-@keyframes ripple-out {
-  to { transform: scale(2.5); opacity: 0; }
-}
+/* (Removed: ripple-out) */
 
 /* ── Safe Areas & Mobile ── */
 .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -443,18 +261,6 @@ body::after {
 /* ── Mobile-first overrides ── */
 @media (max-width: 639px) {
   main { padding-bottom: 5.5rem !important; }
-
-  /* Reduce GPU-heavy animations on mobile for performance */
-  body::before, body::after, .ambient-layer-3 {
-    animation-duration: 30s !important;
-    filter: blur(90px) !important;
-    opacity: 0.7;
-  }
-
-  /* Hide heavy SVG animations on mobile to save GPU */
-  svg animateTransform, svg animateMotion {
-    animation-play-state: paused;
-  }
 
   /* Larger touch targets */
   button, a, [role="button"] {
@@ -484,10 +290,11 @@ body::after {
   html { font-size: 15px; }
 }
 
-/* ── Reduced motion: pause all SVG animations ── */
+/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
-  svg animateTransform, svg animateMotion, svg animate {
-    animation: none !important;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -632,68 +439,13 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ── CTA ボタン呼吸アニメーション (次のアクションに注意を引く) ── */
-@keyframes cta-breathe {
-  0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(252,60,68,0.20); }
-  50% { transform: scale(1.05); box-shadow: 0 8px 36px rgba(252,60,68,0.40); }
-}
-.cta-breathe {
-  animation: cta-breathe 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
 /* ── ウィザードセクション登場アニメーション ── */
 @keyframes wizard-section-enter {
-  from { opacity: 0; transform: translateY(36px) scale(0.96); filter: blur(6px); }
-  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .wizard-section-enter {
-  animation: wizard-section-enter 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: wizard-section-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ── ステップインジケーター呼吸グロー ── */
-@keyframes step-indicator-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(252,60,68,0); }
-  50% { box-shadow: 0 0 0 8px rgba(252,60,68,0.12); }
-}
-.step-indicator-glow {
-  animation: step-indicator-glow 2s ease-in-out infinite;
-}
-
-/* ── 選択後のサクセスバウンス ── */
-@keyframes select-bounce {
-  0% { transform: scale(1); }
-  30% { transform: scale(0.96); }
-  60% { transform: scale(1.03); }
-  100% { transform: scale(1); }
-}
-.select-bounce {
-  animation: select-bounce 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* ── 次のアクションハイライト (カード選択後に「次へ」を強調) ── */
-@keyframes next-highlight {
-  0%, 100% { transform: scale(1); opacity: 0.85; }
-  50% { transform: scale(1.02); opacity: 1; }
-}
-.next-highlight {
-  animation: next-highlight 1.8s ease-in-out infinite;
-}
-
-/* ── ナビゲーションエリアのソフトグロー ── */
-@keyframes nav-glow-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.nav-glow-in {
-  animation: nav-glow-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
-}
-
-/* ── カード選択時のリップル ── */
-@keyframes card-select-ripple {
-  0% { box-shadow: 0 0 0 0 rgba(252,60,68,0.25); }
-  70% { box-shadow: 0 0 0 12px rgba(252,60,68,0); }
-  100% { box-shadow: 0 0 0 0 rgba(252,60,68,0); }
-}
-.card-select-ripple {
-  animation: card-select-ripple 0.6s ease-out;
-}
+/* (Removed: cta-breathe, step-indicator-glow, select-bounce, next-highlight, nav-glow-in, card-select-ripple) */

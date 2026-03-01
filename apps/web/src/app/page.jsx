@@ -111,32 +111,26 @@ function DbIcon() {
   );
 }
 
-/* ─── メイン機能カード (Vivid) ─── */
-function ActionCard({ href, icon, label, hint, description, gradient, glowColor, delay }) {
+/* ─── メイン機能カード (Clean) ─── */
+function ActionCard({ href, icon, label, hint, description, accentColor, delay }) {
   return (
     <Link href={href} className="group block stagger-item" style={{ animationDelay: `${delay}ms` }}>
-      <div className="relative card-premium card-glow p-5 sm:p-6 transition-all duration-500 ease-out hover:shadow-xl active:scale-[0.97] overflow-hidden">
-        {/* 背景グラデーション装飾 */}
-        <div className={`absolute -top-8 -right-8 w-28 h-28 rounded-full ${gradient} opacity-[0.07] blur-2xl group-hover:opacity-[0.14] transition-all duration-700 group-hover:scale-125`} />
-
-        {/* アクセントライン（左端） — グラデーション */}
-        <div className={`absolute left-0 top-4 bottom-4 w-[3px] rounded-r-full ${gradient} opacity-70 group-hover:opacity-100 transition-all duration-500 group-hover:h-[calc(100%-16px)]`} />
-
-        {/* アイコン — ヴィヴィッドコンテナ */}
-        <div className={`icon-vivid w-14 h-14 rounded-2xl mb-4 transition-all duration-500 group-hover:scale-110 group-hover:rotate-[-2deg]`}
-             style={{ background: `linear-gradient(135deg, ${glowColor}18, ${glowColor}08)` }}>
+      <div className="relative card-premium p-5 sm:p-6 transition-all duration-300 ease-out hover:shadow-lg active:scale-[0.98] overflow-hidden">
+        {/* アイコン */}
+        <div className="w-12 h-12 rounded-2xl mb-4 flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
+             style={{ background: `${accentColor}0a` }}>
           {icon}
         </div>
 
         {/* テキスト */}
-        <h3 className="text-[18px] font-bold text-[#1d1d1f] mb-1.5 tracking-tight">{label}</h3>
+        <h3 className="text-[17px] font-bold text-[#1d1d1f] mb-1.5 tracking-tight">{label}</h3>
         <p className="text-[13px] text-[#6e6e73] leading-relaxed mb-3">{description}</p>
 
-        {/* ヒント — ワークフロー表示 */}
-        <div className="flex items-center gap-2 text-[12px] font-semibold opacity-60 group-hover:opacity-100 transition-all duration-400"
-             style={{ color: glowColor }}>
+        {/* ヒント */}
+        <div className="flex items-center gap-2 text-[12px] font-semibold transition-opacity duration-300 opacity-50 group-hover:opacity-100"
+             style={{ color: accentColor }}>
           <span>{hint}</span>
-          <svg className="w-3.5 h-3.5 transition-transform duration-500 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
         </div>
@@ -145,28 +139,22 @@ function ActionCard({ href, icon, label, hint, description, gradient, glowColor,
   );
 }
 
-/* ─── ツールカード (Vivid) ─── */
-function ToolCard({ href, icon, label, description, glowColor, delay }) {
+/* ─── ツールカード (Clean) ─── */
+function ToolCard({ href, icon, label, description, accentColor, delay }) {
   return (
     <Link href={href} className="group block stagger-item" style={{ animationDelay: `${delay}ms` }}>
-      <div className="relative flex items-center gap-4 card-premium card-glow px-5 py-4 transition-all duration-500 hover:shadow-lg active:scale-[0.97] overflow-hidden">
-        {/* 背景グロー */}
-        <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full opacity-0 group-hover:opacity-[0.08] blur-2xl transition-all duration-700"
-             style={{ background: glowColor }} />
-        <div className={`icon-vivid flex-shrink-0 w-11 h-11 rounded-xl transition-all duration-500 group-hover:scale-110`}
-             style={{ background: `linear-gradient(135deg, ${glowColor}15, ${glowColor}08)` }}>
+      <div className="relative flex items-center gap-4 card-premium px-5 py-4 transition-all duration-300 hover:shadow-lg active:scale-[0.98]">
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
+             style={{ background: `${accentColor}0a` }}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[15px] font-semibold text-[#1d1d1f]">{label}</div>
           <div className="text-[12px] text-[#6e6e73] mt-0.5">{description}</div>
         </div>
-        <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-400 group-hover:scale-110"
-             style={{ background: `${glowColor}10` }}>
-          <svg className="w-3.5 h-3.5 transition-all duration-400" style={{ color: glowColor }} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
-        </div>
+        <svg className="flex-shrink-0 w-4 h-4 text-[#c7c7cc] transition-all duration-300 group-hover:text-[#6e6e73] group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
       </div>
     </Link>
   );
@@ -175,175 +163,35 @@ function ToolCard({ href, icon, label, description, glowColor, delay }) {
 /* ─── ページ本体 ─── */
 export default function HomePage() {
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-20 pb-28 sm:pb-20 overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 sm:px-6 sm:py-20 pb-28 sm:pb-20">
 
-      {/* ── 背景: Apple-inspired Ambient Canvas ── */}
-      {/*
-        心理学・人間工学に基づく設計:
-        ・色彩心理: ローズ(温かみ・安心) + ラベンダー(創造性) + ソフトブルー(信頼・集中)
-        ・ヒックの法則: 要素数を絞り認知負荷を最小化
-        ・有機的形状: 角のないブロブで親しみやすさと高級感を両立
-        ・呼吸アニメーション: ゆっくりした膨張収縮で心拍を落ち着かせフロー状態を誘導
-        ・Von Restorff効果: 1つだけ記憶に残るウォーターマーク
-      */}
-      <div className="absolute inset-0 pointer-events-none z-0 select-none" aria-hidden="true">
-
-        {/* ── 大型グラデーション・オーブ群（Apple macOS風） ── */}
-        {/* 左上: ウォームローズ */}
-        <div className="absolute -top-[20%] -left-[15%] w-[70vw] h-[70vw] max-w-[700px] max-h-[700px] rounded-full opacity-[0.18]"
-             style={{
-               background: 'radial-gradient(circle, #f472b6 0%, #e8457a 30%, #c084fc 60%, transparent 80%)',
-               animation: 'orbBreathe1 12s ease-in-out infinite',
-             }} />
-        {/* 右上: クールインディゴ */}
-        <div className="absolute -top-[10%] -right-[20%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full opacity-[0.14]"
-             style={{
-               background: 'radial-gradient(circle, #818cf8 0%, #6366f1 30%, #c084fc 55%, transparent 80%)',
-               animation: 'orbBreathe2 15s ease-in-out infinite',
-             }} />
-        {/* 中央下: ゴールド・アンバー（温かみ・達成感） */}
-        <div className="absolute -bottom-[15%] left-[20%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.10]"
-             style={{
-               background: 'radial-gradient(circle, #fbbf24 0%, #f59e0b 25%, #f472b6 50%, transparent 78%)',
-               animation: 'orbBreathe3 18s ease-in-out infinite',
-             }} />
-        {/* 右下: ソフトティール（成長・学び） */}
-        <div className="absolute -bottom-[8%] -right-[10%] w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full opacity-[0.08]"
-             style={{
-               background: 'radial-gradient(circle, #34d399 0%, #818cf8 40%, transparent 75%)',
-               animation: 'orbBreathe1 20s ease-in-out infinite',
-             }} />
-
-        {/* ── SVGレイヤー ── */}
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <linearGradient id="orbRing1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#e8457a" stopOpacity="0.18" />
-              <stop offset="50%" stopColor="#c084fc" stopOpacity="0.12" />
-              <stop offset="100%" stopColor="#818cf8" stopOpacity="0.06" />
-            </linearGradient>
-            <linearGradient id="orbRing2" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#818cf8" stopOpacity="0.14" />
-              <stop offset="100%" stopColor="#f472b6" stopOpacity="0.05" />
-            </linearGradient>
-            <linearGradient id="wmGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#e8457a" stopOpacity="1" />
-              <stop offset="40%" stopColor="#c084fc" stopOpacity="1" />
-              <stop offset="100%" stopColor="#818cf8" stopOpacity="1" />
-            </linearGradient>
-          </defs>
-
-          {/* ── ウォーターマーク: "REM" — 画面中央にひとつだけ大きく ── */}
-          <text x="50%" y="48%" textAnchor="middle" dominantBaseline="central"
-                fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="320" fontWeight="900" letterSpacing="-0.02em"
-                fill="url(#wmGrad)" opacity="0.035">
-            REM
-          </text>
-
-          {/* ── サブテキスト: タグライン ── */}
-          <text x="50%" y="60%" textAnchor="middle"
-                fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="18" fontWeight="700" letterSpacing="0.55em"
-                fill="url(#wmGrad)" opacity="0.06">
-            AI-POWERED EXAM CREATION
-          </text>
-
-          {/* ── ソフト・オービットリング（呼吸アニメーション） ── */}
-          <g opacity="0.5">
-            {/* 内側リング — 穏やかな呼吸 */}
-            <ellipse cx="50%" cy="46%" rx="180" ry="160" fill="none"
-                     stroke="url(#orbRing1)" strokeWidth="0.8">
-              <animate attributeName="rx" values="180;195;180" dur="10s" repeatCount="indefinite" />
-              <animate attributeName="ry" values="160;172;160" dur="10s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.5;0.7;0.5" dur="10s" repeatCount="indefinite" />
-            </ellipse>
-            {/* 中間リング — 逆位相の呼吸 */}
-            <ellipse cx="50%" cy="46%" rx="280" ry="240" fill="none"
-                     stroke="url(#orbRing2)" strokeWidth="0.5" strokeDasharray="16 24">
-              <animate attributeName="rx" values="280;265;280" dur="13s" repeatCount="indefinite" />
-              <animate attributeName="ry" values="240;228;240" dur="13s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.4;0.6;0.4" dur="13s" repeatCount="indefinite" />
-            </ellipse>
-            {/* 外側リング — ゆったり */}
-            <ellipse cx="50%" cy="46%" rx="400" ry="340" fill="none"
-                     stroke="url(#orbRing1)" strokeWidth="0.3" strokeDasharray="8 32">
-              <animate attributeName="rx" values="400;412;400" dur="18s" repeatCount="indefinite" />
-              <animate attributeName="ry" values="340;350;340" dur="18s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.25;0.4;0.25" dur="18s" repeatCount="indefinite" />
-            </ellipse>
-          </g>
-
-          {/* ── 左上アクセント: 優しいカーブ + テキスト ── */}
-          <g opacity="0.5">
-            <path d="M0 180 Q90 90 180 0" fill="none" stroke="url(#orbRing1)" strokeWidth="1.2">
-              <animate attributeName="opacity" values="0.5;0.75;0.5" dur="8s" repeatCount="indefinite" />
-            </path>
-            <path d="M0 280 Q140 140 280 0" fill="none" stroke="url(#orbRing1)" strokeWidth="0.6" opacity="0.5" />
-          </g>
-          <text x="3%" y="5.5%" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="13" fontWeight="700" letterSpacing="0.35em" fill="#c084fc" opacity="0.15">
-            AI · GENERATE
-          </text>
-
-          {/* ── 右上アクセント: 優しいカーブ + テキスト ── */}
-          <g opacity="0.5">
-            <path d="M100%,180 Q calc(100% - 90px),90 calc(100% - 180px),0" fill="none" stroke="url(#orbRing2)" strokeWidth="1.2">
-              <animate attributeName="opacity" values="0.5;0.7;0.5" dur="9s" repeatCount="indefinite" />
-            </path>
-            <path d="M100%,260 Q calc(100% - 130px),130 calc(100% - 260px),0" fill="none" stroke="url(#orbRing2)" strokeWidth="0.5" opacity="0.4" />
-          </g>
-          <text x="97%" y="5.5%" textAnchor="end" fontFamily="'SF Pro Display', 'Inter', system-ui, sans-serif"
-                fontSize="13" fontWeight="700" letterSpacing="0.35em" fill="#818cf8" opacity="0.15">
-            SMART · CREATION
-          </text>
-
-          {/* ── フローティング・ライトパーティクル ── */}
-          <g opacity="0.55">
-            <circle r="2.5" fill="#e8457a" opacity="0.25">
-              <animateMotion dur="22s" repeatCount="indefinite" path="M120,200 C250,100 450,350 550,180 C650,60 200,380 120,200" />
-            </circle>
-            <circle r="2" fill="#c084fc" opacity="0.20">
-              <animateMotion dur="28s" repeatCount="indefinite" path="M520,300 C400,150 200,280 140,420 C80,520 480,370 520,300" />
-            </circle>
-            <circle r="1.8" fill="#818cf8" opacity="0.18">
-              <animateMotion dur="32s" repeatCount="indefinite" path="M300,100 C440,260 100,380 250,480 C400,520 350,140 300,100" />
-            </circle>
-          </g>
-        </svg>
-
-        {/* ── コンテンツ領域のソフトフォグ ── */}
-        <div className="absolute inset-x-[10%] inset-y-[22%] bg-[#f5f5f7]/50 blur-[80px] rounded-full" />
-      </div>
-
-      <div className="relative z-10 max-w-[540px] w-full mx-auto">
+      <div className="max-w-[540px] w-full mx-auto">
 
         {/* ── ヒーロー ── */}
         <div className="text-center mb-14 stagger-item" style={{ animationDelay: '0ms' }}>
-          {/* ロゴマーク — パルスグロー */}
-          <div className="inline-flex items-center justify-center w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] rounded-[22px] sm:rounded-[24px] bg-gradient-to-br from-[#e8457a] via-[#f472b6] to-[#c084fc] text-white mb-5 sm:mb-6 shadow-xl shadow-[#e8457a]/25 animate-glow-pulse">
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+          {/* ロゴマーク */}
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-[72px] sm:h-[72px] rounded-[20px] sm:rounded-[22px] bg-[#1d1d1f] text-white mb-5 sm:mb-6 shadow-lg">
+            <svg className="w-8 h-8 sm:w-9 sm:h-9" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
 
-          <h1 className="text-[44px] sm:text-[60px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
+          <h1 className="text-[42px] sm:text-[56px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
             REM
           </h1>
-          <p className="text-[18px] gradient-text font-bold mb-3">
+          <p className="text-[16px] sm:text-[18px] font-bold text-[#6e6e73] mb-3">
             Rapid Exam Maker
           </p>
-          <p className="text-[14px] sm:text-[15px] text-[#6e6e73] leading-relaxed max-w-[280px] sm:max-w-sm mx-auto">
+          <p className="text-[14px] sm:text-[15px] text-[#86868b] leading-relaxed max-w-[300px] mx-auto">
             過去問データとAIで、試験問題を賢くつくる。
           </p>
         </div>
 
         {/* ── メイン機能 ── */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-5 px-1 stagger-item" style={{ animationDelay: '80ms' }}>
-            <div className="w-1.5 h-1.5 rounded-full bg-[#fc3c44]" />
-            <h2 className="text-[12px] font-bold text-[#6e6e73] uppercase tracking-[0.2em]">はじめる</h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-black/[0.06] to-transparent" />
+          <div className="flex items-center gap-3 mb-4 px-1 stagger-item" style={{ animationDelay: '80ms' }}>
+            <h2 className="text-[11px] font-bold text-[#86868b] uppercase tracking-[0.2em]">はじめる</h2>
+            <div className="flex-1 h-px bg-black/[0.06]" />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <ActionCard
@@ -352,8 +200,7 @@ export default function HomePage() {
               label="問題をつくる"
               description="出題パターンを選んで、AIが試験問題を自動生成"
               hint="パターン選択 → 生成 → PDF"
-              gradient="bg-gradient-to-br from-[#fc3c44] to-[#ff375f]"
-              glowColor="#fc3c44"
+              accentColor="#fc3c44"
               delay={120}
             />
             <ActionCard
@@ -362,19 +209,17 @@ export default function HomePage() {
               label="品質を磨く"
               description="過去問の傾向や指示文を参考に、出題の精度をさらに向上"
               hint="調整 → テスト → 評価"
-              gradient="bg-gradient-to-br from-[#bf5af2] to-[#5e5ce6]"
-              glowColor="#bf5af2"
+              accentColor="#bf5af2"
               delay={200}
             />
           </div>
         </div>
 
         {/* ── ツール ── */}
-        <div className="mb-12">
-          <div className="flex items-center gap-3 mb-5 px-1 stagger-item" style={{ animationDelay: '260ms' }}>
-            <div className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
-            <h2 className="text-[12px] font-bold text-[#6e6e73] uppercase tracking-[0.2em]">ツール</h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-black/[0.06] to-transparent" />
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-4 px-1 stagger-item" style={{ animationDelay: '260ms' }}>
+            <h2 className="text-[11px] font-bold text-[#86868b] uppercase tracking-[0.2em]">ツール</h2>
+            <div className="flex-1 h-px bg-black/[0.06]" />
           </div>
           <div className="space-y-3">
             <ToolCard
@@ -382,7 +227,7 @@ export default function HomePage() {
               icon={<SearchIcon />}
               label="問題をさがす"
               description="キーワードや科目でかんたん検索"
-              glowColor="#ff9f0a"
+              accentColor="#ff9f0a"
               delay={300}
             />
             <ToolCard
@@ -390,21 +235,18 @@ export default function HomePage() {
               icon={<DbIcon />}
               label="データ管理"
               description="過去問データを確認・編集"
-              glowColor="#30d158"
+              accentColor="#30d158"
               delay={360}
             />
           </div>
         </div>
 
         {/* ── ヘルプ ── */}
-        <div className="mb-12 stagger-item" style={{ animationDelay: '380ms' }}>
+        <div className="mb-10 stagger-item" style={{ animationDelay: '380ms' }}>
           <Link href="/help" className="group block">
-            <div className="relative flex items-center gap-4 card-premium card-glow px-5 py-4 transition-all duration-500 hover:shadow-lg active:scale-[0.97] overflow-hidden">
-              <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full opacity-0 group-hover:opacity-[0.08] blur-2xl transition-all duration-700"
-                   style={{ background: '#5856d6' }} />
-              <div className="icon-vivid flex-shrink-0 w-11 h-11 rounded-xl transition-all duration-500 group-hover:scale-110"
-                   style={{ background: 'linear-gradient(135deg, #5856d615, #5856d608)' }}>
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="#5856d6" strokeWidth={1.5}>
+            <div className="flex items-center gap-4 card-premium px-5 py-4 transition-all duration-300 hover:shadow-lg active:scale-[0.98]">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-[#5856d6]/[0.06] flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#5856d6" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                 </svg>
               </div>
@@ -412,24 +254,21 @@ export default function HomePage() {
                 <div className="text-[15px] font-semibold text-[#1d1d1f]">はじめてガイド</div>
                 <div className="text-[12px] text-[#6e6e73] mt-0.5">使い方・ワークフロー・用語集</div>
               </div>
-              <div className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-400 group-hover:scale-110"
-                   style={{ background: '#5856d610' }}>
-                <svg className="w-3.5 h-3.5 transition-all duration-400 text-[#5856d6]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              </div>
+              <svg className="flex-shrink-0 w-4 h-4 text-[#c7c7cc] transition-all duration-300 group-hover:text-[#6e6e73] group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
             </div>
           </Link>
         </div>
 
         {/* ── ステータス ── */}
         <div className="text-center stagger-item" style={{ animationDelay: '440ms' }}>
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/60 backdrop-blur-xl border border-black/[0.04] shadow-sm">
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/70 backdrop-blur border border-black/[0.04]">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#30d158] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#30d158]"></span>
             </span>
-            <span className="text-[11px] font-bold text-[#6e6e73] tracking-wider uppercase">AI活用中</span>
+            <span className="text-[11px] font-semibold text-[#86868b] tracking-wider">AI Ready</span>
           </div>
         </div>
       </div>

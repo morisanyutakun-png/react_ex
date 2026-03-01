@@ -22,8 +22,6 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] selection:bg-[#fc3c44]/18 selection:text-[#1d1d1f]">
-        <div className="accent-strip" />
-        <div className="ambient-layer-3" aria-hidden="true" />
         <Header />
         {children}
       </body>

@@ -281,7 +281,7 @@ function FlowDiagram() {
 function FeatureSection({ id, icon, title, subtitle, color, href, diagram, steps, tips }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <div className="relative overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] transition-all duration-300 hover:shadow-xl">
+      <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.04] shadow-sm transition-all duration-300 hover:shadow-xl">
         <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
         <div className="p-6 sm:p-8">
           {/* Header */}
@@ -385,7 +385,7 @@ const FAQ_DATA = [
 
 function FaqCategory({ category, color, icon, items }) {
   return (
-    <div className="relative overflow-hidden rounded-[24px] bg-white/65 backdrop-blur-xl border border-black/[0.04] shadow-sm">
+    <div className="relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-sm">
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
       <div className="px-5 pt-5 pb-2">
         <div className="flex items-center gap-2.5">
@@ -456,7 +456,7 @@ export default function HelpPage() {
 
       {/* ── ヒーロー ── */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-[72px] h-[72px] rounded-[22px] bg-gradient-to-br from-[#0a84ff] via-[#5856d6] to-[#bf5af2] text-white mb-5 shadow-xl shadow-[#5856d6]/25 animate-glow-pulse">
+        <div className="inline-flex items-center justify-center w-[72px] h-[72px] rounded-[22px] bg-[#1d1d1f] text-white mb-5 shadow-lg">
           <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
           </svg>
@@ -486,8 +486,7 @@ export default function HelpPage() {
 
           {/* ═══ 概要 ═══ */}
           <section id="overview" className="scroll-mt-24">
-            <div className="relative overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg p-4 sm:p-8">
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#e8457a] via-[#c084fc] to-[#818cf8] opacity-70" />
+            <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.04] shadow-sm p-4 sm:p-8">
 
               <h2 className="text-[20px] font-black text-[#1d1d1f] tracking-tight mb-2">REM とは？</h2>
               <p className="text-[14px] text-[#6e6e73] leading-relaxed mb-5">
@@ -633,8 +632,7 @@ export default function HelpPage() {
             </div>
 
             {/* 用語集インライン */}
-            <div className="mt-8 relative overflow-hidden rounded-[24px] bg-white/65 backdrop-blur-xl border border-black/[0.04] shadow-sm p-5 sm:p-6">
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#5856d6] via-[#0a84ff] to-[#5856d6] opacity-40" />
+            <div className="mt-8 relative overflow-hidden rounded-[24px] bg-white border border-black/[0.04] shadow-sm p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-[16px]">📘</span>
                 <h4 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">用語集</h4>
@@ -659,7 +657,7 @@ export default function HelpPage() {
 
           {/* ═══ フッター ═══ */}
           <div className="text-center pt-6 pb-4">
-            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-[#fc3c44] to-[#e0323a] text-white text-[14px] font-bold shadow-lg shadow-[#fc3c44]/20 hover:shadow-xl hover:shadow-[#fc3c44]/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
+            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#1d1d1f] text-white text-[14px] font-bold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>

@@ -397,18 +397,7 @@ export default function DbEditorPage() {
   const displayCols = allCols.filter((c) => visibleCols.includes(c.name));
 
   return (
-    <div className="relative min-h-screen px-3 sm:px-4 pb-24 sm:pb-12 overflow-hidden">
-      {/* ── Apple風アンビエント背景 ── */}
-      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
-        <div className="absolute -top-[12%] -right-[15%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.09]"
-             style={{ background: 'radial-gradient(circle, #86efac 0%, #30d158 35%, transparent 75%)', animation: 'orbBreathe1 14s ease-in-out infinite' }} />
-        <div className="absolute -top-[10%] -left-[18%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full opacity-[0.08]"
-             style={{ background: 'radial-gradient(circle, #93c5fd 0%, #818cf8 40%, transparent 75%)', animation: 'orbBreathe2 18s ease-in-out infinite' }} />
-        <div className="absolute -bottom-[15%] right-[15%] w-[48vw] h-[48vw] max-w-[480px] max-h-[480px] rounded-full opacity-[0.07]"
-             style={{ background: 'radial-gradient(circle, #fcd34d 0%, #30d158 40%, transparent 72%)', animation: 'orbBreathe3 22s ease-in-out infinite' }} />
-      </div>
-
-      <div className="relative z-10 max-w-[100rem] mx-auto space-y-4 sm:space-y-5">
+    <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-3 sm:px-4 pb-24 sm:pb-12">
       <PageHeader
         title="データ管理"
         description="過去問データの閲覧・編集・新規登録"
@@ -560,12 +549,12 @@ export default function DbEditorPage() {
           </div>
 
           {/* データ一覧 (デスクトップ) */}
-          <div className="hidden sm:block rounded-2xl bg-white/80 backdrop-blur-xl border border-black/[0.04] shadow-sm overflow-hidden">
+          <div className="hidden sm:block rounded-2xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-black/[0.06]">
-                    <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#86868b] tracking-wide sticky left-0 bg-white/80 backdrop-blur-xl z-10 w-10">
+                    <th className="px-3 py-3 text-left text-[11px] font-semibold text-[#86868b] tracking-wide sticky left-0 bg-white z-10 w-10">
                       #
                     </th>
                     {displayCols.map((col) => (
@@ -593,7 +582,7 @@ export default function DbEditorPage() {
                         className={`border-b border-black/[0.04] transition-colors
                           ${rowDirty ? 'bg-[#ff9500]/[0.06]' : 'hover:bg-black/[0.02]'}`}
                       >
-                        <td className={`px-3 py-2.5 font-mono text-[11px] text-[#c7c7cc] sticky left-0 z-10 bg-white/80 backdrop-blur-xl
+                        <td className={`px-3 py-2.5 font-mono text-[11px] text-[#c7c7cc] sticky left-0 z-10 bg-white
                           ${rowDirty ? '!bg-[#ff9500]/[0.06]' : ''}`}>
                           {page * PAGE_SIZE + idx + 1}
                         </td>
@@ -790,7 +779,6 @@ export default function DbEditorPage() {
           </div>
         </div>
       )}
-      </div>{/* /z-10 wrapper */}
     </div>
   );
 }

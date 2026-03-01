@@ -602,28 +602,17 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div ref={wizardTopRef} className="relative min-h-screen px-3 sm:px-4 py-4 sm:py-8 overflow-hidden">
-      {/* ── Apple風アンビエント背景 ── */}
-      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
-        <div className="absolute -top-[18%] -left-[12%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full opacity-[0.12]"
-             style={{ background: 'radial-gradient(circle, #f472b6 0%, #e8457a 35%, transparent 75%)', animation: 'orbBreathe1 14s ease-in-out infinite' }} />
-        <div className="absolute -top-[8%] -right-[18%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.10]"
-             style={{ background: 'radial-gradient(circle, #c084fc 0%, #818cf8 40%, transparent 75%)', animation: 'orbBreathe2 18s ease-in-out infinite' }} />
-        <div className="absolute -bottom-[12%] left-[15%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full opacity-[0.08]"
-             style={{ background: 'radial-gradient(circle, #fbbf24 0%, #f472b6 45%, transparent 75%)', animation: 'orbBreathe3 20s ease-in-out infinite' }} />
-      </div>
-
-      <div className="relative z-10 max-w-2xl mx-auto">
+    <div ref={wizardTopRef} className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
       {/* ヘッダー */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-xl text-[#e8457a] rounded-full text-xs font-bold mb-4 sm:mb-5 border border-[#e8457a]/[0.10] shadow-sm">
-          <Icons.User className="w-4 h-4" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white text-[#6e6e73] rounded-full text-xs font-semibold mb-4 sm:mb-5 border border-black/[0.06]">
+          <Icons.User className="w-3.5 h-3.5" />
           かんたんモード
         </div>
-        <h1 className="text-2xl sm:text-[34px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
+        <h1 className="text-[24px] sm:text-[30px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-tight">
           問題をつくる
         </h1>
-        <p className="text-[13px] sm:text-[15px] text-[#6e6e73] leading-relaxed max-w-sm mx-auto">
+        <p className="text-[13px] sm:text-[14px] text-[#86868b] leading-relaxed max-w-sm mx-auto">
           ステップに沿って進むだけで、試験問題の PDF が完成します
         </p>
       </div>
@@ -637,9 +626,9 @@ export default function UserModePage() {
 
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
       {step <= 3 && (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#007aff]/[0.05] via-[#5856d6]/[0.04] to-[#af52de]/[0.05] border border-[#007aff]/[0.08] mb-1">
+        <div className="relative overflow-hidden rounded-2xl bg-black/[0.02] border border-black/[0.06] mb-1">
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white text-xs font-black flex-shrink-0 shadow-sm shadow-[#007aff]/20">
+            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#1d1d1f] text-white text-xs font-black flex-shrink-0 shadow-sm">
               {step}
             </div>
             <div className="flex-1 min-w-0">
@@ -726,13 +715,13 @@ export default function UserModePage() {
                     >
                       {/* アクティブ時のトップアクセント */}
                       {isActive && (
-                        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44]" />
+                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-black/[0.06]" />
                       )}
 
                       <div className="p-3.5 sm:p-4 flex items-center gap-3">
                         {/* 科目アイコン */}
                         <div className={`flex items-center justify-center w-11 h-11 rounded-[14px] flex-shrink-0 text-lg
-                          bg-gradient-to-br ${sc.bg} text-white shadow-md
+                          bg-[#1d1d1f] text-white shadow-md
                           transition-transform duration-300 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}
                         >
                           {sc.icon}
@@ -746,7 +735,7 @@ export default function UserModePage() {
                               {subj || t.name || t.id}
                             </span>
                             {isActive && (
-                              <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gradient-to-br from-[#fc3c44] to-[#e0323a] flex-shrink-0">
+                              <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#1d1d1f] flex-shrink-0">
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
@@ -811,12 +800,11 @@ export default function UserModePage() {
 
             {/* ── テンプレート新規作成フォーム ── */}
             {showCreateTemplate ? (
-              <div className="rounded-3xl bg-white/80 backdrop-blur-xl border border-[#34c759]/20 shadow-xl shadow-[#34c759]/[0.06] overflow-hidden">
+              <div className="rounded-3xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
                 {/* 緑のアクセントライン（保存アクション = 緑で統一） */}
-                <div className="h-[3px] bg-gradient-to-r from-[#34c759] to-[#30d158]" />
                 <div className="p-6 space-y-4">
                 <div className="flex items-center gap-3 mb-1">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#34c759] to-[#30d158] flex items-center justify-center shadow-md shadow-[#34c759]/20">
+                  <div className="w-10 h-10 rounded-xl bg-[#1d1d1f] flex items-center justify-center shadow-md">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
@@ -857,9 +845,9 @@ export default function UserModePage() {
                     <input
                       value={newTplCustomSubject}
                       onChange={(e) => setNewTplCustomSubject(e.target.value)}
-                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f] font-medium
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm text-[#1d1d1f] font-medium
                         transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
-                        focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                        focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                         outline-none placeholder:text-[#c7c7cc] shadow-sm"
                       placeholder="例: 地学"
                       autoFocus
@@ -881,7 +869,7 @@ export default function UserModePage() {
                             onClick={() => setNewTplField(newTplField === f ? '' : f)}
                             className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-300 ${
                               newTplField === f
-                                ? 'bg-gradient-to-b from-[#fc3c44] to-[#e0323a] text-white border-transparent shadow-md shadow-[#fc3c44]/20'
+                                ? 'bg-[#1d1d1f] text-white border-transparent shadow-md'
                                 : 'bg-white/80 text-[#6e6e73] border-black/[0.06] hover:border-[#fc3c44]/30 hover:text-[#fc3c44] hover:shadow-sm'
                             }`}>
                             {f}
@@ -894,9 +882,9 @@ export default function UserModePage() {
                       value={newTplField}
                       onChange={(e) => setNewTplField(e.target.value)}
                       placeholder={newTplFieldOptions.length > 0 ? '候補から選択 or 自由入力' : '分野名を入力（例: 微分法）'}
-                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f] font-medium
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm text-[#1d1d1f] font-medium
                         transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
-                        focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                        focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                         outline-none placeholder:text-[#c7c7cc] shadow-sm"
                     />
                   </div>
@@ -914,9 +902,9 @@ export default function UserModePage() {
                       value={newTplTheme}
                       onChange={(e) => setNewTplTheme(e.target.value)}
                       placeholder="例: 置換積分、三角関数の合成、運動方程式の立式"
-                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f] font-medium
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm text-[#1d1d1f] font-medium
                         transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
-                        focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                        focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                         outline-none placeholder:text-[#c7c7cc] shadow-sm"
                     />
                   </div>
@@ -928,9 +916,9 @@ export default function UserModePage() {
                     onClick={handleCreateTemplate}
                     disabled={creatingTemplate || !effectiveNewSubject || !newTplDifficulty}
                     className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-[15px] font-bold
-                               bg-gradient-to-b from-[#34c759] to-[#248a3d] text-white
-                               hover:from-[#30d158] hover:to-[#2d9f47] shadow-lg shadow-[#34c759]/25
-                               hover:shadow-xl hover:shadow-[#34c759]/40 hover:-translate-y-0.5
+                               bg-[#1d1d1f] text-white
+                               shadow-lg shadow-black/[0.15]
+                               hover:shadow-xl hover:shadow-black/[0.20] hover:-translate-y-0.5
                                disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 active:scale-[0.97]"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -1003,11 +991,11 @@ export default function UserModePage() {
               const diffColors = { 1: '#34c759', 2: '#34c759', 3: '#ff9500', 4: '#ff6723', 5: '#ff3b30', 6: '#ff2d55' };
               const dotColor = diffColors[diffLevel] || '#c7c7cc';
               return (
-              <div className="relative overflow-hidden rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-sm shadow-sm">
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#fc3c44] via-[#ff375f] to-[#bf5af2] opacity-50" />
+              <div className="relative overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
+                <div className="absolute top-0 left-0 right-0 h-[1px] bg-black/[0.06]" />
                 <div className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-[14px] flex-shrink-0 text-lg bg-gradient-to-br ${sc.bg} text-white shadow-md`}>
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-[14px] flex-shrink-0 text-lg bg-[#1d1d1f] text-white shadow-md`}>
                       {sc.icon}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1039,11 +1027,10 @@ export default function UserModePage() {
               );
             })()}
           {/* ── 問題数・参照設定カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#007aff] via-[#5ac8fa] to-[#007aff] opacity-70" />
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white shadow-lg shadow-[#007aff]/20">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#1d1d1f] text-white shadow-md">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5l-3.9 19.5m-2.1-19.5l-3.9 19.5" />
                   </svg>
@@ -1083,11 +1070,10 @@ export default function UserModePage() {
             </details>
 
           {/* ── 参考問題カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#ff9500] via-[#ffcc00] to-[#ff9500] opacity-70" />
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#ff9500] to-[#ff6723] text-white shadow-lg shadow-[#ff9500]/20">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#1d1d1f] text-white shadow-md">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                   </svg>
@@ -1101,9 +1087,9 @@ export default function UserModePage() {
 
               {/* 選択済み問題の表示 */}
               {selectedBaseProblem ? (
-                <div className="mb-3 relative overflow-hidden rounded-2xl border border-[#ff9500]/25 bg-gradient-to-br from-[#ff9500]/[0.06] to-[#ff9500]/[0.02]
+                <div className="mb-3 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-black/[0.02]
                                 shadow-sm transition-all duration-300 hover:shadow-md">
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#ff9500] via-[#ffcc00] to-[#ff9500] opacity-60" />
+                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-black/[0.06]" />
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
@@ -1260,11 +1246,10 @@ export default function UserModePage() {
           </div>
 
           {/* ── 生成方法カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#5856d6] via-[#af52de] to-[#5856d6] opacity-70" />
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#5856d6] to-[#af52de] text-white shadow-lg shadow-[#5856d6]/20">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#1d1d1f] text-white shadow-md">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                   </svg>
@@ -1283,7 +1268,7 @@ export default function UserModePage() {
                 >
                   <div className="relative z-10 flex items-start gap-3">
                     <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300 ${
-                      mode === 'auto' ? 'bg-gradient-to-br from-[#fc3c44] to-[#e0323a] text-white shadow-lg shadow-[#fc3c44]/20' : 'bg-black/[0.04] text-[#86868b]'
+                      mode === 'auto' ? 'bg-[#1d1d1f] text-white shadow-md' : 'bg-black/[0.04] text-[#86868b]'
                     }`}>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
@@ -1312,7 +1297,7 @@ export default function UserModePage() {
                 >
                   <div className="relative z-10 flex items-start gap-3">
                     <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300 ${
-                      mode === 'manual' ? 'bg-gradient-to-br from-[#6e6e73] to-[#3a3a3c] text-white shadow-lg shadow-[#6e6e73]/20' : 'bg-black/[0.04] text-[#86868b]'
+                      mode === 'manual' ? 'bg-[#1d1d1f] text-white shadow-md' : 'bg-black/[0.04] text-[#86868b]'
                     }`}>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
@@ -1338,11 +1323,10 @@ export default function UserModePage() {
           </div>
 
           {/* ── カスタム要望カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#34c759] via-[#30d158] to-[#34c759] opacity-70" />
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#34c759] to-[#30d158] text-white shadow-lg shadow-[#34c759]/20">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#1d1d1f] text-white shadow-md">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
                   </svg>
@@ -1363,7 +1347,7 @@ export default function UserModePage() {
                   placeholder="例: 数値ではなく文字式で出題してほしい、具体的な数値は使わず一般的な変数で表してほしい ..."
                   rows={3}
                   maxLength={CUSTOM_REQUEST_MAX_LENGTH}
-                  className="w-full px-4 py-3 text-[13px] leading-relaxed border border-black/[0.06] bg-white/80 backdrop-blur-sm rounded-2xl
+                  className="w-full px-4 py-3 text-[13px] leading-relaxed border border-black/[0.06] bg-white rounded-2xl
                     focus:outline-none focus:border-[#34c759] focus:ring-2 focus:ring-[#34c759]/20
                     placeholder:text-[#c7c7cc] transition-all hover:border-black/[0.10] hover:shadow-sm
                     resize-none"
@@ -1413,11 +1397,11 @@ export default function UserModePage() {
         <div className="space-y-5 wizard-section-enter">
           {/* 選択中テンプレート情報 */}
           {selectedTemplate && (
-            <div className="mb-5 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-sm shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#fc3c44] via-[#ff375f] to-[#bf5af2] opacity-50" />
+            <div className="mb-5 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-black/[0.06]" />
               <div className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-[#fc3c44]/10 to-[#fc3c44]/5">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-black/[0.04]">
                     <Icons.File className="w-4 h-4 text-[#fc3c44]" />
                   </div>
                   <div className="flex-1">
@@ -1457,11 +1441,10 @@ export default function UserModePage() {
           )}
 
           {/* ── PDF形式カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44] opacity-70" />
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#fc3c44] to-[#e0323a] text-white shadow-lg shadow-[#fc3c44]/20">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#1d1d1f] text-white shadow-md">
                   <Icons.Pdf className="w-5 h-5" />
                 </div>
                 <div>
@@ -1520,7 +1503,7 @@ export default function UserModePage() {
 
           {/* 選択中プレビュー */}
           {selectedPreset && (
-            <div className="mt-4 px-4 py-3 bg-gradient-to-r from-[#fc3c44]/[0.06] to-[#fc3c44]/[0.02] rounded-2xl border border-[#fc3c44]/15 flex items-center gap-2.5">
+            <div className="mt-4 px-4 py-3 bg-black/[0.02] rounded-2xl border border-black/[0.06] flex items-center gap-2.5">
               <div className="check-circle checked !w-5 !h-5">
                 <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -1535,11 +1518,10 @@ export default function UserModePage() {
           </div>
 
           {/* ── 問題形式カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#af52de] via-[#da70d6] to-[#af52de] opacity-70" />
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="p-5">
                 <div className="flex items-center gap-2.5 mb-1">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-[#af52de] to-[#8944ab] shadow-lg shadow-[#af52de]/20">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#1d1d1f] shadow-md">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                     </svg>
@@ -1598,14 +1580,14 @@ export default function UserModePage() {
                       }}
                       className={`relative overflow-hidden rounded-xl p-3.5 text-left transition-all duration-300 active:scale-[0.97]
                         ${active
-                          ? 'bg-gradient-to-br from-[#af52de]/[0.12] to-[#af52de]/[0.04] border-2 border-[#af52de]/40 shadow-sm shadow-[#af52de]/10'
+                          ? 'bg-black/[0.04] border-2 border-[#1d1d1f]/30 shadow-sm'
                           : 'bg-black/[0.02] border-2 border-transparent hover:bg-black/[0.04] hover:border-black/[0.06]'
                         }`}
                     >
                       <div className="flex items-start gap-2.5">
                         <div className={`flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0 transition-all duration-300
                           ${active
-                            ? 'bg-gradient-to-br from-[#af52de] to-[#8944ab] text-white shadow-md shadow-[#af52de]/25'
+                            ? 'bg-[#1d1d1f] text-white shadow-md'
                             : 'bg-black/[0.05] text-[#86868b]'
                           }`}
                         >
@@ -1621,7 +1603,7 @@ export default function UserModePage() {
                         </div>
                         {/* チェックマーク */}
                         {active && (
-                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-[#af52de] to-[#8944ab] flex-shrink-0 mt-0.5">
+                          <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#1d1d1f] flex-shrink-0 mt-0.5">
                             <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
@@ -1636,11 +1618,10 @@ export default function UserModePage() {
           </div>
 
           {/* ── 図表パッケージカード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#5e5ce6] via-[#8e8ce6] to-[#5e5ce6] opacity-70" />
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
             <div className="p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-[#5e5ce6] to-[#3634a3] text-white shadow-lg shadow-[#5e5ce6]/20">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#1d1d1f] text-white shadow-md">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
                   </svg>
@@ -1736,14 +1717,14 @@ export default function UserModePage() {
                   onClick={() => setIncludeDiagramPerQuestion((v) => !v)}
                   className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
                     ${includeDiagramPerQuestion
-                      ? 'bg-gradient-to-br from-[#007aff]/[0.08] to-[#5856d6]/[0.04] border-2 border-[#007aff]/30 shadow-sm'
+                      ? 'bg-black/[0.04] border-2 border-[#1d1d1f]/30 shadow-sm'
                       : 'bg-black/[0.02] border-2 border-transparent hover:bg-black/[0.04] hover:border-black/[0.06]'
                     }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
                       ${includeDiagramPerQuestion
-                        ? 'bg-gradient-to-br from-[#007aff] to-[#5856d6] text-white shadow-lg shadow-[#007aff]/20'
+                        ? 'bg-[#1d1d1f] text-white shadow-md'
                         : 'bg-black/[0.05] text-[#86868b]'
                       }`}>
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -1759,7 +1740,7 @@ export default function UserModePage() {
                     {/* トグルスイッチ */}
                     <div className={`relative w-12 h-7 rounded-full flex-shrink-0 transition-all duration-300
                       ${includeDiagramPerQuestion
-                        ? 'bg-gradient-to-r from-[#007aff] to-[#5856d6]'
+                        ? 'bg-[#1d1d1f]'
                         : 'bg-[#e5e5ea]'
                       }`}>
                       <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
@@ -1778,15 +1759,15 @@ export default function UserModePage() {
                 onChange={(e) => setCustomPackage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addCustomPackage()}
                 placeholder="その他の図表タイプ名（例: 化学式）"
-                className="flex-1 px-4 py-2.5 text-xs border border-black/[0.06] bg-white/80 backdrop-blur-sm rounded-2xl
+                className="flex-1 px-4 py-2.5 text-xs border border-black/[0.06] bg-white rounded-2xl
                            focus:outline-none focus:border-[#af52de] focus:ring-2 focus:ring-[#af52de]/20
                            placeholder:text-[#c7c7cc] transition-all hover:border-black/[0.10] hover:shadow-sm"
               />
               <button
                 onClick={addCustomPackage}
                 disabled={!customPackage.trim()}
-                className="px-4 py-2.5 text-xs font-bold bg-white/80 backdrop-blur-sm border border-black/[0.06] text-[#af52de] rounded-2xl
-                           hover:bg-[#af52de]/[0.08] hover:border-[#af52de]/30 disabled:opacity-30 transition-all"
+                className="px-4 py-2.5 text-xs font-bold bg-white border border-black/[0.06] text-[#1d1d1f] rounded-2xl
+                           hover:bg-black/[0.04] hover:border-black/[0.10] disabled:opacity-30 transition-all"
               >
                 追加
               </button>
@@ -1822,14 +1803,12 @@ export default function UserModePage() {
       {/* ═══════ Step 4: 生成中 ═══════ */}
       {step === 4 && generating && (
         <div className="wizard-section-enter">
-          <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] overflow-hidden">
-            {/* アクセントライン */}
-            <div className="h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6723] to-[#ff9500]" />
+          <div className="rounded-3xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
             <div className="flex flex-col items-center justify-center py-20 px-6">
               {/* パルスリング */}
               <div className="relative mb-6">
                 <div className="absolute inset-0 w-16 h-16 rounded-full bg-[#fc3c44]/10 animate-ping" />
-                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-[#fc3c44] to-[#ff6723] flex items-center justify-center shadow-lg shadow-[#fc3c44]/20">
+                <div className="relative w-16 h-16 rounded-2xl bg-[#1d1d1f] flex items-center justify-center shadow-lg">
                   <svg className="animate-spin h-7 w-7 text-white" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -1849,7 +1828,7 @@ export default function UserModePage() {
         <div className="space-y-5 wizard-section-enter">
           {/* RAG フィードバックカード */}
           {renderContext && (
-            <div className={`rounded-2xl backdrop-blur-xl border text-xs px-5 py-4 shadow-sm ${
+            <div className={`rounded-2xl border text-xs px-5 py-4 shadow-sm ${
               renderContext.rag_status === 'ok' && renderContext.rag_retrieved > 0
                 ? 'bg-[#34c759]/[0.08] border-[#34c759]/20'
                 : renderContext.rag_status === 'no_data'
@@ -1927,13 +1906,11 @@ export default function UserModePage() {
 
           {/* AI自動生成の結果 */}
           {mode === 'auto' && generatedLatex && (
-            <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] overflow-hidden">
-              {/* アクセントライン */}
-              <div className="h-[3px] bg-gradient-to-r from-[#34c759] to-[#30d158]" />
+            <div className="rounded-3xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
               <div className="p-5">
                 {/* ヘッダー */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#34c759] to-[#30d158] flex items-center justify-center shadow-md shadow-[#34c759]/20">
+                  <div className="w-10 h-10 rounded-xl bg-[#1d1d1f] flex items-center justify-center shadow-md">
                     <Icons.Success className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -2006,13 +1983,11 @@ export default function UserModePage() {
 
           {/* 手動モードの結果 */}
           {mode === 'manual' && prompt && (
-            <div className="rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03] overflow-hidden">
-              {/* アクセントライン */}
-              <div className="h-[3px] bg-gradient-to-r from-[#5856d6] to-[#af52de]" />
+            <div className="rounded-3xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
               <div className="p-5">
                 {/* ヘッダー */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5856d6] to-[#af52de] flex items-center justify-center shadow-md shadow-[#5856d6]/20">
+                  <div className="w-10 h-10 rounded-xl bg-[#1d1d1f] flex items-center justify-center shadow-md">
                     <Icons.Prompt className="w-5 h-5 text-white" />
                   </div>
                   <div>
@@ -2138,8 +2113,6 @@ export default function UserModePage() {
           )}
         </div>
       </div>
-
-      </div>{/* /z-10 wrapper */}
     </div>
   );
 }

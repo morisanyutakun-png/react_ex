@@ -24,7 +24,7 @@ export default function Header() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-[52px]">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-gradient-to-br from-[#e8457a] via-[#f472b6] to-[#c084fc] text-white shadow-md shadow-[#e8457a]/20 transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[#e8457a]/30 group-hover:scale-105">
+              <div className="flex items-center justify-center w-[30px] h-[30px] rounded-[9px] bg-[#1d1d1f] text-white shadow-md transition-all duration-300 group-hover:shadow-lg group-hover:scale-105">
                 <Icons.Book className="w-3.5 h-3.5" />
               </div>
               <span className="text-[15px] font-bold tracking-tight text-[#1d1d1f] group-hover:text-[#e8457a] transition-colors duration-300">

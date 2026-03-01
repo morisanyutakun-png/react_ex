@@ -53,7 +53,7 @@ function SubjectChip({ subject, selected, onClick }) {
         transition-all duration-300 cursor-pointer select-none border
         ${selected
           ? 'text-white shadow-lg hover:shadow-xl scale-[1.02]'
-          : 'bg-white/80 backdrop-blur-sm text-[#6e6e73] border-black/[0.06] hover:border-black/[0.12] hover:bg-white hover:shadow-md hover:-translate-y-0.5'
+          : 'bg-white text-[#6e6e73] border-black/[0.06] hover:border-black/[0.10] hover:bg-white hover:shadow-sm'
         } active:scale-[0.96]`}
       style={selected ? {
         background: `linear-gradient(135deg, ${c}, ${c}cc)`,
@@ -121,7 +121,7 @@ function FieldSelector({ subject, value, onChange, options }) {
     <div className="animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="relative group">
         <select value={value} onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-[13px]
+          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.06] bg-white text-[13px]
                     text-[#1d1d1f] transition-all duration-300 cursor-pointer appearance-none font-semibold shadow-sm
                     hover:border-black/[0.10] hover:bg-white hover:shadow-md
                     focus:ring-2 focus:shadow-lg outline-none"
@@ -251,18 +251,7 @@ export default function SearchPage() {
   const hasActiveFilters = query || subjectFilter || fieldFilter || difficultyFilter;
 
   return (
-    <div className="relative min-h-screen px-3 sm:px-4 overflow-hidden">
-      {/* ── Apple風アンビエント背景 ── */}
-      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
-        <div className="absolute -top-[15%] -left-[15%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.10]"
-             style={{ background: 'radial-gradient(circle, #f472b6 0%, #e8457a 35%, transparent 75%)', animation: 'orbBreathe1 16s ease-in-out infinite' }} />
-        <div className="absolute -top-[10%] -right-[18%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full opacity-[0.10]"
-             style={{ background: 'radial-gradient(circle, #c084fc 0%, #818cf8 40%, transparent 75%)', animation: 'orbBreathe2 20s ease-in-out infinite' }} />
-        <div className="absolute -bottom-[12%] left-[20%] w-[45vw] h-[45vw] max-w-[450px] max-h-[450px] rounded-full opacity-[0.07]"
-             style={{ background: 'radial-gradient(circle, #ff9f0a 0%, #f472b6 40%, transparent 72%)', animation: 'orbBreathe3 24s ease-in-out infinite' }} />
-      </div>
-
-      <div className="relative z-10 max-w-3xl mx-auto space-y-4 sm:space-y-6">
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
       <PageHeader
         title="問題検索"
         description="保存された問題を検索・閲覧。科目・分野・難易度での絞り込みや類題生成も可能です。"
@@ -273,20 +262,17 @@ export default function SearchPage() {
       <StatusBar message={status} />
 
       {/* ── 検索パネル ── */}
-      <div className="relative overflow-hidden rounded-[28px] bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
-        {/* Accent bar */}
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#e8457a] via-[#f472b6] to-[#c084fc] opacity-60" />
+      <div className="relative overflow-hidden rounded-[28px] bg-white border border-black/[0.06] shadow-sm">
 
         <div className="p-4 sm:p-7 space-y-4 sm:space-y-5">
 
           {/* ── 検索バー ── */}
           <div className="relative group">
-            <div className="absolute -inset-0.5 rounded-[22px] bg-gradient-to-r from-[#e8457a]/20 via-[#f472b6]/20 to-[#c084fc]/20 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 blur-sm" />
-            <div className="relative flex items-center gap-2 bg-white/90 backdrop-blur-xl rounded-[20px] border border-black/[0.06] shadow-sm
-                            group-focus-within:border-[#e8457a]/30 group-focus-within:shadow-lg group-focus-within:shadow-[#e8457a]/8
+            <div className="relative flex items-center gap-2 bg-black/[0.02] rounded-[20px] border border-black/[0.06]
+                            group-focus-within:border-black/[0.12] group-focus-within:shadow-md
                             transition-all duration-300">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 ml-1.5 rounded-2xl bg-gradient-to-br from-[#e8457a]/10 to-[#f472b6]/5 flex-shrink-0">
-                <Icons.Search className="w-[18px] h-[18px] text-[#e8457a]" />
+              <div className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 ml-1.5 rounded-2xl bg-black/[0.04] flex-shrink-0">
+                <Icons.Search className="w-[18px] h-[18px] text-[#86868b]" />
               </div>
               <input
                 ref={inputRef}
@@ -469,8 +455,8 @@ export default function SearchPage() {
                       <button onClick={() => handleGenerateSimilar(item)}
                         disabled={generatingId === (item.id ?? idx)}
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold
-                                   bg-gradient-to-b from-[#af52de] to-[#8944ab] text-white
-                                   shadow-lg shadow-[#af52de]/20 hover:shadow-xl hover:shadow-[#af52de]/30
+                                   bg-[#1d1d1f] text-white
+                                   shadow-md hover:shadow-lg
                                    hover:-translate-y-0.5 transition-all
                                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none active:scale-95">
                         {generatingId === (item.id ?? idx) ? (
@@ -492,7 +478,7 @@ export default function SearchPage() {
                       </button>
                       <button onClick={() => { navigator.clipboard.writeText(item.stem || item.text || ''); setStatus('問題文をコピーしました'); }}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold
-                                   text-[#6e6e73] bg-white/80 backdrop-blur-sm border border-black/[0.06]
+                                   text-[#6e6e73] bg-white border border-black/[0.06]
                                    hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -534,7 +520,7 @@ export default function SearchPage() {
       {/* ── 初回表示 ── */}
       {!searching && !hasSearched && (
         <div className="text-center py-20">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#fc3c44]/10 to-[#af52de]/10 mb-5 shadow-sm">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-black/[0.04] mb-5 shadow-sm">
             <Icons.Search className="w-7 h-7 text-[#fc3c44]" />
           </div>
           <h3 className="text-[15px] font-bold text-[#1d1d1f] mb-2">過去問を検索</h3>
@@ -544,7 +530,6 @@ export default function SearchPage() {
           </p>
         </div>
       )}
-      </div>{/* /z-10 wrapper */}
     </div>
   );
 }

@@ -146,9 +146,9 @@ export default function TemplateSelector({
               list="field-suggestions"
               value={field || ''}
               onChange={(e) => onFieldChange?.(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-[#1d1d1f] text-sm font-medium
+              className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm font-medium
                          transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
-                         focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                         focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                          outline-none placeholder:text-[#c7c7cc] shadow-sm"
               placeholder={subject ? `${subject}の分野を選択 or 自由入力` : '先に教科を選択...'}
             />
@@ -218,7 +218,7 @@ export default function TemplateSelector({
               <select
                 value={newSubject}
                 onChange={(e) => setNewSubject(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-red-600 focus:ring-2 focus:ring-[#fc3c44]/20"
+                className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05]"
               >
                 <option value="">選択</option>
                 {subjects.map((s) => (
@@ -232,7 +232,7 @@ export default function TemplateSelector({
                 <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">教科名</label>
                 <input
                   id="newTplCustomSubject"
-                  className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-red-600 focus:ring-2 focus:ring-[#fc3c44]/20"
+                  className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05]"
                   placeholder="例: 情報"
                 />
               </div>
@@ -243,7 +243,7 @@ export default function TemplateSelector({
                 list="new-tpl-field-suggestions"
                 value={newField}
                 onChange={(e) => setNewField(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-red-600 focus:ring-2 focus:ring-[#fc3c44]/20"
+                className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05]"
                 placeholder={newSubject && newSubject !== '__custom' ? `${newSubject}の分野...` : '例: 微分積分'}
               />
               {newSubject && newSubject !== '__custom' && SUBJECT_TOPICS[newSubject] && (

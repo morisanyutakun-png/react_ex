@@ -98,21 +98,20 @@ export const Icons = {
   )
 };
 
-/* ── PageHeader (Vivid) ── */
+/* ── PageHeader (Clean) ── */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
     <div className="mb-8 sm:mb-10 animate-fade-in-up">
       {breadcrumbs && (
-        <nav className="flex items-center gap-1.5 mb-5 sm:mb-6 text-[12px] font-semibold tracking-wide">
+        <nav className="flex items-center gap-1.5 mb-5 sm:mb-6 text-[12px] font-medium tracking-wide">
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="flex items-center gap-1 text-[#6e6e73] hover:text-[#fc3c44] transition-colors duration-300">
-                  {i === 0 && bc.label === 'Home' && <Icons.Home className="w-3.5 h-3.5" />}
+                <a href={bc.href} className="text-[#86868b] hover:text-[#1d1d1f] transition-colors duration-200">
                   <span>{bc.label}</span>
                 </a>
               ) : (
-                <span className="text-[#1d1d1f] font-bold">{bc.label}</span>
+                <span className="text-[#1d1d1f] font-semibold">{bc.label}</span>
               )}
               {i < breadcrumbs.length - 1 && (
                 <svg className="w-3 h-3 text-[#c7c7cc]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,9 +124,8 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
       )}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
-          <div className="relative flex-shrink-0 w-13 h-13 rounded-2xl bg-gradient-to-br from-[#fc3c44] via-[#ff375f] to-[#e0323a] text-white flex items-center justify-center shadow-xl shadow-[#fc3c44]/25">
+          <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-[#1d1d1f] text-white flex items-center justify-center shadow-md">
             {icon}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
           </div>
         )}
         <div className="flex-1">
@@ -135,7 +133,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
             {title}
           </h1>
           {description && (
-            <p className="text-[14px] text-[#6e6e73] mt-1.5 max-w-2xl leading-relaxed">
+            <p className="text-[13px] text-[#86868b] mt-1.5 max-w-2xl leading-relaxed">
               {description}
             </p>
           )}
@@ -184,10 +182,10 @@ export function SelectField({ label, value, onChange, options, className = '' })
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm
+          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm
                     text-[#1d1d1f] transition-all duration-300 cursor-pointer appearance-none
                     hover:border-black/[0.10] hover:bg-white hover:shadow-md
-                    focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                    focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                     outline-none font-semibold shadow-sm"
         >
           {options.map((opt) =>
@@ -199,14 +197,14 @@ export function SelectField({ label, value, onChange, options, className = '' })
           )}
         </select>
         {/* Animated chevron */}
-        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none transition-all duration-300 group-hover:text-[#fc3c44] text-[#c7c7cc]">
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none transition-all duration-300 group-hover:text-[#86868b] text-[#c7c7cc]">
           <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
         {/* Active indicator dot */}
         {hasValue && (
-          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#fc3c44] opacity-60" />
+          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#1d1d1f] opacity-40" />
         )}
       </div>
     </div>
@@ -232,7 +230,7 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
       {label && (
         <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>
       )}
-      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm shadow-sm
+      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.06] bg-white shadow-sm
                       hover:shadow-md hover:border-black/[0.10] transition-all duration-300 overflow-hidden">
         {/* Minus button */}
         <button
@@ -240,7 +238,7 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
           onClick={handleDecrement}
           disabled={atMin}
           className="flex items-center justify-center w-11 border-r border-black/[0.06] text-[#6e6e73]
-                     hover:bg-[#fc3c44]/[0.06] hover:text-[#fc3c44] active:bg-[#fc3c44]/[0.12]
+                     hover:bg-black/[0.04] hover:text-[#1d1d1f] active:bg-black/[0.08]
                      disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-[#6e6e73]
                      transition-all duration-200 active:scale-90"
           aria-label="減らす"
@@ -274,7 +272,7 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
           onClick={handleIncrement}
           disabled={atMax}
           className="flex items-center justify-center w-11 border-l border-black/[0.06] text-[#6e6e73]
-                     hover:bg-[#fc3c44]/[0.06] hover:text-[#fc3c44] active:bg-[#fc3c44]/[0.12]
+                     hover:bg-black/[0.04] hover:text-[#1d1d1f] active:bg-black/[0.08]
                      disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-[#6e6e73]
                      transition-all duration-200 active:scale-90"
           aria-label="増やす"
@@ -297,10 +295,10 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         rows={rows} placeholder={placeholder} readOnly={readOnly}
-        className="w-full px-4 py-3.5 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm font-mono text-sm
+        className="w-full px-4 py-3.5 rounded-2xl border border-black/[0.06] bg-white font-mono text-sm
                    leading-relaxed resize-y text-[#1d1d1f] transition-all duration-300
                    hover:border-black/[0.10] hover:bg-white hover:shadow-md
-                   focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                   focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                    outline-none placeholder:text-[#c7c7cc] shadow-sm
                    read-only:bg-[#f2f2f7] read-only:text-[#86868b] read-only:border-black/[0.04]"
       />
@@ -315,25 +313,25 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
       {label && <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">{label}</label>}
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white/80 backdrop-blur-sm text-sm text-[#1d1d1f]
+        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-sm text-[#1d1d1f]
                    transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
-                   focus:border-[#fc3c44]/40 focus:ring-2 focus:ring-[#fc3c44]/10 focus:shadow-lg focus:shadow-[#fc3c44]/5
+                   focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
                    outline-none placeholder:text-[#c7c7cc] shadow-sm font-medium"
       />
     </div>
   );
 }
 
-/* ── Button (Vivid) ── */
+/* ── Button (Clean) ── */
 export function Button({ children, onClick, variant = 'primary', disabled, className = '', size = 'md' }) {
-  const base = 'inline-flex items-center justify-center gap-2 font-bold rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.95]';
+  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]';
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
-    primary: 'bg-gradient-to-b from-[#fc3c44] via-[#ff375f] to-[#e0323a] text-white hover:from-[#ff5c5c] hover:via-[#ff4d6a] hover:to-[#e84040] shadow-lg shadow-[#fc3c44]/20 hover:shadow-xl hover:shadow-[#fc3c44]/35 hover:-translate-y-0.5',
-    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f2f2f7] hover:border-black/[0.14] shadow-sm hover:shadow-md hover:-translate-y-0.5',
-    success: 'bg-gradient-to-b from-[#30d158] via-[#34c759] to-[#28a745] text-white hover:from-[#3de066] hover:to-[#2db84e] shadow-lg shadow-[#30d158]/20 hover:shadow-xl hover:shadow-[#30d158]/35 hover:-translate-y-0.5',
-    danger: 'bg-gradient-to-b from-[#ff453a] via-[#ff3b30] to-[#e0323a] text-white hover:from-[#ff5c5c] hover:to-[#e84040] shadow-lg shadow-[#ff453a]/20 hover:shadow-xl hover:shadow-[#ff453a]/35 hover:-translate-y-0.5',
-    warning: 'bg-gradient-to-b from-[#ff9f0a] via-[#ff9500] to-[#e88800] text-white hover:from-[#ffaa33] hover:to-[#f59e0b] shadow-lg shadow-[#ff9f0a]/20 hover:shadow-xl hover:shadow-[#ff9f0a]/35 hover:-translate-y-0.5',
+    primary: 'bg-[#1d1d1f] text-white hover:bg-[#3a3a3c] shadow-sm hover:shadow-md',
+    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] hover:bg-[#f2f2f7] hover:border-black/[0.12] shadow-sm',
+    success: 'bg-[#248a3d] text-white hover:bg-[#30a04a] shadow-sm hover:shadow-md',
+    danger: 'bg-[#ff453a] text-white hover:bg-[#ff5c5c] shadow-sm hover:shadow-md',
+    warning: 'bg-[#ff9f0a] text-white hover:bg-[#ffaa33] shadow-sm hover:shadow-md',
     ghost: 'bg-transparent text-[#6e6e73] hover:bg-black/[0.04] hover:text-[#1d1d1f]',
   };
   return (
@@ -350,7 +348,7 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
   const colorMap = {
     slate: 'bg-black/[0.04] text-[#86868b]',
     neutral: 'bg-black/[0.04] text-[#86868b]',
-    indigo: 'bg-[#fc3c44]/[0.08] text-[#fc3c44]',
+    indigo: 'bg-black/[0.06] text-[#1d1d1f]',
     emerald: 'bg-[#34c759]/[0.08] text-[#248a3d]',
     amber: 'bg-[#ff9500]/[0.08] text-[#c77c00]',
     rose: 'bg-[#ff3b30]/[0.08] text-[#ff3b30]',
@@ -364,8 +362,8 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
   );
 }
 
-/* ── Slider (Apple Music Vivid) ── */
-export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#fc3c44' }) {
+/* ── Slider ── */
+export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#1d1d1f' }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <label className="flex items-center gap-4 py-2 group cursor-pointer">
@@ -409,16 +407,16 @@ export function CopyButton({ text, onCopied, label = 'コピー' }) {
   );
 }
 
-/* ── SectionCard (Vivid) ── */
+/* ── SectionCard (Clean) ── */
 export function SectionCard({ title, subtitle, icon, children, className = '', accentColor }) {
   return (
-    <div className={`card-premium card-glow p-5 sm:p-6 ${className}`}>
+    <div className={`card-premium p-5 sm:p-6 ${className}`}>
       {(title || icon) && (
         <div className="mb-5">
           <div className="flex items-center gap-2.5">
             {icon && (
               <span className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300"
-                    style={{ background: `${accentColor || '#fc3c44'}12`, color: accentColor || '#fc3c44' }}>
+                    style={{ background: `${accentColor || '#1d1d1f'}12`, color: accentColor || '#1d1d1f' }}>
                 {icon}
               </span>
             )}
@@ -469,22 +467,22 @@ export function ProgressSteps({ steps, current }) {
       {steps.map((s, i) => (
         <div key={i} className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-500
+            <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300
                 ${i + 1 <= current
-                  ? 'bg-gradient-to-br from-[#fc3c44] to-[#e0323a] text-white shadow-md shadow-[#fc3c44]/20'
+                  ? 'bg-[#1d1d1f] text-white shadow-sm'
                   : i + 1 === current + 1
-                  ? 'bg-[#fc3c44]/[0.06] text-[#fc3c44] border-[1.5px] border-[#fc3c44]/20 step-indicator-glow'
+                  ? 'bg-black/[0.06] text-[#1d1d1f] border border-black/[0.08]'
                   : 'bg-black/[0.03] text-[#c7c7cc] border border-black/[0.04]'
                 }`}>
               {i + 1 < current ? <Icons.Success className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : i + 1}
             </div>
-            <span className={`text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap
-                ${i + 1 <= current ? 'text-[#1d1d1f]' : i + 1 === current + 1 ? 'text-[#86868b]' : 'text-[#c7c7cc]'}`}>
+            <span className={`text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap
+                ${i + 1 <= current ? 'text-[#1d1d1f]' : i + 1 === current + 1 ? 'text-[#6e6e73]' : 'text-[#c7c7cc]'}`}>
               {s}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-4 sm:w-8 h-[1.5px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#fc3c44]' : 'bg-black/[0.06]'}`} />
+            <div className={`w-4 sm:w-8 h-[1.5px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#1d1d1f]' : 'bg-black/[0.06]'}`} />
           )}
         </div>
       ))}
