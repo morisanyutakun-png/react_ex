@@ -750,18 +750,21 @@ export default function UserModePage() {
 
             {/* ── テンプレート新規作成フォーム ── */}
             {showCreateTemplate ? (
-              <div className="p-5 bg-black/[0.04] rounded-xl border border-black/[0.06] space-y-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-7 h-7 rounded-xl bg-[#fc3c44]/[0.08] text-[#fc3c44] flex items-center justify-center">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <div className="rounded-3xl bg-white/80 backdrop-blur-xl border border-[#34c759]/20 shadow-xl shadow-[#34c759]/[0.06] overflow-hidden">
+                {/* 緑のアクセントライン（保存アクション = 緑で統一） */}
+                <div className="h-[3px] bg-gradient-to-r from-[#34c759] to-[#30d158]" />
+                <div className="p-6 space-y-4">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#34c759] to-[#30d158] flex items-center justify-center shadow-md shadow-[#34c759]/20">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-bold text-[#1d1d1f]">出題パターンを新しく作る</h3>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">出題パターンを新しく作る</h3>
+                    <p className="text-[11px] text-[#86868b]">教科と分野を選ぶだけで自動作成されます</p>
+                  </div>
                 </div>
-                <p className="text-xs text-[#86868b]">
-                  教科と分野を選ぶだけで、出題パターンが自動で作られます。
-                </p>
 
                 {/* 教科 + 難易度 */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -859,28 +862,38 @@ export default function UserModePage() {
                 )}
 
                 {/* 作成ボタン */}
-                <div className="flex items-center gap-3 pt-1">
+                <div className="flex flex-col gap-3 pt-2">
                   <button
                     onClick={handleCreateTemplate}
                     disabled={creatingTemplate || !effectiveNewSubject || !newTplDifficulty}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold
-                               bg-gradient-to-b from-[#fc3c44] via-[#ff375f] to-[#e0323a] text-white
-                               hover:from-[#ff5c5c] hover:to-[#e84040] shadow-lg shadow-[#fc3c44]/20
-                               hover:shadow-xl hover:shadow-[#fc3c44]/35 hover:-translate-y-0.5
-                               disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 active:scale-[0.95]"
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-[15px] font-bold
+                               bg-gradient-to-b from-[#34c759] to-[#248a3d] text-white
+                               hover:from-[#30d158] hover:to-[#2d9f47] shadow-lg shadow-[#34c759]/25
+                               hover:shadow-xl hover:shadow-[#34c759]/40 hover:-translate-y-0.5
+                               disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 active:scale-[0.97]"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
-                    {creatingTemplate ? '作成中...' : '出題パターンを作成'}
+                    {creatingTemplate ? '作成中...' : 'このパターンを保存する'}
                   </button>
                   <button
                     onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplDifficulty(''); }}
-                    className="px-4 py-3 rounded-xl text-sm font-medium text-[#86868b] hover:text-[#424245] hover:bg-black/[0.03] transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#86868b] hover:text-[#424245] hover:bg-black/[0.03] transition-all"
                   >
                     キャンセル
                   </button>
                 </div>
+                {/* 操作ヒント */}
+                <div className="flex items-center gap-2 pt-1 px-1">
+                  <div className="w-4 h-4 rounded-full bg-[#34c759]/10 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-[#34c759]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
+                  <p className="text-[10px] text-[#aeaeb2]">保存後、自動で選択されます。そのまま「次のステップへ」で進めます。</p>
+                </div>
+              </div>
               </div>
             ) : (
               /* ── 新規作成ボタン ── */
@@ -2004,7 +2017,7 @@ export default function UserModePage() {
               最初からやり直す
             </Button>
           )}
-          {step === 1 && (
+          {step === 1 && !showCreateTemplate && (
             <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${canNext() ? 'cta-breathe !py-3.5 !text-base' : ''}`}>
               {canNext() ? '次のステップへ →' : 'パターンを選んでください'}
             </Button>
