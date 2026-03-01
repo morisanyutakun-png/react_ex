@@ -602,17 +602,28 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div ref={wizardTopRef} className="max-w-2xl mx-auto py-4 sm:py-8 px-3 sm:px-4">
+    <div ref={wizardTopRef} className="relative min-h-screen px-3 sm:px-4 py-4 sm:py-8 overflow-hidden">
+      {/* ── Apple風アンビエント背景 ── */}
+      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
+        <div className="absolute -top-[18%] -left-[12%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full opacity-[0.12]"
+             style={{ background: 'radial-gradient(circle, #f472b6 0%, #e8457a 35%, transparent 75%)', animation: 'orbBreathe1 14s ease-in-out infinite' }} />
+        <div className="absolute -top-[8%] -right-[18%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.10]"
+             style={{ background: 'radial-gradient(circle, #c084fc 0%, #818cf8 40%, transparent 75%)', animation: 'orbBreathe2 18s ease-in-out infinite' }} />
+        <div className="absolute -bottom-[12%] left-[15%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full opacity-[0.08]"
+             style={{ background: 'radial-gradient(circle, #fbbf24 0%, #f472b6 45%, transparent 75%)', animation: 'orbBreathe3 20s ease-in-out infinite' }} />
+      </div>
+
+      <div className="relative z-10 max-w-2xl mx-auto">
       {/* ヘッダー */}
       <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#e8457a]/[0.08] text-[#e8457a] rounded-full text-xs font-bold mb-3 sm:mb-4 border border-[#e8457a]/[0.12]">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/60 backdrop-blur-xl text-[#e8457a] rounded-full text-xs font-bold mb-4 sm:mb-5 border border-[#e8457a]/[0.10] shadow-sm">
           <Icons.User className="w-4 h-4" />
           かんたんモード
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#1d1d1f]">
+        <h1 className="text-2xl sm:text-[34px] font-black tracking-tight text-[#1d1d1f] mb-2 leading-none">
           問題をつくる
         </h1>
-        <p className="text-xs sm:text-sm text-[#86868b] mt-1">
+        <p className="text-[13px] sm:text-[15px] text-[#6e6e73] leading-relaxed max-w-sm mx-auto">
           ステップに沿って進むだけで、試験問題の PDF が完成します
         </p>
       </div>
@@ -2128,6 +2139,7 @@ export default function UserModePage() {
         </div>
       </div>
 
-</div>
+      </div>{/* /z-10 wrapper */}
+    </div>
   );
 }

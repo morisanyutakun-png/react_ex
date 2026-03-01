@@ -642,7 +642,18 @@ export default function TuningPage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
+    <div className="relative min-h-screen px-3 sm:px-4 overflow-hidden">
+      {/* ── Apple風アンビエント背景 ── */}
+      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
+        <div className="absolute -top-[15%] -right-[15%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.12]"
+             style={{ background: 'radial-gradient(circle, #c084fc 0%, #bf5af2 30%, #818cf8 55%, transparent 78%)', animation: 'orbBreathe2 16s ease-in-out infinite' }} />
+        <div className="absolute -top-[10%] -left-[18%] w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full opacity-[0.10]"
+             style={{ background: 'radial-gradient(circle, #f472b6 0%, #e8457a 35%, transparent 72%)', animation: 'orbBreathe1 20s ease-in-out infinite' }} />
+        <div className="absolute -bottom-[15%] right-[10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full opacity-[0.08]"
+             style={{ background: 'radial-gradient(circle, #fbbf24 0%, #ff9f0a 30%, transparent 70%)', animation: 'orbBreathe3 22s ease-in-out infinite' }} />
+      </div>
+
+      <div className="relative z-10 max-w-3xl mx-auto space-y-4 sm:space-y-6">
       <PageHeader
         title="品質をみがく"
         description="出題パターンを選んで → AIに指示を出し → 出来栄えを確認する、3ステップの作業スペースです"
@@ -1716,6 +1727,7 @@ export default function TuningPage() {
           </div>
         </div>
       )}
+      </div>{/* /z-10 wrapper */}
     </div>
   );
 }

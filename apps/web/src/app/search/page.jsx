@@ -251,7 +251,18 @@ export default function SearchPage() {
   const hasActiveFilters = query || subjectFilter || fieldFilter || difficultyFilter;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
+    <div className="relative min-h-screen px-3 sm:px-4 overflow-hidden">
+      {/* ── Apple風アンビエント背景 ── */}
+      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
+        <div className="absolute -top-[15%] -left-[15%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.10]"
+             style={{ background: 'radial-gradient(circle, #f472b6 0%, #e8457a 35%, transparent 75%)', animation: 'orbBreathe1 16s ease-in-out infinite' }} />
+        <div className="absolute -top-[10%] -right-[18%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full opacity-[0.10]"
+             style={{ background: 'radial-gradient(circle, #c084fc 0%, #818cf8 40%, transparent 75%)', animation: 'orbBreathe2 20s ease-in-out infinite' }} />
+        <div className="absolute -bottom-[12%] left-[20%] w-[45vw] h-[45vw] max-w-[450px] max-h-[450px] rounded-full opacity-[0.07]"
+             style={{ background: 'radial-gradient(circle, #ff9f0a 0%, #f472b6 40%, transparent 72%)', animation: 'orbBreathe3 24s ease-in-out infinite' }} />
+      </div>
+
+      <div className="relative z-10 max-w-3xl mx-auto space-y-4 sm:space-y-6">
       <PageHeader
         title="問題検索"
         description="保存された問題を検索・閲覧。科目・分野・難易度での絞り込みや類題生成も可能です。"
@@ -533,6 +544,7 @@ export default function SearchPage() {
           </p>
         </div>
       )}
+      </div>{/* /z-10 wrapper */}
     </div>
   );
 }

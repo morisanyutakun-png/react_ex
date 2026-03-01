@@ -121,19 +121,22 @@ function colLabel(name) {
   return COL_LABELS[name] || name;
 }
 
-// テーブル名日本語マッピング
-const TABLE_LABELS = {
-  problems: '問題データ',
-  templates: 'テンプレート',
-  generations: '生成履歴',
-  generation_runs: '生成バッチ',
-  annotations: '評価データ',
-  generation_evals: '生成評価',
-  users: 'ユーザー',
+// テーブル名日本語マッピング（メタ情報付き）
+const TABLE_META = {
+  problems:        { label: '問題データ',  desc: '過去問・オリジナル問題の一覧',           icon: '📝', color: '#fc3c44' },
+  templates:       { label: '出題パターン', desc: '教科・分野・難易度の組み合わせ',   icon: '🗂️', color: '#bf5af2' },
+  generations:     { label: '生成履歴',      desc: 'AIが作った問題の履歴',               icon: '✨',  color: '#ff9f0a' },
+  generation_runs: { label: '生成バッチ',    desc: 'まとめて生成した記録',               icon: '📦', color: '#30d158' },
+  annotations:     { label: '評価データ',    desc: '生成結果の品質評価記録',           icon: '⭐',  color: '#5856d6' },
+  generation_evals:{ label: '生成評価',      desc: '生成の自動評価スコア',             icon: '📊', color: '#007aff' },
+  users:           { label: 'ユーザー',      desc: 'ユーザーアカウント情報',             icon: '👤', color: '#64d2ff' },
 };
 
 function tableLabel(name) {
-  return TABLE_LABELS[name] || name;
+  return TABLE_META[name]?.label || name;
+}
+function tableMeta(name) {
+  return TABLE_META[name] || { label: name, desc: '', icon: '🗃️', color: '#86868b' };
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -394,7 +397,18 @@ export default function DbEditorPage() {
   const displayCols = allCols.filter((c) => visibleCols.includes(c.name));
 
   return (
-    <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-3 sm:px-4 pb-24 sm:pb-12">
+    <div className="relative min-h-screen px-3 sm:px-4 pb-24 sm:pb-12 overflow-hidden">
+      {/* ── Apple風アンビエント背景 ── */}
+      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
+        <div className="absolute -top-[12%] -right-[15%] w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full opacity-[0.09]"
+             style={{ background: 'radial-gradient(circle, #86efac 0%, #30d158 35%, transparent 75%)', animation: 'orbBreathe1 14s ease-in-out infinite' }} />
+        <div className="absolute -top-[10%] -left-[18%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px] rounded-full opacity-[0.08]"
+             style={{ background: 'radial-gradient(circle, #93c5fd 0%, #818cf8 40%, transparent 75%)', animation: 'orbBreathe2 18s ease-in-out infinite' }} />
+        <div className="absolute -bottom-[15%] right-[15%] w-[48vw] h-[48vw] max-w-[480px] max-h-[480px] rounded-full opacity-[0.07]"
+             style={{ background: 'radial-gradient(circle, #fcd34d 0%, #30d158 40%, transparent 72%)', animation: 'orbBreathe3 22s ease-in-out infinite' }} />
+      </div>
+
+      <div className="relative z-10 max-w-[100rem] mx-auto space-y-4 sm:space-y-5">
       <PageHeader
         title="データ管理"
         description="過去問データの閲覧・編集・新規登録"
@@ -404,19 +418,44 @@ export default function DbEditorPage() {
 
       <StatusBar message={status} />
 
-      {/* データ種類選択 */}
-      <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-black/[0.04] shadow-sm">
-        <div className="px-5 py-4">
-          <div className="flex flex-wrap items-end gap-4">
-            <SelectField
-              label="データ種類"
-              value={selectedTable}
-              onChange={(v) => setSelectedTable(v)}
-              options={tables.map((t) => ({ value: t.name, label: tableLabel(t.name) }))}
-              className="min-w-[220px]"
-            />
-          </div>
-        </div>
+      {/* データ種類選択 — カードグリッド */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+        {tables.map((t) => {
+          const meta = tableMeta(t.name);
+          const active = selectedTable === t.name;
+          return (
+            <button
+              key={t.name}
+              onClick={() => setSelectedTable(t.name)}
+              className={`group relative text-left rounded-2xl p-3.5 transition-all duration-300 overflow-hidden
+                ${active
+                  ? 'bg-white shadow-lg shadow-black/[0.06] border-2 scale-[1.02]'
+                  : 'bg-white/60 backdrop-blur-sm border border-black/[0.04] hover:bg-white hover:shadow-md hover:scale-[1.01]'
+                }`}
+              style={active ? { borderColor: `${meta.color}40` } : {}}
+            >
+              {/* アクティブ時の背景グロー */}
+              {active && (
+                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full blur-2xl opacity-20"
+                     style={{ background: meta.color }} />
+              )}
+              {/* アイコン */}
+              <div className="text-xl mb-1.5 transition-transform duration-300 group-hover:scale-110">{meta.icon}</div>
+              {/* ラベル */}
+              <div className={`text-[12px] font-bold leading-tight transition-colors duration-300
+                ${active ? 'text-[#1d1d1f]' : 'text-[#6e6e73] group-hover:text-[#1d1d1f]'}`}>
+                {meta.label}
+              </div>
+              {/* 説明 */}
+              <div className="text-[10px] text-[#aeaeb2] leading-snug mt-0.5 line-clamp-2">{meta.desc}</div>
+              {/* アクティブドット */}
+              {active && (
+                <div className="absolute top-2 right-2 w-2 h-2 rounded-full"
+                     style={{ background: meta.color }} />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── データ一覧 ── */}
@@ -751,6 +790,7 @@ export default function DbEditorPage() {
           </div>
         </div>
       )}
+      </div>{/* /z-10 wrapper */}
     </div>
   );
 }
@@ -1041,7 +1081,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
           </svg>
           <span className="text-sm font-bold text-[#34c759]">新しい行を追加</span>
           <span className="text-[10px] bg-[#34c759]/[0.08] text-[#34c759] px-2 py-0.5 rounded-lg font-bold">
-            {table}
+            {tableLabel(table)}
           </span>
         </div>
         <button onClick={onCancel} className="text-[#c7c7cc] hover:text-[#424245] transition-colors p-1">
@@ -1091,7 +1131,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
             type="text"
             value={data.topic || ''}
             onChange={(e) => onChange('topic', e.target.value)}
-            placeholder={data.subject ? '候補から選択 or 自由入力' : '先に教科を選択してください'}
+            placeholder={data.subject ? '候補から選択または自由入力' : '先に教科を選択してください'}
             className={baseInputClass}
           />
         </div>
@@ -1169,7 +1209,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
                     onChange={(e) => onChange(col.name, e.target.value)}
                     rows={2}
                     className={`${baseInputClass} font-mono text-xs resize-y`}
-                    placeholder={col.type}
+                    placeholder={col.type === 'JSONB' ? 'JSON形式で入力' : col.type === 'TEXT' ? 'テキストを入力' : '値を入力'}
                   />
                 ) : isBoolColumn(col.type) ? (
                   <select
