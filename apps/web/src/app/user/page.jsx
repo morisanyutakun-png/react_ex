@@ -644,87 +644,114 @@ export default function UserModePage() {
                 <p className="text-xs text-[#86868b] mt-1">下の「＋ 新しく作る」ボタンから出題パターンを作成しましょう</p>
               </div>
             ) : !showCreateTemplate ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {templates.map((t) => {
                   const isActive = templateId === t.id;
+                  const meta = t.metadata || {};
+                  const subj = meta.subject || '';
+                  const fld = meta.field || '';
+                  const thm = meta.theme || '';
+                  const diff = meta.difficulty || '';
+
                   // 科目に応じたカラーとアイコン
                   const subjectColors = {
-                    '数学': { bg: 'from-[#007aff] to-[#5856d6]', icon: '∑' },
-                    '物理': { bg: 'from-[#ff9500] to-[#ff6723]', icon: '⚛' },
-                    '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: '🧪' },
-                    '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: '🌐' },
-                    '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: '🧬' },
-                    '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: '💻' },
+                    '数学': { bg: 'from-[#007aff] to-[#5856d6]', light: '#007aff', icon: '∑' },
+                    '物理': { bg: 'from-[#ff9500] to-[#ff6723]', light: '#ff9500', icon: '⚛' },
+                    '化学': { bg: 'from-[#34c759] to-[#30d158]', light: '#34c759', icon: '🧪' },
+                    '英語': { bg: 'from-[#af52de] to-[#bf5af2]', light: '#af52de', icon: '🌐' },
+                    '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', light: '#00c7be', icon: '🧬' },
+                    '情報': { bg: 'from-[#5856d6] to-[#007aff]', light: '#5856d6', icon: '💻' },
+                    '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', light: '#ff2d55', icon: '📖' },
+                    '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', light: '#ff9500', icon: '🌍' },
+                    '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', light: '#64d2ff', icon: '🌏' },
+                    '理科': { bg: 'from-[#30d158] to-[#00c7be]', light: '#30d158', icon: '🔬' },
                   };
-                  const sc = subjectColors[t.metadata?.subject] || { bg: 'from-[#fc3c44] to-[#e0323a]', icon: '📝' };
+                  const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', light: '#8e8e93', icon: '📝' };
+
+                  // 難易度ドット数（6段階）
+                  const diffLevels = { '基礎': 1, '標準': 2, '応用': 3, '発展': 4, '難関': 5, '最難関': 6 };
+                  const diffLevel = diffLevels[diff] || 0;
+                  const diffColors = {
+                    1: '#34c759', 2: '#34c759', 3: '#ff9500',
+                    4: '#ff6723', 5: '#ff3b30', 6: '#ff2d55',
+                  };
+                  const dotColor = diffColors[diffLevel] || '#c7c7cc';
+
+                  // パンくずサブタイトル: 分野 › テーマ
+                  const breadcrumb = [fld, thm].filter(Boolean).join(' › ');
+
                   return (
                     <button
                       key={t.id}
                       onClick={() => onSelectTemplate(t.id)}
                       className={`group relative w-full text-left rounded-2xl overflow-hidden transition-all duration-300 active:scale-[0.98]
                         ${isActive
-                          ? 'bg-white shadow-md shadow-black/[0.06] ring-2 ring-[#fc3c44]/30 select-bounce'
-                          : 'bg-white/60 shadow-sm shadow-black/[0.03] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
+                          ? 'bg-white shadow-lg shadow-black/[0.08] ring-2 ring-[#fc3c44]/30 select-bounce'
+                          : 'bg-white/60 shadow-sm shadow-black/[0.02] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
                         }`}
                     >
                       {/* アクティブ時のトップアクセント */}
                       {isActive && (
-                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44]" />
+                        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#fc3c44] via-[#ff6b6b] to-[#fc3c44]" />
                       )}
 
-                      <div className="p-4 flex items-center gap-3.5">
+                      <div className="p-3.5 sm:p-4 flex items-center gap-3">
                         {/* 科目アイコン */}
                         <div className={`flex items-center justify-center w-11 h-11 rounded-[14px] flex-shrink-0 text-lg
-                          bg-gradient-to-br ${sc.bg} text-white shadow-lg shadow-black/[0.08]
+                          bg-gradient-to-br ${sc.bg} text-white shadow-md
                           transition-transform duration-300 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}
                         >
                           {sc.icon}
                         </div>
 
-                        {/* テンプレート情報 */}
+                        {/* テンプレート情報 — 3行構成 */}
                         <div className="flex-1 min-w-0">
+                          {/* 1行目: 科目名 */}
                           <div className="flex items-center gap-2">
-                            <span className="text-[14px] font-bold text-[#1d1d1f] truncate">
-                              {t.name || t.id}
+                            <span className="text-[15px] font-bold text-[#1d1d1f] leading-tight">
+                              {subj || t.name || t.id}
                             </span>
                             {isActive && (
-                              <div className="flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-[#fc3c44] to-[#e0323a] flex-shrink-0">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                              <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-gradient-to-br from-[#fc3c44] to-[#e0323a] flex-shrink-0">
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                 </svg>
                               </div>
                             )}
                           </div>
-                          {t.description && (
-                            <div className="text-[11px] text-[#86868b] mt-0.5 truncate">{t.description}</div>
+
+                          {/* 2行目: 分野 › テーマ（パンくず） */}
+                          {breadcrumb && (
+                            <p className="text-[12px] text-[#6e6e73] mt-0.5 truncate leading-snug">
+                              {fld && <span className="font-medium">{fld}</span>}
+                              {fld && thm && <span className="text-[#c7c7cc] mx-1">›</span>}
+                              {thm && <span className="text-[#86868b]">{thm}</span>}
+                            </p>
                           )}
-                          {/* メタデータタグ */}
-                          <div className="flex gap-1.5 mt-2 flex-wrap">
-                            {t.metadata?.subject && (
-                              <span className="px-2 py-0.5 bg-[#fc3c44]/[0.06] text-[#fc3c44] rounded-full text-[9px] font-bold border border-[#fc3c44]/10">
-                                {t.metadata.subject}
+
+                          {/* 3行目: 難易度ドットバー */}
+                          {diffLevel > 0 && (
+                            <div className="flex items-center gap-1.5 mt-1.5">
+                              <div className="flex gap-[3px]">
+                                {[1, 2, 3, 4, 5, 6].map((i) => (
+                                  <div
+                                    key={i}
+                                    className="w-[5px] h-[5px] rounded-full transition-colors"
+                                    style={{
+                                      backgroundColor: i <= diffLevel ? dotColor : '#e5e5ea',
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[10px] font-medium leading-none" style={{ color: dotColor }}>
+                                {difficultyLabel(diff)}
                               </span>
-                            )}
-                            {t.metadata?.field && (
-                              <span className="px-2 py-0.5 bg-[#34c759]/[0.06] text-[#34c759] rounded-full text-[9px] font-bold border border-[#34c759]/10">
-                                {t.metadata.field}
-                              </span>
-                            )}
-                            {t.metadata?.theme && (
-                              <span className="px-2 py-0.5 bg-[#af52de]/[0.06] text-[#af52de] rounded-full text-[9px] font-bold border border-[#af52de]/10">
-                                {t.metadata.theme}
-                              </span>
-                            )}
-                            {t.metadata?.difficulty && (
-                              <span className="px-2 py-0.5 bg-[#ff9500]/[0.06] text-[#ff9500] rounded-full text-[9px] font-bold border border-[#ff9500]/10">
-                                {difficultyLabel(t.metadata.difficulty)}
-                              </span>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
 
-                        {/* 右矢印 / 削除ボタン */}
-                        <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+                        {/* 右: 削除 + 矢印 */}
+                        <div className="flex flex-col items-center gap-1 flex-shrink-0">
                           <div
                             onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }}
                             className="w-7 h-7 rounded-lg flex items-center justify-center text-[#c7c7cc]
@@ -917,44 +944,66 @@ export default function UserModePage() {
       {step === 2 && (
         <div className="space-y-5 wizard-section-enter">
             {/* 選択中テンプレート表示（科目・分野・難易度もここに表示） */}
-            {selectedTemplate && (
+            {selectedTemplate && (() => {
+              const meta = selectedTemplate.metadata || {};
+              const subj = meta.subject || subject || '';
+              const fld = meta.field || field || '';
+              const thm = meta.theme || theme || '';
+              const diff = meta.difficulty || difficulty || '';
+              const subjectColors = {
+                '数学': { bg: 'from-[#007aff] to-[#5856d6]', icon: '∑' },
+                '物理': { bg: 'from-[#ff9500] to-[#ff6723]', icon: '⚛' },
+                '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: '🧪' },
+                '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: '🌐' },
+                '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: '🧬' },
+                '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: '💻' },
+                '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', icon: '📖' },
+                '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', icon: '🌍' },
+                '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', icon: '🌏' },
+                '理科': { bg: 'from-[#30d158] to-[#00c7be]', icon: '🔬' },
+              };
+              const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', icon: '📝' };
+              const breadcrumb = [fld, thm].filter(Boolean).join(' › ');
+              const diffLevels = { '基礎': 1, '標準': 2, '応用': 3, '発展': 4, '難関': 5, '最難関': 6 };
+              const diffLevel = diffLevels[diff] || 0;
+              const diffColors = { 1: '#34c759', 2: '#34c759', 3: '#ff9500', 4: '#ff6723', 5: '#ff3b30', 6: '#ff2d55' };
+              const dotColor = diffColors[diffLevel] || '#c7c7cc';
+              return (
               <div className="relative overflow-hidden rounded-2xl border border-black/[0.06] bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-sm shadow-sm">
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#fc3c44] via-[#ff375f] to-[#bf5af2] opacity-50" />
                 <div className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-[#fc3c44]/10 to-[#fc3c44]/5">
-                      <Icons.File className="w-4 h-4 text-[#fc3c44]" />
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-[14px] flex-shrink-0 text-lg bg-gradient-to-br ${sc.bg} text-white shadow-md`}>
+                      {sc.icon}
                     </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-[#1d1d1f]">{selectedTemplate.name}</div>
-                      <div className="text-[11px] text-[#86868b]">{selectedTemplate.description}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[15px] font-bold text-[#1d1d1f]">{subj || selectedTemplate.name}</span>
+                        <span className="px-1.5 py-0.5 bg-[#fc3c44]/[0.06] text-[#fc3c44] rounded-full text-[9px] font-bold">選択中</span>
+                      </div>
+                      {breadcrumb && (
+                        <p className="text-[12px] text-[#6e6e73] mt-0.5 truncate">
+                          {fld && <span className="font-medium">{fld}</span>}
+                          {fld && thm && <span className="text-[#c7c7cc] mx-1">›</span>}
+                          {thm && <span className="text-[#86868b]">{thm}</span>}
+                        </p>
+                      )}
+                      {diffLevel > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <div className="flex gap-[3px]">
+                            {[1,2,3,4,5,6].map((i) => (
+                              <div key={i} className="w-[5px] h-[5px] rounded-full" style={{ backgroundColor: i <= diffLevel ? dotColor : '#e5e5ea' }} />
+                            ))}
+                          </div>
+                          <span className="text-[10px] font-medium" style={{ color: dotColor }}>{difficultyLabel(diff)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-1.5 mt-3 ml-12">
-                  {subject && (
-                    <span className="px-2 py-0.5 bg-[#fc3c44]/[0.08] text-[#fc3c44] rounded-full text-[10px] font-bold">
-                      科目: {subject}
-                    </span>
-                  )}
-                  {field && (
-                    <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold">
-                      分野: {field}
-                    </span>
-                  )}
-                  {theme && (
-                    <span className="px-2 py-0.5 bg-[#af52de]/[0.08] text-[#af52de] rounded-full text-[10px] font-bold">
-                      テーマ: {theme}
-                    </span>
-                  )}
-                  {difficulty && (
-                    <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[10px] font-bold">
-                      難易度: {difficulty}
-                    </span>
-                  )}
-                </div>
                 </div>
               </div>
-            )}
+              );
+            })()}
           {/* ── 問題数・参照設定カード ── */}
           <div className="relative overflow-hidden rounded-3xl bg-white/70 backdrop-blur-xl border border-black/[0.04] shadow-lg shadow-black/[0.03]">
             <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#007aff] via-[#5ac8fa] to-[#007aff] opacity-70" />
