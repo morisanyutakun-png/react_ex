@@ -2,7 +2,7 @@
 
 /* ─────────────────────────────────────────────────
    共通UIコンポーネント群 (Apple HIG · Refined)
-   Clean whites · Confident typography · Warm accent
+   Glossy surfaces · Confident typography · Warm accent
    ───────────────────────────────────────────────── */
 
 export const Icons = {
@@ -143,17 +143,17 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
   );
 }
 
-/* ── StatusBar ── */
+/* ── StatusBar — Refined with subtle gradient ── */
 export function StatusBar({ message }) {
   if (!message) return null;
   const isError = message.includes('失敗') || message.includes('エラー') || message.includes('Error');
-  const isSuccess = message.includes('完了') || message.includes('成功') || message.includes('取得') || message.includes('作成') || message.includes('開きました') || /\d+件/.test(message);
+  const isSuccess = message.includes('完了') || message.includes('成功') || message.includes('取得') || message.includes('作成') || message.includes('開きました') || message.includes('コピー') || /\d+件/.test(message);
 
   const styles = isError
-    ? 'bg-[#ff3b30]/[0.04] text-[#ff3b30] border-[#ff3b30]/[0.08]'
+    ? 'bg-gradient-to-r from-[#ff3b30]/[0.05] to-[#ff3b30]/[0.02] text-[#ff3b30] border-[#ff3b30]/[0.1]'
     : isSuccess
-    ? 'bg-[#34c759]/[0.04] text-[#248a3d] border-[#34c759]/[0.08]'
-    : 'bg-black/[0.02] text-[#86868b] border-black/[0.04]';
+    ? 'bg-gradient-to-r from-[#34c759]/[0.05] to-[#34c759]/[0.02] text-[#248a3d] border-[#34c759]/[0.1]'
+    : 'bg-gradient-to-r from-black/[0.02] to-transparent text-[#86868b] border-black/[0.04]';
 
   return (
     <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border ${styles}`}
@@ -317,17 +317,17 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
   );
 }
 
-/* ── Button (Premium) ── */
+/* ── Button (Premium) — Glossy with inner highlight ── */
 export function Button({ children, onClick, variant = 'primary', disabled, className = '', size = 'md' }) {
-  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed';
+  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden';
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
     primary: 'btn-premium',
-    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] shadow-sm',
-    success: 'bg-[#34c759] text-white shadow-sm',
-    danger: 'bg-[#ff3b30] text-white shadow-sm',
-    warning: 'bg-[#ff9f0a] text-white shadow-sm',
-    ghost: 'bg-transparent text-[#6e6e73]',
+    secondary: 'bg-white text-[#1d1d1f] border border-black/[0.08] shadow-sm hover:shadow-md',
+    success: 'bg-gradient-to-b from-[#36d15c] to-[#34c759] text-white shadow-sm',
+    danger: 'bg-gradient-to-b from-[#ff4f44] to-[#ff3b30] text-white shadow-sm',
+    warning: 'bg-gradient-to-b from-[#ffa514] to-[#ff9f0a] text-white shadow-sm',
+    ghost: 'bg-transparent text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.03]',
   };
   return (
     <button onClick={onClick} disabled={disabled}
@@ -392,7 +392,7 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
 /* ── CopyButton ── */
 export function CopyButton({ text, onCopied, label = 'コピー' }) {
   const copy = async () => {
-    try { await navigator.clipboard.writeText(text); onCopied?.('成功：クリップボードにコピーしました'); }
+    try { await navigator.clipboard.writeText(text); onCopied?.('クリップボードにコピーしました'); }
     catch (e) { onCopied?.('コピー失敗: ' + e.message); }
   };
   return (
@@ -439,7 +439,8 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs (Premium) ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]">
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]"
+         style={{ boxShadow: 'inset 0 0.5px 1px rgba(0,0,0,0.04)' }}>
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
@@ -449,7 +450,9 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
             }`}
           style={{
             transition: 'all 0.4s var(--ease-spring)',
-            ...(activeTab === tab.id ? { boxShadow: '0 0.5px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04)' } : {}),
+            ...(activeTab === tab.id ? {
+              boxShadow: '0 0.5px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04), inset 0 0.5px 0 rgba(255,255,255,0.8)',
+            } : {}),
           }}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
           {tab.label}
@@ -459,7 +462,7 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
   );
 }
 
-/* ── ProgressSteps ── */
+/* ── ProgressSteps — Refined with gradient fills ── */
 export function ProgressSteps({ steps, current }) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
@@ -475,7 +478,10 @@ export function ProgressSteps({ steps, current }) {
                 }`}
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
-                ...(i + 1 <= current ? { background: 'linear-gradient(145deg, #3a3a3c 0%, #1d1d1f 100%)' } : {}),
+                ...(i + 1 <= current ? {
+                  background: 'linear-gradient(145deg, #48484a 0%, #1d1d1f 100%)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1), inset 0 0.5px 0 rgba(255,255,255,0.06)',
+                } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>

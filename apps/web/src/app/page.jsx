@@ -117,32 +117,21 @@ function DbIcon() {
 function ActionCard({ href, icon, label, description, gradientFrom, gradientTo, accentColor, delay }) {
   return (
     <Link href={href} className="group block scroll-reveal" style={{ transitionDelay: `${delay}ms` }}>
-      <div className="relative overflow-hidden rounded-[22px] bg-white/80 backdrop-blur-sm border border-black/[0.04] p-7 sm:p-8 active:scale-[0.97]"
-           style={{
-             boxShadow: 'var(--shadow-card)',
-             transition: 'box-shadow 0.5s var(--ease-spring), transform 0.5s var(--ease-spring), border-color 0.5s ease',
-           }}>
-        {/* Ambient glow on hover */}
-        <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-0 group-hover:opacity-100 pointer-events-none"
-             style={{ background: `radial-gradient(circle, ${accentColor}0a 0%, transparent 70%)`, transition: 'opacity 0.7s var(--ease-out-expo)' }} />
-
+      <div className="action-card-wrap p-7 sm:p-8"
+           style={{ '--card-glow-color': `${accentColor}0a` }}>
         <div className="relative z-10">
-          <div className={`w-12 h-12 rounded-[14px] flex items-center justify-center mb-5 bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white`}
-               style={{ 
-                 boxShadow: `0 2px 8px ${accentColor}30, 0 1px 2px rgba(0,0,0,0.06)`,
-                 transition: 'transform 0.6s var(--ease-spring), box-shadow 0.5s var(--ease-apple)',
-               }}
-               className2="group-hover:scale-[1.08] group-hover:shadow-lg">
+          <div className={`action-card-icon w-12 h-12 flex items-center justify-center mb-5 bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white`}
+               style={{ '--icon-shadow': `${accentColor}30` }}>
             <div style={{ transition: 'transform 0.6s var(--ease-spring)' }} className="group-hover:scale-[1.08]">{icon}</div>
           </div>
           <h3 className="text-[18px] font-bold text-[#1d1d1f] mb-1.5 tracking-[-0.02em]">{label}</h3>
           <p className="text-[13px] text-[#86868b] leading-[1.6] tracking-[-0.01em]">{description}</p>
 
-          {/* Hover CTA with spring animation */}
-          <div className="mt-4 flex items-center gap-1.5 text-[12px] font-semibold opacity-0 translate-y-3"
+          {/* Hover CTA */}
+          <div className="mt-4 flex items-center gap-1.5 text-[12px] font-semibold opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0"
                style={{ color: accentColor, transition: 'opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-spring)' }}>
-            <span className="group-hover:opacity-100 group-hover:translate-y-0">はじめる</span>
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
+            <span>はじめる</span>
+            <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
                  style={{ transition: 'transform 0.4s var(--ease-spring)' }}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
@@ -157,20 +146,16 @@ function ActionCard({ href, icon, label, description, gradientFrom, gradientTo, 
 function ToolCard({ href, icon, label, description, delay }) {
   return (
     <Link href={href} className="group block scroll-reveal" style={{ transitionDelay: `${delay}ms` }}>
-      <div className="flex items-center gap-4 rounded-[18px] border border-black/[0.04] bg-white/80 backdrop-blur-sm px-5 py-4.5 active:scale-[0.98]"
-           style={{
-             boxShadow: 'var(--shadow-card)',
-             transition: 'box-shadow 0.5s var(--ease-spring), transform 0.5s var(--ease-spring), border-color 0.4s ease',
-           }}>
-        <div className="flex-shrink-0 w-10 h-10 rounded-[12px] bg-[#f5f5f7] flex items-center justify-center text-[#86868b]"
-             style={{ transition: 'all 0.45s var(--ease-spring)' }}>
+      <div className="tool-card-wrap">
+        <div className="tool-card-icon text-[#86868b] group-hover:text-[#1d1d1f]"
+             style={{ transition: 'color 0.4s var(--ease-spring)' }}>
           <div className="group-hover:scale-110" style={{ transition: 'transform 0.45s var(--ease-spring)' }}>{icon}</div>
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[15px] font-semibold text-[#1d1d1f] tracking-[-0.01em]">{label}</div>
           <div className="text-[12px] text-[#aeaeb2] mt-0.5 tracking-[-0.01em]">{description}</div>
         </div>
-        <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+        <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7] group-hover:text-[#aeaeb2] group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
              style={{ transition: 'all 0.4s var(--ease-spring)' }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
@@ -191,9 +176,9 @@ export default function HomePage() {
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse 80% 45% at 50% -5%, rgba(0,113,227,0.035) 0%, transparent 50%),
-              radial-gradient(ellipse 50% 35% at 85% 15%, rgba(88,86,214,0.02) 0%, transparent 40%),
-              radial-gradient(ellipse 60% 35% at 10% 85%, rgba(175,82,222,0.015) 0%, transparent 45%)
+              radial-gradient(ellipse 80% 45% at 50% -5%, rgba(0,113,227,0.04) 0%, transparent 50%),
+              radial-gradient(ellipse 50% 35% at 85% 15%, rgba(88,86,214,0.025) 0%, transparent 40%),
+              radial-gradient(ellipse 60% 35% at 10% 85%, rgba(175,82,222,0.02) 0%, transparent 45%)
             `
           }}
         />
@@ -221,19 +206,14 @@ export default function HomePage() {
 
           {/* ── Hero Section ── */}
           <div className="text-center mb-20 sm:mb-24 stagger-item" style={{ animationDelay: '0ms' }}>
-            {/* Logo mark */}
-            <div className="relative inline-flex items-center justify-center w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] rounded-[16px] sm:rounded-[18px] mb-7 sm:mb-8 float-slow"
-              style={{
-                background: '#ffffff',
-                border: '0.5px solid rgba(0,0,0,0.04)',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.04), 0 0.5px 1px rgba(0,0,0,0.03)',
-              }}>
-              <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[#0071e3]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            {/* Logo mark — glossy floating orb */}
+            <div className="relative inline-flex items-center justify-center w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] rounded-[16px] sm:rounded-[18px] mb-7 sm:mb-8 float-slow hero-logo">
+              <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[#0071e3] relative z-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
 
-            <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 text-[#1d1d1f]">
+            <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 gradient-text-dark">
               REM
             </h1>
             <p className="text-[15px] sm:text-[17px] text-[#86868b] font-medium mb-5 tracking-[-0.01em]"
@@ -306,8 +286,7 @@ export default function HomePage() {
 
           {/* ── Status Pill ── */}
           <div className="text-center scroll-reveal" style={{ transitionDelay: '100ms' }}>
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-black/[0.04] bg-white/70 backdrop-blur-sm press-scale"
-                 style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.02)', transition: 'box-shadow 0.4s var(--ease-apple)' }}>
+            <div className="status-pill press-scale">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34c759] opacity-40"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#34c759]"></span>

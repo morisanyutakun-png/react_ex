@@ -42,12 +42,15 @@ export default function Header() {
                     href={href}
                     className={`relative px-3 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5
                       ${active
-                        ? 'bg-[#1d1d1f] text-white'
+                        ? 'text-white'
                         : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
                       }`}
                     style={{
                       transition: 'all 0.4s var(--ease-spring)',
-                      ...(active ? { boxShadow: '0 1px 4px rgba(0,0,0,0.1)' } : {}),
+                      ...(active ? {
+                        background: 'linear-gradient(145deg, #3a3a3c 0%, #1d1d1f 100%)',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.12), inset 0 0.5px 0 rgba(255,255,255,0.06)',
+                      } : {}),
                     }}
                   >
                     {icon}
@@ -63,10 +66,11 @@ export default function Header() {
       {/* ── モバイルボトムナビバー ── */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
            style={{
-             background: 'rgba(255,255,255,0.88)',
+             background: 'rgba(255,255,255,0.85)',
              backdropFilter: 'saturate(200%) blur(32px)',
              WebkitBackdropFilter: 'saturate(200%) blur(32px)',
              borderTop: '0.5px solid rgba(0,0,0,0.05)',
+             boxShadow: '0 -0.5px 0 rgba(0,0,0,0.02)',
            }}>
         <div className="flex items-center justify-around px-1">
           {NAV_ITEMS.map(({ href, label, mobileIcon }) => {
@@ -82,7 +86,8 @@ export default function Header() {
                 <div className="relative" style={{ transition: 'transform 0.35s var(--ease-spring)' }}>
                   {mobileIcon}
                   {active && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#0071e3]" />
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#0071e3]"
+                         style={{ boxShadow: '0 0 4px rgba(0,113,227,0.4)' }} />
                   )}
                 </div>
                 <span className={`text-[10px] font-medium leading-none mt-0.5 ${active ? 'text-[#0071e3]' : 'text-[#c7c7cc]'}`}>
