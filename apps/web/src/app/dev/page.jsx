@@ -122,10 +122,10 @@ function SelectedTag({ label, value, color = 'red', onClear }) {
   if (!value) return null;
   const colors = {
     red: 'bg-[#1d1d1f]/[0.06] text-[#1d1d1f] border-[#1d1d1f]/15',
-    emerald: 'bg-[#34c759]/[0.06] text-[#34c759] border-[#34c759]/15',
-    amber: 'bg-[#ff9500]/[0.06] text-[#ff9500] border-[#ff9500]/15',
-    violet: 'bg-[#af52de]/[0.06] text-[#af52de] border-[#af52de]/15',
-    sky: 'bg-[#007aff]/[0.06] text-[#007aff] border-[#007aff]/15',
+    emerald: 'bg-[#1d1d1f]/[0.06] text-[#1d1d1f] border-[#1d1d1f]/15',
+    amber: 'bg-[#636366]/[0.06] text-[#636366] border-[#636366]/15',
+    violet: 'bg-[#636366]/[0.06] text-[#636366] border-[#636366]/15',
+    sky: 'bg-[#48484a]/[0.06] text-[#48484a] border-[#48484a]/15',
   };
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${colors[color] || colors.red} transition-all hover:shadow-sm`}>
@@ -155,9 +155,9 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
     { label: 'ひっかけ強化', icon: '⁇', text: 0.3, diff: 0.3, trick: 1.5, desc: '巧妙な問題を参照' },
   ];
   const axes = [
-    { label: '類似度', value: textWeight, color: '#0a84ff', onChange: onText, desc: '作りたい問題に似た過去問を重視します' },
-    { label: '難易度', value: diffWeight, color: '#30d158', onChange: onDiff, desc: '指定した難しさに近い過去問を重視します' },
-    { label: 'ひっかけ', value: trickWeight, color: '#ff9f0a', onChange: onTrick, desc: 'ひっかけ要素のある過去問を重視します' },
+    { label: '類似度', value: textWeight, color: '#1d1d1f', onChange: onText, desc: '作りたい問題に似た過去問を重視します' },
+    { label: '難易度', value: diffWeight, color: '#48484a', onChange: onDiff, desc: '指定した難しさに近い過去問を重視します' },
+    { label: 'ひっかけ', value: trickWeight, color: '#636366', onChange: onTrick, desc: 'ひっかけ要素のある過去問を重視します' },
   ];
   return (
     <div className="space-y-6">
@@ -262,11 +262,11 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
 
 function QualityRating({ score, onChange }) {
   const levels = [
-    { value: 0.2, icon: '×', label: '低い', color: '#ff3b30' },
-    { value: 0.4, icon: '△', label: 'いまいち', color: '#ff9500' },
-    { value: 0.6, icon: '○', label: 'まあまあ', color: '#ffcc00' },
-    { value: 0.8, icon: '◎', label: '良い', color: '#34c759' },
-    { value: 1.0, icon: '◉', label: '最高', color: '#007aff' },
+    { value: 0.2, icon: '×', label: '低い', color: '#3a3a3c' },
+    { value: 0.4, icon: '△', label: 'いまいち', color: '#636366' },
+    { value: 0.6, icon: '○', label: 'まあまあ', color: '#636366' },
+    { value: 0.8, icon: '◎', label: '良い', color: '#1d1d1f' },
+    { value: 1.0, icon: '◉', label: '最高', color: '#48484a' },
   ];
   return (
     <div className="flex items-stretch gap-2">
@@ -726,7 +726,7 @@ export default function TuningPage() {
                       </div>
                       {fb.notes && (
                         <div className="text-[11px] text-[#86868b] flex items-start gap-1.5 mb-1">
-                          <svg className="w-3.5 h-3.5 text-[#ff9500] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                          <svg className="w-3.5 h-3.5 text-[#636366] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
                           <span>{fb.notes}</span>
                         </div>
                       )}
@@ -827,7 +827,7 @@ export default function TuningPage() {
                         const count = evalHistory.analytics.score_distribution[score] || 0;
                         const maxCount = Math.max(...Object.values(evalHistory.analytics.score_distribution), 1);
                         const height = (count / maxCount) * 100;
-                        const colors = { 0.2: '#ff3b30', 0.4: '#ff9500', 0.6: '#ffcc00', 0.8: '#34c759', 1.0: '#007aff' };
+                        const colors = { 0.2: '#3a3a3c', 0.4: '#636366', 0.6: '#636366', 0.8: '#1d1d1f', 1.0: '#48484a' };
                         const labels = { 0.2: '低い', 0.4: 'いまいち', 0.6: 'まあまあ', 0.8: '良い', 1.0: '最高' };
                         return (
                           <div key={score} className="flex-1 flex flex-col items-center gap-1">
@@ -848,7 +848,7 @@ export default function TuningPage() {
                     <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-3">科目ごとの評価</div>
                     <div className="space-y-2">
                       {Object.entries(evalHistory.analytics.per_subject).map(([subj, data]) => {
-                        const scoreColor = data.avg >= 0.8 ? '#34c759' : data.avg >= 0.6 ? '#ffcc00' : data.avg >= 0.4 ? '#ff9500' : '#ff3b30';
+                        const scoreColor = data.avg >= 0.8 ? '#1d1d1f' : data.avg >= 0.6 ? '#636366' : data.avg >= 0.4 ? '#636366' : '#3a3a3c';
                         return (
                           <div key={subj} className="flex items-center gap-3">
                             <span className="text-[12px] font-bold text-[#1d1d1f] min-w-[3rem]">{subj}</span>
@@ -874,7 +874,7 @@ export default function TuningPage() {
                     <div className="flex items-end gap-1 h-12">
                       {evalHistory.analytics.recent_trend.map((pt, idx) => {
                         const height = ((pt.score || 0) / 1.0) * 100;
-                        const scoreColor = pt.score >= 0.8 ? '#34c759' : pt.score >= 0.6 ? '#ffcc00' : pt.score >= 0.4 ? '#ff9500' : '#ff3b30';
+                        const scoreColor = pt.score >= 0.8 ? '#1d1d1f' : pt.score >= 0.6 ? '#636366' : pt.score >= 0.4 ? '#636366' : '#3a3a3c';
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-0.5" title={`${pt.timestamp?.slice(0, 10)} — ${pt.score}`}>
                             <div className="w-full rounded-sm transition-all duration-300"
@@ -898,7 +898,7 @@ export default function TuningPage() {
                 <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider mb-1">最近の評価</div>
                 {evalHistory.evaluations.map((ev, idx) => {
                   const scoreIcon = { 0.2: '×', 0.4: '△', 0.6: '○', 0.8: '◎', 1.0: '◉' };
-                  const scoreColor = ev.score >= 0.8 ? '#34c759' : ev.score >= 0.6 ? '#ffcc00' : ev.score >= 0.4 ? '#ff9500' : '#ff3b30';
+                  const scoreColor = ev.score >= 0.8 ? '#1d1d1f' : ev.score >= 0.6 ? '#636366' : ev.score >= 0.4 ? '#636366' : '#3a3a3c';
                   return (
                     <div key={ev.id || idx} className="p-3 bg-white rounded-xl border border-black/[0.04] shadow-sm hover:shadow-md transition-all">
                       <div className="flex items-center justify-between mb-1">
@@ -939,9 +939,9 @@ export default function TuningPage() {
         {sections.map((s, idx) => {
           const isActive = activeSection === s.id;
           const sectionColors = {
-            configure: { grad: 'from-[#007aff] to-[#5856d6]', shadow: '#007aff' },
-            execute:   { grad: 'from-[#ff9500] to-[#ff6723]', shadow: '#ff9500' },
-            evaluate:  { grad: 'from-[#34c759] to-[#30d158]', shadow: '#34c759' },
+            configure: { grad: 'from-[#48484a] to-[#48484a]', shadow: '#48484a' },
+            execute:   { grad: 'from-[#636366] to-[#48484a]', shadow: '#636366' },
+            evaluate:  { grad: 'from-[#1d1d1f] to-[#48484a]', shadow: '#1d1d1f' },
           };
           const sc = sectionColors[s.id] || sectionColors.configure;
           return (
@@ -969,7 +969,7 @@ export default function TuningPage() {
           );
         })}
         <button onClick={resetAll} title="リセット"
-          className="px-3 py-3 rounded-xl text-[#c7c7cc] hover:text-[#ff3b30] hover:bg-[#ff3b30]/[0.06] transition-all flex-shrink-0 active:scale-90">
+          className="px-3 py-3 rounded-xl text-[#c7c7cc] hover:text-[#3a3a3c] hover:bg-[#3a3a3c]/[0.06] transition-all flex-shrink-0 active:scale-90">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
           </svg>
@@ -1048,22 +1048,22 @@ export default function TuningPage() {
                     const thm = meta.theme || '';
                     const diff = meta.difficulty || '';
                     const subjectColors = {
-                      '数学': { bg: 'from-[#007aff] to-[#5856d6]', icon: '∑' },
-                      '物理': { bg: 'from-[#ff9500] to-[#ff6723]', icon: '⚛' },
-                      '化学': { bg: 'from-[#34c759] to-[#30d158]', icon: 'Ch' },
-                      '英語': { bg: 'from-[#af52de] to-[#bf5af2]', icon: 'En' },
-                      '生物': { bg: 'from-[#00c7be] to-[#64d2ff]', icon: 'Bi' },
-                      '情報': { bg: 'from-[#5856d6] to-[#007aff]', icon: 'CS' },
-                      '国語': { bg: 'from-[#ff2d55] to-[#ff6482]', icon: '国' },
-                      '社会': { bg: 'from-[#ff9500] to-[#ffcc00]', icon: '社' },
-                      '地学': { bg: 'from-[#64d2ff] to-[#5ac8fa]', icon: '地' },
-                      '理科': { bg: 'from-[#30d158] to-[#00c7be]', icon: 'Sc' },
+                      '数学': { bg: 'from-[#48484a] to-[#48484a]', icon: '∑' },
+                      '物理': { bg: 'from-[#636366] to-[#48484a]', icon: '⚛' },
+                      '化学': { bg: 'from-[#1d1d1f] to-[#48484a]', icon: 'Ch' },
+                      '英語': { bg: 'from-[#636366] to-[#86868b]', icon: 'En' },
+                      '生物': { bg: 'from-[#86868b] to-[#aeaeb2]', icon: 'Bi' },
+                      '情報': { bg: 'from-[#48484a] to-[#48484a]', icon: 'CS' },
+                      '国語': { bg: 'from-[#3a3a3c] to-[#636366]', icon: '国' },
+                      '社会': { bg: 'from-[#636366] to-[#636366]', icon: '社' },
+                      '地学': { bg: 'from-[#aeaeb2] to-[#aeaeb2]', icon: '地' },
+                      '理科': { bg: 'from-[#48484a] to-[#86868b]', icon: 'Sc' },
                     };
                     const sc = subjectColors[subj] || { bg: 'from-[#8e8e93] to-[#636366]', icon: '—' };
                     const breadcrumb = [fld, thm].filter(Boolean).join(' › ');
                     const diffLevels = { '基礎': 1, '標準': 2, '応用': 3, '発展': 4, '難関': 5, '最難関': 6 };
                     const diffLevel = diffLevels[diff] || 0;
-                    const diffColors = { 1: '#34c759', 2: '#34c759', 3: '#ff9500', 4: '#ff6723', 5: '#ff3b30', 6: '#ff2d55' };
+                    const diffColors = { 1: '#1d1d1f', 2: '#1d1d1f', 3: '#636366', 4: '#48484a', 5: '#3a3a3c', 6: '#3a3a3c' };
                     const dotColor = diffColors[diffLevel] || '#c7c7cc';
                     return (
                       <button
@@ -1171,9 +1171,9 @@ export default function TuningPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
-                        <span className="text-[11px] font-bold text-[#ff9500] uppercase tracking-wider">選択中</span>
+                        <span className="text-[11px] font-bold text-[#636366] uppercase tracking-wider">選択中</span>
                         {selectedRefProblem.id && (
-                          <span className="text-[10px] text-[#ff9500]/60 font-mono">#{selectedRefProblem.id}</span>
+                          <span className="text-[10px] text-[#636366]/60 font-mono">#{selectedRefProblem.id}</span>
                         )}
                       </div>
                       <div className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-3 ml-[30px]">
@@ -1184,17 +1184,17 @@ export default function TuningPage() {
                           <span className="px-2 py-0.5 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[9px] font-bold">{selectedRefProblem.subject}</span>
                         )}
                         {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
-                          <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
+                          <span className="px-2 py-0.5 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
                         )}
                         {selectedRefProblem.difficulty != null && (
-                          <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[9px] font-bold">{difficultyLabel(selectedRefProblem.difficulty)}</span>
+                          <span className="px-2 py-0.5 bg-[#636366]/[0.08] text-[#636366] rounded-full text-[9px] font-bold">{difficultyLabel(selectedRefProblem.difficulty)}</span>
                         )}
                       </div>
                     </div>
                     <button
                       onClick={clearRefProblem}
-                      className="flex items-center justify-center w-8 h-8 rounded-xl bg-black/[0.04] hover:bg-[#ff3b30]/10
-                                 text-[#aeaeb2] hover:text-[#ff3b30] transition-all duration-200 flex-shrink-0 active:scale-90"
+                      className="flex items-center justify-center w-8 h-8 rounded-xl bg-black/[0.04] hover:bg-[#3a3a3c]/10
+                                 text-[#aeaeb2] hover:text-[#3a3a3c] transition-all duration-200 flex-shrink-0 active:scale-90"
                       title="選択を解除"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1213,11 +1213,11 @@ export default function TuningPage() {
                   <span className="px-2.5 py-1 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[10px] font-bold">{subject}</span>
                 )}
                 {field && (
-                  <span className="px-2.5 py-1 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold">{field}</span>
+                  <span className="px-2.5 py-1 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[10px] font-bold">{field}</span>
                 )}
               </div>
               <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/[0.03] border border-black/[0.04]
-                              focus-within:bg-white focus-within:border-[#ff9500]/30 focus-within:shadow-sm transition-all duration-200">
+                              focus-within:bg-white focus-within:border-[#636366]/30 focus-within:shadow-sm transition-all duration-200">
                 <svg className="w-3.5 h-3.5 text-[#c7c7cc] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -1230,7 +1230,7 @@ export default function TuningPage() {
                   className="flex-1 bg-transparent text-xs text-[#1d1d1f] outline-none placeholder:text-[#c7c7cc]"
                 />
                 {refFilterQuery && (
-                  <button onClick={() => setRefFilterQuery('')} className="text-[#aeaeb2] hover:text-[#ff3b30] transition-colors">
+                  <button onClick={() => setRefFilterQuery('')} className="text-[#aeaeb2] hover:text-[#3a3a3c] transition-colors">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -1242,7 +1242,7 @@ export default function TuningPage() {
             {/* 問題一覧 */}
             {matchedRefLoading ? (
               <div className="flex flex-col items-center justify-center py-8 gap-2">
-                <svg className="animate-spin h-5 w-5 text-[#ff9500]" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5 text-[#636366]" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
@@ -1281,10 +1281,10 @@ export default function TuningPage() {
                               <span className="px-2 py-0.5 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[9px] font-bold">{item.subject}</span>
                             )}
                             {(item.topic || item.metadata?.field) && (
-                              <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
+                              <span className="px-2 py-0.5 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
                             )}
                             {item.difficulty != null && (
-                              <span className="px-2 py-0.5 bg-[#ff9500]/[0.08] text-[#ff9500] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
+                              <span className="px-2 py-0.5 bg-[#636366]/[0.08] text-[#636366] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
                             )}
                           </div>
                         </div>
@@ -1315,8 +1315,8 @@ export default function TuningPage() {
 
             {referenceStem && !selectedRefProblem && (
               <div className="mt-2 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#34c759] flex-shrink-0" />
-                <span className="text-[10px] text-[#34c759] font-bold">参考問題が設定されています</span>
+                <span className="w-2 h-2 rounded-full bg-[#1d1d1f] flex-shrink-0" />
+                <span className="text-[10px] text-[#1d1d1f] font-bold">参考問題が設定されています</span>
               </div>
             )}
             </div>
@@ -1381,7 +1381,7 @@ export default function TuningPage() {
           </div>
 
           {ragSkipped && (
-            <div className="p-3 bg-[#ff9500]/[0.08] rounded-lg border border-[#ff9500]/20/40 text-xs text-amber-700 flex items-center gap-2">
+            <div className="p-3 bg-[#636366]/[0.08] rounded-lg border border-[#636366]/20/40 text-xs text-[#636366] flex items-center gap-2">
               <Icons.Info className="w-3.5 h-3.5 flex-shrink-0" /> 過去問なしで進めています
             </div>
           )}
@@ -1392,8 +1392,8 @@ export default function TuningPage() {
                 参照データ ({retrievedChunks.length}件)
                 {retrievedChunks[0]?.search_tier && (
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                    retrievedChunks[0].search_tier === 'subject+field' ? 'bg-emerald-100 text-emerald-700' :
-                    retrievedChunks[0].search_tier === 'subject-only' ? 'bg-amber-100 text-amber-700' :
+                    retrievedChunks[0].search_tier === 'subject+field' ? 'bg-black/[0.06] text-[#1d1d1f]' :
+                    retrievedChunks[0].search_tier === 'subject-only' ? 'bg-black/[0.04] text-[#636366]' :
                     'bg-gray-200 text-[#aeaeb2]'
                   }`}>
                     {retrievedChunks[0].search_tier === 'subject+field' ? '科目+分野' :
@@ -1476,8 +1476,8 @@ export default function TuningPage() {
             </div>
             {/* RAG 注入ボタン（未注入の場合に表示） */}
             {!ragPrompt && !ragSkipped && (
-              <div className="flex flex-wrap items-center gap-2 mt-3 p-3 bg-[#ff9500]/[0.08] rounded-lg border border-amber-100/40">
-                <span className="text-xs text-[#ff9500] font-bold">過去問未参考:</span>
+              <div className="flex flex-wrap items-center gap-2 mt-3 p-3 bg-[#636366]/[0.08] rounded-lg border border-black/[0.06]/40">
+                <span className="text-xs text-[#636366] font-bold">過去問未参考:</span>
                 <Button onClick={injectRag} variant="secondary" size="sm">
                   <Icons.Search className="w-3.5 h-3.5" /> 過去問を参考にする
                 </Button>
@@ -1486,14 +1486,14 @@ export default function TuningPage() {
             )}
             <div className="mt-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#ff9500] text-white text-xs font-black">2</div>
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#636366] text-white text-xs font-black">2</div>
                 <span className="text-sm font-bold text-[#1d1d1f]">AIを開いて貼り付け</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { name: 'ChatGPT', url: 'https://chat.openai.com', color: 'from-green-500 to-emerald-600' },
-                { name: 'Claude', url: 'https://claude.ai', color: 'from-amber-500 to-orange-500' },
-                { name: 'Gemini', url: 'https://gemini.google.com', color: 'from-blue-500 to-indigo-600' },
+                { name: 'ChatGPT', url: 'https://chat.openai.com', color: 'from-[#1d1d1f] to-[#3a3a3c]' },
+                { name: 'Claude', url: 'https://claude.ai', color: 'from-[#3a3a3c] to-[#48484a]' },
+                { name: 'Gemini', url: 'https://gemini.google.com', color: 'from-[#48484a] to-[#636366]' },
               ].map(({ name, url, color }) => (
                 <a key={name} href={url} target="_blank" rel="noreferrer"
                   className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#1d1d1f] text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]`}>
@@ -1525,13 +1525,13 @@ export default function TuningPage() {
               </Button>
             </div>
             {parseError && (
-              <div className="mt-3 p-3 bg-rose-50 rounded-lg border border-rose-200/40 text-xs text-rose-700">
+              <div className="mt-3 p-3 bg-black/[0.04] rounded-lg border border-black/[0.08]/40 text-xs text-[#3a3a3c]">
                 <Icons.Info className="w-3.5 h-3.5 inline mr-1" /> {parseError}
               </div>
             )}
             {parsedProblem && (
-              <div className="mt-4 p-4 bg-[#34c759]/[0.08] rounded-lg border border-[#34c759]/20/40 space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
+              <div className="mt-4 p-4 bg-[#1d1d1f]/[0.08] rounded-lg border border-[#1d1d1f]/20/40 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#1d1d1f]">
                   <Icons.Success className="w-4 h-4" /> 読み取り結果
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -1548,7 +1548,7 @@ export default function TuningPage() {
                     ['解答要約', parsedProblem.answer_brief],
                   ].filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => (
                     <div key={k} className="flex gap-2 items-start">
-                      <span className="font-medium text-[#34c759] flex-shrink-0 min-w-[80px]">{k}:</span>
+                      <span className="font-medium text-[#1d1d1f] flex-shrink-0 min-w-[80px]">{k}:</span>
                       <span className="text-[#aeaeb2] break-all">
                         {typeof v === 'object' ? JSON.stringify(v) : String(v).slice(0, 200)}{String(v).length > 200 ? '...' : ''}
                       </span>
@@ -1602,11 +1602,11 @@ export default function TuningPage() {
                 </div>
 
                 {/* 保存先情報 */}
-                <div className="flex items-center gap-2 p-3 bg-[#34c759]/[0.04] rounded-xl border border-[#34c759]/10">
-                  <svg className="w-4 h-4 text-[#34c759] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <div className="flex items-center gap-2 p-3 bg-[#1d1d1f]/[0.04] rounded-xl border border-[#1d1d1f]/10">
+                  <svg className="w-4 h-4 text-[#1d1d1f] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75" />
                   </svg>
-                  <span className="text-[11px] text-[#34c759] font-medium">記録は自動保存されます。ブラウザを閉じても失われません。</span>
+                  <span className="text-[11px] text-[#1d1d1f] font-medium">記録は自動保存されます。ブラウザを閉じても失われません。</span>
                 </div>
 
                 <Button onClick={saveLog} disabled={!llmOutput}>
@@ -1641,7 +1641,7 @@ export default function TuningPage() {
                   {parsedProblem.checks && (
                     <div className="flex gap-3 mt-1">
                       {parsedProblem.checks.map((c, i) => (
-                        <span key={i} className={`text-xs ${c.ok ? 'text-[#34c759]' : 'text-rose-500'}`}>
+                        <span key={i} className={`text-xs ${c.ok ? 'text-[#1d1d1f]' : 'text-[#3a3a3c]'}`}>
                           {c.ok ? '✓' : '✗'} {c.desc}
                         </span>
                       ))}
@@ -1661,8 +1661,8 @@ export default function TuningPage() {
                 {verificationResult && !verificationResult.skipped && (
                   <div className={`p-3 rounded-lg border text-sm font-semibold flex items-center gap-2 ${
                     verificationResult.verified
-                      ? 'bg-[#34c759]/[0.08] border-[#34c759]/20 text-emerald-700'
-                      : 'bg-rose-50 border-rose-200 text-rose-700'
+                      ? 'bg-[#1d1d1f]/[0.08] border-[#1d1d1f]/20 text-[#1d1d1f]'
+                      : 'bg-black/[0.04] border-black/[0.08] text-[#3a3a3c]'
                   }`}>
                     {verificationResult.verified
                       ? <><Icons.Success className="w-4 h-4" /> 答え合わせ OK: {verificationResult.expected} = {verificationResult.computed}</>
@@ -1670,13 +1670,13 @@ export default function TuningPage() {
                   </div>
                 )}
                 {savedProblemId && (
-                  <div className="p-3 bg-[#34c759]/[0.08] rounded-lg border border-[#34c759]/20 text-sm text-emerald-700 font-semibold flex items-center gap-2">
+                  <div className="p-3 bg-[#1d1d1f]/[0.08] rounded-lg border border-[#1d1d1f]/20 text-sm text-[#1d1d1f] font-semibold flex items-center gap-2">
                     <Icons.Success className="w-4 h-4" /> 保存済み — ID: {savedProblemId}
                   </div>
                 )}
                 {pdfUrl && (
                   <a href={pdfUrl} target="_blank" rel="noreferrer"
-                    className="flex items-center justify-center gap-2 p-3 bg-[#34c759]/[0.08] text-emerald-700 rounded-lg border border-emerald-100 font-bold text-sm hover:bg-emerald-100 transition-colors">
+                    className="flex items-center justify-center gap-2 p-3 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-lg border border-black/[0.06] font-bold text-sm hover:bg-black/[0.06] transition-colors">
                     <Icons.Pdf className="w-4 h-4" /> PDF プレビューを開く
                   </a>
                 )}

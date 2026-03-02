@@ -42,7 +42,7 @@ function IcoTune() {
       <path d="M18 10 A10 10 0 0 1 28 20" stroke="url(#hAr1)" strokeWidth="2" strokeLinecap="round" fill="none"/>
       <defs>
         <linearGradient id="hDi1" x1="15" y1="17" x2="21" y2="23"><stop stopColor="#636366"/><stop offset="1" stopColor="#48484a"/></linearGradient>
-        <linearGradient id="hSp1" x1="27" y1="8" x2="37" y2="16"><stop stopColor="#ff9f0a"/><stop offset="1" stopColor="#86868b"/></linearGradient>
+        <linearGradient id="hSp1" x1="27" y1="8" x2="37" y2="16"><stop stopColor="#86868b"/><stop offset="1" stopColor="#86868b"/></linearGradient>
         <linearGradient id="hAr1" x1="18" y1="10" x2="28" y2="20"><stop stopColor="#1d1d1f"/><stop offset="1" stopColor="#636366"/></linearGradient>
       </defs>
     </svg>
@@ -52,13 +52,13 @@ function IcoTune() {
 function IcoSearch() {
   return (
     <svg className="w-10 h-10" viewBox="0 0 36 36" fill="none">
-      <rect x="6" y="4" width="16" height="20" rx="2.5" fill="white" stroke="#ff9f0a" strokeWidth="1.5"/>
-      <line x1="10" y1="10" x2="18" y2="10" stroke="#ff9f0a" strokeWidth="1" opacity=".4" strokeLinecap="round"/>
-      <line x1="10" y1="13" x2="16" y2="13" stroke="#ff9f0a" strokeWidth="1" opacity=".3" strokeLinecap="round"/>
-      <line x1="10" y1="16" x2="17" y2="16" stroke="#ff9f0a" strokeWidth="1" opacity=".25" strokeLinecap="round"/>
+      <rect x="6" y="4" width="16" height="20" rx="2.5" fill="white" stroke="#636366" strokeWidth="1.5"/>
+      <line x1="10" y1="10" x2="18" y2="10" stroke="#636366" strokeWidth="1" opacity=".4" strokeLinecap="round"/>
+      <line x1="10" y1="13" x2="16" y2="13" stroke="#636366" strokeWidth="1" opacity=".3" strokeLinecap="round"/>
+      <line x1="10" y1="16" x2="17" y2="16" stroke="#636366" strokeWidth="1" opacity=".25" strokeLinecap="round"/>
       <circle cx="25" cy="22" r="7" stroke="url(#hSe1)" strokeWidth="2" fill="white" fillOpacity=".8"/>
       <line x1="30" y1="27" x2="34" y2="31" stroke="url(#hSe1)" strokeWidth="2.5" strokeLinecap="round"/>
-      <defs><linearGradient id="hSe1" x1="18" y1="15" x2="34" y2="31"><stop stopColor="#ff9f0a"/><stop offset="1" stopColor="#86868b"/></linearGradient></defs>
+      <defs><linearGradient id="hSe1" x1="18" y1="15" x2="34" y2="31"><stop stopColor="#636366"/><stop offset="1" stopColor="#86868b"/></linearGradient></defs>
     </svg>
   );
 }
@@ -66,14 +66,14 @@ function IcoSearch() {
 function IcoDb() {
   return (
     <svg className="w-10 h-10" viewBox="0 0 36 36" fill="none">
-      <ellipse cx="16" cy="9" rx="10" ry="4" fill="white" stroke="#30d158" strokeWidth="1.5"/>
-      <path d="M6 9v16c0 2.2 4.5 4 10 4s10-1.8 10-4V9" stroke="#30d158" strokeWidth="1.5" fill="white"/>
+      <ellipse cx="16" cy="9" rx="10" ry="4" fill="white" stroke="#48484a" strokeWidth="1.5"/>
+      <path d="M6 9v16c0 2.2 4.5 4 10 4s10-1.8 10-4V9" stroke="#48484a" strokeWidth="1.5" fill="white"/>
       <ellipse cx="16" cy="9" rx="10" ry="4" fill="url(#hDb1)" opacity=".12"/>
-      <path d="M6 17c0 2.2 4.5 4 10 4s10-1.8 10-4" stroke="#30d158" strokeWidth="1" opacity=".3"/>
-      <path d="M6 22c0 2.2 4.5 4 10 4s10-1.8 10-4" stroke="#30d158" strokeWidth="1" opacity=".2"/>
-      <circle cx="29" cy="27" r="5" fill="white" stroke="#30d158" strokeWidth="1.3"/>
-      <circle cx="29" cy="27" r="2" fill="#30d158" opacity=".3"/>
-      <defs><linearGradient id="hDb1" x1="6" y1="5" x2="26" y2="13"><stop stopColor="#30d158"/><stop offset="1" stopColor="#0a84ff"/></linearGradient></defs>
+      <path d="M6 17c0 2.2 4.5 4 10 4s10-1.8 10-4" stroke="#48484a" strokeWidth="1" opacity=".3"/>
+      <path d="M6 22c0 2.2 4.5 4 10 4s10-1.8 10-4" stroke="#48484a" strokeWidth="1" opacity=".2"/>
+      <circle cx="29" cy="27" r="5" fill="white" stroke="#48484a" strokeWidth="1.3"/>
+      <circle cx="29" cy="27" r="2" fill="#48484a" opacity=".3"/>
+      <defs><linearGradient id="hDb1" x1="6" y1="5" x2="26" y2="13"><stop stopColor="#48484a"/><stop offset="1" stopColor="#636366"/></linearGradient></defs>
     </svg>
   );
 }
@@ -99,7 +99,7 @@ function TableOfContents({ activeId }) {
       {TOC.map(({ id, label, emoji }) => (
         <a key={id} href={`#${id}`}
           className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300
-            ${activeId === id ? 'bg-[#0a84ff]/[0.08] text-[#0a84ff]' : 'text-[#86868b] hover:bg-black/[0.03] hover:text-[#1d1d1f]'}`}>
+            ${activeId === id ? 'bg-[#1d1d1f]/[0.06] text-[#1d1d1f]' : 'text-[#86868b] hover:bg-black/[0.03] hover:text-[#1d1d1f]'}`}>
           <span className="text-[14px]">{emoji}</span>{label}
         </a>
       ))}
@@ -117,9 +117,9 @@ function ScreenFrame({ children, title, color }) {
     <div className="rounded-[20px] border border-black/[0.04] bg-white overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 px-3 py-2 border-b border-black/[0.04]" style={{ background: `linear-gradient(90deg,${color}08,${color}02)` }}>
         <div className="flex gap-1">
-          <div className="w-2 h-2 rounded-full bg-[#ff5f57]" />
-          <div className="w-2 h-2 rounded-full bg-[#febc2e]" />
-          <div className="w-2 h-2 rounded-full bg-[#28c840]" />
+          <div className="w-2 h-2 rounded-full bg-[#d1d1d6]" />
+          <div className="w-2 h-2 rounded-full bg-[#d1d1d6]" />
+          <div className="w-2 h-2 rounded-full bg-[#d1d1d6]" />
         </div>
         <span className="text-[10px] font-bold text-[#86868b] tracking-wide ml-1">{title}</span>
       </div>
@@ -172,9 +172,9 @@ function DiagramTunePage() {
       <div className="space-y-2 p-2.5 rounded-xl bg-[#f5f5f7] border border-black/[0.04]">
         <div className="text-[9px] font-bold text-[#86868b] mb-1">バランス調整</div>
         {[
-          { label: '類似度', value: 60, color: '#0a84ff' },
+          { label: '類似度', value: 60, color: '#1d1d1f' },
           { label: '難易度', value: 25, color: '#48484a' },
-          { label: 'ひっかけ', value: 15, color: '#ff9f0a' },
+          { label: 'ひっかけ', value: 15, color: '#86868b' },
         ].map((s) => (
           <div key={s.label} className="flex items-center gap-2">
             <span className="text-[8px] font-semibold text-[#6e6e73] w-10">{s.label}</span>
@@ -191,19 +191,19 @@ function DiagramTunePage() {
 
 function DiagramSearchPage() {
   return (
-    <ScreenFrame title="問題を検索" color="#ff9f0a">
+    <ScreenFrame title="問題を検索" color="#636366">
       <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-[#f5f5f7] border border-black/[0.04] mb-2.5">
         <svg className="w-3.5 h-3.5 text-[#aeaeb2]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <span className="text-[9px] text-[#aeaeb2]">キーワードを入力...</span>
       </div>
       <div className="flex gap-1 mb-2.5 flex-wrap">
         {['数学', '★3', '微積分'].map((f, i) => (
-          <span key={i} className="px-2 py-0.5 rounded-full text-[8px] font-bold bg-[#ff9f0a]/10 text-[#ff9f0a] border border-[#ff9f0a]/20">{f}</span>
+          <span key={i} className="px-2 py-0.5 rounded-full text-[8px] font-bold bg-[#636366]/10 text-[#636366] border border-[#636366]/20">{f}</span>
         ))}
       </div>
       {[1, 2].map((r) => (
         <div key={r} className="flex items-start gap-2 p-2 rounded-lg border border-black/[0.04] mb-1.5 bg-white/60">
-          <div className="text-[8px] font-bold text-[#ff9f0a] bg-[#ff9f0a]/10 px-1.5 py-0.5 rounded">#{r}</div>
+          <div className="text-[8px] font-bold text-[#636366] bg-[#636366]/10 px-1.5 py-0.5 rounded">#{r}</div>
           <div className="flex-1"><div className="h-1.5 w-3/4 bg-[#e5e5ea] rounded-full mb-1" /><div className="h-1.5 w-1/2 bg-[#e5e5ea] rounded-full" /></div>
         </div>
       ))}
@@ -213,17 +213,17 @@ function DiagramSearchPage() {
 
 function DiagramDbEditor() {
   return (
-    <ScreenFrame title="データ管理" color="#30d158">
+    <ScreenFrame title="データ管理" color="#48484a">
       <div className="flex gap-1 mb-2.5">
         {['データ一覧', 'かんたん登録'].map((t, i) => (
-          <div key={i} className={`flex-1 text-center py-1.5 rounded-lg text-[9px] font-bold ${i === 0 ? 'bg-[#30d158] text-white' : 'bg-[#f5f5f7] text-[#86868b]'}`}>{t}</div>
+          <div key={i} className={`flex-1 text-center py-1.5 rounded-lg text-[9px] font-bold ${i === 0 ? 'bg-[#48484a] text-white' : 'bg-[#f5f5f7] text-[#86868b]'}`}>{t}</div>
         ))}
       </div>
       <div className="rounded-lg border border-black/[0.04] overflow-hidden">
         <div className="grid grid-cols-4 text-[7px] font-bold text-[#86868b] bg-[#f5f5f7] px-2 py-1.5"><span>ID</span><span>科目</span><span>難易度</span><span>操作</span></div>
         {[{ id: 1, s: '数学', d: '★3' }, { id: 2, s: '物理', d: '★4' }].map((r) => (
           <div key={r.id} className="grid grid-cols-4 text-[8px] text-[#6e6e73] px-2 py-1.5 border-t border-black/[0.03]">
-            <span className="font-bold text-[#30d158]">{r.id}</span><span>{r.s}</span><span>{r.d}</span><span className="text-[#0a84ff] font-bold">Edit</span>
+            <span className="font-bold text-[#48484a]">{r.id}</span><span>{r.s}</span><span>{r.d}</span><span className="text-[#1d1d1f] font-bold">Edit</span>
           </div>
         ))}
       </div>
@@ -259,9 +259,9 @@ function FlowDiagram() {
       <line x1="310" y1="50" x2="355" y2="50" stroke="#d1d1d6" strokeWidth="2" strokeDasharray="4 3" markerEnd="url(#fArr)"/>
 
       {/* PDF */}
-      <rect x="360" y="20" width="120" height="60" rx="16" fill="white" stroke="#30d158" strokeWidth="1.5"/>
-      <rect x="360" y="20" width="120" height="60" rx="16" fill="#30d158" opacity=".04"/>
-      <text x="420" y="48" textAnchor="middle" fontSize="11" fontWeight="800" fill="#30d158">試験問題 完成</text>
+      <rect x="360" y="20" width="120" height="60" rx="16" fill="white" stroke="#1d1d1f" strokeWidth="1.5"/>
+      <rect x="360" y="20" width="120" height="60" rx="16" fill="#1d1d1f" opacity=".04"/>
+      <text x="420" y="48" textAnchor="middle" fontSize="11" fontWeight="800" fill="#1d1d1f">試験問題 完成</text>
       <text x="420" y="63" textAnchor="middle" fontSize="8" fill="#86868b">PDF ダウンロード</text>
 
       <defs>
@@ -373,7 +373,7 @@ const FAQ_DATA = [
     ],
   },
   {
-    category: '検索・データ', color: '#0a84ff', icon: '◉',
+    category: '検索・データ', color: '#636366', icon: '◉',
     items: [
       { q: '検索のフィルターは？', a: 'キーワード・科目・分野（科目連動）・難易度の4条件で絞り込めます。' },
       { q: '検索結果から類題を作れる？', a: 'はい。結果カードの「類題を生成」ボタンで、その場でAIが類題を作成します。' },
@@ -420,10 +420,10 @@ function FaqCategory({ category, color, icon, items }) {
 const GLOSSARY = [
   { term: 'テンプレート', def: '教科・分野・難易度が定義された問題生成の設計図。繰り返し使えます。', color: '#1d1d1f' },
   { term: '過去問参照', def: '過去問データを参照して、AI生成の品質を高める仕組み。', color: '#48484a' },
-  { term: 'プリセット', def: 'PDF出力や生成バランスの事前設定。ワンタップで切り替え可能。', color: '#ff9f0a' },
-  { term: 'フィードバック', def: '生成問題への評価。保存すると次回の生成に自動反映されます。', color: '#30d158' },
-  { term: '品質調整', def: '生成バランスを調整して品質を改善するプロセス。', color: '#5856d6' },
-  { term: 'ソースコード', def: '数式を美しく表現するための記述形式。PDF出力に使用されます。', color: '#0a84ff' },
+  { term: 'プリセット', def: 'PDF出力や生成バランスの事前設定。ワンタップで切り替え可能。', color: '#636366' },
+  { term: 'フィードバック', def: '生成問題への評価。保存すると次回の生成に自動反映されます。', color: '#48484a' },
+  { term: '品質調整', def: '生成バランスを調整して品質を改善するプロセス。', color: '#86868b' },
+  { term: 'ソースコード', def: '数式を美しく表現するための記述形式。PDF出力に使用されます。', color: '#636366' },
 ];
 
 
@@ -497,9 +497,9 @@ export default function HelpPage() {
                 {[
                   { tag: 'AI 問題生成', color: '#1d1d1f' },
                   { tag: '過去問活用', color: '#48484a' },
-                  { tag: 'PDF 出力', color: '#ff9f0a' },
-                  { tag: '品質改善', color: '#30d158' },
-                  { tag: '6教科対応', color: '#0a84ff' },
+                  { tag: 'PDF 出力', color: '#636366' },
+                  { tag: '品質改善', color: '#48484a' },
+                  { tag: '6教科対応', color: '#86868b' },
                 ].map(({ tag, color }) => (
                   <span key={tag} className="px-3 py-1 rounded-full text-[11px] font-bold border"
                         style={{ color, borderColor: `${color}20`, background: `${color}08` }}>{tag}</span>
@@ -519,8 +519,8 @@ export default function HelpPage() {
                   {[
                     { icon: <IcoCreate />, label: '問題をつくる', href: '/user', color: '#1d1d1f' },
                     { icon: <IcoTune />,   label: '品質を高める', href: '/dev', color: '#48484a' },
-                    { icon: <IcoSearch />, label: '問題を検索',   href: '/search', color: '#ff9f0a' },
-                    { icon: <IcoDb />,     label: 'データ管理',   href: '/db-editor', color: '#30d158' },
+                    { icon: <IcoSearch />, label: '問題を検索',   href: '/search', color: '#636366' },
+                    { icon: <IcoDb />,     label: 'データ管理',   href: '/db-editor', color: '#48484a' },
                   ].map((item) => (
                     <Link key={item.href} href={item.href}
                       className="group flex flex-col items-center gap-1.5 p-3 rounded-[16px] bg-white/80 border border-black/[0.04] transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:scale-[1.02] active:scale-[0.98]" style={{ boxShadow: 'var(--shadow-card)' }}>
@@ -537,7 +537,7 @@ export default function HelpPage() {
           {/* ═══ はじめかた ═══ */}
           <section id="quickstart" className="scroll-mt-24">
             <div className="flex items-center gap-3 mb-4 px-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#0a84ff]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[#1d1d1f]" />
               <h2 className="text-[12px] font-bold text-[#6e6e73] uppercase tracking-[0.2em]">はじめかた</h2>
               <div className="flex-1 h-px bg-gradient-to-r from-black/[0.06] to-transparent" />
             </div>
@@ -545,7 +545,7 @@ export default function HelpPage() {
               {[
                 { n: '1', icon: '◇', title: 'テンプレートを選ぶ', desc: '教科・難易度が設定済みのカードから選択。', color: '#1d1d1f' },
                 { n: '2', icon: '▷', title: '生成する', desc: 'AIが過去問を参照しながら自動生成。数秒で完了。', color: '#48484a' },
-                { n: '3', icon: '↓', title: 'PDFをダウンロード', desc: '完成した試験問題をPDFで取得。そのまま印刷OK。', color: '#30d158' },
+                { n: '3', icon: '↓', title: 'PDFをダウンロード', desc: '完成した試験問題をPDFで取得。そのまま印刷OK。', color: '#636366' },
               ].map((s) => (
                 <div key={s.n} className="relative flex flex-col items-center gap-3 p-5 rounded-[20px] bg-white/70 border border-black/[0.04] transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:shadow-md" style={{ boxShadow: 'var(--shadow-card)' }}>
                   <div className="absolute top-0 left-5 right-5 h-[2px] rounded-b-full" style={{ background: `linear-gradient(90deg,${s.color},transparent)`, opacity: 0.3 }} />
@@ -592,7 +592,7 @@ export default function HelpPage() {
             ]}
           />
 
-          <FeatureSection id="search" icon={<IcoSearch />} title="問題を検索" subtitle="キーワードとフィルターで過去問をかんたん検索" color="#ff9f0a" href="/search"
+          <FeatureSection id="search" icon={<IcoSearch />} title="問題を検索" subtitle="キーワードとフィルターで過去問をかんたん検索" color="#636366" href="/search"
             diagram={<DiagramSearchPage />}
             steps={[
               { title: 'キーワード入力', desc: '検索バーにキーワードを入力。科目・分野を横断検索。' },
@@ -605,7 +605,7 @@ export default function HelpPage() {
             ]}
           />
 
-          <FeatureSection id="db" icon={<IcoDb />} title="データ管理" subtitle="データの閲覧・編集・かんたん登録" color="#30d158" href="/db-editor"
+          <FeatureSection id="db" icon={<IcoDb />} title="データ管理" subtitle="データの閲覧・編集・かんたん登録" color="#48484a" href="/db-editor"
             diagram={<DiagramDbEditor />}
             steps={[
               { title: 'テーブルを選んで閲覧', desc: 'プルダウンで切替。テーブルビューで一覧表示。' },
@@ -621,7 +621,7 @@ export default function HelpPage() {
           {/* ═══ FAQ ═══ */}
           <section id="faq" className="scroll-mt-24">
             <div className="flex items-center gap-3 mb-4 px-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#ff9f0a]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-[#1d1d1f]" />
               <h2 className="text-[12px] font-bold text-[#6e6e73] uppercase tracking-[0.2em]">よくある質問</h2>
               <div className="flex-1 h-px bg-gradient-to-r from-black/[0.06] to-transparent" />
             </div>
@@ -634,7 +634,7 @@ export default function HelpPage() {
             {/* 用語集インライン */}
             <div className="mt-8 relative overflow-hidden rounded-[20px] bg-white border border-black/[0.04] p-5 sm:p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-[14px] font-black text-[#0a84ff]">Glossary</span>
+                <span className="text-[14px] font-black text-[#636366]">Glossary</span>
                 <h4 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">用語集</h4>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

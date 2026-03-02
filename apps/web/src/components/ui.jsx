@@ -150,9 +150,9 @@ export function StatusBar({ message }) {
   const isSuccess = message.includes('完了') || message.includes('成功') || message.includes('取得') || message.includes('作成') || message.includes('開きました') || message.includes('コピー') || /\d+件/.test(message);
 
   const styles = isError
-    ? 'bg-red-50 text-red-600 border-red-100'
+    ? 'bg-black/[0.04] text-[#3a3a3c] border-black/[0.08]'
     : isSuccess
-    ? 'bg-green-50 text-green-600 border-green-100'
+    ? 'bg-black/[0.04] text-[#1d1d1f] border-black/[0.08]'
     : 'bg-gray-50 text-[#6e6e73] border-gray-100';
 
   return (
@@ -322,9 +322,9 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
   const variants = {
     primary: 'btn-premium',
     secondary: 'bg-[#f5f5f7] text-[#1d1d1f] border border-black/[0.06] shadow-sm hover:bg-[#ebebed] hover:border-black/[0.1]',
-    success: 'bg-[#34c759] text-white shadow-sm',
-    danger: 'bg-[#ff3b30] text-white shadow-sm',
-    warning: 'bg-[#ff9500] text-white shadow-sm',
+    success: 'bg-[#1d1d1f] text-white shadow-sm',
+    danger: 'bg-[#3a3a3c] text-white shadow-sm',
+    warning: 'bg-[#636366] text-white shadow-sm',
     ghost: 'bg-transparent text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.03]',
   };
   return (
@@ -342,10 +342,10 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
   const colorMap = {
     slate: 'bg-gray-50 text-[#6e6e73]',
     neutral: 'bg-gray-50 text-[#6e6e73]',
-    indigo: 'bg-indigo-50 text-indigo-600',
-    emerald: 'bg-green-50 text-green-600',
-    amber: 'bg-amber-50 text-amber-600',
-    rose: 'bg-red-50 text-red-600',
+    indigo: 'bg-black/[0.04] text-[#48484a]',
+    emerald: 'bg-black/[0.04] text-[#1d1d1f]',
+    amber: 'bg-black/[0.04] text-[#636366]',
+    rose: 'bg-black/[0.04] text-[#3a3a3c]',
   };
   return (
     <span className={`badge ${colorMap[color] || colorMap.slate}`}>

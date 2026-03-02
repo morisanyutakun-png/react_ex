@@ -92,7 +92,7 @@ function renderLatexToHtml(text) {
       }
     } catch {
       // If KaTeX fails, show original text
-      parts.push(`<code class="text-rose-500 text-xs">${escapeHtml(m.latex)}</code>`);
+      parts.push(`<code class="text-[#3a3a3c] text-xs">${escapeHtml(m.latex)}</code>`);
     }
     pos = m.end;
   }

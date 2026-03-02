@@ -288,8 +288,8 @@ export default function HomePage() {
           <div className="text-center scroll-reveal" style={{ transitionDelay: '100ms' }}>
             <div className="status-pill press-scale">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#34c759] opacity-40"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#34c759]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1d1d1f] opacity-40"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#1d1d1f]"></span>
               </span>
               <span className="text-[11px] font-medium text-[#aeaeb2] tracking-[0.02em]">AI Ready</span>
             </div>

@@ -9,11 +9,11 @@ import { LatexText, LatexBlock } from '@/components/LatexRenderer';
 /* ── 科目カラーマップ ── */
 const SUBJECT_COLORS = {
   '数学': '#1d1d1f',
-  '物理': '#0a84ff',
-  '英語': '#5856d6',
-  '化学': '#ff9f0a',
-  '生物': '#30d158',
-  '情報': '#bf5af2',
+  '物理': '#1d1d1f',
+  '英語': '#48484a',
+  '化学': '#636366',
+  '生物': '#48484a',
+  '情報': '#48484a',
 };
 
 const SUBJECT_ICONS = {
@@ -29,12 +29,12 @@ const SUBJECT_ICONS = {
 function Badge({ children, color = 'slate' }) {
   const map = {
     indigo: 'bg-[#1d1d1f]/[0.08] text-[#1d1d1f] border-[#1d1d1f]/[0.12]',
-    emerald: 'bg-[#34c759]/[0.08] text-[#248a3d] border-[#34c759]/[0.12]',
-    amber: 'bg-[#ff9500]/[0.08] text-[#c77c00] border-[#ff9500]/[0.12]',
-    rose: 'bg-[#ff3b30]/[0.08] text-[#ff3b30] border-[#ff3b30]/[0.12]',
-    violet: 'bg-[#af52de]/[0.08] text-[#af52de] border-[#af52de]/[0.12]',
+    emerald: 'bg-[#1d1d1f]/[0.08] text-[#1d1d1f] border-[#1d1d1f]/[0.12]',
+    amber: 'bg-[#636366]/[0.08] text-[#636366] border-[#636366]/[0.12]',
+    rose: 'bg-[#3a3a3c]/[0.08] text-[#3a3a3c] border-[#3a3a3c]/[0.12]',
+    violet: 'bg-[#48484a]/[0.08] text-[#48484a] border-[#48484a]/[0.12]',
     slate: 'bg-black/[0.04] text-[#86868b] border-black/[0.06]',
-    sky: 'bg-[#007aff]/[0.08] text-[#007aff] border-[#007aff]/[0.12]',
+    sky: 'bg-[#48484a]/[0.08] text-[#48484a] border-[#48484a]/[0.12]',
   };
   return (
     <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${map[color] || map.slate}`}>
@@ -149,7 +149,7 @@ function Skeleton({ className = '' }) {
 }
 
 function DetailBlock({ label, color = 'slate', children }) {
-  const bgMap = { slate: 'bg-black/[0.04]', blue: 'bg-[#007aff]/[0.08]', indigo: 'bg-[#1d1d1f]/[0.08]', emerald: 'bg-[#34c759]/[0.08]' };
+  const bgMap = { slate: 'bg-black/[0.04]', blue: 'bg-[#48484a]/[0.08]', indigo: 'bg-[#1d1d1f]/[0.08]', emerald: 'bg-[#1d1d1f]/[0.08]' };
   return (
     <div>
       <div className="text-[10px] font-bold text-[#c7c7cc] mb-1.5">{label}</div>
@@ -338,7 +338,7 @@ export default function SearchPage() {
                 {query && (
                   <button onClick={() => setQuery('')}
                     className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full
-                               bg-[#007aff]/[0.08] text-[#007aff] border border-[#007aff]/[0.12] hover:bg-[#007aff]/[0.14] transition-colors">
+                               bg-[#48484a]/[0.08] text-[#48484a] border border-[#48484a]/[0.12] hover:bg-[#48484a]/[0.14] transition-colors">
                     "{query}"
                     <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -354,7 +354,7 @@ export default function SearchPage() {
                 {fieldFilter && (
                   <button onClick={() => setFieldFilter('')}
                     className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full
-                               bg-[#34c759]/[0.08] text-[#248a3d] border border-[#34c759]/[0.12] hover:bg-[#34c759]/[0.14] transition-colors">
+                               bg-[#1d1d1f]/[0.08] text-[#1d1d1f] border border-[#1d1d1f]/[0.12] hover:bg-[#1d1d1f]/[0.14] transition-colors">
                     {fieldFilter}
                     <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -362,7 +362,7 @@ export default function SearchPage() {
                 {difficultyFilter && (
                   <button onClick={() => setDifficultyFilter('')}
                     className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full
-                               bg-[#ff9500]/[0.08] text-[#c77c00] border border-[#ff9500]/[0.12] hover:bg-[#ff9500]/[0.14] transition-colors">
+                               bg-[#636366]/[0.08] text-[#636366] border border-[#636366]/[0.12] hover:bg-[#636366]/[0.14] transition-colors">
                     {difficultyFilter}
                     <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -492,11 +492,11 @@ export default function SearchPage() {
                     {/* 類題生成結果 */}
                     {similarResults[item.id] && similarResults[item.id].length > 0 && (
                       <div className="mt-3 space-y-2">
-                        <div className="text-xs font-semibold text-[#af52de] uppercase">
+                        <div className="text-xs font-semibold text-[#48484a] uppercase">
                           生成された類題 ({similarResults[item.id].length}件)
                         </div>
                         {similarResults[item.id].map((sim, sIdx) => (
-                          <div key={sIdx} className="bg-[#af52de]/[0.08] rounded-lg p-3 border border-black/[0.06]">
+                          <div key={sIdx} className="bg-[#48484a]/[0.08] rounded-lg p-3 border border-black/[0.06]">
                             <LatexBlock className="text-xs text-[#1d1d1f]">
                               {sim.text || sim.stem || JSON.stringify(sim, null, 2)}
                             </LatexBlock>

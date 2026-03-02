@@ -210,8 +210,8 @@ export default function TemplateSelector({
 
       {/* 新規テンプレートフォーム */}
       {showNewForm && (
-        <div className="mt-4 p-6 border border-[#34c759]/20 rounded-xl bg-[#34c759]/[0.08]/60 backdrop-blur-sm ">
-          <div className="text-[15px] font-bold text-emerald-700 mb-4 tracking-tight">新しいテンプレート</div>
+        <div className="mt-4 p-6 border border-[#1d1d1f]/[0.12] rounded-xl bg-[#1d1d1f]/[0.04] backdrop-blur-sm ">
+          <div className="text-[15px] font-bold text-[#1d1d1f] mb-4 tracking-tight">新しいテンプレート</div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 items-end">
             <div>
               <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">教科 *</label>
