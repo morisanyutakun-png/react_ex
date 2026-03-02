@@ -213,12 +213,13 @@ export default function DbEditorPage() {
   const [difficultyEstimating, setDifficultyEstimating] = useState(false);
   const [difficultyResult, setDifficultyResult] = useState(null);
 
-  // テーブル一覧取得
+  // テーブル一覧取得（fieldsテーブルは除外）
   useEffect(() => {
     fetchDbTables()
       .then((data) => {
-        setTables(data.tables || []);
-        if (data.tables?.length > 0) setSelectedTable(data.tables[0].name);
+        const filtered = (data.tables || []).filter((t) => t.name !== 'fields');
+        setTables(filtered);
+        if (filtered.length > 0) setSelectedTable(filtered[0].name);
       })
       .catch((e) => setStatus(`データ種類の取得エラー: ${e.message}`));
   }, []);

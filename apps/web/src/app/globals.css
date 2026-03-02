@@ -232,8 +232,8 @@ body::before {
 
 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-black/8 rounded-full; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { @apply bg-black/15; }
+.custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-black/[0.08] rounded-full; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { @apply bg-black/[0.15]; }
 
 /* ══════════════════════════════════════════════
    Core Animations
