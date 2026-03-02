@@ -18,16 +18,16 @@ export default function Header() {
 
   return (
     <>
-      {/* ── デスクトップヘッダー (Apple frosted glass) ── */}
+      {/* ── デスクトップヘッダー (Dark frosted glass) ── */}
       <header className="header-bar sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <div className="flex items-center justify-between h-[48px]">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex items-center justify-center w-[28px] h-[28px] rounded-[8px] icon-premium text-white"
+              <div className="flex items-center justify-center w-[28px] h-[28px] rounded-[8px] icon-glossy text-white"
                    style={{ transition: 'transform 0.5s var(--ease-spring), box-shadow 0.4s ease' }}>
-                <Icons.Book className="w-3 h-3" style={{ transition: 'transform 0.5s var(--ease-spring)' }} />
+                <Icons.Book className="w-3 h-3 relative z-10" style={{ transition: 'transform 0.5s var(--ease-spring)' }} />
               </div>
-              <span className="text-[14px] font-bold tracking-[-0.02em] text-[#1d1d1f]" style={{ transition: 'opacity 0.3s ease' }}>
+              <span className="text-[14px] font-bold tracking-[-0.02em] text-[#f0f0f5]" style={{ transition: 'opacity 0.3s ease' }}>
                 REM
               </span>
             </Link>
@@ -43,13 +43,13 @@ export default function Header() {
                     className={`relative px-3 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5
                       ${active
                         ? 'text-white'
-                        : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
+                        : 'text-[#6a6a7a] hover:text-[#f0f0f5] hover:bg-white/[0.04]'
                       }`}
                     style={{
                       transition: 'all 0.4s var(--ease-spring)',
                       ...(active ? {
-                        background: 'linear-gradient(145deg, #3a3a3c 0%, #1d1d1f 100%)',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.12), inset 0 0.5px 0 rgba(255,255,255,0.06)',
+                        background: 'linear-gradient(145deg, #1a9eff 0%, #0088ee 100%)',
+                        boxShadow: '0 0 10px rgba(0,170,255,0.25), 0 1px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
                       } : {}),
                     }}
                   >
@@ -66,11 +66,11 @@ export default function Header() {
       {/* ── モバイルボトムナビバー ── */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
            style={{
-             background: 'rgba(255,255,255,0.85)',
+             background: 'rgba(10,10,18,0.88)',
              backdropFilter: 'saturate(200%) blur(32px)',
              WebkitBackdropFilter: 'saturate(200%) blur(32px)',
-             borderTop: '0.5px solid rgba(0,0,0,0.05)',
-             boxShadow: '0 -0.5px 0 rgba(0,0,0,0.02)',
+             borderTop: '0.5px solid rgba(255,255,255,0.06)',
+             boxShadow: '0 -1px 0 rgba(255,255,255,0.02)',
            }}>
         <div className="flex items-center justify-around px-1">
           {NAV_ITEMS.map(({ href, label, mobileIcon }) => {
@@ -80,17 +80,17 @@ export default function Header() {
                 key={href}
                 href={href}
                 className={`flex flex-col items-center gap-0.5 py-2 px-2 min-w-[3.5rem] min-h-[52px] justify-center
-                  ${active ? 'text-[#0071e3]' : 'text-[#c7c7cc]'}`}
+                  ${active ? 'text-[#0af]' : 'text-[#3a3a4a]'}`}
                 style={{ transition: 'all 0.35s var(--ease-spring)' }}
               >
                 <div className="relative" style={{ transition: 'transform 0.35s var(--ease-spring)' }}>
                   {mobileIcon}
                   {active && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#0071e3]"
-                         style={{ boxShadow: '0 0 4px rgba(0,113,227,0.4)' }} />
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#0af]"
+                         style={{ boxShadow: '0 0 6px rgba(0,170,255,0.5)' }} />
                   )}
                 </div>
-                <span className={`text-[10px] font-medium leading-none mt-0.5 ${active ? 'text-[#0071e3]' : 'text-[#c7c7cc]'}`}>
+                <span className={`text-[10px] font-medium leading-none mt-0.5 ${active ? 'text-[#0af]' : 'text-[#3a3a4a]'}`}>
                   {label}
                 </span>
               </Link>

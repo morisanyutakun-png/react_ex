@@ -21,7 +21,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] selection:bg-[#0071e3]/18 selection:text-[#1d1d1f]">
+      <body className="min-h-screen bg-[#0a0a0f] text-[#f0f0f5] selection:bg-[#0af]/30 selection:text-white">
         <Header />
         {children}
       </body>
