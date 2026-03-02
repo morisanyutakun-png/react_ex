@@ -48,8 +48,8 @@ export default function Header() {
                     style={{
                       transition: 'all 0.4s var(--ease-spring)',
                       ...(active ? {
-                        background: '#0071e3',
-                        boxShadow: '0 1px 3px rgba(0,113,227,0.25)',
+                        background: 'linear-gradient(180deg, #3a3a3c 0%, #1d1d1f 100%)',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                       } : {}),
                     }}
                   >
@@ -80,17 +80,17 @@ export default function Header() {
                 key={href}
                 href={href}
                 className={`flex flex-col items-center gap-0.5 py-2 px-2 min-w-[3.5rem] min-h-[52px] justify-center
-                  ${active ? 'text-[#0071e3]' : 'text-[#aeaeb2]'}`}
+                  ${active ? 'text-[#1d1d1f]' : 'text-[#aeaeb2]'}`}
                 style={{ transition: 'all 0.35s var(--ease-spring)' }}
               >
                 <div className="relative" style={{ transition: 'transform 0.35s var(--ease-spring)' }}>
                   {mobileIcon}
                   {active && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#0071e3]"
-                         style={{ boxShadow: '0 0 4px rgba(0,113,227,0.3)' }} />
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#1d1d1f]"
+                         style={{ boxShadow: '0 0 4px rgba(0,0,0,0.15)' }} />
                   )}
                 </div>
-                <span className={`text-[10px] font-medium leading-none mt-0.5 ${active ? 'text-[#0071e3]' : 'text-[#aeaeb2]'}`}>
+                <span className={`text-[10px] font-medium leading-none mt-0.5 ${active ? 'text-[#1d1d1f]' : 'text-[#aeaeb2]'}`}>
                   {label}
                 </span>
               </Link>

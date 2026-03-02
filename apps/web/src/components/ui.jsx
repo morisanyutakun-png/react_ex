@@ -180,7 +180,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
           onChange={(e) => onChange(e.target.value)}
           className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] text-sm
                     text-[#1d1d1f] cursor-pointer appearance-none
-                    focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 focus:bg-white
+                    focus:ring-2 focus:ring-black/[0.08] focus:border-black/[0.2] focus:bg-white
                     outline-none font-semibold"
           style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
         >
@@ -198,7 +198,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
           </svg>
         </div>
         {hasValue && (
-          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#0071e3] opacity-60" />
+          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#1d1d1f] opacity-60" />
         )}
       </div>
     </div>
@@ -290,7 +290,7 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
         rows={rows} placeholder={placeholder} readOnly={readOnly}
         className="w-full px-4 py-3.5 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] font-mono text-sm
                    leading-relaxed resize-y text-[#1d1d1f]
-                   focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 focus:bg-white
+                   focus:ring-2 focus:ring-black/[0.08] focus:border-black/[0.2] focus:bg-white
                    outline-none placeholder:text-[#aeaeb2]
                    read-only:bg-[#fafafa] read-only:text-[#86868b] read-only:border-black/[0.04]"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
@@ -307,7 +307,7 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] text-sm text-[#1d1d1f]
-                   focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 focus:bg-white
+                   focus:ring-2 focus:ring-black/[0.08] focus:border-black/[0.2] focus:bg-white
                    outline-none placeholder:text-[#aeaeb2] font-medium"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
@@ -357,7 +357,7 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
 }
 
 /* ── Slider ── */
-export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#0071e3' }) {
+export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#1d1d1f' }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <label className="flex items-center gap-4 py-2 group cursor-pointer">
@@ -467,7 +467,7 @@ export function ProgressSteps({ steps, current }) {
           <div className="flex items-center gap-1.5">
             <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-[9px] text-[10px] sm:text-[11px] font-bold
                 ${i + 1 <= current
-                  ? 'text-white bg-[#0071e3]'
+                  ? 'text-white'
                   : i + 1 === current + 1
                   ? 'bg-[#f5f5f7] text-[#1d1d1f]'
                   : 'bg-[#f5f5f7] text-[#aeaeb2]'
@@ -475,7 +475,8 @@ export function ProgressSteps({ steps, current }) {
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
-                  boxShadow: '0 1px 3px rgba(0,113,227,0.25)',
+                  background: 'linear-gradient(180deg, #3a3a3c 0%, #1d1d1f 100%)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                 } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
@@ -486,7 +487,7 @@ export function ProgressSteps({ steps, current }) {
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#0071e3]/40' : 'bg-black/[0.06]'}`} />
+            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#1d1d1f]/40' : 'bg-black/[0.06]'}`} />
           )}
         </div>
       ))}

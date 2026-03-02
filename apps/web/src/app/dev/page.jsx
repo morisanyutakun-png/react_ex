@@ -121,7 +121,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
 function SelectedTag({ label, value, color = 'red', onClear }) {
   if (!value) return null;
   const colors = {
-    red: 'bg-[#0071e3]/[0.06] text-[#0071e3] border-[#0071e3]/15',
+    red: 'bg-[#1d1d1f]/[0.06] text-[#1d1d1f] border-[#1d1d1f]/15',
     emerald: 'bg-[#34c759]/[0.06] text-[#34c759] border-[#34c759]/15',
     amber: 'bg-[#ff9500]/[0.06] text-[#ff9500] border-[#ff9500]/15',
     violet: 'bg-[#af52de]/[0.06] text-[#af52de] border-[#af52de]/15',
@@ -1071,7 +1071,7 @@ export default function TuningPage() {
                         onClick={() => onSelectTemplate(t.id)}
                         className={`group relative w-full text-left rounded-2xl overflow-hidden transition-all duration-300 active:scale-[0.98]
                           ${isActive
-                            ? 'bg-white shadow-lg shadow-black/[0.08] ring-2 ring-[#0071e3]/30'
+                            ? 'bg-white shadow-lg shadow-black/[0.08] ring-2 ring-[#1d1d1f]/30'
                             : 'bg-white/60 shadow-sm shadow-black/[0.02] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
                           }`}
                       >
@@ -1133,7 +1133,7 @@ export default function TuningPage() {
                 <NumberField label="問数" value={numQuestions} onChange={setNumQuestions} min={1} />
               </div>
               <button onClick={async () => { await refresh(); setStatus('一覧を再読み込みしました'); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#86868b] hover:text-[#0071e3] hover:bg-[#0071e3]/[0.08] transition-all border border-black/[0.04] hover:border-[#0071e3]/20"
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#1d1d1f]/[0.08] transition-all border border-black/[0.04] hover:border-[#1d1d1f]/20"
                 title="一覧を再読込">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -1181,7 +1181,7 @@ export default function TuningPage() {
                       </div>
                       <div className="flex gap-1.5 mt-2 ml-[30px] flex-wrap">
                         {selectedRefProblem.subject && (
-                          <span className="px-2 py-0.5 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[9px] font-bold">{selectedRefProblem.subject}</span>
+                          <span className="px-2 py-0.5 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[9px] font-bold">{selectedRefProblem.subject}</span>
                         )}
                         {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
                           <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
@@ -1210,7 +1210,7 @@ export default function TuningPage() {
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {subject && (
-                  <span className="px-2.5 py-1 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[10px] font-bold">{subject}</span>
+                  <span className="px-2.5 py-1 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[10px] font-bold">{subject}</span>
                 )}
                 {field && (
                   <span className="px-2.5 py-1 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[10px] font-bold">{field}</span>
@@ -1278,7 +1278,7 @@ export default function TuningPage() {
                           </div>
                           <div className="flex gap-1.5 mt-1.5 flex-wrap">
                             {item.subject && (
-                              <span className="px-2 py-0.5 bg-[#0071e3]/[0.08] text-[#0071e3] rounded-full text-[9px] font-bold">{item.subject}</span>
+                              <span className="px-2 py-0.5 bg-[#1d1d1f]/[0.08] text-[#1d1d1f] rounded-full text-[9px] font-bold">{item.subject}</span>
                             )}
                             {(item.topic || item.metadata?.field) && (
                               <span className="px-2 py-0.5 bg-[#34c759]/[0.08] text-[#34c759] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
@@ -1406,7 +1406,7 @@ export default function TuningPage() {
                   <span className="text-gray-300 font-mono flex-shrink-0">#{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     {c.subject && (
-                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[#0071e3]/[0.08] text-[#0071e3] mr-1">{c.subject}</span>
+                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[#1d1d1f]/[0.08] text-[#1d1d1f] mr-1">{c.subject}</span>
                     )}
                     <span className="text-[#aeaeb2] leading-relaxed">
                       {(c.text || '').slice(0, 150).replace(/\n/g, ' ')}{(c.text || '').length > 150 ? '...' : ''}
@@ -1461,9 +1461,9 @@ export default function TuningPage() {
                   <p className="text-[11px] text-[#86868b]">① コピー → ② AIを開く → ③ 貼り付けて実行</p>
                 </div>
               </div>
-            <div className="p-4 bg-[#0071e3]/[0.08] rounded-2xl border border-[#0071e3]/20">
+            <div className="p-4 bg-[#1d1d1f]/[0.08] rounded-2xl border border-[#1d1d1f]/20">
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0071e3] text-white text-xs font-black">1</div>
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#1d1d1f] text-white text-xs font-black">1</div>
                 <div className="flex-1">
                   <div className="text-sm font-bold text-[#1d1d1f]">まず指示文をコピー</div>
                   <div className="text-[11px] text-[#86868b]">{finalPrompt.length.toLocaleString()} 文字</div>
@@ -1589,14 +1589,14 @@ export default function TuningPage() {
                     <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">メモ</label>
                     <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
                       className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f]
-                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 outline-none font-medium"
+                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#1d1d1f] focus:ring-2 focus:ring-[#1d1d1f]/30 outline-none font-medium"
                       placeholder="例: 難しさは良い。でも解説がもう少し欲しい。" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">こうなって欲しかった <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
                     <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
                       className="w-full px-4 py-3 rounded-2xl border border-black/[0.06] bg-white shadow-sm text-sm text-[#1d1d1f]
-                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/30 outline-none font-medium"
+                        transition-all hover:border-black/[0.10] hover:shadow-md focus:border-[#1d1d1f] focus:ring-2 focus:ring-[#1d1d1f]/30 outline-none font-medium"
                       placeholder="こんな問題が作られたら良かった、というイメージ" />
                   </div>
                 </div>
@@ -1636,7 +1636,7 @@ export default function TuningPage() {
                     <div><span className="font-bold text-[#aeaeb2]">問題:</span> <span className="text-[#86868b]">{parsedProblem.stem.slice(0, 200)}{parsedProblem.stem.length > 200 ? '...' : ''}</span></div>
                   )}
                   {parsedProblem.final_answer && (
-                    <div><span className="font-bold text-[#86868b]">解答:</span> <span className="text-[#0071e3] font-bold">{parsedProblem.final_answer}</span></div>
+                    <div><span className="font-bold text-[#86868b]">解答:</span> <span className="text-[#1d1d1f] font-bold">{parsedProblem.final_answer}</span></div>
                   )}
                   {parsedProblem.checks && (
                     <div className="flex gap-3 mt-1">

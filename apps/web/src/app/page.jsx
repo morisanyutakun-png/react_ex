@@ -176,9 +176,9 @@ export default function HomePage() {
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse 80% 45% at 50% -5%, rgba(0,113,227,0.04) 0%, transparent 50%),
-              radial-gradient(ellipse 50% 35% at 85% 15%, rgba(88,86,214,0.025) 0%, transparent 40%),
-              radial-gradient(ellipse 60% 35% at 10% 85%, rgba(175,82,222,0.02) 0%, transparent 45%)
+              radial-gradient(ellipse 80% 45% at 50% -5%, rgba(29,29,31,0.025) 0%, transparent 50%),
+              radial-gradient(ellipse 50% 35% at 85% 15%, rgba(142,142,147,0.02) 0%, transparent 40%),
+              radial-gradient(ellipse 60% 35% at 10% 85%, rgba(174,174,178,0.015) 0%, transparent 45%)
             `
           }}
         />
@@ -208,12 +208,12 @@ export default function HomePage() {
           <div className="text-center mb-20 sm:mb-24 stagger-item" style={{ animationDelay: '0ms' }}>
             {/* Logo mark — glossy floating orb */}
             <div className="relative inline-flex items-center justify-center w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] rounded-[16px] sm:rounded-[18px] mb-7 sm:mb-8 float-slow hero-logo">
-              <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[#0071e3] relative z-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[#1d1d1f] relative z-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
 
-            <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 gradient-text-dark">
+            <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 text-glossy-hero">
               REM
             </h1>
             <p className="text-[15px] sm:text-[17px] text-[#86868b] font-medium mb-5 tracking-[-0.01em]"
@@ -236,9 +236,9 @@ export default function HomePage() {
                 icon={<CreateIcon />}
                 label="問題をつくる"
                 description="出題パターンを選んで、AIが試験問題を自動生成"
-                gradientFrom="from-[#0071e3]"
-                gradientTo="to-[#5856d6]"
-                accentColor="#0071e3"
+                gradientFrom="from-[#2c2c2e]"
+                gradientTo="to-[#1d1d1f]"
+                accentColor="#1d1d1f"
                 delay={60}
               />
               <ActionCard
@@ -246,9 +246,9 @@ export default function HomePage() {
                 icon={<TuneIcon />}
                 label="品質を磨く"
                 description="出題の精度を分析し、さらに向上させる"
-                gradientFrom="from-[#af52de]"
-                gradientTo="to-[#5856d6]"
-                accentColor="#af52de"
+                gradientFrom="from-[#48484a]"
+                gradientTo="to-[#2c2c2e]"
+                accentColor="#2c2c2e"
                 delay={120}
               />
             </div>
