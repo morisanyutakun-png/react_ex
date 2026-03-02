@@ -619,10 +619,10 @@ export default function UserModePage() {
     <div ref={wizardTopRef} className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-14 pb-28 sm:pb-16">
       {/* ヘッダー — Apple spatial design */}
       <div className="text-center mb-8 sm:mb-12">
-        <h1 className="text-[28px] sm:text-[36px] font-black tracking-tight leading-[1.1] mb-2 gradient-text-hero">
+        <h1 className="text-[32px] sm:text-[40px] font-black tracking-[-0.03em] leading-[1.08] mb-3 gradient-text-hero-animated">
           問題をつくる
         </h1>
-        <p className="text-[14px] sm:text-[15px] text-[#86868b] leading-relaxed max-w-md mx-auto font-medium">
+        <p className="text-[14px] sm:text-[15px] text-[#86868b] leading-relaxed max-w-md mx-auto font-medium tracking-[-0.01em]">
           ステップに沿って進むだけで、試験問題の PDF が完成します
         </p>
       </div>
@@ -636,10 +636,9 @@ export default function UserModePage() {
 
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
       {step <= 3 && (
-        <div className="relative overflow-hidden rounded-2xl surface-glass mb-5">
-          <div className="flex items-center gap-3 px-5 py-3.5">
-            <div className="flex items-center justify-center w-8 h-8 rounded-xl text-white text-[12px] font-bold flex-shrink-0"
-              style={{ background: 'linear-gradient(145deg, #0077ed 0%, #0071e3 100%)', boxShadow: '0 2px 6px rgba(0,113,227,0.18)' }}>
+        <div className="wizard-guide mb-5">
+          <div className="flex items-center gap-3 px-5 py-4 relative z-10">
+            <div className="step-orb w-9 h-9 text-white text-[13px] font-bold flex-shrink-0">
               {step}
             </div>
             <div className="flex-1 min-w-0">
@@ -718,21 +717,13 @@ export default function UserModePage() {
                     <button
                       key={t.id}
                       onClick={() => onSelectTemplate(t.id)}
-                      className={`group relative w-full text-left rounded-2xl overflow-hidden transition-all duration-300 active:scale-[0.98]
-                        ${isActive
-                          ? 'bg-white shadow-lg shadow-black/[0.08] ring-2 ring-[#0071e3]/30 select-bounce'
-                          : 'bg-white/60 shadow-sm shadow-black/[0.02] hover:shadow-md hover:shadow-black/[0.06] ring-1 ring-black/[0.04] hover:ring-black/[0.08]'
-                        }`}
+                      className={`group relative w-full text-left template-card-glossy
+                        ${isActive ? 'active select-bounce' : ''}`}
                     >
-                      {/* アクティブ時のトップアクセント */}
-                      {isActive && (
-                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-black/[0.06]" />
-                      )}
-
-                      <div className="p-3.5 sm:p-4 flex items-center gap-3">
+                      <div className="p-3.5 sm:p-4 flex items-center gap-3 relative z-10">
                         {/* 科目アイコン */}
-                        <div className={`flex items-center justify-center w-11 h-11 rounded-[14px] flex-shrink-0 text-lg
-                          bg-[#1d1d1f] text-white shadow-md
+                        <div className={`subject-icon-orb flex items-center justify-center w-11 h-11 flex-shrink-0 text-lg
+                          bg-[#1d1d1f] text-white
                           transition-transform duration-300 ${isActive ? 'scale-105' : 'group-hover:scale-105'}`}
                         >
                           {sc.icon}
@@ -811,11 +802,10 @@ export default function UserModePage() {
 
             {/* ── テンプレート新規作成フォーム ── */}
             {showCreateTemplate ? (
-              <div className="rounded-3xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
-                {/* 緑のアクセントライン（保存アクション = 緑で統一） */}
-                <div className="p-6 space-y-4">
+              <div className="card-glossy">
+                <div className="p-6 space-y-4 relative z-10">
                 <div className="flex items-center gap-3 mb-1">
-                  <div className="icon-premium w-10 h-10">
+                  <div className="icon-glossy w-10 h-10">
                     <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
@@ -927,10 +917,8 @@ export default function UserModePage() {
                     onClick={handleCreateTemplate}
                     disabled={creatingTemplate || !effectiveNewSubject || !newTplDifficulty}
                     className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-[15px] font-bold
-                               bg-[#1d1d1f] text-white
-                               shadow-lg shadow-black/[0.15]
-                               hover:shadow-xl hover:shadow-black/[0.20] hover:-translate-y-0.5
-                               disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 active:scale-[0.97]"
+                               text-white manual-pdf-btn
+                               disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -959,9 +947,9 @@ export default function UserModePage() {
               /* ── 新規作成ボタン ── */
               <button
                 onClick={() => setShowCreateTemplate(true)}
-                className="w-full p-4 rounded-2xl border border-black/[0.06] text-[#86868b]
-                           hover:border-[#0071e3]/30 hover:text-[#0071e3] hover:bg-[#0071e3]/[0.04]
-                           transition-all duration-300 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                className="w-full p-4 rounded-2xl text-[#86868b] section-frosted
+                           hover:text-[#0071e3]
+                           transition-all duration-300 flex items-center justify-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -1002,11 +990,10 @@ export default function UserModePage() {
               const diffColors = { 1: '#34c759', 2: '#34c759', 3: '#ff9500', 4: '#ff6723', 5: '#ff3b30', 6: '#ff2d55' };
               const dotColor = diffColors[diffLevel] || '#c7c7cc';
               return (
-              <div className="relative overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
-                <div className="absolute top-0 left-0 right-0 h-[1px] bg-black/[0.06]" />
-                <div className="p-4">
+              <div className="section-frosted">
+                <div className="p-4 relative z-10">
                   <div className="flex items-center gap-3">
-                    <div className={`icon-premium w-10 h-10 flex-shrink-0 text-lg text-white`}>
+                    <div className={`icon-glossy w-10 h-10 flex-shrink-0 text-lg text-white`}>
                       {sc.icon}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1038,10 +1025,10 @@ export default function UserModePage() {
               );
             })()}
           {/* ── 問題数・参照設定カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
-            <div className="p-5">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="icon-premium w-10 h-10 text-white">
+                <div className="icon-glossy w-10 h-10 text-white">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5l-3.9 19.5m-2.1-19.5l-3.9 19.5" />
                   </svg>
@@ -1081,10 +1068,10 @@ export default function UserModePage() {
             </details>
 
           {/* ── 参考問題カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
-            <div className="p-5">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="icon-premium w-10 h-10 text-white">
+                <div className="icon-glossy w-10 h-10 text-white">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                   </svg>
@@ -1257,10 +1244,10 @@ export default function UserModePage() {
           </div>
 
           {/* ── 生成方法カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
-            <div className="p-5">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="icon-premium w-10 h-10 text-white">
+                <div className="icon-glossy w-10 h-10 text-white">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                   </svg>
@@ -1334,10 +1321,10 @@ export default function UserModePage() {
           </div>
 
           {/* ── カスタム要望カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
-            <div className="p-5">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="icon-premium w-10 h-10 text-white">
+                <div className="icon-glossy w-10 h-10 text-white">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
                   </svg>
@@ -1408,9 +1395,8 @@ export default function UserModePage() {
         <div className="space-y-6 wizard-section-enter">
           {/* 選択中テンプレート情報 */}
           {selectedTemplate && (
-            <div className="mb-6 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
-              <div className="absolute top-0 left-0 right-0 h-[1px] bg-black/[0.06]" />
-              <div className="p-4">
+            <div className="mb-6 section-frosted">
+              <div className="p-4 relative z-10">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-black/[0.04]">
                     <Icons.File className="w-4 h-4 text-[#0071e3]" />
@@ -1452,10 +1438,10 @@ export default function UserModePage() {
           )}
 
           {/* ── PDF形式カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
-            <div className="p-5">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="icon-premium w-10 h-10 text-white">
+                <div className="icon-glossy w-10 h-10 text-white">
                   <Icons.Pdf className="w-5 h-5" />
                 </div>
                 <div>
@@ -1529,10 +1515,10 @@ export default function UserModePage() {
           </div>
 
           {/* ── 問題形式カード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
-            <div className="p-5">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
                 <div className="flex items-center gap-2.5 mb-1">
-                  <div className="icon-premium w-8 h-8">
+                  <div className="icon-glossy w-8 h-8">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                     </svg>
@@ -1629,10 +1615,10 @@ export default function UserModePage() {
           </div>
 
           {/* ── 図表パッケージカード ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/[0.06] shadow-sm">
-            <div className="p-5">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="icon-premium w-10 h-10 text-white">
+                <div className="icon-glossy w-10 h-10 text-white">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
                   </svg>
@@ -1814,20 +1800,21 @@ export default function UserModePage() {
       {/* ═══════ Step 4: 生成中 ═══════ */}
       {step === 4 && generating && (
         <div className="wizard-section-enter">
-          <div className="rounded-3xl bg-white/80 backdrop-blur-xl border border-black/[0.04] shadow-lg overflow-hidden">
-            <div className="flex flex-col items-center justify-center py-24 px-8">
+          <div className="card-glossy generating-glow">
+            <div className="flex flex-col items-center justify-center py-24 px-8 relative z-10">
               {/* パルスリング */}
               <div className="relative mb-8">
-                <div className="absolute inset-[-8px] rounded-full border-2 border-[#0071e3]/10 animate-ping" />
-                <div className="absolute inset-[-16px] rounded-full border border-[#0071e3]/5 animate-pulse" />
-                <div className="icon-premium relative w-16 h-16">
-                  <svg className="animate-spin h-7 w-7 text-white" viewBox="0 0 24 24">
+                <div className="absolute inset-[-12px] rounded-full border-2 border-[#0071e3]/15 animate-ping" />
+                <div className="absolute inset-[-24px] rounded-full border border-[#0071e3]/8 animate-pulse" />
+                <div className="icon-glossy relative w-16 h-16"
+                  style={{ background: 'linear-gradient(145deg, #0a84ff 0%, #0071e3 50%, #005bb5 100%)' }}>
+                  <svg className="animate-spin h-7 w-7 text-white relative z-10" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                 </div>
               </div>
-              <p className="text-lg font-bold text-[#1d1d1f] mb-2 tracking-tight">問題を生成しています</p>
+              <p className="text-lg font-bold text-[#1d1d1f] mb-2 tracking-[-0.02em]">問題を生成しています</p>
               <p className="text-sm text-[#0071e3] font-medium">{status}</p>
               <p className="text-[13px] text-[#aeaeb2] mt-4">しばらくお待ちください...</p>
             </div>
@@ -1918,12 +1905,13 @@ export default function UserModePage() {
 
           {/* AI自動生成の結果 */}
           {mode === 'auto' && generatedLatex && (
-            <div className="rounded-3xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
-              <div className="p-5">
+            <div className="card-glossy">
+              <div className="p-5 relative z-10">
                 {/* ヘッダー */}
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#1d1d1f] flex items-center justify-center shadow-md">
-                    <Icons.Success className="w-5 h-5 text-white" />
+                  <div className="icon-glossy w-10 h-10"
+                    style={{ background: 'linear-gradient(145deg, #38d260 0%, #30b855 50%, #248a3d 100%)' }}>
+                    <Icons.Success className="w-5 h-5 text-white relative z-10" />
                   </div>
                   <div>
                     <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">生成結果</h3>
@@ -2105,12 +2093,12 @@ export default function UserModePage() {
             </Button>
           )}
           {step === 1 && !showCreateTemplate && (
-            <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${canNext() ? 'cta-breathe !py-3.5 !text-base' : ''}`}>
+            <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${canNext() ? 'cta-glass cta-breathe !py-3.5 !text-base !rounded-2xl' : ''}`}>
               {canNext() ? '次のステップへ →' : 'パターンを選んでください'}
             </Button>
           )}
           {step === 2 && (
-            <Button onClick={goNext} className="w-full sm:w-auto cta-breathe !py-3.5 !text-base">
+            <Button onClick={goNext} className="w-full sm:w-auto cta-glass cta-breathe !py-3.5 !text-base !rounded-2xl">
               次のステップへ →
             </Button>
           )}
@@ -2118,7 +2106,7 @@ export default function UserModePage() {
             <Button
               onClick={goNext}
               disabled={!templateId || generating}
-              className={`w-full sm:w-auto px-6 py-3 !text-base ${!generating ? 'cta-breathe' : ''}`}
+              className={`w-full sm:w-auto px-6 py-3 !text-base !rounded-2xl ${!generating ? 'cta-glass cta-breathe' : ''}`}
             >
               {generating ? (
                 <span className="flex items-center justify-center gap-2">

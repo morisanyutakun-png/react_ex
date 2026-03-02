@@ -102,26 +102,26 @@ body::after {
   border-radius: 50%;
   pointer-events: none;
   z-index: -1;
-  filter: blur(80px);
-  opacity: 0.4;
+  filter: blur(100px);
+  opacity: 0.5;
 }
 body::before {
-  top: -15%;
+  top: -20%;
   right: -10%;
+  width: 55vw;
+  height: 55vw;
+  max-width: 700px;
+  max-height: 700px;
+  background: radial-gradient(circle, rgba(0,113,227,0.08) 0%, rgba(88,86,214,0.03) 40%, transparent 70%);
+}
+body::after {
+  bottom: -15%;
+  left: -15%;
   width: 50vw;
   height: 50vw;
   max-width: 600px;
   max-height: 600px;
-  background: radial-gradient(circle, rgba(0,113,227,0.06) 0%, transparent 70%);
-}
-body::after {
-  bottom: -10%;
-  left: -15%;
-  width: 45vw;
-  height: 45vw;
-  max-width: 500px;
-  max-height: 500px;
-  background: radial-gradient(circle, rgba(175,82,222,0.04) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(175,82,222,0.06) 0%, rgba(0,199,190,0.03) 40%, transparent 70%);
 }
 
 ::selection {
@@ -226,7 +226,19 @@ body::after {
 }
 .gradient-text-hero {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #1d1d1f 0%, #48484a 40%, #0071e3 100%);
+  background-image: linear-gradient(135deg, #1d1d1f 0%, #3a3a3c 30%, #0071e3 65%, #5856d6 100%);
+}
+
+/* ── Hero shimmer overlay ── */
+@keyframes hero-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.gradient-text-hero-animated {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #1d1d1f 0%, #3a3a3c 25%, #0071e3 50%, #5856d6 75%, #1d1d1f 100%);
+  background-size: 200% 200%;
+  animation: hero-shimmer 6s ease-in-out infinite;
 }
 
 /* ── Hover Lift — responsive spring feel ── */
@@ -1278,4 +1290,356 @@ main {
 @keyframes page-enter {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ══════════════════════════════════════════════════
+   Premium Glossy Card System — Apple Luster
+   ══════════════════════════════════════════════════ */
+
+/* Glass card with multi-layer depth and inner light */
+.card-glossy {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.88) 100%);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 0.5px solid rgba(255,255,255,0.6);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.04),
+    0 1px 2px rgba(0,0,0,0.02),
+    0 4px 12px rgba(0,0,0,0.03),
+    0 12px 32px rgba(0,0,0,0.04);
+  overflow: hidden;
+  transition: all 0.5s var(--ease-spring);
+}
+/* Top edge specular highlight */
+.card-glossy::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 5%,
+    rgba(255,255,255,0.9) 25%,
+    rgba(255,255,255,1) 50%,
+    rgba(255,255,255,0.9) 75%,
+    transparent 95%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
+/* Subtle inner light from top */
+.card-glossy::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 5%; right: 5%;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+.card-glossy:hover {
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.03),
+    0 2px 4px rgba(0,0,0,0.03),
+    0 8px 24px rgba(0,0,0,0.05),
+    0 24px 48px rgba(0,0,0,0.04);
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.8);
+}
+
+/* ── Frosted section with ambient glow ── */
+.section-frosted {
+  position: relative;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.92) 0%,
+    rgba(250,250,252,0.85) 100%);
+  backdrop-filter: saturate(160%) blur(16px);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+  border: 0.5px solid rgba(255,255,255,0.5);
+  border-radius: var(--radius-xl);
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.03),
+    var(--shadow-card),
+    inset 0 0.5px 0 rgba(255,255,255,0.7);
+  overflow: hidden;
+}
+.section-frosted::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 8%; right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ── Premium icon with depth & shine ── */
+.icon-glossy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #3a3a3c 0%, #1d1d1f 50%, #000000 100%);
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.15),
+    0 6px 16px rgba(0,0,0,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    inset 0 -0.5px 0 rgba(0,0,0,0.3);
+  transition: all 0.4s var(--ease-spring);
+}
+.icon-glossy::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.02) 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.icon-glossy::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  pointer-events: none;
+}
+
+/* ── Wizard guidance card — frosted glass ── */
+.wizard-guide {
+  position: relative;
+  background: linear-gradient(135deg,
+    rgba(255,255,255,0.9) 0%,
+    rgba(245,245,247,0.85) 100%);
+  backdrop-filter: saturate(200%) blur(24px);
+  -webkit-backdrop-filter: saturate(200%) blur(24px);
+  border: 0.5px solid rgba(255,255,255,0.6);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.03),
+    0 1px 3px rgba(0,0,0,0.02),
+    0 4px 16px rgba(0,0,0,0.03),
+    inset 0 0.5px 0 rgba(255,255,255,0.8);
+  overflow: hidden;
+}
+.wizard-guide::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Step number badge — luminous orb ── */
+.step-orb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(145deg, #0a84ff 0%, #0071e3 50%, #005bb5 100%);
+  box-shadow:
+    0 2px 6px rgba(0,113,227,0.25),
+    0 1px 2px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 -0.5px 0 rgba(0,0,0,0.1);
+}
+.step-orb::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* ── Refined selection card with glass ── */
+.selection-card-glass {
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  transition: all 0.4s var(--ease-spring);
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(250,250,252,0.9) 100%);
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.04),
+    var(--shadow-card),
+    inset 0 0.5px 0 rgba(255,255,255,0.7);
+  overflow: hidden;
+}
+.selection-card-glass::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.selection-card-glass:hover {
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.03),
+    var(--shadow-elevated),
+    inset 0 0.5px 0 rgba(255,255,255,0.8);
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,0.7);
+}
+.selection-card-glass:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.12s;
+}
+.selection-card-glass.active {
+  border-color: rgba(0,113,227,0.3);
+  background: linear-gradient(180deg, rgba(0,113,227,0.04) 0%, rgba(0,113,227,0.01) 100%);
+  box-shadow:
+    0 0 0 3px rgba(0,113,227,0.08),
+    0 0 0 0.5px rgba(0,113,227,0.15),
+    var(--shadow-card),
+    inset 0 0.5px 0 rgba(255,255,255,0.6);
+}
+
+/* ── CTA button — glass-layer premium ── */
+.cta-glass {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0081fc 0%, #0071e3 40%, #005bb5 100%);
+  color: white;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.1),
+    0 4px 12px rgba(0,113,227,0.25),
+    0 12px 28px rgba(0,113,227,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 -0.5px 0 rgba(0,0,0,0.1);
+  transition: all 0.35s var(--ease-spring);
+}
+.cta-glass::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.cta-glass::after {
+  content: '';
+  position: absolute;
+  top: 1px; left: 15%; right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  pointer-events: none;
+}
+.cta-glass:hover:not(:disabled) {
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.1),
+    0 8px 20px rgba(0,113,227,0.3),
+    0 20px 40px rgba(0,113,227,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+.cta-glass:active:not(:disabled) {
+  transform: scale(0.97) translateY(0);
+  transition-duration: 0.12s;
+  box-shadow:
+    0 1px 1px rgba(0,0,0,0.1),
+    inset 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ── Template card — glossy interactive ── */
+.template-card-glossy {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255,255,255,0.97) 0%, rgba(250,250,252,0.92) 100%);
+  border: 0.5px solid rgba(255,255,255,0.5);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.04),
+    0 1px 2px rgba(0,0,0,0.02),
+    0 4px 12px rgba(0,0,0,0.03),
+    inset 0 0.5px 0 rgba(255,255,255,0.7);
+  overflow: hidden;
+  transition: all 0.4s var(--ease-spring);
+}
+.template-card-glossy::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 8%; right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+  z-index: 1;
+  pointer-events: none;
+}
+.template-card-glossy:hover {
+  box-shadow:
+    0 0 0 0.5px rgba(0,0,0,0.03),
+    0 2px 4px rgba(0,0,0,0.03),
+    0 8px 24px rgba(0,0,0,0.05),
+    inset 0 0.5px 0 rgba(255,255,255,0.8);
+  transform: translateY(-2px);
+}
+.template-card-glossy:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.12s;
+}
+.template-card-glossy.active {
+  border-color: rgba(0,113,227,0.25);
+  box-shadow:
+    0 0 0 3px rgba(0,113,227,0.08),
+    0 0 0 0.5px rgba(0,113,227,0.12),
+    0 2px 8px rgba(0,113,227,0.06),
+    0 8px 24px rgba(0,0,0,0.04),
+    inset 0 0.5px 0 rgba(255,255,255,0.6);
+}
+
+/* ── Generating state — luminous pulse ── */
+@keyframes luminous-pulse {
+  0%, 100% {
+    box-shadow: 0 0 30px rgba(0,113,227,0.15), 0 0 60px rgba(0,113,227,0.05);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(0,113,227,0.25), 0 0 80px rgba(0,113,227,0.1);
+  }
+}
+.generating-glow {
+  animation: luminous-pulse 2s ease-in-out infinite;
+}
+
+/* ── Subject icon orb — multi-layer gloss ── */
+.subject-icon-orb {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.12),
+    0 1px 2px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 -0.5px 0 rgba(0,0,0,0.2);
+}
+.subject-icon-orb::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 55%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.subject-icon-orb::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 20%; right: 20%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  pointer-events: none;
 }
