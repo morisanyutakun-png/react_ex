@@ -52,9 +52,9 @@ function EndrollColumn({ items, speed, direction = 'up', opacity = 0.08 }) {
         style={{ animationDuration: `${speed}s` }}
       >
         {doubled.map((text, i) => (
-          <div key={i} className="py-[18px] sm:py-[22px] text-center">
-            <span className="text-[9px] sm:text-[10px] tracking-[0.2em] text-[#8e8e93] whitespace-nowrap uppercase"
-                  style={{ fontFamily: '"SF Pro Display", -apple-system, "Helvetica Neue", Arial, sans-serif', fontWeight: 400 }}>
+          <div key={i} className="py-[22px] sm:py-[26px] text-center">
+            <span className="text-[8px] sm:text-[9px] tracking-[0.25em] text-[#c7c7cc] whitespace-nowrap uppercase"
+                  style={{ fontFamily: '"SF Pro Display", -apple-system, "Helvetica Neue", Arial, sans-serif', fontWeight: 300 }}>
               {text}
             </span>
           </div>
@@ -186,16 +186,16 @@ export default function HomePage() {
 
       {/* ── Endroll background ── */}
       <div className="absolute inset-0 flex pointer-events-none select-none" aria-hidden="true">
-        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#fbfbfd] via-[#fbfbfd]/95 to-transparent z-10" />
-        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#fbfbfd] via-[#fbfbfd]/95 to-transparent z-10" />
+        <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#fbfbfd] via-[#fbfbfd]/98 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#fbfbfd] via-[#fbfbfd]/98 to-transparent z-10" />
 
         {ENDROLL_COLS.map((items, i) => (
           <EndrollColumn
             key={i}
             items={items}
-            speed={55 + i * 10}
+            speed={80 + i * 12}
             direction={i % 2 === 0 ? 'up' : 'down'}
-            opacity={0.35 + (i % 3) * 0.06}
+            opacity={0.15 + (i % 3) * 0.04}
           />
         ))}
       </div>

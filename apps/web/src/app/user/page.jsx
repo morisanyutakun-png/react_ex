@@ -616,24 +616,19 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div ref={wizardTopRef} className="max-w-2xl mx-auto px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
-      {/* ヘッダー */}
-      <div className="text-center mb-6 sm:mb-8">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-[#86868b] rounded-full text-[11px] font-semibold mb-3 sm:mb-4 border border-black/[0.04]"
-             style={{ boxShadow: '0 0.5px 1px rgba(0,0,0,0.02)' }}>
-          <Icons.User className="w-3 h-3" />
-          かんたんモード
-        </div>
-        <h1 className="text-[22px] sm:text-[28px] font-black tracking-tight text-[#1d1d1f] mb-1.5 leading-tight">
+    <div ref={wizardTopRef} className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-14 pb-28 sm:pb-16">
+      {/* ヘッダー — Apple spatial design */}
+      <div className="text-center mb-8 sm:mb-12">
+        <h1 className="text-[28px] sm:text-[36px] font-black tracking-tight leading-[1.1] mb-2 gradient-text-hero">
           問題をつくる
         </h1>
-        <p className="text-[13px] text-[#86868b] leading-relaxed max-w-sm mx-auto">
+        <p className="text-[14px] sm:text-[15px] text-[#86868b] leading-relaxed max-w-md mx-auto font-medium">
           ステップに沿って進むだけで、試験問題の PDF が完成します
         </p>
       </div>
 
       {/* プログレスバー */}
-      <div className="mb-5 sm:mb-7">
+      <div className="mb-6 sm:mb-8">
         <ProgressSteps steps={STEPS} current={step} />
       </div>
 
@@ -641,10 +636,10 @@ export default function UserModePage() {
 
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
       {step <= 3 && (
-        <div className="relative overflow-hidden rounded-2xl surface-glass mb-4">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex items-center justify-center w-7 h-7 rounded-[10px] text-white text-[11px] font-bold flex-shrink-0"
-              style={{ background: 'linear-gradient(145deg, #0077ed 0%, #0071e3 100%)', boxShadow: '0 1px 3px rgba(0,113,227,0.20)' }}>
+        <div className="relative overflow-hidden rounded-2xl surface-glass mb-5">
+          <div className="flex items-center gap-3 px-5 py-3.5">
+            <div className="flex items-center justify-center w-8 h-8 rounded-xl text-white text-[12px] font-bold flex-shrink-0"
+              style={{ background: 'linear-gradient(145deg, #0077ed 0%, #0071e3 100%)', boxShadow: '0 2px 6px rgba(0,113,227,0.18)' }}>
               {step}
             </div>
             <div className="flex-1 min-w-0">
@@ -980,7 +975,7 @@ export default function UserModePage() {
 
       {/* ═══════ Step 2: 設定 ═══════ */}
       {step === 2 && (
-        <div className="space-y-5 wizard-section-enter">
+        <div className="space-y-6 wizard-section-enter">
             {/* 選択中テンプレート表示（科目・分野・難易度もここに表示） */}
             {selectedTemplate && (() => {
               const meta = selectedTemplate.metadata || {};
@@ -1410,10 +1405,10 @@ export default function UserModePage() {
 
       {/* ═══════ Step 3: PDF形式選択 ═══════ */}
       {step === 3 && (
-        <div className="space-y-5 wizard-section-enter">
+        <div className="space-y-6 wizard-section-enter">
           {/* 選択中テンプレート情報 */}
           {selectedTemplate && (
-            <div className="mb-5 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
+            <div className="mb-6 relative overflow-hidden rounded-2xl border border-black/[0.06] bg-white shadow-sm">
               <div className="absolute top-0 left-0 right-0 h-[1px] bg-black/[0.06]" />
               <div className="p-4">
                 <div className="flex items-center gap-3">
@@ -1819,11 +1814,12 @@ export default function UserModePage() {
       {/* ═══════ Step 4: 生成中 ═══════ */}
       {step === 4 && generating && (
         <div className="wizard-section-enter">
-          <div className="rounded-3xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
-            <div className="flex flex-col items-center justify-center py-20 px-6">
+          <div className="rounded-3xl bg-white/80 backdrop-blur-xl border border-black/[0.04] shadow-lg overflow-hidden">
+            <div className="flex flex-col items-center justify-center py-24 px-8">
               {/* パルスリング */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 w-16 h-16 rounded-full bg-[#0071e3]/10 animate-ping" />
+              <div className="relative mb-8">
+                <div className="absolute inset-[-8px] rounded-full border-2 border-[#0071e3]/10 animate-ping" />
+                <div className="absolute inset-[-16px] rounded-full border border-[#0071e3]/5 animate-pulse" />
                 <div className="icon-premium relative w-16 h-16">
                   <svg className="animate-spin h-7 w-7 text-white" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
@@ -1831,9 +1827,9 @@ export default function UserModePage() {
                   </svg>
                 </div>
               </div>
-              <p className="text-base font-bold text-[#1d1d1f] mb-1">問題を生成しています</p>
+              <p className="text-lg font-bold text-[#1d1d1f] mb-2 tracking-tight">問題を生成しています</p>
               <p className="text-sm text-[#0071e3] font-medium">{status}</p>
-              <p className="text-xs text-[#86868b] mt-3">しばらくお待ちください...</p>
+              <p className="text-[13px] text-[#aeaeb2] mt-4">しばらくお待ちください...</p>
             </div>
           </div>
         </div>
@@ -1841,7 +1837,7 @@ export default function UserModePage() {
 
       {/* ═══════ Step 5: 結果表示 ═══════ */}
       {step === 5 && (
-        <div className="space-y-5 wizard-section-enter">
+        <div className="space-y-6 wizard-section-enter">
           {/* RAG フィードバックカード */}
           {renderContext && (
             <div className={`rounded-2xl border text-xs px-5 py-4 shadow-sm ${
@@ -2088,7 +2084,7 @@ export default function UserModePage() {
       )}
 
       {/* ═══════ ナビゲーションボタン ═══════ */}
-      <div ref={nextActionRef} className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-6 sm:mt-8 mb-4 sm:mb-0 nav-glow-in">
+      <div ref={nextActionRef} className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-8 sm:mt-10 mb-4 sm:mb-0 nav-glow-in">
         <div>
           {step > 1 && step < 4 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
