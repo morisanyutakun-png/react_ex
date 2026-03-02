@@ -1,8 +1,8 @@
 'use client';
 
 /* ─────────────────────────────────────────────────
-   共通UIコンポーネント群 (Neo-futuristic · Dark Glass)
-   Neon accents · Cinematic depth · Luminous surfaces
+   共通UIコンポーネント群 (Apple-inspired · Light · Refined)
+   Clean surfaces · Subtle depth · Quiet elegance
    ───────────────────────────────────────────────── */
 
 export const Icons = {
@@ -47,7 +47,7 @@ export const Icons = {
     </svg>
   ),
   Empty: (props) => (
-    <svg className="w-12 h-12 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+    <svg className="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
     </svg>
   ),
@@ -98,7 +98,7 @@ export const Icons = {
   )
 };
 
-/* ── PageHeader (Dark) ── */
+/* ── PageHeader ── */
 export function PageHeader({ title, description, icon, breadcrumbs }) {
   return (
     <div className="mb-8 sm:mb-10 animate-fade-in-up">
@@ -107,14 +107,14 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="text-[#6a6a7a] hover:text-[#f0f0f5] transition-colors duration-200">
+                <a href={bc.href} className="text-[#86868b] hover:text-[#1d1d1f] transition-colors duration-200">
                   <span>{bc.label}</span>
                 </a>
               ) : (
-                <span className="text-[#f0f0f5] font-semibold">{bc.label}</span>
+                <span className="text-[#1d1d1f] font-semibold">{bc.label}</span>
               )}
               {i < breadcrumbs.length - 1 && (
-                <svg className="w-3 h-3 text-[#3a3a4a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-[#aeaeb2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               )}
@@ -129,11 +129,11 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-[24px] sm:text-[30px] font-black text-[#f0f0f5] tracking-[-0.03em] leading-tight">
+          <h1 className="text-[24px] sm:text-[30px] font-black text-[#1d1d1f] tracking-[-0.03em] leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#6a6a7a] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
+            <p className="text-[13px] text-[#86868b] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
               {description}
             </p>
           )}
@@ -143,17 +143,17 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
   );
 }
 
-/* ── StatusBar — Dark neon feedback ── */
+/* ── StatusBar ── */
 export function StatusBar({ message }) {
   if (!message) return null;
   const isError = message.includes('失敗') || message.includes('エラー') || message.includes('Error');
   const isSuccess = message.includes('完了') || message.includes('成功') || message.includes('取得') || message.includes('作成') || message.includes('開きました') || message.includes('コピー') || /\d+件/.test(message);
 
   const styles = isError
-    ? 'bg-[#ff5252]/[0.08] text-[#ff5252] border-[#ff5252]/20'
+    ? 'bg-red-50 text-red-600 border-red-100'
     : isSuccess
-    ? 'bg-[#00e676]/[0.08] text-[#00e676] border-[#00e676]/20'
-    : 'bg-white/[0.03] text-[#9898a8] border-white/[0.06]';
+    ? 'bg-green-50 text-green-600 border-green-100'
+    : 'bg-gray-50 text-[#6e6e73] border-gray-100';
 
   return (
     <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border ${styles}`}
@@ -172,15 +172,15 @@ export function SelectField({ label, value, onChange, options, className = '' })
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#6a6a7a] uppercase tracking-wider mb-2">{label}</label>
+        <label className="block text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">{label}</label>
       )}
       <div className="relative group">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-white/[0.08] bg-[#16161e] text-sm
-                    text-[#f0f0f5] cursor-pointer appearance-none
-                    focus:ring-2 focus:ring-[#0af]/20 focus:border-[#0af]/40
+          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] text-sm
+                    text-[#1d1d1f] cursor-pointer appearance-none
+                    focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 focus:bg-white
                     outline-none font-semibold"
           style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
         >
@@ -192,20 +192,20 @@ export function SelectField({ label, value, onChange, options, className = '' })
             )
           )}
         </select>
-        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#6a6a7a]">
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#86868b]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
         {hasValue && (
-          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#0af] opacity-60" />
+          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#0071e3] opacity-60" />
         )}
       </div>
     </div>
   );
 }
 
-/* ── NumberField (Dark Stepper) ── */
+/* ── NumberField ── */
 export function NumberField({ label, value, onChange, min = 1, max, step = 1, className = '' }) {
   const handleDecrement = () => {
     const next = value - step;
@@ -222,16 +222,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#6a6a7a] uppercase tracking-wider mb-2">{label}</label>
+        <label className="block text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">{label}</label>
       )}
-      <div className="inline-flex items-stretch rounded-2xl border border-white/[0.08] bg-[#16161e] overflow-hidden"
+      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.08] bg-[#f5f5f7] overflow-hidden"
            style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}>
         <button
           type="button"
           onClick={handleDecrement}
           disabled={atMin}
-          className="flex items-center justify-center w-11 border-r border-white/[0.08] text-[#6a6a7a]
-                     hover:bg-white/[0.04] hover:text-[#f0f0f5] active:bg-white/[0.06]
+          className="flex items-center justify-center w-11 border-r border-black/[0.06] text-[#86868b]
+                     hover:bg-black/[0.03] hover:text-[#1d1d1f] active:bg-black/[0.05]
                      disabled:opacity-20 disabled:hover:bg-transparent
                      active:scale-90"
           style={{ transition: 'all 0.3s var(--ease-spring)' }}
@@ -254,7 +254,7 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
             min={min}
             max={max}
             step={step}
-            className="w-12 text-center text-[17px] font-bold text-[#f0f0f5] bg-transparent outline-none tabular-nums
+            className="w-12 text-center text-[17px] font-bold text-[#1d1d1f] bg-transparent outline-none tabular-nums
                        [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden
                        [-moz-appearance:textfield]"
           />
@@ -263,8 +263,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
           type="button"
           onClick={handleIncrement}
           disabled={atMax}
-          className="flex items-center justify-center w-11 border-l border-white/[0.08] text-[#6a6a7a]
-                     hover:bg-white/[0.04] hover:text-[#f0f0f5] active:bg-white/[0.06]
+          className="flex items-center justify-center w-11 border-l border-black/[0.06] text-[#86868b]
+                     hover:bg-black/[0.03] hover:text-[#1d1d1f] active:bg-black/[0.05]
                      disabled:opacity-20 disabled:hover:bg-transparent
                      active:scale-90"
           style={{ transition: 'all 0.3s var(--ease-spring)' }}
@@ -283,16 +283,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
 export function TextArea({ label, value, onChange, rows = 6, placeholder, readOnly, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[11px] font-bold text-[#6a6a7a] uppercase tracking-wider mb-2">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">{label}</label>}
       <textarea
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         rows={rows} placeholder={placeholder} readOnly={readOnly}
-        className="w-full px-4 py-3.5 rounded-2xl border border-white/[0.08] bg-[#16161e] font-mono text-sm
-                   leading-relaxed resize-y text-[#f0f0f5]
-                   focus:ring-2 focus:ring-[#0af]/20 focus:border-[#0af]/40
-                   outline-none placeholder:text-[#3a3a4a]
-                   read-only:bg-[#0e0e14] read-only:text-[#6a6a7a] read-only:border-white/[0.04]"
+        className="w-full px-4 py-3.5 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] font-mono text-sm
+                   leading-relaxed resize-y text-[#1d1d1f]
+                   focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 focus:bg-white
+                   outline-none placeholder:text-[#aeaeb2]
+                   read-only:bg-[#fafafa] read-only:text-[#86868b] read-only:border-black/[0.04]"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
@@ -303,29 +303,29 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
 export function TextField({ label, value, onChange, placeholder, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[11px] font-bold text-[#6a6a7a] uppercase tracking-wider mb-2">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">{label}</label>}
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-white/[0.08] bg-[#16161e] text-sm text-[#f0f0f5]
-                   focus:ring-2 focus:ring-[#0af]/20 focus:border-[#0af]/40
-                   outline-none placeholder:text-[#3a3a4a] font-medium"
+        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] text-sm text-[#1d1d1f]
+                   focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 focus:bg-white
+                   outline-none placeholder:text-[#aeaeb2] font-medium"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
   );
 }
 
-/* ── Button (Dark Futuristic) ── */
+/* ── Button ── */
 export function Button({ children, onClick, variant = 'primary', disabled, className = '', size = 'md' }) {
   const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden';
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
     primary: 'btn-premium',
-    secondary: 'bg-white/[0.04] text-[#f0f0f5] border border-white/[0.08] shadow-sm hover:bg-white/[0.06] hover:border-white/[0.12]',
-    success: 'bg-gradient-to-b from-[#00e676] to-[#00c853] text-[#0a0a0f] shadow-sm',
-    danger: 'bg-gradient-to-b from-[#ff5252] to-[#d50000] text-white shadow-sm',
-    warning: 'bg-gradient-to-b from-[#ffab00] to-[#ff8f00] text-[#0a0a0f] shadow-sm',
-    ghost: 'bg-transparent text-[#9898a8] hover:text-[#f0f0f5] hover:bg-white/[0.04]',
+    secondary: 'bg-[#f5f5f7] text-[#1d1d1f] border border-black/[0.06] shadow-sm hover:bg-[#ebebed] hover:border-black/[0.1]',
+    success: 'bg-[#34c759] text-white shadow-sm',
+    danger: 'bg-[#ff3b30] text-white shadow-sm',
+    warning: 'bg-[#ff9500] text-white shadow-sm',
+    ghost: 'bg-transparent text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.03]',
   };
   return (
     <button onClick={onClick} disabled={disabled}
@@ -340,12 +340,12 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
 export function MetaTag({ icon, label, value, color = 'slate' }) {
   if (!value) return null;
   const colorMap = {
-    slate: 'bg-white/[0.04] text-[#9898a8]',
-    neutral: 'bg-white/[0.04] text-[#9898a8]',
-    indigo: 'bg-[#8c9eff]/10 text-[#8c9eff]',
-    emerald: 'bg-[#00e676]/10 text-[#00e676]',
-    amber: 'bg-[#ffab00]/10 text-[#ffab00]',
-    rose: 'bg-[#ff5252]/10 text-[#ff5252]',
+    slate: 'bg-gray-50 text-[#6e6e73]',
+    neutral: 'bg-gray-50 text-[#6e6e73]',
+    indigo: 'bg-indigo-50 text-indigo-600',
+    emerald: 'bg-green-50 text-green-600',
+    amber: 'bg-amber-50 text-amber-600',
+    rose: 'bg-red-50 text-red-600',
   };
   return (
     <span className={`badge ${colorMap[color] || colorMap.slate}`}>
@@ -357,28 +357,28 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
 }
 
 /* ── Slider ── */
-export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#0af' }) {
+export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#0071e3' }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <label className="flex items-center gap-4 py-2 group cursor-pointer">
-      <span className="min-w-[5rem] text-[12px] font-bold text-[#f0f0f5] tracking-[-0.01em]">{label}</span>
+      <span className="min-w-[5rem] text-[12px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{label}</span>
       <div className="flex-1 relative h-6 flex items-center">
-        <div className="absolute inset-x-0 h-[5px] rounded-full bg-white/[0.06]" />
+        <div className="absolute inset-x-0 h-[5px] rounded-full bg-black/[0.06]" />
         <div className="absolute left-0 h-[5px] rounded-full transition-all duration-150"
-             style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, ${color}cc)` }} />
+             style={{ width: `${pct}%`, background: color }} />
         <input type="range" min={min} max={max} step={step} value={value}
           onChange={(e) => onChange(Number(e.target.value))}
           className="relative w-full h-[5px] rounded-full appearance-none cursor-pointer bg-transparent z-10
                      [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:appearance-none
-                     [&::-webkit-slider-thumb]:shadow-[0_0_8px_rgba(0,170,255,0.3),0_2px_6px_rgba(0,0,0,0.3)]
+                     [&::-webkit-slider-thumb]:shadow-[0_1px_3px_rgba(0,0,0,0.15),0_0_0_0.5px_rgba(0,0,0,0.04)]
                      [&::-webkit-slider-thumb]:transition-all
-                     [&::-webkit-slider-thumb]:hover:scale-125"
+                     [&::-webkit-slider-thumb]:hover:scale-110"
         />
       </div>
       <span className="min-w-[2.5rem] text-right text-[13px] font-bold tabular-nums px-2 py-0.5 rounded-lg"
-            style={{ color, background: `${color}15` }}>
+            style={{ color, background: `${color}10` }}>
         {Number(value).toFixed(1)}
       </span>
     </label>
@@ -398,7 +398,7 @@ export function CopyButton({ text, onCopied, label = 'コピー' }) {
   );
 }
 
-/* ── SectionCard (Dark Glass) ── */
+/* ── SectionCard ── */
 export function SectionCard({ title, subtitle, icon, children, className = '' }) {
   return (
     <div className={`card-glossy p-5 sm:p-6 ${className}`}>
@@ -411,9 +411,9 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
                 {icon}
               </span>
             )}
-            {title && <h2 className="text-[15px] font-bold text-[#f0f0f5] tracking-[-0.01em]">{title}</h2>}
+            {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[11px] text-[#6a6a7a] mt-1 ml-[42px]">{subtitle}</p>}
+          {subtitle && <p className="text-[11px] text-[#86868b] mt-1 ml-[42px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -425,30 +425,29 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
 /* ── EmptyState ── */
 export function EmptyState({ icon, title, description }) {
   return (
-    <div className="text-center py-16 card-glossy border-dashed !border-white/[0.08]">
-      <div className="flex justify-center mb-4 text-[#3a3a4a]">{icon || <Icons.Empty />}</div>
-      {title && <div className="text-[15px] font-bold text-[#9898a8] mb-1.5 tracking-[-0.01em]">{title}</div>}
-      {description && <div className="text-[13px] text-[#6a6a7a] leading-relaxed max-w-sm mx-auto">{description}</div>}
+    <div className="text-center py-16 card-glossy border-dashed !border-black/[0.08]">
+      <div className="flex justify-center mb-4 text-[#aeaeb2]">{icon || <Icons.Empty />}</div>
+      {title && <div className="text-[15px] font-bold text-[#6e6e73] mb-1.5 tracking-[-0.01em]">{title}</div>}
+      {description && <div className="text-[13px] text-[#86868b] leading-relaxed max-w-sm mx-auto">{description}</div>}
     </div>
   );
 }
 
-/* ── Tabs (Dark) ── */
+/* ── Tabs ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-white/[0.04] rounded-[14px]"
-         style={{ boxShadow: 'inset 0 0.5px 1px rgba(0,0,0,0.3)' }}>
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]">
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
             ${activeTab === tab.id
-              ? 'bg-white/[0.08] text-[#f0f0f5]'
-              : 'text-[#6a6a7a] hover:text-[#f0f0f5] hover:bg-white/[0.04]'
+              ? 'bg-white text-[#1d1d1f]'
+              : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
             }`}
           style={{
             transition: 'all 0.4s var(--ease-spring)',
             ...(activeTab === tab.id ? {
-              boxShadow: '0 0 0 0.5px rgba(255,255,255,0.08), 0 2px 8px rgba(0,0,0,0.3)',
+              boxShadow: '0 0 0 0.5px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06)',
             } : {}),
           }}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
@@ -459,7 +458,7 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
   );
 }
 
-/* ── ProgressSteps — Neon glow steps ── */
+/* ── ProgressSteps ── */
 export function ProgressSteps({ steps, current }) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
@@ -468,27 +467,26 @@ export function ProgressSteps({ steps, current }) {
           <div className="flex items-center gap-1.5">
             <div className={`flex items-center justify-center w-6 h-6 sm:w-7 sm:h-7 rounded-[9px] text-[10px] sm:text-[11px] font-bold
                 ${i + 1 <= current
-                  ? 'text-white'
+                  ? 'text-white bg-[#0071e3]'
                   : i + 1 === current + 1
-                  ? 'bg-white/[0.06] text-[#f0f0f5]'
-                  : 'bg-white/[0.03] text-[#3a3a4a]'
+                  ? 'bg-[#f5f5f7] text-[#1d1d1f]'
+                  : 'bg-[#f5f5f7] text-[#aeaeb2]'
                 }`}
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
-                  background: 'linear-gradient(145deg, #1a9eff 0%, #0088ee 100%)',
-                  boxShadow: '0 0 10px rgba(0,170,255,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+                  boxShadow: '0 1px 3px rgba(0,113,227,0.25)',
                 } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-[12px] font-medium transition-colors whitespace-nowrap
-                ${i + 1 <= current ? 'text-[#f0f0f5]' : i + 1 === current + 1 ? 'text-[#9898a8]' : 'text-[#3a3a4a]'}`}>
+                ${i + 1 <= current ? 'text-[#1d1d1f]' : i + 1 === current + 1 ? 'text-[#6e6e73]' : 'text-[#aeaeb2]'}`}>
               {s}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#0af]/40' : 'bg-white/[0.06]'}`} />
+            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#0071e3]/40' : 'bg-black/[0.06]'}`} />
           )}
         </div>
       ))}
