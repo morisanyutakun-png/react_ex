@@ -747,6 +747,228 @@ button[class*="secondary"] {
   animation: empty-fade-in 0.7s var(--ease-out-expo) both;
 }
 
+/* ══════════════════════════════════════════════════
+   Manual Mode — Premium Output Card
+   ══════════════════════════════════════════════════ */
+
+.manual-output-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: var(--radius-xl);
+  border: 0.5px solid rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.03),
+    0 6px 20px rgba(0, 0, 0, 0.04),
+    0 20px 44px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  animation: manual-card-enter 0.7s var(--ease-out-expo) both;
+}
+.manual-output-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.9) 20%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.9) 80%,
+    transparent 100%
+  );
+  z-index: 1;
+}
+.manual-output-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 60%;
+  background: radial-gradient(ellipse at top, rgba(0, 113, 227, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+@keyframes manual-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* ── コピー完了バナー ── */
+.manual-output-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(52, 199, 89, 0.06) 0%, rgba(52, 199, 89, 0.02) 100%);
+  border-bottom: 0.5px solid rgba(52, 199, 89, 0.1);
+  position: relative;
+  z-index: 2;
+}
+.manual-output-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #38d260 0%, #30b855 100%);
+  color: white;
+  box-shadow:
+    0 1px 3px rgba(48, 209, 88, 0.2),
+    0 4px 12px rgba(48, 209, 88, 0.15),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+/* ── 指示文作成ボタン ── */
+.manual-generate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(180deg, #0077ed 0%, #0071e3 100%);
+  border: none;
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 3px 10px rgba(0, 113, 227, 0.18),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.12);
+  transition: all 0.35s var(--ease-spring);
+  letter-spacing: -0.01em;
+  min-height: 48px;
+}
+.manual-generate-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #0081fc 0%, #0077ed 100%);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 6px 18px rgba(0, 113, 227, 0.26),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+.manual-generate-btn:active:not(:disabled) {
+  background: linear-gradient(180deg, #006edb 0%, #0066cc 100%);
+  transform: scale(0.97) translateY(0);
+  transition-duration: 0.12s;
+}
+.manual-generate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  animation: none !important;
+}
+
+/* ── PDF生成ボタン — glossy premium ── */
+.manual-pdf-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(180deg, #1d1d1f 0%, #000000 100%);
+  border: none;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 12px 28px rgba(0, 0, 0, 0.06),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.06);
+  transition: all 0.4s var(--ease-spring);
+}
+.manual-pdf-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.04) 45%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 55%,
+    transparent 60%
+  );
+  transition: left 0.8s var(--ease-out-expo);
+}
+.manual-pdf-btn:hover:not(:disabled)::before {
+  left: 100%;
+}
+.manual-pdf-btn:hover:not(:disabled) {
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.14),
+    0 16px 36px rgba(0, 0, 0, 0.06),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+.manual-pdf-btn:active:not(:disabled) {
+  transform: scale(0.97) translateY(0);
+  transition-duration: 0.12s;
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.12),
+    inset 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+.manual-pdf-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── PDF成功リンク ── */
+.manual-pdf-success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #248a3d;
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.08) 0%, rgba(48, 209, 88, 0.03) 100%);
+  border: 1px solid rgba(48, 209, 88, 0.15);
+  transition: all 0.35s var(--ease-spring);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+.manual-pdf-success::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(48, 209, 88, 0.2),
+    transparent
+  );
+}
+.manual-pdf-success:hover {
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.12) 0%, rgba(48, 209, 88, 0.05) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(48, 209, 88, 0.1);
+}
+
 /* ── Smooth page transitions ── */
 main {
   animation: page-enter 0.5s var(--ease-out-expo) both;

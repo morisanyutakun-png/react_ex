@@ -495,13 +495,17 @@ export default function UserModePage() {
     setGenerating(false);
   };
 
-  /* ── 手動: プロンプト生成のみ ── */
+  /* ── 手動: プロンプト生成 → 自動コピー ── */
+  const [promptCopied, setPromptCopied] = useState(false);
+  const [promptGenerating, setPromptGenerating] = useState(false);
   const generatePrompt = async () => {
     if (!templateId) {
       setStatus('出題パターンを選んでください');
       return;
     }
-    setStatus('AIへの指示文を作成中（過去問を参考にしています）...');
+    setPromptCopied(false);
+    setPromptGenerating(true);
+    setStatus('AIへの指示文を作成中...');
     try {
       const data = await renderTemplate({
         template_id: templateId,
@@ -522,15 +526,25 @@ export default function UserModePage() {
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       });
       setRenderContext(data.context || null);
-      setPrompt(data.rendered_prompt || data.rendered || '');
+      const generatedText = data.rendered_prompt || data.rendered || '';
+      setPrompt(generatedText);
+
+      // 自動でクリップボードにコピー
+      try {
+        await navigator.clipboard.writeText(generatedText);
+        setPromptCopied(true);
+      } catch { /* clipboard blocked — ユーザーが手動コピー可能 */ }
+
       setStatus(
         data.context?.chunk_count
-          ? `指示文が完成しました（過去問 ${data.context.chunk_count}件を参考）`
-          : '指示文が完成しました'
+          ? `指示文をコピーしました（過去問 ${data.context.chunk_count}件を参考）`
+          : '指示文をクリップボードにコピーしました'
       );
+      setPromptGenerating(false);
       setStep(5);
     } catch (e) {
       setStatus(`エラー: ${e.message}`);
+      setPromptGenerating(false);
     }
   };
 
@@ -1983,73 +1997,90 @@ export default function UserModePage() {
             </div>
           )}
 
-          {/* 手動モードの結果 */}
+          {/* 手動モード — 出力貼り付け */}
           {mode === 'manual' && prompt && (
-            <div className="rounded-3xl bg-white border border-black/[0.06] shadow-sm overflow-hidden">
-              <div className="p-5">
-                {/* ヘッダー */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#1d1d1f] flex items-center justify-center shadow-md">
-                    <Icons.Prompt className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIへの指示文</h3>
-                    <p className="text-[11px] text-[#86868b]">ChatGPT等に送信してください</p>
-                  </div>
+            <div className="manual-output-card">
+              {/* コピー完了バナー */}
+              <div className="manual-output-banner">
+                <div className="manual-output-banner-icon">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+                  </svg>
                 </div>
-              <div className="space-y-4">
-                <TextArea value={prompt} onChange={setPrompt} rows={12} />
-                <div className="flex items-center justify-between gap-3">
-                  {renderContext?.chunk_count > 0 && (
-                    <span className="text-xs text-[#0071e3] font-medium px-3 py-1 bg-[#0071e3]/[0.08] rounded-full">
-                      過去問 {renderContext.chunk_count}件を参照
-                    </span>
-                  )}
-                  <CopyButton text={prompt} onCopied={setStatus} />
-                </div>
-
-                <div className="border-t border-black/[0.06] pt-4">
-                  <p className="text-xs text-[#86868b] mb-3">
-                    上の指示文を ChatGPT 等に送って、得られた出力を下に貼り付けてください。
+                <div className="flex-1">
+                  <p className="text-[13px] font-semibold text-[#1d1d1f] tracking-tight">
+                    指示文をクリップボードにコピー済み
                   </p>
-                  <TextArea
-                    label="AI の出力"
-                    value={llmOutput}
-                    onChange={setLlmOutput}
-                    rows={8}
-                    placeholder="AI の出力をここに貼り付け..."
-                  />
-                  <div className="mt-3">
-                    <Button
-                      onClick={() => compilePdf()}
-                      disabled={!llmOutput || pdfWorking}
-                      variant="success"
-                      className="w-full py-3"
-                    >
-                      {pdfWorking ? (
-                        <span className="flex items-center gap-2">
-                          <Icons.Info className="animate-pulse" /> 生成中...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <Icons.Pdf /> PDF を生成
-                        </span>
-                      )}
-                    </Button>
-                  </div>
-
-                  {pdfUrl && (
-                    <a
-                      href={pdfUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 flex items-center justify-center gap-2 p-3 bg-[#34c759]/[0.08] text-[#34c759] rounded-xl border border-[#34c759]/20 font-bold hover:bg-emerald-900/50 transition-colors"
-                    >
-                      <Icons.Pdf /> PDF を別タブで開く
-                    </a>
-                  )}
+                  <p className="text-[11px] text-[#86868b] mt-0.5">
+                    ChatGPT や Claude に貼り付けて実行してください
+                  </p>
                 </div>
+                {renderContext?.chunk_count > 0 && (
+                  <span className="text-[11px] font-medium text-[#0071e3] bg-[#0071e3]/[0.06] px-2.5 py-1 rounded-full flex-shrink-0">
+                    過去問 {renderContext.chunk_count}件参照
+                  </span>
+                )}
+                <CopyButton text={prompt} onCopied={setStatus} label="再コピー" />
               </div>
+
+              {/* メインエリア */}
+              <div className="p-6 sm:p-8">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-b from-[#3a3a3c] to-[#1d1d1f] shadow-lg mb-4">
+                    <svg className="w-7 h-7 text-white/90" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-bold text-[#1d1d1f] tracking-tight">AI の出力を貼り付け</h3>
+                  <p className="text-[13px] text-[#86868b] mt-1">
+                    AI から返ってきた LaTeX コードをここに貼り付けてください
+                  </p>
+                </div>
+
+                <TextArea
+                  label=""
+                  value={llmOutput}
+                  onChange={setLlmOutput}
+                  rows={12}
+                  placeholder="AI の出力（LaTeX コード）をここに貼り付け..."
+                />
+
+                <div className="mt-5">
+                  <button
+                    onClick={() => compilePdf()}
+                    disabled={!llmOutput || pdfWorking}
+                    className="manual-pdf-btn w-full"
+                  >
+                    {pdfWorking ? (
+                      <span className="flex items-center justify-center gap-2.5">
+                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        PDF を生成中...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2.5">
+                        <Icons.Pdf className="w-5 h-5" /> PDF を生成
+                      </span>
+                    )}
+                  </button>
+                </div>
+
+                {pdfUrl && (
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="manual-pdf-success mt-4"
+                  >
+                    <Icons.Pdf className="w-5 h-5" />
+                    PDF を別タブで開く
+                    <svg className="w-4 h-4 ml-auto opacity-40" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                  </a>
+                )}
               </div>
             </div>
           )}
@@ -2109,9 +2140,25 @@ export default function UserModePage() {
             </Button>
           )}
           {step === 3 && mode === 'manual' && (
-            <Button onClick={goNext} disabled={!templateId} className="w-full sm:w-auto">
-              <Icons.Prompt className="w-4 h-4 mr-1" /> 指示文を作成
-            </Button>
+            <button
+              onClick={goNext}
+              disabled={!templateId || promptGenerating}
+              className={`manual-generate-btn ${!promptGenerating && templateId ? 'cta-breathe' : ''}`}
+            >
+              {promptGenerating ? (
+                <span className="flex items-center justify-center gap-2.5">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  指示文を作成中...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <Icons.Prompt className="w-4 h-4" /> 指示文を作成してコピー
+                </span>
+              )}
+            </button>
           )}
         </div>
       </div>
