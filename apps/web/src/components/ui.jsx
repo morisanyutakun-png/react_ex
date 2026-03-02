@@ -317,11 +317,11 @@ export function TextField({ label, value, onChange, placeholder, className = '' 
 
 /* ── Button ── */
 export function Button({ children, onClick, variant = 'primary', disabled, className = '', size = 'md' }) {
-  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden';
+  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl disabled:opacity-40 disabled:cursor-not-allowed relative overflow-hidden active:scale-[0.97]';
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
     primary: 'btn-premium',
-    secondary: 'bg-[#f5f5f7] text-[#1d1d1f] border border-black/[0.06] shadow-sm hover:bg-[#ebebed] hover:border-black/[0.1]',
+    secondary: 'bg-gradient-to-b from-[#f8f8fa] to-[#f0f0f2] text-[#1d1d1f] border border-black/[0.06] hover:from-[#f0f0f2] hover:to-[#e8e8ea] hover:border-black/[0.1] hover:shadow-md',
     success: 'bg-[#1d1d1f] text-white shadow-sm',
     danger: 'bg-[#3a3a3c] text-white shadow-sm',
     warning: 'bg-[#636366] text-white shadow-sm',
@@ -330,7 +330,7 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
   return (
     <button onClick={onClick} disabled={disabled}
       className={`${base} ${sizes[size] || sizes.md} ${variants[variant] || variants.primary} ${className}`}
-      style={{ transition: 'all 0.35s var(--ease-spring)', transitionProperty: 'transform, box-shadow, background, border-color, opacity, color' }}>
+      style={{ transition: 'all 0.35s var(--ease-spring)', transitionProperty: 'transform, box-shadow, background, border-color, opacity, color', boxShadow: variant === 'secondary' ? 'var(--shadow-card), var(--shadow-glossy-inset)' : undefined }}>
       {children}
     </button>
   );
@@ -405,7 +405,7 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
       <div className="relative z-10">
       {(title || icon) && (
         <div className="mb-4">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             {icon && (
               <span className="icon-glossy w-8 h-8 text-white flex-shrink-0">
                 {icon}
@@ -413,7 +413,7 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
             )}
             {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[11px] text-[#86868b] mt-1 ml-[42px]">{subtitle}</p>}
+          {subtitle && <p className="text-[11px] text-[#86868b] mt-1.5 ml-[44px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -436,18 +436,18 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]">
+    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
             ${activeTab === tab.id
               ? 'bg-white text-[#1d1d1f]'
-              : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.02]'
+              : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/40'
             }`}
           style={{
             transition: 'all 0.4s var(--ease-spring)',
             ...(activeTab === tab.id ? {
-              boxShadow: '0 0 0 0.5px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.06)',
+              boxShadow: '0 0 0 0.5px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.8)',
             } : {}),
           }}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
@@ -475,8 +475,8 @@ export function ProgressSteps({ steps, current }) {
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
-                  background: 'linear-gradient(180deg, #3a3a3c 0%, #1d1d1f 100%)',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                  background: 'linear-gradient(180deg, #48484a 0%, #2c2c2e 40%, #1d1d1f 100%)',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)',
                 } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}

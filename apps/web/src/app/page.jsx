@@ -117,7 +117,7 @@ function DbIcon() {
 function ActionCard({ href, icon, label, description, gradientFrom, gradientTo, accentColor, delay }) {
   return (
     <Link href={href} className="group block scroll-reveal" style={{ transitionDelay: `${delay}ms` }}>
-      <div className="action-card-wrap p-7 sm:p-8"
+      <div className="action-card-wrap shine-on-hover p-7 sm:p-8"
            style={{ '--card-glow-color': `${accentColor}0a` }}>
         <div className="relative z-10">
           <div className={`action-card-icon w-12 h-12 flex items-center justify-center mb-5 bg-gradient-to-br ${gradientFrom} ${gradientTo} text-white`}
@@ -131,7 +131,7 @@ function ActionCard({ href, icon, label, description, gradientFrom, gradientTo, 
           <div className="mt-4 flex items-center gap-1.5 text-[12px] font-semibold opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0"
                style={{ color: accentColor, transition: 'opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-spring)' }}>
             <span>はじめる</span>
-            <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
+            <svg className="w-3.5 h-3.5 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"
                  style={{ transition: 'transform 0.4s var(--ease-spring)' }}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
@@ -151,11 +151,11 @@ function ToolCard({ href, icon, label, description, delay }) {
              style={{ transition: 'color 0.4s var(--ease-spring)' }}>
           <div className="group-hover:scale-110" style={{ transition: 'transform 0.45s var(--ease-spring)' }}>{icon}</div>
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 relative z-10">
           <div className="text-[15px] font-semibold text-[#1d1d1f] tracking-[-0.01em]">{label}</div>
           <div className="text-[12px] text-[#aeaeb2] mt-0.5 tracking-[-0.01em]">{description}</div>
         </div>
-        <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7] group-hover:text-[#aeaeb2] group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+        <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7] group-hover:text-[#86868b] group-hover:translate-x-1 relative z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
              style={{ transition: 'all 0.4s var(--ease-spring)' }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
@@ -213,7 +213,7 @@ export default function HomePage() {
               </svg>
             </div>
 
-            <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 text-glossy-hero">
+            <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 gradient-text-hero-animated">
               REM
             </h1>
             <p className="text-[15px] sm:text-[17px] text-[#86868b] font-medium mb-5 tracking-[-0.01em]"
