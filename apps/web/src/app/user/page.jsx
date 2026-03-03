@@ -198,18 +198,76 @@ const PresetThumbnail = ({ id, active }) => {
 export default function UserModePage() {
   const { templates, subjects, refresh } = useTemplates();
 
+  // 科目アイコン（SVG）
+  const SubjectIcon = useCallback(({ type, className = "w-4 h-4" }) => {
+    const icons = {
+      '数学': ( // 幾何学的な図形（∑記号風）
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 4h6l-6 8 6 8H4" /><path d="M14 12h6" /><path d="M14 6h6" /><path d="M14 18h6" />
+        </svg>
+      ),
+      '物理': ( // 原子モデル
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
+          <circle cx="12" cy="12" r="2" fill="currentColor" /><ellipse cx="12" cy="12" rx="10" ry="4" /><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" /><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)" />
+        </svg>
+      ),
+      '化学': ( // フラスコ
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 3h6v5.172a2 2 0 01-.586 1.414l-.828.828A2 2 0 0013 11.828V17a4 4 0 01-2 3.464A4 4 0 019 17v-5.172a2 2 0 00-.586-1.414l-.828-.828A2 2 0 017 8.172V3" /><path d="M9 3h6" /><path d="M7.5 16h9" />
+        </svg>
+      ),
+      '英語': ( // 地球＋言語
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+        </svg>
+      ),
+      '生物': ( // DNA二重螺旋
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round">
+          <path d="M7 4a8 8 0 005 7.5A8 8 0 0017 4" /><path d="M7 20a8 8 0 005-7.5A8 8 0 0017 20" /><path d="M8 6h8" /><path d="M8 18h8" /><path d="M7 12h10" />
+        </svg>
+      ),
+      '情報': ( // ターミナル/コード
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
+        </svg>
+      ),
+      '国語': ( // 筆（ブラシ）
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M18 2l4 4-9.5 9.5a4 4 0 01-2 1.1L6 18l1.4-4.5a4 4 0 011.1-2L18 2z" /><path d="M6 18v4h4" />
+        </svg>
+      ),
+      '社会': ( // ランドマーク/柱
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="22" x2="21" y2="22" /><line x1="6" y1="18" x2="6" y2="11" /><line x1="10" y1="18" x2="10" y2="11" /><line x1="14" y1="18" x2="14" y2="11" /><line x1="18" y1="18" x2="18" y2="11" /><polygon points="12 2 20 7 4 7" fill="none" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      ),
+      '地学': ( // 地層/山
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 3l4 8 5-5 4 14H3z" /><path d="M4.14 15.08C5 14 6 13.5 7 13.5c2 0 3.5 2.5 5 2.5s2.5-1 4-1 2.5.5 4 2" />
+        </svg>
+      ),
+      '理科': ( // 顕微鏡風（レンズ＋光線）
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="4" /><path d="M12 2v4" /><path d="M12 18v4" /><path d="M4.93 4.93l2.83 2.83" /><path d="M16.24 16.24l2.83 2.83" /><path d="M2 12h4" /><path d="M18 12h4" /><path d="M4.93 19.07l2.83-2.83" /><path d="M16.24 7.76l2.83-2.83" />
+        </svg>
+      ),
+    };
+    return icons[type] || <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10" /></svg>;
+  }, []);
+
   // 科目カラー定義（共通）
   const SUBJECT_COLOR_MAP = useMemo(() => ({
-    '数学': { bg: 'from-[#3b82f6] to-[#2563eb]', light: '#3b82f6', icon: '📐', bgLight: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-    '物理': { bg: 'from-[#8b5cf6] to-[#7c3aed]', light: '#8b5cf6', icon: '🍎', bgLight: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
-    '化学': { bg: 'from-[#10b981] to-[#059669]', light: '#10b981', icon: '🧪', bgLight: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-    '英語': { bg: 'from-[#f59e0b] to-[#d97706]', light: '#f59e0b', icon: '📖', bgLight: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-    '生物': { bg: 'from-[#22c55e] to-[#16a34a]', light: '#22c55e', icon: '🌿', bgLight: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
-    '情報': { bg: 'from-[#06b6d4] to-[#0891b2]', light: '#06b6d4', icon: '💻', bgLight: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
-    '国語': { bg: 'from-[#ec4899] to-[#db2777]', light: '#ec4899', icon: '📝', bgLight: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
-    '社会': { bg: 'from-[#f97316] to-[#ea580c]', light: '#f97316', icon: '🏛️', bgLight: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-    '地学': { bg: 'from-[#14b8a6] to-[#0d9488]', light: '#14b8a6', icon: '🌋', bgLight: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
-    '理科': { bg: 'from-[#6366f1] to-[#4f46e5]', light: '#6366f1', icon: '🔬', bgLight: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
+    '数学': { bg: 'from-[#3b82f6] to-[#2563eb]', light: '#3b82f6', icon: '数学', bgLight: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+    '物理': { bg: 'from-[#8b5cf6] to-[#7c3aed]', light: '#8b5cf6', icon: '物理', bgLight: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
+    '化学': { bg: 'from-[#10b981] to-[#059669]', light: '#10b981', icon: '化学', bgLight: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    '英語': { bg: 'from-[#f59e0b] to-[#d97706]', light: '#f59e0b', icon: '英語', bgLight: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+    '生物': { bg: 'from-[#22c55e] to-[#16a34a]', light: '#22c55e', icon: '生物', bgLight: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
+    '情報': { bg: 'from-[#06b6d4] to-[#0891b2]', light: '#06b6d4', icon: '情報', bgLight: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
+    '国語': { bg: 'from-[#ec4899] to-[#db2777]', light: '#ec4899', icon: '国語', bgLight: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
+    '社会': { bg: 'from-[#f97316] to-[#ea580c]', light: '#f97316', icon: '社会', bgLight: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+    '地学': { bg: 'from-[#14b8a6] to-[#0d9488]', light: '#14b8a6', icon: '地学', bgLight: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
+    '理科': { bg: 'from-[#6366f1] to-[#4f46e5]', light: '#6366f1', icon: '理科', bgLight: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
   }), []);
   const getSubjectColor = useCallback((subj) => SUBJECT_COLOR_MAP[subj] || { bg: 'from-[#64748b] to-[#475569]', light: '#64748b', icon: '—', bgLight: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' }, [SUBJECT_COLOR_MAP]);
 
@@ -751,7 +809,7 @@ export default function UserModePage() {
                         className={`w-full flex items-center gap-3 px-4 py-3 transition-colors duration-200 ${isExpanded ? sc.bgLight : 'hover:bg-blue-50/40'}`}
                       >
                         <div className={`flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br ${sc.bg} text-white text-sm font-bold flex-shrink-0`}>
-                          {sc.icon}
+                          <SubjectIcon type={subjName} className="w-4 h-4" />
                         </div>
                         <div className="flex-1 text-left min-w-0">
                           <span className={`text-[14px] font-bold ${sc.text}`}>{subjName}</span>
@@ -1021,7 +1079,7 @@ export default function UserModePage() {
                 <div className="p-4 relative z-10">
                   <div className="flex items-center gap-3">
                     <div className={`icon-glossy w-10 h-10 flex-shrink-0 text-lg text-white`}>
-                      {sc.icon}
+                      <SubjectIcon type={subj} className="w-5 h-5" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
