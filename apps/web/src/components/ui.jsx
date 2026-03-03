@@ -107,14 +107,14 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="text-[#86868b] hover:text-[#1d1d1f] transition-colors duration-200">
+                <a href={bc.href} className="text-[#64748b] hover:text-[#1e293b] transition-colors duration-200">
                   <span>{bc.label}</span>
                 </a>
               ) : (
-                <span className="text-[#1d1d1f] font-semibold">{bc.label}</span>
+                <span className="text-[#1e293b] font-semibold">{bc.label}</span>
               )}
               {i < breadcrumbs.length - 1 && (
-                <svg className="w-3 h-3 text-[#aeaeb2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               )}
@@ -129,11 +129,11 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-[24px] sm:text-[30px] font-black text-[#1d1d1f] tracking-[-0.03em] leading-tight">
+          <h1 className="text-[24px] sm:text-[30px] font-black text-[#1e293b] tracking-[-0.03em] leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#86868b] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
+            <p className="text-[13px] text-[#64748b] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
               {description}
             </p>
           )}
@@ -150,10 +150,10 @@ export function StatusBar({ message }) {
   const isSuccess = message.includes('完了') || message.includes('成功') || message.includes('取得') || message.includes('作成') || message.includes('開きました') || message.includes('コピー') || /\d+件/.test(message);
 
   const styles = isError
-    ? 'bg-black/[0.04] text-[#3a3a3c] border-black/[0.08]'
+    ? 'bg-red-50 text-red-700 border-red-200/60'
     : isSuccess
-    ? 'bg-black/[0.04] text-[#1d1d1f] border-black/[0.08]'
-    : 'bg-gray-50 text-[#6e6e73] border-gray-100';
+    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+    : 'bg-blue-50 text-[#64748b] border-blue-200/40';
 
   return (
     <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border ${styles}`}
@@ -172,15 +172,15 @@ export function SelectField({ label, value, onChange, options, className = '' })
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">{label}</label>
+        <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">{label}</label>
       )}
       <div className="relative group">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] text-sm
-                    text-[#1d1d1f] cursor-pointer appearance-none
-                    focus:ring-2 focus:ring-black/[0.08] focus:border-black/[0.2] focus:bg-white
+          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-blue-200/80 bg-[#f0f4ff] text-sm
+                    text-[#1e293b] cursor-pointer appearance-none
+                    focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
                     outline-none font-semibold"
           style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
         >
@@ -192,13 +192,13 @@ export function SelectField({ label, value, onChange, options, className = '' })
             )
           )}
         </select>
-        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#86868b]">
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#64748b]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
         {hasValue && (
-          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#1d1d1f] opacity-60" />
+          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#2563eb] opacity-60" />
         )}
       </div>
     </div>
@@ -222,16 +222,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">{label}</label>
+        <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">{label}</label>
       )}
-      <div className="inline-flex items-stretch rounded-2xl border border-black/[0.08] bg-[#f5f5f7] overflow-hidden"
+      <div className="inline-flex items-stretch rounded-2xl border border-blue-200/80 bg-[#f0f4ff] overflow-hidden"
            style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}>
         <button
           type="button"
           onClick={handleDecrement}
           disabled={atMin}
-          className="flex items-center justify-center w-11 border-r border-black/[0.06] text-[#86868b]
-                     hover:bg-black/[0.03] hover:text-[#1d1d1f] active:bg-black/[0.05]
+          className="flex items-center justify-center w-11 border-r border-blue-200/60 text-[#64748b]
+                     hover:bg-blue-50/60 hover:text-[#1e293b] active:bg-blue-100/60
                      disabled:opacity-20 disabled:hover:bg-transparent
                      active:scale-90"
           style={{ transition: 'all 0.3s var(--ease-spring)' }}
@@ -254,7 +254,7 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
             min={min}
             max={max}
             step={step}
-            className="w-12 text-center text-[17px] font-bold text-[#1d1d1f] bg-transparent outline-none tabular-nums
+            className="w-12 text-center text-[17px] font-bold text-[#1e293b] bg-transparent outline-none tabular-nums
                        [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden
                        [-moz-appearance:textfield]"
           />
@@ -263,8 +263,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
           type="button"
           onClick={handleIncrement}
           disabled={atMax}
-          className="flex items-center justify-center w-11 border-l border-black/[0.06] text-[#86868b]
-                     hover:bg-black/[0.03] hover:text-[#1d1d1f] active:bg-black/[0.05]
+          className="flex items-center justify-center w-11 border-l border-blue-200/60 text-[#64748b]
+                     hover:bg-blue-50/60 hover:text-[#1e293b] active:bg-blue-100/60
                      disabled:opacity-20 disabled:hover:bg-transparent
                      active:scale-90"
           style={{ transition: 'all 0.3s var(--ease-spring)' }}
@@ -283,16 +283,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
 export function TextArea({ label, value, onChange, rows = 6, placeholder, readOnly, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">{label}</label>}
       <textarea
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         rows={rows} placeholder={placeholder} readOnly={readOnly}
-        className="w-full px-4 py-3.5 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] font-mono text-sm
-                   leading-relaxed resize-y text-[#1d1d1f]
-                   focus:ring-2 focus:ring-black/[0.08] focus:border-black/[0.2] focus:bg-white
-                   outline-none placeholder:text-[#aeaeb2]
-                   read-only:bg-[#fafafa] read-only:text-[#86868b] read-only:border-black/[0.04]"
+        className="w-full px-4 py-3.5 rounded-2xl border border-blue-200/80 bg-[#f0f4ff] font-mono text-sm
+                   leading-relaxed resize-y text-[#1e293b]
+                   focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
+                   outline-none placeholder:text-[#94a3b8]
+                   read-only:bg-[#fafafa] read-only:text-[#64748b] read-only:border-blue-200/40"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
@@ -303,12 +303,12 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
 export function TextField({ label, value, onChange, placeholder, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[11px] font-bold text-[#86868b] uppercase tracking-wider mb-2">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">{label}</label>}
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.08] bg-[#f5f5f7] text-sm text-[#1d1d1f]
-                   focus:ring-2 focus:ring-black/[0.08] focus:border-black/[0.2] focus:bg-white
-                   outline-none placeholder:text-[#aeaeb2] font-medium"
+        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/80 bg-[#f0f4ff] text-sm text-[#1e293b]
+                   focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
+                   outline-none placeholder:text-[#94a3b8] font-medium"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
@@ -321,11 +321,11 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
     primary: 'btn-premium',
-    secondary: 'bg-gradient-to-b from-[#f8f8fa] to-[#f0f0f2] text-[#1d1d1f] border border-black/[0.06] hover:from-[#f0f0f2] hover:to-[#e8e8ea] hover:border-black/[0.1] hover:shadow-md',
-    success: 'bg-[#1d1d1f] text-white shadow-sm',
-    danger: 'bg-[#3a3a3c] text-white shadow-sm',
-    warning: 'bg-[#636366] text-white shadow-sm',
-    ghost: 'bg-transparent text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.03]',
+    secondary: 'bg-gradient-to-b from-[#f0f4ff] to-[#e8efff] text-[#1e293b] border border-blue-200/60 hover:from-[#e8efff] hover:to-[#dce6ff] hover:border-blue-300/50 hover:shadow-md',
+    success: 'bg-[#2563eb] text-white shadow-sm',
+    danger: 'bg-[#1e40af] text-white shadow-sm',
+    warning: 'bg-[#475569] text-white shadow-sm',
+    ghost: 'bg-transparent text-[#64748b] hover:text-[#1e293b] hover:bg-blue-50/60',
   };
   return (
     <button onClick={onClick} disabled={disabled}
@@ -340,12 +340,12 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
 export function MetaTag({ icon, label, value, color = 'slate' }) {
   if (!value) return null;
   const colorMap = {
-    slate: 'bg-gray-50 text-[#6e6e73]',
-    neutral: 'bg-gray-50 text-[#6e6e73]',
-    indigo: 'bg-black/[0.04] text-[#48484a]',
-    emerald: 'bg-black/[0.04] text-[#1d1d1f]',
-    amber: 'bg-black/[0.04] text-[#636366]',
-    rose: 'bg-black/[0.04] text-[#3a3a3c]',
+    slate: 'bg-slate-50 text-[#64748b]',
+    neutral: 'bg-slate-50 text-[#64748b]',
+    indigo: 'bg-blue-50 text-[#2563eb]',
+    emerald: 'bg-emerald-50 text-[#059669]',
+    amber: 'bg-amber-50 text-[#d97706]',
+    rose: 'bg-rose-50 text-[#e11d48]',
   };
   return (
     <span className={`badge ${colorMap[color] || colorMap.slate}`}>
@@ -357,13 +357,13 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
 }
 
 /* ── Slider ── */
-export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#1d1d1f' }) {
+export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#2563eb' }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <label className="flex items-center gap-4 py-2 group cursor-pointer">
-      <span className="min-w-[5rem] text-[12px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{label}</span>
+      <span className="min-w-[5rem] text-[12px] font-bold text-[#1e293b] tracking-[-0.01em]">{label}</span>
       <div className="flex-1 relative h-6 flex items-center">
-        <div className="absolute inset-x-0 h-[5px] rounded-full bg-black/[0.06]" />
+        <div className="absolute inset-x-0 h-[5px] rounded-full bg-blue-100/70" />
         <div className="absolute left-0 h-[5px] rounded-full transition-all duration-150"
              style={{ width: `${pct}%`, background: color }} />
         <input type="range" min={min} max={max} step={step} value={value}
@@ -428,9 +428,9 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
                 {icon}
               </span>
             )}
-            {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{title}</h2>}
+            {title && <h2 className="text-[15px] font-bold text-[#1e293b] tracking-[-0.01em]">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[11px] text-[#86868b] mt-1.5 ml-[44px]">{subtitle}</p>}
+          {subtitle && <p className="text-[11px] text-[#64748b] mt-1.5 ml-[44px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -442,10 +442,10 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
 /* ── EmptyState ── */
 export function EmptyState({ icon, title, description }) {
   return (
-    <div className="text-center py-16 card-glossy border-dashed !border-black/[0.08]">
-      <div className="flex justify-center mb-4 text-[#aeaeb2]">{icon || <Icons.Empty />}</div>
-      {title && <div className="text-[15px] font-bold text-[#6e6e73] mb-1.5 tracking-[-0.01em]">{title}</div>}
-      {description && <div className="text-[13px] text-[#86868b] leading-relaxed max-w-sm mx-auto">{description}</div>}
+    <div className="text-center py-16 card-glossy border-dashed !border-blue-200/80">
+      <div className="flex justify-center mb-4 text-[#94a3b8]">{icon || <Icons.Empty />}</div>
+      {title && <div className="text-[15px] font-bold text-[#64748b] mb-1.5 tracking-[-0.01em]">{title}</div>}
+      {description && <div className="text-[13px] text-[#64748b] leading-relaxed max-w-sm mx-auto">{description}</div>}
     </div>
   );
 }
@@ -453,13 +453,13 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-black/[0.04] rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.04)' }}>
+    <div className="flex gap-0.5 p-[3px] bg-blue-50/80 rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(37,99,235,0.06)' }}>
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
             ${activeTab === tab.id
-              ? 'bg-white text-[#1d1d1f]'
-              : 'text-[#86868b] hover:text-[#1d1d1f] hover:bg-white/40'
+              ? 'bg-white text-[#1e293b]'
+              : 'text-[#64748b] hover:text-[#1e293b] hover:bg-white/40'
             }`}
           style={{
             transition: 'all 0.4s var(--ease-spring)',
@@ -486,25 +486,25 @@ export function ProgressSteps({ steps, current }) {
                 ${i + 1 <= current
                   ? 'text-white'
                   : i + 1 === current + 1
-                  ? 'bg-[#f5f5f7] text-[#1d1d1f]'
-                  : 'bg-[#f5f5f7] text-[#aeaeb2]'
+                  ? 'bg-[#f0f4ff] text-[#1e293b]'
+                  : 'bg-[#f0f4ff] text-[#94a3b8]'
                 }`}
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
-                  background: 'linear-gradient(180deg, #48484a 0%, #2c2c2e 40%, #1d1d1f 100%)',
+                  background: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 40%, #1e40af 100%)',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)',
                 } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-[12px] font-medium transition-colors whitespace-nowrap
-                ${i + 1 <= current ? 'text-[#1d1d1f]' : i + 1 === current + 1 ? 'text-[#6e6e73]' : 'text-[#aeaeb2]'}`}>
+                ${i + 1 <= current ? 'text-[#1e293b]' : i + 1 === current + 1 ? 'text-[#64748b]' : 'text-[#94a3b8]'}`}>
               {s}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#1d1d1f]/40' : 'bg-black/[0.06]'}`} />
+            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#2563eb]/40' : 'bg-blue-100/70'}`} />
           )}
         </div>
       ))}

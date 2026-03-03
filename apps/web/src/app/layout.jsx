@@ -21,7 +21,13 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-white text-[#1d1d1f] selection:bg-black/[0.12] selection:text-[#1d1d1f]">
+      <body className="min-h-screen bg-[#f8faff] text-[#1e293b] selection:bg-blue-500/[0.15] selection:text-[#1e293b]">
+        {/* Ambient floating orbs for warm background */}
+        <div className="ambient-orbs" aria-hidden="true">
+          <div className="ambient-orb ambient-orb-1" />
+          <div className="ambient-orb ambient-orb-2" />
+          <div className="ambient-orb ambient-orb-3" />
+        </div>
         <Header />
         {children}
       </body>

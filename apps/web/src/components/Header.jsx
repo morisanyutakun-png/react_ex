@@ -27,7 +27,7 @@ export default function Header() {
                    style={{ transition: 'transform 0.5s var(--ease-spring), box-shadow 0.4s ease' }}>
                 <Icons.Book className="w-3 h-3 relative z-10" style={{ transition: 'transform 0.5s var(--ease-spring)' }} />
               </div>
-              <span className="text-[14px] font-bold tracking-[-0.02em] text-[#1d1d1f]" style={{ transition: 'opacity 0.3s ease' }}>
+              <span className="text-[14px] font-bold tracking-[-0.02em] text-[#1e40af]" style={{ transition: 'opacity 0.3s ease' }}>
                 REM
               </span>
             </Link>
@@ -43,13 +43,13 @@ export default function Header() {
                     className={`relative px-3 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5
                       ${active
                         ? 'text-white'
-                        : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.03]'
+                        : 'text-[#64748b] hover:text-[#2563eb] hover:bg-blue-50'
                       }`}
                     style={{
                       transition: 'all 0.4s var(--ease-spring)',
                       ...(active ? {
-                        background: 'linear-gradient(180deg, #48484a 0%, #2c2c2e 40%, #1d1d1f 100%)',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)',
+                        background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
+                        boxShadow: '0 2px 6px rgba(37,99,235,0.25), inset 0 1px 0 rgba(255,255,255,0.15)',
                       } : {}),
                     }}
                   >
@@ -66,11 +66,11 @@ export default function Header() {
       {/* ── モバイルボトムナビバー ── */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
            style={{
-             background: 'rgba(255,255,255,0.88)',
+             background: 'rgba(248,250,255,0.92)',
              backdropFilter: 'saturate(200%) blur(24px)',
              WebkitBackdropFilter: 'saturate(200%) blur(24px)',
-             borderTop: '0.5px solid rgba(0,0,0,0.06)',
-             boxShadow: '0 -4px 16px rgba(0,0,0,0.03), 0 -0.5px 0 rgba(0,0,0,0.03)',
+             borderTop: '0.5px solid rgba(37,99,235,0.08)',
+             boxShadow: '0 -4px 16px rgba(37,99,235,0.04), 0 -0.5px 0 rgba(37,99,235,0.04)',
            }}>
         <div className="flex items-center justify-around px-1">
           {NAV_ITEMS.map(({ href, label, mobileIcon }) => {
@@ -80,17 +80,17 @@ export default function Header() {
                 key={href}
                 href={href}
                 className={`flex flex-col items-center gap-0.5 py-2 px-2 min-w-[3.5rem] min-h-[52px] justify-center
-                  ${active ? 'text-[#1d1d1f]' : 'text-[#aeaeb2]'}`}
+                  ${active ? 'text-[#2563eb]' : 'text-[#94a3b8]'}`}
                 style={{ transition: 'all 0.35s var(--ease-spring)' }}
               >
                 <div className="relative" style={{ transition: 'transform 0.35s var(--ease-spring)', transform: active ? 'scale(1.08)' : 'scale(1)' }}>
                   {mobileIcon}
                   {active && (
-                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-[3px] rounded-full bg-[#1d1d1f]"
-                         style={{ boxShadow: '0 0 6px rgba(0,0,0,0.15)' }} />
+                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-[3px] rounded-full bg-[#2563eb]"
+                         style={{ boxShadow: '0 0 6px rgba(37,99,235,0.3)' }} />
                   )}
                 </div>
-                <span className={`text-[10px] font-medium leading-none mt-0.5 ${active ? 'text-[#1d1d1f]' : 'text-[#aeaeb2]'}`}>
+                <span className={`text-[10px] font-medium leading-none mt-0.5 ${active ? 'text-[#2563eb]' : 'text-[#94a3b8]'}`}>
                   {label}
                 </span>
               </Link>
