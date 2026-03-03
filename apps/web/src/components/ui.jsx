@@ -388,8 +388,25 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
 /* ── CopyButton ── */
 export function CopyButton({ text, onCopied, label = 'コピー' }) {
   const copy = async () => {
-    try { await navigator.clipboard.writeText(text); onCopied?.('クリップボードにコピーしました'); }
-    catch (e) { onCopied?.('コピー失敗: ' + e.message); }
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      onCopied?.('クリップボードにコピーしました');
+    } catch (e) {
+      onCopied?.('コピー失敗: ' + e.message);
+    }
   };
   return (
     <Button variant="secondary" size="sm" onClick={copy} disabled={!text}>

@@ -531,7 +531,20 @@ export default function UserModePage() {
 
       // 自動でクリップボードにコピー
       try {
-        await navigator.clipboard.writeText(generatedText);
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(generatedText);
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = generatedText;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+        }
         setPromptCopied(true);
       } catch { /* clipboard blocked — ユーザーが手動コピー可能 */ }
 
