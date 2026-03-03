@@ -30,6 +30,14 @@ if start_idx == -1 or end_idx == -1:
     sys.exit(1)
 
 code_block = source[start_idx:end_idx]
+# Also need _sanitise_custom_request for _build_groq_system_prompt
+sanitise_marker = 'def _sanitise_custom_request'
+sanitise_idx = source.find(sanitise_marker)
+if sanitise_idx != -1:
+    sanitise_end = source.find('\ndef ', sanitise_idx + len(sanitise_marker))
+    if sanitise_end == -1:
+        sanitise_end = len(source)
+    code_block += '\n' + source[sanitise_idx:sanitise_end]
 exec(code_block, namespace)
 
 _is_stem_subject = namespace['_is_stem_subject']
@@ -103,11 +111,13 @@ def test_build_latex_instructions_with_preset():
 
 
 def test_build_groq_system_prompt_stem():
-    """Groq STEM prompt has math rules."""
+    """Groq STEM prompt uses skeleton-driven approach with math rules."""
     prompt = _build_groq_system_prompt(subject='数学', prompt_text='')
     assert '理系' in prompt, 'STEM prompt should mention 理系'
     assert 'frac' in prompt, 'STEM prompt should have frac rules'
-    assert '検算' in prompt, 'STEM prompt should have verification rule'
+    assert 'documentclass' in prompt, 'STEM prompt should have LaTeX skeleton'
+    assert 'チェック' in prompt, 'STEM prompt should have final checklist'
+    assert 'ネスト' in prompt, 'STEM prompt should have nesting rules'
     print('  [PASS] test_build_groq_system_prompt_stem')
 
 
@@ -124,12 +134,12 @@ def test_build_groq_system_prompt_non_stem():
 def test_no_contradictions():
     """Prompts should not contain contradictory instructions."""
     instr = _build_latex_instructions(subject='数学', prompt_text='')
-    # Should NOT say things are "禁止" (too strict, causes misbehavior)
-    # Core rules should say "使用しない" or "使わない" (softer, less confusing)
-    assert '絶対禁止' not in instr, 'Should not use 絶対禁止 (too harsh)'
     # Should not mention \\(...\\) at all (was causing contradiction)
     assert '\\(...\\)' not in instr, 'Should not mention \\(...\\) (confusing)'
     assert '$$' not in instr or '$$ は使わない' in instr, 'Should use soft prohibition for $$'
+    # Groq STEM prompt (skeleton-driven) should not use harsh prohibition language
+    groq_prompt = _build_groq_system_prompt(subject='数学', prompt_text='')
+    assert '絶対禁止' not in groq_prompt, 'Groq STEM prompt should not use 絶対禁止'
     print('  [PASS] test_no_contradictions')
 
 

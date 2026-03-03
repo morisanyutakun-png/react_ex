@@ -442,6 +442,117 @@ def _unescape_latex(latex: str) -> str:
     return s
 
 
+def _repair_latex_nesting(latex: str) -> str:
+    """LLM出力のLaTeXネスト崩れを自動修復する。
+
+    主な修復:
+    1. 閉じ忘れた \\begin{env} に対応する \\end{env} を補完
+    2. 余分な \\end{env} を除去
+    3. 3階層以上のenumerate/itemizeネストをフラット化
+    4. \\frac の空引数を修復
+    5. 中括弧 {} のバランス修復
+    """
+    if not latex or not isinstance(latex, str):
+        return latex
+
+    s = latex
+
+    # ── 1. \\begin/\\end のバランス修復 ──
+    begin_pattern = re.compile(r'\\begin\{(\w+)\}')
+    end_pattern = re.compile(r'\\end\{(\w+)\}')
+
+    # document環境は特別扱い（すでに対処済みの場合が多い）
+    skip_envs = {'document'}
+
+    # 全begin/endを走査してスタックで検証
+    lines = s.split('\n')
+    env_stack = []  # (env_name, line_index)
+    orphan_ends = []  # (env_name, line_index) - 対応するbeginがないend
+
+    for i, line in enumerate(lines):
+        for m in begin_pattern.finditer(line):
+            env_name = m.group(1)
+            if env_name not in skip_envs:
+                env_stack.append((env_name, i))
+        for m in end_pattern.finditer(line):
+            env_name = m.group(1)
+            if env_name in skip_envs:
+                continue
+            # スタックから対応するbeginを探す（後ろから）
+            found = False
+            for j in range(len(env_stack) - 1, -1, -1):
+                if env_stack[j][0] == env_name:
+                    env_stack.pop(j)
+                    found = True
+                    break
+            if not found:
+                orphan_ends.append((env_name, i))
+
+    # 余分なendを除去（行ごと削除は危険なので、その\\end{X}だけ削除）
+    for env_name, line_idx in reversed(orphan_ends):
+        lines[line_idx] = re.sub(
+            r'\\end\{' + re.escape(env_name) + r'\}\s*',
+            '',
+            lines[line_idx],
+            count=1
+        )
+
+    # 閉じ忘れたbeginに対応するendを挿入
+    # \\end{document} の直前に挿入する
+    if env_stack:
+        end_doc_idx = None
+        for i in range(len(lines) - 1, -1, -1):
+            if '\\end{document}' in lines[i]:
+                end_doc_idx = i
+                break
+
+        insert_lines = []
+        for env_name, _ in reversed(env_stack):
+            insert_lines.append(f'\\end{{{env_name}}}')
+
+        if end_doc_idx is not None:
+            for fix_line in insert_lines:
+                lines.insert(end_doc_idx, fix_line)
+        else:
+            lines.extend(insert_lines)
+
+    s = '\n'.join(lines)
+
+    # ── 2. \\frac の空引数修復 ──
+    # \\frac{}{...} → \\frac{?}{...}
+    s = re.sub(r'\\frac\{\}(\{)', r'\\frac{?}\1', s)
+    # \\frac{...}{} → \\frac{...}{?}
+    s = re.sub(r'(\\frac\{[^}]*\})\{\}', r'\1{?}', s)
+
+    # ── 3. 中括弧バランスの簡易修復 ──
+    # document本体のみを対象にカウント（プリアンブル部分は除外）
+    doc_begin = re.search(r'\\begin\{document\}', s)
+    doc_end = re.search(r'\\end\{document\}', s)
+    if doc_begin and doc_end:
+        before = s[:doc_begin.end()]
+        body = s[doc_begin.end():doc_end.start()]
+        after = s[doc_end.start():]
+
+        open_count = body.count('{')
+        close_count = body.count('}')
+        if open_count > close_count:
+            body += '}' * (open_count - close_count)
+        elif close_count > open_count:
+            # 末尾の余分な}を除去
+            diff = close_count - open_count
+            for _ in range(diff):
+                last_brace = body.rfind('}')
+                if last_brace >= 0:
+                    body = body[:last_brace] + body[last_brace + 1:]
+
+        s = before + body + after
+
+    # ── 4. \\\\[寸法] を \\\\ に正規化 ──
+    s = re.sub(r'\\\\(\[[\d.]+(?:mm|cm|pt|em|ex)\])', r'\\\\', s)
+
+    return s
+
+
 def _extract_latex_if_json(blob: str) -> str:
     """If the provided blob looks like JSON containing a `latex` field, extract it.
 
@@ -2555,21 +2666,32 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
                                preset_instr: str = '',
                                include_diagram_per_question: bool = False,
                                custom_request: str = '') -> str:
-    """Groq API 用のシステムプロンプトを科目に応じて構築する。"""
-    is_stem = _is_stem_subject(subject, prompt_text)
+    """Groq API 用のシステムプロンプトを科目に応じて構築する。
 
-    # 科目に応じた役割記述
+    STEM科目ではスケルトン駆動型（具体例ベース）で安定出力を実現。
+    """
+    is_stem = _is_stem_subject(subject, prompt_text)
+    is_physics = _is_physics_subject(subject, prompt_text)
+    is_english = _is_english_subject(subject, prompt_text)
+
     if is_stem:
-        role_desc = 'あなたは理系教科の問題を LaTeX 形式で出力する教材作成アシスタントです。'
-    else:
-        role_desc = 'あなたは教科の問題を LaTeX 形式で出力する教材作成アシスタントです。'
+        return _build_stem_system_prompt(
+            subject=subject,
+            prompt_text=prompt_text,
+            preset_instr=preset_instr,
+            is_physics=is_physics,
+            include_diagram_per_question=include_diagram_per_question,
+            custom_request=custom_request,
+        )
+
+    # ── 非STEM（文系科目）は従来のルール列挙型 ──
+    role_desc = 'あなたは教科の問題を LaTeX 形式で出力する教材作成アシスタントです。'
 
     parts = [
         f'{role_desc}\n'
         '以下のルールを守ってください:\n\n'
     ]
 
-    # Core rules (concise, non-contradictory)
     parts.append(
         '【基本ルール】\n'
         '1. 出力は \\documentclass から \\end{document} までの完全な LaTeX 文書のみ。\n'
@@ -2584,83 +2706,172 @@ def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
         '9. 長いテキストは LaTeX に折り返しを任せる。\n\n'
     )
 
-    # Math-specific rules (STEM only)
-    if is_stem:
-        parts.append(
-            '【数式ルール（理系科目）】\n'
-            '- \\frac{分子}{分母}: 分子・分母は必ず両方記述。空禁止。\n'
-            '  入れ子: \\frac{\\frac{a}{b}}{c+d} のように中括弧を完全に対応。\n'
-            '- 関数は必ず \\付き: \\sin, \\cos, \\tan, \\arcsin, \\arccos, \\arctan,\n'
-            '  \\log, \\ln, \\exp, \\lim, \\max, \\min\n'
-            '  × 誤: arctan x  ○ 正: \\arctan x\n'
-            '- 積分記号の微分子（dx, dt等）の前にカンマやピリオドを絶対に入れない。\\int ... dx のように書く。\n'
-            '- 掛け算: \\times / \\cdot。根号: \\sqrt{x}。\n'
-            '- 添字2文字以上は中括弧: $x_{10}$。\n\n'
-        )
-
-    # Diagram rules
-    parts.append(
-        '【図の座標ルール（TikZ 使用時）】\n'
-        '- 座標 (x,y) は数値で指定。閉じた図形は cycle で閉じる。\n\n'
-    )
-
-    # Physics-specific diagram rules (Groq path)
-    if _is_physics_subject(subject, prompt_text):
-        parts.append(
-            '【物理科目の図ルール（厳守）】\n'
-            '- TikZ 図中のラベルは物理量の記号（$F$, $v$, $m$, $\\theta$ 等）を使用し、日本語テキストを書かない。\n'
-            '- 力のベクトルは矢印 [-{Stealth}] で描く。物体の形状は正確に（rectangle, circle 等）。\n'
-            '- 角度は arc で円弧を描き記号 $\\theta$ を配置。床面にはハッチングを付ける。\n'
-            '- 電気回路は circuitikz を使用。グラフは pgfplots で軸に物理量と単位を明記。\n\n'
-        )
-
-    # English-specific rules
-    if _is_english_subject(subject, prompt_text):
+    if is_english:
         parts.append(
             '【英語問題の書式ルール（厳守）】\n'
             '- 英文は斜体にしない（\\textit{} 禁止）。ローマン体で記述。\n'
-            '- 設問文（Next, Read the following... など指示文）は必ず \\textbf{\\large ...} で囲み、本文や選択肢と明確に区別すること。\n'
+            '- 設問文は必ず \\textbf{\\large ...} で囲み、本文と区別。\n'
             '- 長文は \\begin{quotation}...\\end{quotation} で囲み、前後に \\vspace{1em}。\n'
             '- \\mbox{}, \\hbox{}, \\fbox{}, tcolorbox, mdframed は使わない。\n'
             '- 自動折り返しに任せる。手動改行(\\\\)で英文を折り返さない。\n'
-            '- 下線部: \\underline{word} のみ使用。入れ子禁止:\n'
-            '  × \\underline{\\underline{text}} は絶対に書かない\n'
-            '  × \\underline{...\\underline{...}...} のようなネストも禁止\n'
-            '  ○ \\underline{This is the underlined part} のようにフラットに書く\n'
-            '- インデントは最大2段階。enumerate/itemize のネストは最大2階層。\n'
-            '  \\begin{enumerate}[(1)] の中にさらに \\begin{enumerate}[(a)] は可。\n'
-            '  3階層以上のネストは絶対に行わない。\n'
+            '- 下線部: \\underline{word} のみ。入れ子禁止。\n'
+            '- enumerate/itemize のネストは最大2階層。\n'
             '- 選択肢: \\begin{enumerate}[(A)] または \\begin{enumerate}[(1)]。\n'
             '- 問題ページと解答ページは \\newpage で分離。\n\n'
         )
+    else:
+        parts.append(_LATEX_HUMANITIES_HINTS)
 
     if preset_instr:
         parts.append(f'{preset_instr}\n')
 
-    # Physics: require a diagram for each major question (大問)
-    if include_diagram_per_question and _is_physics_subject(subject, prompt_text):
-        parts.append(
-            '【物理図の必須ルール（厳守）】\n'
-            '- 大問（\\section* / \\problem 等で区切られた各問題）ごとに必ず1つ TikZ 図を含めること。\n'
-            '- 図は問題文の直後に \\begin{tikzpicture}...\\end{tikzpicture} で配置する。\n'
-            '- 力の図示、物体の配置、回路図、グラフなど問題内容に適した図を描くこと。\n'
-            '- 図を省略してはならない。テキストのみの大問は不可。\n\n'
-        )
-
     # User custom request (sanitised, max 200 chars)
     if custom_request:
-        import re as _re
-        sanitised = custom_request[:200].strip()
-        # Remove potential prompt-injection patterns
-        sanitised = _re.sub(r'(ignore|forget|disregard|override)\s+(all|previous|above|system)', '', sanitised, flags=_re.IGNORECASE)
-        sanitised = _re.sub(r'<[^>]+>', '', sanitised)  # strip HTML tags
-        sanitised = _re.sub(r'```.*?```', '', sanitised, flags=_re.DOTALL)  # strip code fences
-        sanitised = sanitised.strip()
+        sanitised = _sanitise_custom_request(custom_request)
         if sanitised:
-            parts.append(
-                f'【ユーザからの追加要望】\n'
-                f'{sanitised}\n\n'
-            )
+            parts.append(f'【ユーザからの追加要望】\n{sanitised}\n\n')
+
+    return ''.join(parts)
+
+
+def _sanitise_custom_request(custom_request: str) -> str:
+    """ユーザのカスタムリクエストをサニタイズする。"""
+    import re as _re
+    sanitised = custom_request[:200].strip()
+    sanitised = _re.sub(r'(ignore|forget|disregard|override)\s+(all|previous|above|system)', '', sanitised, flags=_re.IGNORECASE)
+    sanitised = _re.sub(r'<[^>]+>', '', sanitised)
+    sanitised = _re.sub(r'```.*?```', '', sanitised, flags=_re.DOTALL)
+    return sanitised.strip()
+
+
+def _build_stem_system_prompt(subject: str, prompt_text: str,
+                               preset_instr: str,
+                               is_physics: bool,
+                               include_diagram_per_question: bool,
+                               custom_request: str) -> str:
+    """STEM科目用：スケルトン駆動型のシステムプロンプト。
+
+    ルールを列挙するのではなく、具体的な完成形を見せることで
+    Thinkingモードなしでも安定したLaTeX出力を実現する。
+    """
+    parts = []
+
+    # ── 役割（短く明確に） ──
+    parts.append(
+        'あなたは理系教科の試験問題をLaTeXで作成する専門アシスタントです。\n'
+        '\\documentclass から \\end{document} までの完全なLaTeX文書だけを出力してください。\n'
+        'マークダウン(```等)・説明文・装飾行(===,---)は出力しないでください。\n\n'
+    )
+
+    # ── 構造テンプレート（具体例ベース） ──
+    parts.append(
+        '【出力構造テンプレート】\n'
+        '以下の構造に従って出力してください。%FILL は内容を埋める箇所です。\n\n'
+        '\\documentclass[a4paper,11pt]{article}\n'
+        '\\usepackage{iftex}\n'
+        '\\ifpdftex\n'
+        '  \\usepackage[utf8]{inputenc}\n'
+        '  \\usepackage{CJKutf8}\n'
+        '\\fi\n'
+        '\\ifluatex\n'
+        '  \\usepackage{luatexja}\n'
+        '\\fi\n'
+        '\\ifxetex\n'
+        '  \\usepackage{xeCJK}\n'
+        '\\fi\n'
+        '\\usepackage{amsmath,amssymb}\n'
+        '\\usepackage{enumitem}\n'
+        '\\usepackage{geometry}\n'
+        '\\geometry{margin=2cm}\n'
+        '%FILL: 必要に応じて追加パッケージ(tikz等)\n\n'
+        '\\begin{document}\n\n'
+        '\\section*{問題}\n\n'
+        '%FILL: 各問題を以下の形式で記述\n'
+        '% \\subsection*{問1}\n'
+        '% 問題文...\n'
+        '% \\vspace{0.5em}\n'
+        '% \\begin{enumerate}[(1)]\n'
+        '%   \\item 小問...\n'
+        '% \\end{enumerate}\n'
+        '% \\vspace{1em}\n\n'
+        '\\newpage\n'
+        '\\section*{解答・解説}\n\n'
+        '%FILL: 各問の解答と解説\n'
+        '% \\subsection*{問1}\n'
+        '% 解答と途中式...\n\n'
+        '\\end{document}\n\n'
+    )
+
+    # ── 数式の書き方（禁止リストではなく正しい書き方を示す） ──
+    parts.append(
+        '【数式の書き方】\n'
+        '- インライン数式: $a^2 + b^2 = c^2$\n'
+        '- ディスプレイ数式: \\[ E = mc^2 \\]\n'
+        '- 分数: \\frac{分子}{分母}  例: \\frac{1}{2}, \\frac{x+1}{x-1}\n'
+        '- 入れ子分数: \\frac{\\frac{a}{b}}{c} （中括弧を必ず対応）\n'
+        '- 関数: \\sin, \\cos, \\tan, \\log, \\ln, \\exp, \\lim, \\arctan\n'
+        '- 根号: \\sqrt{x}, \\sqrt[3]{x}\n'
+        '- 積分: \\int_0^1 f(x) \\, dx （dxの前に \\, のみ）\n'
+        '- 添字: $x_1$, $x_{10}$, $a_{ij}$ （2文字以上は{}で囲む）\n'
+        '- 掛け算: \\times, \\cdot\n'
+        '- $$...$$は使わない。\\[...\\]を使う。\n\n'
+    )
+
+    # ── ネスト安定化ルール（最重要・簡潔に） ──
+    parts.append(
+        '【ネスト規則（最重要）】\n'
+        '1. \\begin{X}を書いたら、必ず同じ環境名で\\end{X}を書く。\n'
+        '2. enumerate/itemize は最大2階層まで。3階層目は禁止。\n'
+        '   OK: enumerate > enumerate\n'
+        '   NG: enumerate > enumerate > enumerate\n'
+        '3. 各\\begin, \\endは独立した行に書く。\n'
+        '4. 中括弧{}は開いたら必ず閉じる。\\frac{A}{B}のA,Bは絶対に空にしない。\n\n'
+    )
+
+    # ── 禁止コマンド（短く） ──
+    parts.append(
+        '【使用禁止】\n'
+        'tcolorbox, mdframed, fbox, \\mbox{}, \\hbox{}, \\\\[寸法]\n\n'
+    )
+
+    # ── 物理図ルール ──
+    if is_physics:
+        parts.append(
+            '【物理の図（TikZ）】\n'
+            '- ラベルは物理記号: $F$, $v$, $m$, $\\theta$（日本語ラベル禁止）\n'
+            '- 力ベクトル: \\draw[-{Stealth},thick] で描く\n'
+            '- 物体: rectangle / circle で正確に\n'
+            '- 床面: \\fill[pattern=north east lines] でハッチング\n'
+            '- 回路: circuitikz を使用\n'
+            '- グラフ: pgfplots で軸に物理量と単位を明記\n\n'
+        )
+
+    if include_diagram_per_question and is_physics:
+        parts.append(
+            '【物理図の必須ルール】\n'
+            '各大問に必ず1つTikZ図を含めること。図のない大問は不可。\n\n'
+        )
+
+    # ── プリセット固有指示 ──
+    if preset_instr:
+        parts.append(f'{preset_instr}\n')
+
+    # ── ユーザ追加要望 ──
+    if custom_request:
+        sanitised = _sanitise_custom_request(custom_request)
+        if sanitised:
+            parts.append(f'【ユーザからの追加要望】\n{sanitised}\n\n')
+
+    # ── 最終チェックリスト（LLMへのリマインダー） ──
+    parts.append(
+        '【出力前の最終チェック】\n'
+        '出力する前に以下を確認してください:\n'
+        '☐ \\begin と \\end の数が一致している\n'
+        '☐ { と } の数が一致している\n'
+        '☐ enumerate/itemize のネストが2階層以内\n'
+        '☐ \\frac{}{} に空の引数がない\n'
+        '☐ \\documentclass で始まり \\end{document} で終わっている\n'
+    )
 
     return ''.join(parts)
 
@@ -3616,6 +3827,12 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     if end_doc_match:
         latex_text = latex_text[:end_doc_match.end()]
 
+    # 4) Repair nesting issues (unbalanced begin/end, braces, etc.)
+    try:
+        latex_text = _repair_latex_nesting(latex_text)
+    except Exception:
+        pass
+
     # Now compile LaTeX to PDF via the existing generate_pdf infrastructure
     # We reuse the same logic by calling the endpoint internally
     try:
@@ -3950,6 +4167,10 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     only = _normalize_latex_linebreaks(only)
                 except Exception:
                     pass
+                try:
+                    only = _repair_latex_nesting(only)
+                except Exception:
+                    pass
                 body_lines = [only]
             elif isinstance(only, str) and ("\n" in only or re.search(r"\\section|\\textbf", only)):
                 # Normalize bracketed math within multi-line blobs and collapse
@@ -3974,6 +4195,10 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     pass
                 try:
                     only = _auto_wrap_inline_math(only)
+                except Exception:
+                    pass
+                try:
+                    only = _repair_latex_nesting(only)
                 except Exception:
                     pass
                 body_lines = [header, only, '\\end{document}']
