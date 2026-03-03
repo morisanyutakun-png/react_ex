@@ -171,17 +171,67 @@ export default function HomePage() {
   return (
     <div ref={containerRef} className="relative min-h-screen overflow-hidden">
 
-      {/* ── Clean light background with subtle ambient color ── */}
+      {/* ── Artistic background layers ── */}
       <div className="absolute inset-0 bg-[#f8faff]">
+        {/* Base aurora gradient */}
         <div className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse 80% 45% at 50% -5%, rgba(29,29,31,0.025) 0%, transparent 50%),
-              radial-gradient(ellipse 50% 35% at 85% 15%, rgba(142,142,147,0.02) 0%, transparent 40%),
-              radial-gradient(ellipse 60% 35% at 10% 85%, rgba(174,174,178,0.015) 0%, transparent 45%)
+              radial-gradient(ellipse 90% 50% at 50% -5%, rgba(37,99,235,0.06) 0%, transparent 50%),
+              radial-gradient(ellipse 60% 40% at 90% 15%, rgba(99,102,241,0.04) 0%, transparent 40%),
+              radial-gradient(ellipse 70% 40% at 5% 80%, rgba(6,182,212,0.035) 0%, transparent 45%),
+              radial-gradient(ellipse 50% 30% at 70% 60%, rgba(139,92,246,0.025) 0%, transparent 40%)
             `
           }}
         />
+        {/* Topographic contour lines */}
+        <div className="home-topo-lines" />
+        {/* Flowing connection network */}
+        <svg className="home-network-svg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <linearGradient id="net-grad-1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="rgba(37,99,235,0.12)" />
+              <stop offset="100%" stopColor="rgba(99,102,241,0.06)" />
+            </linearGradient>
+            <linearGradient id="net-grad-2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="rgba(6,182,212,0.10)" />
+              <stop offset="100%" stopColor="rgba(37,99,235,0.04)" />
+            </linearGradient>
+          </defs>
+          {/* Node network constellation */}
+          <g className="home-net-nodes">
+            <circle cx="120" cy="80" r="2" fill="rgba(37,99,235,0.15)"><animate attributeName="r" values="2;3;2" dur="4s" repeatCount="indefinite" /></circle>
+            <circle cx="680" cy="120" r="1.5" fill="rgba(99,102,241,0.12)"><animate attributeName="r" values="1.5;2.5;1.5" dur="5s" repeatCount="indefinite" /></circle>
+            <circle cx="400" cy="50" r="2.5" fill="rgba(6,182,212,0.10)"><animate attributeName="r" values="2.5;3.5;2.5" dur="3.5s" repeatCount="indefinite" /></circle>
+            <circle cx="200" cy="350" r="1.8" fill="rgba(139,92,246,0.10)"><animate attributeName="r" values="1.8;2.8;1.8" dur="4.5s" repeatCount="indefinite" /></circle>
+            <circle cx="600" cy="400" r="2" fill="rgba(37,99,235,0.12)"><animate attributeName="r" values="2;3;2" dur="3.8s" repeatCount="indefinite" /></circle>
+            <circle cx="50" cy="500" r="1.5" fill="rgba(6,182,212,0.08)"><animate attributeName="r" values="1.5;2.5;1.5" dur="5.2s" repeatCount="indefinite" /></circle>
+            <circle cx="750" cy="500" r="2" fill="rgba(99,102,241,0.10)"><animate attributeName="r" values="2;3;2" dur="4.2s" repeatCount="indefinite" /></circle>
+            <circle cx="350" cy="550" r="1.8" fill="rgba(37,99,235,0.08)"><animate attributeName="r" values="1.8;2.8;1.8" dur="3.6s" repeatCount="indefinite" /></circle>
+          </g>
+          {/* Connection paths */}
+          <g className="home-net-lines" strokeWidth="0.5" fill="none">
+            <path d="M120,80 Q260,30 400,50" stroke="url(#net-grad-1)"><animate attributeName="stroke-dashoffset" from="200" to="0" dur="8s" repeatCount="indefinite" /></path>
+            <path d="M400,50 Q540,70 680,120" stroke="url(#net-grad-2)" strokeDasharray="4 6"><animate attributeName="stroke-dashoffset" from="200" to="0" dur="10s" repeatCount="indefinite" /></path>
+            <path d="M120,80 Q160,210 200,350" stroke="url(#net-grad-1)" strokeDasharray="3 5"><animate attributeName="stroke-dashoffset" from="150" to="0" dur="9s" repeatCount="indefinite" /></path>
+            <path d="M680,120 Q640,260 600,400" stroke="url(#net-grad-2)" strokeDasharray="4 6"><animate attributeName="stroke-dashoffset" from="180" to="0" dur="11s" repeatCount="indefinite" /></path>
+            <path d="M200,350 Q300,450 350,550" stroke="url(#net-grad-1)" strokeDasharray="3 4"><animate attributeName="stroke-dashoffset" from="120" to="0" dur="7s" repeatCount="indefinite" /></path>
+            <path d="M600,400 Q675,450 750,500" stroke="url(#net-grad-2)" strokeDasharray="4 5"><animate attributeName="stroke-dashoffset" from="100" to="0" dur="8s" repeatCount="indefinite" /></path>
+            <path d="M200,350 Q400,370 600,400" stroke="url(#net-grad-1)" strokeDasharray="5 8" opacity="0.6"><animate attributeName="stroke-dashoffset" from="250" to="0" dur="12s" repeatCount="indefinite" /></path>
+          </g>
+          {/* Orbiting particles */}
+          <circle r="1.2" fill="rgba(37,99,235,0.25)">
+            <animateMotion dur="15s" repeatCount="indefinite" path="M120,80 Q260,30 400,50 Q540,70 680,120" />
+          </circle>
+          <circle r="1" fill="rgba(6,182,212,0.20)">
+            <animateMotion dur="18s" repeatCount="indefinite" path="M200,350 Q400,370 600,400 Q675,450 750,500" />
+          </circle>
+          <circle r="1.2" fill="rgba(99,102,241,0.22)">
+            <animateMotion dur="20s" repeatCount="indefinite" path="M120,80 Q160,210 200,350 Q300,450 350,550" />
+          </circle>
+        </svg>
+        {/* Prismatic light streaks */}
+        <div className="home-light-streaks" />
       </div>
 
       {/* ── Endroll background ── */}
