@@ -10,130 +10,154 @@ function ArtisticBackground() {
       <defs>
         {/* Gradient definitions */}
         <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.07" />
-          <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#2563eb" stopOpacity="0.05" />
         </linearGradient>
         <linearGradient id="grad-indigo" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.06" />
-          <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.01" />
+          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.03" />
         </linearGradient>
         <linearGradient id="grad-cyan" x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.06" />
-          <stop offset="100%" stopColor="#0891b2" stopOpacity="0.01" />
+          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#0891b2" stopOpacity="0.03" />
         </linearGradient>
         <linearGradient id="grad-violet" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.05" />
-          <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.01" />
+          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.03" />
         </linearGradient>
         <linearGradient id="line-blue" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#3b82f6" stopOpacity="0" />
-          <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.12" />
+          <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.25" />
           <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="line-indigo" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#6366f1" stopOpacity="0" />
-          <stop offset="50%" stopColor="#6366f1" stopOpacity="0.10" />
+          <stop offset="50%" stopColor="#6366f1" stopOpacity="0.20" />
           <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="line-cyan" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#06b6d4" stopOpacity="0" />
-          <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.08" />
+          <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.18" />
           <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
         </linearGradient>
         <radialGradient id="glow-center" cx="50%" cy="40%" r="40%">
-          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.06" />
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.12" />
           <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
         </radialGradient>
       </defs>
 
       {/* ── Large geometric shapes ── */}
       {/* Big circle — top right */}
-      <circle cx="1050" cy="120" r="280" fill="none" stroke="#3b82f6" strokeWidth="0.8" opacity="0.08" />
-      <circle cx="1050" cy="120" r="220" fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.06" />
+      <circle cx="1050" cy="120" r="280" fill="none" stroke="#3b82f6" strokeWidth="1.2" opacity="0.15" />
+      <circle cx="1050" cy="120" r="220" fill="none" stroke="#6366f1" strokeWidth="0.8" opacity="0.12" />
       <circle cx="1050" cy="120" r="160" fill="url(#grad-indigo)" />
 
       {/* Big circle — bottom left */}
-      <circle cx="100" cy="750" r="320" fill="none" stroke="#06b6d4" strokeWidth="0.8" opacity="0.07" />
-      <circle cx="100" cy="750" r="250" fill="none" stroke="#3b82f6" strokeWidth="0.5" opacity="0.05" />
+      <circle cx="100" cy="750" r="320" fill="none" stroke="#06b6d4" strokeWidth="1.2" opacity="0.14" />
+      <circle cx="100" cy="750" r="250" fill="none" stroke="#3b82f6" strokeWidth="0.8" opacity="0.10" />
       <circle cx="100" cy="750" r="180" fill="url(#grad-cyan)" />
 
       {/* Medium circle — center left */}
-      <circle cx="200" cy="300" r="120" fill="none" stroke="#8b5cf6" strokeWidth="0.6" opacity="0.06" />
+      <circle cx="200" cy="300" r="120" fill="none" stroke="#8b5cf6" strokeWidth="1" opacity="0.12" />
       <circle cx="200" cy="300" r="80" fill="url(#grad-violet)" />
 
       {/* Center glow */}
       <ellipse cx="600" cy="360" rx="500" ry="350" fill="url(#glow-center)" />
 
       {/* ── Triangular shapes ── */}
-      <polygon points="950,350 1100,650 800,650" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.06" />
+      <polygon points="950,350 1100,650 800,650" fill="none" stroke="#3b82f6" strokeWidth="1" opacity="0.12" />
       <polygon points="970,390 1070,600 870,600" fill="url(#grad-blue)" />
 
-      <polygon points="300,50 420,250 180,250" fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.05" />
+      <polygon points="300,50 420,250 180,250" fill="none" stroke="#6366f1" strokeWidth="0.8" opacity="0.10" />
       <polygon points="310,80 400,230 220,230" fill="url(#grad-indigo)" />
 
       {/* ── Diamond / rotated square ── */}
-      <rect x="520" y="650" width="100" height="100" rx="4" fill="none" stroke="#06b6d4" strokeWidth="0.6" opacity="0.07" transform="rotate(45 570 700)" />
+      <rect x="520" y="650" width="100" height="100" rx="4" fill="none" stroke="#06b6d4" strokeWidth="1" opacity="0.14" transform="rotate(45 570 700)" />
       <rect x="535" y="665" width="70" height="70" rx="3" fill="url(#grad-cyan)" transform="rotate(45 570 700)" />
 
+      {/* ── Additional hexagons for artistic density ── */}
+      <polygon points="850,180 900,210 900,260 850,290 800,260 800,210" fill="none" stroke="#2563eb" strokeWidth="0.8" opacity="0.10" />
+      <polygon points="850,195 890,217 890,253 850,275 810,253 810,217" fill="url(#grad-blue)" />
+
+      <polygon points="350,620 410,655 410,715 350,750 290,715 290,655" fill="none" stroke="#8b5cf6" strokeWidth="0.7" opacity="0.08" />
+      <polygon points="350,638 400,663 400,707 350,732 300,707 300,663" fill="url(#grad-violet)" />
+
       {/* ── Horizontal accent lines ── */}
-      <line x1="0" y1="180" x2="1200" y2="180" stroke="url(#line-blue)" strokeWidth="0.5" />
-      <line x1="0" y1="420" x2="1200" y2="420" stroke="url(#line-indigo)" strokeWidth="0.4" />
-      <line x1="0" y1="680" x2="1200" y2="680" stroke="url(#line-blue)" strokeWidth="0.5" />
+      <line x1="0" y1="180" x2="1200" y2="180" stroke="url(#line-blue)" strokeWidth="0.8" />
+      <line x1="0" y1="420" x2="1200" y2="420" stroke="url(#line-indigo)" strokeWidth="0.6" />
+      <line x1="0" y1="680" x2="1200" y2="680" stroke="url(#line-blue)" strokeWidth="0.8" />
+      <line x1="0" y1="300" x2="1200" y2="300" stroke="url(#line-indigo)" strokeWidth="0.4" />
+      <line x1="0" y1="560" x2="1200" y2="560" stroke="url(#line-blue)" strokeWidth="0.4" />
 
       {/* ── Vertical accent lines ── */}
-      <line x1="300" y1="0" x2="300" y2="900" stroke="url(#line-cyan)" strokeWidth="0.4" />
-      <line x1="900" y1="0" x2="900" y2="900" stroke="url(#line-cyan)" strokeWidth="0.4" />
+      <line x1="300" y1="0" x2="300" y2="900" stroke="url(#line-cyan)" strokeWidth="0.6" />
+      <line x1="900" y1="0" x2="900" y2="900" stroke="url(#line-cyan)" strokeWidth="0.6" />
+      <line x1="600" y1="0" x2="600" y2="900" stroke="url(#line-cyan)" strokeWidth="0.3" />
 
       {/* ── Diagonal accent lines ── */}
-      <line x1="0" y1="0" x2="600" y2="900" stroke="#3b82f6" strokeWidth="0.3" opacity="0.04" />
-      <line x1="600" y1="0" x2="1200" y2="900" stroke="#6366f1" strokeWidth="0.3" opacity="0.03" />
-      <line x1="1200" y1="0" x2="600" y2="900" stroke="#06b6d4" strokeWidth="0.3" opacity="0.03" />
+      <line x1="0" y1="0" x2="600" y2="900" stroke="#3b82f6" strokeWidth="0.5" opacity="0.08" />
+      <line x1="600" y1="0" x2="1200" y2="900" stroke="#6366f1" strokeWidth="0.5" opacity="0.06" />
+      <line x1="1200" y1="0" x2="600" y2="900" stroke="#06b6d4" strokeWidth="0.5" opacity="0.06" />
+      <line x1="0" y1="450" x2="1200" y2="0" stroke="#8b5cf6" strokeWidth="0.4" opacity="0.05" />
 
       {/* ── Scattered dots / nodes ── */}
-      <g opacity="0.15">
-        <circle cx="150" cy="150" r="3" fill="#3b82f6" />
-        <circle cx="450" cy="80" r="2.5" fill="#6366f1" />
-        <circle cx="750" cy="200" r="3.5" fill="#06b6d4" />
-        <circle cx="1000" cy="400" r="2" fill="#8b5cf6" />
-        <circle cx="350" cy="500" r="3" fill="#3b82f6" />
-        <circle cx="850" cy="600" r="2.5" fill="#6366f1" />
-        <circle cx="600" cy="800" r="3" fill="#06b6d4" />
-        <circle cx="100" cy="450" r="2" fill="#8b5cf6" />
-        <circle cx="1100" cy="700" r="2.5" fill="#3b82f6" />
-        <circle cx="500" cy="300" r="2" fill="#06b6d4" />
+      <g opacity="0.30">
+        <circle cx="150" cy="150" r="3.5" fill="#3b82f6" />
+        <circle cx="450" cy="80" r="3" fill="#6366f1" />
+        <circle cx="750" cy="200" r="4" fill="#06b6d4" />
+        <circle cx="1000" cy="400" r="2.5" fill="#8b5cf6" />
+        <circle cx="350" cy="500" r="3.5" fill="#3b82f6" />
+        <circle cx="850" cy="600" r="3" fill="#6366f1" />
+        <circle cx="600" cy="800" r="3.5" fill="#06b6d4" />
+        <circle cx="100" cy="450" r="2.5" fill="#8b5cf6" />
+        <circle cx="1100" cy="700" r="3" fill="#3b82f6" />
+        <circle cx="500" cy="300" r="2.5" fill="#06b6d4" />
+        <circle cx="270" cy="200" r="2" fill="#2563eb" />
+        <circle cx="680" cy="120" r="2.5" fill="#8b5cf6" />
+        <circle cx="1080" cy="550" r="3" fill="#06b6d4" />
+        <circle cx="430" cy="720" r="2" fill="#6366f1" />
+        <circle cx="920" cy="320" r="2.5" fill="#3b82f6" />
       </g>
 
       {/* ── Concentric arcs — top left ── */}
-      <path d="M0,0 Q0,200 200,200" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.07" />
-      <path d="M0,0 Q0,300 300,300" fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.05" />
-      <path d="M0,0 Q0,400 400,400" fill="none" stroke="#06b6d4" strokeWidth="0.4" opacity="0.04" />
+      <path d="M0,0 Q0,200 200,200" fill="none" stroke="#3b82f6" strokeWidth="1" opacity="0.14" />
+      <path d="M0,0 Q0,300 300,300" fill="none" stroke="#6366f1" strokeWidth="0.8" opacity="0.10" />
+      <path d="M0,0 Q0,400 400,400" fill="none" stroke="#06b6d4" strokeWidth="0.6" opacity="0.08" />
 
       {/* ── Concentric arcs — bottom right ── */}
-      <path d="M1200,900 Q1200,700 1000,700" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.07" />
-      <path d="M1200,900 Q1200,600 900,600" fill="none" stroke="#8b5cf6" strokeWidth="0.5" opacity="0.05" />
-      <path d="M1200,900 Q1200,500 800,500" fill="none" stroke="#06b6d4" strokeWidth="0.4" opacity="0.04" />
+      <path d="M1200,900 Q1200,700 1000,700" fill="none" stroke="#3b82f6" strokeWidth="1" opacity="0.14" />
+      <path d="M1200,900 Q1200,600 900,600" fill="none" stroke="#8b5cf6" strokeWidth="0.8" opacity="0.10" />
+      <path d="M1200,900 Q1200,500 800,500" fill="none" stroke="#06b6d4" strokeWidth="0.6" opacity="0.08" />
 
-      {/* ── Hexagon ── */}
-      <polygon points="600,100 660,135 660,195 600,230 540,195 540,135" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.06" />
+      {/* ── Hexagons — scattered ── */}
+      <polygon points="600,100 660,135 660,195 600,230 540,195 540,135" fill="none" stroke="#3b82f6" strokeWidth="1" opacity="0.12" />
       <polygon points="600,115 648,142 648,188 600,215 552,188 552,142" fill="url(#grad-blue)" />
 
+      <polygon points="150,500 190,525 190,565 150,590 110,565 110,525" fill="none" stroke="#06b6d4" strokeWidth="0.7" opacity="0.10" />
+      <polygon points="1050,650 1090,675 1090,715 1050,740 1010,715 1010,675" fill="none" stroke="#8b5cf6" strokeWidth="0.7" opacity="0.09" />
+
       {/* ── Small cross marks ── */}
-      <g stroke="#6366f1" strokeWidth="0.8" opacity="0.08">
+      <g stroke="#6366f1" strokeWidth="1.2" opacity="0.15">
         <line x1="780" y1="85" x2="800" y2="85" /><line x1="790" y1="75" x2="790" y2="95" />
         <line x1="380" y1="700" x2="400" y2="700" /><line x1="390" y1="690" x2="390" y2="710" />
         <line x1="1050" y1="500" x2="1070" y2="500" /><line x1="1060" y1="490" x2="1060" y2="510" />
+        <line x1="220" y1="650" x2="240" y2="650" /><line x1="230" y1="640" x2="230" y2="660" />
+        <line x1="950" y1="250" x2="970" y2="250" /><line x1="960" y1="240" x2="960" y2="260" />
       </g>
 
       {/* ── Small squares ── */}
-      <rect x="680" y="380" width="16" height="16" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.08" rx="2" />
-      <rect x="160" y="580" width="12" height="12" fill="none" stroke="#06b6d4" strokeWidth="0.6" opacity="0.07" rx="1" />
-      <rect x="1020" y="280" width="14" height="14" fill="none" stroke="#8b5cf6" strokeWidth="0.6" opacity="0.06" rx="2" />
+      <rect x="680" y="380" width="16" height="16" fill="none" stroke="#3b82f6" strokeWidth="1" opacity="0.14" rx="2" />
+      <rect x="160" y="580" width="12" height="12" fill="none" stroke="#06b6d4" strokeWidth="1" opacity="0.12" rx="1" />
+      <rect x="1020" y="280" width="14" height="14" fill="none" stroke="#8b5cf6" strokeWidth="1" opacity="0.11" rx="2" />
+      <rect x="440" y="150" width="10" height="10" fill="none" stroke="#2563eb" strokeWidth="0.8" opacity="0.10" rx="1" />
+      <rect x="780" y="750" width="12" height="12" fill="none" stroke="#6366f1" strokeWidth="0.8" opacity="0.10" rx="1" />
 
       {/* ── Flowing curves ── */}
-      <path d="M0,500 C200,450 400,550 600,480 C800,410 1000,520 1200,460" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.06" />
-      <path d="M0,520 C200,470 400,570 600,500 C800,430 1000,540 1200,480" fill="none" stroke="#6366f1" strokeWidth="0.4" opacity="0.04" />
+      <path d="M0,500 C200,450 400,550 600,480 C800,410 1000,520 1200,460" fill="none" stroke="#3b82f6" strokeWidth="1" opacity="0.12" />
+      <path d="M0,520 C200,470 400,570 600,500 C800,430 1000,540 1200,480" fill="none" stroke="#6366f1" strokeWidth="0.7" opacity="0.08" />
 
-      <path d="M0,200 C300,250 500,150 700,220 C900,290 1100,180 1200,230" fill="none" stroke="#06b6d4" strokeWidth="0.5" opacity="0.05" />
+      <path d="M0,200 C300,250 500,150 700,220 C900,290 1100,180 1200,230" fill="none" stroke="#06b6d4" strokeWidth="0.8" opacity="0.10" />
+      <path d="M0,750 C200,700 500,800 700,720 C900,640 1100,760 1200,700" fill="none" stroke="#8b5cf6" strokeWidth="0.6" opacity="0.07" />
     </svg>
   );
 }
@@ -348,14 +372,49 @@ export default function HomePage() {
 
           {/* ── Hero Section ── */}
           <div className="text-center mb-20 sm:mb-24 stagger-item" style={{ animationDelay: '0ms' }}>
-            {/* Logo mark — glossy floating orb */}
-            <div className="relative inline-flex items-center justify-center w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] rounded-[16px] sm:rounded-[18px] mb-7 sm:mb-8 float-slow hero-logo">
-              <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[#1e293b] relative z-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            {/* Hexagonal Logo Assembly */}
+            <div className="hero-hex-assembly mb-8 sm:mb-10">
+              {/* Outer rotating hex ring */}
+              <svg className="hero-hex-ring" viewBox="0 0 200 200" fill="none" aria-hidden="true">
+                <defs>
+                  <linearGradient id="hex-ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.3" />
+                    <stop offset="33%" stopColor="#6366f1" stopOpacity="0.2" />
+                    <stop offset="66%" stopColor="#06b6d4" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.2" />
+                  </linearGradient>
+                  <linearGradient id="hex-ring-grad-2" x1="100%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.2" />
+                    <stop offset="50%" stopColor="#2563eb" stopOpacity="0.15" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.2" />
+                  </linearGradient>
+                </defs>
+                {/* Outer hex */}
+                <polygon points="100,8 178,46 178,122 100,160 22,122 22,46" stroke="url(#hex-ring-grad)" strokeWidth="1.2" fill="none" />
+                {/* Middle hex — counter-rotate */}
+                <polygon points="100,22 165,53 165,115 100,146 35,115 35,53" stroke="url(#hex-ring-grad-2)" strokeWidth="0.8" fill="none" opacity="0.6" />
+                {/* Inner accent hex */}
+                <polygon points="100,36 152,60 152,108 100,132 48,108 48,60" stroke="#2563eb" strokeWidth="0.5" fill="none" opacity="0.25" />
+                {/* Decorative corner dots */}
+                <circle cx="100" cy="8" r="2" fill="#2563eb" opacity="0.4" />
+                <circle cx="178" cy="46" r="1.5" fill="#6366f1" opacity="0.3" />
+                <circle cx="178" cy="122" r="1.5" fill="#06b6d4" opacity="0.3" />
+                <circle cx="100" cy="160" r="2" fill="#8b5cf6" opacity="0.4" />
+                <circle cx="22" cy="122" r="1.5" fill="#06b6d4" opacity="0.3" />
+                <circle cx="22" cy="46" r="1.5" fill="#6366f1" opacity="0.3" />
               </svg>
+
+              {/* Central hex logo */}
+              <div className="hero-hex-logo float-slow">
+                <div className="hero-hex-inner">
+                  <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[#1e293b] relative z-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
-            <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 gradient-text-hero-animated">
+            <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 gradient-text-hero-animated hero-title-hex">
               REM
             </h1>
             <p className="text-[15px] sm:text-[17px] text-[#64748b] font-medium mb-5 tracking-[-0.01em]"
