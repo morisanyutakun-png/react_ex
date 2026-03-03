@@ -3,15 +3,140 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-/* ─── Endroll Data ─── */
-const ENDROLL_COLS = [
-  ['Calculus', 'Linear Algebra', 'Probability', 'Trigonometry', 'Vector Analysis', 'Matrix Theory', 'Sequences', 'Limits', 'Complex Numbers', 'Statistics', 'Differential Eq.', 'Set Theory', 'Topology', 'Number Theory'],
-  ['Mechanics', 'Electromagnetism', 'Wave Theory', 'Optics', 'Thermodynamics', 'Quantum Physics', 'Fluid Dynamics', 'Relativity', 'Atomic Physics', 'Particle Physics', 'Acoustics', 'Conservation Laws', 'Kinematics', 'Rotational Inertia'],
-  ['Organic Chemistry', 'Inorganic Chemistry', 'Equilibrium', 'Reaction Kinetics', 'Electrochemistry', 'Polymers', 'Redox Reactions', 'Solution Chemistry', 'Crystal Structures', 'Chemical Bonding', 'Gas Laws', 'Thermochemistry', 'Colloids', 'Analytical Chemistry'],
-  ['Reading', 'Grammar', 'Composition', 'Vocabulary', 'Listening', 'Syntax', 'Semantics', 'Phonetics', 'Rhetoric', 'Creative Writing', 'Literature', 'Translation', 'Idioms', 'Etymology'],
-  ['Genetics', 'Cell Biology', 'Ecology', 'Evolution', 'Neuroscience', 'Immunology', 'Embryology', 'Molecular Biology', 'Botany', 'Ethology', 'Microbiology', 'Anatomy', 'Physiology', 'Biochemistry'],
-  ['Information Theory', 'Algorithms', 'Data Structures', 'Networks', 'Cryptography', 'Machine Learning', 'Operating Systems', 'Databases', 'Compilers', 'Complexity Theory', 'Deep Learning', 'Parallel Computing', 'Signal Processing', 'Robotics'],
-];
+/* ─── Artistic Background SVG ─── */
+function ArtisticBackground() {
+  return (
+    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        {/* Gradient definitions */}
+        <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.07" />
+          <stop offset="100%" stopColor="#2563eb" stopOpacity="0.02" />
+        </linearGradient>
+        <linearGradient id="grad-indigo" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.01" />
+        </linearGradient>
+        <linearGradient id="grad-cyan" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="#0891b2" stopOpacity="0.01" />
+        </linearGradient>
+        <linearGradient id="grad-violet" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.05" />
+          <stop offset="100%" stopColor="#7c3aed" stopOpacity="0.01" />
+        </linearGradient>
+        <linearGradient id="line-blue" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0" />
+          <stop offset="50%" stopColor="#3b82f6" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="line-indigo" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#6366f1" stopOpacity="0" />
+          <stop offset="50%" stopColor="#6366f1" stopOpacity="0.10" />
+          <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="line-cyan" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0" />
+          <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.08" />
+          <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+        </linearGradient>
+        <radialGradient id="glow-center" cx="50%" cy="40%" r="40%">
+          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* ── Large geometric shapes ── */}
+      {/* Big circle — top right */}
+      <circle cx="1050" cy="120" r="280" fill="none" stroke="#3b82f6" strokeWidth="0.8" opacity="0.08" />
+      <circle cx="1050" cy="120" r="220" fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.06" />
+      <circle cx="1050" cy="120" r="160" fill="url(#grad-indigo)" />
+
+      {/* Big circle — bottom left */}
+      <circle cx="100" cy="750" r="320" fill="none" stroke="#06b6d4" strokeWidth="0.8" opacity="0.07" />
+      <circle cx="100" cy="750" r="250" fill="none" stroke="#3b82f6" strokeWidth="0.5" opacity="0.05" />
+      <circle cx="100" cy="750" r="180" fill="url(#grad-cyan)" />
+
+      {/* Medium circle — center left */}
+      <circle cx="200" cy="300" r="120" fill="none" stroke="#8b5cf6" strokeWidth="0.6" opacity="0.06" />
+      <circle cx="200" cy="300" r="80" fill="url(#grad-violet)" />
+
+      {/* Center glow */}
+      <ellipse cx="600" cy="360" rx="500" ry="350" fill="url(#glow-center)" />
+
+      {/* ── Triangular shapes ── */}
+      <polygon points="950,350 1100,650 800,650" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.06" />
+      <polygon points="970,390 1070,600 870,600" fill="url(#grad-blue)" />
+
+      <polygon points="300,50 420,250 180,250" fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.05" />
+      <polygon points="310,80 400,230 220,230" fill="url(#grad-indigo)" />
+
+      {/* ── Diamond / rotated square ── */}
+      <rect x="520" y="650" width="100" height="100" rx="4" fill="none" stroke="#06b6d4" strokeWidth="0.6" opacity="0.07" transform="rotate(45 570 700)" />
+      <rect x="535" y="665" width="70" height="70" rx="3" fill="url(#grad-cyan)" transform="rotate(45 570 700)" />
+
+      {/* ── Horizontal accent lines ── */}
+      <line x1="0" y1="180" x2="1200" y2="180" stroke="url(#line-blue)" strokeWidth="0.5" />
+      <line x1="0" y1="420" x2="1200" y2="420" stroke="url(#line-indigo)" strokeWidth="0.4" />
+      <line x1="0" y1="680" x2="1200" y2="680" stroke="url(#line-blue)" strokeWidth="0.5" />
+
+      {/* ── Vertical accent lines ── */}
+      <line x1="300" y1="0" x2="300" y2="900" stroke="url(#line-cyan)" strokeWidth="0.4" />
+      <line x1="900" y1="0" x2="900" y2="900" stroke="url(#line-cyan)" strokeWidth="0.4" />
+
+      {/* ── Diagonal accent lines ── */}
+      <line x1="0" y1="0" x2="600" y2="900" stroke="#3b82f6" strokeWidth="0.3" opacity="0.04" />
+      <line x1="600" y1="0" x2="1200" y2="900" stroke="#6366f1" strokeWidth="0.3" opacity="0.03" />
+      <line x1="1200" y1="0" x2="600" y2="900" stroke="#06b6d4" strokeWidth="0.3" opacity="0.03" />
+
+      {/* ── Scattered dots / nodes ── */}
+      <g opacity="0.15">
+        <circle cx="150" cy="150" r="3" fill="#3b82f6" />
+        <circle cx="450" cy="80" r="2.5" fill="#6366f1" />
+        <circle cx="750" cy="200" r="3.5" fill="#06b6d4" />
+        <circle cx="1000" cy="400" r="2" fill="#8b5cf6" />
+        <circle cx="350" cy="500" r="3" fill="#3b82f6" />
+        <circle cx="850" cy="600" r="2.5" fill="#6366f1" />
+        <circle cx="600" cy="800" r="3" fill="#06b6d4" />
+        <circle cx="100" cy="450" r="2" fill="#8b5cf6" />
+        <circle cx="1100" cy="700" r="2.5" fill="#3b82f6" />
+        <circle cx="500" cy="300" r="2" fill="#06b6d4" />
+      </g>
+
+      {/* ── Concentric arcs — top left ── */}
+      <path d="M0,0 Q0,200 200,200" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.07" />
+      <path d="M0,0 Q0,300 300,300" fill="none" stroke="#6366f1" strokeWidth="0.5" opacity="0.05" />
+      <path d="M0,0 Q0,400 400,400" fill="none" stroke="#06b6d4" strokeWidth="0.4" opacity="0.04" />
+
+      {/* ── Concentric arcs — bottom right ── */}
+      <path d="M1200,900 Q1200,700 1000,700" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.07" />
+      <path d="M1200,900 Q1200,600 900,600" fill="none" stroke="#8b5cf6" strokeWidth="0.5" opacity="0.05" />
+      <path d="M1200,900 Q1200,500 800,500" fill="none" stroke="#06b6d4" strokeWidth="0.4" opacity="0.04" />
+
+      {/* ── Hexagon ── */}
+      <polygon points="600,100 660,135 660,195 600,230 540,195 540,135" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.06" />
+      <polygon points="600,115 648,142 648,188 600,215 552,188 552,142" fill="url(#grad-blue)" />
+
+      {/* ── Small cross marks ── */}
+      <g stroke="#6366f1" strokeWidth="0.8" opacity="0.08">
+        <line x1="780" y1="85" x2="800" y2="85" /><line x1="790" y1="75" x2="790" y2="95" />
+        <line x1="380" y1="700" x2="400" y2="700" /><line x1="390" y1="690" x2="390" y2="710" />
+        <line x1="1050" y1="500" x2="1070" y2="500" /><line x1="1060" y1="490" x2="1060" y2="510" />
+      </g>
+
+      {/* ── Small squares ── */}
+      <rect x="680" y="380" width="16" height="16" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.08" rx="2" />
+      <rect x="160" y="580" width="12" height="12" fill="none" stroke="#06b6d4" strokeWidth="0.6" opacity="0.07" rx="1" />
+      <rect x="1020" y="280" width="14" height="14" fill="none" stroke="#8b5cf6" strokeWidth="0.6" opacity="0.06" rx="2" />
+
+      {/* ── Flowing curves ── */}
+      <path d="M0,500 C200,450 400,550 600,480 C800,410 1000,520 1200,460" fill="none" stroke="#3b82f6" strokeWidth="0.6" opacity="0.06" />
+      <path d="M0,520 C200,470 400,570 600,500 C800,430 1000,540 1200,480" fill="none" stroke="#6366f1" strokeWidth="0.4" opacity="0.04" />
+
+      <path d="M0,200 C300,250 500,150 700,220 C900,290 1100,180 1200,230" fill="none" stroke="#06b6d4" strokeWidth="0.5" opacity="0.05" />
+    </svg>
+  );
+}
 
 /* ─── Scroll Reveal Hook ─── */
 function useScrollReveal() {
@@ -40,28 +165,6 @@ function useScrollReveal() {
   }, []);
 
   return ref;
-}
-
-/* ─── Endroll Column Component ─── */
-function EndrollColumn({ items, speed, direction = 'up', opacity = 0.08 }) {
-  const doubled = [...items, ...items];
-  return (
-    <div className="endroll-col flex-1 overflow-hidden relative" style={{ opacity }}>
-      <div
-        className={direction === 'up' ? 'endroll-scroll-up' : 'endroll-scroll-down'}
-        style={{ animationDuration: `${speed}s` }}
-      >
-        {doubled.map((text, i) => (
-          <div key={i} className="py-[22px] sm:py-[26px] text-center">
-            <span className="text-[8px] sm:text-[9px] tracking-[0.25em] text-[#c7c7cc] whitespace-nowrap uppercase"
-                  style={{ fontFamily: '"SF Pro Display", -apple-system, "Helvetica Neue", Arial, sans-serif', fontWeight: 300 }}>
-              {text}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 /* ─── Feature Icons (SF Symbols precision) ─── */
@@ -234,20 +337,9 @@ export default function HomePage() {
         <div className="home-light-streaks" />
       </div>
 
-      {/* ── Endroll background ── */}
-      <div className="absolute inset-0 flex pointer-events-none select-none" aria-hidden="true">
-        <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#f8faff] via-[#f8faff]/98 to-transparent z-10" />
-        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#f8faff] via-[#f8faff]/98 to-transparent z-10" />
-
-        {ENDROLL_COLS.map((items, i) => (
-          <EndrollColumn
-            key={i}
-            items={items}
-            speed={80 + i * 12}
-            direction={i % 2 === 0 ? 'up' : 'down'}
-            opacity={0.15 + (i % 3) * 0.04}
-          />
-        ))}
+      {/* ── Static artistic background pattern ── */}
+      <div className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
+        <ArtisticBackground />
       </div>
 
       {/* ── Content layer ── */}
