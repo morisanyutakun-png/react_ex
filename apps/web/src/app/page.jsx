@@ -124,8 +124,8 @@ function ActionCard({ href, icon, label, description, gradientFrom, gradientTo, 
                style={{ '--icon-shadow': `${accentColor}30` }}>
             <div style={{ transition: 'transform 0.6s var(--ease-spring)' }} className="group-hover:scale-[1.08]">{icon}</div>
           </div>
-          <h3 className="text-[18px] font-bold text-[#1d1d1f] mb-1.5 tracking-[-0.02em]">{label}</h3>
-          <p className="text-[13px] text-[#86868b] leading-[1.6] tracking-[-0.01em]">{description}</p>
+          <h3 className="text-[18px] font-bold text-[#1e293b] mb-1.5 tracking-[-0.02em]">{label}</h3>
+          <p className="text-[13px] text-[#64748b] leading-[1.6] tracking-[-0.01em]">{description}</p>
 
           {/* Hover CTA */}
           <div className="mt-4 flex items-center gap-1.5 text-[12px] font-semibold opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0"
@@ -147,15 +147,15 @@ function ToolCard({ href, icon, label, description, delay }) {
   return (
     <Link href={href} className="group block scroll-reveal" style={{ transitionDelay: `${delay}ms` }}>
       <div className="tool-card-wrap">
-        <div className="tool-card-icon text-[#86868b] group-hover:text-[#1d1d1f]"
+        <div className="tool-card-icon text-[#64748b] group-hover:text-[#1e293b]"
              style={{ transition: 'color 0.4s var(--ease-spring)' }}>
           <div className="group-hover:scale-110" style={{ transition: 'transform 0.45s var(--ease-spring)' }}>{icon}</div>
         </div>
         <div className="flex-1 min-w-0 relative z-10">
-          <div className="text-[15px] font-semibold text-[#1d1d1f] tracking-[-0.01em]">{label}</div>
-          <div className="text-[12px] text-[#aeaeb2] mt-0.5 tracking-[-0.01em]">{description}</div>
+          <div className="text-[15px] font-semibold text-[#1e293b] tracking-[-0.01em]">{label}</div>
+          <div className="text-[12px] text-[#94a3b8] mt-0.5 tracking-[-0.01em]">{description}</div>
         </div>
-        <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7] group-hover:text-[#86868b] group-hover:translate-x-1 relative z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+        <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7] group-hover:text-[#64748b] group-hover:translate-x-1 relative z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
              style={{ transition: 'all 0.4s var(--ease-spring)' }}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
         </svg>
@@ -172,7 +172,7 @@ export default function HomePage() {
     <div ref={containerRef} className="relative min-h-screen overflow-hidden">
 
       {/* ── Clean light background with subtle ambient color ── */}
-      <div className="absolute inset-0 bg-[#fbfbfd]">
+      <div className="absolute inset-0 bg-[#f8faff]">
         <div className="absolute inset-0"
           style={{
             background: `
@@ -186,8 +186,8 @@ export default function HomePage() {
 
       {/* ── Endroll background ── */}
       <div className="absolute inset-0 flex pointer-events-none select-none" aria-hidden="true">
-        <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#fbfbfd] via-[#fbfbfd]/98 to-transparent z-10" />
-        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#fbfbfd] via-[#fbfbfd]/98 to-transparent z-10" />
+        <div className="absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-[#f8faff] via-[#f8faff]/98 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-[#f8faff] via-[#f8faff]/98 to-transparent z-10" />
 
         {ENDROLL_COLS.map((items, i) => (
           <EndrollColumn
@@ -208,7 +208,7 @@ export default function HomePage() {
           <div className="text-center mb-20 sm:mb-24 stagger-item" style={{ animationDelay: '0ms' }}>
             {/* Logo mark — glossy floating orb */}
             <div className="relative inline-flex items-center justify-center w-[56px] h-[56px] sm:w-[64px] sm:h-[64px] rounded-[16px] sm:rounded-[18px] mb-7 sm:mb-8 float-slow hero-logo">
-              <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[#1d1d1f] relative z-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <svg className="w-7 h-7 sm:w-8 sm:h-8 text-[#1e293b] relative z-10" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
@@ -216,11 +216,11 @@ export default function HomePage() {
             <h1 className="text-[64px] sm:text-[80px] font-black tracking-[-0.05em] leading-[0.9] mb-3 gradient-text-hero-animated">
               REM
             </h1>
-            <p className="text-[15px] sm:text-[17px] text-[#86868b] font-medium mb-5 tracking-[-0.01em]"
+            <p className="text-[15px] sm:text-[17px] text-[#64748b] font-medium mb-5 tracking-[-0.01em]"
                style={{ fontFeatureSettings: '"palt"' }}>
               Rapid Exam Maker
             </p>
-            <p className="text-[14px] text-[#aeaeb2] leading-[1.7] max-w-[300px] mx-auto tracking-[-0.01em]">
+            <p className="text-[14px] text-[#94a3b8] leading-[1.7] max-w-[300px] mx-auto tracking-[-0.01em]">
               過去問データとAIで、<br className="sm:hidden" />試験問題を賢くつくる。
             </p>
           </div>
@@ -236,9 +236,9 @@ export default function HomePage() {
                 icon={<CreateIcon />}
                 label="問題をつくる"
                 description="出題パターンを選んで、AIが試験問題を自動生成"
-                gradientFrom="from-[#2c2c2e]"
-                gradientTo="to-[#1d1d1f]"
-                accentColor="#1d1d1f"
+                gradientFrom="from-[#1e40af]"
+                gradientTo="to-[#1e40af]"
+                accentColor="#2563eb"
                 delay={60}
               />
               <ActionCard
@@ -246,9 +246,9 @@ export default function HomePage() {
                 icon={<TuneIcon />}
                 label="品質を磨く"
                 description="出題の精度を分析し、さらに向上させる"
-                gradientFrom="from-[#48484a]"
-                gradientTo="to-[#2c2c2e]"
-                accentColor="#2c2c2e"
+                gradientFrom="from-[#3b82f6]"
+                gradientTo="to-[#1e40af]"
+                accentColor="#1e40af"
                 delay={120}
               />
             </div>
@@ -288,10 +288,10 @@ export default function HomePage() {
           <div className="text-center scroll-reveal" style={{ transitionDelay: '100ms' }}>
             <div className="status-pill press-scale">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#1d1d1f] opacity-40"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#1d1d1f]"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2563eb] opacity-40"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#2563eb]"></span>
               </span>
-              <span className="text-[11px] font-medium text-[#aeaeb2] tracking-[0.02em]">AI Ready</span>
+              <span className="text-[11px] font-medium text-[#94a3b8] tracking-[0.02em]">AI Ready</span>
             </div>
           </div>
         </div>

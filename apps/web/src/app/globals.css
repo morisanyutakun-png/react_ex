@@ -100,10 +100,12 @@ body::before {
   pointer-events: none;
   z-index: -2;
   background:
-    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(37,99,235,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(139,92,246,0.03) 0%, transparent 50%),
-    radial-gradient(ellipse 50% 50% at 60% 80%, rgba(59,130,246,0.03) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 30% at 10% 70%, rgba(99,102,241,0.02) 0%, transparent 50%);
+    radial-gradient(ellipse 120% 60% at 0% 0%, rgba(37,99,235,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 50% at 100% 10%, rgba(139,92,246,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 50% at 50% 100%, rgba(59,130,246,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 15% 60%, rgba(99,102,241,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 30% at 85% 70%, rgba(37,99,235,0.04) 0%, transparent 50%);
+  animation: bg-gradient-shift 25s ease-in-out infinite alternate;
 }
 
 body::after {
@@ -112,21 +114,29 @@ body::after {
   top: 0; left: 0; right: 0; bottom: 0;
   pointer-events: none;
   z-index: -1;
-  opacity: 0.35;
+  opacity: 0.5;
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(37,99,235,0.08) 0%, transparent 1.5px),
-    radial-gradient(circle at 60% 15%, rgba(139,92,246,0.06) 0%, transparent 1.5px),
-    radial-gradient(circle at 80% 45%, rgba(59,130,246,0.06) 0%, transparent 1.5px),
-    radial-gradient(circle at 40% 70%, rgba(99,102,241,0.06) 0%, transparent 1.5px),
-    radial-gradient(circle at 75% 80%, rgba(37,99,235,0.05) 0%, transparent 1.5px),
-    radial-gradient(circle at 15% 85%, rgba(139,92,246,0.05) 0%, transparent 1.5px);
-  background-size: 120px 120px, 180px 180px, 150px 150px, 200px 200px, 160px 160px, 140px 140px;
-  animation: bg-dots-drift 30s ease-in-out infinite alternate;
+    radial-gradient(circle at 1px 1px, rgba(37,99,235,0.10) 1px, transparent 0);
+  background-size: 32px 32px;
+  animation: bg-dots-drift 20s ease-in-out infinite alternate;
+}
+
+@keyframes bg-gradient-shift {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
 @keyframes bg-dots-drift {
-  0%   { background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }
-  100% { background-position: 30px 20px, -20px 30px, 25px -15px, -15px 25px, 20px -20px, -25px 15px; }
+  0%   { background-position: 0 0; }
+  100% { background-position: 16px 16px; }
+}
+
+/* ── Accent bar animation ── */
+@keyframes accent-bar-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* ── Floating ambient orbs ── */
@@ -140,41 +150,65 @@ body::after {
 .ambient-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.4;
+  filter: blur(80px);
+  opacity: 0.5;
 }
 .ambient-orb-1 {
-  width: 300px; height: 300px;
-  background: radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%);
-  top: 10%; left: 5%;
-  animation: orb-float-1 20s ease-in-out infinite;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(37,99,235,0.18) 0%, rgba(37,99,235,0.06) 40%, transparent 70%);
+  top: -5%; left: -5%;
+  animation: orb-float-1 18s ease-in-out infinite;
 }
 .ambient-orb-2 {
-  width: 250px; height: 250px;
-  background: radial-gradient(circle, rgba(139,92,246,0.10) 0%, transparent 70%);
-  top: 40%; right: 5%;
-  animation: orb-float-2 25s ease-in-out infinite;
+  width: 450px; height: 450px;
+  background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0.05) 40%, transparent 70%);
+  top: 30%; right: -8%;
+  animation: orb-float-2 22s ease-in-out infinite;
 }
 .ambient-orb-3 {
-  width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
-  bottom: 15%; left: 30%;
-  animation: orb-float-3 22s ease-in-out infinite;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.04) 40%, transparent 70%);
+  bottom: 5%; left: 15%;
+  animation: orb-float-3 20s ease-in-out infinite;
 }
 
 @keyframes orb-float-1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(40px, -30px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.95); }
+  25% { transform: translate(60px, 40px) scale(1.15); }
+  50% { transform: translate(20px, -50px) scale(0.95); }
+  75% { transform: translate(-40px, 30px) scale(1.08); }
 }
 @keyframes orb-float-2 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-30px, 40px) scale(0.9); }
-  66% { transform: translate(20px, -20px) scale(1.05); }
+  25% { transform: translate(-50px, -30px) scale(1.1); }
+  50% { transform: translate(30px, 50px) scale(0.92); }
+  75% { transform: translate(40px, -40px) scale(1.05); }
 }
 @keyframes orb-float-3 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(30px, -40px) scale(1.1); }
+  33% { transform: translate(50px, -60px) scale(1.12); }
+  66% { transform: translate(-30px, 40px) scale(0.96); }
+}
+.ambient-orb-4 {
+  width: 350px; height: 350px;
+  background: radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 65%);
+  top: 60%; left: 60%;
+  animation: orb-float-4 24s ease-in-out infinite;
+}
+.ambient-orb-5 {
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 65%);
+  top: 80%; right: 20%;
+  animation: orb-float-5 19s ease-in-out infinite;
+}
+@keyframes orb-float-4 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-60px, -40px) scale(1.08); }
+  66% { transform: translate(40px, 30px) scale(0.94); }
+}
+@keyframes orb-float-5 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-40px, -50px) scale(1.1); }
 }
 
 ::selection {

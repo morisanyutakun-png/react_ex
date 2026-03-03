@@ -92,7 +92,7 @@ function renderLatexToHtml(text) {
       }
     } catch {
       // If KaTeX fails, show original text
-      parts.push(`<code class="text-[#3a3a3c] text-xs">${escapeHtml(m.latex)}</code>`);
+      parts.push(`<code class="text-[#1e293b] text-xs">${escapeHtml(m.latex)}</code>`);
     }
     pos = m.end;
   }
@@ -138,7 +138,7 @@ export function LatexBlock({ children, className = '' }) {
   const html = useMemo(() => renderLatexToHtml(children || ''), [children]);
   return (
     <div
-      className={`text-sm text-[#1d1d1f] leading-relaxed ${className}`}
+      className={`text-sm text-[#1e293b] leading-relaxed ${className}`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

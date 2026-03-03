@@ -139,16 +139,16 @@ export default function TemplateSelector({
 
         {showFieldInput && (
           <div>
-            <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-2">
+            <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">
               分野
             </label>
             <input
               list="field-suggestions"
               value={field || ''}
               onChange={(e) => onFieldChange?.(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm font-medium
-                         transition-all duration-300 hover:border-black/[0.10] hover:bg-white hover:shadow-md
-                         focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05] focus:shadow-md
+              className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/50 bg-white text-[#1e293b] text-sm font-medium
+                         transition-all duration-300 hover:border-blue-300/50 hover:bg-white hover:shadow-md
+                         focus:border-blue-300/70 focus:ring-2 focus:ring-blue-200/40 focus:shadow-md
                          outline-none placeholder:text-[#c7c7cc] shadow-sm"
               placeholder={subject ? `${subject}の分野を選択 or 自由入力` : '先に教科を選択...'}
             />
@@ -165,12 +165,12 @@ export default function TemplateSelector({
 
       {/* 選択中テンプレート情報 */}
       {selectedTemplate && (
-        <div className="p-3 bg-black/[0.04] rounded-xl mb-4 border border-black/[0.06] ">
-          <div className="text-sm font-semibold text-[#1d1d1f]">
+        <div className="p-3 bg-blue-50/60 rounded-xl mb-4 border border-blue-200/50 ">
+          <div className="text-sm font-semibold text-[#1e293b]">
             {selectedTemplate.name || selectedTemplate.id}
           </div>
           {selectedTemplate.description && (
-            <div className="text-xs text-[#86868b] mt-0.5">{selectedTemplate.description}</div>
+            <div className="text-xs text-[#64748b] mt-0.5">{selectedTemplate.description}</div>
           )}
           <div className="flex gap-2 mt-2 flex-wrap">
             <MetaTag value={selectedTemplate.metadata?.subject} color="indigo" />
@@ -210,15 +210,15 @@ export default function TemplateSelector({
 
       {/* 新規テンプレートフォーム */}
       {showNewForm && (
-        <div className="mt-4 p-6 border border-[#1d1d1f]/[0.12] rounded-xl bg-[#1d1d1f]/[0.04] backdrop-blur-sm ">
-          <div className="text-[15px] font-bold text-[#1d1d1f] mb-4 tracking-tight">新しいテンプレート</div>
+        <div className="mt-4 p-6 border border-blue-300/50 rounded-xl bg-blue-50/60 backdrop-blur-sm ">
+          <div className="text-[15px] font-bold text-[#1e293b] mb-4 tracking-tight">新しいテンプレート</div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 items-end">
             <div>
-              <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">教科 *</label>
+              <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-1.5">教科 *</label>
               <select
                 value={newSubject}
                 onChange={(e) => setNewSubject(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05]"
+                className="w-full px-3 py-2.5 rounded-xl border border-blue-200/50 bg-white text-[#1e293b] text-sm input-ring focus:border-blue-300/70 focus:ring-2 focus:ring-blue-200/40"
               >
                 <option value="">選択</option>
                 {subjects.map((s) => (
@@ -229,21 +229,21 @@ export default function TemplateSelector({
             </div>
             {newSubject === '__custom' && (
               <div>
-                <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">教科名</label>
+                <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-1.5">教科名</label>
                 <input
                   id="newTplCustomSubject"
-                  className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-blue-200/50 bg-white text-[#1e293b] text-sm input-ring focus:border-blue-300/70 focus:ring-2 focus:ring-blue-200/40"
                   placeholder="例: 情報"
                 />
               </div>
             )}
             <div>
-              <label className="block text-[11px] font-bold text-[#6e6e73] uppercase tracking-wider mb-1.5">分野</label>
+              <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-1.5">分野</label>
               <input
                 list="new-tpl-field-suggestions"
                 value={newField}
                 onChange={(e) => setNewField(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-black/[0.06] bg-white text-[#1d1d1f] text-sm input-ring focus:border-black/[0.15] focus:ring-2 focus:ring-black/[0.05]"
+                className="w-full px-3 py-2.5 rounded-xl border border-blue-200/50 bg-white text-[#1e293b] text-sm input-ring focus:border-blue-300/70 focus:ring-2 focus:ring-blue-200/40"
                 placeholder={newSubject && newSubject !== '__custom' ? `${newSubject}の分野...` : '例: 微分積分'}
               />
               {newSubject && newSubject !== '__custom' && SUBJECT_TOPICS[newSubject] && (
@@ -264,7 +264,7 @@ export default function TemplateSelector({
               {saving ? '保存中...' : '作成'}
             </Button>
           </div>
-          <p className="mt-2 text-[#86868b] text-[11px]">
+          <p className="mt-2 text-[#64748b] text-[11px]">
             教科＋分野を入力するだけ。テンプレート名・ID・本文は自動生成されます。
           </p>
         </div>

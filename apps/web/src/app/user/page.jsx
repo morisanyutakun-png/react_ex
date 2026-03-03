@@ -200,15 +200,15 @@ export default function UserModePage() {
 
   // 科目カラー定義（共通）
   const SUBJECT_COLOR_MAP = useMemo(() => ({
-    '数学': { bg: 'from-[#3b82f6] to-[#2563eb]', light: '#3b82f6', icon: '∑', bgLight: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-    '物理': { bg: 'from-[#8b5cf6] to-[#7c3aed]', light: '#8b5cf6', icon: '⚡', bgLight: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
-    '化学': { bg: 'from-[#10b981] to-[#059669]', light: '#10b981', icon: '⚗️', bgLight: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-    '英語': { bg: 'from-[#f59e0b] to-[#d97706]', light: '#f59e0b', icon: 'Aa', bgLight: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-    '生物': { bg: 'from-[#22c55e] to-[#16a34a]', light: '#22c55e', icon: '🧬', bgLight: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
-    '情報': { bg: 'from-[#06b6d4] to-[#0891b2]', light: '#06b6d4', icon: '</>', bgLight: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
-    '国語': { bg: 'from-[#ec4899] to-[#db2777]', light: '#ec4899', icon: '文', bgLight: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
-    '社会': { bg: 'from-[#f97316] to-[#ea580c]', light: '#f97316', icon: '🌍', bgLight: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-    '地学': { bg: 'from-[#14b8a6] to-[#0d9488]', light: '#14b8a6', icon: '🌏', bgLight: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
+    '数学': { bg: 'from-[#3b82f6] to-[#2563eb]', light: '#3b82f6', icon: '📐', bgLight: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+    '物理': { bg: 'from-[#8b5cf6] to-[#7c3aed]', light: '#8b5cf6', icon: '🍎', bgLight: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
+    '化学': { bg: 'from-[#10b981] to-[#059669]', light: '#10b981', icon: '🧪', bgLight: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    '英語': { bg: 'from-[#f59e0b] to-[#d97706]', light: '#f59e0b', icon: '📖', bgLight: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+    '生物': { bg: 'from-[#22c55e] to-[#16a34a]', light: '#22c55e', icon: '🌿', bgLight: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
+    '情報': { bg: 'from-[#06b6d4] to-[#0891b2]', light: '#06b6d4', icon: '💻', bgLight: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
+    '国語': { bg: 'from-[#ec4899] to-[#db2777]', light: '#ec4899', icon: '📝', bgLight: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
+    '社会': { bg: 'from-[#f97316] to-[#ea580c]', light: '#f97316', icon: '🏛️', bgLight: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+    '地学': { bg: 'from-[#14b8a6] to-[#0d9488]', light: '#14b8a6', icon: '🌋', bgLight: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
     '理科': { bg: 'from-[#6366f1] to-[#4f46e5]', light: '#6366f1', icon: '🔬', bgLight: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
   }), []);
   const getSubjectColor = useCallback((subj) => SUBJECT_COLOR_MAP[subj] || { bg: 'from-[#64748b] to-[#475569]', light: '#64748b', icon: '—', bgLight: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' }, [SUBJECT_COLOR_MAP]);
@@ -1834,7 +1834,7 @@ export default function UserModePage() {
                 <div className="absolute inset-[-12px] rounded-full border-2 border-[#2563eb]/15 animate-ping" />
                 <div className="absolute inset-[-24px] rounded-full border border-[#2563eb]/8 animate-pulse" />
                 <div className="icon-glossy relative w-16 h-16"
-                  style={{ background: 'linear-gradient(145deg, #3b82f6 0%, #2563eb 50%, #000000 100%)' }}>
+                  style={{ background: 'linear-gradient(145deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%)' }}>
                   <svg className="animate-spin h-7 w-7 text-white relative z-10" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />

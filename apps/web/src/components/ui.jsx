@@ -372,7 +372,7 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
                      [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:appearance-none
-                     [&::-webkit-slider-thumb]:shadow-[0_1px_3px_rgba(0,0,0,0.15),0_0_0_0.5px_rgba(0,0,0,0.04)]
+                     [&::-webkit-slider-thumb]:shadow-[0_1px_3px_rgba(37,99,235,0.12),0_0_0_0.5px_rgba(37,99,235,0.04)]
                      [&::-webkit-slider-thumb]:transition-all
                      [&::-webkit-slider-thumb]:hover:scale-110"
         />
@@ -464,7 +464,7 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
           style={{
             transition: 'all 0.4s var(--ease-spring)',
             ...(activeTab === tab.id ? {
-              boxShadow: '0 0 0 0.5px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.8)',
+              boxShadow: '0 0 0 0.5px rgba(37,99,235,0.04), 0 1px 4px rgba(37,99,235,0.06), 0 2px 8px rgba(37,99,235,0.03), inset 0 1px 0 rgba(255,255,255,0.8)',
             } : {}),
           }}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
@@ -493,7 +493,7 @@ export function ProgressSteps({ steps, current }) {
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
                   background: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 40%, #1e40af 100%)',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)',
+                  boxShadow: '0 2px 6px rgba(37,99,235,0.15), inset 0 1px 0 rgba(255,255,255,0.08)',
                 } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
