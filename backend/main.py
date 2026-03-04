@@ -2563,6 +2563,7 @@ _LATEX_PHYSICS_DIAGRAM_RULES = (
     "PD6. 力の分解図: 元のベクトルを実線、分解成分を破線 [dashed] で描き、\n"
     "     直角マークを \\draw で小さい正方形として示す。\n"
     "PD7. 電気回路図は circuitikz を使い、TikZ で手書きしない。\n"
+    "     \\ctikzset{bipoles/fill=white} を必ず設定し、母線を先に描画してから素子枝を描画する。\n"
     "PD8. グラフ（v-t図、x-t図等）は pgfplots の axis 環境を使い、\n"
     "     軸ラベルには物理量記号と単位を付ける: xlabel={$t$ [s]}, ylabel={$v$ [m/s]}。\n"
     "PD9. 寸法・距離の表示: |<->| スタイルで描く:\n"
@@ -2842,7 +2843,7 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
             '- 力ベクトル: \\draw[-{Stealth},thick] で描く\n'
             '- 物体: rectangle / circle で正確に\n'
             '- 床面: \\fill[pattern=north east lines] でハッチング\n'
-            '- 回路: circuitikz を使用\n'
+            '- 回路: circuitikz を使用（\\ctikzset{bipoles/fill=white}必須、母線→素子の順で描画）\n'
             '- グラフ: pgfplots で軸に物理量と単位を明記\n\n'
         )
 
@@ -3004,12 +3005,13 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
         'name': 'CircuiTikZ（回路図）',
         'usepackage': (
             '\\usepackage{tikz}\n'
-            '\\usepackage[siunitx]{circuitikz}'
+            '\\usepackage[siunitx]{circuitikz}\n'
+            '\\ctikzset{bipoles/fill=white}'
         ),
         'prompt_hint': (
             'CircuiTikZ が利用可能。\\begin{circuitikz}...\\end{circuitikz} で電気回路図を描く。\n'
             '素子: 抵抗 to[R,l=$R$], コンデンサ to[C,l=$C$], インダクタ to[L,l=$L$], '
-            '電圧源 to[V,l=$V$], 電流源 to[I,l=$I$], ダイオード to[D]。\n'
+            '電圧源 to[V,l=$V$] / to[sV,l=$v$], 電流源 to[I,l=$I$], ダイオード to[D]。\n'
             '配線は -- で接続し、ノードラベルは node[above]{ラベル} で付ける。\n\n'
             '【回路図の厳密な座標計算ルール — 必ず守ること】\n'
             '1. ★閉回路の保証★: 回路は必ず閉じたループを形成すること。\n'
@@ -3026,7 +3028,27 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '   % ノード座標: A=(0,0), B=(0,3), C=(3,3), D=(3,0)\n'
             '   % パス: A→B (電圧源), B→C (抵抗), C→D (コンデンサ), D→A (配線)\n'
             '7. 座標が矩形ならば y座標・x座標がそれぞれ揃っているか確認:\n'
-            '   左辺は x=0 で統一、右辺は x=3 で統一、上辺は y=3 で統一、下辺は y=0 で統一。\n'
+            '   左辺は x=0 で統一、右辺は x=3 で統一、上辺は y=3 で統一、下辺は y=0 で統一。\n\n'
+            '【★★ 素子内部の導線貫通を防止する描画順序ルール — 最重要 ★★】\n'
+            '並列回路など、母線（水平/垂直の配線）と素子枝が交差する回路では\n'
+            '素子の内部を導線が貫通して表示される問題が発生する。\n'
+            '以下のルールを厳守すること:\n\n'
+            'W1. \\ctikzset{bipoles/fill=white} をプリアンブルに必ず記述する。\n'
+            '    これにより全素子の内部背景が白塗りになり、背後の線が隠れる。\n'
+            'W2. ★描画順序★: 母線（素子を含まない配線）を先に描画し、\n'
+            '    素子を含む枝を後から描画する。後から描画した素子の白背景が\n'
+            '    先に描画した母線の線を隠すため、導線貫通が起きない。\n'
+            'W3. 並列回路の正しい描画手順:\n'
+            '   % Step 1: 母線（単純配線）を先に描画\n'
+            '   \\draw (0,3.2) -- (8,3.2);          % 上側母線\n'
+            '   \\draw (0,0)   -- (8,0);             % 下側母線\n'
+            '   % Step 2: 素子枝を後から描画（白背景で母線を隠す）\n'
+            '   \\draw (0,0) to[sV,l_=$v(t)$] (0,3.2);  % 電源\n'
+            '   \\draw (2.6,3.2) to[R,l_=$R$] (2.6,0);  % 抵抗\n'
+            '   \\draw (5.0,3.2) to[L,l_=$L$] (5.0,0);  % コイル\n'
+            '   \\draw (7.4,3.2) to[C,l_=$C$] (7.4,0);  % コンデンサ\n'
+            'W4. 直列回路では1本の \\draw パスで全素子を連続接続してよいが、\n'
+            '    並列回路では必ず枝ごとに別の \\draw コマンドに分割すること。\n'
         ),
     },
     'pgfplots': {
@@ -4949,6 +4971,33 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 return re.sub(pattern, _fix_env, tex_str, flags=re.S)
 
             tex = _fix_circuitikz_closed_loops(tex)
+
+            # 7f-2) ★ CircuiTikZ bipoles/fill=white enforcer ★
+            #     Ensure \ctikzset{bipoles/fill=white} is present when circuitikz is used,
+            #     to prevent wires from showing through component bodies.
+            def _ensure_circuitikz_fill_white(tex_str):
+                r"""If circuitikz is used but \ctikzset{bipoles/fill=white} is missing,
+                insert it right after the \usepackage line for circuitikz.
+                Also ensures it appears before \begin{circuitikz} if no usepackage line found."""
+                if 'circuitikz' not in tex_str:
+                    return tex_str
+                if 'bipoles/fill=white' in tex_str:
+                    return tex_str  # already present
+                # Try to insert after \usepackage{circuitikz} or \usepackage[...]{circuitikz}
+                pkg_pat = r'(\\usepackage(?:\[.*?\])?\{circuitikz\})'
+                m_pkg = re.search(pkg_pat, tex_str)
+                if m_pkg:
+                    insert_pos = m_pkg.end()
+                    tex_str = tex_str[:insert_pos] + '\n\\ctikzset{bipoles/fill=white}' + tex_str[insert_pos:]
+                else:
+                    # No usepackage line found, insert before first \begin{circuitikz}
+                    m_env = re.search(r'\\begin\{circuitikz\}', tex_str)
+                    if m_env:
+                        insert_pos = m_env.start()
+                        tex_str = tex_str[:insert_pos] + '\\ctikzset{bipoles/fill=white}\n' + tex_str[insert_pos:]
+                return tex_str
+
+            tex = _ensure_circuitikz_fill_white(tex)
 
             # 7g) ★ TikZ coordinate consistency checker ★
             #     For tikzpicture environments, verify that paths using -- connect
