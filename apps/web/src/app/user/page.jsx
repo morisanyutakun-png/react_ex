@@ -737,7 +737,7 @@ export default function UserModePage() {
     <div ref={wizardTopRef} className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-14 pb-28 sm:pb-16">
       {/* ヘッダー — Warm blue design */}
       <div className="text-center mb-8 sm:mb-12">
-        <h1 className="text-[32px] sm:text-[40px] font-black tracking-[-0.03em] leading-[1.08] mb-3 gradient-text-hero-animated">
+        <h1 className="text-[32px] sm:text-[40px] font-black tracking-[-0.03em] leading-[1.08] mb-3 gradient-text-hero">
           問題をつくる
         </h1>
         <p className="text-[14px] sm:text-[15px] text-[#64748b] leading-relaxed max-w-md mx-auto font-medium tracking-[-0.01em]">
@@ -1887,12 +1887,11 @@ export default function UserModePage() {
         <div className="wizard-section-enter">
           <div className="card-glossy generating-glow">
             <div className="flex flex-col items-center justify-center py-24 px-8 relative z-10">
-              {/* パルスリング */}
+              {/* スピナー */}
               <div className="relative mb-8">
-                <div className="absolute inset-[-12px] rounded-full border-2 border-[#2563eb]/15 animate-ping" />
-                <div className="absolute inset-[-24px] rounded-full border border-[#2563eb]/8 animate-pulse" />
-                <div className="icon-glossy relative w-16 h-16"
-                  style={{ background: 'linear-gradient(145deg, #3b82f6 0%, #2563eb 50%, #1e40af 100%)' }}>
+                <div className="absolute inset-[-12px] rounded-full border-2 border-[#2563eb]/15 animate-pulse" />
+                <div className="bg-[#2563eb] relative w-16 h-16 rounded-2xl flex items-center justify-center"
+                  style={{ boxShadow: '0 1px 3px rgba(37,99,235,0.20), 0 4px 12px rgba(37,99,235,0.10)' }}>
                   <svg className="animate-spin h-7 w-7 text-white relative z-10" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />

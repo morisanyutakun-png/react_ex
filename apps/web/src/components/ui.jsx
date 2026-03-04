@@ -124,7 +124,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
       )}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
-          <div className="flex-shrink-0 w-11 h-11 rounded-[13px] icon-glossy text-white flex items-center justify-center">
+          <div className="flex-shrink-0 w-11 h-11 rounded-[13px] bg-[#2563eb] text-white flex items-center justify-center">
             {icon}
           </div>
         )}
@@ -424,7 +424,7 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
         <div className="mb-4">
           <div className="flex items-center gap-3">
             {icon && (
-              <span className="icon-glossy w-8 h-8 text-white flex-shrink-0">
+              <span className="bg-[#2563eb] w-8 h-8 rounded-[10px] text-white flex items-center justify-center flex-shrink-0">
                 {icon}
               </span>
             )}
@@ -492,8 +492,8 @@ export function ProgressSteps({ steps, current }) {
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
-                  background: 'linear-gradient(180deg, #3b82f6 0%, #2563eb 40%, #1e40af 100%)',
-                  boxShadow: '0 2px 6px rgba(37,99,235,0.15), inset 0 1px 0 rgba(255,255,255,0.08)',
+                  background: '#2563eb',
+                  boxShadow: '0 1px 3px rgba(37,99,235,0.15)',
                 } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}

@@ -20,15 +20,15 @@ export default function Header() {
     <>
       {/* ── アクセントバー ── */}
       <div className="fixed top-0 left-0 right-0 h-[3px] z-[60]"
-           style={{ background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6)', backgroundSize: '200% 100%', animation: 'accent-bar-shift 8s ease-in-out infinite' }} />
+           style={{ background: '#2563eb' }} />
 
       {/* ── デスクトップヘッダー (Frosted glass light) ── */}
       <header className="header-bar sticky top-0 z-50" style={{ marginTop: '3px' }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <div className="flex items-center justify-between h-[48px]">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex items-center justify-center w-[28px] h-[28px] rounded-[8px] icon-glossy text-white group-hover:scale-105"
-                   style={{ transition: 'transform 0.5s var(--ease-spring), box-shadow 0.4s ease' }}>
+              <div className="flex items-center justify-center w-[28px] h-[28px] rounded-[8px] bg-[#2563eb] text-white group-hover:scale-105"
+                   style={{ transition: 'transform 0.5s var(--ease-spring)' }}>
                 <Icons.Book className="w-3 h-3 relative z-10" style={{ transition: 'transform 0.5s var(--ease-spring)' }} />
               </div>
               <span className="text-[14px] font-bold tracking-[-0.02em] text-[#1e40af]" style={{ transition: 'opacity 0.3s ease' }}>
@@ -52,8 +52,8 @@ export default function Header() {
                     style={{
                       transition: 'all 0.4s var(--ease-spring)',
                       ...(active ? {
-                        background: 'linear-gradient(180deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%)',
-                        boxShadow: '0 2px 6px rgba(37,99,235,0.25), inset 0 1px 0 rgba(255,255,255,0.15)',
+                        background: '#2563eb',
+                        boxShadow: '0 1px 3px rgba(37,99,235,0.25)',
                       } : {}),
                     }}
                   >
@@ -90,8 +90,7 @@ export default function Header() {
                 <div className="relative" style={{ transition: 'transform 0.35s var(--ease-spring)', transform: active ? 'scale(1.08)' : 'scale(1)' }}>
                   {mobileIcon}
                   {active && (
-                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-[3px] rounded-full bg-[#2563eb]"
-                         style={{ boxShadow: '0 0 6px rgba(37,99,235,0.3)' }} />
+                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-[3px] rounded-full bg-[#2563eb]" />
                   )}
                 </div>
                 <span className={`text-[10px] font-medium leading-none mt-0.5 ${active ? 'text-[#2563eb]' : 'text-[#94a3b8]'}`}>
