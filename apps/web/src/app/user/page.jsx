@@ -734,10 +734,54 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div ref={wizardTopRef} className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-14 pb-28 sm:pb-16">
-      {/* ヘッダー — Warm blue design */}
+    <div ref={wizardTopRef} className="relative max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-14 pb-28 sm:pb-16">
+      {/* ── Stripe風アーティスティックな虹色グラデーション背景 ── */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: -2 }}>
+        {/* 左上の紫〜インディゴのブロブ */}
+        <div className="absolute -top-[20%] -left-[15%] w-[60vw] h-[60vw] rounded-full opacity-[0.12]"
+          style={{
+            background: 'radial-gradient(circle, #7c3aed 0%, #6366f1 40%, transparent 70%)',
+            filter: 'blur(80px)',
+            animation: 'aurora-blob-1 25s ease-in-out infinite',
+          }}
+        />
+        {/* 右上のピンク〜ローズのブロブ */}
+        <div className="absolute -top-[10%] -right-[10%] w-[50vw] h-[50vw] rounded-full opacity-[0.10]"
+          style={{
+            background: 'radial-gradient(circle, #ec4899 0%, #f472b6 40%, transparent 70%)',
+            filter: 'blur(80px)',
+            animation: 'aurora-blob-2 20s ease-in-out infinite',
+          }}
+        />
+        {/* 中央のティール〜シアンのブロブ */}
+        <div className="absolute top-[30%] left-[20%] w-[45vw] h-[45vw] rounded-full opacity-[0.08]"
+          style={{
+            background: 'radial-gradient(circle, #06b6d4 0%, #22d3ee 40%, transparent 70%)',
+            filter: 'blur(90px)',
+            animation: 'aurora-blob-3 22s ease-in-out infinite',
+          }}
+        />
+        {/* 右下のオレンジ〜アンバーのブロブ */}
+        <div className="absolute bottom-[10%] right-[5%] w-[40vw] h-[40vw] rounded-full opacity-[0.07]"
+          style={{
+            background: 'radial-gradient(circle, #f59e0b 0%, #fbbf24 40%, transparent 70%)',
+            filter: 'blur(70px)',
+            animation: 'aurora-blob-4 28s ease-in-out infinite',
+          }}
+        />
+        {/* 左下の緑〜エメラルドのブロブ */}
+        <div className="absolute bottom-[-5%] -left-[10%] w-[35vw] h-[35vw] rounded-full opacity-[0.08]"
+          style={{
+            background: 'radial-gradient(circle, #10b981 0%, #34d399 40%, transparent 70%)',
+            filter: 'blur(70px)',
+            animation: 'aurora-blob-5 18s ease-in-out infinite',
+          }}
+        />
+      </div>
+
+      {/* ヘッダー — Artistic gradient design */}
       <div className="text-center mb-8 sm:mb-12">
-        <h1 className="text-[32px] sm:text-[40px] font-black tracking-[-0.03em] leading-[1.08] mb-3 gradient-text-hero">
+        <h1 className="text-[32px] sm:text-[40px] font-black tracking-[-0.03em] leading-[1.08] mb-3 gradient-text-hero-animated">
           問題をつくる
         </h1>
         <p className="text-[14px] sm:text-[15px] text-[#64748b] leading-relaxed max-w-md mx-auto font-medium tracking-[-0.01em]">

@@ -424,7 +424,8 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
         <div className="mb-4">
           <div className="flex items-center gap-3">
             {icon && (
-              <span className="bg-[#2563eb] w-8 h-8 rounded-[10px] text-white flex items-center justify-center flex-shrink-0">
+              <span className="w-8 h-8 rounded-[10px] text-white flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)', boxShadow: '0 2px 6px rgba(120,119,198,0.20)' }}>
                 {icon}
               </span>
             )}
@@ -453,7 +454,7 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-blue-50/80 rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(37,99,235,0.06)' }}>
+    <div className="flex gap-0.5 p-[3px] bg-violet-50/60 rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(120,119,198,0.06)' }}>
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
@@ -464,7 +465,7 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
           style={{
             transition: 'all 0.4s var(--ease-spring)',
             ...(activeTab === tab.id ? {
-              boxShadow: '0 0 0 0.5px rgba(37,99,235,0.04), 0 1px 4px rgba(37,99,235,0.06), 0 2px 8px rgba(37,99,235,0.03), inset 0 1px 0 rgba(255,255,255,0.8)',
+              boxShadow: '0 0 0 0.5px rgba(120,119,198,0.04), 0 1px 4px rgba(120,119,198,0.06), 0 2px 8px rgba(120,119,198,0.03), inset 0 1px 0 rgba(255,255,255,0.8)',
             } : {}),
           }}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
@@ -486,14 +487,14 @@ export function ProgressSteps({ steps, current }) {
                 ${i + 1 <= current
                   ? 'text-white'
                   : i + 1 === current + 1
-                  ? 'bg-[#f0f4ff] text-[#1e293b]'
-                  : 'bg-[#f0f4ff] text-[#94a3b8]'
+                  ? 'bg-[#f3f0ff] text-[#1e293b]'
+                  : 'bg-[#f3f0ff] text-[#94a3b8]'
                 }`}
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
-                  background: '#2563eb',
-                  boxShadow: '0 1px 3px rgba(37,99,235,0.15)',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
+                  boxShadow: '0 2px 6px rgba(120,119,198,0.20)',
                 } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
@@ -504,7 +505,7 @@ export function ProgressSteps({ steps, current }) {
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-[#2563eb]/40' : 'bg-blue-100/70'}`} />
+            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-violet-400/40' : 'bg-violet-100/70'}`} />
           )}
         </div>
       ))}
