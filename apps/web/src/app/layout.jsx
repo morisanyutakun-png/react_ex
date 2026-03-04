@@ -34,20 +34,15 @@ export default function RootLayout({ children }) {
         </div>
         {/* Geometric mesh overlay */}
         <div className="geo-mesh-overlay" aria-hidden="true" />
-        {/* Floating geometric shapes */}
+        {/* Circuit trace decorations */}
         <div aria-hidden="true">
-          <div className="geo-float geo-float-triangle" />
-          <div className="geo-float geo-float-circle" />
-          <div className="geo-float geo-float-diamond" />
-          <div className="geo-float geo-float-cross" />
+          <div className="circuit-trace circuit-trace-1" />
+          <div className="circuit-trace circuit-trace-2" />
+          <div className="circuit-trace circuit-trace-3" />
+          <div className="circuit-trace circuit-trace-4" />
         </div>
-        {/* Wave decoration */}
-        <div className="wave-decoration" aria-hidden="true">
-          <svg viewBox="0 0 1440 200" preserveAspectRatio="none" fill="none">
-            <path d="M0,120 C240,180 480,60 720,120 C960,180 1200,60 1440,120 C1680,180 1920,60 2160,120 C2400,180 2640,60 2880,120 L2880,200 L0,200 Z" fill="rgba(37,99,235,0.4)" />
-            <path d="M0,140 C240,100 480,180 720,140 C960,100 1200,180 1440,140 C1680,100 1920,180 2160,140 C2400,100 2640,180 2880,140 L2880,200 L0,200 Z" fill="rgba(99,102,241,0.3)" />
-          </svg>
-        </div>
+        {/* Bottom horizon line */}
+        <div className="wave-decoration" aria-hidden="true" />
         <Header />
         {children}
       </body>
