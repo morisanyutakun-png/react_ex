@@ -1491,10 +1491,144 @@ main {
 }
 
 /* ══════════════════════════════════════════════════
-   Home Page — Artistic Background Elements
+   Home Page — Stripe-style Gradient Mesh
    ══════════════════════════════════════════════════ */
 
-/* ── Home page backgrounds — removed ── */
+/* ── Gradient mesh container ── */
+.gradient-mesh {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* ── Individual color blobs ── */
+.gradient-mesh-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+}
+
+/* Deep indigo — top left anchor */
+.gradient-mesh-blob-1 {
+  width: 55%;
+  height: 60%;
+  top: -18%;
+  left: -12%;
+  background: radial-gradient(circle at 60% 55%,
+    rgba(99, 102, 241, 0.38) 0%,
+    rgba(79, 70, 229, 0.22) 35%,
+    rgba(67, 56, 202, 0.08) 60%,
+    transparent 80%
+  );
+  animation: mesh-drift-1 18s ease-in-out infinite;
+}
+
+/* Warm violet-pink — top right */
+.gradient-mesh-blob-2 {
+  width: 50%;
+  height: 55%;
+  top: -10%;
+  right: -8%;
+  background: radial-gradient(circle at 40% 50%,
+    rgba(168, 85, 247, 0.30) 0%,
+    rgba(217, 70, 239, 0.18) 30%,
+    rgba(236, 72, 153, 0.10) 55%,
+    transparent 78%
+  );
+  animation: mesh-drift-2 22s ease-in-out infinite;
+}
+
+/* Teal accent — center right */
+.gradient-mesh-blob-3 {
+  width: 40%;
+  height: 45%;
+  top: 8%;
+  right: 5%;
+  background: radial-gradient(circle at 45% 50%,
+    rgba(6, 182, 212, 0.22) 0%,
+    rgba(14, 165, 233, 0.12) 40%,
+    transparent 72%
+  );
+  animation: mesh-drift-3 20s ease-in-out infinite;
+}
+
+/* Blue core — center */
+.gradient-mesh-blob-4 {
+  width: 45%;
+  height: 50%;
+  top: 2%;
+  left: 28%;
+  background: radial-gradient(circle at 50% 45%,
+    rgba(37, 99, 235, 0.28) 0%,
+    rgba(59, 130, 246, 0.14) 40%,
+    transparent 70%
+  );
+  animation: mesh-drift-4 16s ease-in-out infinite;
+}
+
+/* Warm amber hint — bottom edge, very subtle */
+.gradient-mesh-blob-5 {
+  width: 35%;
+  height: 30%;
+  top: 18%;
+  left: 10%;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(245, 158, 11, 0.10) 0%,
+    rgba(251, 146, 60, 0.05) 40%,
+    transparent 70%
+  );
+  animation: mesh-drift-5 24s ease-in-out infinite;
+}
+
+/* ── Noise texture for organic feel ── */
+.gradient-mesh-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.3;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+}
+
+/* ── Bottom fade to page color ── */
+.gradient-mesh::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, transparent 0%, #f8faff 100%);
+  pointer-events: none;
+}
+
+/* ── Slow, organic drift animations ── */
+@keyframes mesh-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, 15px) scale(1.04); }
+  66% { transform: translate(-15px, -10px) scale(0.98); }
+}
+@keyframes mesh-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-25px, 20px) scale(1.03); }
+  70% { transform: translate(15px, -12px) scale(0.97); }
+}
+@keyframes mesh-drift-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-20px, -18px) scale(1.05); }
+}
+@keyframes mesh-drift-4 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  35% { transform: translate(18px, -12px) scale(1.02); }
+  65% { transform: translate(-12px, 8px) scale(0.98); }
+}
+@keyframes mesh-drift-5 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(15px, 10px) scale(1.06); }
+}
+
+/* ── Unused home page backgrounds ── */
 .home-topo-lines { display: none; }
 .home-network-svg { display: none; }
 .home-light-streaks { display: none; }
