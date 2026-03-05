@@ -18,7 +18,7 @@ import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLab
 import { LatexText } from '@/components/LatexRenderer';
 
 /* ── ウィザードステップ定義（8ステップに細分化） ── */
-const STEPS = ['教科', '分野', '難易度・問題数', '出力形式', 'オプション', '確認', '生成', '完成'];
+const STEPS = ['教科', '分野', '難易度・問題数', '出力形式', '図表・パッケージ', 'オプション', 'テンプレート確認', '生成', '完成'];
 
 /* ── 各図表タイプのASCIIアートプレビュー ── */
 const PACKAGE_ILLUSTRATIONS = {
@@ -542,7 +542,7 @@ export default function UserModePage() {
     setGenerating(true);
     setGeneratedLatex('');
     setPdfUrl('');
-    setStep(7);
+    setStep(8);
 
     setStatus('ステップ 1/3: AIへの指示文を作成中...');
     let generatedPrompt = '';
@@ -623,13 +623,13 @@ export default function UserModePage() {
         setPdfUrl(data.pdf_url);
         window.open(data.pdf_url, '_blank');
         setStatus('PDF を生成・表示しました');
-        setStep(8);
+        setStep(9);
       } else if (data?.pdf_error) {
         setStatus(`問題の生成は成功 / PDF 変換失敗: ${data.pdf_error}`);
-        setStep(8);
+        setStep(9);
       } else {
         setStatus('問題の生成完了（PDF エンジン未設定）');
-        setStep(8);
+        setStep(9);
       }
     } catch (e) {
       // 429 = 使用回数上限
@@ -705,7 +705,7 @@ export default function UserModePage() {
           : '指示文をクリップボードにコピーしました'
       );
       setPromptGenerating(false);
-      setStep(8);
+      setStep(9);
     } catch (e) {
       setStatus(`エラー: ${e.message}`);
       setPromptGenerating(false);
@@ -744,14 +744,15 @@ export default function UserModePage() {
     if (step === 2) return true;                // 分野（任意）
     if (step === 3) return !!difficulty;         // 難易度
     if (step === 4) return true;                // 出力形式
-    if (step === 5) return true;                // オプション
-    if (step === 6) return !!templateId;         // 確認
+    if (step === 5) return true;                // 図表・パッケージ（任意）
+    if (step === 6) return true;                // オプション
+    if (step === 7) return !!templateId;         // テンプレート確認
     return false;
   };
 
   const goNext = () => {
-    // Step 6（確認）で「生成」を実行
-    if (step === 6 && mode === 'auto') {
+    // Step 7（テンプレート確認）で「生成」を実行
+    if (step === 7 && mode === 'auto') {
       // テンプレートが無ければ自動作成
       if (!templateId) {
         const id = buildTemplateId(subject, field);
@@ -772,7 +773,7 @@ export default function UserModePage() {
       } else {
         handleAutoGenerate();
       }
-    } else if (step === 6 && mode === 'manual') {
+    } else if (step === 7 && mode === 'manual') {
       if (!templateId) {
         const id = buildTemplateId(subject, field);
         const f = field;
@@ -798,8 +799,8 @@ export default function UserModePage() {
   };
 
   const goBack = () => {
-    if (step > 1 && step <= 6) setStep(step - 1);
-    if (step === 8) setStep(6);
+    if (step > 1 && step <= 7) setStep(step - 1);
+    if (step === 9) setStep(7);
   };
 
   const resetWizard = () => {
@@ -944,7 +945,7 @@ export default function UserModePage() {
       )}
 
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
-      {step <= 6 && (
+      {step <= 7 && (
         <div className="wizard-guide mb-5">
           <div className="flex items-center gap-3 px-5 py-4 relative z-10">
             <div className="step-orb w-9 h-9 text-white text-[13px] font-bold flex-shrink-0">
@@ -956,8 +957,9 @@ export default function UserModePage() {
                 {step === 2 && '分野を選択してください（任意）'}
                 {step === 3 && '難易度と問題数を設定してください'}
                 {step === 4 && 'PDFの出力形式を選んでください'}
-                {step === 5 && '問題形式や図表など、オプションを設定してください（全て任意）'}
-                {step === 6 && (mode === 'auto' ? '設定を確認したら「PDF を生成」で完成！' : '設定を確認したら「指示文を作成」で次へ')}
+                {step === 5 && '図表やLaTeXパッケージを選択してください（任意）'}
+                {step === 6 && '問題形式やカスタムリクエストを設定してください（全て任意）'}
+                {step === 7 && (mode === 'auto' ? '設定を確認したら「PDF を生成」で完成！' : '設定を確認したら「指示文を作成」で次へ')}
               </p>
               <p className="text-[11px] text-[#94a3b8] mt-0.5">
                 ステップ {step} / {STEPS.length}
@@ -1256,8 +1258,132 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 5: オプション ═══════ */}
+      {/* ═══════ Step 5: 図表・パッケージ選択 ═══════ */}
       {step === 5 && (
+        <div className="space-y-5 wizard-section-enter">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="icon-glossy w-8 h-8">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v13.5A1.5 1.5 0 003.75 21z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[13px] font-bold text-[#1e293b] tracking-tight">図表・パッケージ</h3>
+                  <p className="text-[10px] text-[#64748b]">任意 — 問題に含める図表の種類を選択（複数選択可）</p>
+                </div>
+              </div>
+
+              {/* パッケージカード一覧 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {DIAGRAM_PACKAGE_DEFS.map((pkg) => {
+                  const active = extraPackages.includes(pkg.id);
+                  const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
+                  return (
+                    <button
+                      key={pkg.id}
+                      onClick={() => togglePackage(pkg.id)}
+                      className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-300 active:scale-[0.97] ${
+                        active
+                          ? 'border-[#2563eb]/40 bg-blue-50/60 shadow-sm'
+                          : 'border-transparent bg-[#f8fafc] hover:border-blue-100 hover:bg-blue-50/30'
+                      }`}
+                    >
+                      {/* 推奨バッジ */}
+                      {pkg.recommended && (
+                        <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white">
+                          おすすめ
+                        </span>
+                      )}
+                      {/* チェックマーク */}
+                      {active && (
+                        <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
+                      )}
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl flex-shrink-0 mt-0.5">{pkg.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] font-bold text-[#1e293b]">{pkg.name}</div>
+                          <div className="text-[10px] text-[#64748b] mt-0.5">{pkg.description}</div>
+                          {pkg.hint && (
+                            <div className="text-[10px] text-[#2563eb] font-medium mt-1">{pkg.hint}</div>
+                          )}
+                        </div>
+                      </div>
+                      {/* ASCIIプレビュー */}
+                      {illustration && (
+                        <pre className={`mt-3 text-[10px] leading-[1.4] font-mono p-2.5 rounded-xl whitespace-pre overflow-x-auto ${
+                          active ? 'bg-white/80 text-[#1e293b]' : 'bg-[#f1f5f9] text-[#64748b]'
+                        }`}>
+                          {illustration}
+                        </pre>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* TikZ 選択時のサブオプション */}
+              {extraPackages.includes('tikz') && (
+                <div className="mt-4 p-3 rounded-xl bg-blue-50/50 border border-blue-100/60">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <div className={`relative w-10 h-5 rounded-full transition-colors duration-300 ${includeDiagramPerQuestion ? 'bg-[#2563eb]' : 'bg-[#cbd5e1]'}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${includeDiagramPerQuestion ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                    </div>
+                    <div>
+                      <span className="text-[12px] font-bold text-[#1e293b]">問題ごとに図を自動挿入</span>
+                      <p className="text-[10px] text-[#64748b]">各問題に個別のTikZ図を生成して挿入します</p>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {/* カスタムパッケージ入力 */}
+              <div className="mt-4 flex gap-2">
+                <input
+                  type="text"
+                  value={customPackage}
+                  onChange={(e) => setCustomPackage(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addCustomPackage()}
+                  placeholder="その他のパッケージ名を入力..."
+                  className="flex-1 px-3 py-2 text-[12px] border border-blue-200/60 bg-[#f0f4ff] rounded-xl
+                    focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20 transition-all"
+                />
+                <button
+                  onClick={addCustomPackage}
+                  disabled={!customPackage.trim()}
+                  className="px-3 py-2 text-[12px] font-medium text-white bg-[#2563eb] rounded-xl
+                    hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  追加
+                </button>
+              </div>
+
+              {/* 選択中のパッケージ一覧 */}
+              {extraPackages.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {extraPackages.map((pkg) => {
+                    const def = DIAGRAM_PACKAGE_DEFS.find(d => d.id === pkg);
+                    return (
+                      <span key={pkg} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#2563eb]/10 text-[#2563eb]">
+                        {def?.icon || '📦'} {def?.label || pkg}
+                        <button onClick={() => togglePackage(pkg)} className="ml-0.5 hover:text-red-500 transition-colors">×</button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ Step 6: オプション ═══════ */}
+      {step === 6 && (
         <div className="space-y-5 wizard-section-enter">
           {/* 問題形式 */}
           <div className="card-glossy">
@@ -1325,76 +1451,163 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 6: 確認 ═══════ */}
-      {step === 6 && (
+      {/* ═══════ Step 7: テンプレート確認 ═══════ */}
+      {step === 7 && (
         <div className="space-y-5 wizard-section-enter">
+          {/* テンプレート管理セクション */}
           <div className="card-glossy">
             <div className="p-5 relative z-10">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="icon-glossy w-10 h-10 text-white" style={{ background: 'linear-gradient(145deg, #38d260 0%, #248a3d 100%)' }}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="icon-glossy w-8 h-8">
+                    <Icons.File className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-[13px] font-bold text-[#1e293b] tracking-tight">出題テンプレート</h3>
+                    <p className="text-[10px] text-[#64748b]">RAG検索のベースとなるテンプレートを選択・管理</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCreateTemplate(!showCreateTemplate)}
+                  className="text-[11px] font-medium text-[#2563eb] hover:underline"
+                >
+                  {showCreateTemplate ? '← 一覧に戻る' : '＋ 新規作成'}
+                </button>
+              </div>
+
+              {/* テンプレート新規作成フォーム */}
+              {showCreateTemplate ? (
+                <div className="space-y-3 p-4 bg-[#f8fafc] rounded-2xl border border-[#e2e8f0]">
+                  <p className="text-[11px] text-[#64748b]">現在の設定からテンプレートを自動作成します</p>
+                  <div className="text-[12px] text-[#1e293b] space-y-1">
+                    <div><span className="text-[#64748b]">教科:</span> {subject}</div>
+                    <div><span className="text-[#64748b]">分野:</span> {field || '全般'}</div>
+                    <div><span className="text-[#64748b]">難易度:</span> {difficulty}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const id = buildTemplateId(subject, field);
+                      const f = field;
+                      const label = f ? `${subject}（${f}）` : subject;
+                      createTemplate({
+                        id,
+                        name: `${label} 出題パターン`,
+                        description: `${label} の問題を生成する出題パターン`,
+                        prompt: buildTemplatePrompt(subject, f, { theme }),
+                        metadata: { subject, field: f || null, theme: theme || null, subtopic: theme || null, difficulty, auto_generated: true },
+                      }).then(() => {
+                        setTemplateId(id);
+                        refresh();
+                        setShowCreateTemplate(false);
+                        setStatus('テンプレートを作成しました');
+                      }).catch((e) => setStatus(`作成失敗: ${e.message}`));
+                    }}
+                    className="w-full py-2.5 rounded-xl text-[12px] font-semibold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors"
+                  >
+                    テンプレートを作成
+                  </button>
+                </div>
+              ) : (
+                /* テンプレート一覧 */
+                <div className="space-y-2 max-h-[240px] overflow-y-auto">
+                  {templates.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-[12px] text-[#94a3b8]">テンプレートがありません</p>
+                      <p className="text-[10px] text-[#94a3b8] mt-1">「生成」ボタンを押すと自動作成されます</p>
+                    </div>
+                  ) : (
+                    Object.entries(groupedTemplates).map(([subjName, subjectTemplates]) => {
+                      const sc = getSubjectColor(subjName);
+                      return (
+                        <div key={subjName}>
+                          <div className={`text-[11px] font-bold px-2 py-1 ${sc.text}`}>{subjName}（{subjectTemplates.length}）</div>
+                          {subjectTemplates.map((t) => {
+                            const isActive = templateId === t.id;
+                            return (
+                              <div
+                                key={t.id}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all ${
+                                  isActive ? 'bg-[#2563eb]/10 border border-[#2563eb]/30' : 'hover:bg-[#f1f5f9] border border-transparent'
+                                }`}
+                                onClick={() => { setTemplateId(t.id); onSelectTemplate(t); }}
+                              >
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-[#2563eb]' : 'bg-[#cbd5e1]'}`} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[12px] font-medium text-[#1e293b] truncate">{t.name}</div>
+                                  {t.description && <div className="text-[10px] text-[#64748b] truncate">{t.description}</div>}
+                                </div>
+                                {isActive && (
+                                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white flex-shrink-0">選択中</span>
+                                )}
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteTemplate(t.id); }}
+                                  className="text-[#94a3b8] hover:text-red-500 transition-colors flex-shrink-0"
+                                  title="削除"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* 選択中テンプレート表示 */}
+              {templateId && (
+                <div className="mt-3 p-2.5 rounded-xl bg-blue-50/50 border border-blue-100/60">
+                  <div className="text-[10px] text-[#64748b]">選択中のテンプレート:</div>
+                  <div className="text-[12px] font-bold text-[#2563eb]">{selectedTemplate?.name || templateId}</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 設定サマリーカード */}
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="icon-glossy w-8 h-8 text-white" style={{ background: 'linear-gradient(145deg, #38d260 0%, #248a3d 100%)' }}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">設定を確認</h3>
-                  <p className="text-[11px] text-[#64748b]">以下の内容でAIが問題を生成します</p>
+                  <h3 className="text-[13px] font-bold text-[#1e293b] tracking-tight">設定サマリー</h3>
+                  <p className="text-[10px] text-[#64748b]">以下の内容でAIが問題を生成します</p>
                 </div>
               </div>
-              <div className="space-y-2.5 bg-[#f8fafc] rounded-2xl p-4 border border-[#e2e8f0]">
-                <div className="flex justify-between items-center">
-                  <span className="text-[12px] text-[#64748b] font-medium">教科</span>
-                  <span className="text-[13px] font-bold text-[#1e293b]">{subject || '未選択'}</span>
-                </div>
-                <div className="h-px bg-[#e2e8f0]" />
-                <div className="flex justify-between items-center">
-                  <span className="text-[12px] text-[#64748b] font-medium">分野</span>
-                  <span className="text-[13px] font-bold text-[#1e293b]">{field || 'すべて'}</span>
-                </div>
-                {theme && (
-                  <>
-                    <div className="h-px bg-[#e2e8f0]" />
+              <div className="space-y-2 bg-[#f8fafc] rounded-2xl p-4 border border-[#e2e8f0] text-[12px]">
+                {[
+                  ['教科', subject || '未選択'],
+                  ['分野', field || 'すべて'],
+                  ...(theme ? [['テーマ', theme]] : []),
+                  ['難易度', difficulty],
+                  ['問題数', `${numQuestions}問`],
+                  ['出力形式', selectedPreset?.name || latexPreset],
+                  ['生成方法', mode === 'auto' ? 'AI自動生成' : '手動'],
+                  ...(questionFormat !== 'standard' ? [['問題形式', QUESTION_FORMATS.find(f => f.value === questionFormat)?.label]] : []),
+                  ...(extraPackages.length > 0 ? [['図表', extraPackages.map(p => DIAGRAM_PACKAGE_DEFS.find(d => d.id === p)?.label || p).join(', ')]] : []),
+                ].map(([label, value], i) => (
+                  <div key={i}>
+                    {i > 0 && <div className="h-px bg-[#e2e8f0] mb-2" />}
                     <div className="flex justify-between items-center">
-                      <span className="text-[12px] text-[#64748b] font-medium">テーマ</span>
-                      <span className="text-[13px] font-bold text-[#1e293b]">{theme}</span>
+                      <span className="text-[#64748b] font-medium">{label}</span>
+                      <span className="font-bold text-[#1e293b]">{value}</span>
                     </div>
-                  </>
-                )}
-                <div className="h-px bg-[#e2e8f0]" />
-                <div className="flex justify-between items-center">
-                  <span className="text-[12px] text-[#64748b] font-medium">難易度</span>
-                  <span className="text-[13px] font-bold text-[#1e293b]">{difficulty}</span>
-                </div>
-                <div className="h-px bg-[#e2e8f0]" />
-                <div className="flex justify-between items-center">
-                  <span className="text-[12px] text-[#64748b] font-medium">問題数</span>
-                  <span className="text-[13px] font-bold text-[#1e293b]">{numQuestions}問</span>
-                </div>
-                <div className="h-px bg-[#e2e8f0]" />
-                <div className="flex justify-between items-center">
-                  <span className="text-[12px] text-[#64748b] font-medium">出力形式</span>
-                  <span className="text-[13px] font-bold text-[#1e293b]">{selectedPreset?.name || latexPreset}</span>
-                </div>
-                <div className="h-px bg-[#e2e8f0]" />
-                <div className="flex justify-between items-center">
-                  <span className="text-[12px] text-[#64748b] font-medium">生成方法</span>
-                  <span className="text-[13px] font-bold text-[#1e293b]">{mode === 'auto' ? 'AI自動生成' : '手動'}</span>
-                </div>
-                {questionFormat !== 'standard' && (
-                  <>
-                    <div className="h-px bg-[#e2e8f0]" />
-                    <div className="flex justify-between items-center">
-                      <span className="text-[12px] text-[#64748b] font-medium">問題形式</span>
-                      <span className="text-[13px] font-bold text-[#1e293b]">{QUESTION_FORMATS.find(f => f.value === questionFormat)?.label}</span>
-                    </div>
-                  </>
-                )}
+                  </div>
+                ))}
                 {customRequest.trim() && (
                   <>
                     <div className="h-px bg-[#e2e8f0]" />
                     <div>
-                      <span className="text-[12px] text-[#64748b] font-medium block mb-1">カスタム要望</span>
-                      <span className="text-[12px] text-[#1e293b]">{customRequest}</span>
+                      <span className="text-[#64748b] font-medium block mb-1">カスタム要望</span>
+                      <span className="text-[#1e293b]">{customRequest}</span>
                     </div>
                   </>
                 )}
@@ -2511,8 +2724,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 7: 生成中 ═══════ */}
-      {step === 7 && generating && (
+      {/* ═══════ Step 8: 生成中 ═══════ */}
+      {step === 8 && generating && (
         <div className="wizard-section-enter">
           <div className="card-glossy generating-glow">
             <div className="flex flex-col items-center justify-center py-24 px-8 relative z-10">
@@ -2535,8 +2748,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 8: 結果表示 ═══════ */}
-      {step === 8 && (
+      {/* ═══════ Step 9: 結果表示 ═══════ */}
+      {step === 9 && (
         <div className="space-y-6 wizard-section-enter">
           {/* RAG フィードバックカード */}
           {renderContext && (
@@ -2787,12 +3000,12 @@ export default function UserModePage() {
       {/* ═══════ ナビゲーションボタン ═══════ */}
       <div ref={nextActionRef} className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-8 sm:mt-10 mb-4 sm:mb-0 nav-glow-in">
         <div>
-          {step > 1 && step <= 6 && (
+          {step > 1 && step <= 7 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
               ← 戻る
             </Button>
           )}
-          {step === 8 && (
+          {step === 9 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
               ← 設定を変更
             </Button>
@@ -2800,17 +3013,17 @@ export default function UserModePage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {step === 8 && (
+          {step === 9 && (
             <Button variant="ghost" onClick={resetWizard} className="w-full sm:w-auto">
               最初からやり直す
             </Button>
           )}
-          {step >= 1 && step <= 5 && (
+          {step >= 1 && step <= 6 && (
             <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${canNext() ? 'cta-glass cta-breathe !py-3.5 !text-base !rounded-2xl' : ''}`}>
               {canNext() ? '次のステップへ →' : (step === 1 ? '教科を選んでください' : step === 3 ? '難易度を選んでください' : '次へ')}
             </Button>
           )}
-          {step === 6 && mode === 'auto' && (
+          {step === 7 && mode === 'auto' && (
             <Button
               onClick={goNext}
               disabled={generating}
@@ -2831,7 +3044,7 @@ export default function UserModePage() {
               )}
             </Button>
           )}
-          {step === 6 && mode === 'manual' && (
+          {step === 7 && mode === 'manual' && (
             <button
               onClick={goNext}
               disabled={promptGenerating}
