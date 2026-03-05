@@ -78,6 +78,67 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Rate Limiting ──────────────────────────────────
+try:
+    from slowapi import Limiter, _rate_limit_exceeded_handler
+    from slowapi.util import get_remote_address
+    from slowapi.errors import RateLimitExceeded
+
+    limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+except ImportError:
+    # slowapi not installed — skip rate limiting
+    limiter = None
+    logger.warning('slowapi not installed; rate limiting disabled')
+
+# ── Auth Middleware (protect non-public routes) ────
+try:
+    from backend.auth import _jwt_verify
+except Exception:
+    try:
+        from auth import _jwt_verify  # type: ignore
+    except Exception:
+        _jwt_verify = None
+
+# Public paths that don't require authentication
+_PUBLIC_PATHS = {
+    '/health', '/api/auth/register', '/api/auth/login', '/api/auth/refresh',
+    '/api/templates', '/api/latex_presets', '/api/fields',
+}
+_PUBLIC_PREFIXES = ('/api/auth/', '/api/generated_pdf/', '/docs', '/openapi.json', '/redoc')
+
+# Auth enforcement is opt-in: set REQUIRE_AUTH=true in production
+_REQUIRE_AUTH = os.environ.get('REQUIRE_AUTH', '').lower() in ('true', '1', 'yes')
+
+if _REQUIRE_AUTH and _jwt_verify:
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.responses import JSONResponse as StarletteJSONResponse
+
+    class AuthMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            path = request.url.path
+            # Allow public paths
+            if path in _PUBLIC_PATHS or any(path.startswith(p) for p in _PUBLIC_PREFIXES):
+                return await call_next(request)
+            # Allow OPTIONS (CORS preflight)
+            if request.method == 'OPTIONS':
+                return await call_next(request)
+            # Check JWT
+            auth_header = request.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                token = auth_header[7:]
+                payload = _jwt_verify(token)
+                if payload:
+                    return await call_next(request)
+            return StarletteJSONResponse(
+                {'detail': '認証が必要です。'},
+                status_code=401,
+            )
+
+    app.add_middleware(AuthMiddleware)
+    logger.info('Auth middleware enabled (REQUIRE_AUTH=true)')
+
 # In-memory store used by several endpoints (keeps session/sample docs in memory).
 # Initialize it to avoid NameError in dev/test environments where DB isn't used.
 STORE: Dict[str, Any] = {}
@@ -111,6 +172,16 @@ try:
     app.include_router(generations_router)
 except Exception:
     pass
+
+try:
+    from backend.auth import router as auth_router
+    app.include_router(auth_router)
+except Exception:
+    try:
+        from auth import router as auth_router  # type: ignore
+        app.include_router(auth_router)
+    except Exception:
+        logger.warning('Auth router could not be loaded')
 
 try:
     from backend.routers.tuning import router as tuning_router
@@ -2663,11 +2734,11 @@ def _build_latex_instructions(subject: str = '', prompt_text: str = '', struct_r
     return ''.join(parts)
 
 
-def _build_groq_system_prompt(subject: str = '', prompt_text: str = '',
-                               preset_instr: str = '',
-                               include_diagram_per_question: bool = False,
-                               custom_request: str = '') -> str:
-    """Groq API 用のシステムプロンプトを科目に応じて構築する。
+def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
+                              preset_instr: str = '',
+                              include_diagram_per_question: bool = False,
+                              custom_request: str = '') -> str:
+    """LLM API 用のシステムプロンプトを科目に応じて構築する。
 
     STEM科目ではスケルトン駆動型（具体例ベース）で安定出力を実現。
     """
@@ -3692,7 +3763,142 @@ def ask(req: AskRequest = Body(...)):
     return {"answer": answer, "contexts": contexts}
 
 
-# ── Groq Cloud LLM → PDF ワンクリック生成 ──────────────────────────
+# ── AI 使用回数制限 ──────────────────────────────────────────────────
+
+def _ensure_usage_table():
+    """usage_limits テーブルを作成する（未作成の場合）。"""
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+        if is_sqlite:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS usage_limits (
+                    user_id TEXT PRIMARY KEY,
+                    generation_count INTEGER DEFAULT 0,
+                    unlocked INTEGER DEFAULT 0,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )
+            """)
+        else:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS usage_limits (
+                    user_id TEXT PRIMARY KEY,
+                    generation_count INTEGER DEFAULT 0,
+                    unlocked BOOLEAN DEFAULT false,
+                    created_at TIMESTAMPTZ DEFAULT now()
+                )
+            """)
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception:
+        logger.exception('Failed to create usage_limits table')
+
+
+# Create table on module load
+_ensure_usage_table()
+
+
+def _get_usage(user_id: str) -> dict:
+    """ユーザーの使用状況を取得する。"""
+    limit = int(os.getenv('AI_GENERATION_LIMIT', '3'))
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute("SELECT generation_count, unlocked FROM usage_limits WHERE user_id = %s", (user_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if row:
+            count, unlocked = row[0], bool(row[1])
+            return {
+                'user_id': user_id,
+                'generation_count': count,
+                'limit': limit,
+                'remaining': max(0, limit - count) if not unlocked else 999,
+                'unlocked': unlocked,
+            }
+        return {
+            'user_id': user_id,
+            'generation_count': 0,
+            'limit': limit,
+            'remaining': limit,
+            'unlocked': False,
+        }
+    except Exception:
+        logger.exception('Failed to get usage')
+        return {'user_id': user_id, 'generation_count': 0, 'limit': limit, 'remaining': limit, 'unlocked': False}
+
+
+def _increment_usage(user_id: str):
+    """使用回数をインクリメントする。"""
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+        if is_sqlite:
+            cur.execute("""
+                INSERT INTO usage_limits (user_id, generation_count) VALUES (%s, 1)
+                ON CONFLICT(user_id) DO UPDATE SET generation_count = generation_count + 1
+            """, (user_id,))
+        else:
+            cur.execute("""
+                INSERT INTO usage_limits (user_id, generation_count) VALUES (%s, 1)
+                ON CONFLICT(user_id) DO UPDATE SET generation_count = usage_limits.generation_count + 1
+            """, (user_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception:
+        logger.exception('Failed to increment usage')
+
+
+@app.get('/api/usage/{user_id}')
+def get_usage(user_id: str):
+    """ユーザーのAI使用状況を取得する。"""
+    return JSONResponse(_get_usage(user_id))
+
+
+class AdminUnlockRequest(BaseModel):
+    password: str
+    user_id: str
+
+
+@app.post('/api/admin/unlock')
+def admin_unlock(req: AdminUnlockRequest = Body(...)):
+    """管理者パスワードでAI使用制限を解除する。"""
+    admin_password = os.getenv('ADMIN_PASSWORD')
+    if not admin_password:
+        return JSONResponse({'error': 'ADMIN_PASSWORD が設定されていません。'}, status_code=500)
+
+    if req.password != admin_password:
+        return JSONResponse({'error': 'パスワードが正しくありません。'}, status_code=403)
+
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+        if is_sqlite:
+            cur.execute("""
+                INSERT INTO usage_limits (user_id, unlocked) VALUES (%s, 1)
+                ON CONFLICT(user_id) DO UPDATE SET unlocked = 1
+            """, (req.user_id,))
+        else:
+            cur.execute("""
+                INSERT INTO usage_limits (user_id, unlocked) VALUES (%s, true)
+                ON CONFLICT(user_id) DO UPDATE SET unlocked = true
+            """, (req.user_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return JSONResponse({'success': True, 'message': 'AI使用制限が解除されました。', 'usage': _get_usage(req.user_id)})
+    except Exception as e:
+        logger.exception('Failed to unlock usage')
+        return JSONResponse({'error': f'解除に失敗しました: {e}'}, status_code=500)
+
+
+# ── OpenAI GPT LLM → PDF ワンクリック生成 ──────────────────────────
 class LlmGenerateRequest(BaseModel):
     prompt: str
     latex_preset: Optional[str] = 'exam'
@@ -3708,22 +3914,34 @@ class LlmGenerateRequest(BaseModel):
     include_diagram_per_question: Optional[bool] = False
     # User custom request (free text, max 200 chars, sanitised)
     custom_request: Optional[str] = None
+    # User ID for usage tracking
+    user_id: Optional[str] = None
 
 
 @app.post('/api/generate_with_llm')
 def generate_with_llm(req: LlmGenerateRequest = Body(...)):
-    """Call Groq Cloud (Llama 3.3 70B) to generate LaTeX from a prompt, then compile to PDF.
+    """Call OpenAI GPT to generate LaTeX from a prompt, then compile to PDF.
 
     Returns JSON with keys: latex (raw LaTeX), pdf_url (if compilation succeeded), error (if any).
     """
-    groq_key = os.getenv('GROQ_API_KEY')
-    if not groq_key:
-        return JSONResponse({'error': 'GROQ_API_KEY が設定されていません。.env に GROQ_API_KEY を追加してください。'}, status_code=500)
+    openai_key = os.getenv('OPENAI_API_KEY')
+    if not openai_key:
+        return JSONResponse({'error': 'OPENAI_API_KEY が設定されていません。.env に OPENAI_API_KEY を追加してください。'}, status_code=500)
 
     if not req.prompt or not req.prompt.strip():
         raise HTTPException(status_code=400, detail='prompt is required')
 
-    groq_model = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
+    # ── AI 使用回数制限チェック ──
+    user_id = req.user_id
+    if user_id:
+        usage_info = _get_usage(user_id)
+        if not usage_info.get('unlocked', False) and usage_info.get('generation_count', 0) >= 3:
+            return JSONResponse({
+                'error': 'AI生成の無料利用回数（3回）に達しました。管理者パスワードで上限を解除してください。',
+                'usage': usage_info,
+            }, status_code=429)
+
+    openai_model = os.getenv('OPENAI_MODEL', 'gpt-5.2')
 
     # Load latex preset to build format-specific system instruction
     preset_id = req.latex_preset or 'exam'
@@ -3732,7 +3950,7 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     preset_instr = preset_data.get('prompt_instruction', '') if preset_data else ''
 
     # Build system instruction for LaTeX generation (subject-aware)
-    system_instruction = _build_groq_system_prompt(
+    system_instruction = _build_llm_system_prompt(
         subject=req.subject or '',
         prompt_text=req.prompt,
         preset_instr=preset_instr,
@@ -3740,7 +3958,7 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         custom_request=req.custom_request or '',
     )
 
-    # Append extra package usage hints so Groq knows what's available
+    # Append extra package usage hints so the LLM knows what's available
     extra_pkgs = req.extra_packages or []
     if extra_pkgs:
         system_instruction += '\n【利用可能な追加パッケージ（プリアンブルに既に追加済み）】\n'
@@ -3758,14 +3976,14 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         if fmt_instr:
             system_instruction += fmt_instr
 
-    # Call Groq Cloud API (OpenAI-compatible)
-    groq_url = 'https://api.groq.com/openai/v1/chat/completions'
+    # Call OpenAI API
+    openai_url = 'https://api.openai.com/v1/chat/completions'
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': f'Bearer {groq_key}',
+        'Authorization': f'Bearer {openai_key}',
     }
-    groq_payload = {
-        'model': groq_model,
+    openai_payload = {
+        'model': openai_model,
         'messages': [
             {'role': 'system', 'content': system_instruction},
             {'role': 'user', 'content': req.prompt},
@@ -3777,17 +3995,17 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     resp = None
     try:
         resp = requests.post(
-            groq_url,
+            openai_url,
             headers=headers,
-            json=groq_payload,
-            timeout=120
+            json=openai_payload,
+            timeout=180
         )
         resp.raise_for_status()
         body = resp.json()
     except requests.exceptions.Timeout:
-        return JSONResponse({'error': 'Groq API がタイムアウトしました。再度お試しください。'}, status_code=504)
+        return JSONResponse({'error': 'OpenAI API がタイムアウトしました。再度お試しください。'}, status_code=504)
     except requests.exceptions.RequestException as e:
-        logger.exception('Groq API call failed')
+        logger.exception('OpenAI API call failed')
         error_detail = str(e)
         try:
             if resp is not None:
@@ -3795,19 +4013,19 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
                 error_detail = error_body.get('error', {}).get('message', str(e))
         except Exception:
             pass
-        return JSONResponse({'error': f'Groq API エラー: {error_detail}'}, status_code=502)
+        return JSONResponse({'error': f'OpenAI API エラー: {error_detail}'}, status_code=502)
 
-    # Extract text from Groq response (OpenAI format)
+    # Extract text from OpenAI response
     try:
         choices = body.get('choices', [])
         if not choices:
-            return JSONResponse({'error': 'Groq からの応答が空です', 'raw': body}, status_code=500)
+            return JSONResponse({'error': 'OpenAI からの応答が空です', 'raw': body}, status_code=500)
         raw_text = choices[0].get('message', {}).get('content', '').strip()
     except Exception as e:
-        return JSONResponse({'error': f'Groq レスポンスの解析に失敗: {e}', 'raw': body}, status_code=500)
+        return JSONResponse({'error': f'OpenAI レスポンスの解析に失敗: {e}', 'raw': body}, status_code=500)
 
     if not raw_text:
-        return JSONResponse({'error': 'Groq からのテキスト出力が空です'}, status_code=500)
+        return JSONResponse({'error': 'OpenAI からのテキスト出力が空です'}, status_code=500)
 
     # Strip markdown code fences if present
     latex_text = raw_text
@@ -3870,11 +4088,15 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         logger.exception('Internal PDF generation failed')
         pdf_data = {'error': f'PDF 生成失敗: {e}'}
 
+    # Increment usage count after successful generation
+    if user_id:
+        _increment_usage(user_id)
+
     result = {
         'latex': latex_text,
         'pdf_url': pdf_data.get('pdf_url'),
         'pdf_error': pdf_data.get('error'),
-        'model': groq_model,
+        'model': openai_model,
     }
     return JSONResponse(result)
 

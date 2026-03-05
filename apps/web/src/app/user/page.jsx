@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, fetchUsage, adminUnlock } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -17,8 +17,8 @@ import {
 import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
 import { LatexText } from '@/components/LatexRenderer';
 
-/* ── ウィザードステップ定義 ── */
-const STEPS = ['出題パターン', '詳細設定', 'レイアウト・図表', '生成', '完成'];
+/* ── ウィザードステップ定義（8ステップに細分化） ── */
+const STEPS = ['教科', '分野', '難易度・問題数', '出力形式', 'オプション', '確認', '生成', '完成'];
 
 /* ── 各図表タイプのASCIIアートプレビュー ── */
 const PACKAGE_ILLUSTRATIONS = {
@@ -296,6 +296,37 @@ export default function UserModePage() {
     }
   }, [groupedTemplates]);
 
+  /* ── AI使用回数制限 ── */
+  const [userId] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    let id = localStorage.getItem('rem_user_id');
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem('rem_user_id', id); }
+    return id;
+  });
+  const [usage, setUsage] = useState({ generation_count: 0, limit: 3, remaining: 3, unlocked: false });
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [unlockPassword, setUnlockPassword] = useState('');
+  const [unlockError, setUnlockError] = useState('');
+
+  // 使用状況取得
+  useEffect(() => {
+    if (!userId) return;
+    fetchUsage(userId).then(setUsage).catch(() => {});
+  }, [userId]);
+
+  const handleAdminUnlock = async () => {
+    setUnlockError('');
+    try {
+      const res = await adminUnlock(userId, unlockPassword);
+      if (res.usage) setUsage(res.usage);
+      setShowUnlockModal(false);
+      setUnlockPassword('');
+      setStatus('AI使用制限が解除されました');
+    } catch (e) {
+      setUnlockError(e.message || 'パスワードが正しくありません');
+    }
+  };
+
   /* ── ウィザード状態 ── */
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState('');
@@ -497,16 +528,21 @@ export default function UserModePage() {
 
   const selectedTemplate = templates.find((t) => t.id === templateId) || null;
 
-  /* ── AI自動生成: プロンプト→Groq→LaTeX→PDF ── */
+  /* ── AI自動生成: プロンプト→OpenAI→LaTeX→PDF ── */
   const handleAutoGenerate = async () => {
     if (!templateId) {
       setStatus('出題パターンを選んでください');
       return;
     }
+    // 使用回数チェック
+    if (!usage.unlocked && usage.remaining <= 0) {
+      setShowUnlockModal(true);
+      return;
+    }
     setGenerating(true);
     setGeneratedLatex('');
     setPdfUrl('');
-    setStep(4);
+    setStep(7);
 
     setStatus('ステップ 1/3: AIへの指示文を作成中...');
     let generatedPrompt = '';
@@ -569,6 +605,7 @@ export default function UserModePage() {
         sub_topic: theme || '',
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         custom_request: customRequest.trim() || undefined,
+        user_id: userId,
       });
 
       if (data?.error) {
@@ -586,17 +623,26 @@ export default function UserModePage() {
         setPdfUrl(data.pdf_url);
         window.open(data.pdf_url, '_blank');
         setStatus('PDF を生成・表示しました');
-        setStep(5);
+        setStep(8);
       } else if (data?.pdf_error) {
         setStatus(`問題の生成は成功 / PDF 変換失敗: ${data.pdf_error}`);
-        setStep(5);
+        setStep(8);
       } else {
         setStatus('問題の生成完了（PDF エンジン未設定）');
-        setStep(5);
+        setStep(8);
       }
     } catch (e) {
-      setStatus(`生成エラー: ${e.message}`);
+      // 429 = 使用回数上限
+      if (e.data?.usage || e.message?.includes('無料利用回数')) {
+        if (e.data?.usage) setUsage(e.data.usage);
+        setShowUnlockModal(true);
+        setStatus('AI生成の無料利用回数に達しました');
+      } else {
+        setStatus(`生成エラー: ${e.message}`);
+      }
     }
+    // 使用状況を更新
+    if (userId) fetchUsage(userId).then(setUsage).catch(() => {});
     setGenerating(false);
   };
 
@@ -659,7 +705,7 @@ export default function UserModePage() {
           : '指示文をクリップボードにコピーしました'
       );
       setPromptGenerating(false);
-      setStep(5);
+      setStep(8);
     } catch (e) {
       setStatus(`エラー: ${e.message}`);
       setPromptGenerating(false);
@@ -694,25 +740,66 @@ export default function UserModePage() {
 
   /* ── 次/前ステップ ── */
   const canNext = () => {
-    if (step === 1) return !!templateId;
-    if (step === 2) return true;
-    if (step === 3) return true;
+    if (step === 1) return !!subject;          // 教科選択
+    if (step === 2) return true;                // 分野（任意）
+    if (step === 3) return !!difficulty;         // 難易度
+    if (step === 4) return true;                // 出力形式
+    if (step === 5) return true;                // オプション
+    if (step === 6) return !!templateId;         // 確認
     return false;
   };
 
   const goNext = () => {
-    if (step === 3 && mode === 'auto') {
-      handleAutoGenerate();
-    } else if (step === 3 && mode === 'manual') {
-      generatePrompt();
+    // Step 6（確認）で「生成」を実行
+    if (step === 6 && mode === 'auto') {
+      // テンプレートが無ければ自動作成
+      if (!templateId) {
+        const id = buildTemplateId(subject, field);
+        const f = field;
+        const label = f ? `${subject}（${f}）` : subject;
+        createTemplate({
+          id,
+          name: `${label} 出題パターン`,
+          description: `${label} の問題を生成する出題パターン`,
+          prompt: buildTemplatePrompt(subject, f, { theme }),
+          metadata: { subject, field: f || null, theme: theme || null, subtopic: theme || null, difficulty, auto_generated: true },
+        }).then(() => {
+          setTemplateId(id);
+          refresh().then(() => handleAutoGenerate());
+        }).catch(() => {
+          setStatus('テンプレート作成に失敗しました');
+        });
+      } else {
+        handleAutoGenerate();
+      }
+    } else if (step === 6 && mode === 'manual') {
+      if (!templateId) {
+        const id = buildTemplateId(subject, field);
+        const f = field;
+        const label = f ? `${subject}（${f}）` : subject;
+        createTemplate({
+          id,
+          name: `${label} 出題パターン`,
+          description: `${label} の問題を生成する出題パターン`,
+          prompt: buildTemplatePrompt(subject, f, { theme }),
+          metadata: { subject, field: f || null, theme: theme || null, subtopic: theme || null, difficulty, auto_generated: true },
+        }).then(() => {
+          setTemplateId(id);
+          refresh().then(() => generatePrompt());
+        }).catch(() => {
+          setStatus('テンプレート作成に失敗しました');
+        });
+      } else {
+        generatePrompt();
+      }
     } else if (canNext()) {
       setStep(step + 1);
     }
   };
 
   const goBack = () => {
-    if (step > 1 && step < 4) setStep(step - 1);
-    if (step === 5) setStep(3);
+    if (step > 1 && step <= 6) setStep(step - 1);
+    if (step === 8) setStep(6);
   };
 
   const resetWizard = () => {
@@ -796,8 +883,68 @@ export default function UserModePage() {
 
       <StatusBar message={status} />
 
+      {/* ── AI使用回数バッジ ── */}
+      {userId && (
+        <div className="flex items-center justify-end mb-3 gap-2">
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold ${
+            usage.unlocked
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : usage.remaining > 0
+                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                : 'bg-red-50 text-red-600 border border-red-200'
+          }`}>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            {usage.unlocked ? '無制限' : `残り ${usage.remaining}/${usage.limit} 回`}
+          </div>
+          {!usage.unlocked && (
+            <button
+              onClick={() => setShowUnlockModal(true)}
+              className="text-[11px] text-[#64748b] hover:text-[#2563eb] underline underline-offset-2 transition-colors"
+            >
+              上限解除
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── 管理者パスワード解除モーダル ── */}
+      {showUnlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowUnlockModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-[90vw] max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-[18px] font-bold text-[#1e293b] mb-2">AI使用制限の解除</h3>
+            <p className="text-[13px] text-[#64748b] mb-4">管理者パスワードを入力して、AI生成の回数制限を解除してください。</p>
+            <input
+              type="password"
+              value={unlockPassword}
+              onChange={e => setUnlockPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAdminUnlock()}
+              placeholder="管理者パスワード"
+              className="w-full px-4 py-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb] mb-3"
+              autoFocus
+            />
+            {unlockError && <p className="text-[12px] text-red-500 mb-3">{unlockError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowUnlockModal(false); setUnlockPassword(''); setUnlockError(''); }}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#f1f5f9] transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleAdminUnlock}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1e40af] transition-colors"
+              >
+                解除する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
-      {step <= 3 && (
+      {step <= 6 && (
         <div className="wizard-guide mb-5">
           <div className="flex items-center gap-3 px-5 py-4 relative z-10">
             <div className="step-orb w-9 h-9 text-white text-[13px] font-bold flex-shrink-0">
@@ -805,22 +952,460 @@ export default function UserModePage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-[#1e293b] leading-snug">
-                {step === 1 && (templateId ? '出題パターンを選びました — 次のステップへ進めます' : 'まず、作りたい問題のパターンを選んでください')}
-                {step === 2 && '問題数や参照数はそのままでもOK。お好みで調整してください'}
-                {step === 3 && (mode === 'auto' ? 'PDFの見た目を選んだら「PDF を生成」で完成！' : 'レイアウトを選んだら「指示文を作成」で次へ')}
+                {step === 1 && '作りたい問題の教科を選んでください'}
+                {step === 2 && '分野を選択してください（任意）'}
+                {step === 3 && '難易度と問題数を設定してください'}
+                {step === 4 && 'PDFの出力形式を選んでください'}
+                {step === 5 && '問題形式や図表など、オプションを設定してください（全て任意）'}
+                {step === 6 && (mode === 'auto' ? '設定を確認したら「PDF を生成」で完成！' : '設定を確認したら「指示文を作成」で次へ')}
               </p>
               <p className="text-[11px] text-[#94a3b8] mt-0.5">
                 ステップ {step} / {STEPS.length}
-                {step === 1 && !templateId && ' — 下のカードをタップするだけ'}
-                {step === 1 && templateId && ' — 右下の「次のステップへ」をタップ'}
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* ═══════ Step 1: 出題パターン選択 ═══════ */}
+      {/* ═══════ Step 1: 教科選択 ═══════ */}
       {step === 1 && (
+        <div className="space-y-5 wizard-section-enter">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="icon-glossy w-10 h-10 text-white">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">教科を選んでください</h3>
+                  <p className="text-[11px] text-[#64748b]">作りたい問題の教科をタップしてください</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {SUBJECTS.map((subj) => {
+                  const sc = getSubjectColor(subj);
+                  const active = subject === subj;
+                  return (
+                    <button
+                      key={subj}
+                      onClick={() => {
+                        setSubject(subj);
+                        setField('');
+                        setTheme('');
+                        // テンプレートを自動検索
+                        const matchingTpl = templates.find(t => t.metadata?.subject === subj);
+                        if (matchingTpl) {
+                          setTemplateId(matchingTpl.id);
+                        }
+                      }}
+                      className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 active:scale-[0.96] ${
+                        active
+                          ? `border-[${sc.light}] bg-gradient-to-b from-white to-[${sc.light}]/5 shadow-md`
+                          : 'border-transparent bg-[#f8fafc] hover:bg-white hover:shadow-sm hover:border-blue-100'
+                      }`}
+                    >
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                        active ? `bg-gradient-to-br ${sc.bg} text-white shadow-lg` : `${sc.bgLight} ${sc.text}`
+                      }`}>
+                        <SubjectIcon type={subj} className="w-5 h-5" />
+                      </div>
+                      <span className={`text-[13px] font-bold transition-colors ${active ? 'text-[#1e293b]' : 'text-[#64748b]'}`}>{subj}</span>
+                      {active && (
+                        <div className="absolute top-2 right-2">
+                          <div className="w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ Step 2: 分野選択 ═══════ */}
+      {step === 2 && (
+        <div className="space-y-5 wizard-section-enter">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="icon-glossy w-10 h-10 text-white">
+                  <SubjectIcon type={subject} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">{subject} の分野を選択</h3>
+                  <p className="text-[11px] text-[#64748b]">特定の分野に絞りたい場合に選択してください（任意）</p>
+                </div>
+              </div>
+              {SUBJECT_TOPICS[subject]?.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => { setField(''); }}
+                    className={`px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-300 active:scale-[0.96] ${
+                      !field
+                        ? 'bg-[#2563eb] text-white shadow-md'
+                        : 'bg-[#f0f4ff] text-[#64748b] hover:bg-blue-50 border border-blue-200/60'
+                    }`}
+                  >
+                    すべての分野
+                  </button>
+                  {SUBJECT_TOPICS[subject].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => {
+                        setField(f);
+                        // テンプレート自動マッチ
+                        const matchingTpl = templates.find(t => t.metadata?.subject === subject && t.metadata?.field === f);
+                        if (matchingTpl) setTemplateId(matchingTpl.id);
+                      }}
+                      className={`px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all duration-300 active:scale-[0.96] ${
+                        field === f
+                          ? 'bg-[#2563eb] text-white shadow-md'
+                          : 'bg-[#f0f4ff] text-[#64748b] hover:bg-blue-50 border border-blue-200/60'
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[13px] text-[#94a3b8] py-4 text-center">この教科の分野一覧はまだ登録されていません。そのまま次へ進めます。</p>
+              )}
+              {/* テーマ入力 */}
+              <div className="mt-4">
+                <label className="text-[12px] font-bold text-[#64748b] mb-1.5 block">テーマ・単元（任意）</label>
+                <input
+                  type="text"
+                  value={theme}
+                  onChange={e => setTheme(e.target.value)}
+                  placeholder="例: 二次関数、力学、関係代名詞 ..."
+                  className="w-full px-4 py-3 text-[13px] border border-blue-200/60 bg-[#f0f4ff] rounded-2xl
+                    focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20
+                    placeholder:text-[#94a3b8] transition-all hover:border-blue-300/60"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ Step 3: 難易度・問題数 ═══════ */}
+      {step === 3 && (
+        <div className="space-y-5 wizard-section-enter">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="icon-glossy w-10 h-10 text-white">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">難易度と問題数</h3>
+                  <p className="text-[11px] text-[#64748b]">問題のレベルと生成する数を設定してください</p>
+                </div>
+              </div>
+
+              {/* 難易度 */}
+              <div className="mb-5">
+                <label className="text-[12px] font-bold text-[#64748b] mb-2 block">難易度</label>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {DIFFICULTIES.map((d) => {
+                    const active = difficulty === d.label;
+                    return (
+                      <button
+                        key={d.label}
+                        onClick={() => setDifficulty(d.label)}
+                        className={`px-3 py-3 rounded-xl text-center transition-all duration-300 active:scale-[0.96] ${
+                          active
+                            ? 'bg-[#2563eb] text-white shadow-md font-bold'
+                            : 'bg-[#f0f4ff] text-[#64748b] hover:bg-blue-50 border border-blue-200/60 font-semibold'
+                        }`}
+                      >
+                        <div className="text-[13px]">{d.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 問題数 */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={10} />
+                </div>
+                <div>
+                  <NumberField label="参照する過去問数" value={topK} onChange={setTopK} min={1} max={20} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ Step 4: 出力形式 ═══════ */}
+      {step === 4 && (
+        <div className="space-y-5 wizard-section-enter">
+          {/* PDF形式カード - 既存Step3のPDF部分を再利用 */}
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="icon-glossy w-10 h-10 text-white">
+                  <Icons.Pdf className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">PDF の見た目を選ぶ</h3>
+                  <p className="text-[11px] text-[#64748b]">完成するPDFの形式を選んでください</p>
+                </div>
+              </div>
+              {latexPresets.length === 0 ? (
+                <div className="text-center py-8 text-[#64748b]">
+                  <Icons.Empty className="mx-auto mb-2" />
+                  <p className="text-sm">形式を読み込み中...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {latexPresets.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setLatexPreset(p.id)}
+                      className={`selection-card !p-0 text-left ${latexPreset === p.id ? 'active card-select-ripple' : ''}`}
+                    >
+                      <PresetThumbnail id={p.id} active={latexPreset === p.id} />
+                      <div className="px-4 py-3 relative z-10">
+                        <div className="flex items-center gap-2">
+                          {latexPreset === p.id && (
+                            <div className="check-circle checked !w-5 !h-5">
+                              <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="text-sm font-bold text-[#1e293b]">{p.name}</div>
+                        </div>
+                        <div className="text-[10px] text-[#64748b] mt-0.5 leading-tight">{p.description}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 生成方法カード */}
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="icon-glossy w-10 h-10 text-white">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">生成方法</h3>
+                  <p className="text-[11px] text-[#64748b]">自動生成 or 手動で指示文を使う</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  onClick={() => setMode('auto')}
+                  className={`selection-card text-left ${mode === 'auto' ? 'active' : ''}`}
+                >
+                  <div className="relative z-10 flex items-start gap-3">
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300 ${
+                      mode === 'auto' ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50/60 text-[#64748b]'
+                    }`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-[#1e293b]">AI 自動生成</div>
+                      <div className="text-[11px] text-[#64748b] mt-0.5">ワンクリックで PDF まで自動作成</div>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setMode('manual')}
+                  className={`selection-card text-left ${mode === 'manual' ? 'active' : ''}`}
+                >
+                  <div className="relative z-10 flex items-start gap-3">
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300 ${
+                      mode === 'manual' ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50/60 text-[#64748b]'
+                    }`}>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm font-bold text-[#1e293b]">手動</div>
+                      <div className="text-[11px] text-[#64748b] mt-0.5">AIへの指示文を取得して自分で送る</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ Step 5: オプション ═══════ */}
+      {step === 5 && (
+        <div className="space-y-5 wizard-section-enter">
+          {/* 問題形式 */}
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="icon-glossy w-8 h-8">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12M8.25 17.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[13px] font-bold text-[#1e293b] tracking-tight">問題形式</h3>
+                  <p className="text-[10px] text-[#64748b]">任意 — 未選択なら記述式になります</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {QUESTION_FORMATS.map((fmt) => {
+                  const active = questionFormat === fmt.value;
+                  return (
+                    <button
+                      key={fmt.value}
+                      onClick={() => setQuestionFormat(fmt.value)}
+                      className={`px-3 py-2.5 rounded-xl text-left transition-all duration-300 active:scale-[0.97] ${
+                        active ? 'bg-blue-50/60 border-2 border-[#2563eb]/30' : 'bg-[#f8fafc] border-2 border-transparent hover:border-blue-100'
+                      }`}
+                    >
+                      <div className="text-[12px] font-bold text-[#1e293b]">{fmt.label}</div>
+                      <div className="text-[10px] text-[#64748b] mt-0.5">{fmt.description}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* カスタム要望 */}
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="icon-glossy w-8 h-8">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[13px] font-bold text-[#1e293b] tracking-tight">カスタム要望</h3>
+                  <p className="text-[10px] text-[#64748b]">任意 — 問題の内容・形式についての要望を自由に記入</p>
+                </div>
+              </div>
+              <textarea
+                value={customRequest}
+                onChange={(e) => { if (e.target.value.length <= CUSTOM_REQUEST_MAX_LENGTH) setCustomRequest(e.target.value); }}
+                placeholder="例: 数値ではなく文字式で出題してほしい ..."
+                rows={3}
+                maxLength={CUSTOM_REQUEST_MAX_LENGTH}
+                className="w-full px-4 py-3 text-[13px] leading-relaxed border border-blue-200/60 bg-[#f0f4ff] rounded-2xl
+                  focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20
+                  placeholder:text-[#94a3b8] transition-all resize-none"
+              />
+              <div className="text-right mt-1">
+                <span className="text-[10px] text-[#94a3b8]">{customRequest.length} / {CUSTOM_REQUEST_MAX_LENGTH}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ Step 6: 確認 ═══════ */}
+      {step === 6 && (
+        <div className="space-y-5 wizard-section-enter">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="icon-glossy w-10 h-10 text-white" style={{ background: 'linear-gradient(145deg, #38d260 0%, #248a3d 100%)' }}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">設定を確認</h3>
+                  <p className="text-[11px] text-[#64748b]">以下の内容でAIが問題を生成します</p>
+                </div>
+              </div>
+              <div className="space-y-2.5 bg-[#f8fafc] rounded-2xl p-4 border border-[#e2e8f0]">
+                <div className="flex justify-between items-center">
+                  <span className="text-[12px] text-[#64748b] font-medium">教科</span>
+                  <span className="text-[13px] font-bold text-[#1e293b]">{subject || '未選択'}</span>
+                </div>
+                <div className="h-px bg-[#e2e8f0]" />
+                <div className="flex justify-between items-center">
+                  <span className="text-[12px] text-[#64748b] font-medium">分野</span>
+                  <span className="text-[13px] font-bold text-[#1e293b]">{field || 'すべて'}</span>
+                </div>
+                {theme && (
+                  <>
+                    <div className="h-px bg-[#e2e8f0]" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-[12px] text-[#64748b] font-medium">テーマ</span>
+                      <span className="text-[13px] font-bold text-[#1e293b]">{theme}</span>
+                    </div>
+                  </>
+                )}
+                <div className="h-px bg-[#e2e8f0]" />
+                <div className="flex justify-between items-center">
+                  <span className="text-[12px] text-[#64748b] font-medium">難易度</span>
+                  <span className="text-[13px] font-bold text-[#1e293b]">{difficulty}</span>
+                </div>
+                <div className="h-px bg-[#e2e8f0]" />
+                <div className="flex justify-between items-center">
+                  <span className="text-[12px] text-[#64748b] font-medium">問題数</span>
+                  <span className="text-[13px] font-bold text-[#1e293b]">{numQuestions}問</span>
+                </div>
+                <div className="h-px bg-[#e2e8f0]" />
+                <div className="flex justify-between items-center">
+                  <span className="text-[12px] text-[#64748b] font-medium">出力形式</span>
+                  <span className="text-[13px] font-bold text-[#1e293b]">{selectedPreset?.name || latexPreset}</span>
+                </div>
+                <div className="h-px bg-[#e2e8f0]" />
+                <div className="flex justify-between items-center">
+                  <span className="text-[12px] text-[#64748b] font-medium">生成方法</span>
+                  <span className="text-[13px] font-bold text-[#1e293b]">{mode === 'auto' ? 'AI自動生成' : '手動'}</span>
+                </div>
+                {questionFormat !== 'standard' && (
+                  <>
+                    <div className="h-px bg-[#e2e8f0]" />
+                    <div className="flex justify-between items-center">
+                      <span className="text-[12px] text-[#64748b] font-medium">問題形式</span>
+                      <span className="text-[13px] font-bold text-[#1e293b]">{QUESTION_FORMATS.find(f => f.value === questionFormat)?.label}</span>
+                    </div>
+                  </>
+                )}
+                {customRequest.trim() && (
+                  <>
+                    <div className="h-px bg-[#e2e8f0]" />
+                    <div>
+                      <span className="text-[12px] text-[#64748b] font-medium block mb-1">カスタム要望</span>
+                      <span className="text-[12px] text-[#1e293b]">{customRequest}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ (Legacy) Step 1: 出題パターン選択 — hidden, used for template data ═══════ */}
+      {false && (
         <SectionCard title="出題パターンを選ぶ" icon={<Icons.File />} className="wizard-section-enter">
           <p className="text-xs text-[#64748b] mb-4">
             どんな問題を作りたいですか？科目・分野・レベルが設定済みのパターンから選ぶだけでOKです。
@@ -1102,8 +1687,8 @@ export default function UserModePage() {
         </SectionCard>
       )}
 
-      {/* ═══════ Step 2: 設定 ═══════ */}
-      {step === 2 && (
+      {/* ═══════ (Legacy) Step 2: 設定 — hidden ═══════ */}
+      {false && (
         <div className="space-y-6 wizard-section-enter">
             {/* 選択中テンプレート表示（科目・分野・難易度もここに表示） */}
             {selectedTemplate && (() => {
@@ -1519,8 +2104,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 3: PDF形式選択 ═══════ */}
-      {step === 3 && (
+      {/* ═══════ (Legacy) Step 3: PDF形式選択 — hidden ═══════ */}
+      {false && (
         <div className="space-y-6 wizard-section-enter">
           {/* 選択中テンプレート情報 */}
           {selectedTemplate && (
@@ -1926,8 +2511,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 4: 生成中 ═══════ */}
-      {step === 4 && generating && (
+      {/* ═══════ Step 7: 生成中 ═══════ */}
+      {step === 7 && generating && (
         <div className="wizard-section-enter">
           <div className="card-glossy generating-glow">
             <div className="flex flex-col items-center justify-center py-24 px-8 relative z-10">
@@ -1950,8 +2535,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 5: 結果表示 ═══════ */}
-      {step === 5 && (
+      {/* ═══════ Step 8: 結果表示 ═══════ */}
+      {step === 8 && (
         <div className="space-y-6 wizard-section-enter">
           {/* RAG フィードバックカード */}
           {renderContext && (
@@ -2202,38 +2787,33 @@ export default function UserModePage() {
       {/* ═══════ ナビゲーションボタン ═══════ */}
       <div ref={nextActionRef} className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-8 sm:mt-10 mb-4 sm:mb-0 nav-glow-in">
         <div>
-          {step > 1 && step < 4 && (
+          {step > 1 && step <= 6 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
               ← 戻る
             </Button>
           )}
-          {step === 5 && (
+          {step === 8 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
-              ← レイアウトを変更
+              ← 設定を変更
             </Button>
           )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {step === 5 && (
+          {step === 8 && (
             <Button variant="ghost" onClick={resetWizard} className="w-full sm:w-auto">
               最初からやり直す
             </Button>
           )}
-          {step === 1 && !showCreateTemplate && (
+          {step >= 1 && step <= 5 && (
             <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${canNext() ? 'cta-glass cta-breathe !py-3.5 !text-base !rounded-2xl' : ''}`}>
-              {canNext() ? '次のステップへ →' : 'パターンを選んでください'}
+              {canNext() ? '次のステップへ →' : (step === 1 ? '教科を選んでください' : step === 3 ? '難易度を選んでください' : '次へ')}
             </Button>
           )}
-          {step === 2 && (
-            <Button onClick={goNext} className="w-full sm:w-auto cta-glass cta-breathe !py-3.5 !text-base !rounded-2xl">
-              次のステップへ →
-            </Button>
-          )}
-          {step === 3 && mode === 'auto' && (
+          {step === 6 && mode === 'auto' && (
             <Button
               onClick={goNext}
-              disabled={!templateId || generating}
+              disabled={generating}
               className={`w-full sm:w-auto px-6 py-3 !text-base !rounded-2xl ${!generating ? 'cta-glass cta-breathe' : ''}`}
             >
               {generating ? (
@@ -2251,11 +2831,11 @@ export default function UserModePage() {
               )}
             </Button>
           )}
-          {step === 3 && mode === 'manual' && (
+          {step === 6 && mode === 'manual' && (
             <button
               onClick={goNext}
-              disabled={!templateId || promptGenerating}
-              className={`manual-generate-btn ${!promptGenerating && templateId ? 'cta-breathe' : ''}`}
+              disabled={promptGenerating}
+              className={`manual-generate-btn ${!promptGenerating ? 'cta-breathe' : ''}`}
             >
               {promptGenerating ? (
                 <span className="flex items-center justify-center gap-2.5">

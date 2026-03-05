@@ -6,13 +6,21 @@
 - 値は全てパラメータバインド（SQLインジェクション防止）
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from backend.db import connect_db
 import json
 import logging
+
+try:
+    from backend.auth import optional_current_user
+except Exception:
+    try:
+        from auth import optional_current_user  # type: ignore
+    except Exception:
+        optional_current_user = None
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +116,16 @@ def _validate_table(table: str):
         raise HTTPException(status_code=400, detail=f"table '{table}' is not allowed")
 
 
+def _extract_org_id(request: Request) -> Optional[str]:
+    """Extract org_id from JWT if available. Returns None for unauthenticated requests."""
+    if optional_current_user is None:
+        return None
+    user = optional_current_user(request)
+    if user and user.get('org_id'):
+        return user['org_id']
+    return None
+
+
 def _valid_column_names(conn, table: str) -> set:
     return {c["name"] for c in _get_columns(conn, table)}
 
@@ -146,6 +164,7 @@ def get_table_schema(table: str):
 
 @router.get("/{table}/rows")
 def list_rows(
+    request: Request,
     table: str,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
@@ -155,11 +174,20 @@ def list_rows(
 ):
     """ページネーション付き行取得"""
     _validate_table(table)
+    org_id = _extract_org_id(request)
     conn = connect_db()
     try:
         valid_cols = _valid_column_names(conn, table)
         pk = ALLOWED_TABLES[table]["pk"]
         cur = conn.cursor()
+
+        # org_id フィルタ（テナント分離）
+        has_org_col = "org_id" in valid_cols
+        org_filter = ""
+        org_params = []
+        if org_id and has_org_col:
+            org_filter = "org_id = %s"
+            org_params = [org_id]
 
         # LIKE 演算子をDB種別で切り替え
         like_op = "LIKE" if _is_sqlite(conn) else "ILIKE"
@@ -179,20 +207,31 @@ def list_rows(
                         clause_parts.append(f"{c}::text {like_op} %s")
                     else:
                         clause_parts.append(f"{c} {like_op} %s")
-                where_clauses = " OR ".join(clause_parts)
+                where_clauses = "(" + " OR ".join(clause_parts) + ")"
                 search_params = [f"%{search}%" for _ in text_cols]
+                if org_filter:
+                    where_clauses = f"{org_filter} AND {where_clauses}"
+                    search_params = org_params + search_params
                 cur.execute(
                     f"SELECT COUNT(*) FROM {table} WHERE {where_clauses}",
                     search_params,
                 )
             else:
-                cur.execute(f"SELECT COUNT(*) FROM {table}")
+                if org_filter:
+                    cur.execute(f"SELECT COUNT(*) FROM {table} WHERE {org_filter}", org_params)
+                else:
+                    cur.execute(f"SELECT COUNT(*) FROM {table}")
                 search_params = []
                 where_clauses = None
         else:
-            cur.execute(f"SELECT COUNT(*) FROM {table}")
-            where_clauses = None
-            search_params = []
+            if org_filter:
+                cur.execute(f"SELECT COUNT(*) FROM {table} WHERE {org_filter}", org_params)
+                where_clauses = org_filter
+                search_params = list(org_params)
+            else:
+                cur.execute(f"SELECT COUNT(*) FROM {table}")
+                where_clauses = None
+                search_params = []
 
         total = cur.fetchone()[0]
 
@@ -262,12 +301,13 @@ class RowUpdateRequest(BaseModel):
 
 
 @router.put("/{table}/rows/{row_id}")
-def update_row(table: str, row_id: str, payload: RowUpdateRequest):
+def update_row(request: Request, table: str, row_id: str, payload: RowUpdateRequest):
     """行更新（変更カラムのみ送信）"""
     _validate_table(table)
     if not payload.data:
         raise HTTPException(status_code=400, detail="no data to update")
 
+    org_id = _extract_org_id(request)
     conn = connect_db()
     try:
         valid_cols = _valid_column_names(conn, table)
@@ -295,7 +335,12 @@ def update_row(table: str, row_id: str, payload: RowUpdateRequest):
         pk_val = int(row_id) if pk_type == "int" else row_id
         params.append(pk_val)
 
-        sql = f"UPDATE {table} SET {', '.join(set_clauses)} WHERE {pk} = %s"
+        where = f"{pk} = %s"
+        if org_id and "org_id" in valid_cols:
+            where += " AND org_id = %s"
+            params.append(org_id)
+
+        sql = f"UPDATE {table} SET {', '.join(set_clauses)} WHERE {where}"
         cur = conn.cursor()
         cur.execute(sql, params)
         conn.commit()
@@ -322,18 +367,22 @@ class RowCreateRequest(BaseModel):
 
 
 @router.post("/{table}/rows")
-def create_row(table: str, payload: RowCreateRequest):
+def create_row(request: Request, table: str, payload: RowCreateRequest):
     """新規行追加"""
     _validate_table(table)
     if not payload.data:
         raise HTTPException(status_code=400, detail="no data to insert")
 
+    org_id = _extract_org_id(request)
     conn = connect_db()
     try:
         valid_cols = _valid_column_names(conn, table)
         pk = ALLOWED_TABLES[table]["pk"]
 
         insert_data = {k: v for k, v in payload.data.items() if k in valid_cols}
+        # Auto-inject org_id for tenant isolation
+        if org_id and "org_id" in valid_cols:
+            insert_data["org_id"] = org_id
         if not insert_data:
             raise HTTPException(status_code=400, detail="no valid columns to insert")
 
@@ -382,17 +431,25 @@ def create_row(table: str, payload: RowCreateRequest):
 
 
 @router.delete("/{table}/rows/{row_id}")
-def delete_row(table: str, row_id: str):
+def delete_row(request: Request, table: str, row_id: str):
     """行削除"""
     _validate_table(table)
+    org_id = _extract_org_id(request)
     conn = connect_db()
     try:
+        valid_cols = _valid_column_names(conn, table)
         pk = ALLOWED_TABLES[table]["pk"]
         pk_type = ALLOWED_TABLES[table]["pk_type"]
         pk_val = int(row_id) if pk_type == "int" else row_id
 
+        where = f"{pk} = %s"
+        params = [pk_val]
+        if org_id and "org_id" in valid_cols:
+            where += " AND org_id = %s"
+            params.append(org_id)
+
         cur = conn.cursor()
-        cur.execute(f"DELETE FROM {table} WHERE {pk} = %s", (pk_val,))
+        cur.execute(f"DELETE FROM {table} WHERE {where}", params)
         conn.commit()
         cur.close()
 
@@ -557,7 +614,7 @@ class SmartCreateRequest(BaseModel):
 
 
 @router.post("/{table}/smart-create")
-def smart_create_row(table: str, payload: SmartCreateRequest):
+def smart_create_row(request: Request, table: str, payload: SmartCreateRequest):
     """行挿入 + 難易度自動計算。
 
     auto_difficulty=True の場合、stem が含まれていれば難易度を自動計算して
@@ -568,6 +625,11 @@ def smart_create_row(table: str, payload: SmartCreateRequest):
         raise HTTPException(status_code=400, detail="no data to insert")
 
     data = dict(payload.data)
+
+    # Auto-inject org_id for tenant isolation
+    org_id = _extract_org_id(request)
+    if org_id:
+        data["org_id"] = org_id
 
     # 自動難易度計算
     difficulty_result = None

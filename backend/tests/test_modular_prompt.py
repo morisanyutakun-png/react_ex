@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for the refactored modular prompt system.
-   
+
 Uses exec() to extract only the needed functions from main.py
 without triggering heavy imports like sklearn/scipy.
 """
@@ -30,7 +30,7 @@ if start_idx == -1 or end_idx == -1:
     sys.exit(1)
 
 code_block = source[start_idx:end_idx]
-# Also need _sanitise_custom_request for _build_groq_system_prompt
+# Also need _sanitise_custom_request for _build_llm_system_prompt
 sanitise_marker = 'def _sanitise_custom_request'
 sanitise_idx = source.find(sanitise_marker)
 if sanitise_idx != -1:
@@ -42,7 +42,7 @@ exec(code_block, namespace)
 
 _is_stem_subject = namespace['_is_stem_subject']
 _build_latex_instructions = namespace['_build_latex_instructions']
-_build_groq_system_prompt = namespace['_build_groq_system_prompt']
+_build_llm_system_prompt = namespace['_build_llm_system_prompt']
 
 def test_subject_classification():
     """Test _is_stem_subject correctly classifies subjects."""
@@ -110,25 +110,25 @@ def test_build_latex_instructions_with_preset():
     print('  [PASS] test_build_latex_instructions_with_preset')
 
 
-def test_build_groq_system_prompt_stem():
-    """Groq STEM prompt uses skeleton-driven approach with math rules."""
-    prompt = _build_groq_system_prompt(subject='数学', prompt_text='')
+def test_build_llm_system_prompt_stem():
+    """LLM STEM prompt uses skeleton-driven approach with math rules."""
+    prompt = _build_llm_system_prompt(subject='数学', prompt_text='')
     assert '理系' in prompt, 'STEM prompt should mention 理系'
     assert 'frac' in prompt, 'STEM prompt should have frac rules'
     assert 'documentclass' in prompt, 'STEM prompt should have LaTeX skeleton'
     assert 'チェック' in prompt, 'STEM prompt should have final checklist'
     assert 'ネスト' in prompt, 'STEM prompt should have nesting rules'
-    print('  [PASS] test_build_groq_system_prompt_stem')
+    print('  [PASS] test_build_llm_system_prompt_stem')
 
 
-def test_build_groq_system_prompt_non_stem():
-    """Groq non-STEM prompt omits math-specific rules."""
-    prompt = _build_groq_system_prompt(subject='', prompt_text='英語の長文問題')
+def test_build_llm_system_prompt_non_stem():
+    """LLM non-STEM prompt omits math-specific rules."""
+    prompt = _build_llm_system_prompt(subject='', prompt_text='英語の長文問題')
     assert '数式ルール（理系科目）' not in prompt, 'Non-STEM prompt should NOT have STEM math section'
     assert '検算' not in prompt, 'Non-STEM prompt should NOT have verification rule'
     # But should still have core LaTeX rules
     assert '$...$' in prompt, 'Should have inline math notation'
-    print('  [PASS] test_build_groq_system_prompt_non_stem')
+    print('  [PASS] test_build_llm_system_prompt_non_stem')
 
 
 def test_no_contradictions():
@@ -137,9 +137,9 @@ def test_no_contradictions():
     # Should not mention \\(...\\) at all (was causing contradiction)
     assert '\\(...\\)' not in instr, 'Should not mention \\(...\\) (confusing)'
     assert '$$' not in instr or '$$ は使わない' in instr, 'Should use soft prohibition for $$'
-    # Groq STEM prompt (skeleton-driven) should not use harsh prohibition language
-    groq_prompt = _build_groq_system_prompt(subject='数学', prompt_text='')
-    assert '絶対禁止' not in groq_prompt, 'Groq STEM prompt should not use 絶対禁止'
+    # LLM STEM prompt (skeleton-driven) should not use harsh prohibition language
+    llm_prompt = _build_llm_system_prompt(subject='数学', prompt_text='')
+    assert '絶対禁止' not in llm_prompt, 'LLM STEM prompt should not use 絶対禁止'
     print('  [PASS] test_no_contradictions')
 
 
@@ -161,8 +161,8 @@ if __name__ == '__main__':
     test_build_latex_instructions_stem()
     test_build_latex_instructions_non_stem()
     test_build_latex_instructions_with_preset()
-    test_build_groq_system_prompt_stem()
-    test_build_groq_system_prompt_non_stem()
+    test_build_llm_system_prompt_stem()
+    test_build_llm_system_prompt_non_stem()
     test_no_contradictions()
     test_quality_rules()
     print('\nAll tests passed!')

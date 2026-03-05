@@ -289,13 +289,55 @@ export async function smartCreateDbRow(table, data, autoDifficulty = true) {
   });
 }
 
-// ── Groq Cloud LLM → PDF ワンクリック生成 ──────────────
+// ── OpenAI GPT LLM → PDF ワンクリック生成 ──────────────
 
 export async function generateWithLlm(params) {
   return apiFetch('/api/generate_with_llm', {
     method: 'POST',
     body: JSON.stringify(params),
     timeout: 180000, // LLM + PDF compilation can take time
+  });
+}
+
+// ── AI 使用回数制限 ──────────────────────────────────────
+
+export async function fetchUsage(userId) {
+  return apiFetch(`/api/usage/${encodeURIComponent(userId)}`);
+}
+
+export async function adminUnlock(userId, password) {
+  return apiFetch('/api/admin/unlock', {
+    method: 'POST',
+    body: JSON.stringify({ user_id: userId, password }),
+  });
+}
+
+// ── Authentication ────────────────────────────────────────────────────────
+
+export async function authRegister({ email, password, orgName, displayName }) {
+  return apiFetch('/api/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password, org_name: orgName || '', display_name: displayName || '' }),
+  });
+}
+
+export async function authLogin({ email, password }) {
+  return apiFetch('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function authRefresh(refreshToken) {
+  return apiFetch('/api/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+}
+
+export async function authMe(accessToken) {
+  return apiFetch('/api/auth/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
 

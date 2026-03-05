@@ -1,5 +1,7 @@
 import './globals.css';
 import Header from '@/components/Header';
+import { BrandingProvider } from '@/contexts/BrandingContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata = {
   title: 'REM — Rapid Exam Maker',
@@ -22,8 +24,12 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-screen bg-[#f8faff] text-[#1e293b] selection:bg-blue-500/[0.15] selection:text-[#1e293b]">
-        <Header />
-        {children}
+        <AuthProvider>
+          <BrandingProvider>
+            <Header />
+            {children}
+          </BrandingProvider>
+        </AuthProvider>
       </body>
     </html>
   );
