@@ -527,19 +527,6 @@ textarea.input {
 }
 
 /* ==========================================
-   Progress Sub-label
-   ========================================== */
-.progress-sub {
-  font-size: 9px;
-  font-weight: 500;
-  color: var(--c-accent);
-  white-space: nowrap;
-}
-@media (min-width: 480px) {
-  .progress-sub { font-size: 10px; }
-}
-
-/* ==========================================
    Instruction Steps (Step 2)
    ========================================== */
 .instruction-steps {
@@ -1248,53 +1235,6 @@ details[open] > .how-summary::before {
 }
 
 /* ==========================================
-   View Mode Bar (wizard vs manual)
-   ========================================== */
-.view-mode-bar {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
-  background: white;
-  padding: 4px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--c-border-light);
-}
-.view-mode-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  border: 2px solid transparent;
-  background: transparent;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--c-text-muted);
-  cursor: pointer;
-  transition: all 0.25s var(--ease);
-}
-.view-mode-btn:hover {
-  color: var(--c-text-secondary);
-  background: var(--c-bg);
-}
-.view-mode-btn.active {
-  background: linear-gradient(135deg, rgba(26,82,118,0.06), rgba(46,134,193,0.08));
-  color: var(--c-primary);
-  border-color: var(--c-secondary);
-  box-shadow: 0 2px 8px rgba(46,134,193,0.12);
-}
-.view-mode-btn svg {
-  flex-shrink: 0;
-}
-@media (max-width: 479px) {
-  .view-mode-btn { font-size: 12px; gap: 6px; padding: 10px 8px; }
-  .view-mode-btn svg { width: 16px; height: 16px; }
-}
-
-/* ==========================================
    Preset Chips (output format selection)
    ========================================== */
 .preset-chips {
@@ -1359,27 +1299,6 @@ details[open] > .how-summary::before {
   }
 }
 
-/* ==========================================
-   Manual Mode AI Links
-   ========================================== */
-.manual-ai-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 16px;
-  padding: 10px 14px;
-  background: white;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--c-border-light);
-  flex-wrap: wrap;
-}
-.manual-ai-links-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--c-text-muted);
-}
 .ai-link-compact {
   display: inline-flex;
   align-items: center;
@@ -1397,6 +1316,172 @@ details[open] > .how-summary::before {
 .ai-link-compact:hover {
   background: #D6EAF8;
   border-color: var(--c-secondary);
+}
+
+/* ==========================================
+   Step 4 Merged Layout (AI依頼 & 結果入力)
+   ========================================== */
+.step4-section {
+  margin-bottom: 8px;
+}
+.step4-section-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--c-border);
+  background: var(--c-bg);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  color: var(--c-text);
+}
+.step4-section-toggle:hover {
+  border-color: var(--c-secondary);
+  background: #EBF5FB;
+}
+.step4-section-toggle[aria-expanded="true"] {
+  border-color: var(--c-secondary);
+  background: #EBF5FB;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+}
+.step4-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.step4-section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--c-primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.step4-section-num-b {
+  background: var(--c-success);
+}
+.step4-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.step4-section-body {
+  padding: 16px;
+  border: 1.5px solid var(--c-secondary);
+  border-top: none;
+  border-bottom-left-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  background: rgba(235,245,251,0.5);
+}
+.step4-divider {
+  height: 1px;
+  background: var(--c-border);
+  margin: 20px 0;
+  position: relative;
+}
+.step4-divider::after {
+  content: '▼';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: var(--c-text-muted);
+}
+
+/* Compact instruction steps for Section A */
+.instruction-steps-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.instruction-step-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-secondary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.75);
+}
+.instruction-step-compact code {
+  font-size: 11px;
+  background: rgba(0,0,0,0.06);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.instruction-num-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--c-primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.instruction-step-highlight {
+  background: rgba(243,156,18,0.08);
+  border: 1px solid rgba(243,156,18,0.2);
+}
+
+.step4-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.step4-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+/* LaTeX validation hints */
+.latex-validation-hints {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.hint-ok {
+  color: var(--c-success);
+}
+.hint-warn {
+  color: var(--c-accent);
+}
+
+/* Step 4 mobile */
+@media (max-width: 479px) {
+  .step4-section-toggle { padding: 10px 12px; }
+  .step4-section-num { width: 24px; height: 24px; font-size: 12px; }
+  .step4-section-title { font-size: 13px; }
+  .step4-section-body { padding: 12px; }
+  .instruction-step-compact { font-size: 12px; padding: 5px 8px; }
+  .instruction-num-sm { width: 20px; height: 20px; font-size: 10px; }
+  .step4-actions-row { gap: 6px; }
+  .step4-badges { gap: 4px; }
+  .latex-validation-hints { flex-direction: column; gap: 4px; }
 }
 
 /* Safe area for mobile */

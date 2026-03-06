@@ -18,9 +18,9 @@ const Ico = {
   Database: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
   Pdf: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15v-2h2a1 1 0 1 0 0-2H9v6"/></svg>,
   Skip: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>,
+  Paste: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>,
+  Wand: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M15 9h0"/><path d="M17.8 6.2L19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2L11 5"/></svg>,
   Zap: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
-  ChevronDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
-  ChevronUp: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,
 }
 
 /* ────────────────────────────────────────────
@@ -71,6 +71,13 @@ export default function App() {
   const [difficulties] = useState(['易', '普通', '難'])
   const [latexPresets, setLatexPresets] = useState([])
 
+  // View mode: 'wizard' (step-by-step) or 'manual' (direct paste)
+  const [viewMode, setViewMode] = useState('wizard')
+  // Manual mode paste state
+  const [manualLatex, setManualLatex] = useState('')
+  const [manualPreset, setManualPreset] = useState('exam')
+  const [manualPdfUrl, setManualPdfUrl] = useState('')
+
   // Wizard state
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
@@ -84,8 +91,6 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [showHelp, setShowHelp] = useState(false)
-  // Step 4 sub-section toggle
-  const [showPromptSection, setShowPromptSection] = useState(true)
 
   // Step 3: Base question state
   const [baseMode, setBaseMode] = useState('skip') // 'db' | 'pdf' | 'skip'
@@ -203,7 +208,6 @@ export default function App() {
         setPrompt(renderedPrompt)
         setRagCtx(d.context)
         setStep(4)
-        setShowPromptSection(true)
         notify('指示文の作成完了', 'success')
       } else {
         notify('エラー: ' + (d.detail || r.statusText), 'error')
@@ -218,7 +222,7 @@ export default function App() {
     catch { notify('コピー失敗', 'error') }
   }
 
-  /* ── Generate PDF ── */
+  /* ── Step 5 → 6 : Generate PDF ── */
   const generatePdf = async () => {
     if (!llmOutput.trim()) return notify('LaTeXコードを貼り付けてください', 'error')
     setLoading(true); setLoadingMsg('PDFを生成中...')
@@ -236,7 +240,7 @@ export default function App() {
         const d = await r.json().catch(() => null)
         const url = d?.pdf_url || URL.createObjectURL(await r.blob())
         setPdfUrl(url)
-        setStep(5)
+        setStep(6)
         notify('PDFを作成しました！', 'success')
       } else {
         const d = await r.json().catch(() => null)
@@ -250,7 +254,33 @@ export default function App() {
   const resetWizard = () => {
     setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl('')
     setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null)
-    setShowPromptSection(true)
+  }
+
+  /* ── Manual mode: Generate PDF directly ── */
+  const generatePdfManual = async () => {
+    if (!manualLatex.trim()) return notify('LaTeXコードを貼り付けてください', 'error')
+    setLoading(true); setLoadingMsg('PDFを生成中...')
+    try {
+      const r = await fetch('/api/generate_pdf', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          latex: manualLatex,
+          title: 'Manual PDF',
+          return_url: true,
+          latex_preset: manualPreset || 'exam',
+        }),
+      })
+      if (r.ok) {
+        const d = await r.json().catch(() => null)
+        const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+        setManualPdfUrl(url)
+        notify('PDFを作成しました！', 'success')
+      } else {
+        const d = await r.json().catch(() => null)
+        notify('PDF生成失敗: ' + (d?.detail || d?.error || ''), 'error')
+      }
+    } catch { notify('PDF生成エラー', 'error') }
+    setLoading(false)
   }
 
   /* ── Current preset info ── */
@@ -265,10 +295,11 @@ export default function App() {
      ════════════════════════════════════════ */
   const STEPS = [
     { n: 1, label: '出題パターン' },
-    { n: 2, label: '設定' },
+    { n: 2, label: '難易度・問題数' },
     { n: 3, label: 'ベース問題' },
-    { n: 4, label: 'AI依頼 & 入力' },
-    { n: 5, label: 'PDF完成' },
+    { n: 4, label: 'AIに依頼', sub: '外部AI使用' },
+    { n: 5, label: '結果を入力' },
+    { n: 6, label: 'PDF完成' },
   ]
 
   /* ════════════════════════════════════════
@@ -302,6 +333,128 @@ export default function App() {
 
         {mode === 'user' ? (
           <>
+            {/* ── VIEW MODE SWITCHER ── */}
+            <div className="view-mode-bar">
+              <button
+                className={`view-mode-btn ${viewMode === 'wizard' ? 'active' : ''}`}
+                onClick={() => setViewMode('wizard')}
+              >
+                <Ico.Wand />
+                <span>ガイド付き生成</span>
+              </button>
+              <button
+                className={`view-mode-btn ${viewMode === 'manual' ? 'active' : ''}`}
+                onClick={() => setViewMode('manual')}
+              >
+                <Ico.Paste />
+                <span>手動入力モード</span>
+              </button>
+            </div>
+
+            {/* ══════════════════════════════════
+                MANUAL PASTE MODE — 直接LaTeX入力
+               ══════════════════════════════════ */}
+            {viewMode === 'manual' && (
+              <>
+                <div className="card anim-fade-up">
+                  <div className="card-header">
+                    <span className="card-emoji">📋</span>
+                    <div className="card-title">手動入力モード</div>
+                    <div className="card-desc">
+                      ChatGPT / Claude が生成したLaTeXコードを直接貼り付けてPDFに変換します
+                    </div>
+                  </div>
+
+                  <div className="tip">
+                    <span className="tip-icon">💡</span>
+                    <div>AIの出力した <code>{`\\documentclass`}</code> 〜 <code>{`\\end{document}`}</code> の全体をそのまま貼り付けてください。コードブロック記号（<code>```</code>）は不要です。</div>
+                  </div>
+
+                  {/* Preset chips */}
+                  {latexPresets.length > 0 && (
+                    <div className="field" style={{marginBottom: 16}}>
+                      <label className="field-label">出力形式</label>
+                      <div className="preset-chips">
+                        {latexPresets.map(p => (
+                          <button
+                            key={p.id}
+                            className={`preset-chip ${manualPreset === p.id ? 'active' : ''}`}
+                            onClick={() => setManualPreset(p.id)}
+                            title={p.description}
+                          >
+                            <span className="preset-chip-emoji">{presetEmoji(p.id)}</span>
+                            <span className="preset-chip-label">{p.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="field">
+                    <label className="field-label">LaTeX コード（AIの出力を貼り付け）</label>
+                    <textarea
+                      className="input manual-textarea"
+                      placeholder={"\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{問題}\n問1: ...\n\\end{document}"}
+                      value={manualLatex}
+                      onChange={e => setManualLatex(e.target.value)}
+                    />
+                    {manualLatex.trim() && (
+                      <div className="field-hint" style={{marginTop: 6}}>
+                        {manualLatex.includes('\\documentclass') ? '✅ \\documentclass を検出' : '⚠️ \\documentclass が見つかりません'}
+                        {manualLatex.includes('\\end{document}') ? ' ・ ✅ \\end{document} を検出' : ' ・ ⚠️ \\end{document} が見つかりません'}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    className="btn btn-success btn-block"
+                    onClick={generatePdfManual}
+                    disabled={loading || !manualLatex.trim()}
+                  >
+                    <Ico.Zap /> PDF を生成
+                  </button>
+                </div>
+
+                {/* Manual mode PDF result */}
+                {manualPdfUrl && (
+                  <div className="card anim-fade-up" style={{marginTop: 16}}>
+                    <div className="success-screen">
+                      <div className="success-icon">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      <div className="card-title" style={{fontSize:20, marginBottom:8}}>PDF作成完了</div>
+                      <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginTop: 16}}>
+                        <a href={manualPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success">
+                          <Ico.ExternalLink /> PDFを開く
+                        </a>
+                        <button className="btn btn-outline" onClick={() => { setManualLatex(''); setManualPdfUrl('') }}>
+                          <Ico.RotateCcw /> 新しく作る
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick links to AI services */}
+                <div className="manual-ai-links">
+                  <span className="manual-ai-links-label">AIサービス:</span>
+                  <a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="ai-link-compact">
+                    <Ico.ExternalLink /> ChatGPT
+                  </a>
+                  <a href="https://claude.ai/" target="_blank" rel="noreferrer" className="ai-link-compact">
+                    <Ico.ExternalLink /> Claude
+                  </a>
+                </div>
+              </>
+            )}
+
+            {/* ══════════════════════════════════
+                WIZARD MODE — ステップバイステップ
+               ══════════════════════════════════ */}
+            {viewMode === 'wizard' && (
+              <>
             {/* ── FLOW OVERVIEW ── */}
             <div className="flow-overview">
               <span>パターン選択</span>
@@ -310,7 +463,7 @@ export default function App() {
               <span className="flow-arrow">→</span>
               <span>ベース問題</span>
               <span className="flow-arrow">→</span>
-              <span className="flow-external">AI依頼 & 結果入力</span>
+              <span className="flow-external">ChatGPT / Claude に貼付</span>
               <span className="flow-arrow">→</span>
               <span>PDF完成</span>
             </div>
@@ -327,6 +480,7 @@ export default function App() {
                       {step > s.n ? <Ico.Check s={14} /> : s.n}
                     </div>
                     <div className="progress-name">{s.label}</div>
+                    {s.sub && <div className="progress-sub">{s.sub}</div>}
                   </div>
                   {i < STEPS.length - 1 && (
                     <div className={`progress-line ${step > s.n ? 'filled' : ''}`} />
@@ -649,136 +803,169 @@ export default function App() {
             )}
 
             {/* ══════════════════════════════════
-                STEP 4 — AI依頼 & 結果入力 (統合)
+                STEP 4 — 指示文をコピー
                ══════════════════════════════════ */}
             {step === 4 && (
               <div className="card anim-fade-up">
                 <div className="card-header">
-                  <span className="card-emoji">🤖</span>
-                  <div className="card-title">AIに依頼して結果を入力</div>
-                  <div className="card-desc">指示文を外部AIに送り、返ってきたLaTeXコードを貼り付けてPDFに変換します</div>
+                  <span className="card-emoji">📋</span>
+                  <div className="card-title">指示文をコピーしてAIに依頼</div>
+                  <div className="card-desc">外部のAI（ChatGPT・Claude等）に指示文を渡してLaTeXコードを生成してもらいます</div>
                 </div>
 
-                {/* ─── Section A: Prompt copy ─── */}
-                <div className="step4-section">
-                  <button
-                    className="step4-section-toggle"
-                    onClick={() => setShowPromptSection(p => !p)}
-                    aria-expanded={showPromptSection}
-                  >
-                    <div className="step4-section-header">
-                      <span className="step4-section-num">A</span>
-                      <span className="step4-section-title">指示文をコピーしてAIに送信</span>
+                <div className="instruction-steps">
+                  <div className="instruction-step">
+                    <span className="instruction-num">1</span>
+                    <div>
+                      <strong>「指示文をコピー」ボタンを押す</strong>
+                      <div className="step-detail">指示文がクリップボードにコピーされます</div>
                     </div>
-                    {showPromptSection ? <Ico.ChevronUp /> : <Ico.ChevronDown />}
-                  </button>
-
-                  {showPromptSection && (
-                    <div className="step4-section-body anim-fade-up">
-                      <div className="instruction-steps-compact">
-                        <div className="instruction-step-compact">
-                          <span className="instruction-num-sm">1</span>
-                          指示文をコピー
+                  </div>
+                  <div className="instruction-step">
+                    <span className="instruction-num">2</span>
+                    <div>
+                      <strong>外部AI（ChatGPT / Claude）を開く</strong>
+                      <div className="step-detail">下のリンクから開けます。無料プランでも利用可能です。</div>
+                    </div>
+                  </div>
+                  {baseMode === 'pdf' && basePdfData && (
+                    <div className="instruction-step">
+                      <span className="instruction-num" style={{background: 'var(--c-accent)'}}>!</span>
+                      <div>
+                        <strong>ベースPDFもAIに添付してください</strong>
+                        <div className="step-detail">
+                          「{basePdfData.filename}」をChatGPT/Claudeの添付ファイルとしてアップロードしてください。
+                          指示文内にPDFを参照する旨が記載されています。
                         </div>
-                        <div className="instruction-step-compact">
-                          <span className="instruction-num-sm">2</span>
-                          外部AIを開いて貼り付け
-                        </div>
-                        {baseMode === 'pdf' && basePdfData && (
-                          <div className="instruction-step-compact instruction-step-highlight">
-                            <span className="instruction-num-sm" style={{background:'var(--c-accent)'}}>!</span>
-                            ベースPDF「{basePdfData.filename}」もAIに添付
-                          </div>
-                        )}
-                        <div className="instruction-step-compact">
-                          <span className="instruction-num-sm">3</span>
-                          AIの出力 (<code>\documentclass</code>〜<code>{`\\end{document}`}</code>) をコピー
-                        </div>
-                      </div>
-
-                      <div className="prompt-preview">{prompt}</div>
-
-                      <div className="step4-actions-row">
-                        <button className="btn btn-primary" onClick={copyPrompt}>
-                          <Ico.Copy /> 指示文をコピー
-                        </button>
-                        <a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="ai-link-compact">
-                          <Ico.ExternalLink /> ChatGPT
-                        </a>
-                        <a href="https://claude.ai/" target="_blank" rel="noreferrer" className="ai-link-compact">
-                          <Ico.ExternalLink /> Claude
-                        </a>
-                      </div>
-
-                      <div className="step4-badges">
-                        {ragCtx?.chunk_count > 0 && (
-                          <span className="rag-badge">📚 {ragCtx.chunk_count}件の類似問題を参照</span>
-                        )}
-                        {currentPreset && (
-                          <span className="rag-badge">📄 形式: {currentPreset.name}</span>
-                        )}
-                        {baseMode === 'db' && selectedBaseProblem && (
-                          <span className="rag-badge">🎯 ベース問題選択済み</span>
-                        )}
-                        {baseMode === 'pdf' && basePdfData && (
-                          <span className="rag-badge">📎 PDF添付: {basePdfData.filename}</span>
-                        )}
                       </div>
                     </div>
                   )}
+                  <div className="instruction-step">
+                    <span className="instruction-num">{baseMode === 'pdf' && basePdfData ? '3' : '3'}</span>
+                    <div>
+                      <strong>コピーした指示文を貼り付けて送信</strong>
+                      <div className="step-detail">AIが数秒〜数十秒でLaTeXコードを生成します</div>
+                    </div>
+                  </div>
+                  <div className="instruction-step">
+                    <span className="instruction-num">{baseMode === 'pdf' && basePdfData ? '4' : '4'}</span>
+                    <div>
+                      <strong>AIの出力（LaTeXコード全体）をコピー</strong>
+                      <div className="step-detail"><code>\documentclass</code> から <code>{`\\end{document}`}</code> まで全てコピーしてください</div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="step4-divider" />
+                <div className="prompt-preview">{prompt}</div>
 
-                {/* ─── Section B: Paste & Generate PDF ─── */}
-                <div className="step4-section">
-                  <div className="step4-section-header" style={{marginBottom: 12}}>
-                    <span className="step4-section-num step4-section-num-b">B</span>
-                    <span className="step4-section-title">AIの出力を貼り付けてPDF生成</span>
-                  </div>
+                <div style={{display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap', marginBottom:16}}>
+                  {ragCtx?.chunk_count > 0 && (
+                    <span className="rag-badge">📚 {ragCtx.chunk_count}件の類似問題を参照</span>
+                  )}
+                  {currentPreset && (
+                    <span className="rag-badge">📄 形式: {currentPreset.name}</span>
+                  )}
+                  {baseMode === 'db' && selectedBaseProblem && (
+                    <span className="rag-badge">🎯 ベース問題選択済み</span>
+                  )}
+                  {baseMode === 'pdf' && basePdfData && (
+                    <span className="rag-badge">📎 PDF添付: {basePdfData.filename}</span>
+                  )}
+                </div>
 
-                  <div className="field">
-                    <label className="field-label">LaTeX コード（AIの出力を貼り付け）</label>
-                    <textarea
-                      className="input manual-textarea"
-                      placeholder={"\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{問題}\n問1: ...\n\\end{document}"}
-                      value={llmOutput}
-                      onChange={e => setLlmOutput(e.target.value)}
-                    />
-                    {llmOutput.trim() && (
-                      <div className="latex-validation-hints">
-                        <span className={llmOutput.includes('\\documentclass') ? 'hint-ok' : 'hint-warn'}>
-                          {llmOutput.includes('\\documentclass') ? '✅' : '⚠️'} \documentclass
-                        </span>
-                        <span className={llmOutput.includes('\\end{document}') ? 'hint-ok' : 'hint-warn'}>
-                          {llmOutput.includes('\\end{document}') ? '✅' : '⚠️'} \end{'{document}'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    className="btn btn-success btn-block"
-                    onClick={generatePdf}
-                    disabled={loading || !llmOutput.trim()}
-                  >
-                    PDF を生成
+                <div style={{marginBottom:16}}>
+                  <button className="btn btn-primary btn-block" onClick={copyPrompt}>
+                    <Ico.Copy /> 指示文をコピー
                   </button>
                 </div>
 
-                <div style={{marginTop: 20}}>
+                <div style={{display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap', marginBottom:20}}>
+                  <a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="ai-link">
+                    <Ico.ExternalLink /> ChatGPT を開く
+                  </a>
+                  <a href="https://claude.ai/" target="_blank" rel="noreferrer" className="ai-link">
+                    <Ico.ExternalLink /> Claude を開く
+                  </a>
+                </div>
+
+                <div className="btn-row btn-row-2">
                   <button className="btn btn-outline" onClick={() => setStep(3)}>
                     <Ico.ArrowLeft /> 戻る
+                  </button>
+                  <button className="btn btn-success" onClick={() => setStep(5)}>
+                    AIの出力を受け取った → 次へ <Ico.ArrowRight />
                   </button>
                 </div>
               </div>
             )}
 
-
             {/* ══════════════════════════════════
-                STEP 5 — 完了
+                STEP 5 — LaTeX 貼り付け → PDF生成
                ══════════════════════════════════ */}
             {step === 5 && (
+              <div className="card anim-fade-up">
+                <div className="card-header">
+                  <span className="card-emoji">✨</span>
+                  <div className="card-title">AIの出力を貼り付けてPDF生成</div>
+                  <div className="card-desc">ChatGPT/Claude が生成したLaTeXコードを貼り付けてPDFに変換します</div>
+                </div>
+
+                <div className="tip tip-warning">
+                  <span className="tip-icon">⚠️</span>
+                  <div>
+                    <strong>貼り付けるもの：</strong>AIが出力したLaTeXコード全体<br />
+                    <strong>含めるもの：</strong><code>{`\\documentclass{article}`}</code> から <code>{`\\end{document}`}</code> まで<br />
+                    <strong>含めないもの：</strong>コードブロック記号（<code>```latex</code> や <code>```</code>）は削除してください
+                  </div>
+                </div>
+
+                <details className="examples-section">
+                  <summary>正しい貼り付け例を見る</summary>
+                  <div className="example-code">
+                    <div className="example-label good">正しい例</div>
+                    <pre>{`\\documentclass{article}
+\\usepackage{amsmath}
+\\begin{document}
+\\section{問題}
+問1: ...
+\\end{document}`}</pre>
+                  </div>
+                  <div className="example-code">
+                    <div className="example-label bad">間違った例（コードブロック記号付き）</div>
+                    <pre>{`\`\`\`latex
+\\documentclass{article}
+...
+\\end{document}
+\`\`\``}</pre>
+                  </div>
+                </details>
+
+                <div className="field" style={{marginTop:16}}>
+                  <label className="field-label">LaTeX コード（AIの出力）</label>
+                  <textarea
+                    className="input"
+                    style={{ height: 280, fontFamily: "'SF Mono','Fira Code','Consolas',monospace", fontSize: 12 }}
+                    placeholder={"\\documentclass{article}\n\\begin{document}\n...\n\\end{document}"}
+                    value={llmOutput}
+                    onChange={e => setLlmOutput(e.target.value)}
+                  />
+                </div>
+
+                <div className="btn-row btn-row-2">
+                  <button className="btn btn-outline" onClick={() => setStep(4)}>
+                    <Ico.ArrowLeft /> 戻る
+                  </button>
+                  <button className="btn btn-success" onClick={generatePdf} disabled={loading || !llmOutput.trim()}>
+                    PDF を生成 <Ico.ArrowRight />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════
+                STEP 6 — 完了
+               ══════════════════════════════════ */}
+            {step === 6 && (
               <div className="card anim-fade-up">
                 <div className="success-screen">
                   <div className="success-icon">
@@ -801,6 +988,8 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            )}
+              </>
             )}
           </>
         ) : (
@@ -841,10 +1030,9 @@ export default function App() {
                 <dd>はい。このシステムは「問題データベース検索」と「PDF生成」を担当します。
                     問題の生成はChatGPTやClaude等の外部AIサービスが行います。</dd>
 
-                <dt>Q: ステップ4の「セクションA」が閉じています</dt>
-                <dd>セクションAは折りたたみ可能です。クリックして展開すると、
-                    指示文のコピーとAIサービスへのリンクが表示されます。
-                    既にLaTeXコードをお持ちの場合は、セクションBに直接貼り付けてPDFを生成できます。</dd>
+                <dt>Q: 「手動入力モード」とは？</dt>
+                <dd>既にLaTeXコードをお持ちの場合、ウィザードの全ステップを省略して
+                    直接PDFを生成できるモードです。ChatGPT/Claudeの出力をそのまま貼り付けてください。</dd>
 
                 <dt>Q: ベース問題とは？</dt>
                 <dd>生成する問題の「お手本」となる問題です。DBから既存の問題を選ぶか、
