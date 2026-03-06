@@ -5,6 +5,7 @@ fastapi
 uvicorn[standard]
 python-multipart
 pypdf
+PyMuPDF
 scikit-learn
 numpy
 requests

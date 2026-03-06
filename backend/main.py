@@ -3971,7 +3971,7 @@ def api_problems_by_pattern(template_id: str = '', limit: int = 20):
 # ── ベースPDFバリデーション (3ページ制限 + 画像変換) ──────────────────────────
 @app.post('/api/validate_base_pdf')
 async def api_validate_base_pdf(file: UploadFile = File(...)):
-    """Validate uploaded PDF. If > 3 pages, truncate to first 3 and warn. Convert pages to base64 PNG images for LLM vision input."""
+    """Validate uploaded PDF. Reject if > 3 pages. Convert pages to base64 PNG images for LLM vision input."""
     MAX_PAGES = 3
 
     if not file.filename or not file.filename.lower().endswith('.pdf'):
@@ -3981,17 +3981,31 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
     if len(content) > 20 * 1024 * 1024:
         raise HTTPException(status_code=400, detail='ファイルサイズが大きすぎます（最大20MB）')
 
-    # Count pages with pypdf (lenient mode)
+    import base64 as b64
+
+    # ── 1) PyMuPDF (fitz) でページ数取得 & 画像変換 (最も確実) ──
+    images = []
     page_count = None
-    truncated = False
-    warning = ''
     try:
-        from pypdf import PdfReader
-        reader = PdfReader(BytesIO(content), strict=False)
-        page_count = len(reader.pages)
+        import fitz  # PyMuPDF
+        doc = fitz.open(stream=content, filetype='pdf')
+        page_count = doc.page_count
+        logger.info('PDF opened with PyMuPDF: %d pages', page_count)
     except Exception as e:
-        logger.warning('pypdf PdfReader failed: %s', e)
-        # Fallback: try to detect page count via pdftoppm or pdfinfo
+        logger.warning('PyMuPDF open failed: %s', e)
+
+    # ── 2) pypdf フォールバック (ページ数のみ) ──
+    if page_count is None:
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(BytesIO(content), strict=False)
+            page_count = len(reader.pages)
+            logger.info('PDF opened with pypdf: %d pages', page_count)
+        except Exception as e:
+            logger.warning('pypdf PdfReader failed: %s', e)
+
+    # ── 3) pdfinfo / pdftoppm フォールバック ──
+    if page_count is None:
         pdfinfo_bin = shutil.which('pdfinfo')
         if pdfinfo_bin:
             try:
@@ -4008,92 +4022,86 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
                         page_count = int(line.split(':')[1].strip())
                         break
             except Exception as e2:
-                logger.warning('pdfinfo fallback also failed: %s', e2)
-        if page_count is None:
-            # Last resort: try pdftoppm directly and count output files
-            pdftoppm_bin = shutil.which('pdftoppm')
-            if pdftoppm_bin:
-                try:
-                    with tempfile.TemporaryDirectory() as tmpdir:
-                        pdf_path = os.path.join(tmpdir, 'input.pdf')
-                        with open(pdf_path, 'wb') as f:
-                            f.write(content)
-                        subprocess.run(
-                            [pdftoppm_bin, '-png', '-r', '72', pdf_path, os.path.join(tmpdir, 'page')],
-                            capture_output=True, timeout=30, check=True
-                        )
-                        import glob as glob_mod
-                        png_files = sorted(glob_mod.glob(os.path.join(tmpdir, 'page-*.png')))
-                        page_count = len(png_files) if png_files else None
-                except Exception as e3:
-                    logger.warning('pdftoppm page count fallback failed: %s', e3)
+                logger.warning('pdfinfo fallback failed: %s', e2)
 
-        if page_count is None:
-            raise HTTPException(
-                status_code=400,
-                detail='PDFの読み込みに失敗しました。ファイルが破損しているか、対応していない形式です。'
-            )
+    if page_count is None:
+        raise HTTPException(
+            status_code=400,
+            detail='PDFの読み込みに失敗しました。ファイルが破損しているか、対応していない形式です。'
+        )
 
-    # If > MAX_PAGES, truncate and warn (don't reject)
-    effective_pages = page_count
+    # ── ページ数制限: 4ページ以上は拒否 ──
     if page_count > MAX_PAGES:
-        effective_pages = MAX_PAGES
-        truncated = True
-        warning = f'PDFは{page_count}ページありますが、先頭{MAX_PAGES}ページのみ読み込みました。{MAX_PAGES}ページ以内に収めることを推奨します。'
+        raise HTTPException(
+            status_code=400,
+            detail=f'PDFは{MAX_PAGES}ページ以内にしてください。（アップロードされたPDF: {page_count}ページ）'
+        )
 
-    # Convert PDF pages to PNG images using pdftoppm (poppler)
-    import base64 as b64
-    images = []
-    pdftoppm = shutil.which('pdftoppm')
+    # ── 画像変換: PyMuPDF → pdftoppm フォールバック ──
 
-    if pdftoppm:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            pdf_path = os.path.join(tmpdir, 'input.pdf')
-            with open(pdf_path, 'wb') as f:
-                f.write(content)
-            try:
-                subprocess.run(
-                    [pdftoppm, '-png', '-r', '200', pdf_path, os.path.join(tmpdir, 'page')],
-                    capture_output=True, timeout=30, check=True
-                )
-                # pdftoppm outputs page-1.png, page-2.png, ... (only up to effective_pages)
-                for i in range(1, effective_pages + 1):
-                    # pdftoppm uses different naming: page-1.png or page-01.png
-                    for pattern in [f'page-{i}.png', f'page-{i:02d}.png', f'page-{i:03d}.png']:
-                        img_path = os.path.join(tmpdir, pattern)
-                        if os.path.exists(img_path):
-                            with open(img_path, 'rb') as img_f:
-                                images.append(b64.b64encode(img_f.read()).decode('ascii'))
-                            break
-            except Exception as e:
-                logger.warning('pdftoppm conversion failed: %s', e)
+    # Method A: PyMuPDF (fitz) — 高品質、外部コマンド不要
+    if not images:
+        try:
+            import fitz
+            doc = fitz.open(stream=content, filetype='pdf')
+            zoom = 2.0  # 200 DPI相当
+            mat = fitz.Matrix(zoom, zoom)
+            for i in range(min(page_count, MAX_PAGES)):
+                pix = doc[i].get_pixmap(matrix=mat, alpha=False)
+                png_data = pix.tobytes('png')
+                images.append(b64.b64encode(png_data).decode('ascii'))
+                logger.info('PyMuPDF page %d: %d bytes PNG', i + 1, len(png_data))
+            doc.close()
+        except Exception as e:
+            logger.warning('PyMuPDF image conversion failed: %s', e)
+            images = []
 
-    # Fallback: extract text if image conversion fails
+    # Method B: pdftoppm (poppler) — フォールバック
+    if not images:
+        pdftoppm_bin = shutil.which('pdftoppm')
+        if pdftoppm_bin:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                pdf_path = os.path.join(tmpdir, 'input.pdf')
+                with open(pdf_path, 'wb') as f:
+                    f.write(content)
+                try:
+                    subprocess.run(
+                        [pdftoppm_bin, '-png', '-r', '200',
+                         '-l', str(min(page_count, MAX_PAGES)),
+                         pdf_path, os.path.join(tmpdir, 'page')],
+                        capture_output=True, timeout=30, check=True
+                    )
+                    for i in range(1, min(page_count, MAX_PAGES) + 1):
+                        for pattern in [f'page-{i}.png', f'page-{i:02d}.png', f'page-{i:03d}.png']:
+                            img_path = os.path.join(tmpdir, pattern)
+                            if os.path.exists(img_path):
+                                with open(img_path, 'rb') as img_f:
+                                    images.append(b64.b64encode(img_f.read()).decode('ascii'))
+                                break
+                except Exception as e:
+                    logger.warning('pdftoppm conversion failed: %s', e)
+
+    # ── テキスト抽出フォールバック (画像変換が完全に失敗した場合) ──
     extracted_text = ''
     if not images:
         try:
             from pypdf import PdfReader
             reader2 = PdfReader(BytesIO(content), strict=False)
             texts = []
-            for page in reader2.pages[:effective_pages]:
+            for page in reader2.pages[:MAX_PAGES]:
                 t = page.extract_text() or ''
                 texts.append(t)
             extracted_text = '\n---PAGE BREAK---\n'.join(texts)
         except Exception:
             pass
 
-    resp = {
+    return JSONResponse({
         'valid': True,
-        'page_count': effective_pages,
-        'original_page_count': page_count,
+        'page_count': page_count,
         'filename': file.filename,
         'images': images,
         'extracted_text': extracted_text if not images else '',
-    }
-    if truncated:
-        resp['truncated'] = True
-        resp['warning'] = warning
-    return JSONResponse(resp)
+    })
 
 
 # ── OpenAI GPT LLM → PDF ワンクリック生成 ──────────────────────────
