@@ -3898,6 +3898,140 @@ def admin_unlock(req: AdminUnlockRequest = Body(...)):
         return JSONResponse({'error': f'解除に失敗しました: {e}'}, status_code=500)
 
 
+# ── ベース問題検索 (出題パターン別) ──────────────────────────
+@app.get('/api/problems_by_pattern')
+def api_problems_by_pattern(template_id: str = '', limit: int = 20):
+    """Return problems matching the given template's subject/field for base-question selection."""
+    if not template_id:
+        return JSONResponse({'problems': []})
+
+    # Resolve subject/field from template metadata
+    tpls = globals().get('TEMPLATES') or {}
+    tpl = tpls.get(template_id, {})
+    meta = tpl.get('metadata', {})
+    subject = meta.get('subject', '')
+    field = meta.get('field', '')
+
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        if subject and field:
+            cur.execute(
+                "SELECT id, stem, solution_outline, difficulty, subject, topic "
+                "FROM problems WHERE subject = %s AND topic = %s AND stem IS NOT NULL AND stem != '' "
+                "ORDER BY RANDOM() LIMIT %s",
+                (subject, field, limit)
+            )
+        elif subject:
+            cur.execute(
+                "SELECT id, stem, solution_outline, difficulty, subject, topic "
+                "FROM problems WHERE subject = %s AND stem IS NOT NULL AND stem != '' "
+                "ORDER BY RANDOM() LIMIT %s",
+                (subject, limit)
+            )
+        else:
+            cur.execute(
+                "SELECT id, stem, solution_outline, difficulty, subject, topic "
+                "FROM problems WHERE stem IS NOT NULL AND stem != '' "
+                "ORDER BY RANDOM() LIMIT %s",
+                (limit,)
+            )
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        problems = []
+        for r in rows:
+            problems.append({
+                'id': r[0],
+                'stem': (r[1] or '')[:200],
+                'solution_outline': (r[2] or '')[:100],
+                'difficulty': r[3],
+                'subject': r[4],
+                'topic': r[5],
+            })
+        return JSONResponse({'problems': problems, 'subject': subject, 'field': field})
+    except Exception as e:
+        logger.exception('problems_by_pattern failed')
+        return JSONResponse({'problems': [], 'error': str(e)})
+
+
+# ── ベースPDFバリデーション (3ページ制限 + 画像変換) ──────────────────────────
+@app.post('/api/validate_base_pdf')
+async def api_validate_base_pdf(file: UploadFile = File(...)):
+    """Validate uploaded PDF is <= 3 pages. Convert pages to base64 PNG images for LLM vision input."""
+    MAX_PAGES = 3
+
+    if not file.filename or not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail='PDFファイルのみアップロード可能です')
+
+    content = await file.read()
+    if len(content) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail='ファイルサイズが大きすぎます（最大20MB）')
+
+    # Count pages with pypdf
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(BytesIO(content))
+        page_count = len(reader.pages)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f'PDFの読み込みに失敗しました: {e}')
+
+    if page_count > MAX_PAGES:
+        raise HTTPException(
+            status_code=400,
+            detail=f'PDFは{MAX_PAGES}ページ以下にしてください（現在: {page_count}ページ）'
+        )
+
+    # Convert PDF pages to PNG images using pdftoppm (poppler)
+    import base64 as b64
+    images = []
+    pdftoppm = shutil.which('pdftoppm')
+
+    if pdftoppm:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            pdf_path = os.path.join(tmpdir, 'input.pdf')
+            with open(pdf_path, 'wb') as f:
+                f.write(content)
+            try:
+                subprocess.run(
+                    [pdftoppm, '-png', '-r', '200', pdf_path, os.path.join(tmpdir, 'page')],
+                    capture_output=True, timeout=30, check=True
+                )
+                # pdftoppm outputs page-1.png, page-2.png, ...
+                for i in range(1, page_count + 1):
+                    # pdftoppm uses different naming: page-1.png or page-01.png
+                    for pattern in [f'page-{i}.png', f'page-{i:02d}.png', f'page-{i:03d}.png']:
+                        img_path = os.path.join(tmpdir, pattern)
+                        if os.path.exists(img_path):
+                            with open(img_path, 'rb') as img_f:
+                                images.append(b64.b64encode(img_f.read()).decode('ascii'))
+                            break
+            except Exception as e:
+                logger.warning('pdftoppm conversion failed: %s', e)
+
+    # Fallback: extract text if image conversion fails
+    extracted_text = ''
+    if not images:
+        try:
+            from pypdf import PdfReader
+            reader2 = PdfReader(BytesIO(content))
+            texts = []
+            for page in reader2.pages:
+                t = page.extract_text() or ''
+                texts.append(t)
+            extracted_text = '\n---PAGE BREAK---\n'.join(texts)
+        except Exception:
+            pass
+
+    return JSONResponse({
+        'valid': True,
+        'page_count': page_count,
+        'filename': file.filename,
+        'images': images,
+        'extracted_text': extracted_text if not images else '',
+    })
+
+
 # ── OpenAI GPT LLM → PDF ワンクリック生成 ──────────────────────────
 class LlmGenerateRequest(BaseModel):
     prompt: str
@@ -3916,6 +4050,10 @@ class LlmGenerateRequest(BaseModel):
     custom_request: Optional[str] = None
     # User ID for usage tracking
     user_id: Optional[str] = None
+    # Base PDF images (base64 PNG) for vision input
+    base_pdf_images: Optional[List[str]] = None
+    # Base problem text from DB
+    base_problem_text: Optional[str] = None
 
 
 @app.post('/api/generate_with_llm')
@@ -3982,11 +4120,40 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         'Content-Type': 'application/json',
         'Authorization': f'Bearer {openai_key}',
     }
+    # Build user content: text + optional base PDF images
+    user_content_parts = []
+
+    # Add base problem context if provided
+    base_context = ''
+    if req.base_problem_text:
+        base_context = (
+            '\n\n【ベース問題（参考）】\n'
+            '以下のベース問題を参考にして、同じ形式・難易度で類似問題を作成してください：\n'
+            f'{req.base_problem_text}\n'
+        )
+
+    if req.base_pdf_images and len(req.base_pdf_images) > 0:
+        # Vision mode: send PDF pages as images
+        prompt_text = req.prompt + (
+            '\n\n【添付PDFについて】\n'
+            '添付されたPDF画像はベースラインとなる問題です。'
+            'このPDFの問題形式・構成・難易度を参考にして、同じスタイルで類似問題を作成してください。'
+            'PDFの内容をそのままコピーするのではなく、同等レベルの新しい問題を生成してください。'
+        )
+        user_content_parts.append({'type': 'text', 'text': prompt_text})
+        for img_b64 in req.base_pdf_images:
+            user_content_parts.append({
+                'type': 'image_url',
+                'image_url': {'url': f'data:image/png;base64,{img_b64}', 'detail': 'high'}
+            })
+    else:
+        user_content_parts = req.prompt + base_context
+
     openai_payload = {
         'model': openai_model,
         'messages': [
             {'role': 'system', 'content': system_instruction},
-            {'role': 'user', 'content': req.prompt},
+            {'role': 'user', 'content': user_content_parts},
         ],
         'temperature': 0.3,
         'max_tokens': 8192,

@@ -15,6 +15,9 @@ const Ico = {
   RotateCcw: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>,
   Star: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
   Help: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+  Database: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
+  Pdf: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15v-2h2a1 1 0 1 0 0-2H9v6"/></svg>,
+  Skip: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>,
 }
 
 /* ────────────────────────────────────────────
@@ -55,16 +58,14 @@ export default function App() {
 
   // Data
   const [templates, setTemplates] = useState([])
-  const [subjects] = useState(['数学', '物理', '英語', '化学', '生物', '情報'])
   const [difficulties] = useState(['易', '普通', '難'])
   const [latexPresets, setLatexPresets] = useState([])
-  const [fields, setFields] = useState([])
 
   // Wizard state
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
-    templateId: '', subject: '数学', difficulty: '普通', numQuestions: 3,
-    sourceText: '', fileName: '', latexPreset: 'exam', fieldFilter: '',
+    templateId: '', difficulty: '普通', numQuestions: 3,
+    latexPreset: 'exam',
   })
   const [prompt, setPrompt] = useState('')
   const [ragCtx, setRagCtx] = useState(null)
@@ -72,9 +73,15 @@ export default function App() {
   const [pdfUrl, setPdfUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
-  const [dragOver, setDragOver] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
-  const fileRef = useRef(null)
+
+  // Step 3: Base question state
+  const [baseMode, setBaseMode] = useState('skip') // 'db' | 'pdf' | 'skip'
+  const [baseProblems, setBaseProblems] = useState([])
+  const [selectedBaseProblem, setSelectedBaseProblem] = useState(null)
+  const [basePdfData, setBasePdfData] = useState(null) // { filename, page_count, images, extracted_text }
+  const [basePdfDragOver, setBasePdfDragOver] = useState(false)
+  const basePdfRef = useRef(null)
 
   const notify = (msg, type = 'info') => setToast({ msg, type })
   const upd = (k, v) => setForm(p => ({ ...p, [k]: v }))
@@ -102,38 +109,67 @@ export default function App() {
     } catch (e) { console.error(e) }
   }, [])
 
-  /* ── Fetch fields ── */
-  const fetchFields = useCallback(async () => {
-    try {
-      const r = await fetch('/api/fields')
-      const d = await r.json()
-      if (r.ok && d.fields?.length) {
-        setFields(d.fields)
-      }
-    } catch (e) { console.error(e) }
-  }, [])
-
   useEffect(() => {
     fetchTemplates()
     fetchPresets()
-    fetchFields()
   }, [])
 
-  /* ── Step 1 → 2 : Generate prompt ── */
+  /* ── Fetch base problems for Step 3 ── */
+  const fetchBaseProblems = useCallback(async (templateId) => {
+    if (!templateId) return
+    try {
+      const r = await fetch(`/api/problems_by_pattern?template_id=${encodeURIComponent(templateId)}&limit=20`)
+      const d = await r.json()
+      if (r.ok) setBaseProblems(d.problems || [])
+    } catch (e) { console.error(e) }
+  }, [])
+
+  /* ── Upload base PDF (3 page limit) ── */
+  const uploadBasePdf = async (file) => {
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      return notify('PDFファイルのみアップロード可能です', 'error')
+    }
+    setLoading(true); setLoadingMsg('PDFを検証中...')
+    const fd = new FormData(); fd.append('file', file)
+    try {
+      const r = await fetch('/api/validate_base_pdf', { method: 'POST', body: fd })
+      const d = await r.json()
+      if (r.ok) {
+        setBasePdfData(d)
+        notify(`${d.filename}（${d.page_count}ページ）を読み込みました`, 'success')
+      } else {
+        notify(d.detail || 'PDFの検証に失敗しました', 'error')
+      }
+    } catch { notify('アップロードエラー', 'error') }
+    setLoading(false)
+    if (basePdfRef.current) basePdfRef.current.value = ''
+  }
+  const onBasePdfDrop = (e) => { e.preventDefault(); setBasePdfDragOver(false); uploadBasePdf(e.dataTransfer.files?.[0]) }
+  const onBasePdfDragOver = (e) => { e.preventDefault(); setBasePdfDragOver(true) }
+  const onBasePdfDragLeave = () => setBasePdfDragOver(false)
+
+  /* ── Generate prompt (Step 3 → 4) ── */
   const generatePrompt = async () => {
     if (!form.templateId) return notify('テンプレートを選んでください', 'error')
     setLoading(true); setLoadingMsg('指示文を作成中...')
     try {
+      // Build source text from base problem if selected
+      let sourceText = ''
+      if (baseMode === 'db' && selectedBaseProblem) {
+        sourceText = `【ベース問題】\n${selectedBaseProblem.stem || ''}\n${selectedBaseProblem.solution_outline || ''}`
+      } else if (baseMode === 'pdf' && basePdfData?.extracted_text) {
+        sourceText = basePdfData.extracted_text
+      }
+
       const body = {
         template_id: form.templateId,
-        subject: form.subject,
         difficulty: form.difficulty,
         num_questions: form.numQuestions,
         rag_inject: true,
-        source_text: form.sourceText || undefined,
+        source_text: sourceText || undefined,
         user_mode: true,
         latex_preset: form.latexPreset || 'exam',
-        field_filter: form.fieldFilter || undefined,
       }
       const r = await fetch('/api/template_render', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -141,9 +177,20 @@ export default function App() {
       })
       const d = await r.json()
       if (r.ok) {
-        setPrompt(d.rendered_prompt || d.rendered)
+        let renderedPrompt = d.rendered_prompt || d.rendered
+        // When PDF mode: append instruction for the user to attach the PDF
+        if (baseMode === 'pdf' && basePdfData) {
+          renderedPrompt += (
+            '\n\n【重要：添付PDFについて】\n' +
+            'このメッセージと一緒に添付されたPDFファイルがベースライン問題です。\n' +
+            'このPDFの問題形式・構成・難易度・出題スタイルを分析し、' +
+            '同じスタイルで新しい類似問題を作成してください。\n' +
+            'PDFの内容をそのままコピーするのではなく、数値や条件を変えた新しい問題を生成すること。'
+          )
+        }
+        setPrompt(renderedPrompt)
         setRagCtx(d.context)
-        setStep(2)
+        setStep(4)
         notify('指示文の作成完了', 'success')
       } else {
         notify('エラー: ' + (d.detail || r.statusText), 'error')
@@ -152,35 +199,13 @@ export default function App() {
     setLoading(false)
   }
 
-  /* ── File upload (extract text) ── */
-  const uploadFile = async (file) => {
-    if (!file) return
-    setLoading(true); setLoadingMsg('テキストを抽出中...')
-    const fd = new FormData(); fd.append('file', file)
-    try {
-      const r = await fetch('/api/extract_text', { method: 'POST', body: fd })
-      const d = await r.json()
-      if (r.ok) {
-        setForm(p => ({ ...p, sourceText: d.extracted_text, fileName: d.filename || file.name }))
-        notify(`${d.filename || file.name} からテキストを抽出しました`, 'success')
-      } else {
-        notify('抽出失敗: ' + (d.detail || ''), 'error')
-      }
-    } catch { notify('アップロードエラー', 'error') }
-    setLoading(false)
-    if (fileRef.current) fileRef.current.value = ''
-  }
-  const onDrop = (e) => { e.preventDefault(); setDragOver(false); uploadFile(e.dataTransfer.files?.[0]) }
-  const onDragOver = (e) => { e.preventDefault(); setDragOver(true) }
-  const onDragLeave = () => setDragOver(false)
-
   /* ── Copy prompt ── */
   const copyPrompt = async () => {
     try { await navigator.clipboard.writeText(prompt); notify('クリップボードにコピーしました', 'success') }
     catch { notify('コピー失敗', 'error') }
   }
 
-  /* ── Step 3 → 4 : Generate PDF ── */
+  /* ── Step 5 → 6 : Generate PDF ── */
   const generatePdf = async () => {
     if (!llmOutput.trim()) return notify('LaTeXコードを貼り付けてください', 'error')
     setLoading(true); setLoadingMsg('PDFを生成中...')
@@ -198,7 +223,7 @@ export default function App() {
         const d = await r.json().catch(() => null)
         const url = d?.pdf_url || URL.createObjectURL(await r.blob())
         setPdfUrl(url)
-        setStep(4)
+        setStep(6)
         notify('PDFを作成しました！', 'success')
       } else {
         const d = await r.json().catch(() => null)
@@ -211,23 +236,26 @@ export default function App() {
   /* ── Reset wizard ── */
   const resetWizard = () => {
     setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl('')
-    setForm(p => ({ ...p, sourceText: '', fileName: '' }))
+    setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null)
   }
-
-  /* ── Filtered fields by selected subject ── */
-  const filteredFields = fields.filter(f => !form.subject || f.subject === form.subject)
 
   /* ── Current preset info ── */
   const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
 
+  /* ── Selected template info ── */
+  const selectedTemplate = templates.find(t => t.id === form.templateId)
+  const templateMeta = selectedTemplate?.metadata || {}
+
   /* ════════════════════════════════════════
-     STEP Names for progress bar
+     STEP Names for progress bar (6 steps)
      ════════════════════════════════════════ */
   const STEPS = [
-    { n: 1, label: '問題設定' },
-    { n: 2, label: 'AIに依頼', sub: '外部AI使用' },
-    { n: 3, label: '結果を入力' },
-    { n: 4, label: 'PDF完成' },
+    { n: 1, label: '出題パターン' },
+    { n: 2, label: '難易度・問題数' },
+    { n: 3, label: 'ベース問題' },
+    { n: 4, label: 'AIに依頼', sub: '外部AI使用' },
+    { n: 5, label: '結果を入力' },
+    { n: 6, label: 'PDF完成' },
   ]
 
   /* ════════════════════════════════════════
@@ -261,13 +289,13 @@ export default function App() {
           <>
             {/* ── FLOW OVERVIEW ── */}
             <div className="flow-overview">
+              <span>パターン選択</span>
+              <span className="flow-arrow">→</span>
               <span>条件設定</span>
               <span className="flow-arrow">→</span>
-              <span>指示文をコピー</span>
+              <span>ベース問題</span>
               <span className="flow-arrow">→</span>
               <span className="flow-external">ChatGPT / Claude に貼付</span>
-              <span className="flow-arrow">→</span>
-              <span>結果貼り付け</span>
               <span className="flow-arrow">→</span>
               <span>PDF完成</span>
             </div>
@@ -297,98 +325,311 @@ export default function App() {
             </div>
 
             {/* ══════════════════════════════════
-                STEP 1 — 問題設定
+                STEP 1 — 出題パターンを選ぶ
                ══════════════════════════════════ */}
             {step === 1 && (
               <div className="card anim-fade-up">
                 <div className="card-header">
                   <span className="card-emoji">📝</span>
-                  <div className="card-title">問題の条件を設定</div>
-                  <div className="card-desc">AIへ送る指示文を自動作成します。下の項目を選択してください。</div>
+                  <div className="card-title">出題パターンを選ぶ</div>
+                  <div className="card-desc">問題の出題形式・スタイルを決めるパターンを選択してください</div>
                 </div>
 
                 <div className="tip">
                   <span className="tip-icon">💡</span>
-                  <div>初めての方：テンプレートを選び、問題数を決めて<strong>「指示文を作成」</strong>ボタンを押すだけ！</div>
+                  <div>パターンには科目・分野の情報が含まれています。目的に合ったものを選んでください。</div>
                 </div>
 
-                {/* Row 1: テンプレート */}
-                <div className="form-row" style={{marginBottom:16}}>
-                  <div className="field">
-                    <label className="field-label">
-                      テンプレート
-                      <span className="tooltip-icon" title="問題の出題形式やスタイルを決めるテンプレートです。科目・分野・難易度はテンプレートに含まれています。">?</span>
-                    </label>
-                    <select className="select" value={form.templateId} onChange={e => upd('templateId', e.target.value)}>
-                      {templates.map(t => <option key={t.id} value={t.id}>{t.name || t.id}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Row 2: 問題数 + 出力形式 */}
-                <div className="form-row form-row-2" style={{marginBottom:20}}>
-                  <div className="field">
-                    <label className="field-label">問題数</label>
-                    <input className="input" type="number" min={1} max={10} value={form.numQuestions}
-                      onChange={e => upd('numQuestions', Number(e.target.value))} />
-                  </div>
-                  <div className="field">
-                    <label className="field-label">
-                      出力形式
-                      <span className="tooltip-icon" title="生成されるPDFのレイアウト形式を選択します">?</span>
-                    </label>
-                    <select className="select" value={form.latexPreset} onChange={e => upd('latexPreset', e.target.value)}>
-                      {latexPresets.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                    {currentPreset && (
-                      <div className="field-hint">{currentPreset.description}</div>
-                    )}
-                  </div>
-                </div>
-
-                {/* File upload */}
-                <div className="field">
-                  <label className="field-label">
-                    参照ファイル（任意）
-                    <span className="tooltip-icon" title="似た形式の問題を作りたい場合、元の問題ファイルをアップロードすると精度が上がります">?</span>
-                  </label>
-                  <div
-                    className={`upload-area ${form.fileName ? 'has-file' : ''} ${dragOver ? 'drag-over' : ''}`}
-                    onClick={() => fileRef.current?.click()}
-                    onDrop={onDrop}
-                    onDragOver={onDragOver}
-                    onDragLeave={onDragLeave}
-                  >
-                    <input ref={fileRef} type="file" accept=".pdf,.txt,.tex,.md,.json" onChange={e => uploadFile(e.target.files?.[0])} />
-                    <div className="upload-icon"><Ico.Upload /></div>
-                    {form.fileName ? (
-                      <>
-                        <div className="upload-file-name">
-                          <Ico.FileText /> {form.fileName}
-                          <button className="upload-clear" onClick={e => { e.stopPropagation(); setForm(p => ({...p, sourceText:'', fileName:''})) }}>×</button>
+                <div className="pattern-grid">
+                  {templates.map(t => {
+                    const meta = t.metadata || {}
+                    const isSelected = form.templateId === t.id
+                    return (
+                      <div
+                        key={t.id}
+                        className={`pattern-card ${isSelected ? 'selected' : ''}`}
+                        onClick={() => upd('templateId', t.id)}
+                      >
+                        <div className="pattern-card-header">
+                          <div className="pattern-card-name">{t.name || t.id}</div>
+                          {isSelected && <div className="pattern-check"><Ico.Check s={14} /></div>}
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="upload-label"><strong>タップ</strong>または<strong>ドラッグ＆ドロップ</strong></div>
-                        <div className="upload-formats">PDF / テキスト / LaTeX 対応</div>
-                      </>
-                    )}
-                  </div>
+                        {t.description && (
+                          <div className="pattern-card-desc">{t.description}</div>
+                        )}
+                        <div className="pattern-card-tags">
+                          {meta.subject && <span className="pattern-tag">{meta.subject}</span>}
+                          {meta.field && <span className="pattern-tag">{meta.field}</span>}
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
 
-                <button className="btn btn-primary btn-block" style={{marginTop:8}} onClick={generatePrompt} disabled={loading || !form.templateId}>
-                  指示文を作成 <Ico.ArrowRight />
+                <button
+                  className="btn btn-primary btn-block"
+                  style={{marginTop: 16}}
+                  onClick={() => form.templateId && setStep(2)}
+                  disabled={!form.templateId}
+                >
+                  次へ <Ico.ArrowRight />
                 </button>
               </div>
             )}
 
             {/* ══════════════════════════════════
-                STEP 2 — 指示文をコピー
+                STEP 2 — 難易度・問題数
                ══════════════════════════════════ */}
             {step === 2 && (
+              <div className="card anim-fade-up">
+                <div className="card-header">
+                  <span className="card-emoji">⚙️</span>
+                  <div className="card-title">難易度・問題数を設定</div>
+                  <div className="card-desc">生成する問題の難易度と数を選んでください</div>
+                </div>
+
+                {selectedTemplate && (
+                  <div className="selected-pattern-badge">
+                    <span>選択中：</span>
+                    <strong>{selectedTemplate.name || selectedTemplate.id}</strong>
+                    {templateMeta.subject && <span className="pattern-tag">{templateMeta.subject}</span>}
+                  </div>
+                )}
+
+                {/* 難易度 */}
+                <div className="field" style={{marginBottom: 20}}>
+                  <label className="field-label">難易度</label>
+                  <div className="difficulty-selector">
+                    {difficulties.map(d => (
+                      <button
+                        key={d}
+                        className={`difficulty-btn ${form.difficulty === d ? 'active' : ''}`}
+                        onClick={() => upd('difficulty', d)}
+                      >
+                        <span className="difficulty-icon">
+                          {d === '易' ? '🟢' : d === '普通' ? '🟡' : '🔴'}
+                        </span>
+                        <span>{d}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 問題数 */}
+                <div className="field" style={{marginBottom: 20}}>
+                  <label className="field-label">問題数</label>
+                  <div className="num-questions-selector">
+                    {[1, 2, 3, 5, 10].map(n => (
+                      <button
+                        key={n}
+                        className={`num-btn ${form.numQuestions === n ? 'active' : ''}`}
+                        onClick={() => upd('numQuestions', n)}
+                      >
+                        {n}問
+                      </button>
+                    ))}
+                  </div>
+                  <div className="field-hint" style={{marginTop: 8}}>
+                    またはカスタム入力：
+                    <input
+                      className="input"
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={form.numQuestions}
+                      onChange={e => upd('numQuestions', Math.min(10, Math.max(1, Number(e.target.value))))}
+                      style={{width: 80, display: 'inline-block', marginLeft: 8, padding: '6px 10px'}}
+                    />
+                  </div>
+                </div>
+
+                {/* 出力形式 */}
+                <div className="field" style={{marginBottom: 8}}>
+                  <label className="field-label">
+                    出力形式
+                    <span className="tooltip-icon" title="生成されるPDFのレイアウト形式を選択します">?</span>
+                  </label>
+                  <select className="select" value={form.latexPreset} onChange={e => upd('latexPreset', e.target.value)}>
+                    {latexPresets.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                  {currentPreset && (
+                    <div className="field-hint">{currentPreset.description}</div>
+                  )}
+                </div>
+
+                <div className="btn-row btn-row-2">
+                  <button className="btn btn-outline" onClick={() => setStep(1)}>
+                    <Ico.ArrowLeft /> 戻る
+                  </button>
+                  <button className="btn btn-primary" onClick={() => { fetchBaseProblems(form.templateId); setStep(3) }}>
+                    次へ <Ico.ArrowRight />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════
+                STEP 3 — ベース問題選択
+               ══════════════════════════════════ */}
+            {step === 3 && (
+              <div className="card anim-fade-up">
+                <div className="card-header">
+                  <span className="card-emoji">📄</span>
+                  <div className="card-title">ベース問題を選択</div>
+                  <div className="card-desc">参考にする問題をDBから選ぶか、PDFをアップロードしてください。スキップも可能です。</div>
+                </div>
+
+                {/* Tab selector */}
+                <div className="base-mode-tabs">
+                  <button
+                    className={`base-mode-tab ${baseMode === 'db' ? 'active' : ''}`}
+                    onClick={() => setBaseMode('db')}
+                  >
+                    <Ico.Database />
+                    <span>DBから選択</span>
+                  </button>
+                  <button
+                    className={`base-mode-tab ${baseMode === 'pdf' ? 'active' : ''}`}
+                    onClick={() => setBaseMode('pdf')}
+                  >
+                    <Ico.Pdf />
+                    <span>PDFアップロード</span>
+                  </button>
+                  <button
+                    className={`base-mode-tab ${baseMode === 'skip' ? 'active' : ''}`}
+                    onClick={() => { setBaseMode('skip'); setSelectedBaseProblem(null); setBasePdfData(null) }}
+                  >
+                    <Ico.Skip />
+                    <span>スキップ</span>
+                  </button>
+                </div>
+
+                {/* DB mode */}
+                {baseMode === 'db' && (
+                  <div className="base-content anim-fade-up">
+                    {baseProblems.length > 0 ? (
+                      <>
+                        <div className="base-db-hint">同じ出題パターンの問題から1つ選んでください</div>
+                        <div className="base-problem-list">
+                          {baseProblems.map(p => (
+                            <div
+                              key={p.id}
+                              className={`base-problem-card ${selectedBaseProblem?.id === p.id ? 'selected' : ''}`}
+                              onClick={() => setSelectedBaseProblem(selectedBaseProblem?.id === p.id ? null : p)}
+                            >
+                              <div className="base-problem-stem">{p.stem}</div>
+                              <div className="base-problem-meta">
+                                {p.subject && <span className="pattern-tag">{p.subject}</span>}
+                                {p.topic && <span className="pattern-tag">{p.topic}</span>}
+                                {p.difficulty != null && (
+                                  <span className="pattern-tag">難易度: {(p.difficulty * 100).toFixed(0)}%</span>
+                                )}
+                              </div>
+                              {selectedBaseProblem?.id === p.id && (
+                                <div className="base-problem-check"><Ico.Check s={16} /></div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="base-empty">
+                        <div className="base-empty-icon"><Ico.Database /></div>
+                        <div>このパターンに一致する問題がDBに見つかりませんでした。</div>
+                        <div className="field-hint">PDFアップロードかスキップを選択してください。</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* PDF mode */}
+                {baseMode === 'pdf' && (
+                  <div className="base-content anim-fade-up">
+                    <div className="tip tip-info" style={{marginBottom: 16}}>
+                      <span className="tip-icon">📋</span>
+                      <div>
+                        PDFは<strong>3ページ以下</strong>のファイルのみアップロード可能です。
+                        アップロードされたPDFはベースライン問題としてAIに添付送信されます。
+                      </div>
+                    </div>
+
+                    {!basePdfData ? (
+                      <div
+                        className={`upload-area ${basePdfDragOver ? 'drag-over' : ''}`}
+                        onClick={() => basePdfRef.current?.click()}
+                        onDrop={onBasePdfDrop}
+                        onDragOver={onBasePdfDragOver}
+                        onDragLeave={onBasePdfDragLeave}
+                      >
+                        <input ref={basePdfRef} type="file" accept=".pdf" onChange={e => uploadBasePdf(e.target.files?.[0])} />
+                        <div className="upload-icon"><Ico.Upload /></div>
+                        <div className="upload-label"><strong>タップ</strong>または<strong>ドラッグ＆ドロップ</strong></div>
+                        <div className="upload-formats">PDFファイル（3ページ以下）</div>
+                      </div>
+                    ) : (
+                      <div className="base-pdf-preview">
+                        <div className="base-pdf-info">
+                          <div className="base-pdf-filename">
+                            <Ico.FileText /> {basePdfData.filename}
+                          </div>
+                          <div className="base-pdf-pages">{basePdfData.page_count}ページ</div>
+                          <button
+                            className="btn btn-ghost"
+                            style={{padding: '4px 10px', fontSize: 12}}
+                            onClick={() => setBasePdfData(null)}
+                          >
+                            削除
+                          </button>
+                        </div>
+                        {basePdfData.images?.length > 0 && (
+                          <div className="base-pdf-thumbnails">
+                            {basePdfData.images.map((img, i) => (
+                              <div key={i} className="base-pdf-thumb">
+                                <img src={`data:image/png;base64,${img}`} alt={`Page ${i+1}`} />
+                                <div className="base-pdf-thumb-label">P{i+1}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Skip mode */}
+                {baseMode === 'skip' && (
+                  <div className="base-content anim-fade-up">
+                    <div className="base-skip-notice">
+                      <Ico.Skip />
+                      <div>
+                        <strong>ベース問題なしで生成</strong>
+                        <div className="field-hint">RAGによる類似問題検索のみで指示文を作成します</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="btn-row btn-row-2">
+                  <button className="btn btn-outline" onClick={() => setStep(2)}>
+                    <Ico.ArrowLeft /> 戻る
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={generatePrompt}
+                    disabled={loading || (baseMode === 'db' && !selectedBaseProblem) || (baseMode === 'pdf' && !basePdfData)}
+                  >
+                    指示文を作成 <Ico.ArrowRight />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ══════════════════════════════════
+                STEP 4 — 指示文をコピー
+               ══════════════════════════════════ */}
+            {step === 4 && (
               <div className="card anim-fade-up">
                 <div className="card-header">
                   <span className="card-emoji">📋</span>
@@ -411,15 +652,27 @@ export default function App() {
                       <div className="step-detail">下のリンクから開けます。無料プランでも利用可能です。</div>
                     </div>
                   </div>
+                  {baseMode === 'pdf' && basePdfData && (
+                    <div className="instruction-step">
+                      <span className="instruction-num" style={{background: 'var(--c-accent)'}}>!</span>
+                      <div>
+                        <strong>ベースPDFもAIに添付してください</strong>
+                        <div className="step-detail">
+                          「{basePdfData.filename}」をChatGPT/Claudeの添付ファイルとしてアップロードしてください。
+                          指示文内にPDFを参照する旨が記載されています。
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="instruction-step">
-                    <span className="instruction-num">3</span>
+                    <span className="instruction-num">{baseMode === 'pdf' && basePdfData ? '3' : '3'}</span>
                     <div>
                       <strong>コピーした指示文を貼り付けて送信</strong>
                       <div className="step-detail">AIが数秒〜数十秒でLaTeXコードを生成します</div>
                     </div>
                   </div>
                   <div className="instruction-step">
-                    <span className="instruction-num">4</span>
+                    <span className="instruction-num">{baseMode === 'pdf' && basePdfData ? '4' : '4'}</span>
                     <div>
                       <strong>AIの出力（LaTeXコード全体）をコピー</strong>
                       <div className="step-detail"><code>\documentclass</code> から <code>{`\\end{document}`}</code> まで全てコピーしてください</div>
@@ -435,6 +688,12 @@ export default function App() {
                   )}
                   {currentPreset && (
                     <span className="rag-badge">📄 形式: {currentPreset.name}</span>
+                  )}
+                  {baseMode === 'db' && selectedBaseProblem && (
+                    <span className="rag-badge">🎯 ベース問題選択済み</span>
+                  )}
+                  {baseMode === 'pdf' && basePdfData && (
+                    <span className="rag-badge">📎 PDF添付: {basePdfData.filename}</span>
                   )}
                 </div>
 
@@ -454,10 +713,10 @@ export default function App() {
                 </div>
 
                 <div className="btn-row btn-row-2">
-                  <button className="btn btn-outline" onClick={() => setStep(1)}>
+                  <button className="btn btn-outline" onClick={() => setStep(3)}>
                     <Ico.ArrowLeft /> 戻る
                   </button>
-                  <button className="btn btn-success" onClick={() => setStep(3)}>
+                  <button className="btn btn-success" onClick={() => setStep(5)}>
                     AIの出力を受け取った → 次へ <Ico.ArrowRight />
                   </button>
                 </div>
@@ -465,9 +724,9 @@ export default function App() {
             )}
 
             {/* ══════════════════════════════════
-                STEP 3 — LaTeX 貼り付け → PDF生成
+                STEP 5 — LaTeX 貼り付け → PDF生成
                ══════════════════════════════════ */}
-            {step === 3 && (
+            {step === 5 && (
               <div className="card anim-fade-up">
                 <div className="card-header">
                   <span className="card-emoji">✨</span>
@@ -517,7 +776,7 @@ export default function App() {
                 </div>
 
                 <div className="btn-row btn-row-2">
-                  <button className="btn btn-outline" onClick={() => setStep(2)}>
+                  <button className="btn btn-outline" onClick={() => setStep(4)}>
                     <Ico.ArrowLeft /> 戻る
                   </button>
                   <button className="btn btn-success" onClick={generatePdf} disabled={loading || !llmOutput.trim()}>
@@ -528,9 +787,9 @@ export default function App() {
             )}
 
             {/* ══════════════════════════════════
-                STEP 4 — 完了
+                STEP 6 — 完了
                ══════════════════════════════════ */}
-            {step === 4 && (
+            {step === 6 && (
               <div className="card anim-fade-up">
                 <div className="success-screen">
                   <div className="success-icon">
@@ -593,6 +852,14 @@ export default function App() {
                 <dd>はい。このシステムは「問題データベース検索」と「PDF生成」を担当します。
                     問題の生成はChatGPTやClaude等の外部AIサービスが行います。</dd>
 
+                <dt>Q: ベース問題とは？</dt>
+                <dd>生成する問題の「お手本」となる問題です。DBから既存の問題を選ぶか、
+                    PDFをアップロードすることで、より的確な類似問題を生成できます。</dd>
+
+                <dt>Q: PDFアップロードの制限は？</dt>
+                <dd>ベースPDFは3ページ以下のファイルのみアップロード可能です。
+                    入力トークンの最適化のため、この制限を設けています。</dd>
+
                 <dt>Q: ChatGPTやClaudeは無料で使えますか？</dt>
                 <dd>はい、無料プランがあります。ただし利用回数に制限がある場合があります。</dd>
 
@@ -601,10 +868,6 @@ export default function App() {
                     (1) コードブロック記号（```）を削除したか
                     (2) <code>\documentclass</code> から <code>{`\\end{document}`}</code> まで含まれているか
                     (3) LaTeX構文にエラーがないか</dd>
-
-                <dt>Q: テンプレートとは何ですか？</dt>
-                <dd>テンプレートは問題生成の「型」です。科目・分野ごとに最適化された出題指示が含まれており、
-                    AIがより的確な問題を生成できるようになります。</dd>
 
                 <dt>Q: 「出力形式」は何を選べばいいですか？</dt>
                 <dd>
@@ -615,14 +878,6 @@ export default function App() {
                   <strong>レポート・解説</strong> - 解説重視のレポート<br/>
                   <strong>シンプル</strong> - 最小限の装飾
                 </dd>
-
-                <dt>Q: 分野フィルタは何のためですか？</dt>
-                <dd>分野を指定すると、データベースからその分野の類似問題だけを検索します。
-                    これにより、より的確な参考問題が指示文に含まれ、生成品質が向上します。</dd>
-
-                <dt>Q: ファイルアップロードは必須ですか？</dt>
-                <dd>いいえ、任意です。似た形式の問題を作りたい場合にアップロードすると、
-                    そのスタイルを参考にした問題が生成されます。</dd>
               </dl>
             </div>
           </div>
