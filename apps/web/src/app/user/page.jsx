@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, fetchUsage, adminUnlock, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, fetchUsage, adminUnlock, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -60,6 +60,79 @@ C ──k──► D`,
 │ 数学 │  85 │
 │ 英語 │  92 │
 └──────┴─────┘`,
+  /* ── 新パッケージ ── */
+  'tikz-3dplot': `    ╱─╲
+   ╱   ╲ z
+  ╱     ╲↑
+ ╱───────╱→ x
+ ╲      ╱
+  ╲    ╱  ╱
+   ╲──╱  y`,
+  smartdiagram: `┌───┐  ┌───┐  ┌───┐
+│ A │→│ B │→│ C │
+└───┘  └───┘  └───┘
+         ↕
+       ┌───┐
+       │ D │
+       └───┘`,
+  pgfmolbio: `5' ATGCGATCCA 3'
+   |||||||||| 
+3' TACGCTAGGT 5'
+   ▲▲▲▲▲▲▲▲▲▲
+   クロマトグラム`,
+  texshade: `Seq1 MVLSP-KAR
+Seq2 MVLSPADKA
+Seq3 MVL-PGDKS
+     ███░░█░░░`,
+  genealogytree: `   ♂──♀
+   │    │
+ ┌─┴─┐  │
+ ♂  ♀──♂
+    │
+    ♂(患者)`,
+  chemfig: `    H   H
+    │   │
+H─C ═ C─H
+    │
+   OH
+  エタノール`,
+  mhchem: `2H₂ + O₂ → 2H₂O
+ 
+Fe²⁺ → Fe³⁺ + e⁻
+
+pH = -log[H⁺]`,
+  modiagram: `  σ*  ──
+        ↑↓
+  π*  ── ──
+  π   ── ──
+        ↑↓
+  σ   ──  MO図`,
+  'tikz-network': `  A ── B
+ / \\   |
+C   D──E
+ \\ /
+  F ネットワーク`,
+  algorithm2e: `if 体温 > 38℃ then
+  if SpO₂ < 95% then
+    → 精密検査
+  else
+    → 経過観察
+  end`,
+  siunitx: `9.81 m/s²
+2.998×10⁸ m/s
+0.15 mol/L
+37.5 °C`,
+  booktabs: `──────────────
+ 群   N   平均
+══════════════
+ A   30   4.2
+ B   28   3.8
+──────────────`,
+  subcaption: `┌─────┐ ┌─────┐
+│ (a) │ │ (b) │
+│ 図1 │ │ 図2 │
+└─────┘ └─────┘
+  比較配置`,
 };
 
 /* ── 各PDF形式のビジュアルサムネイルコンポーネント ── */
@@ -1368,110 +1441,124 @@ export default function UserModePage() {
       {step === 3 && (
         <div className="space-y-5 wizard-section-enter">
           <div className="card-glossy">
-            <div className="p-5 relative z-10">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="icon-glossy w-10 h-10 text-white">
+            <div className="p-5 sm:p-6 relative z-10">
+              {/* ── ヘッダー: 目的を明確に伝える ── */}
+              <div className="flex items-center gap-3.5 mb-6">
+                <div className="icon-glossy w-11 h-11 text-white base-icon-pulse">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                   </svg>
                 </div>
                 <div>
                   <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">ベース問題を選択</h3>
-                  <p className="text-[11px] text-[#64748b]">参考にする問題を選ぶと、AIがより精度の高い類題を生成します（任意）</p>
+                  <p className="text-[11px] text-[#64748b] leading-relaxed">
+                    参考にする問題を選ぶと、AIがより精度の高い類題を生成します
+                    <span className="inline-flex items-center ml-1.5 px-1.5 py-0.5 bg-blue-50/70 text-[#2563eb] rounded text-[9px] font-bold">任意</span>
+                  </p>
                 </div>
               </div>
 
-              {/* タブ切り替え */}
-              <div className="flex rounded-xl bg-[#f1f5f9] p-1 mb-5">
+              {/* ── タブ切り替え: セグメンテッドコントロール ── */}
+              <div className="base-tab-container relative flex rounded-2xl bg-[#f1f5f9]/80 p-1 mb-6 overflow-hidden">
+                {/* スライディングインジケーター */}
+                <div
+                  className="base-tab-indicator"
+                  style={{
+                    transform: `translateX(${baseMode === 'skip' ? '0%' : baseMode === 'db' ? '100%' : '200%'})`,
+                    width: '33.333%',
+                  }}
+                />
                 {[
-                  { id: 'skip', label: 'スキップ', icon: '→' },
-                  { id: 'db', label: 'DBから選択', icon: '🔍' },
-                  { id: 'pdf', label: 'PDFアップロード', icon: '📄' },
+                  { id: 'skip', label: 'スキップ', desc: 'そのまま次へ', iconEl: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.689c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062A1.125 1.125 0 013 16.81V8.69zM12.75 8.689c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062a1.125 1.125 0 01-1.683-.977V8.69z" />
+                    </svg>
+                  )},
+                  { id: 'db', label: 'DBから選択', desc: '過去問を参照', iconEl: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  )},
+                  { id: 'pdf', label: 'PDFアップロード', desc: '手持ちの問題', iconEl: (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                  )},
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setBaseMode(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-[12px] font-bold transition-all duration-300 ${
+                    className={`base-tab-btn flex-1 relative z-[1] flex flex-col items-center justify-center gap-0.5 px-2 py-3 rounded-xl text-center transition-all duration-300 ${
                       baseMode === tab.id
-                        ? 'bg-white text-[#1e293b] shadow-sm'
-                        : 'text-[#64748b] hover:text-[#1e293b]'
+                        ? 'text-[#1e293b]'
+                        : 'text-[#94a3b8] hover:text-[#64748b]'
                     }`}
                   >
-                    <span className="text-[14px]">{tab.icon}</span>
-                    {tab.label}
+                    <span className={`transition-all duration-300 ${baseMode === tab.id ? 'scale-110 text-[#2563eb]' : ''}`}>
+                      {tab.iconEl}
+                    </span>
+                    <span className="text-[11px] font-bold leading-tight mt-0.5">{tab.label}</span>
+                    <span className={`text-[9px] leading-tight transition-all duration-300 ${baseMode === tab.id ? 'text-[#64748b] opacity-100 max-h-4' : 'opacity-0 max-h-0'}`}>
+                      {tab.desc}
+                    </span>
                   </button>
                 ))}
               </div>
 
-              {/* スキップモード */}
+              {/* ═══ スキップモード ═══ */}
               {baseMode === 'skip' && (
-                <div className="text-center py-8">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50/60 mb-3">
-                    <svg className="w-7 h-7 text-[#94a3b8]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <div className="base-content-enter text-center py-10">
+                  <div className="base-skip-icon inline-flex items-center justify-center w-16 h-16 rounded-[20px] bg-gradient-to-b from-[#f1f5f9] to-[#e2e8f0] mb-4 shadow-sm">
+                    <svg className="w-8 h-8 text-[#94a3b8]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.689c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062A1.125 1.125 0 013 16.81V8.69zM12.75 8.689c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062a1.125 1.125 0 01-1.683-.977V8.69z" />
                     </svg>
                   </div>
-                  <p className="text-[13px] font-bold text-[#1e293b]">ベース問題なしで生成</p>
-                  <p className="text-[11px] text-[#94a3b8] mt-1">AIがゼロから問題を作成します。そのまま次へ進めます。</p>
+                  <p className="text-[14px] font-bold text-[#1e293b] mb-1">ベース問題なしで生成</p>
+                  <p className="text-[12px] text-[#94a3b8] max-w-[260px] mx-auto leading-relaxed">
+                    AIがゼロから問題を作成します。<br />そのまま「次のステップへ」を押してください。
+                  </p>
+                  <div className="mt-5 inline-flex items-center gap-1.5 text-[10px] font-medium text-[#2563eb]/60">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                    次へ進める準備ができています
+                  </div>
                 </div>
               )}
 
-              {/* DB検索モード */}
+              {/* ═══ DB検索モード ═══ */}
               {baseMode === 'db' && (
-                <div>
-                  {/* フィルタバー */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {subject && (
-                        <span className="px-2.5 py-1 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-full text-[10px] font-bold">{subject}</span>
-                      )}
-                      {field && (
-                        <span className="px-2.5 py-1 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-full text-[10px] font-bold">{field}</span>
-                      )}
-                    </div>
-                    <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50/50 border border-blue-200/40
-                                    focus-within:bg-white focus-within:border-blue-300/50 focus-within:shadow-sm transition-all duration-200">
-                      <svg className="w-3.5 h-3.5 text-[#94a3b8] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      <input
-                        ref={baseSearchInputRef}
-                        type="text"
-                        value={baseFilterQuery}
-                        onChange={(e) => setBaseFilterQuery(e.target.value)}
-                        placeholder="絞り込み..."
-                        className="flex-1 bg-transparent text-xs text-[#1e293b] outline-none placeholder:text-[#94a3b8]"
-                      />
-                      {baseFilterQuery && (
-                        <button onClick={() => setBaseFilterQuery('')} className="text-[#94a3b8] hover:text-[#1e293b] transition-colors">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                <div className="base-content-enter">
 
-                  {/* 選択済み表示 */}
+                  {/* ── 選択済みバナー: 最上部に目立つ確認表示 (認知心理学: 選択確認は即座にフィードバック) ── */}
                   {selectedBaseProblem && (
-                    <div className="mb-3 p-3 rounded-xl bg-blue-50/50 border border-blue-200/60">
-                      <div className="flex items-start justify-between gap-2">
+                    <div className="base-selected-banner mb-4">
+                      <div className="flex items-start gap-3">
+                        {/* アニメーション付きチェックマーク */}
+                        <div className="base-selected-check flex-shrink-0">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                            <path className="base-check-path" strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center flex-shrink-0">
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            </div>
-                            <span className="text-[11px] font-bold text-[#475569]">選択中</span>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="text-[11px] font-bold text-emerald-700 tracking-wide uppercase">選択中</span>
+                            {selectedBaseProblem.subject && (
+                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-bold">{selectedBaseProblem.subject}</span>
+                            )}
+                            {(selectedBaseProblem.topic || selectedBaseProblem.metadata?.field) && (
+                              <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-bold">{selectedBaseProblem.topic || selectedBaseProblem.metadata?.field}</span>
+                            )}
                           </div>
-                          <div className="text-[12px] text-[#1e293b] leading-relaxed line-clamp-2 ml-7">
+                          <div className="text-[12px] text-[#1e293b] leading-relaxed line-clamp-2">
                             <LatexText>{(selectedBaseProblem.stem || selectedBaseProblem.text || '').slice(0, 200)}</LatexText>
                           </div>
                         </div>
+                        {/* 解除ボタン: 誤操作防止のため小さめ + ホバーで赤 */}
                         <button
-                          onClick={() => setSelectedBaseProblem(null)}
-                          className="w-7 h-7 rounded-lg bg-blue-50/60 hover:bg-red-50 text-[#94a3b8] hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                          onClick={(e) => { e.stopPropagation(); setSelectedBaseProblem(null); }}
+                          className="base-deselect-btn flex-shrink-0"
+                          title="選択を解除"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1481,60 +1568,176 @@ export default function UserModePage() {
                     </div>
                   )}
 
-                  {/* 問題一覧 */}
-                  {matchedLoading ? (
-                    <div className="flex flex-col items-center justify-center py-8 gap-2">
-                      <svg className="animate-spin h-5 w-5 text-[#475569]" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      <p className="text-[11px] text-[#94a3b8]">過去問を取得中...</p>
-                    </div>
-                  ) : filteredProblems.length > 0 ? (
-                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
-                      <div className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider px-1 mb-1">
-                        {filteredProblems.length} 件{baseFilterQuery.trim() ? ` / ${matchedProblems.length} 件中` : ''}
+                  {/* ── 検索バー: 大きくて見つけやすい (Fitts' Law) ── */}
+                  <div className="base-search-bar mb-4">
+                    <div className="flex items-center gap-2.5">
+                      {/* 科目/分野バッジ */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {subject && (
+                          <span className="base-filter-badge">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
+                            {subject}
+                          </span>
+                        )}
+                        {field && (
+                          <span className="base-filter-badge">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#8b5cf6]" />
+                            {field}
+                          </span>
+                        )}
                       </div>
-                      {filteredProblems.map((item, idx) => {
-                        const isSelected = selectedBaseProblem?.id === item.id;
-                        return (
+                      {/* 検索入力 */}
+                      <div className="base-search-input-wrapper flex-1">
+                        <svg className="w-4 h-4 text-[#94a3b8] flex-shrink-0 transition-colors duration-200" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input
+                          ref={baseSearchInputRef}
+                          type="text"
+                          value={baseFilterQuery}
+                          onChange={(e) => setBaseFilterQuery(e.target.value)}
+                          placeholder="キーワードで絞り込み…"
+                          className="flex-1 bg-transparent text-[13px] text-[#1e293b] outline-none placeholder:text-[#b0bec5] font-medium"
+                        />
+                        {baseFilterQuery && (
                           <button
-                            key={item.id ?? idx}
-                            onClick={() => setSelectedBaseProblem(item)}
-                            className={`result-item w-full text-left px-4 py-3 ${isSelected ? 'selected' : ''}`}
+                            onClick={() => { setBaseFilterQuery(''); baseSearchInputRef.current?.focus(); }}
+                            className="base-clear-btn"
+                            title="検索をクリア"
                           >
-                            <div className="flex items-start gap-3">
-                              <div className={`check-circle mt-0.5 ${isSelected ? 'checked' : ''}`}>
-                                {isSelected && (
-                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-[12px] text-[#1e293b] leading-relaxed line-clamp-2">
-                                  <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
-                                </div>
-                                <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                                  {item.subject && (
-                                    <span className="px-2 py-0.5 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-full text-[9px] font-bold">{item.subject}</span>
-                                  )}
-                                  {(item.topic || item.metadata?.field) && (
-                                    <span className="px-2 py-0.5 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
-                                  )}
-                                  {item.difficulty != null && (
-                                    <span className="px-2 py-0.5 bg-blue-100/50 text-[#475569] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
-                                  )}
-                                </div>
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── 問題一覧 ── */}
+                  {matchedLoading ? (
+                    /* スケルトンローダー: 認知的待ち時間を短縮 */
+                    <div className="space-y-3 base-content-enter">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="base-skeleton-card" style={{ animationDelay: `${i * 0.1}s` }}>
+                          <div className="flex items-start gap-3 p-4">
+                            <div className="w-6 h-6 rounded-full skeleton flex-shrink-0" />
+                            <div className="flex-1 space-y-2">
+                              <div className="h-3 skeleton w-full rounded" />
+                              <div className="h-3 skeleton w-3/4 rounded" />
+                              <div className="flex gap-2 mt-2">
+                                <div className="h-4 w-12 skeleton rounded-full" />
+                                <div className="h-4 w-16 skeleton rounded-full" />
                               </div>
                             </div>
-                          </button>
-                        );
-                      })}
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-center gap-2 pt-2">
+                        <div className="base-loading-dots">
+                          <span /><span /><span />
+                        </div>
+                        <p className="text-[11px] text-[#94a3b8] font-medium">過去問を取得中...</p>
+                      </div>
+                    </div>
+                  ) : filteredProblems.length > 0 ? (
+                    <div className="base-content-enter">
+                      {/* 件数ヘッダー */}
+                      <div className="flex items-center justify-between px-1 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">
+                            {filteredProblems.length} 件{baseFilterQuery.trim() ? ` / ${matchedProblems.length} 件中` : ''}
+                          </span>
+                          {baseFilterQuery.trim() && (
+                            <span className="base-filter-active-badge">フィルタ中</span>
+                          )}
+                        </div>
+                        {selectedBaseProblem && (
+                          <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            1件選択
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 問題カードリスト */}
+                      <div className="base-problem-list space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                        {filteredProblems.map((item, idx) => {
+                          const isSelected = selectedBaseProblem?.id === item.id;
+                          return (
+                            <button
+                              key={item.id ?? idx}
+                              onClick={() => setSelectedBaseProblem(isSelected ? null : item)}
+                              className={`base-problem-card w-full text-left ${isSelected ? 'base-problem-selected' : ''}`}
+                              style={{ animationDelay: `${Math.min(idx * 0.04, 0.4)}s` }}
+                            >
+                              <div className="flex items-start gap-3 p-4">
+                                {/* ラジオ風チェックサークル */}
+                                <div className={`base-check mt-0.5 ${isSelected ? 'base-check-active' : ''}`}>
+                                  <svg className={`w-3 h-3 text-white transition-all duration-300 ${isSelected ? 'scale-100 opacity-100' : 'scale-0 opacity-0'}`} fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                                {/* カード本体 */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[12px] text-[#1e293b] leading-relaxed line-clamp-2 font-medium">
+                                    <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
+                                  </div>
+                                  <div className="flex gap-1.5 mt-2 flex-wrap">
+                                    {item.subject && (
+                                      <span className="base-tag base-tag-subject">{item.subject}</span>
+                                    )}
+                                    {(item.topic || item.metadata?.field) && (
+                                      <span className="base-tag base-tag-topic">{item.topic || item.metadata?.field}</span>
+                                    )}
+                                    {item.difficulty != null && (
+                                      <span className={`base-tag ${
+                                        item.difficulty <= 2 ? 'base-tag-easy' :
+                                        item.difficulty <= 3 ? 'base-tag-medium' :
+                                        'base-tag-hard'
+                                      }`}>{difficultyLabel(item.difficulty)}</span>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* 選択ヒント */}
+                                <span className={`base-select-hint ${isSelected ? 'opacity-0' : ''}`}>
+                                  選択
+                                </span>
+                              </div>
+                              {/* 選択時のグロー */}
+                              {isSelected && <div className="base-card-glow" />}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
-                    <div className="text-center py-6">
-                      <p className="text-[12px] text-[#94a3b8]">この科目・分野の過去問はまだ登録されていません</p>
+                    /* 空状態: ガイダンスを表示 */
+                    <div className="base-content-enter text-center py-10">
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#f1f5f9] mb-3">
+                        <svg className="w-7 h-7 text-[#cbd5e1]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                        </svg>
+                      </div>
+                      <p className="text-[13px] font-bold text-[#64748b] mb-1">
+                        {baseFilterQuery.trim() ? '一致する問題が見つかりません' : 'この科目・分野の過去問はまだ登録されていません'}
+                      </p>
+                      <p className="text-[11px] text-[#94a3b8] max-w-[240px] mx-auto leading-relaxed">
+                        {baseFilterQuery.trim()
+                          ? '別のキーワードで試すか、フィルタをクリアしてください'
+                          : '「スキップ」を選んでAIにゼロから生成させることもできます'}
+                      </p>
+                      {baseFilterQuery.trim() && (
+                        <button
+                          onClick={() => setBaseFilterQuery('')}
+                          className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold text-[#2563eb] bg-[#2563eb]/[0.06] hover:bg-[#2563eb]/[0.12] transition-colors"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          フィルタをクリア
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1779,7 +1982,7 @@ export default function UserModePage() {
         <div className="space-y-5 wizard-section-enter">
           <div className="card-glossy">
             <div className="p-5 relative z-10">
-              <div className="flex items-center gap-2.5 mb-3">
+              <div className="flex items-center gap-2.5 mb-4">
                 <div className="icon-glossy w-8 h-8">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v13.5A1.5 1.5 0 003.75 21z" />
@@ -1791,54 +1994,111 @@ export default function UserModePage() {
                 </div>
               </div>
 
-              {/* パッケージカード一覧 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {DIAGRAM_PACKAGE_DEFS.map((pkg) => {
-                  const active = extraPackages.includes(pkg.id);
-                  const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
-                  return (
+              {/* 選択中サマリー */}
+              {extraPackages.length > 0 && (
+                <div className="mb-4 p-3 rounded-xl bg-[#2563eb]/[0.04] border border-[#2563eb]/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-[#2563eb]">{extraPackages.length} 個選択中</span>
                     <button
-                      key={pkg.id}
-                      onClick={() => togglePackage(pkg.id)}
-                      className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-300 active:scale-[0.97] ${
-                        active
-                          ? 'border-[#2563eb]/40 bg-blue-50/60 shadow-sm'
-                          : 'border-transparent bg-[#f8fafc] hover:border-blue-100 hover:bg-blue-50/30'
-                      }`}
+                      onClick={() => setExtraPackages([])}
+                      className="text-[10px] font-medium text-[#94a3b8] hover:text-red-500 transition-colors"
                     >
-                      {/* 推奨バッジ */}
-                      {pkg.recommended && (
-                        <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white">
-                          おすすめ
+                      すべて解除
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {extraPackages.map((pkg) => {
+                      const def = DIAGRAM_PACKAGE_DEFS.find(d => d.id === pkg);
+                      return (
+                        <span key={pkg} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#2563eb]/10 text-[#2563eb] transition-all hover:bg-[#2563eb]/15">
+                          {def?.icon || '📦'} {def?.label || pkg}
+                          <button onClick={() => togglePackage(pkg)} className="ml-0.5 hover:text-red-500 transition-colors">×</button>
                         </span>
-                      )}
-                      {/* チェックマーク */}
-                      {active && (
-                        <span className="absolute top-2 left-2 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
-                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </span>
-                      )}
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl flex-shrink-0 mt-0.5">{pkg.icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[13px] font-bold text-[#1e293b]">{pkg.name}</div>
-                          <div className="text-[10px] text-[#64748b] mt-0.5">{pkg.description}</div>
-                          {pkg.hint && (
-                            <div className="text-[10px] text-[#2563eb] font-medium mt-1">{pkg.hint}</div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* カテゴリごとにアコーディオン表示 */}
+              <div className="space-y-3">
+                {PACKAGE_CATEGORIES.map((cat) => {
+                  const pkgsInCat = DIAGRAM_PACKAGE_DEFS.filter(p => p.category === cat.id);
+                  const selectedInCat = pkgsInCat.filter(p => extraPackages.includes(p.id)).length;
+                  return (
+                    <details key={cat.id} className="group pkg-category-card" open={cat.id === 'diagram'}>
+                      <summary className="pkg-category-summary">
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          <span className="text-lg flex-shrink-0">{cat.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[12px] font-bold text-[#1e293b]">{cat.name}</div>
+                            <div className="text-[9px] text-[#94a3b8]">{cat.description}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {selectedInCat > 0 && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white">
+                              {selectedInCat}
+                            </span>
                           )}
+                          <svg className="w-4 h-4 text-[#94a3b8] transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </div>
+                      </summary>
+                      <div className="pkg-category-content">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 pt-0">
+                          {pkgsInCat.map((pkg) => {
+                            const active = extraPackages.includes(pkg.id);
+                            const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
+                            return (
+                              <button
+                                key={pkg.id}
+                                onClick={() => togglePackage(pkg.id)}
+                                className={`pkg-card relative text-left p-3.5 rounded-xl border-2 transition-all duration-300 active:scale-[0.97] ${
+                                  active
+                                    ? 'border-[#2563eb]/40 bg-[#2563eb]/[0.04] shadow-sm'
+                                    : 'border-transparent bg-[#f8fafc]/80 hover:border-blue-100 hover:bg-blue-50/30'
+                                }`}
+                              >
+                                {/* 推奨バッジ */}
+                                {pkg.recommended && !active && (
+                                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-[#2563eb] text-white">
+                                    おすすめ
+                                  </span>
+                                )}
+                                {/* チェックマーク */}
+                                {active && (
+                                  <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center shadow-sm">
+                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </span>
+                                )}
+                                <div className="flex items-start gap-2.5">
+                                  <span className="text-xl flex-shrink-0 mt-0.5">{pkg.icon}</span>
+                                  <div className="flex-1 min-w-0 pr-5">
+                                    <div className="text-[12px] font-bold text-[#1e293b]">{pkg.name}</div>
+                                    <div className="text-[10px] text-[#64748b] mt-0.5 leading-relaxed">{pkg.description}</div>
+                                    {pkg.hint && (
+                                      <div className="text-[9px] text-[#2563eb] font-medium mt-1">{pkg.hint}</div>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* ASCIIプレビュー */}
+                                {illustration && (
+                                  <pre className={`mt-2.5 text-[9px] leading-[1.35] font-mono p-2 rounded-lg whitespace-pre overflow-x-auto transition-colors ${
+                                    active ? 'bg-white/80 text-[#1e293b]' : 'bg-[#f1f5f9]/80 text-[#94a3b8]'
+                                  }`}>
+                                    {illustration}
+                                  </pre>
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
-                      {/* ASCIIプレビュー */}
-                      {illustration && (
-                        <pre className={`mt-3 text-[10px] leading-[1.4] font-mono p-2.5 rounded-xl whitespace-pre overflow-x-auto ${
-                          active ? 'bg-white/80 text-[#1e293b]' : 'bg-[#f1f5f9] text-[#64748b]'
-                        }`}>
-                          {illustration}
-                        </pre>
-                      )}
-                    </button>
+                    </details>
                   );
                 })}
               </div>
@@ -1879,20 +2139,7 @@ export default function UserModePage() {
                 </button>
               </div>
 
-              {/* 選択中のパッケージ一覧 */}
-              {extraPackages.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {extraPackages.map((pkg) => {
-                    const def = DIAGRAM_PACKAGE_DEFS.find(d => d.id === pkg);
-                    return (
-                      <span key={pkg} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-[#2563eb]/10 text-[#2563eb]">
-                        {def?.icon || '📦'} {def?.label || pkg}
-                        <button onClick={() => togglePackage(pkg)} className="ml-0.5 hover:text-red-500 transition-colors">×</button>
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
+              {/* 選択中のパッケージサマリー (カテゴリ内表示で十分のため簡略化) */}
             </div>
           </div>
         </div>
@@ -2999,63 +3246,83 @@ export default function UserModePage() {
                 <p>・ 関数グラフ・データグラフ → <strong>PGFPlots</strong></p>
                 <p>・ プログラミング問題のコード → <strong>Listings</strong></p>
                 <p>・ 確率の樹形図 → <strong>Forest</strong></p>
+                <p className="font-bold mt-1.5">生物・化学・医学系の場合:</p>
+                <p>・ 有機化学の構造式 → <strong>ChemFig</strong></p>
+                <p>・ 化学反応式 → <strong>mhchem</strong></p>
+                <p>・ DNA・タンパク質配列 → <strong>pgfmolbio</strong></p>
+                <p>・ 遺伝の家系図 → <strong>genealogytree</strong></p>
+                <p>・ SI単位の正確な表記 → <strong>siunitx</strong></p>
                 <p className="text-[#475569]">図が不要な問題（文章・数式のみ）は何も選ばなくて大丈夫です。</p>
               </div>
             </details>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {DIAGRAM_PACKAGE_DEFS.map((pkg) => {
-                const active = extraPackages.includes(pkg.id);
-                const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
+              {PACKAGE_CATEGORIES.map((cat) => {
+                const pkgsInCat = DIAGRAM_PACKAGE_DEFS.filter(p => p.category === cat.id);
+                const selectedInCat = pkgsInCat.filter(p => extraPackages.includes(p.id));
+                if (pkgsInCat.length === 0) return null;
                 return (
-                  <button
-                    key={pkg.id}
-                    onClick={() => togglePackage(pkg.id)}
-                    className={`selection-card !p-0 text-left ${
-                      active ? 'active !border-[#2563eb] !shadow-[0_0_0_3px_rgba(37,99,235,0.06)]' : ''
-                    }`}
-                  >
-                    {/* ASCIIアートプレビュー */}
-                    {illustration && (
-                      <div className={`px-3 pt-2.5 pb-2 ${active ? 'bg-[#334155]/[0.06]' : 'bg-blue-50/50'}`}>
-                        <pre
-                          className={`text-[9px] sm:text-[8px] leading-[1.35] font-mono select-none transition-colors ${active ? 'text-[#334155]' : 'text-[#94a3b8]'}`}
-                          style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
-                        >
-                          {illustration}
-                        </pre>
+                  <details key={cat.id} className="pkg-category-card col-span-full group" open={cat.id === 'diagram'}>
+                    <summary className="pkg-category-summary">
+                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <span className="text-base">{cat.icon}</span>
+                        <div>
+                          <span className="text-[11px] font-bold text-[#1e293b]">{cat.name}</span>
+                          <span className="text-[9px] text-[#94a3b8] ml-2">{cat.description}</span>
+                        </div>
                       </div>
-                    )}
-                    {/* ラベル */}
-                    <div className="px-4 py-2.5 relative z-10">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {active ? (
-                          <div className="check-circle checked !w-5 !h-5 !border-[#2563eb]" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
-                            <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        ) : (
-                          <div className="check-circle !w-5 !h-5" />
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {selectedInCat.length > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white">{selectedInCat.length}</span>
                         )}
-                        <span className={`text-sm leading-none ${active ? 'text-[#334155]' : 'text-[#94a3b8]'}`}>
-                          {pkg.icon}
-                        </span>
-                        <span className="text-xs font-bold text-[#1e293b]">{pkg.name}</span>
-                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                          active ? 'bg-[#334155]/[0.1] text-[#334155]' : 'bg-blue-50/60 text-[#94a3b8]'
-                        }`}>
-                          {pkg.label}
-                        </span>
-                        {pkg.recommended && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-blue-100/50 text-[#475569]">
-                            おすすめ
-                          </span>
-                        )}
+                        <svg className="w-3.5 h-3.5 text-[#94a3b8] transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
                       </div>
-                      <p className="text-[10px] text-[#64748b] mt-1 ml-7 leading-tight">{pkg.hint || pkg.description}</p>
+                    </summary>
+                    <div className="pkg-category-content grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 pt-2">
+                      {pkgsInCat.map((pkg) => {
+                        const active = extraPackages.includes(pkg.id);
+                        const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
+                        return (
+                          <button
+                            key={pkg.id}
+                            onClick={() => togglePackage(pkg.id)}
+                            className={`selection-card !p-0 text-left ${
+                              active ? 'active !border-[#2563eb] !shadow-[0_0_0_3px_rgba(37,99,235,0.06)]' : ''
+                            }`}
+                          >
+                            {illustration && (
+                              <div className={`px-3 pt-2.5 pb-2 ${active ? 'bg-[#334155]/[0.06]' : 'bg-blue-50/50'}`}>
+                                <pre className={`text-[9px] sm:text-[8px] leading-[1.35] font-mono select-none transition-colors ${active ? 'text-[#334155]' : 'text-[#94a3b8]'}`} style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
+                                  {illustration}
+                                </pre>
+                              </div>
+                            )}
+                            <div className="px-4 py-2.5 relative z-10">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {active ? (
+                                  <div className="check-circle checked !w-5 !h-5 !border-[#2563eb]" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  </div>
+                                ) : (
+                                  <div className="check-circle !w-5 !h-5" />
+                                )}
+                                <span className={`text-sm leading-none ${active ? 'text-[#334155]' : 'text-[#94a3b8]'}`}>{pkg.icon}</span>
+                                <span className="text-xs font-bold text-[#1e293b]">{pkg.name}</span>
+                                {pkg.recommended && !active && (
+                                  <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-blue-100/50 text-[#475569]">おすすめ</span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-[#64748b] mt-1 ml-7 leading-tight">{pkg.hint || pkg.description}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-                  </button>
+                  </details>
                 );
               })}
             </div>
