@@ -299,6 +299,42 @@ export async function generateWithLlm(params) {
   });
 }
 
+// ── ベース問題 PDF バリデーション ─────────────────────────
+
+export async function validateBasePdf(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const url = `${BASE}/api/validate_base_pdf`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 60000);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data?.detail || `HTTP ${res.status}`);
+    }
+    return await res.json();
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === 'AbortError') throw new Error('タイムアウトしました');
+    throw err;
+  }
+}
+
+// ── パターン別問題取得 ─────────────────────────────────────
+
+export async function fetchProblemsByPattern(templateId, limit = 20) {
+  const params = new URLSearchParams();
+  if (templateId) params.set('template_id', templateId);
+  if (limit) params.set('limit', String(limit));
+  return apiFetch(`/api/problems_by_pattern?${params.toString()}`);
+}
+
 // ── AI 使用回数制限 ──────────────────────────────────────
 
 export async function fetchUsage(userId) {

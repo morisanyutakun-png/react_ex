@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, fetchUsage, adminUnlock } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, fetchUsage, adminUnlock, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -17,8 +17,8 @@ import {
 import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
 import { LatexText } from '@/components/LatexRenderer';
 
-/* ── ウィザードステップ定義（10ステップ） ── */
-const STEPS = ['出題パターン', '教科', '分野', '難易度・問題数', '出力形式', '図表・パッケージ', 'オプション', '確認', '生成', '完成'];
+/* ── ウィザードステップ定義（9ステップ） ── */
+const STEPS = ['出題パターン', '難易度・問題数', 'ベース問題', '出力形式', '図表・パッケージ', 'オプション', '確認', '生成', '完成'];
 
 /* ── 各図表タイプのASCIIアートプレビュー ── */
 const PACKAGE_ILLUSTRATIONS = {
@@ -415,6 +415,15 @@ export default function UserModePage() {
   const [selectedBaseProblem, setSelectedBaseProblem] = useState(null);
   const baseSearchInputRef = useRef(null);
 
+  /* ── ベース問題選択モード ── */
+  const [baseMode, setBaseMode] = useState('skip'); // 'db' | 'pdf' | 'skip'
+  const [basePdfFile, setBasePdfFile] = useState(null);
+  const [basePdfImages, setBasePdfImages] = useState([]); // base64 PNG images
+  const [basePdfPageCount, setBasePdfPageCount] = useState(0);
+  const [basePdfError, setBasePdfError] = useState('');
+  const [basePdfUploading, setBasePdfUploading] = useState(false);
+  const basePdfInputRef = useRef(null);
+
   /* ── スクロール用refs ── */
   const wizardTopRef = useRef(null);
   const nextActionRef = useRef(null);
@@ -542,12 +551,12 @@ export default function UserModePage() {
     setGenerating(true);
     setGeneratedLatex('');
     setPdfUrl('');
-    setStep(9);
+    setStep(8);
 
     setStatus('ステップ 1/3: AIへの指示文を作成中...');
     let generatedPrompt = '';
     try {
-      const data = await renderTemplate({
+      const renderParams = {
         template_id: templateId,
         subject,
         difficulty,
@@ -564,7 +573,12 @@ export default function UserModePage() {
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
-      });
+      };
+      // ベース問題テキストをプロンプト生成にも反映
+      if (baseMode === 'db' && selectedBaseProblem) {
+        renderParams.base_problem_text = selectedBaseProblem.stem || selectedBaseProblem.text || '';
+      }
+      const data = await renderTemplate(renderParams);
       generatedPrompt = data.rendered_prompt || data.rendered || '';
       setRenderContext(data.context || null);
       setPrompt(generatedPrompt);
@@ -594,7 +608,7 @@ export default function UserModePage() {
 
     setStatus('ステップ 2/3: AI が問題を生成中...');
     try {
-      const data = await generateWithLlm({
+      const llmParams = {
         prompt: generatedPrompt,
         latex_preset: latexPreset,
         title: `${subject} - ${difficulty}`,
@@ -606,7 +620,14 @@ export default function UserModePage() {
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         custom_request: customRequest.trim() || undefined,
         user_id: userId,
-      });
+      };
+      // ベース問題（PDF or DB）の情報を付与
+      if (baseMode === 'pdf' && basePdfImages.length > 0) {
+        llmParams.base_pdf_images = basePdfImages;
+      } else if (baseMode === 'db' && selectedBaseProblem) {
+        llmParams.base_problem_text = selectedBaseProblem.stem || selectedBaseProblem.text || '';
+      }
+      const data = await generateWithLlm(llmParams);
 
       if (data?.error) {
         setStatus(`生成エラー: ${data.error}`);
@@ -623,13 +644,13 @@ export default function UserModePage() {
         setPdfUrl(data.pdf_url);
         window.open(data.pdf_url, '_blank');
         setStatus('PDF を生成・表示しました');
-        setStep(10);
+        setStep(9);
       } else if (data?.pdf_error) {
         setStatus(`問題の生成は成功 / PDF 変換失敗: ${data.pdf_error}`);
-        setStep(10);
+        setStep(9);
       } else {
         setStatus('問題の生成完了（PDF エンジン未設定）');
-        setStep(10);
+        setStep(9);
       }
     } catch (e) {
       // 429 = 使用回数上限
@@ -658,7 +679,7 @@ export default function UserModePage() {
     setPromptGenerating(true);
     setStatus('AIへの指示文を作成中...');
     try {
-      const data = await renderTemplate({
+      const manualRenderParams = {
         template_id: templateId,
         subject,
         difficulty,
@@ -675,7 +696,12 @@ export default function UserModePage() {
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
-      });
+      };
+      // ベース問題テキストをプロンプトに反映
+      if (baseMode === 'db' && selectedBaseProblem) {
+        manualRenderParams.base_problem_text = selectedBaseProblem.stem || selectedBaseProblem.text || '';
+      }
+      const data = await renderTemplate(manualRenderParams);
       setRenderContext(data.context || null);
       const generatedText = data.rendered_prompt || data.rendered || '';
       setPrompt(generatedText);
@@ -705,7 +731,7 @@ export default function UserModePage() {
           : '指示文をクリップボードにコピーしました'
       );
       setPromptGenerating(false);
-      setStep(10);
+      setStep(9);
     } catch (e) {
       setStatus(`エラー: ${e.message}`);
       setPromptGenerating(false);
@@ -739,22 +765,21 @@ export default function UserModePage() {
   };
 
   /* ── 次/前ステップ ── */
+  /* 新ステップ: 1=出題パターン, 2=難易度・問題数, 3=ベース問題, 4=出力形式, 5=図表, 6=オプション, 7=確認, 8=生成, 9=完成 */
   const canNext = () => {
-    if (step === 1) return !!templateId || templates.length === 0; // パターン選択（無ければスキップ可）
-    if (step === 2) return !!subject;          // 教科選択
-    if (step === 3) return true;                // 分野（任意）
-    if (step === 4) return !!difficulty;         // 難易度
-    if (step === 5) return true;                // 出力形式
-    if (step === 6) return true;                // 図表・パッケージ（任意）
-    if (step === 7) return true;                // オプション
-    if (step === 8) return true;                // 確認
+    if (step === 1) return !!templateId || templates.length === 0;
+    if (step === 2) return !!difficulty;
+    if (step === 3) return true;  // ベース問題（任意）
+    if (step === 4) return true;  // 出力形式
+    if (step === 5) return true;  // 図表（任意）
+    if (step === 6) return true;  // オプション
+    if (step === 7) return true;  // 確認
     return false;
   };
 
   const goNext = () => {
-    // Step 8（確認）で「生成」を実行
-    if (step === 8 && mode === 'auto') {
-      // テンプレートが無ければ自動作成
+    // Step 7（確認）で「生成」を実行
+    if (step === 7 && mode === 'auto') {
       if (!templateId) {
         const id = buildTemplateId(subject, field);
         const f = field;
@@ -774,7 +799,7 @@ export default function UserModePage() {
       } else {
         handleAutoGenerate();
       }
-    } else if (step === 8 && mode === 'manual') {
+    } else if (step === 7 && mode === 'manual') {
       if (!templateId) {
         const id = buildTemplateId(subject, field);
         const f = field;
@@ -795,23 +820,15 @@ export default function UserModePage() {
         generatePrompt();
       }
     } else if (canNext()) {
-      // パターン選択済みなら教科・分野（Step 2,3）をスキップ
-      if (step === 1 && templateId) {
-        setStep(4); // → 難易度・問題数
-      } else {
-        setStep(step + 1);
-      }
+      setStep(step + 1);
     }
   };
 
   const goBack = () => {
-    // パターン選択済みなら教科・分野（Step 2,3）をスキップして戻る
-    if (step === 4 && templateId) {
-      setStep(1);
-    } else if (step > 1 && step <= 8) {
+    if (step > 1 && step <= 7) {
       setStep(step - 1);
     }
-    if (step === 10) setStep(8);
+    if (step === 9) setStep(7);
   };
 
   const resetWizard = () => {
@@ -828,6 +845,38 @@ export default function UserModePage() {
     setQuestionFormat('standard');
     setIncludeDiagramPerQuestion(false);
     setCustomRequest('');
+    setBaseMode('skip');
+    setBasePdfFile(null);
+    setBasePdfImages([]);
+    setBasePdfPageCount(0);
+    setBasePdfError('');
+  };
+
+  /* ── ベースPDFアップロード処理 ── */
+  const handleBasePdfUpload = async (file) => {
+    if (!file) return;
+    setBasePdfError('');
+    setBasePdfUploading(true);
+    setBasePdfFile(file);
+    try {
+      const result = await validateBasePdf(file);
+      if (!result.valid) {
+        setBasePdfError(result.error || 'PDFのバリデーションに失敗しました');
+        setBasePdfFile(null);
+        setBasePdfImages([]);
+        setBasePdfPageCount(0);
+      } else {
+        setBasePdfImages(result.images || []);
+        setBasePdfPageCount(result.page_count || 0);
+        setBasePdfError('');
+      }
+    } catch (e) {
+      setBasePdfError(e.message || 'アップロードに失敗しました');
+      setBasePdfFile(null);
+      setBasePdfImages([]);
+      setBasePdfPageCount(0);
+    }
+    setBasePdfUploading(false);
   };
 
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
@@ -956,7 +1005,7 @@ export default function UserModePage() {
       )}
 
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
-      {step <= 8 && (
+      {step <= 7 && (
         <div className="wizard-guide mb-5">
           <div className="flex items-center gap-3 px-5 py-4 relative z-10">
             <div className="step-orb w-9 h-9 text-white text-[13px] font-bold flex-shrink-0">
@@ -965,13 +1014,12 @@ export default function UserModePage() {
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-[#1e293b] leading-snug">
                 {step === 1 && '既存の出題パターンを選択、または新しく作成してください'}
-                {step === 2 && '作りたい問題の教科を選んでください'}
-                {step === 3 && '分野を選択してください（任意）'}
-                {step === 4 && '難易度と問題数を設定してください'}
-                {step === 5 && 'PDFの出力形式を選んでください'}
-                {step === 6 && '図表やLaTeXパッケージを選択してください（任意）'}
-                {step === 7 && '問題形式やカスタムリクエストを設定してください（全て任意）'}
-                {step === 8 && (mode === 'auto' ? '設定を確認したら「PDF を生成」で完成！' : '設定を確認したら「指示文を作成」で次へ')}
+                {step === 2 && '難易度と問題数を設定してください'}
+                {step === 3 && 'ベースとなる問題を選択してください（任意）'}
+                {step === 4 && 'PDFの出力形式を選んでください'}
+                {step === 5 && '図表やLaTeXパッケージを選択してください（任意）'}
+                {step === 6 && '問題形式やカスタムリクエストを設定してください（全て任意）'}
+                {step === 7 && (mode === 'auto' ? '設定を確認したら「PDF を生成」で完成！' : '設定を確認したら「指示文を作成」で次へ')}
               </p>
               <p className="text-[11px] text-[#94a3b8] mt-0.5">
                 ステップ {step} / {STEPS.length}
@@ -1120,7 +1168,7 @@ export default function UserModePage() {
           {/* 新規作成への導線 */}
           <div className="text-center">
             <button
-              onClick={() => { setTemplateId(''); setStep(2); }}
+              onClick={() => { setTemplateId(''); setShowCreateTemplate(true); }}
               className="text-[12px] text-[#64748b] hover:text-[#2563eb] transition-colors underline underline-offset-2"
             >
               ＋ 新しい出題パターンを作成する
@@ -1129,8 +1177,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 2: 教科選択 ═══════ */}
-      {step === 2 && (
+      {/* ═══════ (Hidden) 教科選択 — テンプレート作成時のみ使用 ═══════ */}
+      {false && (
         <div className="space-y-5 wizard-section-enter">
           <div className="card-glossy">
             <div className="p-5 relative z-10">
@@ -1192,8 +1240,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 3: 分野選択 ═══════ */}
-      {step === 3 && (
+      {/* ═══════ (Hidden) 分野選択 — テンプレート作成時のみ使用 ═══════ */}
+      {false && (
         <div className="space-y-5 wizard-section-enter">
           <div className="card-glossy">
             <div className="p-5 relative z-10">
@@ -1258,8 +1306,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 4: 難易度・問題数 ═══════ */}
-      {step === 4 && (
+      {/* ═══════ Step 2: 難易度・問題数 ═══════ */}
+      {step === 2 && (
         <div className="space-y-5 wizard-section-enter">
           <div className="card-glossy">
             <div className="p-5 relative z-10">
@@ -1312,8 +1360,288 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 5: 出力形式 ═══════ */}
-      {step === 5 && (
+      {/* ═══════ Step 3: ベース問題選択 ═══════ */}
+      {step === 3 && (
+        <div className="space-y-5 wizard-section-enter">
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="icon-glossy w-10 h-10 text-white">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">ベース問題を選択</h3>
+                  <p className="text-[11px] text-[#64748b]">参考にする問題を選ぶと、AIがより精度の高い類題を生成します（任意）</p>
+                </div>
+              </div>
+
+              {/* タブ切り替え */}
+              <div className="flex rounded-xl bg-[#f1f5f9] p-1 mb-5">
+                {[
+                  { id: 'skip', label: 'スキップ', icon: '→' },
+                  { id: 'db', label: 'DBから選択', icon: '🔍' },
+                  { id: 'pdf', label: 'PDFアップロード', icon: '📄' },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setBaseMode(tab.id)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-[12px] font-bold transition-all duration-300 ${
+                      baseMode === tab.id
+                        ? 'bg-white text-[#1e293b] shadow-sm'
+                        : 'text-[#64748b] hover:text-[#1e293b]'
+                    }`}
+                  >
+                    <span className="text-[14px]">{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* スキップモード */}
+              {baseMode === 'skip' && (
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50/60 mb-3">
+                    <svg className="w-7 h-7 text-[#94a3b8]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8.689c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062A1.125 1.125 0 013 16.81V8.69zM12.75 8.689c0-.864.933-1.405 1.683-.977l7.108 4.062a1.125 1.125 0 010 1.953l-7.108 4.062a1.125 1.125 0 01-1.683-.977V8.69z" />
+                    </svg>
+                  </div>
+                  <p className="text-[13px] font-bold text-[#1e293b]">ベース問題なしで生成</p>
+                  <p className="text-[11px] text-[#94a3b8] mt-1">AIがゼロから問題を作成します。そのまま次へ進めます。</p>
+                </div>
+              )}
+
+              {/* DB検索モード */}
+              {baseMode === 'db' && (
+                <div>
+                  {/* フィルタバー */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {subject && (
+                        <span className="px-2.5 py-1 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-full text-[10px] font-bold">{subject}</span>
+                      )}
+                      {field && (
+                        <span className="px-2.5 py-1 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-full text-[10px] font-bold">{field}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50/50 border border-blue-200/40
+                                    focus-within:bg-white focus-within:border-blue-300/50 focus-within:shadow-sm transition-all duration-200">
+                      <svg className="w-3.5 h-3.5 text-[#94a3b8] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                      <input
+                        ref={baseSearchInputRef}
+                        type="text"
+                        value={baseFilterQuery}
+                        onChange={(e) => setBaseFilterQuery(e.target.value)}
+                        placeholder="絞り込み..."
+                        className="flex-1 bg-transparent text-xs text-[#1e293b] outline-none placeholder:text-[#94a3b8]"
+                      />
+                      {baseFilterQuery && (
+                        <button onClick={() => setBaseFilterQuery('')} className="text-[#94a3b8] hover:text-[#1e293b] transition-colors">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 選択済み表示 */}
+                  {selectedBaseProblem && (
+                    <div className="mb-3 p-3 rounded-xl bg-blue-50/50 border border-blue-200/60">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center flex-shrink-0">
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-[11px] font-bold text-[#475569]">選択中</span>
+                          </div>
+                          <div className="text-[12px] text-[#1e293b] leading-relaxed line-clamp-2 ml-7">
+                            <LatexText>{(selectedBaseProblem.stem || selectedBaseProblem.text || '').slice(0, 200)}</LatexText>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedBaseProblem(null)}
+                          className="w-7 h-7 rounded-lg bg-blue-50/60 hover:bg-red-50 text-[#94a3b8] hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 問題一覧 */}
+                  {matchedLoading ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2">
+                      <svg className="animate-spin h-5 w-5 text-[#475569]" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <p className="text-[11px] text-[#94a3b8]">過去問を取得中...</p>
+                    </div>
+                  ) : filteredProblems.length > 0 ? (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+                      <div className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider px-1 mb-1">
+                        {filteredProblems.length} 件{baseFilterQuery.trim() ? ` / ${matchedProblems.length} 件中` : ''}
+                      </div>
+                      {filteredProblems.map((item, idx) => {
+                        const isSelected = selectedBaseProblem?.id === item.id;
+                        return (
+                          <button
+                            key={item.id ?? idx}
+                            onClick={() => setSelectedBaseProblem(item)}
+                            className={`result-item w-full text-left px-4 py-3 ${isSelected ? 'selected' : ''}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`check-circle mt-0.5 ${isSelected ? 'checked' : ''}`}>
+                                {isSelected && (
+                                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[12px] text-[#1e293b] leading-relaxed line-clamp-2">
+                                  <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
+                                </div>
+                                <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                                  {item.subject && (
+                                    <span className="px-2 py-0.5 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-full text-[9px] font-bold">{item.subject}</span>
+                                  )}
+                                  {(item.topic || item.metadata?.field) && (
+                                    <span className="px-2 py-0.5 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
+                                  )}
+                                  {item.difficulty != null && (
+                                    <span className="px-2 py-0.5 bg-blue-100/50 text-[#475569] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-[12px] text-[#94a3b8]">この科目・分野の過去問はまだ登録されていません</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PDFアップロードモード */}
+              {baseMode === 'pdf' && (
+                <div>
+                  <div className="mb-3 p-3 rounded-xl bg-amber-50/60 border border-amber-200/60">
+                    <p className="text-[11px] text-amber-800 font-medium">
+                      PDFは最大3ページまでアップロードできます。AIにそのまま画像として送られます。
+                    </p>
+                  </div>
+
+                  {/* アップロードエリア */}
+                  {!basePdfFile || basePdfError ? (
+                    <div
+                      onClick={() => basePdfInputRef.current?.click()}
+                      className="relative border-2 border-dashed border-blue-200/60 rounded-2xl p-8 text-center cursor-pointer
+                                 hover:border-[#2563eb]/40 hover:bg-blue-50/30 transition-all duration-300 group"
+                    >
+                      <input
+                        ref={basePdfInputRef}
+                        type="file"
+                        accept=".pdf"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleBasePdfUpload(file);
+                          e.target.value = '';
+                        }}
+                      />
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50/60 mb-3 group-hover:bg-[#2563eb]/10 transition-colors">
+                        <svg className="w-7 h-7 text-[#94a3b8] group-hover:text-[#2563eb] transition-colors" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                      </div>
+                      <p className="text-[13px] font-bold text-[#1e293b]">PDFをアップロード</p>
+                      <p className="text-[11px] text-[#94a3b8] mt-1">クリックまたはドラッグ＆ドロップ（3ページ以内）</p>
+                    </div>
+                  ) : basePdfUploading ? (
+                    <div className="flex flex-col items-center justify-center py-8 gap-2">
+                      <svg className="animate-spin h-6 w-6 text-[#2563eb]" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <p className="text-[12px] text-[#64748b] font-medium">PDFを処理中...</p>
+                    </div>
+                  ) : (
+                    <div>
+                      {/* アップロード成功 */}
+                      <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/60 mb-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-bold text-emerald-800 truncate">{basePdfFile.name}</p>
+                          <p className="text-[10px] text-emerald-600">{basePdfPageCount}ページ</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setBasePdfFile(null);
+                            setBasePdfImages([]);
+                            setBasePdfPageCount(0);
+                            setBasePdfError('');
+                          }}
+                          className="w-7 h-7 rounded-lg hover:bg-red-50 text-[#94a3b8] hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* ページサムネイル */}
+                      {basePdfImages.length > 0 && (
+                        <div className="grid grid-cols-3 gap-2">
+                          {basePdfImages.map((img, i) => (
+                            <div key={i} className="relative rounded-xl overflow-hidden border border-blue-200/60 bg-white shadow-sm">
+                              <img
+                                src={`data:image/png;base64,${img}`}
+                                alt={`Page ${i + 1}`}
+                                className="w-full h-auto"
+                              />
+                              <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/50 text-white text-[9px] font-bold">
+                                {i + 1}/{basePdfImages.length}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* エラー表示 */}
+                  {basePdfError && (
+                    <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-200/60">
+                      <p className="text-[12px] text-red-600 font-medium">{basePdfError}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ Step 4: 出力形式 ═══════ */}
+      {step === 4 && (
         <div className="space-y-5 wizard-section-enter">
           {/* PDF形式カード - 既存Step3のPDF部分を再利用 */}
           <div className="card-glossy">
@@ -1418,8 +1746,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 6: 図表・パッケージ選択 ═══════ */}
-      {step === 6 && (
+      {/* ═══════ Step 5: 図表・パッケージ選択 ═══════ */}
+      {step === 5 && (
         <div className="space-y-5 wizard-section-enter">
           <div className="card-glossy">
             <div className="p-5 relative z-10">
@@ -1542,8 +1870,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 7: オプション ═══════ */}
-      {step === 7 && (
+      {/* ═══════ Step 6: オプション ═══════ */}
+      {step === 6 && (
         <div className="space-y-5 wizard-section-enter">
           {/* 問題形式 */}
           <div className="card-glossy">
@@ -1611,8 +1939,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 8: 確認 ═══════ */}
-      {step === 8 && (
+      {/* ═══════ Step 7: 確認 ═══════ */}
+      {step === 7 && (
         <div className="space-y-5 wizard-section-enter">
           {/* 選択中パターン */}
           {templateId && selectedTemplate && (
@@ -2795,8 +3123,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 9: 生成中 ═══════ */}
-      {step === 9 && generating && (
+      {/* ═══════ Step 8: 生成中 ═══════ */}
+      {step === 8 && generating && (
         <div className="wizard-section-enter">
           <div className="card-glossy generating-glow">
             <div className="flex flex-col items-center justify-center py-24 px-8 relative z-10">

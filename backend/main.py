@@ -1634,6 +1634,8 @@ class RenderTemplateRequest(BaseModel):
     include_diagram_per_question: Optional[bool] = False
     # User custom request (free text, max 200 chars, sanitised)
     custom_request: Optional[str] = None
+    # Base problem text selected from DB (for generating similar problems)
+    base_problem_text: Optional[str] = None
 
 
 @app.post('/api/render_template')
@@ -2106,6 +2108,17 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "元の問題をそのままコピーせず、数値や条件を変えた新しい問題を作成すること。\n\n"
                         f"--- 参照元 ---\n{source_text.strip()}\n--- 参照元ここまで ---\n"
                     )
+
+                # Base problem text from DB selection
+                base_problem_text = getattr(req, 'base_problem_text', None) or ''
+                if base_problem_text and isinstance(base_problem_text, str) and base_problem_text.strip():
+                    base_block = (
+                        "\n\n【ベース問題（DBから選択）】\n"
+                        "以下のベース問題を参考にして、同じ形式・難易度で類似問題を作成してください。\n"
+                        "元の問題をそのままコピーせず、数値や条件を変えた新しい問題を生成すること。\n\n"
+                        f"--- ベース問題 ---\n{base_problem_text.strip()}\n--- ベース問題ここまで ---\n"
+                    )
+                    source_block = source_block + base_block if source_block else base_block
 
                 # If RAG retrieved items exist, append them as a supplementary reference block.
                 # When source_text is also provided, RAG items serve as additional examples.
