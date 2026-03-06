@@ -3175,8 +3175,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 10: 結果表示 ═══════ */}
-      {step === 10 && (
+      {/* ═══════ Step 9: 結果表示（完成） ═══════ */}
+      {step === 9 && (
         <div className="space-y-6 wizard-section-enter">
           {/* RAG フィードバックカード */}
           {renderContext && (
@@ -3432,7 +3432,7 @@ export default function UserModePage() {
               ← 戻る
             </Button>
           )}
-          {step === 10 && (
+          {step === 9 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
               ← 設定を変更
             </Button>
@@ -3440,7 +3440,7 @@ export default function UserModePage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {step === 10 && (
+          {step === 9 && (
             <Button variant="ghost" onClick={resetWizard} className="w-full sm:w-auto">
               最初からやり直す
             </Button>
