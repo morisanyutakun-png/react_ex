@@ -643,12 +643,18 @@ export default function TuningPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
-      <PageHeader
-        title="品質をみがく"
-        description="出題パターンを選んで → AIに指示を出し → 出来栄えを確認する、3ステップの作業スペースです"
-        icon={<Icons.Dev />}
-        breadcrumbs={[{ label: 'ホーム', href: '/' }, { label: 'みがく' }]}
-      />
+      {/* ── ヒーロー ── */}
+      <div className="text-center pt-2 pb-2">
+        <div className="inline-flex items-center justify-center w-[56px] h-[56px] rounded-[18px] bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white shadow-lg mb-4">
+          <Icons.Dev className="w-7 h-7" />
+        </div>
+        <h1 className="text-[22px] sm:text-[26px] font-black tracking-tight text-[#1e293b] mb-1 leading-none">
+          品質をみがく
+        </h1>
+        <p className="text-[13px] sm:text-[14px] text-[#64748b] max-w-[340px] mx-auto leading-relaxed">
+          出題パターンを選んで → AIに指示を出し → 出来栄えを確認する
+        </p>
+      </div>
 
       <StatusBar message={status} />
 
@@ -938,27 +944,28 @@ export default function TuningPage() {
         <div className="flex items-center gap-1">
         {sections.map((s, idx) => {
           const isActive = activeSection === s.id;
+          const stepNum = idx + 1;
           const sectionColors = {
-            configure: { grad: 'from-[#3b82f6] to-[#2563eb]', shadow: '#2563eb' },
-            execute:   { grad: 'from-[#60a5fa] to-[#2563eb]', shadow: '#3b82f6' },
-            evaluate:  { grad: 'from-[#2563eb] to-[#2563eb]', shadow: '#1e40af' },
+            configure: '#2563eb',
+            execute:   '#3b82f6',
+            evaluate:  '#1e40af',
           };
           const sc = sectionColors[s.id] || sectionColors.configure;
           return (
           <button key={s.id} onClick={() => s.enabled && setActiveSection(s.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[11px] sm:text-[13px] font-bold transition-all duration-300 relative whitespace-nowrap min-h-[44px]
               ${isActive
-                ? 'bg-[#2563eb] text-white shadow-md'
+                ? 'bg-white shadow-md'
                 : s.enabled
                   ? 'text-[#64748b] hover:text-[#1e293b] hover:bg-white/60'
                   : 'text-[#d2d2d7] cursor-not-allowed'
               }`}
-            style={undefined}
+            style={isActive ? { color: sc, boxShadow: `0 2px 8px ${sc}20` } : undefined}
             disabled={!s.enabled}>
-            <span className="text-[14px]">{s.icon}</span>
+            <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black text-white" style={{ background: isActive ? sc : s.enabled ? '#94a3b8' : '#d2d2d7' }}>{stepNum}</span>
             <span>{s.label}</span>
             {isActive && (
-              <span className="ml-1 w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse" />
+              <span className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full" style={{ background: sc }} />
             )}
             {!s.enabled && s.id !== 'configure' && (
               <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-[#c7c7cc] px-2 py-0.5 rounded-full whitespace-nowrap">
@@ -978,19 +985,33 @@ export default function TuningPage() {
       </div>
 
       {/* ── ウィザードアシスト ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-blue-50/40 border border-blue-200/50">
+      <div className="relative overflow-hidden rounded-2xl border" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06), rgba(37,99,235,0.10))', borderColor: 'rgba(37,99,235,0.15)' }}>
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className={`icon-premium w-8 h-8 text-white text-xs font-black flex-shrink-0`}>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#2563eb] text-white text-xs font-black flex-shrink-0 shadow-sm">
             {activeSection === 'configure' ? '1' : activeSection === 'execute' ? '2' : '3'}
           </div>
-          <p className="text-[13px] font-bold text-[#1e293b] leading-snug">
-            {activeSection === 'configure' && !templateId && '出題パターンを選んで、指示文を作成しましょう'}
-            {activeSection === 'configure' && templateId && !hasPrompt && '設定ができました。「指示文を作成」ボタンを押してください'}
-            {activeSection === 'configure' && hasPrompt && '指示文ができました。「AIに送る」タブへ進みましょう'}
-            {activeSection === 'execute' && !hasOutput && '指示文をコピーして外部AIに送り、結果を貼り付けてください'}
-            {activeSection === 'execute' && hasOutput && '結果が入力されました。「確認・保存」タブへ進みましょう'}
-            {activeSection === 'evaluate' && '出来栄えを確認して、評価を記録しましょう'}
-          </p>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold text-[#1e293b] leading-snug">
+              {activeSection === 'configure' && !templateId && '出題パターンを選んで、指示文を作成しましょう'}
+              {activeSection === 'configure' && templateId && !hasPrompt && '設定ができました。「指示文を作成」ボタンを押してください'}
+              {activeSection === 'configure' && hasPrompt && '指示文ができました！次のステップへ進めます'}
+              {activeSection === 'execute' && !hasOutput && '指示文をコピーして外部AIに送り、結果を貼り付けてください'}
+              {activeSection === 'execute' && hasOutput && '結果が入力されました！次のステップへ進めます'}
+              {activeSection === 'evaluate' && '出来栄えを確認して、評価を記録しましょう'}
+            </p>
+          </div>
+          {activeSection === 'configure' && hasPrompt && (
+            <button onClick={() => setActiveSection('execute')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2563eb] text-white text-[11px] font-bold shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] flex-shrink-0">
+              次へ <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </button>
+          )}
+          {activeSection === 'execute' && hasOutput && (
+            <button onClick={() => setActiveSection('evaluate')}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2563eb] text-white text-[11px] font-bold shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] flex-shrink-0">
+              次へ <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </button>
+          )}
         </div>
       </div>
 

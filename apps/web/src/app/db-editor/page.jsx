@@ -399,12 +399,21 @@ export default function DbEditorPage() {
 
   return (
     <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
-      <PageHeader
-        title="データ管理"
-        description="過去問データの閲覧・編集・新規登録"
-        icon={<Icons.Data />}
-        breadcrumbs={[{ label: 'ホーム', href: '/' }, { label: 'データ管理' }]}
-      />
+      {/* ── ヒーローヘッダー ── */}
+      <div className="text-center mb-2">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white mb-4 shadow-lg shadow-blue-200/50">
+          <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <ellipse cx="12" cy="6.5" rx="8" ry="3" />
+            <path d="M4 6.5v11c0 1.66 3.58 3 8 3s8-1.34 8-3v-11" />
+            <path d="M4 12.5c0 1.66 3.58 3 8 3s8-1.34 8-3" opacity="0.5" />
+          </svg>
+        </div>
+        <h1 className="text-[22px] sm:text-[26px] font-bold text-[#1e293b] tracking-[-0.02em] mb-1.5">データ管理</h1>
+        <p className="text-[13px] text-[#94a3b8] leading-relaxed max-w-md mx-auto">
+          過去問データベースの閲覧・編集・新規登録。<br className="hidden sm:block" />
+          テーブルを選んでデータを確認・管理できます。
+        </p>
+      </div>
 
       <StatusBar message={status} />
 

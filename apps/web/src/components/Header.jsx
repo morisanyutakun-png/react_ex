@@ -48,16 +48,17 @@ export default function Header() {
                   <Link
                     key={href}
                     href={href}
-                    className={`relative px-3 py-1.5 rounded-full text-[13px] font-medium flex items-center gap-1.5
+                    className={`relative px-3 py-1.5 rounded-full text-[13px] font-semibold flex items-center gap-1.5
                       ${active
-                        ? 'text-white'
+                        ? ''
                         : 'text-[#64748b] hover:bg-blue-50'
                       }`}
                     style={{
                       transition: 'all 0.4s var(--ease-spring)',
                       ...(active ? {
-                        background: primaryColor,
-                        boxShadow: `0 1px 3px ${primaryColor}40`,
+                        background: `${primaryColor}12`,
+                        color: primaryColor,
+                        boxShadow: `inset 0 0 0 1.5px ${primaryColor}30`,
                       } : {}),
                       ...(!active ? { '--tw-text-opacity': 1 } : {}),
                     }}
@@ -66,6 +67,10 @@ export default function Header() {
                   >
                     {icon}
                     {label}
+                    {active && (
+                      <span className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-4 h-[2.5px] rounded-full"
+                            style={{ background: primaryColor }} />
+                    )}
                   </Link>
                 );
               })}
@@ -74,14 +79,15 @@ export default function Header() {
                 href="/settings"
                 className={`relative px-2 py-1.5 rounded-full text-[13px] font-medium flex items-center
                   ${pathname === '/settings'
-                    ? 'text-white'
+                    ? ''
                     : 'text-[#94a3b8] hover:text-[#64748b]'
                   }`}
                 style={{
                   transition: 'all 0.4s var(--ease-spring)',
                   ...(pathname === '/settings' ? {
-                    background: primaryColor,
-                    boxShadow: `0 1px 3px ${primaryColor}40`,
+                    background: `${primaryColor}12`,
+                    color: primaryColor,
+                    boxShadow: `inset 0 0 0 1.5px ${primaryColor}30`,
                   } : {}),
                 }}
                 onMouseEnter={(e) => { if (pathname !== '/settings') e.currentTarget.style.color = primaryColor; }}
@@ -142,9 +148,10 @@ export default function Header() {
               <Link
                 key={href}
                 href={href}
-                className="flex flex-col items-center gap-0.5 py-2 px-2 min-w-[3.5rem] min-h-[52px] justify-center"
+                className="flex flex-col items-center gap-0.5 py-2 px-2 min-w-[3.5rem] min-h-[52px] justify-center rounded-xl"
                 style={{
                   color: active ? primaryColor : '#94a3b8',
+                  background: active ? `${primaryColor}0c` : 'transparent',
                   transition: 'all 0.35s var(--ease-spring)',
                 }}
               >
@@ -155,8 +162,8 @@ export default function Header() {
                          style={{ background: primaryColor }} />
                   )}
                 </div>
-                <span className="text-[10px] font-medium leading-none mt-0.5"
-                      style={{ color: active ? primaryColor : '#94a3b8' }}>
+                <span className="text-[10px] leading-none mt-0.5"
+                      style={{ color: active ? primaryColor : '#94a3b8', fontWeight: active ? 700 : 500 }}>
                   {label}
                 </span>
               </Link>

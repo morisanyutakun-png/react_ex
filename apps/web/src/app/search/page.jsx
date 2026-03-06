@@ -260,12 +260,20 @@ export default function SearchPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
-      <PageHeader
-        title="問題検索"
-        description="保存された問題を検索・閲覧。科目・分野・難易度での絞り込みや類題生成も可能です。"
-        icon={<Icons.Search />}
-        breadcrumbs={[{ label: 'ホーム', href: '/' }, { label: '検索' }]}
-      />
+      {/* ── ヒーローヘッダー ── */}
+      <div className="text-center mb-2">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white mb-4 shadow-lg shadow-blue-200/50">
+          <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <line x1="15.5" y1="15.5" x2="21" y2="21" strokeLinecap="round" />
+          </svg>
+        </div>
+        <h1 className="text-[22px] sm:text-[26px] font-bold text-[#1e293b] tracking-[-0.02em] mb-1.5">問題をさがす</h1>
+        <p className="text-[13px] text-[#94a3b8] leading-relaxed max-w-md mx-auto">
+          保存された過去問をキーワード・科目・難易度で検索。<br className="hidden sm:block" />
+          気になる問題から類題の自動生成もできます。
+        </p>
+      </div>
 
       <StatusBar message={status} />
 
@@ -528,15 +536,24 @@ export default function SearchPage() {
 
       {/* ── 初回表示 ── */}
       {!searching && !hasSearched && (
-        <div className="text-center py-20">
+        <div className="text-center py-12 sm:py-16">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-50/60 mb-5 shadow-sm">
-            <Icons.Search className="w-7 h-7 text-[#1e293b]" />
+            <Icons.Search className="w-7 h-7 text-[#2563eb]" />
           </div>
-          <h3 className="text-[15px] font-bold text-[#1e293b] mb-2">過去問を検索</h3>
-          <p className="text-[12px] text-[#94a3b8] max-w-sm mx-auto leading-relaxed">
-            キーワードや科目・分野で問題を検索できます。<br />
-            検索結果から類題の自動生成も可能です。
+          <h3 className="text-[17px] font-bold text-[#1e293b] mb-2">キーワードや科目で検索</h3>
+          <p className="text-[13px] text-[#94a3b8] max-w-sm mx-auto leading-relaxed mb-6">
+            上の検索バーにキーワードを入力するか、<br />
+            科目チップをタップして絞り込めます。
           </p>
+          <div className="flex flex-wrap justify-center gap-2 max-w-xs mx-auto">
+            {['二次関数', '微分', '力学', '英文法'].map((hint) => (
+              <button key={hint} onClick={() => { setQuery(hint); }}
+                className="px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#64748b] bg-white border border-blue-200/50 
+                           hover:border-[#2563eb]/30 hover:text-[#2563eb] hover:bg-blue-50/50 transition-all shadow-sm">
+                {hint}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
