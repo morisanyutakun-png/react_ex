@@ -795,12 +795,22 @@ export default function UserModePage() {
         generatePrompt();
       }
     } else if (canNext()) {
-      setStep(step + 1);
+      // パターン選択済みなら教科・分野（Step 2,3）をスキップ
+      if (step === 1 && templateId) {
+        setStep(4); // → 難易度・問題数
+      } else {
+        setStep(step + 1);
+      }
     }
   };
 
   const goBack = () => {
-    if (step > 1 && step <= 8) setStep(step - 1);
+    // パターン選択済みなら教科・分野（Step 2,3）をスキップして戻る
+    if (step === 4 && templateId) {
+      setStep(1);
+    } else if (step > 1 && step <= 8) {
+      setStep(step - 1);
+    }
     if (step === 10) setStep(8);
   };
 
