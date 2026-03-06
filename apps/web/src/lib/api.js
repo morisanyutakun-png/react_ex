@@ -625,4 +625,65 @@ export const PACKAGE_CATEGORIES = [
   { id: 'layout', name: '図配置・コード', icon: '🖼️', description: '図の並列・コード・表' },
 ];
 
+/* ═══════ プリセットバンドル（ワンクリックで複数パッケージを一括選択） ═══════ */
+export const PACKAGE_PRESETS = [
+  {
+    id: 'math_physics',
+    name: '数学・物理',
+    icon: '📐',
+    subtitle: '図形・グラフ・回路・3D',
+    description: '力学・電磁気・関数グラフ・空間図形など理数系の図を網羅',
+    packages: ['tikz', 'pgfplots', 'circuitikz', 'tikz-3dplot', 'forest'],
+    color: '#3b82f6',
+    gradient: 'from-blue-500/10 to-indigo-500/10',
+    borderActive: 'border-blue-500/40',
+    illustration: `  F↑  ──→v
+  │╲  ○
+  │  ╲   📈 y=f(x)
+  ◇──→ ⚡回路`,
+  },
+  {
+    id: 'biology',
+    name: '生物・遺伝',
+    icon: '🧬',
+    subtitle: 'DNA・家系図・代謝経路',
+    description: '分子生物学・遺伝学・生態系ネットワークのリアルな図解',
+    packages: ['tikz', 'pgfmolbio', 'texshade', 'genealogytree', 'tikz-network'],
+    color: '#10b981',
+    gradient: 'from-emerald-500/10 to-teal-500/10',
+    borderActive: 'border-emerald-500/40',
+    illustration: `  🧬 ATGCGA...
+  ♂──♀ 家系図
+  A──B──C 経路`,
+  },
+  {
+    id: 'chemistry',
+    name: '化学',
+    icon: '⚗️',
+    subtitle: '構造式・反応式・軌道図',
+    description: '有機化学・無機化学・物理化学の構造式や反応を美しく描画',
+    packages: ['tikz', 'chemfig', 'mhchem', 'chemmacros', 'modiagram', 'chemformula'],
+    color: '#f59e0b',
+    gradient: 'from-amber-500/10 to-orange-500/10',
+    borderActive: 'border-amber-500/40',
+    illustration: `  H─C═C─H 構造式
+  2H₂+O₂→2H₂O
+  σ ── π 軌道`,
+  },
+  {
+    id: 'document',
+    name: '論文・レポート',
+    icon: '📊',
+    subtitle: '表・単位・コード・図配置',
+    description: '学術論文品質の表・SI単位・ソースコード・図の並列配置',
+    packages: ['siunitx', 'booktabs', 'tabularx', 'subcaption', 'listings', 'wrapfig'],
+    color: '#8b5cf6',
+    gradient: 'from-violet-500/10 to-purple-500/10',
+    borderActive: 'border-violet-500/40',
+    illustration: `  ┌──┬──┐ 表
+  │  │  │ 📏SI
+  └──┴──┘ 💻code`,
+  },
+];
+
 

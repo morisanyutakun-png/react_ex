@@ -1632,6 +1632,8 @@ class RenderTemplateRequest(BaseModel):
     sub_topic: Optional[str] = None
     # Physics: include a TikZ diagram for each major question
     include_diagram_per_question: Optional[bool] = False
+    # Diagram realism: enable high-quality realistic diagram rendering instructions
+    diagram_realism: Optional[bool] = True
     # User custom request (free text, max 200 chars, sanitised)
     custom_request: Optional[str] = None
     # Base problem text selected from DB (for generating similar problems)
@@ -2371,6 +2373,42 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         '- 力の図示、物体の配置、回路図、グラフなど問題内容に適した図を描くこと。\n'
                         '- テキストのみの大問は不可。\n'
                     )
+
+                # --- Inject realism diagram instructions ---
+                _diagram_realism = getattr(req, 'diagram_realism', True)
+                if _diagram_realism and extra_pkgs:
+                    _realism_instr = (
+                        '\n【★★ リアルで教科書品質の図描画ルール — 最重要 ★★】\n'
+                        '以下のルールをすべての図・図表に厳密に適用すること:\n\n'
+                        '■ 基本品質ルール:\n'
+                        '1. 線の太さを3段階で使い分ける: 主要図形=thick, 補助線=thin, 寸法線=very thin。\n'
+                        '2. 矢印は -{Stealth[length=3mm]} で統一。ベクトル量は [very thick,-{Stealth}] で強調。\n'
+                        '3. 塗りつぶし: fill=gray!15 や pattern=north east lines で領域を視覚区別。\n'
+                        '4. ラベル: node[above right] 等で重なりを防ぎ、数式は $...$ モードで記述。\n'
+                        '5. 点線=dashed, 延長線=dotted を適切に使い分け、視覚的階層を作る。\n'
+                        '6. 角度の弧: arc (start:end:radius) + ラベル $\\theta$ を弧の中央に配置。\n'
+                        '7. すべての座標を明示的に (x,y) で指定し、座標一覧をコメントで先に書く。\n\n'
+                        '■ 生物系図のリアル描画ルール:\n'
+                        '8. 細胞・器官図: 二重線 (double) で細胞膜を表現、内部は fill で色分け。\n'
+                        '   ミトコンドリア=fill=red!10, 核=fill=blue!10, 葉緑体=fill=green!10 等。\n'
+                        '9. DNA二重螺旋: sin/cos 曲線で螺旋を描き、横棒で塩基対を表現。\n'
+                        '   \\draw[thick,blue] plot[domain=0:6.28,samples=100] ({0.5*cos(deg(\\x))}, {\\x});\n'
+                        '10. 家系図: 男性=□, 女性=○, 患者=塗りつぶし、婚姻線=水平実線、子孫線=垂直線。\n'
+                        '11. 代謝経路: 酵素名を矢印の上に \\footnotesize で配置、阻害=⊣ (inhibit) マーク。\n'
+                        '12. 生体ネットワーク: ノードを circle で統一、活性化=→, 抑制=⊣, 触媒=◇。\n\n'
+                        '■ 化学系図のリアル描画ルール:\n'
+                        '13. 構造式の結合: 単結合=実線, 二重結合=二重線, 三重結合=三重線。\n'
+                        '    ウェッジ結合（手前）=太い三角, ダッシュ結合（奥）=破線の三角。\n'
+                        '14. 反応機構の矢印: 曲がり矢印 (curly arrow) で電子の移動を示す。\n'
+                        '15. 軌道図: エネルギー準位を水平線、電子を ↑↓ 矢印で表現。\n\n'
+                        '■ 共通仕上げルール:\n'
+                        '16. 図全体に \\centering と適切な \\caption を付ける。\n'
+                        '17. 色使い: 最大4色に抑え、blue, red!70, green!60!black, orange の組み合わせ推奨。\n'
+                        '18. フォント: 図中のテキストは \\footnotesize 以上、ラベルは \\small を基本とする。\n'
+                        '19. scope 環境で図の部品をグループ化し、保守性を高める。\n'
+                        '20. 図のサイズ: 幅は 0.7\\linewidth ～ 0.9\\linewidth に収め、余白を確保する。\n'
+                    )
+                    latex_instr += _realism_instr
 
                 # --- Inject user custom request ---
                 _cust_req = getattr(req, 'custom_request', '') or ''
@@ -3205,6 +3243,232 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
         'prompt_hint': (
             'Tabularx が利用可能。\\begin{tabularx}{\\linewidth}{l X r} で幅を自動調整した表を作る。'
             'X 列は残り幅を自動配分。booktabs も有効: \\toprule, \\midrule, \\bottomrule で罫線を引く。'
+        ),
+    },
+    # ═══════ 分子生物学パッケージ ═══════
+    'pgfmolbio': {
+        'name': 'pgfmolbio（DNA・タンパク質配列）',
+        'usepackage': (
+            '\\usepackage{tikz}\n'
+            '\\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,patterns,decorations.pathmorphing}'
+        ),
+        'prompt_hint': (
+            'pgfmolbio スタイルの図が利用可能。TikZ で DNA/RNA/タンパク質を描画する。\n'
+            '【リアルな生物学図の描画ルール — 厳守】\n'
+            '1. DNA二重螺旋: sin/cos曲線を2本描き、塩基対を横棒で接続する。\n'
+            '   \\draw[thick,blue!70] plot[domain=0:8,samples=200] ({0.4*cos(deg(\\x*60))},{\\x*0.5});\n'
+            '   \\draw[thick,red!70] plot[domain=0:8,samples=200] ({-0.4*cos(deg(\\x*60))},{\\x*0.5});\n'
+            '   塩基対は A-T(赤), G-C(青) で色分け。\n'
+            '2. 配列表記: 5\'→3\' 方向を矢印で明示。各塩基を色付き□で表現。\n'
+            '3. クロマトグラム: 4色(A=green, T=red, G=black, C=blue)の曲線を重ねて描く。\n'
+            '4. タンパク質二次構造: αヘリックス=螺旋(decoration=coil), βシート=矢印(→)。\n'
+        ),
+    },
+    'texshade': {
+        'name': 'TeXshade（配列アラインメント）',
+        'usepackage': (
+            '\\usepackage{tikz}\n'
+            '\\usetikzlibrary{positioning}'
+        ),
+        'prompt_hint': (
+            'マルチプルシーケンスアラインメント表示が利用可能。\n'
+            '【配列アラインメント描画ルール】\n'
+            '1. 各配列を等幅フォント(\\ttfamily)で横並びに表示する。\n'
+            '2. 保存残基を色付き背景 (fill=blue!30) でハイライト。\n'
+            '3. 一致記号: 完全一致=*, 類似=:, 弱類似=. を配列下段に表示。\n'
+            '4. 配列番号を左端と右端に表示 (node[left]{1}, node[right]{30})。\n'
+        ),
+    },
+    'genealogytree': {
+        'name': 'genealogytree（家系図・系統図）',
+        'usepackage': (
+            '\\usepackage{tikz}\n'
+            '\\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}'
+        ),
+        'prompt_hint': (
+            '遺伝学の家系図描画が利用可能。TikZ で正確な家系図を描く。\n'
+            '【リアルな家系図の描画ルール — 厳守】\n'
+            '1. 男性: □(rectangle, minimum size=8mm), 女性: ○(circle, minimum size=8mm)。\n'
+            '2. 患者(affected): fill=black で塗りつぶし。保因者: 半分塗り(半円fill)。\n'
+            '3. 婚姻線: 夫婦を水平実線(thick)で接続。\n'
+            '4. 子孫線: 婚姻線の中点から垂直に下ろし、子へ分岐。\n'
+            '5. 世代(I, II, III...)を左端にローマ数字で表示。\n'
+            '6. 発端者(proband)は矢印(→)で示す。死亡者は斜線(/)を重ねる。\n'
+            '7. 近親婚は二重線(double)で表現。\n'
+            '例: \\node[draw,rectangle,minimum size=8mm] (f1) at (0,4) {}; % 父\n'
+            '    \\node[draw,circle,minimum size=8mm] (m1) at (2,4) {}; % 母\n'
+            '    \\draw[thick] (f1) -- (m1); % 婚姻線\n'
+        ),
+    },
+    # ═══════ 化学パッケージ ═══════
+    'chemfig': {
+        'name': 'ChemFig（有機構造式）',
+        'usepackage': (
+            '\\usepackage{chemfig}'
+        ),
+        'prompt_hint': (
+            'ChemFig が利用可能。\\chemfig{} で有機構造式を描画する。\n'
+            '【リアルな構造式の描画ルール — 厳守】\n'
+            '1. 基本: \\chemfig{A-B=C~D} (単結合-, 二重結合=, 三重結合~)。\n'
+            '2. 分岐: \\chemfig{A(-[2]X)(-[6]Y)-B} で上下に置換基を配置。\n'
+            '3. 環構造: \\chemfig{*6(--=--=-)} でベンゼン環。\n'
+            '4. ウェッジ・ダッシュ結合: \\chemfig{C(<[1]H)(<:[3]OH)-CH_3}。\n'
+            '5. 反応矢印: \\schemestart A \\arrow{->[$\\Delta$]} B \\schemestop。\n'
+            '6. 電子対: \\Lewis{0:2:4:6:,O} で孤立電子対を表示。\n'
+        ),
+    },
+    'mhchem': {
+        'name': 'mhchem（化学式・反応式）',
+        'usepackage': (
+            '\\usepackage[version=4]{mhchem}'
+        ),
+        'prompt_hint': (
+            'mhchem が利用可能。\\ce{} で化学式・反応式を美しく記述する。\n'
+            '例: \\ce{2H2 + O2 -> 2H2O}, \\ce{Fe^{2+}}, \\ce{SO4^{2-}}\n'
+            '反応矢印: -> (正反応), <=> (平衡), ->[$\\Delta$] (条件付き)。\n'
+            '沈殿矢印: \\ce{v} (↓), ガス発生: \\ce{^} (↑)。\n'
+            'イオン式: \\ce{Na+ + Cl- -> NaCl}。\n'
+        ),
+    },
+    'chemformula': {
+        'name': 'chemformula（化学式拡張）',
+        'usepackage': (
+            '\\usepackage{chemformula}'
+        ),
+        'prompt_hint': (
+            'chemformula が利用可能。\\ch{} で化学式を記述（mhchem の代替）。\n'
+            '例: \\ch{2 H2 + O2 -> 2 H2O}, \\ch{Fe^{2+}}。\n'
+        ),
+    },
+    'chemmacros': {
+        'name': 'chemmacros（化学マクロ集）',
+        'usepackage': (
+            '\\usepackage{chemmacros}'
+        ),
+        'prompt_hint': (
+            'chemmacros が利用可能。IUPAC命名法、酸化数、電子配置のマクロ集。\n'
+            '例: \\iupac{2-methyl-propan-1-ol}, \\ox{+2,Fe}, \\orbital{s}。\n'
+            'p, pKa: \\pH, \\pKa コマンドが使える。\n'
+        ),
+    },
+    'modiagram': {
+        'name': 'MOdiagram（分子軌道図）',
+        'usepackage': (
+            '\\usepackage{modiagram}'
+        ),
+        'prompt_hint': (
+            'MOdiagram が利用可能。\\begin{MOdiagram}...\\end{MOdiagram} で分子軌道図を描く。\n'
+            '例: \\begin{MOdiagram}\n'
+            '  \\atom[left]{1s=1} \\atom[right]{1s=1}\n'
+            '  \\molecule{1sMO={;pair}}\n'
+            '\\end{MOdiagram}\n'
+            'エネルギー準位を自動配置し、結合性/反結合性軌道を描画。\n'
+        ),
+    },
+    # ═══════ 生体・医学系 ═══════
+    'tikz-network': {
+        'name': 'tikz-network（ネットワーク・経路図）',
+        'usepackage': (
+            '\\usepackage{tikz}\n'
+            '\\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric}'
+        ),
+        'prompt_hint': (
+            '生体ネットワーク・代謝経路の図が利用可能。TikZ で描画する。\n'
+            '【生体ネットワーク描画ルール】\n'
+            '1. ノード: circle,draw,minimum size=10mm でタンパク質/代謝物を表現。\n'
+            '2. 活性化矢印: [-{Stealth},thick,green!60!black] で正の制御。\n'
+            '3. 抑制矢印: [-{Bar},thick,red!70] で負の制御（阻害）。\n'
+            '4. 触媒: [-{Diamond},thick,blue] で酵素反応。\n'
+            '5. 代謝経路は左→右または上→下に流れるように配置し、中間体を省略しない。\n'
+            '6. フィードバックループは曲線矢印 (bend left/right) で表現。\n'
+        ),
+    },
+    'algorithm2e': {
+        'name': 'algorithm2e（擬似コード・アルゴリズム）',
+        'usepackage': (
+            '\\usepackage[ruled,vlined]{algorithm2e}'
+        ),
+        'prompt_hint': (
+            'algorithm2e が利用可能。\\begin{algorithm}...\\end{algorithm} で擬似コードを記述。\n'
+            '例: \\If{条件}{処理}\\ElseIf{条件}{処理}\\Else{処理}\n'
+            '\\While{条件}{処理}, \\For{初期化}{条件}{更新}{処理}\n'
+        ),
+    },
+    # ═══════ 統計・論文用 ═══════
+    'siunitx': {
+        'name': 'siunitx（SI単位系）',
+        'usepackage': (
+            '\\usepackage{siunitx}\n'
+            '\\sisetup{inter-unit-product=\\ensuremath{\\cdot}}'
+        ),
+        'prompt_hint': (
+            'siunitx が利用可能。SI単位を正確に表記する。\n'
+            '例: \\qty{9.81}{m/s^2}, \\qty{2.998e8}{m/s}, \\qty{37.5}{\\degreeCelsius}\n'
+            '数値のみ: \\num{1.23e-4}。単位のみ: \\unit{kg.m/s^2}。\n'
+        ),
+    },
+    'booktabs': {
+        'name': 'booktabs（学術論文用表）',
+        'usepackage': (
+            '\\usepackage{booktabs}'
+        ),
+        'prompt_hint': (
+            'booktabs が利用可能。プロフェッショナルな表の罫線ルール。\n'
+            '\\toprule, \\midrule, \\bottomrule で罫線を引く。\\cmidrule{l-r} で部分線。\n'
+            '縦罫線は使用しない。表は tabular 環境内で使用。\n'
+        ),
+    },
+    'datatool': {
+        'name': 'datatool（データ処理）',
+        'usepackage': (
+            '\\usepackage{datatool}'
+        ),
+        'prompt_hint': (
+            'datatool が利用可能。CSV データの読み込みと表の自動生成。\n'
+        ),
+    },
+    # ═══════ レイアウト系 ═══════
+    'subcaption': {
+        'name': 'subcaption（図の並列配置）',
+        'usepackage': (
+            '\\usepackage{subcaption}'
+        ),
+        'prompt_hint': (
+            'subcaption が利用可能。\\begin{subfigure}{0.48\\linewidth}...\\end{subfigure} で図を横並びに。\n'
+            '各サブ図に \\caption{(a) 説明} で個別キャプションを付ける。\n'
+        ),
+    },
+    'wrapfig': {
+        'name': 'wrapfig（文章回り込み図）',
+        'usepackage': (
+            '\\usepackage{wrapfig}'
+        ),
+        'prompt_hint': (
+            'wrapfig が利用可能。\\begin{wrapfigure}{r}{0.4\\linewidth}...\\end{wrapfigure} で文章回り込み。\n'
+            'r=右寄せ, l=左寄せ。教科書風レイアウトに最適。\n'
+        ),
+    },
+    'tikz-3dplot': {
+        'name': 'tikz-3dplot（3D図形）',
+        'usepackage': (
+            '\\usepackage{tikz}\n'
+            '\\usepackage{tikz-3dplot}'
+        ),
+        'prompt_hint': (
+            'tikz-3dplot が利用可能。3D座標系で立体図形を描画。\n'
+            '\\tdplotsetmaincoords{70}{110} で視点設定。\n'
+            '\\begin{tikzpicture}[tdplot_main_coords] で3D座標フレームを開始。\n'
+            '例: \\draw[->] (0,0,0) -- (3,0,0) node[right]{$x$};\n'
+        ),
+    },
+    'smartdiagram': {
+        'name': 'smartdiagram（フロー図・サイクル図）',
+        'usepackage': (
+            '\\usepackage{smartdiagram}'
+        ),
+        'prompt_hint': (
+            'smartdiagram が利用可能。\\smartdiagram[type]{items} でフロー図を生成。\n'
+            'type: flow diagram, circular diagram, descriptive diagram, priority descriptive diagram。\n'
         ),
     },
 }
@@ -4150,6 +4414,8 @@ class LlmGenerateRequest(BaseModel):
     sub_topic: Optional[str] = None
     # Physics: include a TikZ diagram for each major question
     include_diagram_per_question: Optional[bool] = False
+    # Diagram realism: enable high-quality realistic diagram rendering instructions
+    diagram_realism: Optional[bool] = True
     # User custom request (free text, max 200 chars, sanitised)
     custom_request: Optional[str] = None
     # User ID for usage tracking

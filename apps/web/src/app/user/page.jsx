@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, fetchUsage, adminUnlock, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, PACKAGE_PRESETS, fetchUsage, adminUnlock, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -544,11 +544,33 @@ export default function UserModePage() {
   /* ── 図表パッケージ ── */
   const [extraPackages, setExtraPackages] = useState([]);
   const [customPackage, setCustomPackage] = useState('');
+  const [diagramRealism, setDiagramRealism] = useState(true);
+  const [activePresets, setActivePresets] = useState([]);
+  const [showAdvancedPkg, setShowAdvancedPkg] = useState(false);
 
   const togglePackage = (id) =>
     setExtraPackages((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
+
+  /* プリセットバンドルのトグル：ON→そのバンドルのパッケージを一括追加、OFF→バンドル固有のパッケージを除去 */
+  const togglePreset = (presetId) => {
+    const preset = PACKAGE_PRESETS.find(p => p.id === presetId);
+    if (!preset) return;
+    const isActive = activePresets.includes(presetId);
+    if (isActive) {
+      // プリセット解除：他のアクティブプリセットにも含まれるパッケージは残す
+      const otherActivePresets = activePresets.filter(id => id !== presetId);
+      const otherPkgs = new Set(otherActivePresets.flatMap(id => PACKAGE_PRESETS.find(p => p.id === id)?.packages || []));
+      const toRemove = preset.packages.filter(pkg => !otherPkgs.has(pkg));
+      setExtraPackages(prev => prev.filter(pkg => !toRemove.includes(pkg)));
+      setActivePresets(prev => prev.filter(id => id !== presetId));
+    } else {
+      // プリセット追加
+      setExtraPackages(prev => [...new Set([...prev, ...preset.packages])]);
+      setActivePresets(prev => [...prev, presetId]);
+    }
+  };
 
   const addCustomPackage = () => {
     const pkg = customPackage.trim().toLowerCase().replace(/\s+/g, '-');
@@ -645,6 +667,7 @@ export default function UserModePage() {
         question_format: questionFormat,
         sub_topic: theme || undefined,
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
+        diagram_realism: diagramRealism,
         custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       };
@@ -692,6 +715,7 @@ export default function UserModePage() {
         question_format: questionFormat,
         sub_topic: theme || '',
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
+        diagram_realism: diagramRealism,
         custom_request: customRequest.trim() || undefined,
         user_id: userId,
       };
@@ -768,6 +792,7 @@ export default function UserModePage() {
         question_format: questionFormat,
         sub_topic: theme || undefined,
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
+        diagram_realism: diagramRealism,
         custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
       };
@@ -1977,42 +2002,112 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 5: 図表・パッケージ選択 ═══════ */}
+      {/* ═══════ Step 5: 図表・パッケージ選択（プリセット方式） ═══════ */}
       {step === 5 && (
         <div className="space-y-5 wizard-section-enter">
+          {/* ── プリセットバンドル選択 ── */}
           <div className="card-glossy">
             <div className="p-5 relative z-10">
-              <div className="flex items-center gap-2.5 mb-4">
+              <div className="flex items-center gap-2.5 mb-2">
                 <div className="icon-glossy w-8 h-8">
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v13.5A1.5 1.5 0 003.75 21z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-[13px] font-bold text-[#1e293b] tracking-tight">図表・パッケージ</h3>
-                  <p className="text-[10px] text-[#64748b]">任意 — 問題に含める図表の種類を選択（複数選択可）</p>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">図表セットを選ぶ</h3>
+                  <p className="text-[11px] text-[#64748b]">分野に合わせてワンタップ — 複数選択OK・図不要なら何も選ばず次へ</p>
                 </div>
               </div>
 
-              {/* 選択中サマリー */}
-              {extraPackages.length > 0 && (
-                <div className="mb-4 p-3 rounded-xl bg-[#2563eb]/[0.04] border border-[#2563eb]/10">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-[#2563eb]">{extraPackages.length} 個選択中</span>
+              {/* ── プリセットカード グリッド ── */}
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                {PACKAGE_PRESETS.map((preset, idx) => {
+                  const isActive = activePresets.includes(preset.id);
+                  const pkgCount = preset.packages.length;
+                  return (
                     <button
-                      onClick={() => setExtraPackages([])}
-                      className="text-[10px] font-medium text-[#94a3b8] hover:text-red-500 transition-colors"
+                      key={preset.id}
+                      onClick={() => togglePreset(preset.id)}
+                      className={`preset-bundle-card group relative text-left rounded-2xl border-2 overflow-hidden transition-all duration-300 active:scale-[0.97]
+                        ${isActive
+                          ? `${preset.borderActive} shadow-lg`
+                          : 'border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-md'
+                        }`}
+                      style={{
+                        animationDelay: `${idx * 60}ms`,
+                      }}
                     >
-                      すべて解除
+                      {/* 背景グラデーション */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${preset.gradient} transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'}`} />
+                      
+                      {/* チェックバッジ */}
+                      {isActive && (
+                        <div className="absolute top-2.5 right-2.5 z-20 w-6 h-6 rounded-full flex items-center justify-center shadow-md" style={{ background: preset.color }}>
+                          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+
+                      <div className="relative z-10 p-4">
+                        {/* アイコン＆タイトル */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-2xl">{preset.icon}</span>
+                          <div>
+                            <div className="text-[14px] font-extrabold text-[#1e293b]">{preset.name}</div>
+                            <div className="text-[10px] text-[#64748b] font-medium">{preset.subtitle}</div>
+                          </div>
+                        </div>
+
+                        {/* ASCIIイラスト */}
+                        <pre className={`text-[8px] leading-[1.4] font-mono p-2 rounded-lg whitespace-pre transition-all duration-300 ${
+                          isActive ? 'bg-white/60 text-[#334155]' : 'bg-[#f8fafc] text-[#94a3b8]'
+                        }`} style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
+                          {preset.illustration}
+                        </pre>
+
+                        {/* 説明 */}
+                        <p className={`text-[10px] mt-2 leading-relaxed transition-colors ${isActive ? 'text-[#334155]' : 'text-[#94a3b8]'}`}>
+                          {preset.description}
+                        </p>
+
+                        {/* パッケージ数バッジ */}
+                        <div className="flex items-center gap-1.5 mt-2">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold transition-colors ${
+                            isActive ? 'text-white' : 'bg-[#f1f5f9] text-[#94a3b8]'
+                          }`} style={isActive ? { background: preset.color } : {}}>
+                            {pkgCount} パッケージ
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* ── 選択中フィードバックバー ── */}
+              {extraPackages.length > 0 && (
+                <div className="mt-4 p-3 rounded-2xl bg-gradient-to-r from-[#f0f9ff] to-[#f0fdf4] border border-[#e0f2fe]">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#2563eb] text-white text-[10px] font-bold">{extraPackages.length}</span>
+                      <span className="text-[11px] font-bold text-[#1e293b]">パッケージ選択中</span>
+                    </div>
+                    <button
+                      onClick={() => { setExtraPackages([]); setActivePresets([]); }}
+                      className="text-[10px] font-medium text-[#94a3b8] hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+                    >
+                      全解除
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {extraPackages.map((pkg) => {
                       const def = DIAGRAM_PACKAGE_DEFS.find(d => d.id === pkg);
                       return (
-                        <span key={pkg} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#2563eb]/10 text-[#2563eb] transition-all hover:bg-[#2563eb]/15">
-                          {def?.icon || '📦'} {def?.label || pkg}
-                          <button onClick={() => togglePackage(pkg)} className="ml-0.5 hover:text-red-500 transition-colors">×</button>
+                        <span key={pkg} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-white/80 text-[#334155] shadow-sm border border-[#e2e8f0]">
+                          {def?.icon || '📦'} {def?.name || pkg}
+                          <button onClick={() => togglePackage(pkg)} className="ml-0.5 text-[#94a3b8] hover:text-red-500 transition-colors">×</button>
                         </span>
                       );
                     })}
@@ -2020,126 +2115,182 @@ export default function UserModePage() {
                 </div>
               )}
 
-              {/* カテゴリごとにアコーディオン表示 */}
-              <div className="space-y-3">
-                {PACKAGE_CATEGORIES.map((cat) => {
-                  const pkgsInCat = DIAGRAM_PACKAGE_DEFS.filter(p => p.category === cat.id);
-                  const selectedInCat = pkgsInCat.filter(p => extraPackages.includes(p.id)).length;
-                  return (
-                    <details key={cat.id} className="group pkg-category-card" open={cat.id === 'diagram'}>
-                      <summary className="pkg-category-summary">
-                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                          <span className="text-lg flex-shrink-0">{cat.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-[12px] font-bold text-[#1e293b]">{cat.name}</div>
-                            <div className="text-[9px] text-[#94a3b8]">{cat.description}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {selectedInCat > 0 && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white">
-                              {selectedInCat}
-                            </span>
-                          )}
-                          <svg className="w-4 h-4 text-[#94a3b8] transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                          </svg>
-                        </div>
-                      </summary>
-                      <div className="pkg-category-content">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-3 pt-0">
-                          {pkgsInCat.map((pkg) => {
-                            const active = extraPackages.includes(pkg.id);
-                            const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
-                            return (
-                              <button
-                                key={pkg.id}
-                                onClick={() => togglePackage(pkg.id)}
-                                className={`pkg-card relative text-left p-3.5 rounded-xl border-2 transition-all duration-300 active:scale-[0.97] ${
-                                  active
-                                    ? 'border-[#2563eb]/40 bg-[#2563eb]/[0.04] shadow-sm'
-                                    : 'border-transparent bg-[#f8fafc]/80 hover:border-blue-100 hover:bg-blue-50/30'
-                                }`}
-                              >
-                                {/* 推奨バッジ */}
-                                {pkg.recommended && !active && (
-                                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-[#2563eb] text-white">
-                                    おすすめ
-                                  </span>
-                                )}
-                                {/* チェックマーク */}
-                                {active && (
-                                  <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center shadow-sm">
-                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  </span>
-                                )}
-                                <div className="flex items-start gap-2.5">
-                                  <span className="text-xl flex-shrink-0 mt-0.5">{pkg.icon}</span>
-                                  <div className="flex-1 min-w-0 pr-5">
-                                    <div className="text-[12px] font-bold text-[#1e293b]">{pkg.name}</div>
-                                    <div className="text-[10px] text-[#64748b] mt-0.5 leading-relaxed">{pkg.description}</div>
-                                    {pkg.hint && (
-                                      <div className="text-[9px] text-[#2563eb] font-medium mt-1">{pkg.hint}</div>
-                                    )}
-                                  </div>
-                                </div>
-                                {/* ASCIIプレビュー */}
-                                {illustration && (
-                                  <pre className={`mt-2.5 text-[9px] leading-[1.35] font-mono p-2 rounded-lg whitespace-pre overflow-x-auto transition-colors ${
-                                    active ? 'bg-white/80 text-[#1e293b]' : 'bg-[#f1f5f9]/80 text-[#94a3b8]'
-                                  }`}>
-                                    {illustration}
-                                  </pre>
-                                )}
-                              </button>
-                            );
-                          })}
+              {/* ── リアル描画モード トグル ── */}
+              {extraPackages.length > 0 && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setDiagramRealism(v => !v)}
+                    className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
+                      ${diagramRealism
+                        ? 'bg-gradient-to-r from-emerald-50/80 to-teal-50/80 border-2 border-emerald-400/30 shadow-sm'
+                        : 'bg-[#f8fafc] border-2 border-transparent hover:border-[#e2e8f0]'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
+                        ${diagramRealism
+                          ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md'
+                          : 'bg-[#f1f5f9] text-[#94a3b8]'
+                        }`}>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[13px] font-bold text-[#1e293b]">🎨 リアル描画モード</div>
+                        <div className="text-[10px] text-[#64748b] mt-0.5 leading-relaxed">
+                          教科書品質のリアルで美しい図を生成（線の太さ・塗り・影・矢印を最適化）
                         </div>
                       </div>
-                    </details>
-                  );
-                })}
-              </div>
-
-              {/* TikZ 選択時のサブオプション */}
-              {extraPackages.includes('tikz') && (
-                <div className="mt-4 p-3 rounded-xl bg-blue-50/50 border border-blue-100/60">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <div className={`relative w-10 h-5 rounded-full transition-colors duration-300 ${includeDiagramPerQuestion ? 'bg-[#2563eb]' : 'bg-[#cbd5e1]'}`}>
-                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-300 ${includeDiagramPerQuestion ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      <div className={`relative w-12 h-7 rounded-full flex-shrink-0 transition-all duration-300
+                        ${diagramRealism ? 'bg-emerald-500' : 'bg-[#cbd5e1]'}`}>
+                        <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
+                          ${diagramRealism ? 'left-[22px]' : 'left-0.5'}`} />
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-[12px] font-bold text-[#1e293b]">問題ごとに図を自動挿入</span>
-                      <p className="text-[10px] text-[#64748b]">各問題に個別のTikZ図を生成して挿入します</p>
-                    </div>
-                  </label>
+                  </button>
                 </div>
               )}
 
-              {/* カスタムパッケージ入力 */}
-              <div className="mt-4 flex gap-2">
-                <input
-                  type="text"
-                  value={customPackage}
-                  onChange={(e) => setCustomPackage(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addCustomPackage()}
-                  placeholder="その他のパッケージ名を入力..."
-                  className="flex-1 px-3 py-2 text-[12px] border border-blue-200/60 bg-[#f0f4ff] rounded-xl
-                    focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20 transition-all"
-                />
-                <button
-                  onClick={addCustomPackage}
-                  disabled={!customPackage.trim()}
-                  className="px-3 py-2 text-[12px] font-medium text-white bg-[#2563eb] rounded-xl
-                    hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                >
-                  追加
-                </button>
-              </div>
+              {/* ── TikZ 大問ごとの図挿入 ── */}
+              {extraPackages.includes('tikz') && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => setIncludeDiagramPerQuestion((v) => !v)}
+                    className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
+                      ${includeDiagramPerQuestion
+                        ? 'bg-blue-50/60 border-2 border-[#2563eb]/30 shadow-sm'
+                        : 'bg-[#f8fafc] border-2 border-transparent hover:border-[#e2e8f0]'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
+                        ${includeDiagramPerQuestion ? 'bg-[#2563eb] text-white shadow-md' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[13px] font-bold text-[#1e293b]">大問ごとに図を自動挿入</div>
+                        <div className="text-[10px] text-[#64748b] mt-0.5">各大問に図（力学図・回路図等）を自動追加</div>
+                      </div>
+                      <div className={`relative w-12 h-7 rounded-full flex-shrink-0 transition-all duration-300
+                        ${includeDiagramPerQuestion ? 'bg-[#2563eb]' : 'bg-[#cbd5e1]'}`}>
+                        <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
+                          ${includeDiagramPerQuestion ? 'left-[22px]' : 'left-0.5'}`} />
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
 
-              {/* 選択中のパッケージサマリー (カテゴリ内表示で十分のため簡略化) */}
+          {/* ── 詳細カスタマイズ（個別パッケージ） ── */}
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedPkg(v => !v)}
+                className="w-full flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className={`w-4 h-4 text-[#64748b] transition-transform duration-300 ${showAdvancedPkg ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                  <span className="text-[12px] font-bold text-[#475569]">詳細カスタマイズ</span>
+                  <span className="text-[10px] text-[#94a3b8]">個別パッケージの追加・削除</span>
+                </div>
+                <span className="text-[10px] text-[#94a3b8]">{showAdvancedPkg ? '閉じる' : '開く'}</span>
+              </button>
+
+              {showAdvancedPkg && (
+                <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  {/* カテゴリごとの個別パッケージ */}
+                  {PACKAGE_CATEGORIES.map((cat) => {
+                    const pkgsInCat = DIAGRAM_PACKAGE_DEFS.filter(p => p.category === cat.id);
+                    const selectedInCat = pkgsInCat.filter(p => extraPackages.includes(p.id)).length;
+                    return (
+                      <details key={cat.id} className="group pkg-category-card">
+                        <summary className="pkg-category-summary">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-base flex-shrink-0">{cat.icon}</span>
+                            <span className="text-[11px] font-bold text-[#1e293b]">{cat.name}</span>
+                            <span className="text-[9px] text-[#94a3b8]">{cat.description}</span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {selectedInCat > 0 && (
+                              <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-[#2563eb] text-white">{selectedInCat}</span>
+                            )}
+                            <svg className="w-3.5 h-3.5 text-[#94a3b8] transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                            </svg>
+                          </div>
+                        </summary>
+                        <div className="pkg-category-content">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 pt-1">
+                            {pkgsInCat.map((pkg) => {
+                              const active = extraPackages.includes(pkg.id);
+                              return (
+                                <button
+                                  key={pkg.id}
+                                  onClick={() => togglePackage(pkg.id)}
+                                  className={`relative text-left p-3 rounded-xl border transition-all duration-200 active:scale-[0.97] ${
+                                    active
+                                      ? 'border-[#2563eb]/30 bg-[#2563eb]/[0.04]'
+                                      : 'border-transparent bg-[#f8fafc] hover:bg-blue-50/30'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                                      active ? 'border-[#2563eb] bg-[#2563eb]' : 'border-[#cbd5e1]'
+                                    }`}>
+                                      {active && (
+                                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <span className="text-sm">{pkg.icon}</span>
+                                    <span className="text-[11px] font-bold text-[#1e293b]">{pkg.name}</span>
+                                    {pkg.recommended && !active && (
+                                      <span className="px-1 py-0.5 rounded text-[7px] font-bold bg-blue-100 text-[#2563eb]">推奨</span>
+                                    )}
+                                  </div>
+                                  <p className="text-[9px] text-[#64748b] mt-1 ml-6 leading-tight">{pkg.hint || pkg.description}</p>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </details>
+                    );
+                  })}
+
+                  {/* カスタムパッケージ入力 */}
+                  <div className="flex gap-2 pt-2">
+                    <input
+                      type="text"
+                      value={customPackage}
+                      onChange={(e) => setCustomPackage(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addCustomPackage()}
+                      placeholder="その他のパッケージ名を入力..."
+                      className="flex-1 px-3 py-2 text-[12px] border border-blue-200/60 bg-[#f0f4ff] rounded-xl
+                        focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20 transition-all"
+                    />
+                    <button
+                      onClick={addCustomPackage}
+                      disabled={!customPackage.trim()}
+                      className="px-3 py-2 text-[12px] font-medium text-white bg-[#2563eb] rounded-xl
+                        hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      追加
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -3225,175 +3376,34 @@ export default function UserModePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">図表・イラスト</h3>
-                  <p className="text-[11px] text-[#64748b]">図・グラフ・コードが必要な場合に選択。不要なら選ばなくてOK</p>
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">図表セット</h3>
+                  <p className="text-[11px] text-[#64748b]">
+                    {extraPackages.length > 0
+                      ? `${extraPackages.length} パッケージ選択中${diagramRealism ? '（リアル描画ON）' : ''}`
+                      : '図表なし（文章・数式のみ）'}
+                  </p>
                 </div>
                 <span className="ml-auto px-2.5 py-1 bg-[#334155]/[0.08] text-[#334155] rounded-full text-[10px] font-bold border border-blue-200/40">任意</span>
               </div>
 
-            {/* どれを選ぶ？ガイダンス */}
-            <details className="tip-card mb-3 group">
-              <summary>
-                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" /></svg>
-                <span>どれを選べばいい？（初めての方はここを確認）</span>
-                <svg className="w-3.5 h-3.5 ml-auto transition-transform duration-300 group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              </summary>
-              <div className="px-4 pb-4 pt-1 text-[10px] text-[#475569] space-y-1 leading-relaxed animate-expand">
-                <p className="font-bold">迷ったら「TikZ」だけ選べばほとんどの図が描けます。</p>
-                <p>・ 電気回路の問題 → <strong>CircuiTikZ</strong></p>
-                <p>・ 関数グラフ・データグラフ → <strong>PGFPlots</strong></p>
-                <p>・ プログラミング問題のコード → <strong>Listings</strong></p>
-                <p>・ 確率の樹形図 → <strong>Forest</strong></p>
-                <p className="font-bold mt-1.5">生物・化学・医学系の場合:</p>
-                <p>・ 有機化学の構造式 → <strong>ChemFig</strong></p>
-                <p>・ 化学反応式 → <strong>mhchem</strong></p>
-                <p>・ DNA・タンパク質配列 → <strong>pgfmolbio</strong></p>
-                <p>・ 遺伝の家系図 → <strong>genealogytree</strong></p>
-                <p>・ SI単位の正確な表記 → <strong>siunitx</strong></p>
-                <p className="text-[#475569]">図が不要な問題（文章・数式のみ）は何も選ばなくて大丈夫です。</p>
-              </div>
-            </details>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {PACKAGE_CATEGORIES.map((cat) => {
-                const pkgsInCat = DIAGRAM_PACKAGE_DEFS.filter(p => p.category === cat.id);
-                const selectedInCat = pkgsInCat.filter(p => extraPackages.includes(p.id));
-                if (pkgsInCat.length === 0) return null;
-                return (
-                  <details key={cat.id} className="pkg-category-card col-span-full group" open={cat.id === 'diagram'}>
-                    <summary className="pkg-category-summary">
-                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                        <span className="text-base">{cat.icon}</span>
-                        <div>
-                          <span className="text-[11px] font-bold text-[#1e293b]">{cat.name}</span>
-                          <span className="text-[9px] text-[#94a3b8] ml-2">{cat.description}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        {selectedInCat.length > 0 && (
-                          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white">{selectedInCat.length}</span>
-                        )}
-                        <svg className="w-3.5 h-3.5 text-[#94a3b8] transition-transform duration-300 group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                        </svg>
-                      </div>
-                    </summary>
-                    <div className="pkg-category-content grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 pt-2">
-                      {pkgsInCat.map((pkg) => {
-                        const active = extraPackages.includes(pkg.id);
-                        const illustration = PACKAGE_ILLUSTRATIONS[pkg.id];
-                        return (
-                          <button
-                            key={pkg.id}
-                            onClick={() => togglePackage(pkg.id)}
-                            className={`selection-card !p-0 text-left ${
-                              active ? 'active !border-[#2563eb] !shadow-[0_0_0_3px_rgba(37,99,235,0.06)]' : ''
-                            }`}
-                          >
-                            {illustration && (
-                              <div className={`px-3 pt-2.5 pb-2 ${active ? 'bg-[#334155]/[0.06]' : 'bg-blue-50/50'}`}>
-                                <pre className={`text-[9px] sm:text-[8px] leading-[1.35] font-mono select-none transition-colors ${active ? 'text-[#334155]' : 'text-[#94a3b8]'}`} style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
-                                  {illustration}
-                                </pre>
-                              </div>
-                            )}
-                            <div className="px-4 py-2.5 relative z-10">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {active ? (
-                                  <div className="check-circle checked !w-5 !h-5 !border-[#2563eb]" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
-                                    <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  </div>
-                                ) : (
-                                  <div className="check-circle !w-5 !h-5" />
-                                )}
-                                <span className={`text-sm leading-none ${active ? 'text-[#334155]' : 'text-[#94a3b8]'}`}>{pkg.icon}</span>
-                                <span className="text-xs font-bold text-[#1e293b]">{pkg.name}</span>
-                                {pkg.recommended && !active && (
-                                  <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold bg-blue-100/50 text-[#475569]">おすすめ</span>
-                                )}
-                              </div>
-                              <p className="text-[10px] text-[#64748b] mt-1 ml-7 leading-tight">{pkg.hint || pkg.description}</p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </details>
-                );
-              })}
-            </div>
-
-            {/* ── 「図形・図解」選択時のサブオプション: 大問ごとに図を含める ── */}
-            {extraPackages.includes('tikz') && (
-              <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                <button
-                  type="button"
-                  onClick={() => setIncludeDiagramPerQuestion((v) => !v)}
-                  className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
-                    ${includeDiagramPerQuestion
-                      ? 'bg-blue-50/60 border-2 border-[#2563eb]/30 shadow-sm'
-                      : 'bg-blue-50/50 border-2 border-transparent hover:bg-blue-50/60 hover:border-blue-200/60'
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
-                      ${includeDiagramPerQuestion
-                        ? 'bg-[#2563eb] text-white shadow-md'
-                        : 'bg-blue-50/60 text-[#64748b]'
-                      }`}>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-sm font-bold text-[#1e293b]">大問ごとに図を自動挿入</div>
-                      <div className="text-[11px] text-[#64748b] mt-0.5 leading-relaxed">
-                        各大問に物理図（力の図示、回路図など）を自動で追加します
-                      </div>
-                    </div>
-                    {/* トグルスイッチ */}
-                    <div className={`relative w-12 h-7 rounded-full flex-shrink-0 transition-all duration-300
-                      ${includeDiagramPerQuestion
-                        ? 'bg-[#2563eb]'
-                        : 'bg-blue-100/50'
-                      }`}>
-                      <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300
-                        ${includeDiagramPerQuestion ? 'left-[22px]' : 'left-0.5'}`} />
-                    </div>
-                  </div>
-                </button>
+            {/* プリセットバンドル表示 */}
+            {activePresets.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {activePresets.map((presetId) => {
+                  const preset = PACKAGE_PRESETS.find(p => p.id === presetId);
+                  if (!preset) return null;
+                  return (
+                    <span key={presetId} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold text-white shadow-sm" style={{ background: preset.color }}>
+                      {preset.icon} {preset.name}
+                    </span>
+                  );
+                })}
               </div>
             )}
 
-            {/* その他の図表タイプを追加 */}
-            <div className="mt-3 flex gap-2">
-              <input
-                type="text"
-                value={customPackage}
-                onChange={(e) => setCustomPackage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addCustomPackage()}
-                placeholder="その他の図表タイプ名（例: 化学式）"
-                className="flex-1 px-4 py-2.5 text-xs border border-blue-200/60 bg-[#f0f4ff] rounded-2xl
-                           focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/20
-                           placeholder:text-[#94a3b8] transition-all hover:border-blue-300/60 hover:shadow-md"
-              />
-              <button
-                onClick={addCustomPackage}
-                disabled={!customPackage.trim()}
-                className="px-4 py-2.5 text-xs font-bold bg-[#f0f4ff] border border-blue-200/60 text-[#1e293b] rounded-2xl
-                           hover:bg-blue-50/60 hover:border-blue-300/60 disabled:opacity-30 transition-all"
-              >
-                追加
-              </button>
-            </div>
-
             {/* 選択中パッケージのタグ表示 */}
             {extraPackages.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {extraPackages.map((pkg) => {
                   const def = DIAGRAM_PACKAGE_DEFS.find((d) => d.id === pkg);
                   return (
@@ -3401,16 +3411,46 @@ export default function UserModePage() {
                       key={pkg}
                       className="inline-flex items-center gap-1 px-2 py-1 bg-[#334155]/[0.08] text-[#334155] rounded-full text-[10px] font-bold"
                     >
-                      {def?.name || pkg}
+                      {def?.icon || '📦'} {def?.name || pkg}
                       <button
-                        onClick={() => setExtraPackages((prev) => prev.filter((p) => p !== pkg))}
-                        className="ml-0.5 text-[#334155] hover:text-[#64748b] leading-none"
+                        onClick={() => togglePackage(pkg)}
+                        className="ml-0.5 text-[#334155] hover:text-red-500 leading-none transition-colors"
                       >
                         ×
                       </button>
                     </span>
                   );
                 })}
+              </div>
+            )}
+
+            {/* リアル描画モード表示 */}
+            {extraPackages.length > 0 && (
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDiagramRealism(v => !v)}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${
+                    diagramRealism
+                      ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                      : 'bg-[#f1f5f9] text-[#94a3b8] border border-[#e2e8f0]'
+                  }`}
+                >
+                  🎨 リアル描画 {diagramRealism ? 'ON' : 'OFF'}
+                </button>
+                {extraPackages.includes('tikz') && (
+                  <button
+                    type="button"
+                    onClick={() => setIncludeDiagramPerQuestion(v => !v)}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${
+                      includeDiagramPerQuestion
+                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                        : 'bg-[#f1f5f9] text-[#94a3b8] border border-[#e2e8f0]'
+                    }`}
+                  >
+                    🖼️ 大問ごと図挿入 {includeDiagramPerQuestion ? 'ON' : 'OFF'}
+                  </button>
+                )}
               </div>
             )}
             </div>
