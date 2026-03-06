@@ -18,6 +18,9 @@ const Ico = {
   Database: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
   Pdf: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15v-2h2a1 1 0 1 0 0-2H9v6"/></svg>,
   Skip: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>,
+  Paste: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>,
+  Wand: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8L19 13"/><path d="M15 9h0"/><path d="M17.8 6.2L19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2L11 5"/></svg>,
+  Zap: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
 }
 
 /* ────────────────────────────────────────────
@@ -52,6 +55,13 @@ function LoadingOverlay({ text }) {
 /* ════════════════════════════════════════════
    Main Application
    ════════════════════════════════════════════ */
+/* ── Preset emoji map ── */
+const PRESET_EMOJI = {
+  exam: '📝', worksheet: '📋', flashcard: '🃏', mock_exam: '📊',
+  report: '📖', simple: '✏️', default: '📄',
+}
+const presetEmoji = (id) => PRESET_EMOJI[id] || PRESET_EMOJI.default
+
 export default function App() {
   const [mode, setMode] = useState('user')
   const [toast, setToast] = useState(null)
@@ -60,6 +70,13 @@ export default function App() {
   const [templates, setTemplates] = useState([])
   const [difficulties] = useState(['易', '普通', '難'])
   const [latexPresets, setLatexPresets] = useState([])
+
+  // View mode: 'wizard' (step-by-step) or 'manual' (direct paste)
+  const [viewMode, setViewMode] = useState('wizard')
+  // Manual mode paste state
+  const [manualLatex, setManualLatex] = useState('')
+  const [manualPreset, setManualPreset] = useState('exam')
+  const [manualPdfUrl, setManualPdfUrl] = useState('')
 
   // Wizard state
   const [step, setStep] = useState(1)
@@ -239,6 +256,33 @@ export default function App() {
     setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null)
   }
 
+  /* ── Manual mode: Generate PDF directly ── */
+  const generatePdfManual = async () => {
+    if (!manualLatex.trim()) return notify('LaTeXコードを貼り付けてください', 'error')
+    setLoading(true); setLoadingMsg('PDFを生成中...')
+    try {
+      const r = await fetch('/api/generate_pdf', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          latex: manualLatex,
+          title: 'Manual PDF',
+          return_url: true,
+          latex_preset: manualPreset || 'exam',
+        }),
+      })
+      if (r.ok) {
+        const d = await r.json().catch(() => null)
+        const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+        setManualPdfUrl(url)
+        notify('PDFを作成しました！', 'success')
+      } else {
+        const d = await r.json().catch(() => null)
+        notify('PDF生成失敗: ' + (d?.detail || d?.error || ''), 'error')
+      }
+    } catch { notify('PDF生成エラー', 'error') }
+    setLoading(false)
+  }
+
   /* ── Current preset info ── */
   const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
 
@@ -276,9 +320,11 @@ export default function App() {
               <div className="logo-sub">Smart Problem Generator</div>
             </div>
           </div>
-          <div className="mode-toggle">
-            <button className={mode === 'user' ? 'active' : ''} onClick={() => setMode('user')}>ユーザー</button>
-            <button className={mode === 'dev' ? 'active' : ''} onClick={() => setMode('dev')}>開発者</button>
+          <div className="header-actions">
+            <div className="mode-toggle">
+              <button className={mode === 'user' ? 'active' : ''} onClick={() => setMode('user')}>ユーザー</button>
+              <button className={mode === 'dev' ? 'active' : ''} onClick={() => setMode('dev')}>開発者</button>
+            </div>
           </div>
         </div>
       </header>
@@ -287,6 +333,128 @@ export default function App() {
 
         {mode === 'user' ? (
           <>
+            {/* ── VIEW MODE SWITCHER ── */}
+            <div className="view-mode-bar">
+              <button
+                className={`view-mode-btn ${viewMode === 'wizard' ? 'active' : ''}`}
+                onClick={() => setViewMode('wizard')}
+              >
+                <Ico.Wand />
+                <span>ガイド付き生成</span>
+              </button>
+              <button
+                className={`view-mode-btn ${viewMode === 'manual' ? 'active' : ''}`}
+                onClick={() => setViewMode('manual')}
+              >
+                <Ico.Paste />
+                <span>手動入力モード</span>
+              </button>
+            </div>
+
+            {/* ══════════════════════════════════
+                MANUAL PASTE MODE — 直接LaTeX入力
+               ══════════════════════════════════ */}
+            {viewMode === 'manual' && (
+              <>
+                <div className="card anim-fade-up">
+                  <div className="card-header">
+                    <span className="card-emoji">📋</span>
+                    <div className="card-title">手動入力モード</div>
+                    <div className="card-desc">
+                      ChatGPT / Claude が生成したLaTeXコードを直接貼り付けてPDFに変換します
+                    </div>
+                  </div>
+
+                  <div className="tip">
+                    <span className="tip-icon">💡</span>
+                    <div>AIの出力した <code>{`\\documentclass`}</code> 〜 <code>{`\\end{document}`}</code> の全体をそのまま貼り付けてください。コードブロック記号（<code>```</code>）は不要です。</div>
+                  </div>
+
+                  {/* Preset chips */}
+                  {latexPresets.length > 0 && (
+                    <div className="field" style={{marginBottom: 16}}>
+                      <label className="field-label">出力形式</label>
+                      <div className="preset-chips">
+                        {latexPresets.map(p => (
+                          <button
+                            key={p.id}
+                            className={`preset-chip ${manualPreset === p.id ? 'active' : ''}`}
+                            onClick={() => setManualPreset(p.id)}
+                            title={p.description}
+                          >
+                            <span className="preset-chip-emoji">{presetEmoji(p.id)}</span>
+                            <span className="preset-chip-label">{p.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="field">
+                    <label className="field-label">LaTeX コード（AIの出力を貼り付け）</label>
+                    <textarea
+                      className="input manual-textarea"
+                      placeholder={"\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{問題}\n問1: ...\n\\end{document}"}
+                      value={manualLatex}
+                      onChange={e => setManualLatex(e.target.value)}
+                    />
+                    {manualLatex.trim() && (
+                      <div className="field-hint" style={{marginTop: 6}}>
+                        {manualLatex.includes('\\documentclass') ? '✅ \\documentclass を検出' : '⚠️ \\documentclass が見つかりません'}
+                        {manualLatex.includes('\\end{document}') ? ' ・ ✅ \\end{document} を検出' : ' ・ ⚠️ \\end{document} が見つかりません'}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    className="btn btn-success btn-block"
+                    onClick={generatePdfManual}
+                    disabled={loading || !manualLatex.trim()}
+                  >
+                    <Ico.Zap /> PDF を生成
+                  </button>
+                </div>
+
+                {/* Manual mode PDF result */}
+                {manualPdfUrl && (
+                  <div className="card anim-fade-up" style={{marginTop: 16}}>
+                    <div className="success-screen">
+                      <div className="success-icon">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      <div className="card-title" style={{fontSize:20, marginBottom:8}}>PDF作成完了</div>
+                      <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginTop: 16}}>
+                        <a href={manualPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success">
+                          <Ico.ExternalLink /> PDFを開く
+                        </a>
+                        <button className="btn btn-outline" onClick={() => { setManualLatex(''); setManualPdfUrl('') }}>
+                          <Ico.RotateCcw /> 新しく作る
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick links to AI services */}
+                <div className="manual-ai-links">
+                  <span className="manual-ai-links-label">AIサービス:</span>
+                  <a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="ai-link-compact">
+                    <Ico.ExternalLink /> ChatGPT
+                  </a>
+                  <a href="https://claude.ai/" target="_blank" rel="noreferrer" className="ai-link-compact">
+                    <Ico.ExternalLink /> Claude
+                  </a>
+                </div>
+              </>
+            )}
+
+            {/* ══════════════════════════════════
+                WIZARD MODE — ステップバイステップ
+               ══════════════════════════════════ */}
+            {viewMode === 'wizard' && (
+              <>
             {/* ── FLOW OVERVIEW ── */}
             <div className="flow-overview">
               <span>パターン選択</span>
@@ -449,11 +617,19 @@ export default function App() {
                     出力形式
                     <span className="tooltip-icon" title="生成されるPDFのレイアウト形式を選択します">?</span>
                   </label>
-                  <select className="select" value={form.latexPreset} onChange={e => upd('latexPreset', e.target.value)}>
+                  <div className="preset-chips">
                     {latexPresets.map(p => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                      <button
+                        key={p.id}
+                        className={`preset-chip ${form.latexPreset === p.id ? 'active' : ''}`}
+                        onClick={() => upd('latexPreset', p.id)}
+                        title={p.description}
+                      >
+                        <span className="preset-chip-emoji">{presetEmoji(p.id)}</span>
+                        <span className="preset-chip-label">{p.name}</span>
+                      </button>
                     ))}
-                  </select>
+                  </div>
                   {currentPreset && (
                     <div className="field-hint">{currentPreset.description}</div>
                   )}
@@ -813,6 +989,8 @@ export default function App() {
                 </div>
               </div>
             )}
+              </>
+            )}
           </>
         ) : (
           /* ── DEV MODE ── */
@@ -851,6 +1029,10 @@ export default function App() {
                 <dt>Q: 外部AIは必須ですか？</dt>
                 <dd>はい。このシステムは「問題データベース検索」と「PDF生成」を担当します。
                     問題の生成はChatGPTやClaude等の外部AIサービスが行います。</dd>
+
+                <dt>Q: 「手動入力モード」とは？</dt>
+                <dd>既にLaTeXコードをお持ちの場合、ウィザードの全ステップを省略して
+                    直接PDFを生成できるモードです。ChatGPT/Claudeの出力をそのまま貼り付けてください。</dd>
 
                 <dt>Q: ベース問題とは？</dt>
                 <dd>生成する問題の「お手本」となる問題です。DBから既存の問題を選ぶか、
