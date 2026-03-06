@@ -4039,6 +4039,27 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
 
     # ── 画像変換: PyMuPDF → pdftoppm フォールバック ──
 
+    def _is_blank_png(png_bytes: bytes, threshold: float = 0.995) -> bool:
+        """Check if a PNG image is essentially blank (almost all white/transparent)."""
+        try:
+            import fitz as _fitz
+            pix = _fitz.Pixmap(png_bytes)
+            samples = pix.samples
+            n = pix.n  # components per pixel (3=RGB, 4=RGBA)
+            total = pix.width * pix.height
+            if total == 0:
+                return True
+            white_count = 0
+            for j in range(0, len(samples), n):
+                # Check if pixel is very close to white
+                if all(samples[j + c] > 248 for c in range(min(n, 3))):
+                    white_count += 1
+            ratio = white_count / total
+            return ratio > threshold
+        except Exception:
+            # If we can't check, assume it's not blank
+            return False
+
     # Method A: PyMuPDF (fitz) — 高品質、外部コマンド不要
     if not images:
         try:
@@ -4046,12 +4067,19 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
             doc = fitz.open(stream=content, filetype='pdf')
             zoom = 2.0  # 200 DPI相当
             mat = fitz.Matrix(zoom, zoom)
+            all_blank = True
             for i in range(min(page_count, MAX_PAGES)):
                 pix = doc[i].get_pixmap(matrix=mat, alpha=False)
                 png_data = pix.tobytes('png')
+                if not _is_blank_png(png_data):
+                    all_blank = False
                 images.append(b64.b64encode(png_data).decode('ascii'))
                 logger.info('PyMuPDF page %d: %d bytes PNG', i + 1, len(png_data))
             doc.close()
+            # If all pages are blank, discard and try next method
+            if all_blank:
+                logger.warning('PyMuPDF rendered all pages as blank, trying pdftoppm')
+                images = []
         except Exception as e:
             logger.warning('PyMuPDF image conversion failed: %s', e)
             images = []
@@ -4066,7 +4094,7 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
                     f.write(content)
                 try:
                     subprocess.run(
-                        [pdftoppm_bin, '-png', '-r', '200',
+                        [pdftoppm_bin, '-png', '-r', '200', '-cropbox',
                          '-l', str(min(page_count, MAX_PAGES)),
                          pdf_path, os.path.join(tmpdir, 'page')],
                         capture_output=True, timeout=30, check=True
@@ -4076,32 +4104,36 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
                             img_path = os.path.join(tmpdir, pattern)
                             if os.path.exists(img_path):
                                 with open(img_path, 'rb') as img_f:
-                                    images.append(b64.b64encode(img_f.read()).decode('ascii'))
+                                    img_bytes = img_f.read()
+                                    images.append(b64.b64encode(img_bytes).decode('ascii'))
                                 break
                 except Exception as e:
                     logger.warning('pdftoppm conversion failed: %s', e)
 
-    # ── テキスト抽出フォールバック (画像変換が完全に失敗した場合) ──
+    # ── テキスト抽出 (画像がない場合のフォールバック用、または補助情報として) ──
     extracted_text = ''
-    if not images:
-        try:
-            from pypdf import PdfReader
-            reader2 = PdfReader(BytesIO(content), strict=False)
-            texts = []
-            for page in reader2.pages[:MAX_PAGES]:
-                t = page.extract_text() or ''
-                texts.append(t)
-            extracted_text = '\n---PAGE BREAK---\n'.join(texts)
-        except Exception:
-            pass
+    try:
+        from pypdf import PdfReader
+        reader2 = PdfReader(BytesIO(content), strict=False)
+        texts = []
+        for page in reader2.pages[:MAX_PAGES]:
+            t = page.extract_text() or ''
+            texts.append(t)
+        extracted_text = '\n---PAGE BREAK---\n'.join(texts)
+    except Exception:
+        pass
 
-    return JSONResponse({
+    resp = {
         'valid': True,
         'page_count': page_count,
         'filename': file.filename,
         'images': images,
-        'extracted_text': extracted_text if not images else '',
-    })
+        'has_images': len(images) > 0,
+        'extracted_text': extracted_text,
+    }
+    logger.info('validate_base_pdf response: %d pages, %d images, text_len=%d',
+                page_count, len(images), len(extracted_text))
+    return JSONResponse(resp)
 
 
 # ── OpenAI GPT LLM → PDF ワンクリック生成 ──────────────────────────

@@ -421,6 +421,7 @@ export default function UserModePage() {
   const [basePdfImages, setBasePdfImages] = useState([]); // base64 PNG images
   const [basePdfPageCount, setBasePdfPageCount] = useState(0);
   const [basePdfError, setBasePdfError] = useState('');
+  const [basePdfExtractedText, setBasePdfExtractedText] = useState('');
   const [basePdfUploading, setBasePdfUploading] = useState(false);
   const basePdfInputRef = useRef(null);
 
@@ -850,12 +851,14 @@ export default function UserModePage() {
     setBasePdfImages([]);
     setBasePdfPageCount(0);
     setBasePdfError('');
+    setBasePdfExtractedText('');
   };
 
   /* ── ベースPDFアップロード処理 ── */
   const handleBasePdfUpload = async (file) => {
     if (!file) return;
     setBasePdfError('');
+    setBasePdfExtractedText('');
     setBasePdfUploading(true);
     setBasePdfFile(file);
     try {
@@ -868,6 +871,7 @@ export default function UserModePage() {
       } else {
         setBasePdfImages(result.images || []);
         setBasePdfPageCount(result.page_count || 0);
+        setBasePdfExtractedText(result.extracted_text || '');
         setBasePdfError('');
       }
     } catch (e) {
@@ -1598,6 +1602,7 @@ export default function UserModePage() {
                             setBasePdfImages([]);
                             setBasePdfPageCount(0);
                             setBasePdfError('');
+                            setBasePdfExtractedText('');
                           }}
                           className="w-7 h-7 rounded-lg hover:bg-red-50 text-[#94a3b8] hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
                         >
@@ -1607,21 +1612,44 @@ export default function UserModePage() {
                         </button>
                       </div>
 
-                      {/* ページサムネイル */}
-                      {basePdfImages.length > 0 && (
+                      {/* ページプレビュー */}
+                      {basePdfImages.length > 0 ? (
                         <div className="grid grid-cols-3 gap-2">
                           {basePdfImages.map((img, i) => (
-                            <div key={i} className="relative rounded-xl overflow-hidden border border-blue-200/60 bg-white shadow-sm">
+                            <div key={i} className="relative rounded-xl overflow-hidden border border-blue-200/60 shadow-sm" style={{ backgroundColor: '#f8fafc' }}>
                               <img
                                 src={`data:image/png;base64,${img}`}
                                 alt={`Page ${i + 1}`}
-                                className="w-full h-auto"
+                                className="w-full h-auto block"
+                                style={{ minHeight: '80px' }}
+                                onError={(e) => {
+                                  // 画像が読み込めない場合のフォールバック
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling && (e.target.nextSibling.style.display = 'flex');
+                                }}
                               />
+                              <div className="hidden items-center justify-center p-4 text-center" style={{ minHeight: '80px' }}>
+                                <p className="text-[10px] text-[#94a3b8]">プレビュー不可</p>
+                              </div>
                               <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/50 text-white text-[9px] font-bold">
                                 {i + 1}/{basePdfImages.length}
                               </div>
                             </div>
                           ))}
+                        </div>
+                      ) : basePdfExtractedText ? (
+                        /* 画像がない場合のテキストプレビュー */
+                        <div className="rounded-xl border border-blue-200/60 bg-slate-50/80 p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[11px] text-amber-600 font-medium">⚠ 画像プレビューは生成できませんでしたが、テキストは読み取れています</span>
+                          </div>
+                          <pre className="text-[10px] text-[#475569] whitespace-pre-wrap break-words max-h-40 overflow-y-auto font-mono leading-relaxed">
+                            {basePdfExtractedText.slice(0, 500)}{basePdfExtractedText.length > 500 ? '...' : ''}
+                          </pre>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-amber-200/60 bg-amber-50/50 p-3">
+                          <p className="text-[11px] text-amber-700">⚠ PDFのプレビューを生成できませんでしたが、AIにはそのまま送信されます。</p>
                         </div>
                       )}
                     </div>
