@@ -126,14 +126,14 @@ function AnimatedPdfMockup() {
   );
 }
 
-/* ─── Trust Metric (Social Proof の数字カプセル) ─── */
+/* ─── Trust Metric (Social Proof — SVGアイコン + 数字カプセル) ─── */
 function TrustMetric({ icon, value, label }) {
   return (
-    <div className="flex items-center gap-2">
-      <div className="text-[15px]">{icon}</div>
+    <div className="flex items-center gap-2.5">
+      <div className="w-8 h-8 rounded-[10px] bg-[#f1f5f9] border border-[#e2e8f0]/60 flex items-center justify-center text-[#475569]">{icon}</div>
       <div>
-        <div className="text-[16px] sm:text-[18px] font-black text-[#1e293b] tracking-tight leading-none">{value}</div>
-        <div className="text-[10px] text-[#94a3b8] font-medium mt-0.5">{label}</div>
+        <div className="text-[16px] sm:text-[18px] font-black text-[#0f172a] tracking-tight leading-none">{value}</div>
+        <div className="text-[10px] text-[#94a3b8] font-medium mt-0.5 tracking-[0.01em]">{label}</div>
       </div>
     </div>
   );
@@ -150,15 +150,15 @@ function BenefitCard({ icon, title, desc, delay }) {
   );
 }
 
-/* ─── Output Format Card ─── */
-function OutputCard({ emoji, title, desc, lines }) {
+/* ─── Output Format Card (emoji廃止 → SVGアイコンで高級感) ─── */
+function OutputCard({ icon, title, desc, lines }) {
   return (
     <div className="landing-output-card group">
       <div className="bg-white rounded-lg border border-[#e2e8f0]/70 p-2.5 h-[100px] flex flex-col gap-1 mb-2.5 overflow-hidden transition-all duration-500 group-hover:border-blue-200/60 group-hover:shadow-sm">
         {lines}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-base">{emoji}</span>
+        <div className="w-6 h-6 rounded-md bg-[#f1f5f9] border border-[#e2e8f0]/50 flex items-center justify-center text-[#475569]">{icon}</div>
         <div>
           <div className="text-[12px] font-bold text-[#1e293b]">{title}</div>
           <div className="text-[10px] text-[#94a3b8]">{desc}</div>
@@ -223,25 +223,20 @@ export default function HomePage() {
                [5] CTA ボタン（行動誘導）
                [6] 視覚的証明（PDF モックアップ）
              ══════════════════════════════════════════════════════════ */}
-          <section className="pt-12 sm:pt-20 pb-10 sm:pb-16">
+          <section className="pt-10 sm:pt-16 pb-10 sm:pb-16">
             
-            {/* [1] カテゴリーラベル — Framing Effect: 先にカテゴリを定義して理解を加速 */}
-            <div className="flex justify-center mb-5 stagger-item" style={{ animationDelay: '0ms' }}>
-              <div className="landing-category-pill">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                </span>
-                <span>AI試験問題ジェネレーター</span>
+            {/* [1] REM Brand Mark — ブランド認知の定着 */}
+            <div className="text-center mb-6 stagger-item" style={{ animationDelay: '0ms' }}>
+              <div className="inline-flex flex-col items-center gap-1">
+                <span className="text-[32px] sm:text-[40px] font-black tracking-[-0.06em] leading-none gradient-text-hero-animated">REM</span>
+                <span className="text-[10px] sm:text-[11px] font-semibold text-[#94a3b8] tracking-[0.18em] uppercase">Rapid Exam Maker</span>
               </div>
             </div>
 
             {/* [2] メインヘッドライン — 具体の法則: 抽象語を排除し、行動/結果を明示 */}
             <div className="text-center stagger-item" style={{ animationDelay: '80ms' }}>
-              <h1 className="text-[36px] sm:text-[48px] font-black tracking-[-0.04em] leading-[1.1] text-[#0f172a] mb-3">
-                試験問題を、
-                <br />
-                <span className="gradient-text-hero-animated">1分で完成。</span>
+              <h1 className="text-[30px] sm:text-[42px] font-black tracking-[-0.04em] leading-[1.15] text-[#0f172a] mb-3">
+                試験問題を、<span className="gradient-text-hero-animated">1分で完成。</span>
               </h1>
             </div>
 
@@ -254,31 +249,46 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* [4] 社会的証明 — Social Proof & Anchoring: 数字で信頼を先行付与 */}
+            {/* [4] 社会的証明 — Social Proof & Anchoring: SVGアイコン + 数字 */}
             <div className="stagger-item" style={{ animationDelay: '240ms' }}>
-              <div className="flex items-center justify-center gap-5 sm:gap-8 my-7 sm:my-9">
-                <TrustMetric icon="📚" value="9教科" label="対応" />
+              <div className="flex items-center justify-center gap-4 sm:gap-7 my-7 sm:my-9">
+                <TrustMetric
+                  icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84" /></svg>}
+                  value="9教科" label="対応" />
                 <div className="w-[1px] h-8 bg-[#e2e8f0]" />
-                <TrustMetric icon="📄" value="PDF" label="即時出力" />
+                <TrustMetric
+                  icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
+                  value="PDF" label="即時出力" />
                 <div className="w-[1px] h-8 bg-[#e2e8f0]" />
-                <TrustMetric icon="🎯" value="過去問" label="AI分析" />
+                <TrustMetric
+                  icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" /></svg>}
+                  value="過去問" label="AI分析" />
               </div>
             </div>
 
-            {/* [5] CTA — Von Restorff + Fitts' Law: 大きく・孤立・高コントラスト */}
-            <div className="flex flex-col items-center gap-3 stagger-item" style={{ animationDelay: '320ms' }}>
-              <Link href="/user" className="landing-cta-primary group">
-                <span className="relative z-10 flex items-center gap-2.5">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                  </svg>
-                  <span className="text-[15px] sm:text-[16px] font-bold">今すぐ問題をつくる</span>
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                  </svg>
-                </span>
-              </Link>
-              <p className="text-[11px] text-[#94a3b8] font-medium">
+            {/* [5] Dual CTA — つくる / 磨く を並列配置（等価重み付け） */}
+            <div className="stagger-item" style={{ animationDelay: '320ms' }}>
+              <div className="grid grid-cols-2 gap-3 max-w-[400px] mx-auto">
+                <Link href="/user" className="landing-cta-primary group">
+                  <span className="relative z-10 flex flex-col items-center gap-1.5">
+                    <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span className="text-[14px] sm:text-[15px] font-bold">問題をつくる</span>
+                    <span className="text-[10px] font-medium opacity-70">AI自動生成</span>
+                  </span>
+                </Link>
+                <Link href="/dev" className="landing-cta-tune group">
+                  <span className="relative z-10 flex flex-col items-center gap-1.5">
+                    <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                    </svg>
+                    <span className="text-[14px] sm:text-[15px] font-bold">品質を磨く</span>
+                    <span className="text-[10px] font-medium opacity-70">精度分析・改善</span>
+                  </span>
+                </Link>
+              </div>
+              <p className="text-center text-[11px] text-[#94a3b8] font-medium mt-3">
                 無料で始められます — アカウント作成不要
               </p>
             </div>
@@ -416,7 +426,7 @@ export default function HomePage() {
 
             <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
               <OutputCard
-                emoji="📝"
+                icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
                 title="試験問題"
                 desc="テスト・入試形式"
                 lines={
@@ -436,7 +446,7 @@ export default function HomePage() {
                 }
               />
               <OutputCard
-                emoji="📋"
+                icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z" /></svg>}
                 title="演習プリント"
                 desc="ワークシート形式"
                 lines={
@@ -454,7 +464,7 @@ export default function HomePage() {
                 }
               />
               <OutputCard
-                emoji="🃏"
+                icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" /></svg>}
                 title="一問一答"
                 desc="暗記カード形式"
                 lines={
@@ -475,19 +485,31 @@ export default function HomePage() {
           </section>
 
 
-          {/* ── SECOND CTA — 中盤での行動喚起（Decision Fatigue 前） ── */}
+          {/* ── SECOND CTA — 中盤での行動喚起（Dual 並列CTA再掲） ── */}
           <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
             <div className="landing-mid-cta">
-              <div className="text-center">
+              <div className="text-center mb-5">
                 <h3 className="text-[18px] sm:text-[20px] font-black text-[#0f172a] tracking-[-0.02em] mb-2">
-                  今すぐ試してみませんか？
+                  今すぐ始めませんか？
                 </h3>
-                <p className="text-[13px] text-[#64748b] mb-5">登録不要。選ぶだけで、1分後にはPDFが手元に届きます。</p>
+                <p className="text-[13px] text-[#64748b]">登録不要。選ぶだけで、1分後にはPDFが手元に届きます。</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
                 <Link href="/user" className="landing-cta-secondary group">
-                  <span className="flex items-center gap-2">
-                    <span className="text-[14px] font-bold">問題をつくる</span>
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    <span className="text-[13px] font-bold">問題をつくる</span>
+                    <svg className="w-3.5 h-3.5 opacity-50 group-hover:translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </span>
+                </Link>
+                <Link href="/dev" className="landing-cta-secondary-alt group">
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" /></svg>
+                    <span className="text-[13px] font-bold">品質を磨く</span>
+                    <svg className="w-3.5 h-3.5 opacity-50 group-hover:translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
                   </span>
                 </Link>
@@ -506,18 +528,6 @@ export default function HomePage() {
             </div>
 
             <div className="space-y-2.5 scroll-reveal" style={{ transitionDelay: '60ms' }}>
-              <ToolLink
-                href="/dev"
-                icon={
-                  <svg className="w-[22px] h-[22px]" viewBox="0 0 28 28" fill="none">
-                    <circle cx="14" cy="14" r="8" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
-                    <circle cx="14" cy="14" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
-                    <circle cx="14" cy="14" r="1.8" fill="currentColor"/>
-                  </svg>
-                }
-                label="品質を磨く"
-                desc="生成した問題の精度を分析・改善"
-              />
               <ToolLink
                 href="/search"
                 icon={
