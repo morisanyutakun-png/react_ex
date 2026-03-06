@@ -421,6 +421,7 @@ export default function UserModePage() {
   const [basePdfImages, setBasePdfImages] = useState([]); // base64 PNG images
   const [basePdfPageCount, setBasePdfPageCount] = useState(0);
   const [basePdfError, setBasePdfError] = useState('');
+  const [basePdfWarning, setBasePdfWarning] = useState('');
   const [basePdfUploading, setBasePdfUploading] = useState(false);
   const basePdfInputRef = useRef(null);
 
@@ -850,12 +851,14 @@ export default function UserModePage() {
     setBasePdfImages([]);
     setBasePdfPageCount(0);
     setBasePdfError('');
+    setBasePdfWarning('');
   };
 
   /* ── ベースPDFアップロード処理 ── */
   const handleBasePdfUpload = async (file) => {
     if (!file) return;
     setBasePdfError('');
+    setBasePdfWarning('');
     setBasePdfUploading(true);
     setBasePdfFile(file);
     try {
@@ -869,6 +872,10 @@ export default function UserModePage() {
         setBasePdfImages(result.images || []);
         setBasePdfPageCount(result.page_count || 0);
         setBasePdfError('');
+        // 4ページ以上の場合、先頭3ページのみ使用した旨の警告を表示
+        if (result.truncated && result.warning) {
+          setBasePdfWarning(result.warning);
+        }
       }
     } catch (e) {
       setBasePdfError(e.message || 'アップロードに失敗しました');
@@ -1598,6 +1605,7 @@ export default function UserModePage() {
                             setBasePdfImages([]);
                             setBasePdfPageCount(0);
                             setBasePdfError('');
+                            setBasePdfWarning('');
                           }}
                           className="w-7 h-7 rounded-lg hover:bg-red-50 text-[#94a3b8] hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
                         >
@@ -1624,6 +1632,14 @@ export default function UserModePage() {
                           ))}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* 警告表示（ページ数超過） */}
+                  {basePdfWarning && (
+                    <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-300/70 flex items-start gap-2">
+                      <span className="text-amber-500 text-[14px] mt-px flex-shrink-0">⚠️</span>
+                      <p className="text-[12px] text-amber-700 font-medium">{basePdfWarning}</p>
                     </div>
                   )}
 
