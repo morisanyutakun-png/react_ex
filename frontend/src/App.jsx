@@ -73,7 +73,7 @@ export default function App() {
   // Wizard state
   const [step, setStep] = useState(1)
   const [form, setForm] = useState({
-    templateId: '', difficulty: '普通', numQuestions: 3,
+    templateId: '', numQuestions: 3,
     latexPreset: 'exam',
   })
   const [prompt, setPrompt] = useState('')
@@ -175,7 +175,6 @@ export default function App() {
 
       const body = {
         template_id: form.templateId,
-        difficulty: form.difficulty,
         num_questions: form.numQuestions,
         rag_inject: true,
         source_text: sourceText || undefined,
@@ -203,7 +202,7 @@ export default function App() {
         setRagCtx(d.context)
         setStep(3)
         setShowPromptSection(true)
-        notify('指示文（AIへの依頼文）の作成が完了しました', 'success')
+        notify('プロンプト（AIへの指示文）を生成しました', 'success')
       } else {
         notify('エラー: ' + (d.detail || r.statusText), 'error')
       }
@@ -750,7 +749,7 @@ export default function App() {
                   </div>
                   <div className="card-title" style={{fontSize:22, marginBottom:8}}>PDF作成完了！</div>
                   <div className="card-desc" style={{marginBottom:32}}>
-                    問題PDFが正常に生成されました。<br />
+                    LaTeXコードからPDFへの変換が完了しました。<br />
                     下のボタンからダウンロード・閲覧できます。
                   </div>
                   <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap'}}>

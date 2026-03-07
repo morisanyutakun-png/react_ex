@@ -2426,29 +2426,28 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         _ac_disp = (_paper_colors.get('accentColor') or _hc_disp).lstrip('#')
                         _rc_disp = (_paper_colors.get('ruleColor') or _hc_disp).lstrip('#')
                         _branding_parts.extend([
-                            f'★★★ 最重要カラー指示: プリアンブルで以下の3色が\\definecolorで定義済みです。',
+                            f'★★★ カラー指示: プリアンブルで以下の3色が\\definecolorで定義済みです。',
                             f'  \\definecolor{{mainblue}}{{HTML}}{{{_hc_disp}}} — #{_hc_disp}',
                             f'  \\definecolor{{accentcolor}}{{HTML}}{{{_ac_disp}}} — #{_ac_disp}',
                             f'  \\definecolor{{rulecolor}}{{HTML}}{{{_rc_disp}}} — #{_rc_disp}',
                         ])
                     else:
-                        _branding_parts.append('★★★ 最重要カラー指示: プリアンブルで mainblue, accentcolor, rulecolor の3色が定義済みです。')
+                        _branding_parts.append('★★★ カラー指示: プリアンブルで mainblue, accentcolor, rulecolor の3色が定義済みです。')
                     _branding_parts.extend([
                         '',
-                        '文書全体でこれらの色を徹底的に使用してください。黒色は本文と数式のみ。',
+                        '【全体の雰囲気・トーンとしてのカラー指示】',
+                        'これらの色は「文字の強調」だけでなく、PDF全体の雰囲気・トーンを作るために使用:',
+                        '  1. ヘッダー・フッターの装飾線や背景色 → mainblue / rulecolor で統一感',
+                        '  2. セクション見出し → \\textcolor{mainblue}{...}',
+                        '  3. 問題番号や小見出し → \\textcolor{accentcolor}{...}',
+                        '  4. 区切り線 → {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}}',
+                        '  5. 全体として「このブランドのカラーの試験用紙」という印象を与える',
                         '',
-                        '★ 必須の色適用箇所（1つでも黒のままだと不合格）:',
-                        '  1. \\section*, \\subsection* の見出し → 必ず \\textcolor{mainblue}{...} で囲む',
-                        '  2. 問題番号（問1, (1) 等） → 必ず \\textcolor{accentcolor}{\\textbf{...}} で囲む',
-                        '  3. 水平区切り線 → 必ず {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}} にする',
-                        '  4. 小見出し・キーワード → \\textcolor{accentcolor}{...} で強調',
-                        '  5. enumerate/itemize 内の問題文先頭 → \\textcolor{accentcolor}{\\textbf{(1)}}',
-                        '  6. 配点表示 → \\textcolor{mainblue}{...}',
+                        '【図・グラフの色について】',
+                        '図やグラフの色はブランドカラーに縛られる必要はありません。',
+                        'リアルで教科書品質の自然な色彩を使ってください（blue, red, green 等）。',
                         '',
-                        '★ 禁止事項:',
-                        '  - \\section*{見出し} のように色なしで書くこと',
-                        '  - 問題番号を黒色で書くこと',
-                        '  - 文書全体が黒っぽく見える出力',
+                        '★ 禁止: 見出し・問題番号・区切り線を黒色のままにすること。全体が黒っぽい出力。',
                     ])
                 if _brand_logo_url:
                     _branding_parts.append(
@@ -3021,43 +3020,40 @@ def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
         _ac = paper_colors.get('accentColor', _hc).lstrip('#')
         _rc = paper_colors.get('ruleColor', _hc).lstrip('#')
         _bp.extend([
-            f'★★★ 最重要: プリアンブルで以下の3色が\\definecolorで定義済みです。',
-            f'  文書全体でこれらの色を徹底的に使い、黒色のテキストは本文と数式のみにしてください:',
+            f'★★★ カラー指示: プリアンブルで以下の3色が\definecolorで定義済みです。',
             f'  \\definecolor{{mainblue}}{{HTML}}{{{_hc}}} — #{_hc}',
             f'  \\definecolor{{accentcolor}}{{HTML}}{{{_ac}}} — #{_ac}',
             f'  \\definecolor{{rulecolor}}{{HTML}}{{{_rc}}} — #{_rc}',
             '',
-            '- 色の適用箇所（すべて必須。1つでも黒のままだと不合格）:',
-            '  1. \\section*, \\subsection* の見出し → 必ず \\textcolor{mainblue}{...} で囲む',
-            '  2. 問題番号（問1, 問題1, (1) 等） → 必ず \\textcolor{accentcolor}{\\textbf{...}} で囲む',
-            '  3. 水平区切り線 → 必ず {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}} を使う',
-            '  4. 小見出し・キーワード → \\textcolor{accentcolor}{...} で強調',
-            '  5. ページヘッダー・フッターの装飾線 → rulecolor を使用',
-            '  6. 配点表示 → \\textcolor{mainblue}{...}',
+            '【全体の雰囲気・トーンとしてのカラー指示】',
+            'これらの色は「文字の強調」だけでなく、PDF全体の雰囲気・トーンを作るために使用してください:',
+            '  1. ヘッダー・フッターの装飾線や背景色 → mainblue / rulecolor で統一感を出す',
+            '  2. セクション見出し → \\textcolor{mainblue}{...} で囲む',
+            '  3. 問題番号や小見出し → \\textcolor{accentcolor}{...} で色を付ける',
+            '  4. 区切り線 → {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}}',
+            '  5. 配点表示や補足情報 → \\textcolor{mainblue}{...}',
+            '  6. ★重要: 全体として「このブランドのカラーの試験用紙」という印象を与えること',
             '',
-            '- 具体的なLaTeXコード例:',
-            '  \\section*{{\\textcolor{{mainblue}}{{第1問 微分積分}}}}',
-            '  \\textcolor{{accentcolor}}{{\\textbf{{問題 1}}}}\\quad 次の...',
-            '  {{\\color{{rulecolor}}\\rule{{\\linewidth}}{{0.4pt}}}}',
+            '【図・グラフの色について】',
+            '図やグラフの色はブランドカラーに縛られる必要はありません。',
+            'リアルで教科書品質の色彩を使ってください（blue, red, green 等自然な色）。',
             '',
             '★ 禁止事項:',
-            '  - \\section*{見出し} のように色なしで見出しを書くこと → 必ず \\textcolor{mainblue}{} で包む',
-            '  - 問題番号を黒色で書くこと → 必ず \\textcolor{accentcolor}{} で包む',
-            '  - \\rule だけの区切り線 → 必ず {\\color{rulecolor}\\rule{}{}} にする',
-            '  - 文書全体が黒っぽく見える出力は完全にNG',
+            '  - 見出し・問題番号・区切り線を黒色のままにすること',
+            '  - 文書全体が黒っぽく見える出力',
         ])
     else:
         _bp.extend([
-            '★★★ 重要: プリアンブルで mainblue, accentcolor, rulecolor の3色が\\definecolorで定義済みです。',
-            '  文書全体でこれらの色を徹底的に使い、カラフルで見やすいPDFを作成してください。',
-            '  黒色は本文と数式のみ。見出し・問題番号・区切り線・キーワードには必ず色を使うこと。',
+            '★★★ カラー指示: プリアンブルで mainblue, accentcolor, rulecolor の3色が\definecolorで定義済みです。',
+            '文書全体の雰囲気・トーンとしてこれらの色を使い、統一感のあるPDFを作成してください。',
             '',
             '- 見出し: \\textcolor{mainblue}{見出しテキスト}',
             '- 問題番号: \\textcolor{accentcolor}{\\textbf{問題 1}}',
             '- 区切り線: {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}}',
-            '- 強調語: \\textcolor{accentcolor}{重要語}',
             '',
-            '★ 黒一色の見出し・問題番号は禁止。1つでも色なしがあると不合格。',
+            '図やグラフの色はリアルで自然な色彩を使用してください（ブランドカラーに縛られない）。',
+            '',
+            '★ 見出し・問題番号・区切り線は黒色禁止。全体が黒っぽく見える出力はNG。',
         ])
     if _bp:
         parts.append('【カラー・ブランディング指示（厳守）】\n' + '\n'.join(_bp) + '\n\n')
@@ -3212,43 +3208,40 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
         _ac = paper_colors.get('accentColor', _hc).lstrip('#')
         _rc = paper_colors.get('ruleColor', _hc).lstrip('#')
         _bp.extend([
-            f'★★★ 最重要: プリアンブルで以下の3色が\\definecolorで定義済みです。',
-            f'  文書全体でこれらの色を徹底的に使い、黒色のテキストは本文と数式のみにしてください:',
+            f'★★★ カラー指示: プリアンブルで以下の3色が\\definecolorで定義済みです。',
             f'  \\definecolor{{mainblue}}{{HTML}}{{{_hc}}} — #{_hc}',
             f'  \\definecolor{{accentcolor}}{{HTML}}{{{_ac}}} — #{_ac}',
             f'  \\definecolor{{rulecolor}}{{HTML}}{{{_rc}}} — #{_rc}',
             '',
-            '- 色の適用箇所（すべて必須。1つでも黒のままだと不合格）:',
-            '  1. \\section*, \\subsection* の見出し → 必ず \\textcolor{mainblue}{...} で囲む',
-            '  2. 問題番号（問1, 問題1, (1) 等） → 必ず \\textcolor{accentcolor}{\\textbf{...}} で囲む',
-            '  3. 水平区切り線 → 必ず {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}} を使う',
-            '  4. 小見出し・キーワード → \\textcolor{accentcolor}{...} で強調',
-            '  5. ページヘッダー・フッターの装飾線 → rulecolor を使用',
-            '  6. 配点表示 → \\textcolor{mainblue}{...}',
+            '【全体の雰囲気・トーンとしてのカラー指示】',
+            'これらの色は「文字の強調」だけでなく、PDF全体の雰囲気・トーンを作るために使用してください:',
+            '  1. ヘッダー・フッターの装飾線や背景色 → mainblue / rulecolor で統一感を出す',
+            '  2. セクション見出し → \\textcolor{mainblue}{...} で囲む',
+            '  3. 問題番号や小見出し → \\textcolor{accentcolor}{...} で色を付ける',
+            '  4. 区切り線 → {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}}',
+            '  5. 配点表示や補足情報 → \\textcolor{mainblue}{...}',
+            '  6. ★重要: 全体として「このブランドのカラーの試験用紙」という印象を与えること',
             '',
-            '- 具体的なLaTeXコード例:',
-            '  \\section*{{\\textcolor{{mainblue}}{{第1問 微分積分}}}}',
-            '  \\textcolor{{accentcolor}}{{\\textbf{{問題 1}}}}\\quad 次の...',
-            '  {{\\color{{rulecolor}}\\rule{{\\linewidth}}{{0.4pt}}}}',
+            '【図・グラフの色について】',
+            '図やグラフの色はブランドカラーに縛られる必要はありません。',
+            'リアルで教科書品質の色彩を使ってください（blue, red, green 等自然な色）。',
             '',
             '★ 禁止事項:',
-            '  - \\section*{見出し} のように色なしで見出しを書くこと → 必ず \\textcolor{mainblue}{} で包む',
-            '  - 問題番号を黒色で書くこと → 必ず \\textcolor{accentcolor}{} で包む',
-            '  - \\rule だけの区切り線 → 必ず {\\color{rulecolor}\\rule{}{}} にする',
-            '  - 文書全体が黒っぽく見える出力は完全にNG',
+            '  - 見出し・問題番号・区切り線を黒色のままにすること',
+            '  - 文書全体が黒っぽく見える出力',
         ])
     else:
         _bp.extend([
-            '★★★ 重要: プリアンブルで mainblue, accentcolor, rulecolor の3色が\\definecolorで定義済みです。',
-            '  文書全体でこれらの色を徹底的に使い、カラフルで見やすいPDFを作成してください。',
-            '  黒色は本文と数式のみ。見出し・問題番号・区切り線・キーワードには必ず色を使うこと。',
+            '★★★ カラー指示: プリアンブルで mainblue, accentcolor, rulecolor の3色が\\definecolorで定義済みです。',
+            '文書全体の雰囲気・トーンとしてこれらの色を使い、統一感のあるPDFを作成してください。',
             '',
             '- 見出し: \\textcolor{mainblue}{見出しテキスト}',
             '- 問題番号: \\textcolor{accentcolor}{\\textbf{問題 1}}',
             '- 区切り線: {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}}',
-            '- 強調語: \\textcolor{accentcolor}{重要語}',
             '',
-            '★ 黒一色の見出し・問題番号は禁止。1つでも色なしがあると不合格。',
+            '図やグラフの色はリアルで自然な色彩を使用してください（ブランドカラーに縛られない）。',
+            '',
+            '★ 見出し・問題番号・区切り線は黒色禁止。全体が黒っぽく見える出力はNG。',
         ])
     if _bp:
         parts.append('【カラー・ブランディング指示（厳守）】\n' + '\n'.join(_bp) + '\n\n')
@@ -3265,7 +3258,7 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
         '☐ TikZ図がある場合: 座標計算をコメントで書いて検算したか\n'
         '☐ TikZ図がある場合: 閉じた図形は -- cycle で閉じているか\n'
         '☐ 見出し・問題番号にカラー（\\textcolor{mainblue/accentcolor}）を適用したか\n'
-        '☐ 黒一色の見出し・問題番号が残っていないか\n'
+        '☐ 全体の雰囲気がブランドカラーのトーンで統一されているか\n'
     )
 
     return ''.join(parts)
