@@ -417,12 +417,10 @@ export default function UserModePage() {
         setShowGenerationAuthModal(false);
         setGenerationAuthCode('');
         // 検証通過 → 保留中の生成を実行
-        const mode = pendingGenerationRef.current;
+        const pendingMode = pendingGenerationRef.current;
         pendingGenerationRef.current = null;
-        if (mode === 'auto') {
+        if (pendingMode === 'auto') {
           handleAutoGenerate(true);
-        } else if (mode === 'manual') {
-          generatePrompt(true);
         }
       } else {
         setGenerationAuthError(res.error || '認証コードが正しくありません');
@@ -818,14 +816,9 @@ export default function UserModePage() {
   /* ── 手動: プロンプト生成 → 自動コピー ── */
   const [promptCopied, setPromptCopied] = useState(false);
   const [promptGenerating, setPromptGenerating] = useState(false);
-  const generatePrompt = async (authVerified = false) => {
+  const generatePrompt = async () => {
     if (!templateId) {
       setStatus('出題パターンを選んでください');
-      return;
-    }
-    // 生成ごとの認証コードチェック
-    if (!authVerified) {
-      requestGenerationAuth('manual');
       return;
     }
     setPromptCopied(false);
@@ -1221,7 +1214,7 @@ export default function UserModePage() {
                 {step === 4 && 'PDFの出力形式を選んでください'}
                 {step === 5 && '図表やLaTeXパッケージを選択してください（任意）'}
                 {step === 6 && '問題形式やカスタムリクエストを設定してください（全て任意）'}
-                {step === 7 && (mode === 'auto' ? '設定を確認したら「PDF を生成」で完成！' : '設定を確認したら「指示文を作成」で次へ')}
+                {step === 7 && (mode === 'auto' ? '✨ 準備完了！「AI で生成する」を押そう！' : '設定を確認したら「指示文を作成」で次へ')}
               </p>
               <p className="text-[11px] text-[#94a3b8] mt-0.5">
                 ステップ {step} / {STEPS.length}
@@ -2620,6 +2613,26 @@ export default function UserModePage() {
       {/* ═══════ Step 7: 確認 ═══════ */}
       {step === 7 && (
         <div className="space-y-5 wizard-section-enter">
+          {/* 🎉 Motivational banner */}
+          <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200/40 step-complete-pop">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSJyZ2JhKDk5LDEwMiwyNDEsMC4xKSIvPjwvc3ZnPg==')] opacity-40" />
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 step-active-ping">
+                <span className="text-2xl">🚀</span>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-[17px] font-extrabold text-[#1e293b] tracking-tight">
+                  {mode === 'auto' ? 'あと一歩で完成！' : '指示文を作成しましょう！'}
+                </h3>
+                <p className="text-[13px] text-[#64748b] mt-0.5">
+                  {mode === 'auto'
+                    ? '設定を確認して、下の「AI で生成する」ボタンを押すだけです ✨'
+                    : '設定を確認して、下の「指示文を作成」ボタンを押してください'}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* 選択中パターン */}
           {templateId && selectedTemplate && (
             <div className="card-glossy">
@@ -3715,20 +3728,28 @@ export default function UserModePage() {
         <div className="wizard-section-enter">
           <div className="card-glossy generating-glow">
             <div className="flex flex-col items-center justify-center py-24 px-8 relative z-10">
-              {/* スピナー */}
+              {/* スピナー — enhanced */}
               <div className="relative mb-8">
+                <div className="absolute inset-[-20px] rounded-full border-2 border-purple-300/20 animate-ping" style={{ animationDuration: '2s' }} />
                 <div className="absolute inset-[-12px] rounded-full border-2 border-[#2563eb]/15 animate-pulse" />
-                <div className="bg-[#2563eb] relative w-16 h-16 rounded-2xl flex items-center justify-center"
-                  style={{ boxShadow: '0 1px 3px rgba(37,99,235,0.20), 0 4px 12px rgba(37,99,235,0.10)' }}>
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 relative w-16 h-16 rounded-2xl flex items-center justify-center"
+                  style={{ boxShadow: '0 4px 24px rgba(99,102,241,0.30), 0 8px 32px rgba(139,92,246,0.15)' }}>
                   <svg className="animate-spin h-7 w-7 text-white relative z-10" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                 </div>
               </div>
-              <p className="text-lg font-bold text-[#1e293b] mb-2 tracking-[-0.02em]">問題を生成しています</p>
+              <p className="text-lg font-extrabold text-[#1e293b] mb-2 tracking-[-0.02em]">✨ AI が問題を生成しています</p>
               <p className="text-sm text-[#1e293b] font-medium">{status}</p>
-              <p className="text-[13px] text-[#94a3b8] mt-4">しばらくお待ちください...</p>
+              <div className="flex items-center gap-2 mt-4">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0s' }} />
+                  <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '0.15s' }} />
+                  <div className="w-2 h-2 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: '0.3s' }} />
+                </div>
+                <p className="text-[13px] text-[#94a3b8]">しばらくお待ちください</p>
+              </div>
             </div>
           </div>
         </div>
@@ -3737,6 +3758,20 @@ export default function UserModePage() {
       {/* ═══════ Step 9: 結果表示（完成） ═══════ */}
       {step === 9 && (
         <div className="space-y-6 wizard-section-enter">
+          {/* 🎊 Completion celebration */}
+          <div className="relative overflow-hidden rounded-2xl p-6 text-center step-complete-pop success-glow" style={{
+            background: 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(16,185,129,0.08) 50%, rgba(6,182,212,0.08) 100%)',
+            border: '1px solid rgba(34,197,94,0.2)',
+          }}>
+            <div className="text-4xl mb-3 cta-icon-bounce">🎉</div>
+            <h3 className="text-[20px] font-extrabold text-[#1e293b] tracking-tight mb-1">
+              問題の生成が完了しました！
+            </h3>
+            <p className="text-[13px] text-[#64748b]">
+              {pdfUrl ? 'PDFが生成されました。下のリンクから確認できます。' : '生成結果を確認してください。'}
+            </p>
+          </div>
+
           {/* RAG フィードバックカード */}
           {renderContext && (
             <div className={`rounded-2xl border text-xs px-5 py-4 shadow-sm ${
@@ -4005,8 +4040,25 @@ export default function UserModePage() {
             </Button>
           )}
           {step >= 1 && step <= 7 && (
-            <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${canNext() ? 'cta-glass cta-breathe !py-3.5 !text-base !rounded-2xl' : ''}`}>
-              {canNext() ? '次のステップへ →' : (step === 1 ? 'パターンを選んでください' : step === 2 ? '教科を選んでください' : step === 4 ? '難易度を選んでください' : '次へ')}
+            <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${
+              step === 7 && mode === 'auto' && canNext()
+                ? 'cta-generate cta-breathe !py-4 !text-[17px] !rounded-2xl !px-8 cta-generate-pulse'
+                : step === 7 && mode === 'manual' && canNext()
+                ? 'cta-manual cta-breathe !py-4 !text-[17px] !rounded-2xl !px-8'
+                : canNext() ? 'cta-glass cta-breathe !py-3.5 !text-base !rounded-2xl' : ''
+            }`}>
+              {step === 7 && canNext() && mode === 'auto' ? (
+                <span className="flex items-center justify-center gap-2.5">
+                  <svg className="w-5 h-5 cta-icon-bounce" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                  </svg>
+                  AI で生成する
+                </span>
+              ) : step === 7 && canNext() && mode === 'manual' ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Icons.Prompt className="w-5 h-5" /> 指示文を作成
+                </span>
+              ) : canNext() ? '次のステップへ →' : (step === 1 ? 'パターンを選んでください' : step === 2 ? '教科を選んでください' : step === 4 ? '難易度を選んでください' : '次へ')}
             </Button>
           )}
           {step === 8 && mode === 'auto' && (

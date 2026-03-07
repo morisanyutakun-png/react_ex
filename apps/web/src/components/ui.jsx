@@ -495,7 +495,9 @@ export function ProgressSteps({ steps, current }) {
                   : i + 1 === current + 1
                   ? 'bg-[#f3f0ff] text-[#1e293b]'
                   : 'bg-[#f3f0ff] text-[#94a3b8]'
-                }`}
+                }
+                ${i + 1 === current ? 'step-active-ping' : ''}
+                `}
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
@@ -506,12 +508,12 @@ export function ProgressSteps({ steps, current }) {
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-[12px] font-medium transition-colors whitespace-nowrap
-                ${i + 1 <= current ? 'text-[#1e293b]' : i + 1 === current + 1 ? 'text-[#64748b]' : 'text-[#94a3b8]'}`}>
+                ${i + 1 === current ? 'text-[#1e293b] font-bold' : i + 1 < current ? 'text-[#1e293b]' : i + 1 === current + 1 ? 'text-[#64748b]' : 'text-[#94a3b8]'}`}>
               {s}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-[1px] rounded-full transition-colors ${i + 1 < current ? 'bg-violet-400/40' : 'bg-violet-100/70'}`} />
+            <div className={`w-3 sm:w-6 h-[1.5px] rounded-full transition-all duration-500 ${i + 1 < current ? 'bg-violet-400/60' : 'bg-violet-100/70'}`} />
           )}
         </div>
       ))}
