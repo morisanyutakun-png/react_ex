@@ -68,7 +68,6 @@ export default function App() {
 
   // Data
   const [templates, setTemplates] = useState([])
-  const [difficulties] = useState(['易', '普通', '難'])
   const [latexPresets, setLatexPresets] = useState([])
 
   // Wizard state
@@ -164,7 +163,7 @@ export default function App() {
   /* ── Generate prompt (Step 3 → 4) ── */
   const generatePrompt = async () => {
     if (!form.templateId) return notify('テンプレートを選んでください', 'error')
-    setLoading(true); setLoadingMsg('指示文を作成中...')
+    setLoading(true); setLoadingMsg('AIへの指示文を作成中...（問題はまだ生成されません）')
     try {
       // Build source text from base problem if selected
       let sourceText = ''
@@ -202,9 +201,9 @@ export default function App() {
         }
         setPrompt(renderedPrompt)
         setRagCtx(d.context)
-        setStep(4)
+        setStep(3)
         setShowPromptSection(true)
-        notify('指示文の作成完了', 'success')
+        notify('指示文（AIへの依頼文）の作成が完了しました', 'success')
       } else {
         notify('エラー: ' + (d.detail || r.statusText), 'error')
       }
@@ -236,7 +235,7 @@ export default function App() {
         const d = await r.json().catch(() => null)
         const url = d?.pdf_url || URL.createObjectURL(await r.blob())
         setPdfUrl(url)
-        setStep(5)
+        setStep(4)
         notify('PDFを作成しました！', 'success')
       } else {
         const d = await r.json().catch(() => null)
@@ -265,10 +264,9 @@ export default function App() {
      ════════════════════════════════════════ */
   const STEPS = [
     { n: 1, label: '出題パターン' },
-    { n: 2, label: '設定' },
-    { n: 3, label: 'ベース問題' },
-    { n: 4, label: 'AI依頼 & 入力' },
-    { n: 5, label: 'PDF完成' },
+    { n: 2, label: '問題数・ベース問題' },
+    { n: 3, label: 'AI依頼 & 入力' },
+    { n: 4, label: 'PDF完成' },
   ]
 
   /* ════════════════════════════════════════
@@ -306,9 +304,7 @@ export default function App() {
             <div className="flow-overview">
               <span>パターン選択</span>
               <span className="flow-arrow">→</span>
-              <span>条件設定</span>
-              <span className="flow-arrow">→</span>
-              <span>ベース問題</span>
+              <span>問題数・ベース問題</span>
               <span className="flow-arrow">→</span>
               <span className="flow-external">AI依頼 & 結果入力</span>
               <span className="flow-arrow">→</span>
@@ -383,7 +379,7 @@ export default function App() {
                 <button
                   className="btn btn-primary btn-block"
                   style={{marginTop: 16}}
-                  onClick={() => form.templateId && setStep(2)}
+                  onClick={() => { if (form.templateId) { fetchBaseProblems(form.templateId); setStep(2) } }}
                   disabled={!form.templateId}
                 >
                   次へ <Ico.ArrowRight />
@@ -392,14 +388,14 @@ export default function App() {
             )}
 
             {/* ══════════════════════════════════
-                STEP 2 — 難易度・問題数
+                STEP 2 — 問題数・ベース問題
                ══════════════════════════════════ */}
             {step === 2 && (
               <div className="card anim-fade-up">
                 <div className="card-header">
                   <span className="card-emoji">⚙️</span>
-                  <div className="card-title">難易度・問題数を設定</div>
-                  <div className="card-desc">生成する問題の難易度と数を選んでください</div>
+                  <div className="card-title">問題数・ベース問題を設定</div>
+                  <div className="card-desc">生成する問題数と、参考にするベース問題を設定してください</div>
                 </div>
 
                 {selectedTemplate && (
@@ -409,25 +405,6 @@ export default function App() {
                     {templateMeta.subject && <span className="pattern-tag">{templateMeta.subject}</span>}
                   </div>
                 )}
-
-                {/* 難易度 */}
-                <div className="field" style={{marginBottom: 20}}>
-                  <label className="field-label">難易度</label>
-                  <div className="difficulty-selector">
-                    {difficulties.map(d => (
-                      <button
-                        key={d}
-                        className={`difficulty-btn ${form.difficulty === d ? 'active' : ''}`}
-                        onClick={() => upd('difficulty', d)}
-                      >
-                        <span className="difficulty-icon">
-                          {d === '易' ? '🟢' : d === '普通' ? '🟡' : '🔴'}
-                        </span>
-                        <span>{d}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
                 {/* 問題数 */}
                 <div className="field" style={{marginBottom: 20}}>
@@ -458,7 +435,7 @@ export default function App() {
                 </div>
 
                 {/* 出力形式 */}
-                <div className="field" style={{marginBottom: 8}}>
+                <div className="field" style={{marginBottom: 20}}>
                   <label className="field-label">
                     出力形式
                     <span className="tooltip-icon" title="生成されるPDFのレイアウト形式を選択します">?</span>
@@ -481,27 +458,10 @@ export default function App() {
                   )}
                 </div>
 
-                <div className="btn-row btn-row-2">
-                  <button className="btn btn-outline" onClick={() => setStep(1)}>
-                    <Ico.ArrowLeft /> 戻る
-                  </button>
-                  <button className="btn btn-primary" onClick={() => { fetchBaseProblems(form.templateId); setStep(3) }}>
-                    次へ <Ico.ArrowRight />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ══════════════════════════════════
-                STEP 3 — ベース問題選択
-               ══════════════════════════════════ */}
-            {step === 3 && (
-              <div className="card anim-fade-up">
-                <div className="card-header">
-                  <span className="card-emoji">📄</span>
-                  <div className="card-title">ベース問題を選択</div>
-                  <div className="card-desc">参考にする問題をDBから選ぶか、PDFをアップロードしてください。スキップも可能です。</div>
-                </div>
+                {/* ── ベース問題選択セクション ── */}
+                <div className="field" style={{marginBottom: 20}}>
+                  <label className="field-label">ベース問題（参考にする問題）</label>
+                  <div className="card-desc" style={{marginBottom: 12, fontSize: 13}}>参考にする問題をDBから選ぶか、PDFをアップロードしてください。スキップも可能です。</div>
 
                 {/* Tab selector */}
                 <div className="base-mode-tabs">
@@ -633,8 +593,10 @@ export default function App() {
                   </div>
                 )}
 
+                </div>
+
                 <div className="btn-row btn-row-2">
-                  <button className="btn btn-outline" onClick={() => setStep(2)}>
+                  <button className="btn btn-outline" onClick={() => setStep(1)}>
                     <Ico.ArrowLeft /> 戻る
                   </button>
                   <button
@@ -649,9 +611,9 @@ export default function App() {
             )}
 
             {/* ══════════════════════════════════
-                STEP 4 — AI依頼 & 結果入力 (統合)
+                STEP 3 — AI依頼 & 結果入力 (統合)
                ══════════════════════════════════ */}
-            {step === 4 && (
+            {step === 3 && (
               <div className="card anim-fade-up">
                 <div className="card-header">
                   <span className="card-emoji">🤖</span>
@@ -767,7 +729,7 @@ export default function App() {
                 </div>
 
                 <div style={{marginTop: 20}}>
-                  <button className="btn btn-outline" onClick={() => setStep(3)}>
+                  <button className="btn btn-outline" onClick={() => setStep(2)}>
                     <Ico.ArrowLeft /> 戻る
                   </button>
                 </div>
@@ -776,9 +738,9 @@ export default function App() {
 
 
             {/* ══════════════════════════════════
-                STEP 5 — 完了
+                STEP 4 — 完了
                ══════════════════════════════════ */}
-            {step === 5 && (
+            {step === 4 && (
               <div className="card anim-fade-up">
                 <div className="success-screen">
                   <div className="success-icon">

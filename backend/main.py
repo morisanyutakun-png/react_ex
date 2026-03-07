@@ -2421,14 +2421,34 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 if _brand_name:
                     _branding_parts.append(f'- ヘッダー左側のタイトルには「{_brand_name}」と表示してください。')
                 if _paper_colors or True:  # 常にカラー指示を出す
+                    if _paper_colors:
+                        _hc_disp = (_paper_colors.get('headerColor') or '1A5276').lstrip('#')
+                        _ac_disp = (_paper_colors.get('accentColor') or _hc_disp).lstrip('#')
+                        _rc_disp = (_paper_colors.get('ruleColor') or _hc_disp).lstrip('#')
+                        _branding_parts.extend([
+                            f'★★★ 最重要カラー指示: プリアンブルで以下の3色が\\definecolorで定義済みです。',
+                            f'  \\definecolor{{mainblue}}{{HTML}}{{{_hc_disp}}} — #{_hc_disp}',
+                            f'  \\definecolor{{accentcolor}}{{HTML}}{{{_ac_disp}}} — #{_ac_disp}',
+                            f'  \\definecolor{{rulecolor}}{{HTML}}{{{_rc_disp}}} — #{_rc_disp}',
+                        ])
+                    else:
+                        _branding_parts.append('★★★ 最重要カラー指示: プリアンブルで mainblue, accentcolor, rulecolor の3色が定義済みです。')
                     _branding_parts.extend([
-                        '- プリアンブルで mainblue, accentcolor, rulecolor の3色が定義済みです。必ず以下のように使用してください:',
-                        '  * セクション見出し（\\section*, \\subsection*）: \\textcolor{mainblue}{見出しテキスト} で囲む',
-                        '  * 問題番号や小見出し: \\textcolor{accentcolor}{問題 1} のように色を付ける',
-                        '  * 水平線・区切り線: {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}} を使う',
-                        '  * 重要語・キーワード: \\textcolor{accentcolor}{重要語} で強調する',
-                        '  * 問題・解答の番号付きリスト内でも、問題文の先頭に \\textcolor{accentcolor}{\\textbf{(1)}} のように色を適用する',
-                        '- 黒一色の見出しは禁止。すべての見出し・区切り線に上記カラーを適用すること。',
+                        '',
+                        '文書全体でこれらの色を徹底的に使用してください。黒色は本文と数式のみ。',
+                        '',
+                        '★ 必須の色適用箇所（1つでも黒のままだと不合格）:',
+                        '  1. \\section*, \\subsection* の見出し → 必ず \\textcolor{mainblue}{...} で囲む',
+                        '  2. 問題番号（問1, (1) 等） → 必ず \\textcolor{accentcolor}{\\textbf{...}} で囲む',
+                        '  3. 水平区切り線 → 必ず {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}} にする',
+                        '  4. 小見出し・キーワード → \\textcolor{accentcolor}{...} で強調',
+                        '  5. enumerate/itemize 内の問題文先頭 → \\textcolor{accentcolor}{\\textbf{(1)}}',
+                        '  6. 配点表示 → \\textcolor{mainblue}{...}',
+                        '',
+                        '★ 禁止事項:',
+                        '  - \\section*{見出し} のように色なしで書くこと',
+                        '  - 問題番号を黒色で書くこと',
+                        '  - 文書全体が黒っぽく見える出力',
                     ])
                 if _brand_logo_url:
                     _branding_parts.append(
@@ -2476,39 +2496,71 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         '- テキストのみの大問は不可。\n'
                     )
 
+                # --- Always inject general diagram accuracy instruction ---
+                latex_instr += (
+                    '\n【図・グラフの描画精度ルール（TikZ/pgfplotsを使う場合）】\n'
+                    '図やグラフを描画する場合、以下を厳守:\n'
+                    '1. 描画前に座標計算をコメントで明記し、検算すること\n'
+                    '   例: % A=(0,0), B=(3,0), C=(1.5,2.598)  ← cos60°=0.5, sin60°=0.866\n'
+                    '2. 三角関数の値は正確に: cos30°=0.866, sin30°=0.5, cos45°=0.707, sin60°=0.866\n'
+                    '3. 閉じた図形は必ず -- cycle で閉じる\n'
+                    '4. 交点は連立方程式で正確に求める\n'
+                    '5. グラフはsamples=100以上で滑らかに描画\n'
+                    '6. 座標が正しいかセルフチェック: 長さ・角度・面積の整合性を確認\n'
+                )
+
                 # --- Inject realism diagram instructions ---
                 _diagram_realism = getattr(req, 'diagram_realism', True)
                 if _diagram_realism and extra_pkgs:
                     _realism_instr = (
-                        '\n【★★ リアルで教科書品質の図描画ルール — 最重要 ★★】\n'
+                        '\n【★★★ リアルで教科書品質の図描画ルール — 最重要 ★★★】\n'
                         '以下のルールをすべての図・図表に厳密に適用すること:\n\n'
+                        '■ 計算精度ルール（図の正確性を保証するための必須手順）:\n'
+                        '1. ★図を描く前に、必ず座標の計算過程をコメントで書くこと:\n'
+                        '   % === 座標計算 ===\n'
+                        '   % 三角形ABC: A=(0,0), B=(4,0)\n'
+                        '   % AB=4, AC=3, 角A=60° → C=(3*cos60°, 3*sin60°) = (1.5, 2.598)\n'
+                        '   % 検算: BC = sqrt((4-1.5)^2+(0-2.598)^2) = sqrt(6.25+6.75) = sqrt(13) ≈ 3.606\n'
+                        '2. 三角関数の値を正確に使う:\n'
+                        '   cos30°=0.866, sin30°=0.5, cos45°=0.707, sin45°=0.707\n'
+                        '   cos60°=0.5, sin60°=0.866, tan30°=0.577, tan60°=1.732\n'
+                        '3. 円の座標: 半径rの円上の角θの点は (中心x+r*cosθ, 中心y+r*sinθ)\n'
+                        '4. 交点計算: 2直線の方程式を連立して解き、コメントで検算を書く\n'
+                        '5. 面積・長さ・角度の値が問題文と一致しているか最終検証する\n\n'
                         '■ 基本品質ルール:\n'
-                        '1. 線の太さを3段階で使い分ける: 主要図形=thick, 補助線=thin, 寸法線=very thin。\n'
-                        '2. 矢印は -{Stealth[length=3mm]} で統一。ベクトル量は [very thick,-{Stealth}] で強調。\n'
-                        '3. 塗りつぶし: fill=gray!15 や pattern=north east lines で領域を視覚区別。\n'
-                        '4. ラベル: node[above right] 等で重なりを防ぎ、数式は $...$ モードで記述。\n'
-                        '5. 点線=dashed, 延長線=dotted を適切に使い分け、視覚的階層を作る。\n'
-                        '6. 角度の弧: arc (start:end:radius) + ラベル $\\theta$ を弧の中央に配置。\n'
-                        '7. すべての座標を明示的に (x,y) で指定し、座標一覧をコメントで先に書く。\n\n'
+                        '6. 線の太さを3段階で使い分ける: 主要図形=thick, 補助線=thin, 寸法線=very thin。\n'
+                        '7. 矢印は -{Stealth[length=3mm]} で統一。ベクトル量は [very thick,-{Stealth}] で強調。\n'
+                        '8. 塗りつぶし: fill=gray!15 や pattern=north east lines で領域を視覚区別。\n'
+                        '9. ラベル: node[above right] 等で重なりを防ぎ、数式は $...$ モードで記述。\n'
+                        '10. 点線=dashed, 延長線=dotted を適切に使い分け、視覚的階層を作る。\n'
+                        '11. 角度の弧: arc (start:end:radius) + ラベル $\\theta$ を弧の中央に配置。\n'
+                        '12. すべての座標を明示的に (x,y) で指定し、座標一覧をコメントで先に書く。\n\n'
+                        '■ 幾何学図形の正確性チェックリスト:\n'
+                        '13. 平行線: 方向ベクトルが平行（外積=0）か確認。\n'
+                        '14. 垂直線: 方向ベクトルの内積がゼロか確認。\n'
+                        '15. 中点: M = ((x1+x2)/2, (y1+y2)/2) を正確に計算。\n'
+                        '16. 角の二等分線: 両側の角度が等しいか計算で確認。\n'
+                        '17. 接線: 接点での半径と接線が垂直か確認。\n'
+                        '18. 相似・合同: 対応する辺の比や角度が正しいか検証。\n\n'
                         '■ 生物系図のリアル描画ルール:\n'
-                        '8. 細胞・器官図: 二重線 (double) で細胞膜を表現、内部は fill で色分け。\n'
+                        '19. 細胞・器官図: 二重線 (double) で細胞膜を表現、内部は fill で色分け。\n'
                         '   ミトコンドリア=fill=red!10, 核=fill=blue!10, 葉緑体=fill=green!10 等。\n'
-                        '9. DNA二重螺旋: sin/cos 曲線で螺旋を描き、横棒で塩基対を表現。\n'
+                        '20. DNA二重螺旋: sin/cos 曲線で螺旋を描き、横棒で塩基対を表現。\n'
                         '   \\draw[thick,blue] plot[domain=0:6.28,samples=100] ({0.5*cos(deg(\\x))}, {\\x});\n'
-                        '10. 家系図: 男性=□, 女性=○, 患者=塗りつぶし、婚姻線=水平実線、子孫線=垂直線。\n'
-                        '11. 代謝経路: 酵素名を矢印の上に \\footnotesize で配置、阻害=⊣ (inhibit) マーク。\n'
-                        '12. 生体ネットワーク: ノードを circle で統一、活性化=→, 抑制=⊣, 触媒=◇。\n\n'
+                        '21. 家系図: 男性=□, 女性=○, 患者=塗りつぶし、婚姻線=水平実線、子孫線=垂直線。\n'
+                        '22. 代謝経路: 酵素名を矢印の上に \\footnotesize で配置、阻害=⊣ (inhibit) マーク。\n'
+                        '23. 生体ネットワーク: ノードを circle で統一、活性化=→, 抑制=⊣, 触媒=◇。\n\n'
                         '■ 化学系図のリアル描画ルール:\n'
-                        '13. 構造式の結合: 単結合=実線, 二重結合=二重線, 三重結合=三重線。\n'
+                        '24. 構造式の結合: 単結合=実線, 二重結合=二重線, 三重結合=三重線。\n'
                         '    ウェッジ結合（手前）=太い三角, ダッシュ結合（奥）=破線の三角。\n'
-                        '14. 反応機構の矢印: 曲がり矢印 (curly arrow) で電子の移動を示す。\n'
-                        '15. 軌道図: エネルギー準位を水平線、電子を ↑↓ 矢印で表現。\n\n'
+                        '25. 反応機構の矢印: 曲がり矢印 (curly arrow) で電子の移動を示す。\n'
+                        '26. 軌道図: エネルギー準位を水平線、電子を ↑↓ 矢印で表現。\n\n'
                         '■ 共通仕上げルール:\n'
-                        '16. 図全体に \\centering と適切な \\caption を付ける。\n'
-                        '17. 色使い: 最大4色に抑え、blue, red!70, green!60!black, orange の組み合わせ推奨。\n'
-                        '18. フォント: 図中のテキストは \\footnotesize 以上、ラベルは \\small を基本とする。\n'
-                        '19. scope 環境で図の部品をグループ化し、保守性を高める。\n'
-                        '20. 図のサイズ: 幅は 0.7\\linewidth ～ 0.9\\linewidth に収め、余白を確保する。\n'
+                        '27. 図全体に \\centering と適切な \\caption を付ける。\n'
+                        '28. 色使い: 最大4色に抑え、blue, red!70, green!60!black, orange の組み合わせ推奨。\n'
+                        '29. フォント: 図中のテキストは \\footnotesize 以上、ラベルは \\small を基本とする。\n'
+                        '30. scope 環境で図の部品をグループ化し、保守性を高める。\n'
+                        '31. 図のサイズ: 幅は 0.7\\linewidth ～ 0.9\\linewidth に収め、余白を確保する。\n'
                     )
                     latex_instr += _realism_instr
 
@@ -2969,21 +3021,43 @@ def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
         _ac = paper_colors.get('accentColor', _hc).lstrip('#')
         _rc = paper_colors.get('ruleColor', _hc).lstrip('#')
         _bp.extend([
-            f'- プリアンブルで以下の3色が\\definecolorで定義済みです。必ずこれらを使ってカラフルなPDFを作成してください:',
-            f'  mainblue(#{_hc}): セクション見出し・ヘッダー・タイトル',
-            f'  accentcolor(#{_ac}): 問題番号・強調・キーワード',
-            f'  rulecolor(#{_rc}): 区切り線・罫線',
-            '- 具体的な使い方:',
-            '  * \\section*{{\\textcolor{{mainblue}}{{見出し}}}}',
-            '  * \\textcolor{{accentcolor}}{{\\textbf{{問題 1}}}}',
-            '  * {{\\color{{rulecolor}}\\rule{{\\linewidth}}{{0.4pt}}}}',
-            '  * 重要語: \\textcolor{{accentcolor}}{{重要語}}',
-            '- 黒一色の見出しは禁止。すべての見出し・問題番号・区切り線に色を適用すること。',
+            f'★★★ 最重要: プリアンブルで以下の3色が\\definecolorで定義済みです。',
+            f'  文書全体でこれらの色を徹底的に使い、黒色のテキストは本文と数式のみにしてください:',
+            f'  \\definecolor{{mainblue}}{{HTML}}{{{_hc}}} — #{_hc}',
+            f'  \\definecolor{{accentcolor}}{{HTML}}{{{_ac}}} — #{_ac}',
+            f'  \\definecolor{{rulecolor}}{{HTML}}{{{_rc}}} — #{_rc}',
+            '',
+            '- 色の適用箇所（すべて必須。1つでも黒のままだと不合格）:',
+            '  1. \\section*, \\subsection* の見出し → 必ず \\textcolor{mainblue}{...} で囲む',
+            '  2. 問題番号（問1, 問題1, (1) 等） → 必ず \\textcolor{accentcolor}{\\textbf{...}} で囲む',
+            '  3. 水平区切り線 → 必ず {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}} を使う',
+            '  4. 小見出し・キーワード → \\textcolor{accentcolor}{...} で強調',
+            '  5. ページヘッダー・フッターの装飾線 → rulecolor を使用',
+            '  6. 配点表示 → \\textcolor{mainblue}{...}',
+            '',
+            '- 具体的なLaTeXコード例:',
+            '  \\section*{{\\textcolor{{mainblue}}{{第1問 微分積分}}}}',
+            '  \\textcolor{{accentcolor}}{{\\textbf{{問題 1}}}}\\quad 次の...',
+            '  {{\\color{{rulecolor}}\\rule{{\\linewidth}}{{0.4pt}}}}',
+            '',
+            '★ 禁止事項:',
+            '  - \\section*{見出し} のように色なしで見出しを書くこと → 必ず \\textcolor{mainblue}{} で包む',
+            '  - 問題番号を黒色で書くこと → 必ず \\textcolor{accentcolor}{} で包む',
+            '  - \\rule だけの区切り線 → 必ず {\\color{rulecolor}\\rule{}{}} にする',
+            '  - 文書全体が黒っぽく見える出力は完全にNG',
         ])
     else:
         _bp.extend([
-            '- プリアンブルで mainblue, accentcolor, rulecolor が定義済みの場合、それらを積極的に使用してカラフルなPDFを作成してください。',
-            '- \\textcolor{{mainblue}}{{見出し}} や \\textcolor{{accentcolor}}{{強調}} のように色を活用してください。',
+            '★★★ 重要: プリアンブルで mainblue, accentcolor, rulecolor の3色が\\definecolorで定義済みです。',
+            '  文書全体でこれらの色を徹底的に使い、カラフルで見やすいPDFを作成してください。',
+            '  黒色は本文と数式のみ。見出し・問題番号・区切り線・キーワードには必ず色を使うこと。',
+            '',
+            '- 見出し: \\textcolor{mainblue}{見出しテキスト}',
+            '- 問題番号: \\textcolor{accentcolor}{\\textbf{問題 1}}',
+            '- 区切り線: {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}}',
+            '- 強調語: \\textcolor{accentcolor}{重要語}',
+            '',
+            '★ 黒一色の見出し・問題番号は禁止。1つでも色なしがあると不合格。',
         ])
     if _bp:
         parts.append('【カラー・ブランディング指示（厳守）】\n' + '\n'.join(_bp) + '\n\n')
@@ -3096,13 +3170,21 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
     # ── 物理図ルール ──
     if is_physics:
         parts.append(
-            '【物理の図（TikZ）】\n'
+            '【物理の図（TikZ）— 正確な描画ルール】\n'
+            '- ★描画前に必ず座標の計算過程をコメントで書くこと:\n'
+            '  % === 座標計算 ===\n'
+            '  % 斜面: 角度θ=30°, 長さL=4cm → 底辺=L*cos30°=3.464, 高さ=L*sin30°=2.0\n'
+            '  % A=(0,0), B=(3.464,0), C=(0,2.0)\n'
             '- ラベルは物理記号: $F$, $v$, $m$, $\\theta$（日本語ラベル禁止）\n'
-            '- 力ベクトル: \\draw[-{Stealth},thick] で描く\n'
-            '- 物体: rectangle / circle で正確に\n'
+            '- 力ベクトル: \\draw[-{Stealth},thick] で描く。力の向きと大きさの比率を正確に\n'
+            '- 物体: rectangle / circle で正確に。物体の重心位置を明記\n'
             '- 床面: \\fill[pattern=north east lines] でハッチング\n'
+            '- 斜面: 角度をatan2で正確に計算し、arcで角度表示を付ける\n'
+            '- ばね: decorations.pathmorphing の snake / coil で表現\n'
             '- 回路: circuitikz を使用（\\ctikzset{bipoles/fill=white}必須、母線→素子の順で描画）\n'
-            '- グラフ: pgfplots で軸に物理量と単位を明記\n\n'
+            '- グラフ: pgfplots で軸に物理量と単位を明記。\n'
+            '  放物線ならsamples=100以上で滑らかに描画。\n'
+            '  特徴的な点（最大値・x切片など）にマーカーを付ける\n\n'
         )
 
     if include_diagram_per_question and is_physics:
@@ -3130,21 +3212,43 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
         _ac = paper_colors.get('accentColor', _hc).lstrip('#')
         _rc = paper_colors.get('ruleColor', _hc).lstrip('#')
         _bp.extend([
-            f'- プリアンブルで以下の3色が\\definecolorで定義済みです。必ずこれらを使ってカラフルなPDFを作成してください:',
-            f'  mainblue(#{_hc}): セクション見出し・ヘッダー・タイトル',
-            f'  accentcolor(#{_ac}): 問題番号・強調・キーワード',
-            f'  rulecolor(#{_rc}): 区切り線・罫線',
-            '- 具体的な使い方:',
-            '  * \\section*{{\\textcolor{{mainblue}}{{見出し}}}}',
-            '  * \\textcolor{{accentcolor}}{{\\textbf{{問題 1}}}}',
-            '  * {{\\color{{rulecolor}}\\rule{{\\linewidth}}{{0.4pt}}}}',
-            '  * 重要語: \\textcolor{{accentcolor}}{{重要語}}',
-            '- 黒一色の見出しは禁止。すべての見出し・問題番号・区切り線に色を適用すること。',
+            f'★★★ 最重要: プリアンブルで以下の3色が\\definecolorで定義済みです。',
+            f'  文書全体でこれらの色を徹底的に使い、黒色のテキストは本文と数式のみにしてください:',
+            f'  \\definecolor{{mainblue}}{{HTML}}{{{_hc}}} — #{_hc}',
+            f'  \\definecolor{{accentcolor}}{{HTML}}{{{_ac}}} — #{_ac}',
+            f'  \\definecolor{{rulecolor}}{{HTML}}{{{_rc}}} — #{_rc}',
+            '',
+            '- 色の適用箇所（すべて必須。1つでも黒のままだと不合格）:',
+            '  1. \\section*, \\subsection* の見出し → 必ず \\textcolor{mainblue}{...} で囲む',
+            '  2. 問題番号（問1, 問題1, (1) 等） → 必ず \\textcolor{accentcolor}{\\textbf{...}} で囲む',
+            '  3. 水平区切り線 → 必ず {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}} を使う',
+            '  4. 小見出し・キーワード → \\textcolor{accentcolor}{...} で強調',
+            '  5. ページヘッダー・フッターの装飾線 → rulecolor を使用',
+            '  6. 配点表示 → \\textcolor{mainblue}{...}',
+            '',
+            '- 具体的なLaTeXコード例:',
+            '  \\section*{{\\textcolor{{mainblue}}{{第1問 微分積分}}}}',
+            '  \\textcolor{{accentcolor}}{{\\textbf{{問題 1}}}}\\quad 次の...',
+            '  {{\\color{{rulecolor}}\\rule{{\\linewidth}}{{0.4pt}}}}',
+            '',
+            '★ 禁止事項:',
+            '  - \\section*{見出し} のように色なしで見出しを書くこと → 必ず \\textcolor{mainblue}{} で包む',
+            '  - 問題番号を黒色で書くこと → 必ず \\textcolor{accentcolor}{} で包む',
+            '  - \\rule だけの区切り線 → 必ず {\\color{rulecolor}\\rule{}{}} にする',
+            '  - 文書全体が黒っぽく見える出力は完全にNG',
         ])
     else:
         _bp.extend([
-            '- プリアンブルで mainblue, accentcolor, rulecolor が定義済みの場合、それらを積極的に使用してカラフルなPDFを作成してください。',
-            '- \\textcolor{{mainblue}}{{見出し}} や \\textcolor{{accentcolor}}{{強調}} のように色を活用してください。',
+            '★★★ 重要: プリアンブルで mainblue, accentcolor, rulecolor の3色が\\definecolorで定義済みです。',
+            '  文書全体でこれらの色を徹底的に使い、カラフルで見やすいPDFを作成してください。',
+            '  黒色は本文と数式のみ。見出し・問題番号・区切り線・キーワードには必ず色を使うこと。',
+            '',
+            '- 見出し: \\textcolor{mainblue}{見出しテキスト}',
+            '- 問題番号: \\textcolor{accentcolor}{\\textbf{問題 1}}',
+            '- 区切り線: {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}}',
+            '- 強調語: \\textcolor{accentcolor}{重要語}',
+            '',
+            '★ 黒一色の見出し・問題番号は禁止。1つでも色なしがあると不合格。',
         ])
     if _bp:
         parts.append('【カラー・ブランディング指示（厳守）】\n' + '\n'.join(_bp) + '\n\n')
@@ -3158,6 +3262,10 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
         '☐ enumerate/itemize のネストが2階層以内\n'
         '☐ \\frac{}{} に空の引数がない\n'
         '☐ \\documentclass で始まり \\end{document} で終わっている\n'
+        '☐ TikZ図がある場合: 座標計算をコメントで書いて検算したか\n'
+        '☐ TikZ図がある場合: 閉じた図形は -- cycle で閉じているか\n'
+        '☐ 見出し・問題番号にカラー（\\textcolor{mainblue/accentcolor}）を適用したか\n'
+        '☐ 黒一色の見出し・問題番号が残っていないか\n'
     )
 
     return ''.join(parts)
@@ -3270,21 +3378,36 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
         ),
         'prompt_hint': (
             'TikZ が利用可能。\\begin{tikzpicture}...\\end{tikzpicture} で図を描く。\n'
-            '【厳密な座標計算ルール — 必ず守ること】\n'
+            '【★★★ 厳密な座標計算と正確な図描画ルール — 必ず守ること ★★★】\n'
+            '=== 計算の正確性 ===\n'
             '1. すべてのノード・描画に明示的な座標 (x,y) を cm 単位で指定する。相対配置 (right=of ...) だけに頼らない。\n'
-            '2. 閉じた図形（多角形・閉領域）は最後に -- cycle を付けるか、始点の座標に正確に戻る。\n'
-            '3. 座標計算の検算: 直角三角形なら三平方の定理、正三角形なら辺の長さが同じか確認。\n'
-            '4. \\draw (0,0) -- (3,0) -- (3,4) -- cycle; のように閉路を明記。\n'
-            '5. ノード間の配線では、接続元と接続先の座標が一致しているか必ず確認する。\n'
-            '6. 座標の一覧表を先にコメントで書いてから描画コードを書く（例: % A=(0,0), B=(3,0), C=(3,4)）。\n'
+            '2. 座標の一覧表を先にコメントで書いてから描画コードを書く（例: % A=(0,0), B=(3,0), C=(3,4)）。\n'
+            '3. 閉じた図形（多角形・閉領域）は最後に -- cycle を付けるか、始点の座標に正確に戻る。\n'
+            '4. 座標計算の検算を必ず行う:\n'
+            '   - 直角三角形: 三平方の定理 $a^2+b^2=c^2$ で斜辺長を算出\n'
+            '   - 正三角形: 辺の長さがすべて等しいか確認。高さ = 辺×√3/2\n'
+            '   - 円: 中心座標と半径から円周上の点を cos/sin で正確計算\n'
+            '   - 接線: 接点での法線方向を計算し、垂直関係を検証\n'
+            '5. ★ 検算手順: 各図形について、描画前に以下をコメントで明記すること:\n'
+            '   % 検算: AB = sqrt((x2-x1)^2+(y2-y1)^2) = sqrt(9+16) = 5\n'
+            '   % 角度: atan2(y,x) = atan2(4,3) ≈ 53.13°\n'
+            '6. ノード間の配線では、接続元と接続先の座標が一致しているか必ず確認する。\n'
             '\n'
-            '【リアルで美しい図のための描画指針】\n'
+            '=== リアルな図の品質ルール ===\n'
             '7. 線の太さ: 主要な図形は thick、補助線は thin、寸法線は very thin を使い分ける。\n'
             '8. 矢印: -{Stealth[length=3mm]} で統一。力・速度などのベクトル量は太い矢印 [very thick] を使う。\n'
             '9. 塗りつぶし: 強調部分は fill=gray!20 や pattern=north east lines 等で視覚的に区別する。\n'
             '10. ラベル配置: node[above], node[below right] 等で重なりを避ける。ラベルは数式モード $...$ で。\n'
             '11. 点線・破線の使い分け: 補助線 [dashed]、延長線 [dotted]、力の分解成分 [dashed,->]。\n'
             '12. 角度の弧: \\draw (orig) arc (start:end:radius) で描き、ラベル $\\theta$ を弧の中央に配置。\n'
+            '\n'
+            '=== 図形描画の正確性チェックリスト ===\n'
+            '13. 平行線: 傾きが同じか（Δy/Δx が一致するか）確認。\n'
+            '14. 垂直線: 内積がゼロか確認。\n'
+            '15. 角の二等分線: 両側の角度が等しいか確認。\n'
+            '16. 中点: M = ((x1+x2)/2, (y1+y2)/2) を正確に計算。\n'
+            '17. 比例配分点: P = A + t*(B-A) で t の値を明記。\n'
+            '18. 交点: 2直線の連立方程式を解いて座標を求める。\n'
         ),
     },
     'circuitikz': {
