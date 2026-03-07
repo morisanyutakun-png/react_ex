@@ -1214,7 +1214,7 @@ export default function UserModePage() {
                 {step === 4 && 'PDFの出力形式を選んでください'}
                 {step === 5 && '図表やLaTeXパッケージを選択してください（任意）'}
                 {step === 6 && '問題形式やカスタムリクエストを設定してください（全て任意）'}
-                {step === 7 && (mode === 'auto' ? '✨ 準備完了！「AI で生成する」を押そう！' : '設定を確認したら「指示文を作成」で次へ')}
+                {step === 7 && (mode === 'auto' ? '準備完了 — 「AI で生成する」を押そう' : '設定を確認したら「指示文を作成」で次へ')}
               </p>
               <p className="text-[11px] text-[#94a3b8] mt-0.5">
                 ステップ {step} / {STEPS.length}
@@ -2383,7 +2383,7 @@ export default function UserModePage() {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <div className="text-[13px] font-bold text-[#1e293b]">🎨 リアル描画モード</div>
+                        <div className="text-[13px] font-bold text-[#1e293b]">リアル描画モード</div>
                         <div className="text-[10px] text-[#64748b] mt-0.5 leading-relaxed">
                           教科書品質のリアルで美しい図を生成（線の太さ・塗り・影・矢印を最適化）
                         </div>
@@ -2613,12 +2613,14 @@ export default function UserModePage() {
       {/* ═══════ Step 7: 確認 ═══════ */}
       {step === 7 && (
         <div className="space-y-5 wizard-section-enter">
-          {/* 🎉 Motivational banner */}
+          {/* Motivational banner */}
           <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200/40 step-complete-pop">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyMCIgY3k9IjIwIiByPSIxIiBmaWxsPSJyZ2JhKDk5LDEwMiwyNDEsMC4xKSIvPjwvc3ZnPg==')] opacity-40" />
             <div className="relative z-10 flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 step-active-ping">
-                <span className="text-2xl">🚀</span>
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
               </div>
               <div className="flex-1">
                 <h3 className="text-[17px] font-extrabold text-[#1e293b] tracking-tight">
@@ -2626,7 +2628,7 @@ export default function UserModePage() {
                 </h3>
                 <p className="text-[13px] text-[#64748b] mt-0.5">
                   {mode === 'auto'
-                    ? '設定を確認して、下の「AI で生成する」ボタンを押すだけです ✨'
+                    ? '設定を確認して、下の「AI で生成する」ボタンを押すだけです'
                     : '設定を確認して、下の「指示文を作成」ボタンを押してください'}
                 </p>
               </div>
@@ -3701,7 +3703,7 @@ export default function UserModePage() {
                       : 'bg-[#f1f5f9] text-[#94a3b8] border border-[#e2e8f0]'
                   }`}
                 >
-                  🎨 リアル描画 {diagramRealism ? 'ON' : 'OFF'}
+                  リアル描画 {diagramRealism ? 'ON' : 'OFF'}
                 </button>
                 {extraPackages.includes('tikz') && (
                   <button
@@ -3740,7 +3742,7 @@ export default function UserModePage() {
                   </svg>
                 </div>
               </div>
-              <p className="text-lg font-extrabold text-[#1e293b] mb-2 tracking-[-0.02em]">✨ AI が問題を生成しています</p>
+              <p className="text-lg font-extrabold text-[#1e293b] mb-2 tracking-[-0.02em]">AI が問題を生成しています</p>
               <p className="text-sm text-[#1e293b] font-medium">{status}</p>
               <div className="flex items-center gap-2 mt-4">
                 <div className="flex gap-1">
@@ -3758,12 +3760,16 @@ export default function UserModePage() {
       {/* ═══════ Step 9: 結果表示（完成） ═══════ */}
       {step === 9 && (
         <div className="space-y-6 wizard-section-enter">
-          {/* 🎊 Completion celebration */}
+          {/* Completion celebration */}
           <div className="relative overflow-hidden rounded-2xl p-6 text-center step-complete-pop success-glow" style={{
             background: 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(16,185,129,0.08) 50%, rgba(6,182,212,0.08) 100%)',
             border: '1px solid rgba(34,197,94,0.2)',
           }}>
-            <div className="text-4xl mb-3 cta-icon-bounce">🎉</div>
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/25 mb-3 cta-icon-bounce">
+              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            </div>
             <h3 className="text-[20px] font-extrabold text-[#1e293b] tracking-tight mb-1">
               問題の生成が完了しました！
             </h3>

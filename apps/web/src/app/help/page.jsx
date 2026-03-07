@@ -455,7 +455,11 @@ export default function HelpPage() {
 <div className="max-w-4xl mx-auto px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
 
       {/* ── ヒーロー ── */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-12 relative">
+        <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
+          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-400/10 blur-3xl" />
+          <div className="absolute -top-5 -right-10 w-32 h-32 rounded-full bg-gradient-to-bl from-purple-400/15 to-blue-400/10 blur-3xl" />
+        </div>
         <div className="icon-premium inline-flex w-[72px] h-[72px] text-white mb-5">
           <svg className="w-9 h-9" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />

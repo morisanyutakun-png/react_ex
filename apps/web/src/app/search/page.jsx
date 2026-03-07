@@ -21,16 +21,16 @@ const SUBJECT_COLORS = {
 };
 
 const SUBJECT_ICONS = {
-  '数学': '📐',
-  '物理': '🍎',
-  '英語': '📖',
-  '化学': '🧪',
-  '生物': '🌿',
-  '情報': '💻',
-  '国語': '📝',
-  '社会': '🏛️',
-  '地学': '🌋',
-  '理科': '🔬',
+  '数学': '∑',
+  '物理': '⊛',
+  '英語': '◎',
+  '化学': '⬡',
+  '生物': '◈',
+  '情報': '▸',
+  '国語': '〒',
+  '社会': '△',
+  '地学': '◇',
+  '理科': '☼',
 };
 
 /* ── Badge ── */
@@ -261,8 +261,12 @@ export default function SearchPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
       {/* ── ヒーローヘッダー ── */}
-      <div className="text-center mb-2">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white mb-4 shadow-lg shadow-blue-200/50">
+      <div className="text-center mb-2 relative">
+        <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
+          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-400/10 blur-3xl" />
+          <div className="absolute -top-5 -right-10 w-32 h-32 rounded-full bg-gradient-to-bl from-purple-400/15 to-blue-400/10 blur-3xl" />
+        </div>
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white mb-4 shadow-lg shadow-blue-500/25">
           <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
             <circle cx="10.5" cy="10.5" r="6.5" />
             <line x1="15.5" y1="15.5" x2="21" y2="21" strokeLinecap="round" />
