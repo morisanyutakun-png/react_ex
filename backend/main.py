@@ -1638,6 +1638,14 @@ class RenderTemplateRequest(BaseModel):
     custom_request: Optional[str] = None
     # Base problem text selected from DB (for generating similar problems)
     base_problem_text: Optional[str] = None
+    # Branding: service name to display in PDF header
+    brand_name: Optional[str] = None
+    # Branding: logo image as base64 data URL (e.g. data:image/png;base64,...)
+    brand_logo_url: Optional[str] = None
+    # Branding: paper color theme ID (default, forest, burgundy, navy, violet, sepia, mono, brand)
+    paper_theme: Optional[str] = None
+    # Branding: resolved paper theme colors (header_color, accent_color, rule_color) as hex
+    paper_colors: Optional[Dict[str, str]] = None
 
 
 @app.post('/api/render_template')
@@ -2335,6 +2343,61 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     preset_prompt_instr=preset_prompt_instr,
                 )
 
+                # --- Inject branding (colors / header name / logo) ---
+                _brand_name = getattr(req, 'brand_name', None) or None
+                _brand_logo_url = getattr(req, 'brand_logo_url', None) or None
+                _paper_colors = getattr(req, 'paper_colors', None) or None
+
+                if _paper_colors and _paper_colors.get('headerColor'):
+                    _hc = _paper_colors['headerColor'].lstrip('#')
+                    latex_skeleton = latex_skeleton.replace(
+                        '\\definecolor{mainblue}{HTML}{1A5276}',
+                        f'\\definecolor{{mainblue}}{{HTML}}{{{_hc}}}',
+                    )
+                    # worksheet / flashcard / minimal にも色を注入
+                    if '\\definecolor{mainblue}' not in latex_skeleton:
+                        _ac = _paper_colors.get('accentColor', _hc).lstrip('#')
+                        _color_block = (
+                            f'\\usepackage{{xcolor}}\n'
+                            f'\\definecolor{{mainblue}}{{HTML}}{{{_hc}}}\n'
+                            f'\\definecolor{{accentcolor}}{{HTML}}{{{_ac}}}\n'
+                        )
+                        latex_skeleton = latex_skeleton.replace(
+                            '\\begin{document}',
+                            _color_block + '\\begin{document}',
+                            1,
+                        )
+                    else:
+                        # exam 系 — accentColor も追加
+                        _ac = _paper_colors.get('accentColor', _hc).lstrip('#')
+                        latex_skeleton = latex_skeleton.replace(
+                            '\\begin{document}',
+                            f'\\definecolor{{accentcolor}}{{HTML}}{{{_ac}}}\n\\begin{{document}}',
+                            1,
+                        )
+
+                if _brand_name:
+                    latex_skeleton = latex_skeleton.replace(
+                        '\\fancyhead[L]{\\small\\textsf{\\textbf{類題演習}}}',
+                        f'\\fancyhead[L]{{\\small\\textsf{{\\textbf{{{_brand_name}}}}}}}',
+                    )
+
+                # ブランディング指示をプロンプトに追加
+                _branding_parts = []
+                if _brand_name:
+                    _branding_parts.append(f'- ヘッダー左側のタイトルには「{_brand_name}」と表示してください。')
+                if _paper_colors:
+                    _branding_parts.append(
+                        f'- メインカラーは \\definecolor{{mainblue}} で定義済みです。見出し・罫線・強調に mainblue を使用してください。'
+                    )
+                if _brand_logo_url:
+                    _branding_parts.append(
+                        '- ヘッダーにロゴ画像を含める必要はありませんが、'
+                        f'ブランド名「{_brand_name or ""}」をヘッダーに目立つように表示してください。'
+                    )
+                if _branding_parts:
+                    latex_instr += '\n【ブランディング指示】\n' + '\n'.join(_branding_parts) + '\n'
+
                 # --- Inject extra diagram/utility packages ---
                 extra_pkgs = getattr(req, 'extra_packages', None) or []
                 if extra_pkgs:
@@ -2788,7 +2851,9 @@ def _build_latex_instructions(subject: str = '', prompt_text: str = '', struct_r
 def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
                               preset_instr: str = '',
                               include_diagram_per_question: bool = False,
-                              custom_request: str = '') -> str:
+                              custom_request: str = '',
+                              brand_name: str = '',
+                              paper_colors: Optional[Dict[str, str]] = None) -> str:
     """LLM API 用のシステムプロンプトを科目に応じて構築する。
 
     STEM科目ではスケルトン駆動型（具体例ベース）で安定出力を実現。
@@ -2805,6 +2870,8 @@ def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
             is_physics=is_physics,
             include_diagram_per_question=include_diagram_per_question,
             custom_request=custom_request,
+            brand_name=brand_name,
+            paper_colors=paper_colors,
         )
 
     # ── 非STEM（文系科目）は従来のルール列挙型 ──
@@ -2854,6 +2921,16 @@ def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
         if sanitised:
             parts.append(f'【ユーザからの追加要望】\n{sanitised}\n\n')
 
+    # ブランディング指示
+    _bp = []
+    if brand_name:
+        _bp.append(f'- ヘッダー左側のタイトルには「{brand_name}」と表示してください。')
+    if paper_colors:
+        _hc = paper_colors.get('headerColor', '1A5276').lstrip('#')
+        _bp.append(f'- \\definecolor{{mainblue}}{{HTML}}{{{_hc}}} をメインカラーとして使用し、見出し・罫線に適用してください。')
+    if _bp:
+        parts.append('【ブランディング指示】\n' + '\n'.join(_bp) + '\n\n')
+
     return ''.join(parts)
 
 
@@ -2871,7 +2948,9 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
                                preset_instr: str,
                                is_physics: bool,
                                include_diagram_per_question: bool,
-                               custom_request: str) -> str:
+                               custom_request: str,
+                               brand_name: str = '',
+                               paper_colors: Optional[Dict[str, str]] = None) -> str:
     """STEM科目用：スケルトン駆動型のシステムプロンプト。
 
     ルールを列挙するのではなく、具体的な完成形を見せることで
@@ -2984,6 +3063,16 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
         sanitised = _sanitise_custom_request(custom_request)
         if sanitised:
             parts.append(f'【ユーザからの追加要望】\n{sanitised}\n\n')
+
+    # ── ブランディング指示 ──
+    _bp = []
+    if brand_name:
+        _bp.append(f'- ヘッダー左側のタイトルには「{brand_name}」と表示してください。')
+    if paper_colors:
+        _hc = paper_colors.get('headerColor', '1A5276').lstrip('#')
+        _bp.append(f'- \\definecolor{{mainblue}}{{HTML}}{{{_hc}}} をメインカラーとして使用し、見出し・罫線に適用してください。')
+    if _bp:
+        parts.append('【ブランディング指示】\n' + '\n'.join(_bp) + '\n\n')
 
     # ── 最終チェックリスト（LLMへのリマインダー） ──
     parts.append(
@@ -4438,6 +4527,14 @@ class LlmGenerateRequest(BaseModel):
     base_pdf_images: Optional[List[str]] = None
     # Base problem text from DB
     base_problem_text: Optional[str] = None
+    # Branding: service name to display in PDF header
+    brand_name: Optional[str] = None
+    # Branding: logo image as base64 data URL
+    brand_logo_url: Optional[str] = None
+    # Branding: paper color theme ID
+    paper_theme: Optional[str] = None
+    # Branding: resolved paper theme colors (header_color, accent_color, rule_color) as hex
+    paper_colors: Optional[Dict[str, str]] = None
 
 
 @app.post('/api/generate_with_llm')
@@ -4478,6 +4575,8 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         preset_instr=preset_instr,
         include_diagram_per_question=bool(req.include_diagram_per_question),
         custom_request=req.custom_request or '',
+        brand_name=req.brand_name or '',
+        paper_colors=req.paper_colors or None,
     )
 
     # Append extra package usage hints so the LLM knows what's available

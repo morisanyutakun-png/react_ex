@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
+import { useBranding } from '@/contexts/BrandingContext';
 import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, PACKAGE_PRESETS, fetchUsage, adminUnlock, verifyGenerationCode, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
 import {
   StatusBar,
@@ -270,6 +271,7 @@ const PresetThumbnail = ({ id, active }) => {
 
 export default function UserModePage() {
   const { templates, subjects, refresh } = useTemplates();
+  const { serviceName, logoUrl, paperTheme, resolvedPaperColors } = useBranding();
 
   // 科目アイコン（SVG）
   const SubjectIcon = useCallback(({ type, className = "w-4 h-4" }) => {
@@ -718,6 +720,10 @@ export default function UserModePage() {
         diagram_realism: diagramRealism,
         custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
+        brand_name: serviceName || undefined,
+        brand_logo_url: logoUrl || undefined,
+        paper_theme: paperTheme || undefined,
+        paper_colors: resolvedPaperColors || undefined,
       };
       // ベース問題テキストをプロンプト生成にも反映
       if (baseMode === 'db' && selectedBaseProblem) {
@@ -766,6 +772,10 @@ export default function UserModePage() {
         diagram_realism: diagramRealism,
         custom_request: customRequest.trim() || undefined,
         user_id: userId,
+        brand_name: serviceName || undefined,
+        brand_logo_url: logoUrl || undefined,
+        paper_theme: paperTheme || undefined,
+        paper_colors: resolvedPaperColors || undefined,
       };
       // ベース問題（PDF or DB）の情報を付与
       if (baseMode === 'pdf' && basePdfImages.length > 0) {
@@ -843,6 +853,10 @@ export default function UserModePage() {
         diagram_realism: diagramRealism,
         custom_request: customRequest.trim() || undefined,
         ...(sourceText.trim() ? { source_text: sourceText.trim() } : {}),
+        brand_name: serviceName || undefined,
+        brand_logo_url: logoUrl || undefined,
+        paper_theme: paperTheme || undefined,
+        paper_colors: resolvedPaperColors || undefined,
       };
       // ベース問題テキストをプロンプトに反映
       if (baseMode === 'db' && selectedBaseProblem) {

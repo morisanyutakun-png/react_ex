@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
+import { useBranding } from '@/contexts/BrandingContext';
 import {
   renderTemplate,
   assemblePrompt,
@@ -299,6 +300,7 @@ function QualityRating({ score, onChange }) {
 
 export default function TuningPage() {
   const { templates, refresh } = useTemplates();
+  const { serviceName, logoUrl, paperTheme, resolvedPaperColors } = useBranding();
   const [status, setStatus] = useState('');
 
   // 科目アイコン（SVG）
@@ -560,6 +562,10 @@ export default function TuningPage() {
       const data = await renderTemplate({
         template_id: templateId, subject, difficulty,
         num_questions: numQuestions, rag_inject: false,
+        brand_name: serviceName || undefined,
+        brand_logo_url: logoUrl || undefined,
+        paper_theme: paperTheme || undefined,
+        paper_colors: resolvedPaperColors || undefined,
       });
       const rendered = data.rendered_prompt || data.rendered || '';
       const hasOutputSpec = /出力形式.*json|json.*形式|必ず.*json/i.test(rendered);
