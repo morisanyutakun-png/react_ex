@@ -4137,6 +4137,20 @@ def get_usage(user_id: str):
     return JSONResponse(_get_usage(user_id))
 
 
+class VerifyCodeRequest(BaseModel):
+    code: str
+
+@app.post('/api/verify_code')
+def verify_code(req: VerifyCodeRequest = Body(...)):
+    """生成ごとの認証コードを検証する。ADMIN_PASSWORD と一致すれば OK。"""
+    admin_password = os.getenv('ADMIN_PASSWORD')
+    if not admin_password:
+        return JSONResponse({'error': 'ADMIN_PASSWORD が設定されていません。'}, status_code=500)
+    if req.code != admin_password:
+        return JSONResponse({'valid': False, 'error': '認証コードが正しくありません。'}, status_code=403)
+    return JSONResponse({'valid': True})
+
+
 class AdminUnlockRequest(BaseModel):
     password: str
     user_id: str

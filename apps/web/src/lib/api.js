@@ -348,6 +348,13 @@ export async function adminUnlock(userId, password) {
   });
 }
 
+export async function verifyGenerationCode(code) {
+  return apiFetch('/api/verify_code', {
+    method: 'POST',
+    body: JSON.stringify({ code }),
+  });
+}
+
 // ── Authentication ────────────────────────────────────────────────────────
 
 export async function authRegister({ email, password, orgName, displayName }) {

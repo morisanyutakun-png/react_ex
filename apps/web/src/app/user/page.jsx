@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, PACKAGE_PRESETS, fetchUsage, adminUnlock, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, PACKAGE_PRESETS, fetchUsage, adminUnlock, verifyGenerationCode, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -381,6 +381,13 @@ export default function UserModePage() {
   const [unlockPassword, setUnlockPassword] = useState('');
   const [unlockError, setUnlockError] = useState('');
 
+  /* ── 生成ごとの認証コード ── */
+  const [showGenerationAuthModal, setShowGenerationAuthModal] = useState(false);
+  const [generationAuthCode, setGenerationAuthCode] = useState('');
+  const [generationAuthError, setGenerationAuthError] = useState('');
+  const [generationAuthVerifying, setGenerationAuthVerifying] = useState(false);
+  const pendingGenerationRef = useRef(null); // 'auto' | 'manual'
+
   // 使用状況取得
   useEffect(() => {
     if (!userId) return;
@@ -398,6 +405,40 @@ export default function UserModePage() {
     } catch (e) {
       setUnlockError(e.message || 'パスワードが正しくありません');
     }
+  };
+
+  /** 生成前に認証コードを検証し、通過後に生成を実行する */
+  const handleGenerationAuthVerify = async () => {
+    setGenerationAuthError('');
+    setGenerationAuthVerifying(true);
+    try {
+      const res = await verifyGenerationCode(generationAuthCode);
+      if (res.valid) {
+        setShowGenerationAuthModal(false);
+        setGenerationAuthCode('');
+        // 検証通過 → 保留中の生成を実行
+        const mode = pendingGenerationRef.current;
+        pendingGenerationRef.current = null;
+        if (mode === 'auto') {
+          handleAutoGenerate(true);
+        } else if (mode === 'manual') {
+          generatePrompt(true);
+        }
+      } else {
+        setGenerationAuthError(res.error || '認証コードが正しくありません');
+      }
+    } catch (e) {
+      setGenerationAuthError(e.message || '認証コードが正しくありません');
+    }
+    setGenerationAuthVerifying(false);
+  };
+
+  /** 認証コード入力を求めてから生成を開始する */
+  const requestGenerationAuth = (genMode) => {
+    pendingGenerationRef.current = genMode;
+    setGenerationAuthCode('');
+    setGenerationAuthError('');
+    setShowGenerationAuthModal(true);
   };
 
   /* ── ウィザード状態 ── */
@@ -439,6 +480,10 @@ export default function UserModePage() {
       setSubject(effectiveNewSubject);
       if (f) setField(f);
       setDifficulty(newTplDifficulty);
+      // 作成した教科グループを自動展開
+      setExpandedSubjects((prev) =>
+        prev.includes(effectiveNewSubject) ? prev : [...prev, effectiveNewSubject]
+      );
       setStatus(`出題パターン「${label}」を作成しました`);
       setShowCreateTemplate(false);
       setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplDifficulty('');
@@ -634,9 +679,14 @@ export default function UserModePage() {
   const selectedTemplate = templates.find((t) => t.id === templateId) || null;
 
   /* ── AI自動生成: プロンプト→OpenAI→LaTeX→PDF ── */
-  const handleAutoGenerate = async () => {
+  const handleAutoGenerate = async (authVerified = false) => {
     if (!templateId) {
       setStatus('出題パターンを選んでください');
+      return;
+    }
+    // 生成ごとの認証コードチェック
+    if (!authVerified) {
+      requestGenerationAuth('auto');
       return;
     }
     // 使用回数チェック
@@ -768,9 +818,14 @@ export default function UserModePage() {
   /* ── 手動: プロンプト生成 → 自動コピー ── */
   const [promptCopied, setPromptCopied] = useState(false);
   const [promptGenerating, setPromptGenerating] = useState(false);
-  const generatePrompt = async () => {
+  const generatePrompt = async (authVerified = false) => {
     if (!templateId) {
       setStatus('出題パターンを選んでください');
+      return;
+    }
+    // 生成ごとの認証コードチェック
+    if (!authVerified) {
+      requestGenerationAuth('manual');
       return;
     }
     setPromptCopied(false);
@@ -1106,6 +1161,51 @@ export default function UserModePage() {
         </div>
       )}
 
+      {/* ── 生成ごとの認証コードモーダル ── */}
+      {showGenerationAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => { setShowGenerationAuthModal(false); pendingGenerationRef.current = null; }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-[90vw] max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-[18px] font-bold text-[#1e293b]">認証コード</h3>
+                <p className="text-[11px] text-[#64748b]">AI生成を実行するには認証が必要です</p>
+              </div>
+            </div>
+            <p className="text-[13px] text-[#64748b] mb-4">認証コードを入力してください。</p>
+            <input
+              type="password"
+              value={generationAuthCode}
+              onChange={e => setGenerationAuthCode(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !generationAuthVerifying && handleGenerationAuthVerify()}
+              placeholder="認証コード"
+              className="w-full px-4 py-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 mb-3"
+              autoFocus
+            />
+            {generationAuthError && <p className="text-[12px] text-red-500 mb-3">{generationAuthError}</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowGenerationAuthModal(false); setGenerationAuthCode(''); setGenerationAuthError(''); pendingGenerationRef.current = null; }}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#f1f5f9] transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleGenerationAuthVerify}
+                disabled={generationAuthVerifying || !generationAuthCode}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[13px] font-semibold hover:from-amber-600 hover:to-orange-600 transition-colors disabled:opacity-40"
+              >
+                {generationAuthVerifying ? '確認中...' : '認証して生成'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── ウィザードアシスト（各ステップのガイダンス） ── */}
       {step <= 7 && (
         <div className="wizard-guide mb-5">
@@ -1267,15 +1367,167 @@ export default function UserModePage() {
             </div>
           </div>
 
-          {/* 新規作成への導線 */}
-          <div className="text-center">
+          {/* 新規作成ボタン & フォーム */}
+          {showCreateTemplate ? (
+            <div className="card-glossy">
+              <div className="p-6 space-y-4 relative z-10">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="icon-glossy w-10 h-10">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">出題パターンを新しく作る</h3>
+                    <p className="text-[11px] text-[#64748b]">教科と分野を選ぶだけで自動作成されます</p>
+                  </div>
+                </div>
+
+                {/* 教科 + 難易度 */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <SelectField
+                    label="教科 *"
+                    value={newTplSubject}
+                    onChange={(v) => { setNewTplSubject(v); setNewTplField(''); }}
+                    options={[
+                      { value: '', label: '— 選択してください —' },
+                      ...(subjects.length ? subjects : SUBJECTS).map((s) => ({ value: s, label: s })),
+                      { value: '__custom', label: 'その他（入力）' },
+                    ]}
+                  />
+                  <SelectField
+                    label="難易度 *"
+                    value={newTplDifficulty}
+                    onChange={setNewTplDifficulty}
+                    options={[
+                      { value: '', label: '— 選択してください —' },
+                      ...DIFFICULTIES.map((d) => ({ value: d.value, label: `${d.label}（${d.description}）` })),
+                    ]}
+                  />
+                </div>
+
+                {/* カスタム教科入力 */}
+                {newTplSubject === '__custom' && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">教科名（入力）</label>
+                    <input
+                      value={newTplCustomSubject}
+                      onChange={(e) => setNewTplCustomSubject(e.target.value)}
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
+                        outline-none placeholder:text-[#94a3b8] shadow-sm"
+                      placeholder="例: 地学"
+                      autoFocus
+                    />
+                  </div>
+                )}
+
+                {/* 分野 */}
+                {effectiveNewSubject && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">
+                      分野
+                      <span className="text-[10px] font-normal text-[#94a3b8] ml-1 normal-case tracking-normal">（任意）</span>
+                    </label>
+                    {newTplFieldOptions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2.5">
+                        {newTplFieldOptions.slice(0, 15).map((f) => (
+                          <button key={f} type="button"
+                            onClick={() => setNewTplField(newTplField === f ? '' : f)}
+                            className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-300 ${
+                              newTplField === f
+                                ? 'bg-[#2563eb] text-white border-transparent shadow-md'
+                                : 'bg-[#f0f4ff] text-[#64748b] border-blue-200/60 hover:border-[#2563eb]/30 hover:text-[#1e293b] hover:shadow-md'
+                            }`}>
+                            {f}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      value={newTplField}
+                      onChange={(e) => setNewTplField(e.target.value)}
+                      placeholder={newTplFieldOptions.length > 0 ? '候補から選択 or 自由入力' : '分野名を入力（例: 微分法）'}
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
+                        outline-none placeholder:text-[#94a3b8] shadow-sm"
+                    />
+                  </div>
+                )}
+
+                {/* テーマ */}
+                {effectiveNewSubject && (
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">
+                      テーマ
+                      <span className="text-[10px] font-normal text-[#94a3b8] ml-1 normal-case tracking-normal">（任意・さらに細かい分類）</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newTplTheme}
+                      onChange={(e) => setNewTplTheme(e.target.value)}
+                      placeholder="例: 置換積分、三角関数の合成、運動方程式の立式"
+                      className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
+                        outline-none placeholder:text-[#94a3b8] shadow-sm"
+                    />
+                  </div>
+                )}
+
+                {/* 作成ボタン */}
+                <div className="flex flex-col gap-3 pt-2">
+                  <button
+                    onClick={handleCreateTemplate}
+                    disabled={creatingTemplate || !effectiveNewSubject || !newTplDifficulty}
+                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-[15px] font-bold
+                               text-white manual-pdf-btn
+                               disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    {creatingTemplate ? '作成中...' : 'このパターンを保存する'}
+                  </button>
+                  <button
+                    onClick={() => { setShowCreateTemplate(false); setNewTplSubject(''); setNewTplCustomSubject(''); setNewTplField(''); setNewTplTheme(''); setNewTplDifficulty(''); }}
+                    className="w-full px-4 py-2.5 rounded-xl text-sm font-medium text-[#64748b] hover:text-[#1e293b] hover:bg-blue-50/60 transition-all"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+                {/* 操作ヒント */}
+                <div className="flex items-center gap-2 pt-1 px-1">
+                  <div className="w-4 h-4 rounded-full bg-[#2563eb]/10 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-2.5 h-2.5 text-[#1e293b]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
+                  <p className="text-[10px] text-[#94a3b8]">保存後、自動で選択されます。そのまま「次のステップへ」で進めます。</p>
+                </div>
+              </div>
+            </div>
+          ) : (
             <button
               onClick={() => { setTemplateId(''); setShowCreateTemplate(true); }}
-              className="text-[12px] text-[#64748b] hover:text-[#2563eb] transition-colors underline underline-offset-2"
+              className="w-full p-5 rounded-2xl section-frosted border-2 border-dashed border-blue-200/60
+                         hover:border-[#2563eb]/40 hover:bg-blue-50/40 hover:shadow-md
+                         active:scale-[0.98]
+                         transition-all duration-300 flex items-center justify-center gap-3 group"
             >
-              ＋ 新しい出題パターンを作成する
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#2563eb] flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </div>
+              <span className="text-[15px] font-bold text-[#2563eb] group-hover:text-[#1e40af] transition-colors">
+                出題パターンを新しく作る
+              </span>
             </button>
-          </div>
+          )}
         </div>
       )}
 
