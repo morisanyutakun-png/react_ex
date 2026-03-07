@@ -2209,19 +2209,25 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "\\usepackage{titlesec}\n"
                         "\\usepackage{xcolor}\n"
                         "\\definecolor{mainblue}{HTML}{1A5276}\n"
+                        "\\definecolor{accentcolor}{HTML}{2563EB}\n"
+                        "\\definecolor{rulecolor}{HTML}{2C3E50}\n"
                         "\\pagestyle{fancy}\\fancyhf{}\n"
                         "\\renewcommand{\\headrulewidth}{0.8pt}\n"
-                        "\\fancyhead[L]{\\small\\textsf{\\textbf{類題演習}}}\n"
-                        "\\fancyhead[R]{\\small\\textsf{\\thepage}}\n"
+                        "\\renewcommand{\\headrule}{\\hbox to\\headwidth{\\color{mainblue}\\leaders\\hrule height \\headrulewidth\\hfill}}\n"
+                        "\\fancyhead[L]{\\small\\color{mainblue}\\textsf{\\textbf{類題演習}}}\n"
+                        "\\fancyhead[R]{\\small\\color{mainblue}\\textsf{\\thepage}}\n"
                         "\\setlength{\\headheight}{14pt}\n"
-                        "\\newcommand{\\problem}[1]{\\subsection*{\\textbf{問題 #1}}}\n"
-                        "\\newcommand{\\answer}[1]{\\noindent\\rule{\\linewidth}{0.4pt}\\subsection*{問題 #1 の解答}}\n\n"
+                        "% セクション見出しに色適用\n"
+                        "\\titleformat{\\section}{\\Large\\bfseries\\color{mainblue}}{}{0em}{}[\\vspace{-0.5em}{\\color{mainblue}\\rule{\\linewidth}{0.4pt}}]\n"
+                        "\\titleformat{\\subsection}{\\large\\bfseries\\color{accentcolor}}{}{0em}{}\n"
+                        "\\newcommand{\\problem}[1]{\\subsection*{\\textcolor{accentcolor}{\\textbf{問題 #1}}}}\n"
+                        "\\newcommand{\\answer}[1]{\\noindent{\\color{rulecolor}\\rule{\\linewidth}{0.4pt}}\\subsection*{\\textcolor{accentcolor}{問題 #1 の解答}}}\n\n"
                         "\\begin{document}\n"
                         "\\setstretch{1.3}\n\n"
-                        "\\section*{問題}\n\n"
+                        "\\section*{\\textcolor{mainblue}{問題}}\n\n"
                         "{{problems_section}}\n\n"
                         "\\newpage\n\n"
-                        "\\section*{解答・解説}\n\n"
+                        "\\section*{\\textcolor{mainblue}{解答・解説}}\n\n"
                         "{{answers_section}}\n\n"
                         "\\end{document}\n"
                     )
@@ -2231,43 +2237,60 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                             "- {{problems_section}} の冒頭に模試ヘッダーを入れる:\n"
                             "  {\\large\\bfseries 模擬試験} \\hfill 制限時間: 60分 \\quad 満点: 100点\n"
                             "  注意事項を \\begin{itemize} で3〜5項目。\n"
-                            "- 大問は \\section*{第1問}（配点: XX点）形式。小問は \\begin{enumerate}[(1)]。\n"
+                            "- 大問は \\section*{\\textcolor{mainblue}{第1問}}（配点: XX点）形式。小問は \\begin{enumerate}[(1)]。\n"
                             "- {{answers_section}} には \\answer{N} で解答。配点内訳を明記。\n"
-                            "- 問題と解答は \\newpage で分離。\n\n"
+                            "- 問題と解答は \\newpage で分離。\n"
+                            "- すべての見出し・セクション名に \\textcolor{mainblue}{...} を使用すること。\n\n"
                         )
                     elif preset_id == 'report':
                         struct_rules = (
                             "=== レイアウトルール ===\n"
                             "- {{problems_section}} に \\problem{N} で問題を列挙。\n"
                             "- {{answers_section}} は各問3部構成:\n"
-                            "  \\answer{N} → \\paragraph{解法}（step-by-step）→ \\paragraph{ポイント}（箇条書き）\n"
+                            "  \\answer{N} → \\paragraph{\\textcolor{accentcolor}{解法}}（step-by-step）→ \\paragraph{\\textcolor{accentcolor}{ポイント}}（箇条書き）\n"
                             "- align* で計算過程を揃える。\n"
-                            "- 問題と解説は \\newpage で分離。\n\n"
+                            "- 問題と解説は \\newpage で分離。\n"
+                            "- すべての見出し・小見出しに \\textcolor{mainblue}{...} または \\textcolor{accentcolor}{...} を使用すること。\n\n"
                         )
                     else:  # exam
                         struct_rules = (
                             "=== レイアウトルール ===\n"
-                            "- 前半: \\section*{問題}、後半: \\section*{解答・解説}、\\newpage で分離。\n"
+                            "- 前半: \\section*{\\textcolor{mainblue}{問題}}、後半: \\section*{\\textcolor{mainblue}{解答・解説}}、\\newpage で分離。\n"
                             "- 各問題は \\problem{N} で始め、末尾に [XX点] と配点。\n"
                             "  小問は \\begin{enumerate}[(1)] の \\item。\n"
-                            "- 各解答は \\answer{N} で始める。途中式・考え方を含む。\n\n"
+                            "- 各解答は \\answer{N} で始める。途中式・考え方を含む。\n"
+                            "- すべての見出し・セクション名には \\textcolor{mainblue}{...} を使用すること。\n\n"
                         )
 
                 elif preset_id == 'worksheet':
                     latex_skeleton = (
                         _cjk_preamble +
-                        "\\usepackage{ulem}\n\n"
+                        "\\usepackage{ulem}\n"
+                        "\\usepackage{xcolor}\n"
+                        "\\usepackage{fancyhdr}\n"
+                        "\\definecolor{mainblue}{HTML}{1A5276}\n"
+                        "\\definecolor{accentcolor}{HTML}{2563EB}\n"
+                        "\\definecolor{rulecolor}{HTML}{2C3E50}\n"
+                        "\\pagestyle{fancy}\\fancyhf{}\n"
+                        "\\renewcommand{\\headrulewidth}{0.8pt}\n"
+                        "\\renewcommand{\\headrule}{\\hbox to\\headwidth{\\color{mainblue}\\leaders\\hrule height \\headrulewidth\\hfill}}\n"
+                        "\\fancyfoot[C]{\\small\\color{mainblue}\\thepage}\n"
+                        "\\setlength{\\headheight}{14pt}\n\n"
                         "\\begin{document}\n"
                         "\\setstretch{1.3}\n\n"
                         "\\begin{flushright}\n"
                         "名前：\\underline{\\hspace{5cm}} \\quad 日付：\\underline{\\hspace{3cm}}\n"
                         "\\end{flushright}\n"
-                        "\\begin{center}{\\Large\\bfseries {{title}}}\\end{center}\n"
+                        "{\\color{mainblue}\\rule{\\linewidth}{0.8pt}}\n"
+                        "\\begin{center}{\\Large\\bfseries\\color{mainblue} {{title}}}\\end{center}\n"
+                        "{\\color{mainblue}\\rule{\\linewidth}{0.4pt}}\n"
                         "\\vspace{1em}\n\n"
                         "% 問題と解答スペースをここに生成\n"
                         "{{problems_section}}\n\n"
                         "\\newpage\n\n"
-                        "\\begin{center}{\\large\\bfseries 解答}\\end{center}\n\n"
+                        "{\\color{mainblue}\\rule{\\linewidth}{0.4pt}}\n"
+                        "\\begin{center}{\\large\\bfseries\\color{mainblue} 解答}\\end{center}\n"
+                        "{\\color{mainblue}\\rule{\\linewidth}{0.4pt}}\n\n"
                         "{{answers_section}}\n\n"
                         "\\end{document}\n"
                     )
@@ -2275,9 +2298,11 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "=== レイアウトルール ===\n"
                         "- 冒頭に名前欄・日付欄（スケルトン通り、変更しない）。\n"
                         "- {{problems_section}} に問題を \\begin{enumerate}[leftmargin=*] で列挙。\n"
+                        "  各問の番号は \\textcolor{accentcolor}{\\textbf{(N)}} で色付きにする。\n"
                         "  各啎の後に \\vspace{3cm} で解答スペースを設ける。\n"
                         "- {{answers_section}} に番号順に解答を \\begin{enumerate} で記載。\n"
-                        "- \\problem, \\answer 等の独自コマンドは使わない。\n\n"
+                        "- \\problem, \\answer 等の独自コマンドは使わない。\n"
+                        "- 問題間の区切りに {\\color{rulecolor}\\rule{\\linewidth}{0.2pt}} を使用する。\n\n"
                     )
 
                 elif preset_id == 'flashcard':
@@ -2285,10 +2310,18 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         _cjk_preamble +
                         "\\usepackage{array}\n"
                         "\\usepackage{longtable}\n"
-                        "\\usepackage{booktabs}\n\n"
+                        "\\usepackage{booktabs}\n"
+                        "\\usepackage{xcolor}\n"
+                        "\\usepackage{colortbl}\n"
+                        "\\definecolor{mainblue}{HTML}{1A5276}\n"
+                        "\\definecolor{accentcolor}{HTML}{2563EB}\n"
+                        "\\definecolor{rulecolor}{HTML}{2C3E50}\n"
+                        "\\definecolor{lightbg}{HTML}{EBF5FB}\n\n"
                         "\\begin{document}\n"
                         "\\setstretch{1.3}\n\n"
-                        "\\begin{center}{\\Large\\bfseries {{title}}}\\end{center}\n"
+                        "{\\color{mainblue}\\rule{\\linewidth}{0.8pt}}\n"
+                        "\\begin{center}{\\Large\\bfseries\\color{mainblue} {{title}}}\\end{center}\n"
+                        "{\\color{mainblue}\\rule{\\linewidth}{0.4pt}}\n"
                         "\\vspace{1em}\n\n"
                         "% 一問一答カード: longtable で問題と解答を左右に並べる\n"
                         "{{problems_section}}\n\n"
@@ -2298,12 +2331,12 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         "=== レイアウトルール ===\n"
                         "- {{problems_section}} を以下の longtable で置き換える:\n"
                         "\\begin{longtable}{|p{0.47\\textwidth}|p{0.47\\textwidth}|}\n"
-                        "\\hline\n"
-                        "\\textbf{問題} & \\textbf{解答} \\\\\n"
+                        "\\arrayrulecolor{rulecolor}\\hline\n"
+                        "\\rowcolor{mainblue!15}\\textcolor{mainblue}{\\textbf{問題}} & \\textcolor{mainblue}{\\textbf{解答}} \\\\\n"
                         "\\hline\n"
                         "\\endfirsthead\n"
-                        "\\hline\n"
-                        "\\textbf{問題} & \\textbf{解答} \\\\\n"
+                        "\\arrayrulecolor{rulecolor}\\hline\n"
+                        "\\rowcolor{mainblue!15}\\textcolor{mainblue}{\\textbf{問題}} & \\textcolor{mainblue}{\\textbf{解答}} \\\\\n"
                         "\\hline\n"
                         "\\endhead\n"
                         "\\hline\n"
@@ -2320,6 +2353,10 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 else:  # minimal
                     latex_skeleton = (
                         _cjk_preamble +
+                        "\\usepackage{xcolor}\n"
+                        "\\definecolor{mainblue}{HTML}{1A5276}\n"
+                        "\\definecolor{accentcolor}{HTML}{2563EB}\n"
+                        "\\definecolor{rulecolor}{HTML}{2C3E50}\n\n"
                         "\\begin{document}\n"
                         "\\setstretch{1.3}\n\n"
                         "% コンテンツをここに記述\n"
@@ -2329,8 +2366,10 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                     struct_rules = (
                         "=== レイアウトルール ===\n"
                         "- 問題: \\begin{enumerate}[leftmargin=*] の \\item で番号付きリスト。\n"
-                        "- 解答: \\section*{解答} の下に \\begin{enumerate} で番号順。\n"
-                        "- 独自コマンド（\\problem, \\answer）は使わない。\n\n"
+                        "- 解答: \\section*{\\textcolor{mainblue}{解答}} の下に \\begin{enumerate} で番号順。\n"
+                        "- 独自コマンド（\\problem, \\answer）は使わない。\n"
+                        "- 見出しには \\textcolor{mainblue}{...} を必ず使用。\n"
+                        "- 問題間の区切りに {\\color{rulecolor}\\rule{\\linewidth}{0.2pt}} を使用する。\n\n"
                     )
 
                 # Build modular LaTeX instructions based on subject
@@ -2348,55 +2387,55 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                 _brand_logo_url = getattr(req, 'brand_logo_url', None) or None
                 _paper_colors = getattr(req, 'paper_colors', None) or None
 
-                if _paper_colors and _paper_colors.get('headerColor'):
-                    _hc = _paper_colors['headerColor'].lstrip('#')
+                if _paper_colors:
+                    _hc = (_paper_colors.get('headerColor') or '1A5276').lstrip('#')
+                    _ac = (_paper_colors.get('accentColor') or _hc).lstrip('#')
+                    _rc = (_paper_colors.get('ruleColor') or _hc).lstrip('#')
+                    # 3色すべて差し替え
                     latex_skeleton = latex_skeleton.replace(
                         '\\definecolor{mainblue}{HTML}{1A5276}',
                         f'\\definecolor{{mainblue}}{{HTML}}{{{_hc}}}',
                     )
-                    # worksheet / flashcard / minimal にも色を注入
-                    if '\\definecolor{mainblue}' not in latex_skeleton:
-                        _ac = _paper_colors.get('accentColor', _hc).lstrip('#')
-                        _color_block = (
-                            f'\\usepackage{{xcolor}}\n'
-                            f'\\definecolor{{mainblue}}{{HTML}}{{{_hc}}}\n'
-                            f'\\definecolor{{accentcolor}}{{HTML}}{{{_ac}}}\n'
-                        )
-                        latex_skeleton = latex_skeleton.replace(
-                            '\\begin{document}',
-                            _color_block + '\\begin{document}',
-                            1,
-                        )
-                    else:
-                        # exam 系 — accentColor も追加
-                        _ac = _paper_colors.get('accentColor', _hc).lstrip('#')
-                        latex_skeleton = latex_skeleton.replace(
-                            '\\begin{document}',
-                            f'\\definecolor{{accentcolor}}{{HTML}}{{{_ac}}}\n\\begin{{document}}',
-                            1,
-                        )
+                    latex_skeleton = latex_skeleton.replace(
+                        '\\definecolor{accentcolor}{HTML}{2563EB}',
+                        f'\\definecolor{{accentcolor}}{{HTML}}{{{_ac}}}',
+                    )
+                    latex_skeleton = latex_skeleton.replace(
+                        '\\definecolor{rulecolor}{HTML}{2C3E50}',
+                        f'\\definecolor{{rulecolor}}{{HTML}}{{{_rc}}}',
+                    )
+                    # flashcard の lightbg も headerColor から明るい背景色を生成
+                    latex_skeleton = latex_skeleton.replace(
+                        '\\definecolor{lightbg}{HTML}{EBF5FB}',
+                        f'\\definecolor{{lightbg}}{{HTML}}{{{_hc}}}',
+                    )
 
                 if _brand_name:
                     latex_skeleton = latex_skeleton.replace(
-                        '\\fancyhead[L]{\\small\\textsf{\\textbf{類題演習}}}',
-                        f'\\fancyhead[L]{{\\small\\textsf{{\\textbf{{{_brand_name}}}}}}}',
+                        '\\fancyhead[L]{\\small\\color{mainblue}\\textsf{\\textbf{類題演習}}}',
+                        f'\\fancyhead[L]{{\\small\\color{{mainblue}}\\textsf{{\\textbf{{{_brand_name}}}}}}}',
                     )
 
-                # ブランディング指示をプロンプトに追加
+                # ブランディング指示をプロンプトに追加（具体的なLaTeXコマンド例つき）
                 _branding_parts = []
                 if _brand_name:
                     _branding_parts.append(f'- ヘッダー左側のタイトルには「{_brand_name}」と表示してください。')
-                if _paper_colors:
-                    _branding_parts.append(
-                        f'- メインカラーは \\definecolor{{mainblue}} で定義済みです。見出し・罫線・強調に mainblue を使用してください。'
-                    )
+                if _paper_colors or True:  # 常にカラー指示を出す
+                    _branding_parts.extend([
+                        '- プリアンブルで mainblue, accentcolor, rulecolor の3色が定義済みです。必ず以下のように使用してください:',
+                        '  * セクション見出し（\\section*, \\subsection*）: \\textcolor{mainblue}{見出しテキスト} で囲む',
+                        '  * 問題番号や小見出し: \\textcolor{accentcolor}{問題 1} のように色を付ける',
+                        '  * 水平線・区切り線: {\\color{rulecolor}\\rule{\\linewidth}{0.4pt}} を使う',
+                        '  * 重要語・キーワード: \\textcolor{accentcolor}{重要語} で強調する',
+                        '  * 問題・解答の番号付きリスト内でも、問題文の先頭に \\textcolor{accentcolor}{\\textbf{(1)}} のように色を適用する',
+                        '- 黒一色の見出しは禁止。すべての見出し・区切り線に上記カラーを適用すること。',
+                    ])
                 if _brand_logo_url:
                     _branding_parts.append(
-                        '- ヘッダーにロゴ画像を含める必要はありませんが、'
-                        f'ブランド名「{_brand_name or ""}」をヘッダーに目立つように表示してください。'
+                        f'- ブランド名「{_brand_name or ""}」をヘッダーに目立つように表示してください。'
                     )
                 if _branding_parts:
-                    latex_instr += '\n【ブランディング指示】\n' + '\n'.join(_branding_parts) + '\n'
+                    latex_instr += '\n【ブランディング・カラー指示（厳守）】\n' + '\n'.join(_branding_parts) + '\n'
 
                 # --- Inject extra diagram/utility packages ---
                 extra_pkgs = getattr(req, 'extra_packages', None) or []
@@ -2927,9 +2966,27 @@ def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
         _bp.append(f'- ヘッダー左側のタイトルには「{brand_name}」と表示してください。')
     if paper_colors:
         _hc = paper_colors.get('headerColor', '1A5276').lstrip('#')
-        _bp.append(f'- \\definecolor{{mainblue}}{{HTML}}{{{_hc}}} をメインカラーとして使用し、見出し・罫線に適用してください。')
+        _ac = paper_colors.get('accentColor', _hc).lstrip('#')
+        _rc = paper_colors.get('ruleColor', _hc).lstrip('#')
+        _bp.extend([
+            f'- プリアンブルで以下の3色が\\definecolorで定義済みです。必ずこれらを使ってカラフルなPDFを作成してください:',
+            f'  mainblue(#{_hc}): セクション見出し・ヘッダー・タイトル',
+            f'  accentcolor(#{_ac}): 問題番号・強調・キーワード',
+            f'  rulecolor(#{_rc}): 区切り線・罫線',
+            '- 具体的な使い方:',
+            '  * \\section*{{\\textcolor{{mainblue}}{{見出し}}}}',
+            '  * \\textcolor{{accentcolor}}{{\\textbf{{問題 1}}}}',
+            '  * {{\\color{{rulecolor}}\\rule{{\\linewidth}}{{0.4pt}}}}',
+            '  * 重要語: \\textcolor{{accentcolor}}{{重要語}}',
+            '- 黒一色の見出しは禁止。すべての見出し・問題番号・区切り線に色を適用すること。',
+        ])
+    else:
+        _bp.extend([
+            '- プリアンブルで mainblue, accentcolor, rulecolor が定義済みの場合、それらを積極的に使用してカラフルなPDFを作成してください。',
+            '- \\textcolor{{mainblue}}{{見出し}} や \\textcolor{{accentcolor}}{{強調}} のように色を活用してください。',
+        ])
     if _bp:
-        parts.append('【ブランディング指示】\n' + '\n'.join(_bp) + '\n\n')
+        parts.append('【カラー・ブランディング指示（厳守）】\n' + '\n'.join(_bp) + '\n\n')
 
     return ''.join(parts)
 
@@ -3070,9 +3127,27 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
         _bp.append(f'- ヘッダー左側のタイトルには「{brand_name}」と表示してください。')
     if paper_colors:
         _hc = paper_colors.get('headerColor', '1A5276').lstrip('#')
-        _bp.append(f'- \\definecolor{{mainblue}}{{HTML}}{{{_hc}}} をメインカラーとして使用し、見出し・罫線に適用してください。')
+        _ac = paper_colors.get('accentColor', _hc).lstrip('#')
+        _rc = paper_colors.get('ruleColor', _hc).lstrip('#')
+        _bp.extend([
+            f'- プリアンブルで以下の3色が\\definecolorで定義済みです。必ずこれらを使ってカラフルなPDFを作成してください:',
+            f'  mainblue(#{_hc}): セクション見出し・ヘッダー・タイトル',
+            f'  accentcolor(#{_ac}): 問題番号・強調・キーワード',
+            f'  rulecolor(#{_rc}): 区切り線・罫線',
+            '- 具体的な使い方:',
+            '  * \\section*{{\\textcolor{{mainblue}}{{見出し}}}}',
+            '  * \\textcolor{{accentcolor}}{{\\textbf{{問題 1}}}}',
+            '  * {{\\color{{rulecolor}}\\rule{{\\linewidth}}{{0.4pt}}}}',
+            '  * 重要語: \\textcolor{{accentcolor}}{{重要語}}',
+            '- 黒一色の見出しは禁止。すべての見出し・問題番号・区切り線に色を適用すること。',
+        ])
+    else:
+        _bp.extend([
+            '- プリアンブルで mainblue, accentcolor, rulecolor が定義済みの場合、それらを積極的に使用してカラフルなPDFを作成してください。',
+            '- \\textcolor{{mainblue}}{{見出し}} や \\textcolor{{accentcolor}}{{強調}} のように色を活用してください。',
+        ])
     if _bp:
-        parts.append('【ブランディング指示】\n' + '\n'.join(_bp) + '\n\n')
+        parts.append('【カラー・ブランディング指示（厳守）】\n' + '\n'.join(_bp) + '\n\n')
 
     # ── 最終チェックリスト（LLMへのリマインダー） ──
     parts.append(
