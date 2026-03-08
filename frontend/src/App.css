@@ -1484,6 +1484,535 @@ details[open] > .how-summary::before {
   .latex-validation-hints { flex-direction: column; gap: 4px; }
 }
 
+/* ==========================================
+   Mobile / Desktop visibility helpers
+   ========================================== */
+@media (min-width: 768px) {
+  .mobile-only { display: none !important; }
+}
+@media (max-width: 767px) {
+  .desktop-only { display: none !important; }
+}
+
+/* ==========================================
+   Mobile Top Bar (replaces header)
+   ========================================== */
+.mobile-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  padding: 12px 16px 0;
+}
+.mobile-top-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--c-primary);
+  text-align: center;
+  padding-bottom: 10px;
+}
+.mobile-progress-line {
+  height: 3px;
+  background: var(--c-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.mobile-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--c-primary), var(--c-secondary));
+  border-radius: 3px;
+  transition: width 0.4s var(--ease);
+}
+
+/* ==========================================
+   Mobile Bottom Navigation
+   ========================================== */
+.mobile-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  padding: 6px 0 2px;
+  padding-bottom: calc(2px + env(safe-area-inset-bottom, 0px));
+}
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex: 1;
+  padding: 6px 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.mobile-nav-item:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.mobile-nav-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.mobile-nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  line-height: 1.2;
+}
+.mobile-nav-item.active .mobile-nav-label {
+  color: var(--c-secondary);
+}
+.mobile-nav-item.active::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 2.5px;
+  background: var(--c-secondary);
+  border-radius: 2px;
+}
+.mobile-nav-item.done .mobile-nav-label {
+  color: var(--c-success);
+}
+
+/* ==========================================
+   Mobile Card Overrides
+   ========================================== */
+@media (max-width: 767px) {
+  .main-content {
+    padding: 12px 12px 100px;
+  }
+  .mobile-card {
+    border-radius: var(--radius-lg);
+    padding: 20px 16px;
+    border: none;
+    box-shadow: var(--shadow-sm);
+  }
+  .mobile-card-header {
+    margin-bottom: 16px;
+  }
+  .mobile-card-header .card-emoji {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+  .mobile-card-header .card-title {
+    font-size: 18px;
+  }
+  .mobile-card-desc {
+    font-size: 13px;
+  }
+  .card-header {
+    margin-bottom: 16px;
+  }
+  .card-emoji {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+}
+
+/* ==========================================
+   Mobile Tip Compact
+   ========================================== */
+@media (max-width: 767px) {
+  .mobile-tip-compact {
+    padding: 8px 10px;
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+}
+
+/* ==========================================
+   Mobile Sticky Action (bottom-anchored buttons)
+   ========================================== */
+.mobile-sticky-action {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+@media (max-width: 767px) {
+  .mobile-sticky-action {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 12px 0 4px;
+    margin: 16px -16px -20px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-top: 1px solid var(--c-border-light);
+    z-index: 5;
+  }
+}
+
+/* ==========================================
+   Large Button Variant
+   ========================================== */
+.btn-lg {
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: var(--radius-lg);
+  min-height: 52px;
+}
+
+/* ==========================================
+   Mobile Section (replaces step4-section)
+   ========================================== */
+.mobile-section {
+  margin-bottom: 16px;
+}
+.mobile-section-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--c-text);
+  margin-bottom: 12px;
+}
+.mobile-section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--c-primary);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.mobile-section-badge-b {
+  background: var(--c-success);
+}
+
+/* ==========================================
+   Mobile Action Group (prominent buttons)
+   ========================================== */
+.mobile-action-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.mobile-ai-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mobile-ai-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-primary);
+  background: #EBF5FB;
+  border: 1.5px solid #AED6F1;
+  text-decoration: none;
+  transition: all 0.2s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+  min-height: 48px;
+}
+.mobile-ai-link:active {
+  transform: scale(0.97);
+  background: #D6EAF8;
+}
+
+/* ==========================================
+   Mobile Alert (inline notification)
+   ========================================== */
+.mobile-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--c-accent-soft);
+  border: 1.5px solid #F9E79F;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: #8B6914;
+  margin-bottom: 12px;
+}
+.mobile-alert-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* ==========================================
+   Mobile Toggle Preview Button
+   ========================================== */
+.mobile-toggle-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-secondary);
+  cursor: pointer;
+  margin-bottom: 10px;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.2s var(--ease);
+}
+.mobile-toggle-preview:active {
+  background: var(--c-border-light);
+}
+
+/* ==========================================
+   Mobile Divider
+   ========================================== */
+.mobile-divider {
+  height: 1px;
+  background: var(--c-border);
+  margin: 20px 0;
+}
+
+/* ==========================================
+   Mobile Pattern Grid Enhancement
+   ========================================== */
+@media (max-width: 767px) {
+  .pattern-grid {
+    max-height: none;
+    gap: 10px;
+  }
+  .pattern-card {
+    padding: 14px 16px;
+    min-height: 56px;
+    border-width: 2px;
+  }
+  .pattern-card.selected {
+    border-width: 2.5px;
+  }
+  .pattern-card-name {
+    font-size: 14px;
+  }
+  .pattern-card-tags {
+    margin-top: 6px;
+  }
+  .pattern-tag {
+    padding: 3px 10px;
+    font-size: 11px;
+  }
+}
+
+/* ==========================================
+   Mobile Num Selector Enhancement
+   ========================================== */
+@media (max-width: 767px) {
+  .num-questions-selector {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .num-btn {
+    padding: 14px 8px;
+    font-size: 15px;
+    min-width: 0;
+    border-radius: var(--radius-md);
+    text-align: center;
+    min-height: 48px;
+  }
+}
+
+/* ==========================================
+   Mobile Preset Chips Enhancement
+   ========================================== */
+@media (max-width: 767px) {
+  .preset-chips {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .preset-chip {
+    padding: 12px 10px;
+    font-size: 13px;
+    justify-content: center;
+    min-height: 48px;
+    border-width: 2px;
+  }
+  .preset-chip.active {
+    border-width: 2.5px;
+  }
+  .preset-chip-emoji { font-size: 16px; }
+  .preset-chip-label { font-size: 12px; }
+}
+
+/* ==========================================
+   Mobile Base Mode Tabs Enhancement
+   ========================================== */
+@media (max-width: 767px) {
+  .base-mode-tabs {
+    gap: 4px;
+    padding: 4px;
+  }
+  .base-mode-tab {
+    font-size: 13px;
+    padding: 12px 6px;
+    gap: 4px;
+    min-height: 48px;
+    flex-direction: column;
+  }
+  .base-mode-tab svg { width: 20px; height: 20px; }
+}
+
+/* ==========================================
+   Mobile Upload Area Enhancement
+   ========================================== */
+@media (max-width: 767px) {
+  .upload-area {
+    padding: 32px 16px;
+    border-width: 2.5px;
+  }
+  .upload-icon svg { width: 36px; height: 36px; }
+  .upload-label {
+    font-size: 15px;
+    margin-top: 4px;
+  }
+  .upload-formats {
+    font-size: 12px;
+    margin-top: 8px;
+  }
+}
+
+/* ==========================================
+   Mobile Base Problem Cards
+   ========================================== */
+@media (max-width: 767px) {
+  .base-problem-list {
+    max-height: none;
+    gap: 10px;
+  }
+  .base-problem-card {
+    padding: 16px;
+    border-width: 2px;
+    min-height: 56px;
+  }
+  .base-problem-stem {
+    font-size: 14px;
+  }
+}
+
+/* ==========================================
+   Mobile Success Card
+   ========================================== */
+@media (max-width: 767px) {
+  .mobile-success-card {
+    text-align: center;
+    padding-top: 40px;
+  }
+  .mobile-success-card .success-icon {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* ==========================================
+   Mobile Help Modal
+   ========================================== */
+@media (max-width: 767px) {
+  .help-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .help-modal {
+    max-height: 85vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    animation: slideUpModal 0.3s var(--ease) both;
+  }
+  @keyframes slideUpModal {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+}
+
+/* ==========================================
+   Mobile Textarea Enhancement
+   ========================================== */
+@media (max-width: 767px) {
+  .manual-textarea {
+    height: 180px;
+    font-size: 13px !important;
+    padding: 14px;
+    border-width: 2px;
+  }
+  .manual-textarea:focus {
+    border-color: var(--c-success);
+    box-shadow: 0 0 0 3px rgba(39,174,96,0.12);
+  }
+}
+
+/* ==========================================
+   Mobile Btn Row Enhancement
+   ========================================== */
+@media (max-width: 767px) {
+  .btn-row {
+    gap: 8px;
+  }
+  .btn-row-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .btn-row .btn {
+    min-height: 48px;
+    font-size: 14px;
+  }
+}
+
+/* ==========================================
+   Mobile Toast Position (above bottom nav)
+   ========================================== */
+@media (max-width: 767px) {
+  .toast-wrap {
+    bottom: 72px;
+  }
+  .toast {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+}
+
+/* ==========================================
+   Mobile Field Enhancements
+   ========================================== */
+@media (max-width: 767px) {
+  .field-label {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .field-hint {
+    font-size: 13px;
+  }
+  .input, .select {
+    padding: 14px 16px;
+    font-size: 16px; /* prevents zoom on iOS */
+    border-width: 2px;
+  }
+}
+
 /* Safe area for mobile */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .app-shell { padding-bottom: env(safe-area-inset-bottom); }

@@ -276,8 +276,8 @@ export default function App() {
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       {loading && <LoadingOverlay text={loadingMsg} />}
 
-      {/* ── HEADER ── */}
-      <header className="header">
+      {/* ── HEADER (desktop only) ── */}
+      <header className="header desktop-only">
         <div className="header-inner">
           <div className="logo">
             <div className="logo-mark"><Ico.Star /></div>
@@ -295,12 +295,20 @@ export default function App() {
         </div>
       </header>
 
+      {/* ── MOBILE TOP BAR ── */}
+      <div className="mobile-top-bar mobile-only">
+        <div className="mobile-top-title">{STEPS[step - 1]?.label || '類題生成'}</div>
+        <div className="mobile-progress-line">
+          <div className="mobile-progress-fill" style={{width: `${(step / STEPS.length) * 100}%`}} />
+        </div>
+      </div>
+
       <div className="main-content">
 
         {mode === 'user' ? (
           <>
-            {/* ── FLOW OVERVIEW ── */}
-            <div className="flow-overview">
+            {/* ── FLOW OVERVIEW (desktop only) ── */}
+            <div className="flow-overview desktop-only">
               <span>パターン選択</span>
               <span className="flow-arrow">→</span>
               <span>問題数・ベース問題</span>
@@ -310,8 +318,8 @@ export default function App() {
               <span>PDF完成</span>
             </div>
 
-            {/* ── PROGRESS BAR ── */}
-            <div className="progress-bar">
+            {/* ── PROGRESS BAR (desktop only) ── */}
+            <div className="progress-bar desktop-only">
               {STEPS.map((s, i) => (
                 <React.Fragment key={s.n}>
                   <div
@@ -329,7 +337,7 @@ export default function App() {
                 </React.Fragment>
               ))}
             </div>
-            <div className="progress-percentage">
+            <div className="progress-percentage desktop-only">
               ステップ {step} / {STEPS.length}
             </div>
 
@@ -337,16 +345,16 @@ export default function App() {
                 STEP 1 — 出題パターンを選ぶ
                ══════════════════════════════════ */}
             {step === 1 && (
-              <div className="card anim-fade-up">
-                <div className="card-header">
+              <div className="card anim-fade-up mobile-card">
+                <div className="card-header mobile-card-header">
                   <span className="card-emoji">📝</span>
                   <div className="card-title">出題パターンを選ぶ</div>
-                  <div className="card-desc">問題の出題形式・スタイルを決めるパターンを選択してください</div>
+                  <div className="card-desc mobile-card-desc">パターンを選択してください</div>
                 </div>
 
-                <div className="tip">
+                <div className="tip mobile-tip-compact">
                   <span className="tip-icon">💡</span>
-                  <div>パターンには科目・分野の情報が含まれています。目的に合ったものを選んでください。</div>
+                  <div>科目・分野から目的に合ったものを選んでください</div>
                 </div>
 
                 <div className="pattern-grid">
@@ -375,14 +383,16 @@ export default function App() {
                   })}
                 </div>
 
-                <button
-                  className="btn btn-primary btn-block"
-                  style={{marginTop: 16}}
-                  onClick={() => { if (form.templateId) { fetchBaseProblems(form.templateId); setStep(2) } }}
-                  disabled={!form.templateId}
-                >
-                  次へ <Ico.ArrowRight />
-                </button>
+                {/* Mobile: sticky bottom action */}
+                <div className="mobile-sticky-action">
+                  <button
+                    className="btn btn-primary btn-block btn-lg"
+                    onClick={() => { if (form.templateId) { fetchBaseProblems(form.templateId); setStep(2) } }}
+                    disabled={!form.templateId}
+                  >
+                    次へ進む <Ico.ArrowRight />
+                  </button>
+                </div>
               </div>
             )}
 
@@ -594,17 +604,19 @@ export default function App() {
 
                 </div>
 
-                <div className="btn-row btn-row-2">
-                  <button className="btn btn-outline" onClick={() => setStep(1)}>
-                    <Ico.ArrowLeft /> 戻る
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={generatePrompt}
-                    disabled={loading || (baseMode === 'db' && !selectedBaseProblem) || (baseMode === 'pdf' && !basePdfData)}
-                  >
-                    指示文を作成 <Ico.ArrowRight />
-                  </button>
+                <div className="mobile-sticky-action">
+                  <div className="btn-row btn-row-2">
+                    <button className="btn btn-outline btn-lg" onClick={() => setStep(1)}>
+                      <Ico.ArrowLeft /> 戻る
+                    </button>
+                    <button
+                      className="btn btn-primary btn-lg"
+                      onClick={generatePrompt}
+                      disabled={loading || (baseMode === 'db' && !selectedBaseProblem) || (baseMode === 'pdf' && !basePdfData)}
+                    >
+                      指示文を作成 <Ico.ArrowRight />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -613,122 +625,107 @@ export default function App() {
                 STEP 3 — AI依頼 & 結果入力 (統合)
                ══════════════════════════════════ */}
             {step === 3 && (
-              <div className="card anim-fade-up">
-                <div className="card-header">
+              <div className="card anim-fade-up mobile-card">
+                <div className="card-header mobile-card-header">
                   <span className="card-emoji">🤖</span>
-                  <div className="card-title">AIに依頼して結果を入力</div>
-                  <div className="card-desc">指示文を外部AIに送り、返ってきたLaTeXコードを貼り付けてPDFに変換します</div>
+                  <div className="card-title">AIに依頼 → 結果を入力</div>
+                  <div className="card-desc mobile-card-desc">指示文をAIに送り、返ってきたコードを貼り付けてください</div>
                 </div>
 
                 {/* ─── Section A: Prompt copy ─── */}
-                <div className="step4-section">
-                  <button
-                    className="step4-section-toggle"
-                    onClick={() => setShowPromptSection(p => !p)}
-                    aria-expanded={showPromptSection}
-                  >
-                    <div className="step4-section-header">
-                      <span className="step4-section-num">A</span>
-                      <span className="step4-section-title">指示文をコピーしてAIに送信</span>
+                <div className="mobile-section">
+                  <div className="mobile-section-label">
+                    <span className="mobile-section-badge">A</span>
+                    指示文をコピーしてAIに送信
+                  </div>
+
+                  {/* Mobile: quick action buttons first */}
+                  <div className="mobile-action-group">
+                    <button className="btn btn-primary btn-block btn-lg" onClick={copyPrompt}>
+                      <Ico.Copy /> 指示文をコピー
+                    </button>
+                    <div className="mobile-ai-links">
+                      <a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="mobile-ai-link">
+                        <Ico.ExternalLink /> ChatGPTで開く
+                      </a>
+                      <a href="https://claude.ai/" target="_blank" rel="noreferrer" className="mobile-ai-link">
+                        <Ico.ExternalLink /> Claudeで開く
+                      </a>
                     </div>
+                  </div>
+
+                  {baseMode === 'pdf' && basePdfData && (
+                    <div className="mobile-alert">
+                      <span className="mobile-alert-icon">📎</span>
+                      ベースPDF「{basePdfData.filename}」もAIに添付してください
+                    </div>
+                  )}
+
+                  {/* Collapsible prompt preview (desktop: always visible) */}
+                  <button
+                    className="mobile-toggle-preview"
+                    onClick={() => setShowPromptSection(p => !p)}
+                  >
+                    {showPromptSection ? '指示文を隠す' : '指示文を確認する'}
                     {showPromptSection ? <Ico.ChevronUp /> : <Ico.ChevronDown />}
                   </button>
 
                   {showPromptSection && (
-                    <div className="step4-section-body anim-fade-up">
-                      <div className="instruction-steps-compact">
-                        <div className="instruction-step-compact">
-                          <span className="instruction-num-sm">1</span>
-                          指示文をコピー
-                        </div>
-                        <div className="instruction-step-compact">
-                          <span className="instruction-num-sm">2</span>
-                          外部AIを開いて貼り付け
-                        </div>
-                        {baseMode === 'pdf' && basePdfData && (
-                          <div className="instruction-step-compact instruction-step-highlight">
-                            <span className="instruction-num-sm" style={{background:'var(--c-accent)'}}>!</span>
-                            ベースPDF「{basePdfData.filename}」もAIに添付
-                          </div>
-                        )}
-                        <div className="instruction-step-compact">
-                          <span className="instruction-num-sm">3</span>
-                          AIの出力 (<code>\documentclass</code>〜<code>{`\\end{document}`}</code>) をコピー
-                        </div>
-                      </div>
-
-                      <div className="prompt-preview">{prompt}</div>
-
-                      <div className="step4-actions-row">
-                        <button className="btn btn-primary" onClick={copyPrompt}>
-                          <Ico.Copy /> 指示文をコピー
-                        </button>
-                        <a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="ai-link-compact">
-                          <Ico.ExternalLink /> ChatGPT
-                        </a>
-                        <a href="https://claude.ai/" target="_blank" rel="noreferrer" className="ai-link-compact">
-                          <Ico.ExternalLink /> Claude
-                        </a>
-                      </div>
-
-                      <div className="step4-badges">
-                        {ragCtx?.chunk_count > 0 && (
-                          <span className="rag-badge">📚 {ragCtx.chunk_count}件の類似問題を参照</span>
-                        )}
-                        {currentPreset && (
-                          <span className="rag-badge">📄 形式: {currentPreset.name}</span>
-                        )}
-                        {baseMode === 'db' && selectedBaseProblem && (
-                          <span className="rag-badge">🎯 ベース問題選択済み</span>
-                        )}
-                        {baseMode === 'pdf' && basePdfData && (
-                          <span className="rag-badge">📎 PDF添付: {basePdfData.filename}</span>
-                        )}
-                      </div>
-                    </div>
+                    <div className="prompt-preview anim-fade-up">{prompt}</div>
                   )}
+
+                  <div className="step4-badges">
+                    {ragCtx?.chunk_count > 0 && (
+                      <span className="rag-badge">📚 {ragCtx.chunk_count}件参照</span>
+                    )}
+                    {currentPreset && (
+                      <span className="rag-badge">📄 {currentPreset.name}</span>
+                    )}
+                    {baseMode === 'db' && selectedBaseProblem && (
+                      <span className="rag-badge">🎯 ベース問題済</span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="step4-divider" />
+                <div className="mobile-divider" />
 
                 {/* ─── Section B: Paste & Generate PDF ─── */}
-                <div className="step4-section">
-                  <div className="step4-section-header" style={{marginBottom: 12}}>
-                    <span className="step4-section-num step4-section-num-b">B</span>
-                    <span className="step4-section-title">AIの出力を貼り付けてPDF生成</span>
+                <div className="mobile-section">
+                  <div className="mobile-section-label">
+                    <span className="mobile-section-badge mobile-section-badge-b">B</span>
+                    AIの出力を貼り付け
                   </div>
 
                   <div className="field">
-                    <label className="field-label">LaTeX コード（AIの出力を貼り付け）</label>
                     <textarea
                       className="input manual-textarea"
-                      placeholder={"\\documentclass{article}\n\\usepackage{amsmath}\n\\begin{document}\n\\section{問題}\n問1: ...\n\\end{document}"}
+                      placeholder={"\\documentclass{article}\n...\n\\end{document}"}
                       value={llmOutput}
                       onChange={e => setLlmOutput(e.target.value)}
                     />
                     {llmOutput.trim() && (
                       <div className="latex-validation-hints">
                         <span className={llmOutput.includes('\\documentclass') ? 'hint-ok' : 'hint-warn'}>
-                          {llmOutput.includes('\\documentclass') ? '✅' : '⚠️'} \documentclass
+                          {llmOutput.includes('\\documentclass') ? '✅' : '⚠️'} documentclass
                         </span>
                         <span className={llmOutput.includes('\\end{document}') ? 'hint-ok' : 'hint-warn'}>
-                          {llmOutput.includes('\\end{document}') ? '✅' : '⚠️'} \end{'{document}'}
+                          {llmOutput.includes('\\end{document}') ? '✅' : '⚠️'} end
                         </span>
                       </div>
                     )}
                   </div>
+                </div>
 
+                {/* Mobile sticky bottom actions */}
+                <div className="mobile-sticky-action">
                   <button
-                    className="btn btn-success btn-block"
+                    className="btn btn-success btn-block btn-lg"
                     onClick={generatePdf}
                     disabled={loading || !llmOutput.trim()}
                   >
-                    PDF を生成
+                    <Ico.Zap /> PDF を生成する
                   </button>
-                </div>
-
-                <div style={{marginTop: 20}}>
-                  <button className="btn btn-outline" onClick={() => setStep(2)}>
+                  <button className="btn btn-outline btn-block" onClick={() => setStep(2)}>
                     <Ico.ArrowLeft /> 戻る
                   </button>
                 </div>
@@ -740,7 +737,7 @@ export default function App() {
                 STEP 4 — 完了
                ══════════════════════════════════ */}
             {step === 4 && (
-              <div className="card anim-fade-up">
+              <div className="card anim-fade-up mobile-card mobile-success-card">
                 <div className="success-screen">
                   <div className="success-icon">
                     <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -748,15 +745,14 @@ export default function App() {
                     </svg>
                   </div>
                   <div className="card-title" style={{fontSize:22, marginBottom:8}}>PDF作成完了！</div>
-                  <div className="card-desc" style={{marginBottom:32}}>
-                    LaTeXコードからPDFへの変換が完了しました。<br />
-                    下のボタンからダウンロード・閲覧できます。
+                  <div className="card-desc mobile-card-desc" style={{marginBottom:24}}>
+                    PDFが完成しました
                   </div>
-                  <div style={{display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap'}}>
-                    <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-success">
+                  <div className="mobile-sticky-action">
+                    <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg">
                       <Ico.ExternalLink /> PDFを開く
                     </a>
-                    <button className="btn btn-outline" onClick={resetWizard}>
+                    <button className="btn btn-outline btn-block btn-lg" onClick={resetWizard}>
                       <Ico.RotateCcw /> もう一度作る
                     </button>
                   </div>
@@ -783,10 +779,51 @@ export default function App() {
         )}
       </div>
 
-      {/* ── Floating Help Button ── */}
-      <button className="help-floating" onClick={() => setShowHelp(true)} title="ヘルプ">
+      {/* ── Floating Help Button (desktop only) ── */}
+      <button className="help-floating desktop-only" onClick={() => setShowHelp(true)} title="ヘルプ">
         <Ico.Help />
       </button>
+
+      {/* ── Mobile Bottom Navigation ── */}
+      {mode === 'user' && (
+        <nav className="mobile-bottom-nav mobile-only">
+          <button
+            className={`mobile-nav-item ${step === 1 ? 'active' : ''} ${step > 1 ? 'done' : ''}`}
+            onClick={() => step >= 1 && setStep(1)}
+          >
+            <span className="mobile-nav-icon">📝</span>
+            <span className="mobile-nav-label">パターン</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${step === 2 ? 'active' : ''} ${step > 2 ? 'done' : ''}`}
+            onClick={() => step >= 2 && setStep(2)}
+            disabled={step < 2}
+          >
+            <span className="mobile-nav-icon">⚙️</span>
+            <span className="mobile-nav-label">設定</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${step === 3 ? 'active' : ''} ${step > 3 ? 'done' : ''}`}
+            onClick={() => step >= 3 && setStep(3)}
+            disabled={step < 3}
+          >
+            <span className="mobile-nav-icon">🤖</span>
+            <span className="mobile-nav-label">AI依頼</span>
+          </button>
+          <button
+            className={`mobile-nav-item ${step === 4 ? 'active' : ''}`}
+            onClick={() => step >= 4 && setStep(4)}
+            disabled={step < 4}
+          >
+            <span className="mobile-nav-icon">✅</span>
+            <span className="mobile-nav-label">完成</span>
+          </button>
+          <button className="mobile-nav-item" onClick={() => setShowHelp(true)}>
+            <span className="mobile-nav-icon">❓</span>
+            <span className="mobile-nav-label">ヘルプ</span>
+          </button>
+        </nav>
+      )}
 
       {/* ── Help Modal ── */}
       {showHelp && (
