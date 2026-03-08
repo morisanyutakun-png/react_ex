@@ -2501,82 +2501,57 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                         '- テキストのみの大問は不可。\n'
                     )
 
-                # --- Always inject general diagram accuracy instruction ---
-                latex_instr += (
-                    '\n【★★ 図・グラフの描画精度ルール（TikZ/pgfplotsを使う場合）— 厳守 ★★】\n'
-                    '図やグラフを描画する場合、以下を厳守:\n'
-                    '1. ★ 描画前に必ず座標計算をコメントで明記し、検算すること（これを省略しない）\n'
-                    '   例: % === 座標計算 ===\n'
-                    '   % A=(0,0), B=(3,0), C=(3*cos60°,3*sin60°)=(1.5,2.598)\n'
-                    '   % 検算: AB=3, AC=3, BC=sqrt((3-1.5)^2+(0-2.598)^2)=sqrt(2.25+6.75)=3 → 正三角形 ✓\n'
-                    '2. 三角関数の値は正確に（間違えやすいので注意）:\n'
-                    '   cos30°=0.866, sin30°=0.5, cos45°=0.707, sin45°=0.707\n'
-                    '   cos60°=0.5, sin60°=0.866, tan30°=0.577, tan45°=1.0, tan60°=1.732\n'
-                    '3. 閉じた図形は必ず -- cycle で閉じる\n'
-                    '4. 交点は連立方程式で正確に求め、計算過程をコメントで書く\n'
-                    '5. グラフはsamples=100以上で滑らかに描画\n'
-                    '6. ★ 最終検算: 座標が正しいかセルフチェック — 長さ・角度・面積の整合性を確認\n'
-                    '7. ★ 図のスケール: 問題文の数値と図の比率が一致すること（2:1なら図でも2:1に）\n'
-                    '8. ★ ラベル位置: node[above], node[right] 等で重なりを防ぎ、図が読みやすいこと\n'
-                )
-
-                # --- Inject realism diagram instructions ---
-                _diagram_realism = getattr(req, 'diagram_realism', True)
-                if _diagram_realism and extra_pkgs:
-                    _realism_instr = (
-                        '\n【★★★ リアルで教科書品質の図描画ルール — 最重要 ★★★】\n'
-                        '以下のルールをすべての図・図表に厳密に適用すること:\n\n'
-                        '■ 計算精度ルール（図の正確性を保証するための必須手順）:\n'
-                        '1. ★★ 図を描く前に、必ず座標の計算過程をコメントで書くこと（省略厳禁）:\n'
-                        '   % === 座標計算 ===\n'
-                        '   % 三角形ABC: A=(0,0), B=(4,0)\n'
-                        '   % AB=4, AC=3, 角A=60° → C=(3*cos60°, 3*sin60°) = (1.5, 2.598)\n'
-                        '   % 検算: BC = sqrt((4-1.5)^2+(0-2.598)^2) = sqrt(6.25+6.75) = sqrt(13) ≈ 3.606 ✓\n'
-                        '2. 三角関数の値を正確に使う（頻出ミスに注意）:\n'
-                        '   cos30°=0.866, sin30°=0.5, cos45°=0.707, sin45°=0.707\n'
-                        '   cos60°=0.5, sin60°=0.866, tan30°=0.577, tan60°=1.732\n'
-                        '   ★ よくある間違い: cos60°を0.866にしないこと（正しくは0.5）\n'
-                        '3. 円の座標: 半径rの円上の角θの点は (中心x+r*cosθ, 中心y+r*sinθ)\n'
-                        '4. 交点計算: 2直線の方程式を連立して解き、コメントで検算を書く\n'
-                        '5. ★ 面積・長さ・角度の値が問題文と一致しているか最終検証する\n'
-                        '6. ★ 図のアスペクト比: 問題文中の比率（例: 3:4:5）を忠実に図に反映すること\n'
-                        '7. ★ 座標の桁数: 小数は第3位まで計算し、丸め誤差による図の歪みを防ぐ\n\n'
-                        '■ 基本品質ルール:\n'
-                        '6. 線の太さを3段階で使い分ける: 主要図形=thick, 補助線=thin, 寸法線=very thin。\n'
-                        '7. 矢印は -{Stealth[length=3mm]} で統一。ベクトル量は [very thick,-{Stealth}] で強調。\n'
-                        '8. 塗りつぶし: fill=gray!15 や pattern=north east lines で領域を視覚区別。\n'
-                        '9. ラベル: node[above right] 等で重なりを防ぎ、数式は $...$ モードで記述。\n'
-                        '10. 点線=dashed, 延長線=dotted を適切に使い分け、視覚的階層を作る。\n'
-                        '11. 角度の弧: arc (start:end:radius) + ラベル $\\theta$ を弧の中央に配置。\n'
-                        '12. すべての座標を明示的に (x,y) で指定し、座標一覧をコメントで先に書く。\n\n'
-                        '■ 幾何学図形の正確性チェックリスト:\n'
-                        '13. 平行線: 方向ベクトルが平行（外積=0）か確認。\n'
-                        '14. 垂直線: 方向ベクトルの内積がゼロか確認。\n'
-                        '15. 中点: M = ((x1+x2)/2, (y1+y2)/2) を正確に計算。\n'
-                        '16. 角の二等分線: 両側の角度が等しいか計算で確認。\n'
-                        '17. 接線: 接点での半径と接線が垂直か確認。\n'
-                        '18. 相似・合同: 対応する辺の比や角度が正しいか検証。\n\n'
-                        '■ 生物系図のリアル描画ルール:\n'
-                        '19. 細胞・器官図: 二重線 (double) で細胞膜を表現、内部は fill で色分け。\n'
-                        '   ミトコンドリア=fill=red!10, 核=fill=blue!10, 葉緑体=fill=green!10 等。\n'
-                        '20. DNA二重螺旋: sin/cos 曲線で螺旋を描き、横棒で塩基対を表現。\n'
-                        '   \\draw[thick,blue] plot[domain=0:6.28,samples=100] ({0.5*cos(deg(\\x))}, {\\x});\n'
-                        '21. 家系図: 男性=□, 女性=○, 患者=塗りつぶし、婚姻線=水平実線、子孫線=垂直線。\n'
-                        '22. 代謝経路: 酵素名を矢印の上に \\footnotesize で配置、阻害=⊣ (inhibit) マーク。\n'
-                        '23. 生体ネットワーク: ノードを circle で統一、活性化=→, 抑制=⊣, 触媒=◇。\n\n'
-                        '■ 化学系図のリアル描画ルール:\n'
-                        '24. 構造式の結合: 単結合=実線, 二重結合=二重線, 三重結合=三重線。\n'
-                        '    ウェッジ結合（手前）=太い三角, ダッシュ結合（奥）=破線の三角。\n'
-                        '25. 反応機構の矢印: 曲がり矢印 (curly arrow) で電子の移動を示す。\n'
-                        '26. 軌道図: エネルギー準位を水平線、電子を ↑↓ 矢印で表現。\n\n'
-                        '■ 共通仕上げルール:\n'
-                        '27. 図全体に \\centering と適切な \\caption を付ける。\n'
-                        '28. 色使い: 最大4色に抑え、blue, red!70, green!60!black, orange の組み合わせ推奨。\n'
-                        '29. フォント: 図中のテキストは \\footnotesize 以上、ラベルは \\small を基本とする。\n'
-                        '30. scope 環境で図の部品をグループ化し、保守性を高める。\n'
-                        '31. 図のサイズ: 幅は 0.7\\linewidth ～ 0.9\\linewidth に収め、余白を確保する。\n'
+                # --- Inject diagram accuracy rules only for STEM subjects ---
+                _subj_for_rules = _subject_for_rules  # already defined above
+                if _is_stem_subject(_subj_for_rules, orig_prompt_body):
+                    # 共通の STEM 図描画精度ルール
+                    _stem_diagram_base = (
+                        '\n【★★ 図・グラフの描画精度ルール — 厳守 ★★】\n'
+                        '1. 描画前に座標計算をコメントで明記し検算すること\n'
+                        '2. 閉じた図形は -- cycle で閉じる\n'
+                        '3. グラフはsamples=100以上で滑らかに\n'
+                        '4. 図のスケール: 問題文の数値と比率を一致させる\n'
+                        '5. ラベル: node[above]等で重なり防止\n'
                     )
-                    latex_instr += _realism_instr
+                    latex_instr += _stem_diagram_base
+
+                    # 科目別のリアリズムルール（排他的に注入）
+                    _diagram_realism = getattr(req, 'diagram_realism', True)
+                    if _diagram_realism and extra_pkgs:
+                        if _is_physics_subject(_subj_for_rules, orig_prompt_body):
+                            latex_instr += (
+                                '\n【物理図の精度ルール】\n'
+                                '- ★★ 物体が面に置かれている場合、底辺y座標=面y座標（隙間厳禁）\n'
+                                '- 三角関数値: cos30°=0.866, sin30°=0.5, cos60°=0.5, sin60°=0.866\n'
+                                '- 力ベクトル: -{Stealth[length=3mm]} で統一\n'
+                                '- 床面: pattern=north east lines でハッチング\n'
+                                '- 線の太さ: 主要=thick, 補助=thin, 寸法=very thin\n'
+                            )
+                        elif _is_chemistry_subject(_subj_for_rules, orig_prompt_body):
+                            latex_instr += (
+                                '\n【化学図の精度ルール】\n'
+                                '- 構造式: 単結合=実線, 二重=二重線, 三重=三重線\n'
+                                '- ウェッジ=太い三角, ダッシュ=破線三角\n'
+                                '- 反応機構: 曲がり矢印で電子移動を示す\n'
+                                '- 軌道図: 水平線+↑↓矢印\n'
+                            )
+                        elif _is_biology_subject(_subj_for_rules, orig_prompt_body):
+                            latex_instr += (
+                                '\n【生物図の精度ルール】\n'
+                                '- 細胞膜: double線, 内部はfill色分け\n'
+                                '- DNA: sin/cos曲線+横棒で塩基対\n'
+                                '- 家系図: 男=□, 女=○, 患者=塗りつぶし\n'
+                                '- 代謝経路: 酵素名を矢印上に配置\n'
+                            )
+                        else:
+                            # 数学等の一般STEM
+                            latex_instr += (
+                                '\n【幾何図形の精度ルール】\n'
+                                '- 三角関数値: cos30°=0.866, sin30°=0.5, cos60°=0.5, sin60°=0.866\n'
+                                '- 交点は連立方程式で求め検算をコメントに書く\n'
+                                '- 平行線: 外積=0確認, 垂直線: 内積=0確認\n'
+                                '- 色は最大4色, サイズは0.7~0.9\\linewidth\n'
+                            )
 
                 # --- Inject user custom request ---
                 _cust_req = getattr(req, 'custom_request', '') or ''
@@ -2773,6 +2748,42 @@ def _is_english_subject(subject: str, prompt_text: str = '') -> bool:
     return False
 
 
+def _is_chemistry_subject(subject: str, prompt_text: str = '') -> bool:
+    """科目名やプロンプト文から化学科目かどうか判定。"""
+    s = (subject or '').strip().lower()
+    if s in ('化学', 'chemistry'):
+        return True
+    combined = (s + ' ' + (prompt_text or '')[:500]).lower()
+    chem_keywords = {
+        '化学', 'chemistry', '有機化学', '無機化学', '化学反応', '酸化還元',
+        '中和', 'mol', 'モル', '電気分解', '結合', '構造式', '分子',
+        '原子量', '化学式', '反応式', '酸', '塩基', 'pH', '電離',
+        '熱化学', 'ヘスの法則', '化学平衡', 'ルシャトリエ',
+    }
+    for kw in chem_keywords:
+        if kw in combined:
+            return True
+    return False
+
+
+def _is_biology_subject(subject: str, prompt_text: str = '') -> bool:
+    """科目名やプロンプト文から生物科目かどうか判定。"""
+    s = (subject or '').strip().lower()
+    if s in ('生物', 'biology'):
+        return True
+    combined = (s + ' ' + (prompt_text or '')[:500]).lower()
+    bio_keywords = {
+        '生物', 'biology', '細胞', 'DNA', 'RNA', '遺伝', '遺伝子',
+        '酵素', '代謝', '光合成', '呼吸', '神経', 'ホルモン',
+        '生態系', '進化', '分類', '減数分裂', '体細胞分裂',
+        'タンパク質', 'アミノ酸', '免疫', '家系図',
+    }
+    for kw in bio_keywords:
+        if kw in combined:
+            return True
+    return False
+
+
 # --- プロンプト部品: コアルール（全科目共通）---
 _LATEX_CORE_RULES = (
     "=== LaTeX 出力の基本ルール（全科目共通・厳守） ===\n"
@@ -2831,35 +2842,51 @@ _LATEX_MATH_RULES = (
 # --- プロンプト部品: 品質ルール ---
 # --- プロンプト部品: 物理科目 TikZ 図専用ルール ---
 _LATEX_PHYSICS_DIAGRAM_RULES = (
-    "\n=== 物理科目の図（TikZ）作成ルール（物理の場合厳守） ===\n"
-    "PD1. ラベルは物理量の記号（$F$, $v$, $m$, $\\theta$, $T$, $N$, $\\mu$, $g$ 等）を使う。\n"
-    "     日本語テキスト（「力」「速度」等）を TikZ ノードに直接書かない。\n"
-    "     × node{力} → ○ node{$F$}\n"
-    "     × node{速度} → ○ node{$v$}\n"
-    "     日本語の説明が必要な場合は図の外の問題文中に記述する。\n"
-    "PD2. 力のベクトルは矢印付きで描く: \\draw[-{Stealth[length=3mm]},thick]\n"
-    "     作用点から力の向きに矢印を描くこと。\n"
-    "PD3. 物体の形状は正確に:\n"
-    "     - 質点: \\filldraw (x,y) circle (2pt);\n"
-    "     - 直方体: \\draw[thick] (x1,y1) rectangle (x2,y2);\n"
-    "     - 円: \\draw[thick] (cx,cy) circle (r);\n"
-    "     - ばね: snake decoration または coil decoration を使用。\n"
-    "     - 滑車: 小さい円で描画。\n"
-    "PD4. 角度の表記: \\draw (始点) arc (開始角:終了角:半径) で円弧を描き、\n"
-    "     中央付近に $\\theta$ 等の角度記号を配置する。\n"
-    "PD5. 接触面・床・壁:\n"
-    "     - 床面: \\draw[thick] (x1,0) -- (x2,0); にハッチング \\fill[pattern=north east lines]\n"
-    "     - 斜面: 傾斜角度を正確に座標で反映。三角関数で計算した座標を使う。\n"
-    "PD6. 力の分解図: 元のベクトルを実線、分解成分を破線 [dashed] で描き、\n"
-    "     直角マークを \\draw で小さい正方形として示す。\n"
-    "PD7. 電気回路図は circuitikz を使い、TikZ で手書きしない。\n"
-    "     \\ctikzset{bipoles/fill=white} を必ず設定し、母線を先に描画してから素子枝を描画する。\n"
-    "PD8. グラフ（v-t図、x-t図等）は pgfplots の axis 環境を使い、\n"
-    "     軸ラベルには物理量記号と単位を付ける: xlabel={$t$ [s]}, ylabel={$v$ [m/s]}。\n"
-    "PD9. 寸法・距離の表示: |<->| スタイルで描く:\n"
-    "     \\draw[|<->|] (x1,y-0.5) -- (x2,y-0.5) node[midway,below]{$L$};\n"
-    "PD10. 各物理量には SI 単位を正しく使用すること。\n"
-    "      siunitx パッケージがある場合は \\SI{9.8}{m/s^2} 等を使用。\n"
+    "\n=== 物理科目の図（TikZ）作成ルール（厳守） ===\n"
+    "PD1. ラベルは物理量記号（$F$, $v$, $m$, $\\theta$ 等）を使う。日本語ラベル禁止。\n"
+    "PD2. 力ベクトル: \\draw[-{Stealth[length=3mm]},thick] で作用点から描く。\n"
+    "PD3. 物体形状: 質点=circle(2pt), 直方体=rectangle, 円=circle, ばね=coil decoration。\n"
+    "PD4. 角度: arc で円弧を描き $\\theta$ を配置。\n"
+    "PD5. ★★ 接触・設置の厳守ルール（最重要）:\n"
+    "     物体が面の上に「置かれている」場合、物体の底辺のy座標と面のy座標を\n"
+    "     必ず一致させること。隙間が空いて浮いて見えるのは絶対禁止。\n"
+    "     具体例:\n"
+    "     % 床 y=0, 物体の底辺も y=0 → 隙間なし\n"
+    "     \\draw[thick] (-2,0) -- (4,0);  % 床\n"
+    "     \\fill[pattern=north east lines] (-2,-0.3) rectangle (4,0);  % ハッチング\n"
+    "     \\draw[thick] (0,0) rectangle (2,1.5);  % 物体（底辺y=0で床に接触）\n"
+    "     斜面上の物体: 物体の底辺が斜面の線分上に正確に乗るよう座標計算する。\n"
+    "PD6. 力の分解: 実線=元ベクトル, 破線[dashed]=分解成分, 直角マーク=小正方形。\n"
+    "PD7. 回路図: circuitikz使用。\\ctikzset{bipoles/fill=white}必須。\n"
+    "PD8. グラフ: pgfplots使用。軸に物理量と単位: xlabel={$t$ [s]}。\n"
+    "PD9. 座標計算: 描画前にコメントで座標を計算し検算すること。\n"
+    "     % === 座標計算 ===\n"
+    "     % 斜面角θ=30°, L=4 → 底辺=4cos30°=3.464, 高さ=4sin30°=2.0\n"
+    "PD10. 閉じた図形は -- cycle で閉じる。\\begin/\\end の対応を確認。\n"
+)
+
+# --- プロンプト部品: 化学科目 図専用ルール ---
+_LATEX_CHEMISTRY_DIAGRAM_RULES = (
+    "\n=== 化学科目の図・構造式ルール（厳守） ===\n"
+    "CD1. 化学式: \\ce{} (mhchem) または \\ch{} (chemformula) を使用。\n"
+    "CD2. 構造式: 単結合=実線, 二重結合=二重線, 三重結合=三重線。\n"
+    "     ウェッジ結合=太い三角, ダッシュ結合=破線三角。\n"
+    "CD3. 反応機構: 曲がり矢印で電子の移動を示す。\n"
+    "CD4. 軌道図: エネルギー準位=水平線, 電子=↑↓矢印。\n"
+    "CD5. 座標計算: 描画前にコメントで座標を計算し検算すること。\n"
+    "CD6. 閉じた図形は -- cycle で閉じる。\\begin/\\end の対応を確認。\n"
+)
+
+# --- プロンプト部品: 生物科目 図専用ルール ---
+_LATEX_BIOLOGY_DIAGRAM_RULES = (
+    "\n=== 生物科目の図ルール（厳守） ===\n"
+    "BD1. 細胞図: 二重線(double)で細胞膜、内部はfillで色分け。\n"
+    "     ミトコンドリア=red!10, 核=blue!10, 葉緑体=green!10。\n"
+    "BD2. DNA: sin/cos曲線で螺旋、横棒で塩基対を表現。\n"
+    "BD3. 家系図: 男性=□, 女性=○, 患者=塗りつぶし。\n"
+    "BD4. 代謝経路: 酵素名を矢印上に\\footnotesize配置、阻害=⊣マーク。\n"
+    "BD5. 座標計算: 描画前にコメントで座標を計算し検算すること。\n"
+    "BD6. 閉じた図形は -- cycle で閉じる。\\begin/\\end の対応を確認。\n"
 )
 
 _LATEX_QUALITY_RULES = (
@@ -2915,27 +2942,36 @@ _LATEX_ENGLISH_RULES = (
 
 def _build_latex_instructions(subject: str = '', prompt_text: str = '', struct_rules: str = '',
                                preset_name: str = '', preset_prompt_instr: str = '') -> str:
-    """科目・プリセットに応じて最適なLaTeX指示を組み立てる。"""
+    """科目・プリセットに応じて最適なLaTeX指示を組み立てる。
+
+    科目ごとに必要なルールのみを選択し、不要なルールは含めない。
+    """
     is_stem = _is_stem_subject(subject, prompt_text)
+    is_physics = _is_physics_subject(subject, prompt_text)
+    is_chemistry = _is_chemistry_subject(subject, prompt_text)
+    is_biology = _is_biology_subject(subject, prompt_text)
+    is_english = _is_english_subject(subject, prompt_text)
 
     parts = ["【LaTeX 出力ルール】\n以下を守ること。違反するとコンパイルエラーになる。\n"]
 
     # Core rules (always)
     parts.append(_LATEX_CORE_RULES)
 
-    # Math rules (STEM only)
+    # STEM vs 文系: 排他的に切り替え
     if is_stem:
         parts.append(_LATEX_MATH_RULES)
     else:
         parts.append(_LATEX_HUMANITIES_HINTS)
 
-    # English-specific rules
-    if _is_english_subject(subject, prompt_text):
+    # 科目別の専用ルール（排他的に適用）
+    if is_english:
         parts.append(_LATEX_ENGLISH_RULES)
-
-    # Physics-specific diagram rules
-    if _is_physics_subject(subject, prompt_text):
+    elif is_physics:
         parts.append(_LATEX_PHYSICS_DIAGRAM_RULES)
+    elif is_chemistry:
+        parts.append(_LATEX_CHEMISTRY_DIAGRAM_RULES)
+    elif is_biology:
+        parts.append(_LATEX_BIOLOGY_DIAGRAM_RULES)
 
     # Structural rules (preset-specific layout)
     if struct_rules:
@@ -2965,6 +3001,8 @@ def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
     """
     is_stem = _is_stem_subject(subject, prompt_text)
     is_physics = _is_physics_subject(subject, prompt_text)
+    is_chemistry = _is_chemistry_subject(subject, prompt_text)
+    is_biology = _is_biology_subject(subject, prompt_text)
     is_english = _is_english_subject(subject, prompt_text)
 
     if is_stem:
@@ -2973,6 +3011,8 @@ def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
             prompt_text=prompt_text,
             preset_instr=preset_instr,
             is_physics=is_physics,
+            is_chemistry=is_chemistry,
+            is_biology=is_biology,
             include_diagram_per_question=include_diagram_per_question,
             custom_request=custom_request,
             brand_name=brand_name,
@@ -3098,11 +3138,14 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
                                include_diagram_per_question: bool,
                                custom_request: str,
                                brand_name: str = '',
-                               paper_colors: Optional[Dict[str, str]] = None) -> str:
+                               paper_colors: Optional[Dict[str, str]] = None,
+                               is_chemistry: bool = False,
+                               is_biology: bool = False) -> str:
     """STEM科目用：スケルトン駆動型のシステムプロンプト。
 
     ルールを列挙するのではなく、具体的な完成形を見せることで
     Thinkingモードなしでも安定したLaTeX出力を実現する。
+    科目ごとに必要な図ルールのみを含め、不要なルールは含めない。
     """
     parts = []
 
@@ -3189,26 +3232,50 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
     if is_physics:
         parts.append(
             '【物理の図（TikZ）— 正確な描画ルール】\n'
-            '- ★描画前に必ず座標の計算過程をコメントで書くこと:\n'
+            '- ★座標計算をコメントで先に書くこと:\n'
             '  % === 座標計算 ===\n'
-            '  % 斜面: 角度θ=30°, 長さL=4cm → 底辺=L*cos30°=3.464, 高さ=L*sin30°=2.0\n'
-            '  % A=(0,0), B=(3.464,0), C=(0,2.0)\n'
+            '  % 床y=0, 物体底辺y=0（接触）, 物体上辺y=1.5\n'
+            '- ★★ 接触ルール（最重要・違反厳禁）:\n'
+            '  物体が面に置かれている場合、物体底辺のy座標 = 面のy座標にすること。\n'
+            '  隙間が空いて物体が浮いて見えるのは絶対禁止。\n'
+            '  正しい例:\n'
+            '  \\draw[thick] (-2,0)--(4,0); % 床(y=0)\n'
+            '  \\fill[pattern=north east lines] (-2,-0.3) rectangle (4,0);\n'
+            '  \\draw[thick] (0,0) rectangle (2,1.5); % 物体(底辺y=0=床と同じ)\n'
             '- ラベルは物理記号: $F$, $v$, $m$, $\\theta$（日本語ラベル禁止）\n'
-            '- 力ベクトル: \\draw[-{Stealth},thick] で描く。力の向きと大きさの比率を正確に\n'
-            '- 物体: rectangle / circle で正確に。物体の重心位置を明記\n'
+            '- 力ベクトル: \\draw[-{Stealth},thick] 作用点から正確な向きに描く\n'
             '- 床面: \\fill[pattern=north east lines] でハッチング\n'
-            '- 斜面: 角度をatan2で正確に計算し、arcで角度表示を付ける\n'
-            '- ばね: decorations.pathmorphing の snake / coil で表現\n'
-            '- 回路: circuitikz を使用（\\ctikzset{bipoles/fill=white}必須、母線→素子の順で描画）\n'
-            '- グラフ: pgfplots で軸に物理量と単位を明記。\n'
-            '  放物線ならsamples=100以上で滑らかに描画。\n'
-            '  特徴的な点（最大値・x切片など）にマーカーを付ける\n\n'
+            '- 斜面: 三角関数で座標を正確に計算。物体は斜面上に密着させる\n'
+            '- ばね: coil decoration。回路: circuitikz\n'
+            '- グラフ: pgfplots, samples=100以上\n\n'
         )
 
     if include_diagram_per_question and is_physics:
         parts.append(
             '【物理図の必須ルール】\n'
             '各大問に必ず1つTikZ図を含めること。図のない大問は不可。\n\n'
+        )
+
+    # ── 化学図ルール ──
+    if is_chemistry and not is_physics:
+        parts.append(
+            '【化学の図・構造式ルール】\n'
+            '- 化学式: \\ce{} (mhchem) または \\ch{} (chemformula) を使用\n'
+            '- 構造式: 単結合=実線, 二重=二重線, 三重=三重線\n'
+            '- ウェッジ=太い三角, ダッシュ=破線三角\n'
+            '- 反応機構: 曲がり矢印で電子移動を示す\n'
+            '- 座標計算をコメントで書き検算すること\n\n'
+        )
+
+    # ── 生物図ルール ──
+    if is_biology and not is_physics and not is_chemistry:
+        parts.append(
+            '【生物の図ルール】\n'
+            '- 細胞膜: double線, 内部はfill色分け\n'
+            '- DNA: sin/cos曲線+横棒で塩基対\n'
+            '- 家系図: 男=□, 女=○, 患者=塗りつぶし\n'
+            '- 代謝経路: 酵素名を矢印上に配置\n'
+            '- 座標計算をコメントで書き検算すること\n\n'
         )
 
     # ── プリセット固有指示 ──
@@ -3275,19 +3342,26 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
         parts.append('【カラー・ブランディング指示（厳守）】\n' + '\n'.join(_bp) + '\n\n')
 
     # ── 最終チェックリスト（LLMへのリマインダー） ──
-    parts.append(
+    checklist = (
         '【出力前の最終チェック】\n'
-        '出力する前に以下を確認してください:\n'
         '☐ \\begin と \\end の数が一致している\n'
         '☐ { と } の数が一致している\n'
         '☐ enumerate/itemize のネストが2階層以内\n'
         '☐ \\frac{}{} に空の引数がない\n'
         '☐ \\documentclass で始まり \\end{document} で終わっている\n'
-        '☐ TikZ図がある場合: 座標計算をコメントで書いて検算したか\n'
-        '☐ TikZ図がある場合: 閉じた図形は -- cycle で閉じているか\n'
-        '☐ 見出し・問題番号にカラー（\\textcolor{mainblue/accentcolor}）を適用したか\n'
-        '☐ 全体の雰囲気がブランドカラーのトーンで統一されているか\n'
+        '☐ 見出し・問題番号にカラーを適用したか\n'
     )
+    if is_physics:
+        checklist += (
+            '☐ 物体が面に置かれている図: 底辺y座標=面y座標（隙間なし）か\n'
+            '☐ TikZ図: 座標計算をコメントで書いて検算したか\n'
+            '☐ 閉じた図形は -- cycle で閉じているか\n'
+        )
+    elif is_chemistry or is_biology:
+        checklist += (
+            '☐ 図がある場合: 座標計算をコメントで書いて検算したか\n'
+        )
+    parts.append(checklist)
 
     return ''.join(parts)
 
