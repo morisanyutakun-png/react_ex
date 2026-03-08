@@ -19,7 +19,7 @@ import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLab
 import { LatexText } from '@/components/LatexRenderer';
 
 /* ── ウィザードステップ定義（9ステップ） ── */
-const STEPS = ['出題パターン', '難易度・問題数', 'ベース問題', '出力形式', '図表・パッケージ', 'オプション', '確認', '生成', '完成'];
+const STEPS = ['出題パターン', '問題数・ベース問題', '出力形式', '図表・パッケージ', 'オプション', '確認', '生成', '完成'];
 
 /* ── 各図表タイプのASCIIアートプレビュー ── */
 const PACKAGE_ILLUSTRATIONS = {
@@ -697,7 +697,7 @@ export default function UserModePage() {
     setGenerating(true);
     setGeneratedLatex('');
     setPdfUrl('');
-    setStep(8);
+    setStep(7);
 
     setStatus('ステップ 1/3: AIへの指示文を作成中...');
     let generatedPrompt = '';
@@ -800,13 +800,13 @@ export default function UserModePage() {
         setPdfUrl(data.pdf_url);
         window.open(data.pdf_url, '_blank');
         setStatus('PDF を生成・表示しました');
-        setStep(9);
+        setStep(8);
       } else if (data?.pdf_error) {
-        setStatus(`問題の生成は成功 / PDF 変換失敗: ${data.pdf_error}`);
-        setStep(9);
+        setStatus(`問題のLaTeX生成は成功 / PDF変換失敗: ${data.pdf_error}`);
+        setStep(8);
       } else {
-        setStatus('問題の生成完了（PDF エンジン未設定）');
-        setStep(9);
+        setStatus('LaTeX生成完了（PDFエンジン未設定）');
+        setStep(8);
       }
     } catch (e) {
       // 429 = 使用回数上限
@@ -892,7 +892,7 @@ export default function UserModePage() {
           : '指示文をクリップボードにコピーしました'
       );
       setPromptGenerating(false);
-      setStep(9);
+      setStep(8);
     } catch (e) {
       setStatus(`エラー: ${e.message}`);
       setPromptGenerating(false);
@@ -926,21 +926,20 @@ export default function UserModePage() {
   };
 
   /* ── 次/前ステップ ── */
-  /* 新ステップ: 1=出題パターン, 2=難易度・問題数, 3=ベース問題, 4=出力形式, 5=図表, 6=オプション, 7=確認, 8=生成, 9=完成 */
+  /* 新ステップ: 1=出題パターン, 2=問題数・ベース問題, 3=出力形式, 4=図表, 5=オプション, 6=確認, 7=生成, 8=完成 */
   const canNext = () => {
     if (step === 1) return !!templateId || templates.length === 0;
-    if (step === 2) return !!difficulty;
-    if (step === 3) return true;  // ベース問題（任意）
-    if (step === 4) return true;  // 出力形式
-    if (step === 5) return true;  // 図表（任意）
-    if (step === 6) return true;  // オプション
-    if (step === 7) return true;  // 確認
+    if (step === 2) return true;  // 問題数・ベース問題（任意）
+    if (step === 3) return true;  // 出力形式
+    if (step === 4) return true;  // 図表（任意）
+    if (step === 5) return true;  // オプション
+    if (step === 6) return true;  // 確認
     return false;
   };
 
   const goNext = () => {
-    // Step 7（確認）で「生成」を実行
-    if (step === 7 && mode === 'auto') {
+    // Step 6（確認）で「生成」を実行
+    if (step === 6 && mode === 'auto') {
       if (!templateId) {
         const id = buildTemplateId(subject, field);
         const f = field;
@@ -960,7 +959,7 @@ export default function UserModePage() {
       } else {
         handleAutoGenerate();
       }
-    } else if (step === 7 && mode === 'manual') {
+    } else if (step === 6 && mode === 'manual') {
       if (!templateId) {
         const id = buildTemplateId(subject, field);
         const f = field;
@@ -986,10 +985,10 @@ export default function UserModePage() {
   };
 
   const goBack = () => {
-    if (step > 1 && step <= 7) {
+    if (step > 1 && step <= 6) {
       setStep(step - 1);
     }
-    if (step === 9) setStep(7);
+    if (step === 8) setStep(6);
   };
 
   const resetWizard = () => {
@@ -1223,12 +1222,12 @@ export default function UserModePage() {
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-[#1e293b] leading-snug">
                 {step === 1 && '既存の出題パターンを選択、または新しく作成してください'}
-                {step === 2 && '難易度と問題数を設定してください'}
-                {step === 3 && 'ベースとなる問題を選択してください（任意）'}
-                {step === 4 && 'PDFの出力形式を選んでください'}
-                {step === 5 && '図表やLaTeXパッケージを選択してください（任意）'}
-                {step === 6 && '問題形式やカスタムリクエストを設定してください（全て任意）'}
-                {step === 7 && (mode === 'auto' ? '準備完了 — 「AI で生成する」を押そう' : '設定を確認したら「指示文を作成」で次へ')}
+                {step === 2 && '問題数を設定し、ベース問題を選択してください（任意）'}
+                {step === 3 && 'PDFの出力形式を選んでください'}
+                {step === 4 && '図表やLaTeXパッケージを選択してください（任意）'}
+                {step === 5 && '問題形式やカスタムリクエストを設定してください（全て任意）'}
+                {step === 6 && (mode === 'auto' ? '準備完了 — 「AI で生成する」を押そう' : '設定を確認したら「指示文を作成」で次へ')}
+
               </p>
               <p className="text-[11px] text-[#94a3b8] mt-0.5">
                 ステップ {step} / {STEPS.length}
@@ -1366,7 +1365,7 @@ export default function UserModePage() {
                   <div className="text-[13px] font-bold text-[#2563eb]">{selectedTemplate?.name || templateId}</div>
                   {selectedTemplate?.metadata && (
                     <div className="text-[10px] text-[#64748b] mt-1">
-                      {[selectedTemplate.metadata.subject, selectedTemplate.metadata.field, selectedTemplate.metadata.difficulty].filter(Boolean).join(' / ')}
+                      {[selectedTemplate.metadata.subject, selectedTemplate.metadata.field].filter(Boolean).join(' / ')}
                     </div>
                   )}
                 </div>
@@ -1667,9 +1666,10 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 2: 難易度・問題数 ═══════ */}
+      {/* ═══════ Step 2: 問題数・ベース問題 ═══════ */}
       {step === 2 && (
         <div className="space-y-5 wizard-section-enter">
+          {/* 問題数カード */}
           <div className="card-glossy">
             <div className="p-5 relative z-10">
               <div className="flex items-center gap-3 mb-5">
@@ -1679,31 +1679,8 @@ export default function UserModePage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">難易度と問題数</h3>
-                  <p className="text-[11px] text-[#64748b]">問題のレベルと生成する数を設定してください</p>
-                </div>
-              </div>
-
-              {/* 難易度 */}
-              <div className="mb-5">
-                <label className="text-[12px] font-bold text-[#64748b] mb-2 block">難易度</label>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {DIFFICULTIES.map((d) => {
-                    const active = difficulty === d.label;
-                    return (
-                      <button
-                        key={d.label}
-                        onClick={() => setDifficulty(d.label)}
-                        className={`px-3 py-3 rounded-xl text-center transition-all duration-300 active:scale-[0.96] ${
-                          active
-                            ? 'bg-[#2563eb] text-white shadow-md font-bold'
-                            : 'bg-[#f0f4ff] text-[#64748b] hover:bg-blue-50 border border-blue-200/60 font-semibold'
-                        }`}
-                      >
-                        <div className="text-[13px]">{d.label}</div>
-                      </button>
-                    );
-                  })}
+                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">問題数・ベース問題</h3>
+                  <p className="text-[11px] text-[#64748b]">生成する問題数と、参考にするベース問題を設定してください</p>
                 </div>
               </div>
 
@@ -1718,12 +1695,8 @@ export default function UserModePage() {
               </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* ═══════ Step 3: ベース問題選択 ═══════ */}
-      {step === 3 && (
-        <div className="space-y-5 wizard-section-enter">
+          {/* ベース問題カード */}
           <div className="card-glossy">
             <div className="p-5 sm:p-6 relative z-10">
               {/* ── ヘッダー: 目的を明確に伝える ── */}
@@ -2155,8 +2128,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 4: 出力形式 ═══════ */}
-      {step === 4 && (
+      {/* ═══════ Step 3: 出力形式 ═══════ */}
+      {step === 3 && (
         <div className="space-y-5 wizard-section-enter">
           {/* PDF形式カード - 既存Step3のPDF部分を再利用 */}
           <div className="card-glossy">
@@ -2261,8 +2234,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 5: 図表・パッケージ選択（プリセット方式） ═══════ */}
-      {step === 5 && (
+      {/* ═══════ Step 4: 図表・パッケージ選択（プリセット方式） ═══════ */}
+      {step === 4 && (
         <div className="space-y-5 wizard-section-enter">
           {/* ── プリセットバンドル選択 ── */}
           <div className="card-glossy">
@@ -2555,8 +2528,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 6: オプション ═══════ */}
-      {step === 6 && (
+      {/* ═══════ Step 5: オプション ═══════ */}
+      {step === 5 && (
         <div className="space-y-5 wizard-section-enter">
           {/* 問題形式 */}
           <div className="card-glossy">
@@ -2624,8 +2597,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 7: 確認 ═══════ */}
-      {step === 7 && (
+      {/* ═══════ Step 6: 確認 ═══════ */}
+      {step === 6 && (
         <div className="space-y-5 wizard-section-enter">
           {/* Motivational banner */}
           <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200/40 step-complete-pop">
@@ -2666,7 +2639,7 @@ export default function UserModePage() {
                   <div className="text-[13px] font-bold text-[#2563eb]">{selectedTemplate.name}</div>
                   {selectedTemplate.metadata && (
                     <div className="text-[10px] text-[#64748b] mt-0.5">
-                      {[selectedTemplate.metadata.subject, selectedTemplate.metadata.field, selectedTemplate.metadata.difficulty].filter(Boolean).join(' / ')}
+                      {[selectedTemplate.metadata.subject, selectedTemplate.metadata.field].filter(Boolean).join(' / ')}
                     </div>
                   )}
                 </div>
@@ -2693,7 +2666,6 @@ export default function UserModePage() {
                   ['教科', subject || '未選択'],
                   ['分野', field || 'すべて'],
                   ...(theme ? [['テーマ', theme]] : []),
-                  ['難易度', difficulty],
                   ['問題数', `${numQuestions}問`],
                   ['出力形式', selectedPreset?.name || latexPreset],
                   ['生成方法', mode === 'auto' ? 'AI自動生成' : '手動'],
@@ -3739,8 +3711,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 8: 生成中 ═══════ */}
-      {step === 8 && generating && (
+      {/* ═══════ Step 7: 生成中 ═══════ */}
+      {step === 7 && generating && (
         <div className="wizard-section-enter">
           <div className="card-glossy generating-glow">
             <div className="flex flex-col items-center justify-center py-24 px-8 relative z-10">
@@ -3771,8 +3743,8 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ═══════ Step 9: 結果表示（完成） ═══════ */}
-      {step === 9 && (
+      {/* ═══════ Step 8: 結果表示（完成） ═══════ */}
+      {step === 8 && (
         <div className="space-y-6 wizard-section-enter">
           {/* Completion celebration */}
           <div className="relative overflow-hidden rounded-2xl p-6 text-center step-complete-pop success-glow" style={{
@@ -3785,10 +3757,10 @@ export default function UserModePage() {
               </svg>
             </div>
             <h3 className="text-[20px] font-extrabold text-[#1e293b] tracking-tight mb-1">
-              問題の生成が完了しました！
+              {pdfUrl ? '問題の生成が完了しました！' : mode === 'manual' ? '指示文の作成が完了しました！' : '生成が完了しました！'}
             </h3>
             <p className="text-[13px] text-[#64748b]">
-              {pdfUrl ? 'PDFが生成されました。下のリンクから確認できます。' : '生成結果を確認してください。'}
+              {pdfUrl ? 'PDFが生成されました。下のリンクから確認できます。' : mode === 'manual' ? '指示文をAIに送信して、返ってきたLaTeXコードからPDFを作成できます。' : '生成結果を確認してください。'}
             </p>
           </div>
 
@@ -4041,12 +4013,12 @@ export default function UserModePage() {
       {/* ═══════ ナビゲーションボタン ═══════ */}
       <div ref={nextActionRef} className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-8 sm:mt-10 mb-4 sm:mb-0 nav-glow-in">
         <div>
-          {step > 1 && step <= 8 && (
+          {step > 1 && step <= 6 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
               ← 戻る
             </Button>
           )}
-          {step === 9 && (
+          {step === 8 && (
             <Button variant="ghost" onClick={goBack} className="w-full sm:w-auto">
               ← 設定を変更
             </Button>
@@ -4054,34 +4026,34 @@ export default function UserModePage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          {step === 9 && (
+          {step === 8 && (
             <Button variant="ghost" onClick={resetWizard} className="w-full sm:w-auto">
               最初からやり直す
             </Button>
           )}
-          {step >= 1 && step <= 7 && (
+          {step >= 1 && step <= 6 && (
             <Button onClick={goNext} disabled={!canNext()} className={`w-full sm:w-auto transition-all duration-500 ${
-              step === 7 && mode === 'auto' && canNext()
+              step === 6 && mode === 'auto' && canNext()
                 ? 'cta-generate cta-breathe !py-4 !text-[17px] !rounded-2xl !px-8 cta-generate-pulse'
-                : step === 7 && mode === 'manual' && canNext()
+                : step === 6 && mode === 'manual' && canNext()
                 ? 'cta-manual cta-breathe !py-4 !text-[17px] !rounded-2xl !px-8'
                 : canNext() ? 'cta-glass cta-breathe !py-3.5 !text-base !rounded-2xl' : ''
             }`}>
-              {step === 7 && canNext() && mode === 'auto' ? (
+              {step === 6 && canNext() && mode === 'auto' ? (
                 <span className="flex items-center justify-center gap-2.5">
                   <svg className="w-5 h-5 cta-icon-bounce" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                   </svg>
                   AI で生成する
                 </span>
-              ) : step === 7 && canNext() && mode === 'manual' ? (
+              ) : step === 6 && canNext() && mode === 'manual' ? (
                 <span className="flex items-center justify-center gap-2">
                   <Icons.Prompt className="w-5 h-5" /> 指示文を作成
                 </span>
-              ) : canNext() ? '次のステップへ →' : (step === 1 ? 'パターンを選んでください' : step === 2 ? '教科を選んでください' : step === 4 ? '難易度を選んでください' : '次へ')}
+              ) : canNext() ? '次のステップへ →' : (step === 1 ? 'パターンを選んでください' : '次へ')}
             </Button>
           )}
-          {step === 8 && mode === 'auto' && (
+          {step === 7 && mode === 'auto' && (
             <Button
               onClick={goNext}
               disabled={generating}
@@ -4102,7 +4074,7 @@ export default function UserModePage() {
               )}
             </Button>
           )}
-          {step === 8 && mode === 'manual' && (
+          {step === 7 && mode === 'manual' && (
             <button
               onClick={goNext}
               disabled={promptGenerating}
