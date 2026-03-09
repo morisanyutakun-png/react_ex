@@ -5025,15 +5025,28 @@ async def _run_llm_job(job_id: str, openai_key: str, openai_model: str,
     """バックグラウンドで OpenAI API を呼び出し、結果を _LLM_JOBS に格納する。"""
     openai_url = 'https://api.openai.com/v1/chat/completions'
 
+    # 推論モデル (o-series) は temperature / system ロールをサポートしない
+    _is_reasoning = bool(re.match(r'^(o1|o3|o4)', openai_model))
+
+    messages = []
+    if _is_reasoning:
+        # 推論モデルでは 'developer' ロールを使用
+        messages.append({'role': 'developer', 'content': system_instruction})
+    else:
+        messages.append({'role': 'system', 'content': system_instruction})
+    messages.append({'role': 'user', 'content': user_content_parts})
+
     openai_payload = {
         'model': openai_model,
-        'messages': [
-            {'role': 'system', 'content': system_instruction},
-            {'role': 'user', 'content': user_content_parts},
-        ],
-        'temperature': 0.3,
+        'messages': messages,
         'max_completion_tokens': dynamic_max_tokens,
     }
+    # 推論モデルは temperature をサポートしない
+    if not _is_reasoning:
+        openai_payload['temperature'] = 0.3
+
+    logger.info('OpenAI request: model=%s, max_tokens=%d, is_reasoning=%s',
+                openai_model, dynamic_max_tokens, _is_reasoning)
 
     try:
         async with httpx.AsyncClient(timeout=httpx.Timeout(180.0, connect=30.0)) as client:
@@ -5059,16 +5072,91 @@ async def _run_llm_job(job_id: str, openai_key: str, openai_model: str,
             return
 
         body = resp.json()
+        logger.info('OpenAI response keys: %s (model=%s)',
+                     list(body.keys()) if isinstance(body, dict) else type(body).__name__,
+                     openai_model)
+
+        # ── レスポンスからテキストを抽出 ──
+        # Responses API 形式 (output[].content[].text) にも対応
+        raw_text = ''
+
         choices = body.get('choices', [])
-        if not choices:
+        if choices:
+            message = choices[0].get('message') or {}
+            finish_reason = choices[0].get('finish_reason', '')
+            content = message.get('content')
+
+            # content がリスト形式 (multimodal) の場合
+            if isinstance(content, list):
+                text_parts = []
+                for part in content:
+                    if isinstance(part, dict) and part.get('type') == 'text':
+                        text_parts.append(part.get('text', ''))
+                    elif isinstance(part, str):
+                        text_parts.append(part)
+                raw_text = '\n'.join(text_parts)
+            elif isinstance(content, str):
+                raw_text = content
+            # content が None の場合 — 代替フィールドを確認
+            if not raw_text:
+                # 推論モデルの reasoning_content
+                reasoning = message.get('reasoning_content')
+                if reasoning and isinstance(reasoning, str):
+                    logger.info('Using reasoning_content as fallback (model=%s)', openai_model)
+                    raw_text = reasoning
+            if not raw_text:
+                # モデルが生成を拒否した場合
+                refusal = message.get('refusal')
+                if refusal:
+                    logger.error('OpenAI model refused: %s (model=%s)', refusal, openai_model)
+                    _LLM_JOBS[job_id]['status'] = 'error'
+                    _LLM_JOBS[job_id]['error'] = f'モデルが生成を拒否しました: {refusal}'
+                    return
+            if not raw_text:
+                # 旧 completions 形式の text フィールド
+                raw_text = choices[0].get('text', '')
+
+            # finish_reason が content_filter の場合
+            if finish_reason == 'content_filter' and not raw_text:
+                logger.error('OpenAI content_filter triggered (model=%s)', openai_model)
+                _LLM_JOBS[job_id]['status'] = 'error'
+                _LLM_JOBS[job_id]['error'] = 'コンテンツフィルターにより生成がブロックされました。プロンプトを変更してお試しください。'
+                return
+
+            logger.info('OpenAI finish_reason=%s, content_type=%s, content_len=%d (model=%s)',
+                        finish_reason, type(content).__name__,
+                        len(raw_text) if raw_text else 0, openai_model)
+
+        # choices が空の場合 — Responses API (output 形式) を試行
+        if not raw_text and isinstance(body.get('output'), list):
+            for out_item in body['output']:
+                if isinstance(out_item, dict) and out_item.get('type') == 'message':
+                    for c in (out_item.get('content') or []):
+                        if isinstance(c, dict) and c.get('type') in ('output_text', 'text'):
+                            raw_text += c.get('text', '')
+            if raw_text:
+                logger.info('Extracted text from Responses API output format (model=%s, len=%d)',
+                            openai_model, len(raw_text))
+
+        if not raw_text and isinstance(body.get('output_text'), str):
+            raw_text = body['output_text']
+
+        raw_text = raw_text.strip() if raw_text else ''
+
+        if not choices and not raw_text:
+            logger.error('OpenAI empty response. body keys: %s (model=%s)',
+                         list(body.keys()) if isinstance(body, dict) else 'not-dict', openai_model)
             _LLM_JOBS[job_id]['status'] = 'error'
             _LLM_JOBS[job_id]['error'] = 'OpenAI からの応答が空です'
             return
 
-        raw_text = choices[0].get('message', {}).get('content', '').strip()
         if not raw_text:
+            # 最終フォールバック: body 全体をログに出力
+            body_preview = json.dumps(body, ensure_ascii=False)[:1000] if isinstance(body, dict) else str(body)[:1000]
+            logger.error('OpenAI empty content after all fallbacks. body preview: %s (model=%s)',
+                         body_preview, openai_model)
             _LLM_JOBS[job_id]['status'] = 'error'
-            _LLM_JOBS[job_id]['error'] = 'OpenAI からのテキスト出力が空です'
+            _LLM_JOBS[job_id]['error'] = f'OpenAI からのテキスト出力が空です (model={openai_model}, finish_reason={choices[0].get("finish_reason") if choices else "N/A"})'
             return
 
         # LaTeX 後処理
