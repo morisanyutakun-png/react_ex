@@ -1101,9 +1101,23 @@ export default function UserModePage() {
         </p>
       </div>
 
-      {/* プログレスバー */}
-      <div className="mb-6 sm:mb-8">
+      {/* プログレスバー（デスクトップのみ。モバイルではステップ番号のみ表示） */}
+      <div className="hidden sm:block mb-8">
         <ProgressSteps steps={STEPS} current={step} />
+      </div>
+      <div className="sm:hidden mb-3">
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-[13px] font-bold text-[#6366f1]">
+            {step}/{STEPS.length}
+          </span>
+          <span className="text-[13px] font-medium text-[#64748b]">
+            {STEPS[step - 1] || ''}
+          </span>
+        </div>
+        <div className="mt-1.5 h-[3px] bg-[#f3f0ff] rounded-full overflow-hidden">
+          <div className="h-full rounded-full transition-all duration-500"
+               style={{ width: `${(step / STEPS.length) * 100}%`, background: 'linear-gradient(90deg, #6366f1, #a855f7)' }} />
+        </div>
       </div>
 
       <StatusBar message={status} />
