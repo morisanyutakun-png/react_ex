@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useBranding } from '@/contexts/BrandingContext';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, PACKAGE_PRESETS, fetchUsage, adminUnlock, verifyGenerationCode, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, PACKAGE_PRESETS, fetchUsage, adminUnlock, verifyGenerationCode, verifyAccountPassword, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -273,6 +274,7 @@ const PresetThumbnail = ({ id, active }) => {
 export default function UserModePage() {
   const { templates, subjects, refresh } = useTemplates();
   const { serviceName, logoUrl, paperTheme, resolvedPaperColors } = useBranding();
+  const { isGuest, isAuthenticated, getAccessToken, user: authUser } = useAuth();
 
   // 科目アイコン（SVG）
   const SubjectIcon = useCallback(({ type, className = "w-4 h-4" }) => {
@@ -379,6 +381,8 @@ export default function UserModePage() {
     if (!id) { id = crypto.randomUUID(); localStorage.setItem('rem_user_id', id); }
     return id;
   });
+  // 認証ユーザーの場合は authUser.id を使う
+  const effectiveUserId = (isAuthenticated && authUser?.id) ? authUser.id : userId;
   const [usage, setUsage] = useState({ generation_count: 0, limit: 3, remaining: 3, unlocked: false });
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockPassword, setUnlockPassword] = useState('');
@@ -393,14 +397,14 @@ export default function UserModePage() {
 
   // 使用状況取得
   useEffect(() => {
-    if (!userId) return;
-    fetchUsage(userId).then(setUsage).catch(() => {});
-  }, [userId]);
+    if (!effectiveUserId) return;
+    fetchUsage(effectiveUserId).then(setUsage).catch(() => {});
+  }, [effectiveUserId]);
 
   const handleAdminUnlock = async () => {
     setUnlockError('');
     try {
-      const res = await adminUnlock(userId, unlockPassword);
+      const res = await adminUnlock(effectiveUserId, unlockPassword);
       if (res.usage) setUsage(res.usage);
       setShowUnlockModal(false);
       setUnlockPassword('');
@@ -410,12 +414,18 @@ export default function UserModePage() {
     }
   };
 
-  /** 生成前に認証コードを検証し、通過後に生成を実行する */
+  /** 生成前にアカウントパスワードで本人確認し、通過後に生成を実行する */
   const handleGenerationAuthVerify = async () => {
     setGenerationAuthError('');
     setGenerationAuthVerifying(true);
     try {
-      const res = await verifyGenerationCode(generationAuthCode);
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        setGenerationAuthError('ログインが必要です。アカウントにログインしてください。');
+        setGenerationAuthVerifying(false);
+        return;
+      }
+      const res = await verifyAccountPassword(generationAuthCode, accessToken);
       if (res.valid) {
         setShowGenerationAuthModal(false);
         setGenerationAuthCode('');
@@ -426,16 +436,20 @@ export default function UserModePage() {
           handleAutoGenerate(true);
         }
       } else {
-        setGenerationAuthError(res.error || '認証コードが正しくありません');
+        setGenerationAuthError(res.error || 'パスワードが正しくありません');
       }
     } catch (e) {
-      setGenerationAuthError(e.message || '認証コードが正しくありません');
+      setGenerationAuthError(e.message || 'パスワードが正しくありません');
     }
     setGenerationAuthVerifying(false);
   };
 
-  /** 認証コード入力を求めてから生成を開始する */
+  /** アカウントパスワード入力を求めてから生成を開始する */
   const requestGenerationAuth = (genMode) => {
+    if (isGuest) {
+      setStatus('AI自動生成を使用するにはログインが必要です。');
+      return;
+    }
     pendingGenerationRef.current = genMode;
     setGenerationAuthCode('');
     setGenerationAuthError('');
@@ -527,7 +541,14 @@ export default function UserModePage() {
 
   /* ── 手動モード用 ── */
   const [llmOutput, setLlmOutput] = useState('');
-  const [mode, setMode] = useState('auto'); // 'auto' | 'manual'
+  const [mode, setMode] = useState(isGuest ? 'manual' : 'auto'); // 'auto' | 'manual'
+
+  // ゲストがautoモードを使えないように強制
+  useEffect(() => {
+    if (isGuest && mode === 'auto') {
+      setMode('manual');
+    }
+  }, [isGuest, mode]);
 
   /* ── ベース問題DB検索 ── */
   const [baseFilterQuery, setBaseFilterQuery] = useState('');
@@ -775,7 +796,7 @@ export default function UserModePage() {
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         diagram_realism: diagramRealism,
         custom_request: customRequest.trim() || undefined,
-        user_id: userId,
+        user_id: effectiveUserId,
         num_questions: numQuestions,
         brand_name: serviceName || undefined,
         brand_logo_url: logoUrl || undefined,
@@ -824,7 +845,7 @@ export default function UserModePage() {
       }
     }
     // 使用状況を更新
-    if (userId) fetchUsage(userId).then(setUsage).catch(() => {});
+    if (effectiveUserId) fetchUsage(effectiveUserId).then(setUsage).catch(() => {});
     setGenerating(false);
   };
 
@@ -1189,29 +1210,30 @@ export default function UserModePage() {
         </div>
       )}
 
-      {/* ── 生成ごとの認証コードモーダル ── */}
+      {/* ── 本人確認パスワードモーダル ── */}
       {showGenerationAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => { setShowGenerationAuthModal(false); pendingGenerationRef.current = null; }}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-[90vw] max-w-sm mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-md">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                 </svg>
               </div>
               <div>
-                <h3 className="text-[18px] font-bold text-[#1e293b]">認証コード</h3>
-                <p className="text-[11px] text-[#64748b]">AI生成を実行するには認証が必要です</p>
+                <h3 className="text-[18px] font-bold text-[#1e293b]">本人確認</h3>
+                <p className="text-[11px] text-[#64748b]">セキュリティのためパスワードで本人確認します</p>
               </div>
             </div>
-            <p className="text-[13px] text-[#64748b] mb-4">認証コードを入力してください。</p>
+            <p className="text-[13px] text-[#64748b] mb-1">アカウントのパスワードを入力してください。</p>
+            <p className="text-[11px] text-[#94a3b8] mb-4">AI自動生成を実行するには本人確認が必要です。</p>
             <input
               type="password"
               value={generationAuthCode}
               onChange={e => setGenerationAuthCode(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !generationAuthVerifying && handleGenerationAuthVerify()}
-              placeholder="認証コード"
-              className="w-full px-4 py-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 mb-3"
+              placeholder="アカウントパスワード"
+              className="w-full px-4 py-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 mb-3"
               autoFocus
             />
             {generationAuthError && <p className="text-[12px] text-red-500 mb-3">{generationAuthError}</p>}
@@ -1225,9 +1247,9 @@ export default function UserModePage() {
               <button
                 onClick={handleGenerationAuthVerify}
                 disabled={generationAuthVerifying || !generationAuthCode}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[13px] font-semibold hover:from-amber-600 hover:to-orange-600 transition-colors disabled:opacity-40"
+                className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[13px] font-semibold hover:from-emerald-600 hover:to-teal-600 transition-colors disabled:opacity-40"
               >
-                {generationAuthVerifying ? '確認中...' : '認証して生成'}
+                {generationAuthVerifying ? '確認中...' : '確認して生成'}
               </button>
             </div>
           </div>
@@ -2215,8 +2237,9 @@ export default function UserModePage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
-                  onClick={() => setMode('auto')}
-                  className={`selection-card text-left ${mode === 'auto' ? 'active' : ''}`}
+                  onClick={() => !isGuest && setMode('auto')}
+                  disabled={isGuest}
+                  className={`selection-card text-left ${mode === 'auto' ? 'active' : ''} ${isGuest ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="relative z-10 flex items-start gap-3">
                     <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300 ${
@@ -2229,6 +2252,14 @@ export default function UserModePage() {
                     <div className="flex-1">
                       <div className="text-sm font-bold text-[#1e293b]">AI 自動生成</div>
                       <div className="text-[11px] text-[#64748b] mt-0.5">ワンクリックで PDF まで自動作成</div>
+                      {isGuest && (
+                        <div className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                          </svg>
+                          ログインが必要です
+                        </div>
+                      )}
                     </div>
                   </div>
                 </button>
@@ -3286,10 +3317,11 @@ export default function UserModePage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
-                  onClick={() => setMode('auto')}
+                  onClick={() => !isGuest && setMode('auto')}
+                  disabled={isGuest}
                   className={`selection-card text-left ${
                     mode === 'auto' ? 'active' : ''
-                  }`}
+                  } ${isGuest ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div className="relative z-10 flex items-start gap-3">
                     <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300 ${
@@ -3304,6 +3336,14 @@ export default function UserModePage() {
                       <div className="text-[11px] text-[#64748b] mt-0.5 leading-relaxed">
                         ワンクリックで PDF まで自動作成
                       </div>
+                      {isGuest && (
+                        <div className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
+                          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                          </svg>
+                          ログインが必要です
+                        </div>
+                      )}
                     </div>
                     {mode === 'auto' && (
                       <div className="check-circle checked flex-shrink-0">

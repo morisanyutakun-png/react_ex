@@ -372,3 +372,36 @@ def get_me(user: dict = Depends(get_current_user)):
             'org_name': row[5] if len(row) > 5 else '',
         },
     })
+
+
+# ── パスワード再認証（本人確認） ──────────────────────────
+
+class VerifyPasswordRequest(BaseModel):
+    password: str
+
+
+@router.post('/verify_password')
+def verify_password(req: VerifyPasswordRequest = Body(...), user: dict = Depends(get_current_user)):
+    """AI自動生成の実行前にアカウントパスワードで本人確認する。
+    JWT Bearer トークン + パスワードの二重認証。"""
+    if not req.password:
+        raise HTTPException(400, 'パスワードを入力してください。')
+
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute("SELECT password_hash FROM users WHERE id = %s", (user['user_id'],))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+    except Exception:
+        logger.exception('Verify password query failed')
+        raise HTTPException(500, 'パスワード確認に失敗しました。')
+
+    if not row:
+        raise HTTPException(404, 'ユーザーが見つかりません。')
+
+    if not _verify_password(req.password, row[0]):
+        raise HTTPException(403, 'パスワードが正しくありません。')
+
+    return JSONResponse({'valid': True})

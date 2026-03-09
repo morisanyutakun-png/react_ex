@@ -355,6 +355,21 @@ export async function verifyGenerationCode(code) {
   });
 }
 
+/**
+ * アカウントパスワードで本人確認する（JWT + パスワード二重認証）。
+ * AI自動生成モードの実行前に呼ばれる。
+ */
+export async function verifyAccountPassword(password, accessToken) {
+  return apiFetch('/api/auth/verify_password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ password }),
+  });
+}
+
 // ── Authentication ────────────────────────────────────────────────────────
 
 export async function authRegister({ email, password, orgName, displayName }) {

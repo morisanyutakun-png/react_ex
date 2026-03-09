@@ -4877,6 +4877,13 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
 
     Returns JSON with keys: latex (raw LaTeX), pdf_url (if compilation succeeded), error (if any).
     """
+    # ── ゲストユーザーブロック（サーバーサイド強制） ──
+    user_id = req.user_id
+    if not user_id or user_id == 'guest':
+        return JSONResponse({
+            'error': 'AI自動生成を使用するにはアカウント登録とログインが必要です。',
+        }, status_code=403)
+
     openai_key = os.getenv('OPENAI_API_KEY')
     if not openai_key:
         return JSONResponse({'error': 'OPENAI_API_KEY が設定されていません。.env に OPENAI_API_KEY を追加してください。'}, status_code=500)
