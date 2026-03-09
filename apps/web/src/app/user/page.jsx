@@ -14,6 +14,7 @@ import {
   SelectField,
   ProgressSteps,
   Icons,
+  MobileNavLinks,
 } from '@/components/ui';
 import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
 import { LatexText } from '@/components/LatexRenderer';
@@ -1046,7 +1047,7 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div ref={wizardTopRef} className="relative max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-14 pb-28 sm:pb-16">
+    <div ref={wizardTopRef} className="relative max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-14 pb-8 sm:pb-16">
       {/* ── Stripe風アーティスティックな虹色グラデーション背景（モバイルでは非表示で軽量化） ── */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden hidden sm:block" style={{ zIndex: -2 }}>
         {/* 左上の紫〜インディゴのブロブ */}
@@ -4112,6 +4113,7 @@ export default function UserModePage() {
           )}
         </div>
       </div>
+      <MobileNavLinks currentPath="/user" />
     </div>
   );
 }

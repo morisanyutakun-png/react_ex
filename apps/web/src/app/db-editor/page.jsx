@@ -18,6 +18,7 @@ import {
   PageHeader,
   SelectField,
   Icons,
+  MobileNavLinks,
 } from '@/components/ui';
 import { SUBJECT_TOPICS } from '@/lib/constants';
 
@@ -398,7 +399,7 @@ export default function DbEditorPage() {
   const displayCols = allCols.filter((c) => visibleCols.includes(c.name));
 
   return (
-    <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
+    <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-8 sm:pb-12">
       {/* ── ヒーローヘッダー ── */}
       <div className="text-center mb-2">
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white mb-4 shadow-lg shadow-blue-200/50">
@@ -1269,6 +1270,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
           )}
         </button>
       </div>
+      <MobileNavLinks currentPath="/db-editor" />
     </div>
   );
 }

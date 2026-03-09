@@ -4,6 +4,6 @@ export const metadata = {
 
 export default function UserLayout({ children }) {
   return (
-    <main className="pb-24 sm:pb-8">{children}</main>
+    <main className="pb-8">{children}</main>
   );
 }

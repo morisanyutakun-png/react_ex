@@ -28,6 +28,7 @@ import {
   EmptyState,
   PageHeader,
   Icons,
+  MobileNavLinks,
 } from '@/components/ui';
 
 /* ═══════════════════════════════════════════════════════
@@ -747,7 +748,7 @@ export default function TuningPage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-8 sm:pb-12">
       {/* ── ヒーロー ── */}
       <div className="text-center pt-2 pb-2 relative">
         {/* Aurora gradient background blobs */}
@@ -1850,6 +1851,7 @@ export default function TuningPage() {
           </div>
         </div>
       )}
+      <MobileNavLinks currentPath="/dev" />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { Icons } from '@/components/ui';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-const NAV_ITEMS = [
+export const NAV_ITEMS = [
   { href: '/',          label: 'ホーム',   icon: <Icons.Home className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Home className="w-[21px] h-[21px]" /> },
   { href: '/user',      label: 'つくる',   icon: <Icons.User className="w-[14px] h-[14px]" />, mobileIcon: <Icons.User className="w-[21px] h-[21px]" /> },
   { href: '/dev',       label: '磨く',     icon: <Icons.Dev className="w-[14px] h-[14px]" />,  mobileIcon: <Icons.Dev className="w-[21px] h-[21px]" /> },
@@ -132,45 +132,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* ── モバイルボトムナビバー ── */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
-           style={{
-             background: 'rgba(248,250,255,0.92)',
-             backdropFilter: 'saturate(200%) blur(24px)',
-             WebkitBackdropFilter: 'saturate(200%) blur(24px)',
-             borderTop: `0.5px solid ${primaryColor}14`,
-             boxShadow: `0 -4px 16px ${primaryColor}0a, 0 -0.5px 0 ${primaryColor}0a`,
-           }}>
-        <div className="flex items-center justify-around px-1">
-          {NAV_ITEMS.map(({ href, label, mobileIcon }) => {
-            const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex flex-col items-center gap-0.5 py-2 px-2 min-w-[3.5rem] min-h-[52px] justify-center rounded-xl"
-                style={{
-                  color: active ? primaryColor : '#94a3b8',
-                  background: active ? `${primaryColor}0c` : 'transparent',
-                  transition: 'all 0.35s var(--ease-spring)',
-                }}
-              >
-                <div className="relative" style={{ transition: 'transform 0.35s var(--ease-spring)', transform: active ? 'scale(1.08)' : 'scale(1)' }}>
-                  {mobileIcon}
-                  {active && (
-                    <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-4 h-[3px] rounded-full"
-                         style={{ background: primaryColor }} />
-                  )}
-                </div>
-                <span className="text-[10px] leading-none mt-0.5"
-                      style={{ color: active ? primaryColor : '#94a3b8', fontWeight: active ? 700 : 500 }}>
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* モバイルボトムナビは廃止 — 各ページ内の MobileNavLinks で代替 */}
     </>
   );
 }

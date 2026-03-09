@@ -2024,7 +2024,6 @@ main {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
 @media (max-width: 639px) {
-  main { padding-bottom: 5.5rem !important; }
   button, a, [role="button"] { min-height: 44px; }
   .card-premium:hover { transform: none; }
   .card-premium:active { transform: scale(0.97); }

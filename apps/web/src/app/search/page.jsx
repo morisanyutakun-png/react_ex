@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { searchProblems, generateSimilarProblem } from '@/lib/api';
-import { StatusBar, Button, EmptyState, Icons, PageHeader } from '@/components/ui';
+import { StatusBar, Button, EmptyState, Icons, PageHeader, MobileNavLinks } from '@/components/ui';
 import { SUBJECTS, DIFFICULTIES, SUBJECT_TOPICS, difficultyLabel } from '@/lib/constants';
 import { LatexText, LatexBlock } from '@/components/LatexRenderer';
 
@@ -259,7 +259,7 @@ export default function SearchPage() {
   const hasActiveFilters = query || subjectFilter || fieldFilter || difficultyFilter;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
+    <div className="max-w-3xl mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-8 sm:pb-12">
       {/* ── ヒーローヘッダー ── */}
       <div className="text-center mb-2 relative">
         <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
@@ -560,6 +560,7 @@ export default function SearchPage() {
           </div>
         </div>
       )}
+      <MobileNavLinks currentPath="/search" />
     </div>
   );
 }

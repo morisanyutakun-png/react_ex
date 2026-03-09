@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { MobileNavLinks } from '@/components/ui';
 
 /* ═══════════════════════════════════════════
    § 0  アイコン SVG
@@ -452,7 +453,7 @@ export default function HelpPage() {
   }, []);
 
   return (
-<div className="max-w-4xl mx-auto px-4 sm:px-5 py-6 sm:py-10 pb-28 sm:pb-12">
+<div className="max-w-4xl mx-auto px-4 sm:px-5 py-6 sm:py-10 pb-8 sm:pb-12">
 
       {/* ── ヒーロー ── */}
       <div className="text-center mb-12 relative">
@@ -672,6 +673,7 @@ export default function HelpPage() {
 
         </div>
       </div>
+      <MobileNavLinks currentPath="/help" />
     </div>
   );
 }

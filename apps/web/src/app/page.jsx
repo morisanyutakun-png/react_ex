@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { MobileNavLinks } from '@/components/ui';
 
 /* ═══════════════════════════════════════════════════════════════
    REM — Landing Page
@@ -573,6 +574,7 @@ export default function HomePage() {
               <span className="text-[11px] font-medium text-[#94a3b8] tracking-[0.02em]">REM — Rapid Exam Maker</span>
             </div>
           </div>
+          <MobileNavLinks currentPath="/" />
         </div>
       </div>
     </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 /* ─────────────────────────────────────────────────
    共通UIコンポーネント群 (Apple-inspired · Light · Refined)
    Clean surfaces · Subtle depth · Quiet elegance
@@ -517,6 +519,38 @@ export function ProgressSteps({ steps, current }) {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ── モバイル用インラインナビリンク ──
+   固定ボトムバーの代わりに、各ページのコンテンツ末尾に配置する。
+   現在のページを除いた主要リンクをグリッドで表示。 */
+const MOBILE_NAV = [
+  { href: '/',          label: 'ホーム',   icon: <Icons.Home className="w-5 h-5" /> },
+  { href: '/user',      label: 'つくる',   icon: <Icons.User className="w-5 h-5" /> },
+  { href: '/dev',       label: '磨く',     icon: <Icons.Dev className="w-5 h-5" /> },
+  { href: '/search',    label: 'さがす',   icon: <Icons.Search className="w-5 h-5" /> },
+  { href: '/db-editor', label: 'データ',   icon: <Icons.Table className="w-5 h-5" /> },
+  { href: '/help',      label: 'ヘルプ',   icon: <Icons.Book className="w-5 h-5" /> },
+];
+
+export function MobileNavLinks({ currentPath = '' }) {
+  const items = MOBILE_NAV.filter(n =>
+    currentPath === '/' ? n.href !== '/' : !currentPath.startsWith(n.href)
+  );
+  return (
+    <div className="sm:hidden mt-8 mb-4">
+      <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest mb-3 px-1">メニュー</p>
+      <div className="grid grid-cols-3 gap-2">
+        {items.map(({ href, label, icon }) => (
+          <Link key={href} href={href}
+            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white/70 border border-[#e2e8f0]/60 text-[#64748b] active:scale-95 transition-all">
+            {icon}
+            <span className="text-[11px] font-semibold">{label}</span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
