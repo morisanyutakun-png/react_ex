@@ -364,11 +364,19 @@ textarea.input {
 .btn-outline:hover { background: var(--c-bg); border-color: var(--c-text-muted); }
 
 .btn-ghost {
-  background: transparent;
+  background: var(--c-bg);
   color: var(--c-text-secondary);
-  padding: 10px 16px;
+  padding: 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--c-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
 }
-.btn-ghost:hover { background: var(--c-bg); }
+.btn-ghost svg { width: 20px; height: 20px; }
+.btn-ghost:hover { background: var(--c-border); color: var(--c-text); }
 
 .btn-block { width: 100%; }
 .btn-row { display: grid; gap: 12px; margin-top: 24px; }
