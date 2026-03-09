@@ -772,6 +772,7 @@ export default function UserModePage() {
         diagram_realism: diagramRealism,
         custom_request: customRequest.trim() || undefined,
         user_id: userId,
+        num_questions: numQuestions,
         brand_name: serviceName || undefined,
         brand_logo_url: logoUrl || undefined,
         paper_theme: paperTheme || undefined,
@@ -1045,9 +1046,9 @@ export default function UserModePage() {
   const selectedPreset = latexPresets.find((p) => p.id === latexPreset);
 
   return (
-    <div ref={wizardTopRef} className="relative max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-14 pb-28 sm:pb-16">
-      {/* ── Stripe風アーティスティックな虹色グラデーション背景 ── */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: -2 }}>
+    <div ref={wizardTopRef} className="relative max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-14 pb-28 sm:pb-16">
+      {/* ── Stripe風アーティスティックな虹色グラデーション背景（モバイルでは非表示で軽量化） ── */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden hidden sm:block" style={{ zIndex: -2 }}>
         {/* 左上の紫〜インディゴのブロブ */}
         <div className="absolute -top-[20%] -left-[15%] w-[60vw] h-[60vw] rounded-full opacity-[0.12]"
           style={{
@@ -1090,12 +1091,12 @@ export default function UserModePage() {
         />
       </div>
 
-      {/* ヘッダー — Artistic gradient design */}
-      <div className="text-center mb-8 sm:mb-12">
-        <h1 className="text-[32px] sm:text-[40px] font-black tracking-[-0.03em] leading-[1.08] mb-3 gradient-text-hero-animated">
+      {/* ヘッダー — Artistic gradient design（モバイルではコンパクト） */}
+      <div className="text-center mb-4 sm:mb-12">
+        <h1 className="text-[24px] sm:text-[40px] font-black tracking-[-0.03em] leading-[1.08] mb-1 sm:mb-3 gradient-text-hero-animated">
           問題をつくる
         </h1>
-        <p className="text-[14px] sm:text-[15px] text-[#64748b] leading-relaxed max-w-md mx-auto font-medium tracking-[-0.01em]">
+        <p className="hidden sm:block text-[15px] text-[#64748b] leading-relaxed max-w-md mx-auto font-medium tracking-[-0.01em]">
           ステップに沿って進むだけで、試験問題の PDF が完成します
         </p>
       </div>
@@ -1120,7 +1121,7 @@ export default function UserModePage() {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            {usage.unlocked ? '無制限' : `残り ${usage.remaining}/${usage.limit} 回`}
+            {usage.unlocked ? '無制限' : `残り ${usage.remaining}/${usage.limit} 回（1回最大3問）`}
           </div>
           {!usage.unlocked && (
             <button
@@ -1687,7 +1688,7 @@ export default function UserModePage() {
               {/* 問題数 */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={10} />
+                  <NumberField label="問題数（最大3問）" value={numQuestions} onChange={setNumQuestions} min={1} max={3} />
                 </div>
                 <div>
                   <NumberField label="参照する過去問数" value={topK} onChange={setTopK} min={1} max={20} />
@@ -3044,7 +3045,7 @@ export default function UserModePage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} max={20} />
+                <NumberField label="問題数（最大3問）" value={numQuestions} onChange={setNumQuestions} min={1} max={3} />
                 <NumberField label="参照する過去問の数" value={topK} onChange={setTopK} min={1} max={20} />
               </div>
             </div>

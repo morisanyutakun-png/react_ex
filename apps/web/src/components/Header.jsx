@@ -22,12 +22,12 @@ export default function Header() {
 
   return (
     <>
-      {/* ── アクセントバー ── */}
-      <div className="fixed top-0 left-0 right-0 h-[3px] z-[60]"
+      {/* ── アクセントバー（デスクトップのみ） ── */}
+      <div className="hidden sm:block fixed top-0 left-0 right-0 h-[3px] z-[60]"
            style={{ background: primaryColor }} />
 
-      {/* ── デスクトップヘッダー (Frosted glass light) ── */}
-      <header className="header-bar sticky top-0 z-50" style={{ marginTop: '3px' }}>
+      {/* ── デスクトップヘッダー（モバイルでは非表示） ── */}
+      <header className="header-bar sticky top-0 z-50 hidden sm:block" style={{ marginTop: '3px' }}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6">
           <div className="flex items-center justify-between h-[48px]">
             <Link href="/" className="flex items-center gap-2.5 group">

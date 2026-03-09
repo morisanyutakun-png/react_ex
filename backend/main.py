@@ -4806,6 +4806,8 @@ class LlmGenerateRequest(BaseModel):
     field: Optional[str] = ''
     # Question format: 'standard' | 'fill_in_blank' | 'choice' | 'true_false'
     question_format: Optional[str] = 'standard'
+    # Number of questions to generate (used for cost control)
+    num_questions: Optional[int] = 3
     # Sub-topic / theme (maps to DB subtopic column)
     sub_topic: Optional[str] = None
     # Physics: include a TikZ diagram for each major question
@@ -4843,13 +4845,22 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     if not req.prompt or not req.prompt.strip():
         raise HTTPException(status_code=400, detail='prompt is required')
 
+    # ── 問題数制限（コスト制御の本質） ──
+    max_questions_limit = int(os.getenv('MAX_QUESTIONS_PER_GENERATION', '3'))
+    req_num_questions = getattr(req, 'num_questions', None) or 3
+    if req_num_questions > max_questions_limit:
+        return JSONResponse({
+            'error': f'1回の生成で作成できる問題数は最大{max_questions_limit}問です。',
+            'max_questions': max_questions_limit,
+        }, status_code=400)
+
     # ── AI 使用回数制限チェック ──
     user_id = req.user_id
     if user_id:
         usage_info = _get_usage(user_id)
-        if not usage_info.get('unlocked', False) and usage_info.get('generation_count', 0) >= 3:
+        if not usage_info.get('unlocked', False) and usage_info.get('remaining', 0) <= 0:
             return JSONResponse({
-                'error': 'AI生成の無料利用回数（3回）に達しました。管理者パスワードで上限を解除してください。',
+                'error': f'AI生成の無料利用上限（{usage_info["limit"]}回）に達しました。管理者パスワードで上限を解除してください。',
                 'usage': usage_info,
             }, status_code=429)
 
@@ -4925,6 +4936,12 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     else:
         user_content_parts = req.prompt + base_context
 
+    # 問題数に応じて max_tokens を動的に設定（コスト制御）
+    # 1問あたり約1000トークン + ベース600トークン（プリアンブル・解答ページ等）
+    # 目安コスト（GPT-5.2, 1問）: 入力~2000tok + 出力~1600tok ≈ 0.63円
+    _n_q = req_num_questions if 'req_num_questions' in dir() else (req.num_questions or 3)
+    _dynamic_max_tokens = min(8192, 600 + 1000 * _n_q)
+
     openai_payload = {
         'model': openai_model,
         'messages': [
@@ -4932,7 +4949,7 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
             {'role': 'user', 'content': user_content_parts},
         ],
         'temperature': 0.3,
-        'max_tokens': 8192,
+        'max_tokens': _dynamic_max_tokens,
     }
 
     resp = None
