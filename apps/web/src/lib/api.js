@@ -296,13 +296,64 @@ export async function smartCreateDbRow(table, data, autoDifficulty = true) {
 
 // ── OpenAI GPT LLM → PDF ワンクリック生成 ──────────────
 
+/**
+ * LLM 生成 (ポーリング方式)
+ *
+ * バックエンドは即座に job_id を返し、OpenAI API 呼び出しをバックグラウンドで実行する。
+ * フロントエンドは /api/generate_with_llm/status/{job_id} をポーリングして結果を取得する。
+ * これにより Vercel/Koyeb のプロキシタイムアウト (60秒) を回避する。
+ */
 export async function generateWithLlm(params) {
-  return apiFetch('/api/generate_with_llm', {
+  // ステップ1: ジョブを開始（即座に返る）
+  const startData = await apiFetch('/api/generate_with_llm', {
     method: 'POST',
     body: JSON.stringify(params),
-    timeout: 250000, // LLM (最大180秒) + PDF compilation (最大30秒) + マージン
-    noRetry: true,   // 二重課金防止: 502/504 でもリトライしない
+    timeout: 30000,   // 開始リクエストは即座に返るので30秒で十分
+    noRetry: true,    // 二重課金防止
   });
+
+  // バリデーションエラーの場合（403, 429, 400, 500 etc.）は即座にエラー
+  // apiFetch が throw するので、ここに来る = 2xx レスポンス
+  const jobId = startData?.job_id;
+  if (!jobId) {
+    // ジョブIDが返らない場合（互換性: 旧バックエンドが直接結果を返した場合）
+    return startData;
+  }
+
+  // ステップ2: ポーリングで結果を待つ（最大300秒）
+  const maxPolls = 100;      // 最大100回ポーリング
+  const pollInterval = 3000; // 3秒間隔
+  for (let i = 0; i < maxPolls; i++) {
+    await new Promise(r => setTimeout(r, pollInterval));
+
+    let status;
+    try {
+      status = await apiFetch(`/api/generate_with_llm/status/${jobId}`, {
+        timeout: 15000,
+      });
+    } catch (pollErr) {
+      // ポーリング自体のネットワークエラーは無視して再試行
+      if (i < maxPolls - 1) continue;
+      throw pollErr;
+    }
+
+    if (status?.status === 'completed') {
+      // 成功: LaTeX + usage を返す
+      return status;
+    }
+
+    if (status?.status === 'error') {
+      // バックエンドでのエラー
+      const err = new Error(status.error || 'LLM 生成に失敗しました');
+      err.data = status;
+      throw err;
+    }
+
+    // status === 'processing' → 続行
+  }
+
+  // タイムアウト（300秒経過しても完了しない）
+  throw new Error('AI 生成がタイムアウトしました。再度お試しください。');
 }
 
 // ── ベース問題 PDF バリデーション ─────────────────────────

@@ -1,6 +1,6 @@
 # Koyeb app manifest
 # - `repository.url` を実際の GitHub リポジトリ URL に置き換えてください。
-# - DATABASE_URL / CORS_ALLOW_ORIGINS は Koyeb ダッシュボードの Secrets に登録してください。
+# - DATABASE_URL / CORS_ALLOW_ORIGINS / OPENAI_API_KEY は Koyeb ダッシュボードの Secrets に登録してください。
 
 app:
   name: react_ex-backend
@@ -24,6 +24,10 @@ services:
         secret: DATABASE_URL
       - name: CORS_ALLOW_ORIGINS
         secret: CORS_ALLOW_ORIGINS
+      - name: OPENAI_API_KEY
+        secret: OPENAI_API_KEY
+      - name: ADMIN_PASSWORD
+        secret: ADMIN_PASSWORD
       - name: CLOUD_LATEX_ONLY
         value: "1"
       - name: WEB_CONCURRENCY

@@ -13,6 +13,9 @@ from pydantic import BaseModel
 from io import BytesIO
 import sys
 import tempfile
+import asyncio
+import time
+import httpx
 
 # ensure project root is on sys.path so top-level imports like `workers` work
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -4860,6 +4863,20 @@ _SUBJECT_TIER_MAP = {
     # 上記以外（数学・物理・化学・生物 等）→ standard
 }
 
+# ── LLM 生成ジョブストア（ポーリング方式） ──────────────────────────
+# Vercel/Koyeb のプロキシタイムアウト (60秒) を超える長時間 OpenAI API 呼び出しに対応するため、
+# 即座に job_id を返し、バックグラウンドで処理、フロントエンドがポーリングで結果取得する設計。
+_LLM_JOBS: Dict[str, Dict[str, Any]] = {}
+_LLM_JOB_TTL = 600  # 10分間保持
+
+
+def _cleanup_old_jobs():
+    """期限切れのジョブを削除する。"""
+    now = time.time()
+    expired = [jid for jid, job in _LLM_JOBS.items() if now - job.get('created_at', 0) > _LLM_JOB_TTL]
+    for jid in expired:
+        _LLM_JOBS.pop(jid, None)
+
 
 def _resolve_model(model_tier: str, subject: str) -> tuple:
     """モデルティアと教科からOpenAIモデル名を解決する。
@@ -4920,190 +4937,26 @@ class LlmGenerateRequest(BaseModel):
     model_tier: Optional[str] = 'auto'
 
 
-@app.post('/api/generate_with_llm')
-def generate_with_llm(req: LlmGenerateRequest = Body(...)):
-    """Call OpenAI GPT to generate LaTeX from a prompt, then compile to PDF.
-
-    Returns JSON with keys: latex (raw LaTeX), pdf_url (if compilation succeeded), error (if any).
-    """
-    # ── ゲストユーザーブロック（サーバーサイド強制） ──
-    user_id = req.user_id
-    if not user_id or user_id == 'guest':
-        return JSONResponse({
-            'error': 'AI自動生成を使用するにはアカウント登録とログインが必要です。',
-        }, status_code=403)
-
-    openai_key = os.getenv('OPENAI_API_KEY')
-    if not openai_key:
-        return JSONResponse({'error': 'OPENAI_API_KEY が設定されていません。.env に OPENAI_API_KEY を追加してください。'}, status_code=500)
-
-    if not req.prompt or not req.prompt.strip():
-        raise HTTPException(status_code=400, detail='prompt is required')
-
-    # ── 問題数制限（コスト制御の本質） ──
-    max_questions_limit = int(os.getenv('MAX_QUESTIONS_PER_GENERATION', '3'))
-    req_num_questions = getattr(req, 'num_questions', None) or 3
-    if req_num_questions > max_questions_limit:
-        return JSONResponse({
-            'error': f'1回の生成で作成できる問題数は最大{max_questions_limit}問です。',
-            'max_questions': max_questions_limit,
-        }, status_code=400)
-
-    # ── AI 使用回数制限チェック ──
-    user_id = req.user_id
-    if user_id:
-        usage_info = _get_usage(user_id)
-        if not usage_info.get('unlocked', False) and usage_info.get('remaining', 0) <= 0:
-            return JSONResponse({
-                'error': f'AI生成の無料利用上限（{usage_info["limit"]}回）に達しました。管理者パスワードで上限を解除してください。',
-                'usage': usage_info,
-            }, status_code=429)
-
-    # ── モデル解決（ティア × 教科） ──
-    openai_model, resolved_tier = _resolve_model(req.model_tier or 'auto', req.subject or '')
-    logger.info('Model resolved: tier=%s → model=%s (subject=%s)', resolved_tier, openai_model, req.subject)
-
-    # Load latex preset to build format-specific system instruction
-    preset_id = req.latex_preset or 'exam'
-    preset_data = _load_latex_preset(preset_id)
-    preset_name = preset_data.get('name', preset_id) if preset_data else preset_id
-    preset_instr = preset_data.get('prompt_instruction', '') if preset_data else ''
-
-    # Build system instruction for LaTeX generation (subject-aware)
-    system_instruction = _build_llm_system_prompt(
-        subject=req.subject or '',
-        prompt_text=req.prompt,
-        preset_instr=preset_instr,
-        include_diagram_per_question=bool(req.include_diagram_per_question),
-        custom_request=req.custom_request or '',
-        brand_name=req.brand_name or '',
-        paper_colors=req.paper_colors or None,
-    )
-
-    # Append extra package usage hints so the LLM knows what's available
-    extra_pkgs = req.extra_packages or []
-    if extra_pkgs:
-        system_instruction += '\n【利用可能な追加パッケージ（プリアンブルに既に追加済み）】\n'
-        for pkg_id in extra_pkgs:
-            pkg_def = DIAGRAM_PACKAGES.get(pkg_id)
-            if pkg_def:
-                system_instruction += f'- {pkg_def["name"]}: {pkg_def["prompt_hint"]}\n'
-            else:
-                system_instruction += f'- \\usepackage{{{pkg_id}}} が利用可能。\n'
-
-    # Append question format instructions if not standard
-    q_format = req.question_format or 'standard'
-    if q_format != 'standard':
-        fmt_instr = _QUESTION_FORMAT_INSTRUCTIONS.get(q_format, '')
-        if fmt_instr:
-            system_instruction += fmt_instr
-
-    # Call OpenAI API
-    openai_url = 'https://api.openai.com/v1/chat/completions'
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {openai_key}',
-    }
-    # Build user content: text + optional base PDF images
-    user_content_parts = []
-
-    # Add base problem context if provided
-    base_context = ''
-    if req.base_problem_text:
-        base_context = (
-            '\n\n【ベース問題（参考）】\n'
-            '以下のベース問題を参考にして、同じ形式・難易度で類似問題を作成してください：\n'
-            f'{req.base_problem_text}\n'
-        )
-
-    if req.base_pdf_images and len(req.base_pdf_images) > 0:
-        # Vision mode: send PDF pages as images
-        prompt_text = req.prompt + (
-            '\n\n【添付PDFについて】\n'
-            '添付されたPDF画像はベースラインとなる問題です。'
-            'このPDFの問題形式・構成・難易度を参考にして、同じスタイルで類似問題を作成してください。'
-            'PDFの内容をそのままコピーするのではなく、同等レベルの新しい問題を生成してください。'
-        )
-        user_content_parts.append({'type': 'text', 'text': prompt_text})
-        for img_b64 in req.base_pdf_images:
-            user_content_parts.append({
-                'type': 'image_url',
-                'image_url': {'url': f'data:image/png;base64,{img_b64}', 'detail': 'high'}
-            })
-    else:
-        user_content_parts = req.prompt + base_context
-
-    # 問題数に応じて max_tokens を動的に設定（コスト制御）
-    # 1問あたり約1000トークン + ベース600トークン（プリアンブル・解答ページ等）
-    # 目安コスト（GPT-5.2, 1問）: 入力~2500tok + 出力~1600tok ≈ 0.8円
-    # システムプロンプト強化分（+500tok入力）を含めても0.8円/リクエスト以内に収まる設計
-    _n_q = req_num_questions if 'req_num_questions' in dir() else (req.num_questions or 3)
-    _dynamic_max_tokens = min(8192, 600 + 1000 * _n_q)
-
-    openai_payload = {
-        'model': openai_model,
-        'messages': [
-            {'role': 'system', 'content': system_instruction},
-            {'role': 'user', 'content': user_content_parts},
-        ],
-        'temperature': 0.3,
-        'max_tokens': _dynamic_max_tokens,
-    }
-
-    resp = None
-    try:
-        resp = requests.post(
-            openai_url,
-            headers=headers,
-            json=openai_payload,
-            timeout=180
-        )
-        resp.raise_for_status()
-        body = resp.json()
-    except requests.exceptions.Timeout:
-        return JSONResponse({'error': 'OpenAI API がタイムアウトしました。再度お試しください。'}, status_code=504)
-    except requests.exceptions.RequestException as e:
-        logger.exception('OpenAI API call failed')
-        error_detail = str(e)
-        try:
-            if resp is not None:
-                error_body = resp.json()
-                error_detail = error_body.get('error', {}).get('message', str(e))
-        except Exception:
-            pass
-        return JSONResponse({'error': f'OpenAI API エラー: {error_detail}'}, status_code=502)
-
-    # Extract text from OpenAI response
-    try:
-        choices = body.get('choices', [])
-        if not choices:
-            return JSONResponse({'error': 'OpenAI からの応答が空です', 'raw': body}, status_code=500)
-        raw_text = choices[0].get('message', {}).get('content', '').strip()
-    except Exception as e:
-        return JSONResponse({'error': f'OpenAI レスポンスの解析に失敗: {e}', 'raw': body}, status_code=500)
-
+def _postprocess_llm_latex(raw_text: str) -> str:
+    """LLM 生の出力テキストから LaTeX を抽出・修復する共通ヘルパー。"""
     if not raw_text:
-        return JSONResponse({'error': 'OpenAI からのテキスト出力が空です'}, status_code=500)
+        return ''
+    latex_text = raw_text
 
     # Strip markdown code fences if present
-    latex_text = raw_text
     if latex_text.startswith('```'):
         lines = latex_text.split('\n')
-        # Remove first line (```latex or ```) and last line (```)
         if lines[-1].strip() == '```':
             lines = lines[1:-1]
         elif lines[0].strip().startswith('```'):
             lines = lines[1:]
         latex_text = '\n'.join(lines).strip()
 
-    # Also strip markdown fences that appear mid-stream (e.g. ```latex ... ```)
     latex_text = re.sub(r'^```(?:latex|tex)?\s*$', '', latex_text, flags=re.MULTILINE)
     latex_text = re.sub(r'^```\s*$', '', latex_text, flags=re.MULTILINE)
     latex_text = latex_text.strip()
 
-    # Pre-sanitize the LLM output before passing to generate_pdf:
-    # 0) Auto-repair: If LLM skipped \documentclass (Instant mode issue),
-    #    wrap the output in a minimal preamble
+    # Auto-repair: If LLM skipped \documentclass, wrap in minimal preamble
     if '\\documentclass' not in latex_text:
         logger.warning('LLM output missing \\documentclass — auto-wrapping with preamble')
         _auto_preamble = (
@@ -5128,63 +4981,272 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
             '\\usepackage{pgfplots}\n'
             '\\pgfplotsset{compat=1.18}\n'
         )
-        # Check if it has \begin{document}
         if '\\begin{document}' not in latex_text:
             latex_text = _auto_preamble + '\n\\begin{document}\n\n' + latex_text
             if '\\end{document}' not in latex_text:
                 latex_text += '\n\n\\end{document}\n'
         else:
-            # Has \begin{document} but no \documentclass — prepend preamble before \begin{document}
             bd_match = re.search(r'\\begin\{document\}', latex_text)
             if bd_match:
                 latex_text = _auto_preamble + '\n' + latex_text
             else:
                 latex_text = _auto_preamble + '\n\\begin{document}\n\n' + latex_text + '\n\n\\end{document}\n'
 
-    # 1) Unescape JSON-escaped sequences (if the LLM produced literal \n etc.)
     try:
         latex_text = _unescape_latex(latex_text)
     except Exception:
         pass
-    # 2) Collapse internal newlines that split math tokens
     try:
         latex_text = _collapse_internal_newlines(latex_text)
     except Exception:
         pass
-    # 3) Strip LLM preamble/postamble text around the LaTeX document
-    #    (e.g. "Here is the LaTeX code:" before \documentclass)
+
     dc_match = re.search(r'\\documentclass', latex_text)
     if dc_match and dc_match.start() > 0:
         before_dc = latex_text[:dc_match.start()]
-        # If text before \documentclass is not LaTeX (no backslash commands), strip it
         if not re.search(r'\\[a-zA-Z]', before_dc):
             latex_text = latex_text[dc_match.start():]
-    # Strip text after \end{document}
     end_doc_match = re.search(r'\\end\{document\}', latex_text)
     if end_doc_match:
         latex_text = latex_text[:end_doc_match.end()]
 
-    # 4) Repair nesting issues (unbalanced begin/end, braces, etc.)
     try:
         latex_text = _repair_latex_nesting(latex_text)
     except Exception:
         pass
 
-    # Increment usage count only when LLM succeeded (LaTeX was generated).
-    # PDF compilation is handled separately by the frontend calling /api/generate_pdf.
-    if user_id and latex_text:
-        _increment_usage(user_id)
+    return latex_text
 
-    # Fetch updated usage so frontend can refresh immediately
-    updated_usage = _get_usage(user_id) if user_id else None
 
-    result = {
-        'latex': latex_text,
+async def _run_llm_job(job_id: str, openai_key: str, openai_model: str,
+                        resolved_tier: str, system_instruction: str,
+                        user_content_parts, dynamic_max_tokens: int,
+                        user_id: str):
+    """バックグラウンドで OpenAI API を呼び出し、結果を _LLM_JOBS に格納する。"""
+    openai_url = 'https://api.openai.com/v1/chat/completions'
+
+    openai_payload = {
         'model': openai_model,
-        'model_tier': resolved_tier,
-        'usage': updated_usage,
+        'messages': [
+            {'role': 'system', 'content': system_instruction},
+            {'role': 'user', 'content': user_content_parts},
+        ],
+        'temperature': 0.3,
+        'max_completion_tokens': dynamic_max_tokens,
     }
-    return JSONResponse(result)
+
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(180.0, connect=30.0)) as client:
+            resp = await client.post(
+                openai_url,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {openai_key}',
+                },
+                json=openai_payload,
+            )
+
+        if resp.status_code != 200:
+            error_detail = f'HTTP {resp.status_code}'
+            try:
+                error_body = resp.json()
+                error_detail = error_body.get('error', {}).get('message', error_detail)
+            except Exception:
+                error_detail = resp.text[:500] if resp.text else error_detail
+            logger.error('OpenAI API error: %s (model=%s)', error_detail, openai_model)
+            _LLM_JOBS[job_id]['status'] = 'error'
+            _LLM_JOBS[job_id]['error'] = f'OpenAI API エラー: {error_detail}'
+            return
+
+        body = resp.json()
+        choices = body.get('choices', [])
+        if not choices:
+            _LLM_JOBS[job_id]['status'] = 'error'
+            _LLM_JOBS[job_id]['error'] = 'OpenAI からの応答が空です'
+            return
+
+        raw_text = choices[0].get('message', {}).get('content', '').strip()
+        if not raw_text:
+            _LLM_JOBS[job_id]['status'] = 'error'
+            _LLM_JOBS[job_id]['error'] = 'OpenAI からのテキスト出力が空です'
+            return
+
+        # LaTeX 後処理
+        latex_text = _postprocess_llm_latex(raw_text)
+
+        # 使用回数インクリメント
+        if user_id and latex_text:
+            _increment_usage(user_id)
+
+        updated_usage = _get_usage(user_id) if user_id else None
+
+        _LLM_JOBS[job_id]['status'] = 'completed'
+        _LLM_JOBS[job_id]['result'] = {
+            'latex': latex_text,
+            'model': openai_model,
+            'model_tier': resolved_tier,
+            'usage': updated_usage,
+        }
+        logger.info('LLM job %s completed (model=%s, latex_len=%d)', job_id, openai_model, len(latex_text))
+
+    except httpx.TimeoutException:
+        logger.error('OpenAI API timeout for job %s', job_id)
+        _LLM_JOBS[job_id]['status'] = 'error'
+        _LLM_JOBS[job_id]['error'] = 'OpenAI API がタイムアウトしました。再度お試しください。'
+    except Exception as e:
+        logger.exception('LLM job %s failed unexpectedly', job_id)
+        _LLM_JOBS[job_id]['status'] = 'error'
+        _LLM_JOBS[job_id]['error'] = f'生成中にエラーが発生しました: {str(e)}'
+
+
+@app.post('/api/generate_with_llm')
+async def generate_with_llm(req: LlmGenerateRequest = Body(...)):
+    """OpenAI GPT で LaTeX を生成する。ポーリング方式: 即座に job_id を返し、
+    /api/generate_with_llm/status/{job_id} で結果を取得する。
+    """
+    # ── ゲストユーザーブロック ──
+    user_id = req.user_id
+    if not user_id or user_id == 'guest':
+        return JSONResponse({
+            'error': 'AI自動生成を使用するにはアカウント登録とログインが必要です。',
+        }, status_code=403)
+
+    openai_key = os.getenv('OPENAI_API_KEY')
+    if not openai_key:
+        return JSONResponse({'error': 'OPENAI_API_KEY が設定されていません。.env に OPENAI_API_KEY を追加してください。'}, status_code=500)
+
+    if not req.prompt or not req.prompt.strip():
+        raise HTTPException(status_code=400, detail='prompt is required')
+
+    # ── 問題数制限 ──
+    max_questions_limit = int(os.getenv('MAX_QUESTIONS_PER_GENERATION', '3'))
+    req_num_questions = getattr(req, 'num_questions', None) or 3
+    if req_num_questions > max_questions_limit:
+        return JSONResponse({
+            'error': f'1回の生成で作成できる問題数は最大{max_questions_limit}問です。',
+            'max_questions': max_questions_limit,
+        }, status_code=400)
+
+    # ── AI 使用回数制限チェック ──
+    user_id = req.user_id
+    if user_id:
+        usage_info = _get_usage(user_id)
+        if not usage_info.get('unlocked', False) and usage_info.get('remaining', 0) <= 0:
+            return JSONResponse({
+                'error': f'AI生成の無料利用上限（{usage_info["limit"]}回）に達しました。管理者パスワードで上限を解除してください。',
+                'usage': usage_info,
+            }, status_code=429)
+
+    # ── モデル解決 ──
+    openai_model, resolved_tier = _resolve_model(req.model_tier or 'auto', req.subject or '')
+    logger.info('Model resolved: tier=%s → model=%s (subject=%s)', resolved_tier, openai_model, req.subject)
+
+    # ── システムプロンプト構築 ──
+    preset_id = req.latex_preset or 'exam'
+    preset_data = _load_latex_preset(preset_id)
+    preset_instr = preset_data.get('prompt_instruction', '') if preset_data else ''
+
+    system_instruction = _build_llm_system_prompt(
+        subject=req.subject or '',
+        prompt_text=req.prompt,
+        preset_instr=preset_instr,
+        include_diagram_per_question=bool(req.include_diagram_per_question),
+        custom_request=req.custom_request or '',
+        brand_name=req.brand_name or '',
+        paper_colors=req.paper_colors or None,
+    )
+
+    extra_pkgs = req.extra_packages or []
+    if extra_pkgs:
+        system_instruction += '\n【利用可能な追加パッケージ（プリアンブルに既に追加済み）】\n'
+        for pkg_id in extra_pkgs:
+            pkg_def = DIAGRAM_PACKAGES.get(pkg_id)
+            if pkg_def:
+                system_instruction += f'- {pkg_def["name"]}: {pkg_def["prompt_hint"]}\n'
+            else:
+                system_instruction += f'- \\usepackage{{{pkg_id}}} が利用可能。\n'
+
+    q_format = req.question_format or 'standard'
+    if q_format != 'standard':
+        fmt_instr = _QUESTION_FORMAT_INSTRUCTIONS.get(q_format, '')
+        if fmt_instr:
+            system_instruction += fmt_instr
+
+    # ── ユーザーコンテンツ構築 ──
+    base_context = ''
+    if req.base_problem_text:
+        base_context = (
+            '\n\n【ベース問題（参考）】\n'
+            '以下のベース問題を参考にして、同じ形式・難易度で類似問題を作成してください：\n'
+            f'{req.base_problem_text}\n'
+        )
+
+    if req.base_pdf_images and len(req.base_pdf_images) > 0:
+        prompt_text = req.prompt + (
+            '\n\n【添付PDFについて】\n'
+            '添付されたPDF画像はベースラインとなる問題です。'
+            'このPDFの問題形式・構成・難易度を参考にして、同じスタイルで類似問題を作成してください。'
+            'PDFの内容をそのままコピーするのではなく、同等レベルの新しい問題を生成してください。'
+        )
+        user_content_parts = [{'type': 'text', 'text': prompt_text}]
+        for img_b64 in req.base_pdf_images:
+            user_content_parts.append({
+                'type': 'image_url',
+                'image_url': {'url': f'data:image/png;base64,{img_b64}', 'detail': 'high'}
+            })
+    else:
+        user_content_parts = req.prompt + base_context
+
+    _dynamic_max_tokens = min(8192, 600 + 1000 * req_num_questions)
+
+    # ── 古いジョブのクリーンアップ ──
+    _cleanup_old_jobs()
+
+    # ── ジョブ作成＆バックグラウンド実行 ──
+    job_id = uuid.uuid4().hex
+    _LLM_JOBS[job_id] = {
+        'status': 'processing',
+        'result': None,
+        'error': None,
+        'created_at': time.time(),
+    }
+
+    asyncio.create_task(_run_llm_job(
+        job_id=job_id,
+        openai_key=openai_key,
+        openai_model=openai_model,
+        resolved_tier=resolved_tier,
+        system_instruction=system_instruction,
+        user_content_parts=user_content_parts,
+        dynamic_max_tokens=_dynamic_max_tokens,
+        user_id=user_id,
+    ))
+
+    logger.info('LLM job %s started (model=%s)', job_id, openai_model)
+    return JSONResponse({'job_id': job_id, 'status': 'processing'})
+
+
+@app.get('/api/generate_with_llm/status/{job_id}')
+async def generate_with_llm_status(job_id: str):
+    """ポーリング用: LLM 生成ジョブのステータスを返す。"""
+    job = _LLM_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail='ジョブが見つかりません')
+
+    if job['status'] == 'completed':
+        result = job['result']
+        # ジョブ完了後、少し待ってからクリーンアップ（再ポーリング対応）
+        return JSONResponse({
+            'status': 'completed',
+            **result,
+        })
+    elif job['status'] == 'error':
+        return JSONResponse({
+            'status': 'error',
+            'error': job['error'],
+        }, status_code=200)  # フロントエンドがポーリングで処理するため 200 で返す
+    else:
+        return JSONResponse({'status': 'processing'})
 
 
 @app.post('/api/generate_pdf')
