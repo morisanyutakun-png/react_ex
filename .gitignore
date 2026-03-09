@@ -3,6 +3,7 @@
 
 # local env
 .env
+.jwt_secret
 node_modules/
 venv/
 __pycache__/

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTemplates } from '@/hooks/useTemplates';
 import { useBranding } from '@/contexts/BrandingContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, PACKAGE_PRESETS, fetchUsage, adminUnlock, verifyGenerationCode, verifyAccountPassword, validateBasePdf, fetchProblemsByPattern } from '@/lib/api';
+import { renderTemplate, generatePdf, fetchLatexPresets, generateWithLlm, searchProblems, createTemplate, deleteTemplate, DIAGRAM_PACKAGE_DEFS, PACKAGE_CATEGORIES, PACKAGE_PRESETS, fetchUsage, adminUnlock, verifyGenerationCode, verifyAccountPassword, validateBasePdf, fetchProblemsByPattern, authRefresh } from '@/lib/api';
 import {
   StatusBar,
   SectionCard,
@@ -419,7 +419,7 @@ export default function UserModePage() {
     setGenerationAuthError('');
     setGenerationAuthVerifying(true);
     try {
-      const accessToken = getAccessToken();
+      let accessToken = getAccessToken();
       if (!accessToken) {
         setGenerationAuthError('ログインが必要です。アカウントにログインしてください。');
         setGenerationAuthVerifying(false);
@@ -430,8 +430,28 @@ export default function UserModePage() {
       try {
         res = await verifyAccountPassword(generationAuthCode, accessToken);
       } catch (apiErr) {
-        // エンドポイント未デプロイ時のフォールバック: 旧方式（認証コード）で試行
-        if (apiErr.message?.includes('Not Found') || apiErr.message?.includes('404')) {
+        const errMsg = apiErr.message || '';
+        // トークン期限切れ → リフレッシュして再試行
+        if (errMsg.includes('トークン') || errMsg.includes('期限') || errMsg.includes('無効') || errMsg.includes('401') || errMsg.includes('認証')) {
+          const refreshToken = localStorage.getItem('rem_refresh_token');
+          if (refreshToken) {
+            try {
+              const refreshData = await authRefresh(refreshToken);
+              localStorage.setItem('rem_access_token', refreshData.access_token);
+              accessToken = refreshData.access_token;
+              res = await verifyAccountPassword(generationAuthCode, accessToken);
+            } catch (_refreshErr) {
+              setGenerationAuthError('ログインセッションが切れました。再ログインしてください。');
+              setGenerationAuthVerifying(false);
+              return;
+            }
+          } else {
+            setGenerationAuthError('ログインセッションが切れました。再ログインしてください。');
+            setGenerationAuthVerifying(false);
+            return;
+          }
+        } else if (errMsg.includes('Not Found') || errMsg.includes('404')) {
+          // エンドポイント未デプロイ時のフォールバック: 旧方式（認証コード）で試行
           try {
             res = await verifyGenerationCode(generationAuthCode);
           } catch (fallbackErr) {
@@ -460,7 +480,7 @@ export default function UserModePage() {
       const msg = e.message || '';
       if (msg.includes('Not Found') || msg.includes('404')) {
         setGenerationAuthError('認証サーバーが利用できません。バックエンドを再起動してください。');
-      } else if (msg.includes('認証が必要') || msg.includes('401')) {
+      } else if (msg.includes('認証が必要') || msg.includes('401') || msg.includes('トークン') || msg.includes('期限') || msg.includes('無効')) {
         setGenerationAuthError('ログインセッションが切れました。再ログインしてください。');
       } else {
         setGenerationAuthError(msg || 'パスワードが正しくありません');

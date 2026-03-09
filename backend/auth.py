@@ -33,7 +33,36 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix='/api/auth', tags=['auth'])
 
 # ── Config ────────────────────────────────────────────
-JWT_SECRET = os.environ.get('JWT_SECRET', secrets.token_hex(32))
+
+def _get_or_create_jwt_secret() -> str:
+    """環境変数 JWT_SECRET があればそれを使い、なければファイルに永続化して再利用する。
+    --reload によるサーバーリロードでもシークレットが変わらないようにする。"""
+    env_secret = os.environ.get('JWT_SECRET', '').strip()
+    if env_secret:
+        return env_secret
+    # データディレクトリにシークレットファイルを保存
+    secret_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+    os.makedirs(secret_dir, exist_ok=True)
+    secret_file = os.path.join(secret_dir, '.jwt_secret')
+    try:
+        if os.path.exists(secret_file):
+            with open(secret_file, 'r') as f:
+                stored = f.read().strip()
+            if stored:
+                return stored
+    except Exception:
+        pass
+    # 新規生成して保存
+    new_secret = secrets.token_hex(32)
+    try:
+        with open(secret_file, 'w') as f:
+            f.write(new_secret)
+        logger.info('JWT_SECRET を %s に保存しました（サーバー再起動後も有効）', secret_file)
+    except Exception:
+        logger.warning('JWT_SECRET のファイル保存に失敗。再起動時にトークンが無効になります。')
+    return new_secret
+
+JWT_SECRET = _get_or_create_jwt_secret()
 JWT_ACCESS_EXPIRY = 30 * 60          # 30 minutes
 JWT_REFRESH_EXPIRY = 7 * 24 * 60 * 60  # 7 days
 
