@@ -5151,12 +5151,25 @@ async def _run_llm_job(job_id: str, openai_key: str, openai_model: str,
             return
 
         if not raw_text:
-            # 最終フォールバック: body 全体をログに出力
+            finish_reason = choices[0].get('finish_reason', '') if choices else 'N/A'
+            # finish_reason=length の場合: トークン上限が足りなかった
             body_preview = json.dumps(body, ensure_ascii=False)[:1000] if isinstance(body, dict) else str(body)[:1000]
-            logger.error('OpenAI empty content after all fallbacks. body preview: %s (model=%s)',
-                         body_preview, openai_model)
-            _LLM_JOBS[job_id]['status'] = 'error'
-            _LLM_JOBS[job_id]['error'] = f'OpenAI からのテキスト出力が空です (model={openai_model}, finish_reason={choices[0].get("finish_reason") if choices else "N/A"})'
+            # usage 情報があればログに出す（推論トークンの消費量がわかる）
+            usage_info = body.get('usage', {})
+            logger.error(
+                'OpenAI empty content. finish_reason=%s, model=%s, usage=%s, body_preview=%s',
+                finish_reason, openai_model, json.dumps(usage_info, ensure_ascii=False), body_preview
+            )
+            if finish_reason == 'length':
+                _LLM_JOBS[job_id]['status'] = 'error'
+                _LLM_JOBS[job_id]['error'] = (
+                    f'モデルの出力トークン上限に達しました (model={openai_model})。'
+                    f'推論(thinking)にトークンが消費され、テキスト出力に割り当てるトークンが不足しました。'
+                    f'問題数を減らすか、プロンプトを短くしてお試しください。'
+                )
+            else:
+                _LLM_JOBS[job_id]['status'] = 'error'
+                _LLM_JOBS[job_id]['error'] = f'OpenAI からのテキスト出力が空です (model={openai_model}, finish_reason={finish_reason})'
             return
 
         # LaTeX 後処理
@@ -5285,7 +5298,10 @@ async def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     else:
         user_content_parts = req.prompt + base_context
 
-    _dynamic_max_tokens = min(8192, 600 + 1000 * req_num_questions)
+    # GPT-5.x 系は内部推論(thinking)にトークンを消費するため、
+    # max_completion_tokens を十分大きく設定する必要がある。
+    # 推論トークン + 出力トークンの合計がこの値に収まる。
+    _dynamic_max_tokens = max(16384, 4096 + 2000 * req_num_questions)
 
     # ── 古いジョブのクリーンアップ ──
     _cleanup_old_jobs()
