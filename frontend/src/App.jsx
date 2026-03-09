@@ -21,6 +21,147 @@ const Ico = {
   Zap: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
   ChevronDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
   ChevronUp: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,
+  Clock: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  Settings: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  Shield: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  Trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+  WifiOff: () => <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>,
+}
+
+/* ────────────────────────────────────────────
+   Onboarding Component (初回チュートリアル)
+   ──────────────────────────────────────────── */
+const ONBOARDING_SLIDES = [
+  {
+    emoji: '🎓',
+    title: '類題生成へようこそ',
+    desc: 'AIの力で、既存の問題から類似問題を自動生成するツールです。教育現場での問題作成を効率化します。',
+  },
+  {
+    emoji: '📝',
+    title: 'かんたん4ステップ',
+    desc: '1. 出題パターンを選ぶ → 2. 問題数・ベース問題を設定 → 3. AIに依頼 → 4. PDF完成！',
+  },
+  {
+    emoji: '🤖',
+    title: '外部AIサービスと連携',
+    desc: 'ChatGPTやClaudeなどの外部AIに指示文を送り、返ってきたLaTeXコードからPDFを生成します。AIの無料プランでもご利用いただけます。',
+  },
+  {
+    emoji: '🚀',
+    title: 'さあ、始めましょう！',
+    desc: 'まずは出題パターンを選んで、最初の類題を作成してみましょう。',
+  },
+]
+
+function OnboardingScreen({ onComplete }) {
+  const [slideIndex, setSlideIndex] = useState(0)
+  const slide = ONBOARDING_SLIDES[slideIndex]
+  const isLast = slideIndex === ONBOARDING_SLIDES.length - 1
+
+  return (
+    <div className="onboarding-overlay">
+      <div className="onboarding-card anim-scale-in">
+        <div className="onboarding-slide anim-fade-up" key={slideIndex}>
+          <div className="onboarding-emoji">{slide.emoji}</div>
+          <h2 className="onboarding-title">{slide.title}</h2>
+          <p className="onboarding-desc">{slide.desc}</p>
+        </div>
+        <div className="onboarding-dots">
+          {ONBOARDING_SLIDES.map((_, i) => (
+            <div key={i} className={`onboarding-dot ${i === slideIndex ? 'active' : ''}`} />
+          ))}
+        </div>
+        <div className="onboarding-actions">
+          {slideIndex > 0 && (
+            <button className="btn btn-ghost" onClick={() => setSlideIndex(i => i - 1)}>戻る</button>
+          )}
+          {isLast ? (
+            <button className="btn btn-primary btn-lg btn-block" onClick={onComplete}>
+              はじめる <Ico.ArrowRight />
+            </button>
+          ) : (
+            <button className="btn btn-primary btn-lg btn-block" onClick={() => setSlideIndex(i => i + 1)}>
+              次へ <Ico.ArrowRight />
+            </button>
+          )}
+        </div>
+        <button className="onboarding-skip" onClick={onComplete}>スキップ</button>
+      </div>
+    </div>
+  )
+}
+
+/* ────────────────────────────────────────────
+   Offline Banner Component
+   ──────────────────────────────────────────── */
+function OfflineBanner() {
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true)
+    const goOnline = () => setIsOffline(false)
+    window.addEventListener('offline', goOffline)
+    window.addEventListener('online', goOnline)
+    return () => { window.removeEventListener('offline', goOffline); window.removeEventListener('online', goOnline) }
+  }, [])
+  if (!isOffline) return null
+  return (
+    <div className="offline-banner">
+      <Ico.WifiOff />
+      <div>
+        <div className="offline-title">オフラインです</div>
+        <div className="offline-desc">インターネット接続を確認してください。接続が回復すると自動的に復帰します。</div>
+      </div>
+    </div>
+  )
+}
+
+/* ────────────────────────────────────────────
+   History helpers (localStorage)
+   ──────────────────────────────────────────── */
+const HISTORY_KEY = 'examgen_history'
+const MAX_HISTORY = 50
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]')
+  } catch { return [] }
+}
+
+function saveToHistory(entry) {
+  const history = loadHistory()
+  history.unshift({ ...entry, id: Date.now(), createdAt: new Date().toISOString() })
+  if (history.length > MAX_HISTORY) history.length = MAX_HISTORY
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+}
+
+function deleteFromHistory(id) {
+  const history = loadHistory().filter(h => h.id !== id)
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
+}
+
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY)
+}
+
+/* ────────────────────────────────────────────
+   Settings helpers (localStorage)
+   ──────────────────────────────────────────── */
+const SETTINGS_KEY = 'examgen_settings'
+const DEFAULT_SETTINGS = {
+  defaultNumQuestions: 3,
+  defaultLatexPreset: 'exam',
+  defaultBaseMode: 'skip',
+}
+
+function loadSettings() {
+  try {
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }
+  } catch { return { ...DEFAULT_SETTINGS } }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
 }
 
 /* ────────────────────────────────────────────
@@ -70,11 +211,25 @@ export default function App() {
   const [templates, setTemplates] = useState([])
   const [latexPresets, setLatexPresets] = useState([])
 
+  // App-level screens: 'main' | 'history' | 'settings' | 'legal'
+  const [screen, setScreen] = useState('main')
+  const [legalTab, setLegalTab] = useState('terms') // 'terms' | 'privacy'
+
+  // Onboarding
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('examgen_onboarded'))
+
+  // History
+  const [history, setHistory] = useState(() => loadHistory())
+
+  // Settings
+  const [settings, setSettings] = useState(() => loadSettings())
+
   // Wizard state
   const [step, setStep] = useState(1)
+  const initSettings = loadSettings()
   const [form, setForm] = useState({
-    templateId: '', numQuestions: 3,
-    latexPreset: 'exam',
+    templateId: '', numQuestions: initSettings.defaultNumQuestions,
+    latexPreset: initSettings.defaultLatexPreset,
   })
   const [prompt, setPrompt] = useState('')
   const [ragCtx, setRagCtx] = useState(null)
@@ -87,7 +242,7 @@ export default function App() {
   const [showPromptSection, setShowPromptSection] = useState(true)
 
   // Step 3: Base question state
-  const [baseMode, setBaseMode] = useState('skip') // 'db' | 'pdf' | 'skip'
+  const [baseMode, setBaseMode] = useState(initSettings.defaultBaseMode || 'skip')
   const [baseProblems, setBaseProblems] = useState([])
   const [selectedBaseProblem, setSelectedBaseProblem] = useState(null)
   const [basePdfData, setBasePdfData] = useState(null) // { filename, page_count, images, extracted_text }
@@ -96,6 +251,12 @@ export default function App() {
 
   const notify = (msg, type = 'info') => setToast({ msg, type })
   const upd = (k, v) => setForm(p => ({ ...p, [k]: v }))
+
+  /* ── Onboarding complete ── */
+  const completeOnboarding = () => {
+    localStorage.setItem('examgen_onboarded', '1')
+    setShowOnboarding(false)
+  }
 
   /* ── Fetch templates ── */
   const fetchTemplates = useCallback(async () => {
@@ -235,6 +396,15 @@ export default function App() {
         const url = d?.pdf_url || URL.createObjectURL(await r.blob())
         setPdfUrl(url)
         setStep(4)
+        // Save to history
+        const entry = {
+          templateName: selectedTemplate?.name || form.templateId,
+          numQuestions: form.numQuestions,
+          latexPreset: form.latexPreset,
+          pdfUrl: url,
+        }
+        saveToHistory(entry)
+        setHistory(loadHistory())
         notify('PDFを作成しました！', 'success')
       } else {
         const d = await r.json().catch(() => null)
@@ -275,11 +445,13 @@ export default function App() {
     <div className="app-shell">
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       {loading && <LoadingOverlay text={loadingMsg} />}
+      {showOnboarding && <OnboardingScreen onComplete={completeOnboarding} />}
+      <OfflineBanner />
 
       {/* ── HEADER (desktop only) ── */}
       <header className="header desktop-only">
         <div className="header-inner">
-          <div className="logo">
+          <div className="logo" style={{cursor:'pointer'}} onClick={() => setScreen('main')}>
             <div className="logo-mark"><Ico.Star /></div>
             <div>
               <div className="logo-text">類題生成</div>
@@ -287,6 +459,12 @@ export default function App() {
             </div>
           </div>
           <div className="header-actions">
+            <button className="btn btn-ghost" onClick={() => setScreen('history')} title="履歴">
+              <Ico.Clock />
+            </button>
+            <button className="btn btn-ghost" onClick={() => setScreen('settings')} title="設定">
+              <Ico.Settings />
+            </button>
             <div className="mode-toggle">
               <button className={mode === 'user' ? 'active' : ''} onClick={() => setMode('user')}>ユーザー</button>
               <button className={mode === 'dev' ? 'active' : ''} onClick={() => setMode('dev')}>開発者</button>
@@ -297,15 +475,283 @@ export default function App() {
 
       {/* ── MOBILE TOP BAR ── */}
       <div className="mobile-top-bar mobile-only">
-        <div className="mobile-top-title">{STEPS[step - 1]?.label || '類題生成'}</div>
-        <div className="mobile-progress-line">
-          <div className="mobile-progress-fill" style={{width: `${(step / STEPS.length) * 100}%`}} />
+        <div className="mobile-top-title">
+          {screen === 'history' ? '生成履歴' : screen === 'settings' ? '設定' : screen === 'legal' ? (legalTab === 'terms' ? '利用規約' : 'プライバシーポリシー') : (STEPS[step - 1]?.label || '類題生成')}
         </div>
+        {screen === 'main' && (
+          <div className="mobile-progress-line">
+            <div className="mobile-progress-fill" style={{width: `${(step / STEPS.length) * 100}%`}} />
+          </div>
+        )}
       </div>
 
       <div className="main-content">
 
-        {mode === 'user' ? (
+        {/* ══════════════════════════════════
+            SCREEN: History (生成履歴)
+           ══════════════════════════════════ */}
+        {screen === 'history' && (
+          <div className="card anim-fade-up">
+            <div className="card-header">
+              <span className="card-emoji">🕐</span>
+              <div className="card-title">生成履歴</div>
+              <div className="card-desc">過去に生成したPDFの一覧です</div>
+            </div>
+            {history.length > 0 ? (
+              <>
+                <div className="history-list">
+                  {history.map(h => (
+                    <div key={h.id} className="history-item">
+                      <div className="history-item-info">
+                        <div className="history-item-name">
+                          {presetEmoji(h.latexPreset)} {h.templateName}
+                        </div>
+                        <div className="history-item-meta">
+                          {h.numQuestions}問 ・ {new Date(h.createdAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+                      <div className="history-item-actions">
+                        {h.pdfUrl && (
+                          <a href={h.pdfUrl} target="_blank" rel="noreferrer" className="btn btn-outline" style={{padding: '6px 12px', fontSize: 12}}>
+                            <Ico.ExternalLink /> 開く
+                          </a>
+                        )}
+                        <button
+                          className="btn btn-ghost"
+                          style={{padding: '6px 8px', color: 'var(--c-danger)'}}
+                          onClick={() => { deleteFromHistory(h.id); setHistory(loadHistory()) }}
+                        >
+                          <Ico.Trash />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  className="btn btn-outline btn-block"
+                  style={{marginTop: 16}}
+                  onClick={() => { if (window.confirm('全ての履歴を削除しますか？')) { clearHistory(); setHistory([]) } }}
+                >
+                  履歴をすべて削除
+                </button>
+              </>
+            ) : (
+              <div className="base-empty">
+                <div className="base-empty-icon"><Ico.Clock /></div>
+                <div>まだ生成履歴がありません</div>
+                <div className="field-hint">PDFを生成すると、ここに記録されます</div>
+              </div>
+            )}
+            <div className="mobile-sticky-action">
+              <button className="btn btn-primary btn-block btn-lg" onClick={() => setScreen('main')}>
+                <Ico.ArrowLeft /> 戻る
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════
+            SCREEN: Settings (設定)
+           ══════════════════════════════════ */}
+        {screen === 'settings' && (
+          <div className="card anim-fade-up">
+            <div className="card-header">
+              <span className="card-emoji">⚙️</span>
+              <div className="card-title">設定</div>
+              <div className="card-desc">アプリの動作をカスタマイズ</div>
+            </div>
+
+            <div className="field" style={{marginBottom: 20}}>
+              <label className="field-label">デフォルト問題数</label>
+              <div className="num-questions-selector">
+                {[1, 2, 3, 5, 10].map(n => (
+                  <button
+                    key={n}
+                    className={`num-btn ${settings.defaultNumQuestions === n ? 'active' : ''}`}
+                    onClick={() => { const s = { ...settings, defaultNumQuestions: n }; setSettings(s); saveSettings(s) }}
+                  >
+                    {n}問
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="field" style={{marginBottom: 20}}>
+              <label className="field-label">デフォルト出力形式</label>
+              <div className="preset-chips">
+                {latexPresets.map(p => (
+                  <button
+                    key={p.id}
+                    className={`preset-chip ${settings.defaultLatexPreset === p.id ? 'active' : ''}`}
+                    onClick={() => { const s = { ...settings, defaultLatexPreset: p.id }; setSettings(s); saveSettings(s) }}
+                  >
+                    <span className="preset-chip-emoji">{presetEmoji(p.id)}</span>
+                    <span className="preset-chip-label">{p.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="field" style={{marginBottom: 20}}>
+              <label className="field-label">デフォルトベース問題モード</label>
+              <div className="base-mode-tabs">
+                {[
+                  { key: 'db', icon: <Ico.Database />, label: 'DB' },
+                  { key: 'pdf', icon: <Ico.Pdf />, label: 'PDF' },
+                  { key: 'skip', icon: <Ico.Skip />, label: 'スキップ' },
+                ].map(m => (
+                  <button
+                    key={m.key}
+                    className={`base-mode-tab ${settings.defaultBaseMode === m.key ? 'active' : ''}`}
+                    onClick={() => { const s = { ...settings, defaultBaseMode: m.key }; setSettings(s); saveSettings(s) }}
+                  >
+                    {m.icon}
+                    <span>{m.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="settings-divider" />
+
+            <div className="field" style={{marginBottom: 20}}>
+              <label className="field-label">その他</label>
+              <button
+                className="btn btn-outline btn-block"
+                style={{marginBottom: 8}}
+                onClick={() => { setScreen('legal'); setLegalTab('terms') }}
+              >
+                <Ico.Shield /> 利用規約
+              </button>
+              <button
+                className="btn btn-outline btn-block"
+                style={{marginBottom: 8}}
+                onClick={() => { setScreen('legal'); setLegalTab('privacy') }}
+              >
+                <Ico.Shield /> プライバシーポリシー
+              </button>
+              <button
+                className="btn btn-outline btn-block"
+                onClick={() => { setShowOnboarding(true) }}
+              >
+                チュートリアルを再表示
+              </button>
+            </div>
+
+            <div className="settings-app-info">
+              <div className="settings-app-version">類題生成 v1.0.0</div>
+              <div className="field-hint">Smart Problem Generator</div>
+            </div>
+
+            <div className="mobile-sticky-action">
+              <button className="btn btn-primary btn-block btn-lg" onClick={() => setScreen('main')}>
+                <Ico.ArrowLeft /> 戻る
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════
+            SCREEN: Legal (利用規約・プライバシーポリシー)
+           ══════════════════════════════════ */}
+        {screen === 'legal' && (
+          <div className="card anim-fade-up">
+            <div className="legal-tabs">
+              <button
+                className={`legal-tab ${legalTab === 'terms' ? 'active' : ''}`}
+                onClick={() => setLegalTab('terms')}
+              >
+                利用規約
+              </button>
+              <button
+                className={`legal-tab ${legalTab === 'privacy' ? 'active' : ''}`}
+                onClick={() => setLegalTab('privacy')}
+              >
+                プライバシーポリシー
+              </button>
+            </div>
+
+            {legalTab === 'terms' && (
+              <div className="legal-content anim-fade-up">
+                <h3>利用規約</h3>
+                <p className="legal-date">最終更新日: 2025年1月1日</p>
+
+                <h4>第1条（適用）</h4>
+                <p>本規約は、本アプリ「類題生成」（以下「本サービス」）の利用に関する条件を定めるものです。ユーザーは本規約に同意の上、本サービスを利用するものとします。</p>
+
+                <h4>第2条（サービス内容）</h4>
+                <p>本サービスは、教育目的で問題の類題を生成するためのツールです。AIによる問題生成は外部サービス（ChatGPT、Claude等）を利用します。本サービスは問題データベースの検索とPDF生成機能を提供します。</p>
+
+                <h4>第3条（利用条件）</h4>
+                <p>ユーザーは以下の行為を行ってはなりません：</p>
+                <ul>
+                  <li>法令または公序良俗に違反する行為</li>
+                  <li>本サービスの運営を妨害する行為</li>
+                  <li>他のユーザーに不利益を与える行為</li>
+                  <li>生成されたコンテンツの不正利用</li>
+                </ul>
+
+                <h4>第4条（知的財産権）</h4>
+                <p>本サービスを通じて生成された問題の著作権は、元の問題の権利関係に従います。ユーザーは、生成された問題を教育目的の範囲内で利用できます。</p>
+
+                <h4>第5条（免責事項）</h4>
+                <p>本サービスは「現状有姿」で提供されます。生成された問題の正確性・完全性について保証するものではありません。本サービスの利用により生じた損害について、運営者は責任を負いません。</p>
+
+                <h4>第6条（サービスの変更・停止）</h4>
+                <p>運営者は、事前の通知なくサービスの内容を変更、または一時的もしくは永続的にサービスを停止することがあります。</p>
+
+                <h4>第7条（規約の変更）</h4>
+                <p>運営者は、必要に応じて本規約を変更することがあります。変更後の規約は、本アプリ上での掲示をもって効力を生じるものとします。</p>
+              </div>
+            )}
+
+            {legalTab === 'privacy' && (
+              <div className="legal-content anim-fade-up">
+                <h3>プライバシーポリシー</h3>
+                <p className="legal-date">最終更新日: 2025年1月1日</p>
+
+                <h4>1. 収集する情報</h4>
+                <p>本サービスでは、以下の情報を収集する場合があります：</p>
+                <ul>
+                  <li>利用状況に関する情報（利用回数、機能の使用状況等）</li>
+                  <li>アップロードされたPDFファイルの内容（一時的な処理のみ）</li>
+                  <li>デバイス情報（OS、ブラウザの種類等）</li>
+                </ul>
+
+                <h4>2. 情報の利用目的</h4>
+                <p>収集した情報は、以下の目的で利用します：</p>
+                <ul>
+                  <li>サービスの提供・改善</li>
+                  <li>ユーザーサポート</li>
+                  <li>利用状況の分析</li>
+                </ul>
+
+                <h4>3. 情報の保存</h4>
+                <p>生成履歴や設定情報は、お使いのデバイスのローカルストレージに保存されます。サーバーにユーザーの個人情報を保存することはありません。アップロードされたPDFは処理完了後にサーバーから削除されます。</p>
+
+                <h4>4. 第三者への提供</h4>
+                <p>収集した情報を第三者に提供することはありません。ただし、法令に基づく要請がある場合を除きます。</p>
+
+                <h4>5. 外部サービスとの連携</h4>
+                <p>本サービスでは、外部AIサービス（OpenAI、Anthropic等）の利用を推奨しています。これらのサービスの利用には、各サービスの利用規約・プライバシーポリシーが適用されます。</p>
+
+                <h4>6. お問い合わせ</h4>
+                <p>プライバシーに関するお問い合わせは、アプリ内のお問い合わせ機能よりご連絡ください。</p>
+              </div>
+            )}
+
+            <div className="mobile-sticky-action">
+              <button className="btn btn-primary btn-block btn-lg" onClick={() => setScreen('settings')}>
+                <Ico.ArrowLeft /> 設定に戻る
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════
+            SCREEN: Main (メイン画面)
+           ══════════════════════════════════ */}
+        {screen === 'main' && mode === 'user' ? (
           <>
             {/* ── FLOW OVERVIEW (desktop only) ── */}
             <div className="flow-overview desktop-only">
@@ -760,7 +1206,7 @@ export default function App() {
               </div>
             )}
           </>
-        ) : (
+        ) : screen === 'main' && mode === 'dev' ? (
           /* ── DEV MODE ── */
           <div className="card anim-fade-up" style={{marginTop:8}}>
             <div className="card-header">
@@ -776,7 +1222,7 @@ export default function App() {
               ユーザーモードに切り替え
             </button>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* ── Floating Help Button (desktop only) ── */}
@@ -785,45 +1231,41 @@ export default function App() {
       </button>
 
       {/* ── Mobile Bottom Navigation ── */}
-      {mode === 'user' && (
-        <nav className="mobile-bottom-nav mobile-only">
-          <button
-            className={`mobile-nav-item ${step === 1 ? 'active' : ''} ${step > 1 ? 'done' : ''}`}
-            onClick={() => step >= 1 && setStep(1)}
-          >
-            <span className="mobile-nav-icon">📝</span>
-            <span className="mobile-nav-label">パターン</span>
-          </button>
-          <button
-            className={`mobile-nav-item ${step === 2 ? 'active' : ''} ${step > 2 ? 'done' : ''}`}
-            onClick={() => step >= 2 && setStep(2)}
-            disabled={step < 2}
-          >
-            <span className="mobile-nav-icon">⚙️</span>
-            <span className="mobile-nav-label">設定</span>
-          </button>
-          <button
-            className={`mobile-nav-item ${step === 3 ? 'active' : ''} ${step > 3 ? 'done' : ''}`}
-            onClick={() => step >= 3 && setStep(3)}
-            disabled={step < 3}
-          >
-            <span className="mobile-nav-icon">🤖</span>
-            <span className="mobile-nav-label">AI依頼</span>
-          </button>
-          <button
-            className={`mobile-nav-item ${step === 4 ? 'active' : ''}`}
-            onClick={() => step >= 4 && setStep(4)}
-            disabled={step < 4}
-          >
-            <span className="mobile-nav-icon">✅</span>
-            <span className="mobile-nav-label">完成</span>
-          </button>
-          <button className="mobile-nav-item" onClick={() => setShowHelp(true)}>
-            <span className="mobile-nav-icon">❓</span>
-            <span className="mobile-nav-label">ヘルプ</span>
-          </button>
-        </nav>
-      )}
+      <nav className="mobile-bottom-nav mobile-only">
+        <button
+          className={`mobile-nav-item ${screen === 'main' && step === 1 ? 'active' : ''} ${screen === 'main' && step > 1 ? 'done' : ''}`}
+          onClick={() => { setScreen('main'); step >= 1 && setStep(1) }}
+        >
+          <span className="mobile-nav-icon">📝</span>
+          <span className="mobile-nav-label">パターン</span>
+        </button>
+        <button
+          className={`mobile-nav-item ${screen === 'main' && step === 2 ? 'active' : ''} ${screen === 'main' && step > 2 ? 'done' : ''}`}
+          onClick={() => { setScreen('main'); step >= 2 && setStep(2) }}
+          disabled={screen === 'main' && step < 2}
+        >
+          <span className="mobile-nav-icon">⚙️</span>
+          <span className="mobile-nav-label">問題設定</span>
+        </button>
+        <button
+          className={`mobile-nav-item ${screen === 'history' ? 'active' : ''}`}
+          onClick={() => { setScreen('history'); setHistory(loadHistory()) }}
+        >
+          <span className="mobile-nav-icon">🕐</span>
+          <span className="mobile-nav-label">履歴</span>
+        </button>
+        <button
+          className={`mobile-nav-item ${screen === 'settings' || screen === 'legal' ? 'active' : ''}`}
+          onClick={() => setScreen('settings')}
+        >
+          <span className="mobile-nav-icon">⚙️</span>
+          <span className="mobile-nav-label">設定</span>
+        </button>
+        <button className="mobile-nav-item" onClick={() => setShowHelp(true)}>
+          <span className="mobile-nav-icon">❓</span>
+          <span className="mobile-nav-label">ヘルプ</span>
+        </button>
+      </nav>
 
       {/* ── Help Modal ── */}
       {showHelp && (
