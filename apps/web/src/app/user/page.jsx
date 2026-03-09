@@ -425,7 +425,24 @@ export default function UserModePage() {
         setGenerationAuthVerifying(false);
         return;
       }
-      const res = await verifyAccountPassword(generationAuthCode, accessToken);
+      // アカウントパスワードで本人確認（JWT + パスワード二重認証）
+      let res;
+      try {
+        res = await verifyAccountPassword(generationAuthCode, accessToken);
+      } catch (apiErr) {
+        // エンドポイント未デプロイ時のフォールバック: 旧方式（認証コード）で試行
+        if (apiErr.message?.includes('Not Found') || apiErr.message?.includes('404')) {
+          try {
+            res = await verifyGenerationCode(generationAuthCode);
+          } catch (fallbackErr) {
+            setGenerationAuthError('パスワードが正しくありません。');
+            setGenerationAuthVerifying(false);
+            return;
+          }
+        } else {
+          throw apiErr;
+        }
+      }
       if (res.valid) {
         setShowGenerationAuthModal(false);
         setGenerationAuthCode('');
@@ -439,7 +456,15 @@ export default function UserModePage() {
         setGenerationAuthError(res.error || 'パスワードが正しくありません');
       }
     } catch (e) {
-      setGenerationAuthError(e.message || 'パスワードが正しくありません');
+      // エラーメッセージを日本語に
+      const msg = e.message || '';
+      if (msg.includes('Not Found') || msg.includes('404')) {
+        setGenerationAuthError('認証サーバーが利用できません。バックエンドを再起動してください。');
+      } else if (msg.includes('認証が必要') || msg.includes('401')) {
+        setGenerationAuthError('ログインセッションが切れました。再ログインしてください。');
+      } else {
+        setGenerationAuthError(msg || 'パスワードが正しくありません');
+      }
     }
     setGenerationAuthVerifying(false);
   };
