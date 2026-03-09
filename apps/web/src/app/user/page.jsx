@@ -17,7 +17,7 @@ import {
   Icons,
   MobileNavLinks,
 } from '@/components/ui';
-import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
+import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, MODEL_TIERS, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
 import { LatexText } from '@/components/LatexRenderer';
 
 /* ── ウィザードステップ定義（9ステップ） ── */
@@ -574,6 +574,7 @@ export default function UserModePage() {
   const [questionFormat, setQuestionFormat] = useState('standard');
   const [includeDiagramPerQuestion, setIncludeDiagramPerQuestion] = useState(false);
   const [customRequest, setCustomRequest] = useState('');
+  const [modelTier, setModelTier] = useState('auto');  // 'auto' | 'lite' | 'standard' | 'premium'
   const CUSTOM_REQUEST_MAX_LENGTH = 200;
 
   /* ── 生成結果 ── */
@@ -843,6 +844,7 @@ export default function UserModePage() {
         custom_request: customRequest.trim() || undefined,
         user_id: effectiveUserId,
         num_questions: numQuestions,
+        model_tier: modelTier,
         brand_name: serviceName || undefined,
         brand_logo_url: logoUrl || undefined,
         paper_theme: paperTheme || undefined,
@@ -855,6 +857,9 @@ export default function UserModePage() {
         llmParams.base_problem_text = selectedBaseProblem.stem || selectedBaseProblem.text || '';
       }
       const data = await generateWithLlm(llmParams);
+
+      // レスポンスに最新 usage が含まれていれば即時反映
+      if (data?.usage) setUsage(data.usage);
 
       if (data?.error) {
         setStatus(`生成エラー: ${data.error}`);
@@ -2663,6 +2668,78 @@ export default function UserModePage() {
             </div>
           </div>
 
+          {/* AIモデル選択 */}
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="icon-glossy w-8 h-8" style={{ background: 'linear-gradient(145deg, #6366f1 0%, #8b5cf6 100%)' }}>
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[13px] font-bold text-[#1e293b] tracking-tight">AIモデル</h3>
+                  <p className="text-[10px] text-[#64748b]">教科に応じて自動選択、または手動で品質を選択</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {/* 自動モード */}
+                <button
+                  onClick={() => setModelTier('auto')}
+                  className={`w-full px-4 py-3 rounded-xl text-left transition-all duration-300 active:scale-[0.98] ${
+                    modelTier === 'auto'
+                      ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-300/50 shadow-sm'
+                      : 'bg-[#f8fafc] border-2 border-transparent hover:border-indigo-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-[14px]">🤖</span>
+                    <div className="flex-1">
+                      <div className="text-[12px] font-bold text-[#1e293b]">自動（おすすめ）</div>
+                      <div className="text-[10px] text-[#64748b] mt-0.5">
+                        教科に応じて最適なモデルを自動選択 —
+                        {(() => {
+                          const tier = MODEL_TIERS.find(t => t.subject_hint?.includes(subject));
+                          return tier
+                            ? ` ${subject} → ${tier.badge} ${tier.label} (${tier.model})`
+                            : ` ${subject || '理系'} → 🎯 スタンダード (gpt-5.2)`;
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+                {/* 各ティア */}
+                {MODEL_TIERS.map((tier) => {
+                  const active = modelTier === tier.id;
+                  const colorMap = { emerald: 'emerald', blue: 'blue', purple: 'purple' };
+                  const c = colorMap[tier.color] || 'blue';
+                  return (
+                    <button
+                      key={tier.id}
+                      onClick={() => setModelTier(tier.id)}
+                      className={`w-full px-4 py-3 rounded-xl text-left transition-all duration-300 active:scale-[0.98] ${
+                        active
+                          ? `bg-${c}-50/60 border-2 border-${c}-300/50 shadow-sm`
+                          : 'bg-[#f8fafc] border-2 border-transparent hover:border-blue-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px]">{tier.badge}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[12px] font-bold text-[#1e293b]">{tier.label}</span>
+                            <span className="text-[10px] text-[#94a3b8] font-mono">{tier.model}</span>
+                          </div>
+                          <div className="text-[10px] text-[#64748b] mt-0.5">{tier.description}</div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           {/* カスタム要望 */}
           <div className="card-glossy">
             <div className="p-5 relative z-10">
@@ -2766,6 +2843,14 @@ export default function UserModePage() {
                   ...(theme ? [['テーマ', theme]] : []),
                   ['問題数', `${numQuestions}問`],
                   ['出力形式', selectedPreset?.name || latexPreset],
+                  ['AIモデル', (() => {
+                    if (modelTier === 'auto') {
+                      const autoTier = MODEL_TIERS.find(t => t.subject_hint?.includes(subject));
+                      return `自動 → ${autoTier ? autoTier.badge + ' ' + autoTier.label : '🎯 スタンダード'}`;
+                    }
+                    const sel = MODEL_TIERS.find(t => t.id === modelTier);
+                    return sel ? `${sel.badge} ${sel.label}` : modelTier;
+                  })()],
                   ['生成方法', mode === 'auto' ? 'AI自動生成' : '手動'],
                   ...(questionFormat !== 'standard' ? [['問題形式', QUESTION_FORMATS.find(f => f.value === questionFormat)?.label]] : []),
                   ...(extraPackages.length > 0 ? [['図表', extraPackages.map(p => DIAGRAM_PACKAGE_DEFS.find(d => d.id === p)?.label || p).join(', ')]] : []),

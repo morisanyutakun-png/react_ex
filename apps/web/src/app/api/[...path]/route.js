@@ -37,11 +37,15 @@ async function handler(request, context) {
     }
   }
 
+  // LLM 生成エンドポイントは OpenAI API (最大180秒) + PDF コンパイル (最大30秒) があるため
+  // 長いタイムアウトが必要。それ以外は 55秒で十分。
+  const isLongRunning = backendPath.includes('generate_with_llm') || backendPath.includes('generate_pdf');
+  const timeoutMs = isLongRunning ? 240000 : 55000;  // 240s vs 55s
+
   const fetchInit = {
     method: request.method,
     headers,
-    // Koyeb コールドスタート + PDF 生成処理に対応（最大 55s）
-    signal: AbortSignal.timeout(55000),
+    signal: AbortSignal.timeout(timeoutMs),
   };
 
   if (!['GET', 'HEAD'].includes(request.method)) {
@@ -95,5 +99,6 @@ export const DELETE = handler;
 export const PATCH = handler;
 export const OPTIONS = handler;
 
-// Vercel Hobby: max 60s。Koyeb コールドスタート + PDF生成に必要。
-export const maxDuration = 60;
+// Vercel Pro: 最大300秒。Hobby: 最大60秒。
+// LLM + PDF 生成に十分な時間を確保する。
+export const maxDuration = 300;

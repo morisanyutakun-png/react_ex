@@ -3,6 +3,40 @@
  */
 
 export const SUBJECTS = ['数学', '物理', '英語', '化学', '生物', '情報'];
+
+/**
+ * AI モデルティア定義
+ * subject_hint: このティアが自動選択される教科パターン（auto モード用）
+ */
+export const MODEL_TIERS = [
+  {
+    id: 'lite',
+    label: 'ライト',
+    model: 'gpt-4o',
+    description: '高速・低コスト。英語・文系科目向き',
+    badge: '⚡',
+    color: 'emerald',
+    subject_hint: ['英語', '国語', '社会', '情報'],
+  },
+  {
+    id: 'standard',
+    label: 'スタンダード',
+    model: 'gpt-5.2',
+    description: '高精度。理系・図表を含む問題に最適',
+    badge: '🎯',
+    color: 'blue',
+    subject_hint: [],  // デフォルト
+  },
+  {
+    id: 'premium',
+    label: 'プレミアム',
+    model: 'gpt-5.4',
+    description: '最高品質。難関問題・複雑な図表に',
+    badge: '🏆',
+    color: 'purple',
+    subject_hint: [],
+  },
+];
 export const DIFFICULTIES = [
   { value: '基礎', label: '基礎', description: '教科書の例題レベル', numeric: 0.1 },
   { value: '標準', label: '標準', description: '教科書の章末問題・定期テストレベル', numeric: 0.3 },

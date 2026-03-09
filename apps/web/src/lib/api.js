@@ -18,11 +18,14 @@ const BASE = '';
  */
 export async function apiFetch(path, options = {}) {
   const url = `${BASE}${path}`;
-  const { timeout = 60000, retries = 2, ...fetchOpts } = options;
+  const { timeout = 60000, retries = 2, noRetry = false, ...fetchOpts } = options;
+
+  // 副作用のある生成系エンドポイントはリトライしない（二重課金防止）
+  const effectiveRetries = noRetry ? 0 : retries;
 
   let lastError = null;
 
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  for (let attempt = 0; attempt <= effectiveRetries; attempt++) {
     // リトライ時は少し待つ（コールドスタート復帰を待つ）
     if (attempt > 0) {
       await new Promise(r => setTimeout(r, 3000 * attempt));
@@ -41,15 +44,17 @@ export async function apiFetch(path, options = {}) {
       clearTimeout(timer);
       if (err.name === 'AbortError') {
         lastError = new Error(`リクエストがタイムアウトしました (${timeout / 1000}秒)`);
+        if (noRetry) break;
         continue; // retry on timeout
       }
       lastError = new Error(`バックエンドに接続できません: ${err.message}`);
+      if (noRetry) break;
       continue; // retry on connection error
     }
     clearTimeout(timer);
 
     // 500/502/504 はサーバー復帰待ちの可能性が高いのでリトライ
-    if ((res.status === 500 || res.status === 502 || res.status === 504) && attempt < retries) {
+    if ((res.status === 500 || res.status === 502 || res.status === 504) && attempt < effectiveRetries) {
       lastError = new Error(`HTTP ${res.status}: バックエンドが一時的に利用できません（リトライ中...）`);
       continue;
     }
@@ -295,7 +300,8 @@ export async function generateWithLlm(params) {
   return apiFetch('/api/generate_with_llm', {
     method: 'POST',
     body: JSON.stringify(params),
-    timeout: 180000, // LLM + PDF compilation can take time
+    timeout: 250000, // LLM (最大180秒) + PDF compilation (最大30秒) + マージン
+    noRetry: true,   // 二重課金防止: 502/504 でもリトライしない
   });
 }
 

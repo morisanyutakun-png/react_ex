@@ -4836,6 +4836,42 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
 
 
 # ── OpenAI GPT LLM → PDF ワンクリック生成 ──────────────────────────
+# ── モデルティア定義 ──────────────────────────────────────
+# フロントエンドの MODEL_TIERS と対応
+_MODEL_TIERS = {
+    'lite':     {'model': 'gpt-4o',   'label': 'ライト'},
+    'standard': {'model': 'gpt-5.2',  'label': 'スタンダード'},
+    'premium':  {'model': 'gpt-5.4',  'label': 'プレミアム'},
+}
+# 教科→ティア自動マッピング（model_tier='auto' 時に使用）
+_SUBJECT_TIER_MAP = {
+    '英語': 'lite', '国語': 'lite', '社会': 'lite', '情報': 'lite',
+    # 上記以外（数学・物理・化学・生物 等）→ standard
+}
+
+
+def _resolve_model(model_tier: str, subject: str) -> tuple:
+    """モデルティアと教科からOpenAIモデル名を解決する。
+    Returns (model_name, tier_id)"""
+    env_default = os.getenv('OPENAI_MODEL', 'gpt-5.2')
+    tier = model_tier or 'auto'
+
+    if tier == 'auto':
+        # 教科に応じて自動選択
+        resolved_tier = _SUBJECT_TIER_MAP.get(subject, 'standard')
+    elif tier in _MODEL_TIERS:
+        resolved_tier = tier
+    else:
+        resolved_tier = 'standard'
+
+    tier_info = _MODEL_TIERS.get(resolved_tier, _MODEL_TIERS['standard'])
+    # 環境変数でモデル名を上書き可能（例: OPENAI_MODEL_LITE=gpt-4o-mini）
+    env_key = f'OPENAI_MODEL_{resolved_tier.upper()}'
+    model_name = os.getenv(env_key, tier_info['model'])
+
+    return model_name, resolved_tier
+
+
 class LlmGenerateRequest(BaseModel):
     prompt: str
     latex_preset: Optional[str] = 'exam'
@@ -4869,6 +4905,8 @@ class LlmGenerateRequest(BaseModel):
     paper_theme: Optional[str] = None
     # Branding: resolved paper theme colors (header_color, accent_color, rule_color) as hex
     paper_colors: Optional[Dict[str, str]] = None
+    # Model tier: 'auto' | 'lite' | 'standard' | 'premium'
+    model_tier: Optional[str] = 'auto'
 
 
 @app.post('/api/generate_with_llm')
@@ -4910,7 +4948,9 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
                 'usage': usage_info,
             }, status_code=429)
 
-    openai_model = os.getenv('OPENAI_MODEL', 'gpt-5.2')
+    # ── モデル解決（ティア × 教科） ──
+    openai_model, resolved_tier = _resolve_model(req.model_tier or 'auto', req.subject or '')
+    logger.info('Model resolved: tier=%s → model=%s (subject=%s)', resolved_tier, openai_model, req.subject)
 
     # Load latex preset to build format-specific system instruction
     preset_id = req.latex_preset or 'exam'
@@ -5121,6 +5161,7 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
 
     # Now compile LaTeX to PDF via the existing generate_pdf infrastructure
     # We reuse the same logic by calling the endpoint internally
+    pdf_data = {}
     try:
         from fastapi.testclient import TestClient
         internal = TestClient(app)
@@ -5134,15 +5175,21 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
         logger.exception('Internal PDF generation failed')
         pdf_data = {'error': f'PDF 生成失敗: {e}'}
 
-    # Increment usage count after successful generation
-    if user_id:
+    # Increment usage count only when LLM succeeded (LaTeX was generated).
+    # PDF compilation errors do NOT consume usage — user can retry PDF separately.
+    if user_id and latex_text:
         _increment_usage(user_id)
+
+    # Fetch updated usage so frontend can refresh immediately
+    updated_usage = _get_usage(user_id) if user_id else None
 
     result = {
         'latex': latex_text,
         'pdf_url': pdf_data.get('pdf_url'),
         'pdf_error': pdf_data.get('error'),
         'model': openai_model,
+        'model_tier': resolved_tier,
+        'usage': updated_usage,
     }
     return JSONResponse(result)
 
