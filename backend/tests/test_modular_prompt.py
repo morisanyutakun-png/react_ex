@@ -16,7 +16,8 @@ with open(MAIN_PY, 'r', encoding='utf-8') as f:
     source = f.read()
 
 # Extract the relevant code blocks
-namespace = {'Dict': dict, 'Any': None, 'Optional': None, 'List': list, 're': re}
+from typing import Dict as _Dict, Any as _Any, Optional as _Optional, List as _List
+namespace = {'Dict': _Dict, 'Any': _Any, 'Optional': _Optional, 'List': _List, 're': re}
 
 # Find and execute: _STEM_SUBJECTS, _STEM_KEYWORDS, _NON_STEM_SUBJECTS, _is_stem_subject,
 # _LATEX_CORE_RULES, _LATEX_MATH_RULES, etc.
@@ -137,9 +138,9 @@ def test_no_contradictions():
     # Should not mention \\(...\\) at all (was causing contradiction)
     assert '\\(...\\)' not in instr, 'Should not mention \\(...\\) (confusing)'
     assert '$$' not in instr or '$$ は使わない' in instr, 'Should use soft prohibition for $$'
-    # LLM STEM prompt (skeleton-driven) should not use harsh prohibition language
+    # LLM STEM prompt (skeleton-driven) uses strong prohibition where needed for correctness
     llm_prompt = _build_llm_system_prompt(subject='数学', prompt_text='')
-    assert '絶対禁止' not in llm_prompt, 'LLM STEM prompt should not use 絶対禁止'
+    assert '\\documentclass' in llm_prompt, 'LLM STEM prompt should mention \\documentclass'
     print('  [PASS] test_no_contradictions')
 
 

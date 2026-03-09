@@ -2787,6 +2787,8 @@ def _is_biology_subject(subject: str, prompt_text: str = '') -> bool:
 # --- プロンプト部品: コアルール（全科目共通）---
 _LATEX_CORE_RULES = (
     "=== LaTeX 出力の基本ルール（全科目共通・厳守） ===\n"
+    "★★★ 最重要: 出力は \\documentclass で始まり \\end{document} で終わる完全なLaTeX文書のみ。\n"
+    "問題文から書き始めたり、パッケージ宣言を省略することは絶対禁止。\n"
     "1. 出力は LaTeX ソースコードのみ。Markdown (``` 等) や説明文は含めない。\n"
     "2. インライン数式: $...$ を使用。\n"
     "3. ディスプレイ数式: \\[ ... \\] を使用。$$ は使わない。\n"
@@ -2844,9 +2846,14 @@ _LATEX_MATH_RULES = (
 _LATEX_PHYSICS_DIAGRAM_RULES = (
     "\n=== 物理科目の図（TikZ）作成ルール（厳守） ===\n"
     "PD1. ラベルは物理量記号（$F$, $v$, $m$, $\\theta$ 等）を使う。日本語ラベル禁止。\n"
-    "PD2. 力ベクトル: \\draw[-{Stealth[length=3mm]},thick] で作用点から描く。\n"
+    "PD2. ★★ 力ベクトル・矢印の厳密ルール:\n"
+    "     矢印スタイル: \\draw[-{Stealth[length=3mm,width=2mm]},thick] で作用点から描く。\n"
+    "     ×誤: \\draw[->] ←矢先が小さすぎて視認不能。\n"
+    "     ×誤: \\draw[-stealth] ←大文字 Stealth が正しい。\n"
+    "     力の方向: 物理法則に厳密に従う（重力=下, 垂直抗力=面に垂直, 摩擦=面に平行）。\n"
+    "     矢印の長さ: 力の大きさに比例。全ベクトルの縮尺を統一する。\n"
     "PD3. 物体形状: 質点=circle(2pt), 直方体=rectangle, 円=circle, ばね=coil decoration。\n"
-    "PD4. 角度: arc で円弧を描き $\\theta$ を配置。\n"
+    "PD4. 角度: arc で円弧を描き $\\theta$ を配置。始角と終角を物理的に正確に指定。\n"
     "PD5. ★★ 接触・設置の厳守ルール（最重要）:\n"
     "     物体が面の上に「置かれている」場合、物体の底辺のy座標と面のy座標を\n"
     "     必ず一致させること。隙間が空いて浮いて見えるのは絶対禁止。\n"
@@ -2856,12 +2863,13 @@ _LATEX_PHYSICS_DIAGRAM_RULES = (
     "     \\fill[pattern=north east lines] (-2,-0.3) rectangle (4,0);  % ハッチング\n"
     "     \\draw[thick] (0,0) rectangle (2,1.5);  % 物体（底辺y=0で床に接触）\n"
     "     斜面上の物体: 物体の底辺が斜面の線分上に正確に乗るよう座標計算する。\n"
-    "PD6. 力の分解: 実線=元ベクトル, 破線[dashed]=分解成分, 直角マーク=小正方形。\n"
+    "PD6. 力の分解: 実線=元ベクトル, 破線[dashed]=分解成分, 直角マーク=小正方形(0.2単位)。\n"
     "PD7. 回路図: circuitikz使用。\\ctikzset{bipoles/fill=white}必須。\n"
     "PD8. グラフ: pgfplots使用。軸に物理量と単位: xlabel={$t$ [s]}。\n"
-    "PD9. 座標計算: 描画前にコメントで座標を計算し検算すること。\n"
+    "PD9. 座標計算: 描画前にコメントで全座標を計算し検算すること。\n"
     "     % === 座標計算 ===\n"
     "     % 斜面角θ=30°, L=4 → 底辺=4cos30°=3.464, 高さ=4sin30°=2.0\n"
+    "     % 力F=mg, 矢印長さ=1.5, 作用点=(1,1.5), 終点=(1,3.0)\n"
     "PD10. 閉じた図形は -- cycle で閉じる。\\begin/\\end の対応を確認。\n"
 )
 
@@ -3029,6 +3037,8 @@ def _build_llm_system_prompt(subject: str = '', prompt_text: str = '',
 
     parts.append(
         '【基本ルール】\n'
+        '★★★ 最重要: 出力の最初の文字は必ず \\documentclass でなければならない。\n'
+        '問題文やコメントから書き始めることは絶対禁止。\n'
         '1. 出力は \\documentclass から \\end{document} までの完全な LaTeX 文書のみ。\n'
         '2. 余分な説明・マークダウン（``` 等）・装飾行（===, --- 等）は出力しない。\n'
         '3. 日本語を含む場合は \\usepackage{iftex} でエンジンを判定し、\n'
@@ -3152,8 +3162,11 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
     # ── 役割（短く明確に） ──
     parts.append(
         'あなたは理系教科の試験問題をLaTeXで作成する専門アシスタントです。\n'
+        '★★★ 最重要ルール: 出力の最初の文字は必ず \\documentclass でなければならない。\n'
+        '問題文やコメントから書き始めることは絶対禁止。\n'
         '\\documentclass から \\end{document} までの完全なLaTeX文書だけを出力してください。\n'
-        'マークダウン(```等)・説明文・装飾行(===,---)は出力しないでください。\n\n'
+        'マークダウン(```等)・説明文・装飾行(===,---)は出力しないでください。\n'
+        '出力は純粋なLaTeXソースコードのみ。それ以外の文字列は一切含めない。\n\n'
     )
 
     # ── 構造テンプレート（具体例ベース） ──
@@ -3198,14 +3211,20 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
 
     # ── 数式の書き方（禁止リストではなく正しい書き方を示す） ──
     parts.append(
-        '【数式の書き方】\n'
+        '【数式の書き方（厳守）】\n'
         '- インライン数式: $a^2 + b^2 = c^2$\n'
         '- ディスプレイ数式: \\[ E = mc^2 \\]\n'
         '- 分数: \\frac{分子}{分母}  例: \\frac{1}{2}, \\frac{x+1}{x-1}\n'
-        '- 入れ子分数: \\frac{\\frac{a}{b}}{c} （中括弧を必ず対応）\n'
+        '- ★分数の厳守事項:\n'
+        '  ○正: \\frac{x+1}{x-1}  ←{分子}{分母}の2つの{}が必須\n'
+        '  ×誤: \\frac x+1 x-1   ←{}なしは絶対禁止\n'
+        '  ×誤: \\frac{}{x}      ←空の分子/分母は禁止\n'
+        '  ×誤: \\frac{x}        ←分母の{}が欠落\n'
+        '- 入れ子分数: \\frac{\\frac{a}{b}}{c} （各\\fracに必ず2つの{}）\n'
+        '  ×誤: \\frac{\\frac{a}{b}}{\\frac{c}} ←内側\\fracの分母{}が1つだけ\n'
         '- 関数: \\sin, \\cos, \\tan, \\log, \\ln, \\exp, \\lim, \\arctan\n'
         '- 根号: \\sqrt{x}, \\sqrt[3]{x}\n'
-        '- 積分: \\int_0^1 f(x) \\, dx （dxの前に \\, のみ）\n'
+        '- 積分: \\int_0^1 f(x) \\, dx\n'
         '- 添字: $x_1$, $x_{10}$, $a_{ij}$ （2文字以上は{}で囲む）\n'
         '- 掛け算: \\times, \\cdot\n'
         '- $$...$$は使わない。\\[...\\]を使う。\n\n'
@@ -3213,13 +3232,16 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
 
     # ── ネスト安定化ルール（最重要・簡潔に） ──
     parts.append(
-        '【ネスト規則（最重要）】\n'
+        '【ネスト規則（最重要・違反=コンパイルエラー）】\n'
         '1. \\begin{X}を書いたら、必ず同じ環境名で\\end{X}を書く。\n'
+        '   ×誤: \\begin{enumerate} ... \\end{itemize} ←環境名不一致\n'
         '2. enumerate/itemize は最大2階層まで。3階層目は禁止。\n'
-        '   OK: enumerate > enumerate\n'
-        '   NG: enumerate > enumerate > enumerate\n'
         '3. 各\\begin, \\endは独立した行に書く。\n'
-        '4. 中括弧{}は開いたら必ず閉じる。\\frac{A}{B}のA,Bは絶対に空にしない。\n\n'
+        '4. 中括弧{}は開いたら必ず閉じる。出力完了前に{と}の数を数えて一致を確認。\n'
+        '5. \\frac{A}{B}のA,Bは絶対に空にしない。\n'
+        '6. 環境のネスト順序を厳守: 内側の環境は外側より先に閉じる。\n'
+        '   ○正: \\begin{enumerate} \\begin{itemize} ... \\end{itemize} \\end{enumerate}\n'
+        '   ×誤: \\begin{enumerate} \\begin{itemize} ... \\end{enumerate} \\end{itemize}\n\n'
     )
 
     # ── 禁止コマンド（短く） ──
@@ -3231,10 +3253,11 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
     # ── 物理図ルール ──
     if is_physics:
         parts.append(
-            '【物理の図（TikZ）— 正確な描画ルール】\n'
-            '- ★座標計算をコメントで先に書くこと:\n'
+            '【物理の図（TikZ）— 厳密な描画ルール】\n'
+            '- ★座標計算をコメントで先に書き、全座標を事前決定すること:\n'
             '  % === 座標計算 ===\n'
             '  % 床y=0, 物体底辺y=0（接触）, 物体上辺y=1.5\n'
+            '  % 力F=mg, 矢印長さ=1.5, 作用点=(1,1.5), 終点=(1,3.0)\n'
             '- ★★ 接触ルール（最重要・違反厳禁）:\n'
             '  物体が面に置かれている場合、物体底辺のy座標 = 面のy座標にすること。\n'
             '  隙間が空いて物体が浮いて見えるのは絶対禁止。\n'
@@ -3242,12 +3265,26 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
             '  \\draw[thick] (-2,0)--(4,0); % 床(y=0)\n'
             '  \\fill[pattern=north east lines] (-2,-0.3) rectangle (4,0);\n'
             '  \\draw[thick] (0,0) rectangle (2,1.5); % 物体(底辺y=0=床と同じ)\n'
+            '- ★★ 力ベクトル・矢印の厳密ルール:\n'
+            '  1. 矢印スタイル: \\draw[-{Stealth[length=3mm,width=2mm]},thick,<色>]\n'
+            '     ×誤: \\draw[->]  ←矢先が小さすぎて見えない\n'
+            '     ×誤: \\draw[-stealth] ←大文字Stealthが正しい\n'
+            '  2. 作用点: 力が作用する正確な点から描く（重心or接触点）\n'
+            '  3. 方向: 物理法則に厳密に従う（重力=下向き,垂直抗力=面に垂直,摩擦=面に平行）\n'
+            '  4. 長さ: 力の大きさに比例させる。全ベクトルの縮尺を統一\n'
+            '  5. ラベル位置: 矢印の先端または中点の横にnode[right/above]で配置\n'
+            '  6. 力の分解: 元ベクトル=実線, 分解成分=dashed, 直角マーク=小正方形(0.2単位)\n'
+            '     \\draw[dashed,-{Stealth[length=2.5mm]}] (P) -- (Px) node[below]{$F_x$};\n'
+            '     \\draw ($(Px)+(0,0.2)$) -- ++(0.2,0) -- ++(0,-0.2); % 直角マーク\n'
             '- ラベルは物理記号: $F$, $v$, $m$, $\\theta$（日本語ラベル禁止）\n'
-            '- 力ベクトル: \\draw[-{Stealth},thick] 作用点から正確な向きに描く\n'
             '- 床面: \\fill[pattern=north east lines] でハッチング\n'
             '- 斜面: 三角関数で座標を正確に計算。物体は斜面上に密着させる\n'
+            '  % 斜面角θ=30°, 底辺=L*cos30°, 高さ=L*sin30°\n'
+            '- 角度表示: arc を使い、始角と終角を物理的に正確に指定\n'
+            '  \\draw (0.8,0) arc[start angle=0,end angle=30,radius=0.8] node[midway,right]{$\\theta$};\n'
             '- ばね: coil decoration。回路: circuitikz\n'
-            '- グラフ: pgfplots, samples=100以上\n\n'
+            '- グラフ: pgfplots, samples=100以上\n'
+            '- 滑車・糸: 糸は直線で、屈曲点は接線方向。滑車は小円で描く\n\n'
         )
 
     if include_diagram_per_question and is_physics:
@@ -3356,6 +3393,8 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
             '☐ 物体が面に置かれている図: 底辺y座標=面y座標（隙間なし）か\n'
             '☐ TikZ図: 座標計算をコメントで書いて検算したか\n'
             '☐ 閉じた図形は -- cycle で閉じているか\n'
+            '☐ 力ベクトルの矢印: -{Stealth[length=3mm]}を使っているか（->は禁止）\n'
+            '☐ 力の方向が物理法則と一致しているか（重力=下, 抗力=面に垂直）\n'
         )
     elif is_chemistry or is_biology:
         checklist += (
@@ -4938,7 +4977,8 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
 
     # 問題数に応じて max_tokens を動的に設定（コスト制御）
     # 1問あたり約1000トークン + ベース600トークン（プリアンブル・解答ページ等）
-    # 目安コスト（GPT-5.2, 1問）: 入力~2000tok + 出力~1600tok ≈ 0.63円
+    # 目安コスト（GPT-5.2, 1問）: 入力~2500tok + 出力~1600tok ≈ 0.8円
+    # システムプロンプト強化分（+500tok入力）を含めても0.8円/リクエスト以内に収まる設計
     _n_q = req_num_questions if 'req_num_questions' in dir() else (req.num_questions or 3)
     _dynamic_max_tokens = min(8192, 600 + 1000 * _n_q)
 
@@ -5004,6 +5044,45 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     latex_text = latex_text.strip()
 
     # Pre-sanitize the LLM output before passing to generate_pdf:
+    # 0) Auto-repair: If LLM skipped \documentclass (Instant mode issue),
+    #    wrap the output in a minimal preamble
+    if '\\documentclass' not in latex_text:
+        logger.warning('LLM output missing \\documentclass — auto-wrapping with preamble')
+        _auto_preamble = (
+            '\\documentclass[a4paper,11pt]{article}\n'
+            '\\usepackage{iftex}\n'
+            '\\ifpdftex\n'
+            '  \\usepackage[utf8]{inputenc}\n'
+            '  \\usepackage{CJKutf8}\n'
+            '\\fi\n'
+            '\\ifluatex\n'
+            '  \\usepackage{luatexja}\n'
+            '\\fi\n'
+            '\\ifxetex\n'
+            '  \\usepackage{xeCJK}\n'
+            '\\fi\n'
+            '\\usepackage{amsmath,amssymb}\n'
+            '\\usepackage{enumitem}\n'
+            '\\usepackage{geometry}\n'
+            '\\geometry{margin=2cm}\n'
+            '\\usepackage{tikz}\n'
+            '\\usetikzlibrary{arrows.meta,patterns,decorations.pathmorphing,calc}\n'
+            '\\usepackage{pgfplots}\n'
+            '\\pgfplotsset{compat=1.18}\n'
+        )
+        # Check if it has \begin{document}
+        if '\\begin{document}' not in latex_text:
+            latex_text = _auto_preamble + '\n\\begin{document}\n\n' + latex_text
+            if '\\end{document}' not in latex_text:
+                latex_text += '\n\n\\end{document}\n'
+        else:
+            # Has \begin{document} but no \documentclass — prepend preamble before \begin{document}
+            bd_match = re.search(r'\\begin\{document\}', latex_text)
+            if bd_match:
+                latex_text = _auto_preamble + '\n' + latex_text
+            else:
+                latex_text = _auto_preamble + '\n\\begin{document}\n\n' + latex_text + '\n\n\\end{document}\n'
+
     # 1) Unescape JSON-escaped sequences (if the LLM produced literal \n etc.)
     try:
         latex_text = _unescape_latex(latex_text)
