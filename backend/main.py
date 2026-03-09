@@ -20,6 +20,17 @@ PROJECT_ROOT = os.path.dirname(THIS_DIR)
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+# Load .env file (project root or backend dir) before anything else
+try:
+    from dotenv import load_dotenv
+    # Try backend dir first, then project root
+    _env_path = os.path.join(THIS_DIR, '.env')
+    if not os.path.exists(_env_path):
+        _env_path = os.path.join(PROJECT_ROOT, '.env')
+    load_dotenv(_env_path, override=False)
+except ImportError:
+    pass  # python-dotenv not installed; rely on OS env vars
+
 try:
     import rag
 except Exception:
@@ -5159,24 +5170,8 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     except Exception:
         pass
 
-    # Now compile LaTeX to PDF via the existing generate_pdf infrastructure
-    # We reuse the same logic by calling the endpoint internally
-    pdf_data = {}
-    try:
-        from fastapi.testclient import TestClient
-        internal = TestClient(app)
-        pdf_resp = internal.post('/api/generate_pdf', json={
-            'latex': latex_text,
-            'title': req.title or 'Generated Problems',
-            'return_url': True,
-        })
-        pdf_data = pdf_resp.json() if pdf_resp.headers.get('content-type', '').startswith('application/json') else {}
-    except Exception as e:
-        logger.exception('Internal PDF generation failed')
-        pdf_data = {'error': f'PDF 生成失敗: {e}'}
-
     # Increment usage count only when LLM succeeded (LaTeX was generated).
-    # PDF compilation errors do NOT consume usage — user can retry PDF separately.
+    # PDF compilation is handled separately by the frontend calling /api/generate_pdf.
     if user_id and latex_text:
         _increment_usage(user_id)
 
@@ -5185,8 +5180,6 @@ def generate_with_llm(req: LlmGenerateRequest = Body(...)):
 
     result = {
         'latex': latex_text,
-        'pdf_url': pdf_data.get('pdf_url'),
-        'pdf_error': pdf_data.get('error'),
         'model': openai_model,
         'model_tier': resolved_tier,
         'usage': updated_usage,

@@ -769,6 +769,7 @@ export default function UserModePage() {
 
     setStatus('ステップ 1/3: AIへの指示文を作成中...');
     let generatedPrompt = '';
+    let latexResult = '';
     try {
       const renderParams = {
         template_id: templateId,
@@ -868,21 +869,9 @@ export default function UserModePage() {
       }
 
       if (data?.latex) {
+        latexResult = data.latex;
         setGeneratedLatex(data.latex);
         setLlmOutput(data.latex);
-      }
-
-      if (data?.pdf_url) {
-        setPdfUrl(data.pdf_url);
-        window.open(data.pdf_url, '_blank');
-        setStatus('PDF を生成・表示しました');
-        setStep(8);
-      } else if (data?.pdf_error) {
-        setStatus(`問題のLaTeX生成は成功 / PDF変換失敗: ${data.pdf_error}`);
-        setStep(8);
-      } else {
-        setStatus('LaTeX生成完了（PDFエンジン未設定）');
-        setStep(8);
       }
     } catch (e) {
       // 429 = 使用回数上限
@@ -893,7 +882,28 @@ export default function UserModePage() {
       } else {
         setStatus(`生成エラー: ${e.message}`);
       }
+      if (effectiveUserId) fetchUsage(effectiveUserId).then(setUsage).catch(() => {});
+      setGenerating(false);
+      return;
     }
+
+    // ── ステップ 3/3: PDF 生成（別リクエストでタイムアウト回避）──
+    setStatus('ステップ 3/3: PDF を生成中...');
+    try {
+      if (latexResult) {
+        const pdfData = await generatePdf(latexResult);
+        if (pdfData?.pdf_url) {
+          setPdfUrl(pdfData.pdf_url);
+          window.open(pdfData.pdf_url, '_blank');
+          setStatus('PDF を生成・表示しました');
+        } else {
+          setStatus('LaTeX生成完了（PDF生成失敗）');
+        }
+      }
+    } catch (e) {
+      setStatus(`LaTeX生成は完了 / PDF生成エラー: ${e.message}`);
+    }
+    setStep(8);
     // 使用状況を更新
     if (effectiveUserId) fetchUsage(effectiveUserId).then(setUsage).catch(() => {});
     setGenerating(false);
