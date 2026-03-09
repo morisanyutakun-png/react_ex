@@ -727,7 +727,10 @@ export default function UserModePage() {
         paper_colors: resolvedPaperColors || undefined,
       };
       // ベース問題テキストをプロンプト生成にも反映
-      if (baseMode === 'db' && selectedBaseProblem) {
+      if (baseMode === 'pdf' && basePdfExtractedText) {
+        // PDF抽出テキストをベース問題としてプロンプトに反映
+        renderParams.base_problem_text = basePdfExtractedText;
+      } else if (baseMode === 'db' && selectedBaseProblem) {
         renderParams.base_problem_text = selectedBaseProblem.stem || selectedBaseProblem.text || '';
       }
       const data = await renderTemplate(renderParams);
@@ -861,7 +864,10 @@ export default function UserModePage() {
         paper_colors: resolvedPaperColors || undefined,
       };
       // ベース問題テキストをプロンプトに反映
-      if (baseMode === 'db' && selectedBaseProblem) {
+      if (baseMode === 'pdf' && basePdfExtractedText) {
+        // PDF抽出テキストをベース問題としてプロンプトに反映
+        manualRenderParams.base_problem_text = basePdfExtractedText;
+      } else if (baseMode === 'db' && selectedBaseProblem) {
         manualRenderParams.base_problem_text = selectedBaseProblem.stem || selectedBaseProblem.text || '';
       }
       const data = await renderTemplate(manualRenderParams);
@@ -3855,6 +3861,22 @@ export default function UserModePage() {
                   </span>
                 </div>
               )}
+              {/* PDFアップロードでベース問題設定時の表示 */}
+              {baseMode === 'pdf' && basePdfImages.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-blue-200/60 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#2563eb] flex-shrink-0" />
+                  <span className="text-[10px] text-[#2563eb] font-bold">📄 アップロードPDFをベース問題として添付</span>
+                  <span className="text-[10px] text-[#64748b]">
+                    — {basePdfPageCount}ページ{basePdfFile ? ` (${basePdfFile.name})` : ''}
+                  </span>
+                </div>
+              )}
+              {baseMode === 'db' && selectedBaseProblem && (
+                <div className="mt-2 pt-2 border-t border-blue-200/60 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#7c3aed] flex-shrink-0" />
+                  <span className="text-[10px] text-[#7c3aed] font-bold">DB問題をベースに類題を生成</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -3931,6 +3953,45 @@ export default function UserModePage() {
                     </div>
                   </details>
                 )}
+
+                {/* ベース問題PDFプレビュー（自動モード） */}
+                {baseMode === 'pdf' && basePdfImages.length > 0 && (
+                  <details className="group" open>
+                    <summary className="cursor-pointer text-[#64748b] text-xs font-bold hover:text-[#1e293b] transition-colors list-none flex items-center gap-2">
+                      <span className="w-4 h-4 rounded bg-blue-50/60 flex items-center justify-center group-open:rotate-90 transition-transform text-[10px]">
+                        ▸
+                      </span>
+                      📄 添付したベース問題PDF（{basePdfPageCount}ページ）
+                    </summary>
+                    <div className="mt-3">
+                      <div className="rounded-xl border border-blue-200/60 bg-blue-50/30 p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#2563eb]/10 text-[#2563eb] text-[10px] font-bold">
+                            ✓ AIにPDF画像として送信済み
+                          </span>
+                          {basePdfFile && (
+                            <span className="text-[10px] text-[#64748b] truncate">{basePdfFile.name}</span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {basePdfImages.map((img, i) => (
+                            <div key={i} className="relative rounded-lg overflow-hidden border border-blue-200/40 shadow-sm bg-white">
+                              <img
+                                src={`data:image/png;base64,${img}`}
+                                alt={`ベース問題 ページ ${i + 1}`}
+                                className="w-full h-auto block"
+                                style={{ minHeight: '60px' }}
+                              />
+                              <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/50 text-white text-[9px] font-bold">
+                                {i + 1}/{basePdfImages.length}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+                )}
               </div>
               </div>
             </div>
@@ -3961,6 +4022,43 @@ export default function UserModePage() {
                 )}
                 <CopyButton text={prompt} onCopied={setStatus} label="再コピー" />
               </div>
+
+              {/* ベース問題PDF添付ガイド（手動モード） */}
+              {baseMode === 'pdf' && basePdfImages.length > 0 && (
+                <div className="mx-6 sm:mx-8 mt-4 mb-0">
+                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/60 p-4">
+                    <div className="flex items-start gap-2.5 mb-3">
+                      <span className="text-[16px] flex-shrink-0">📄</span>
+                      <div>
+                        <p className="text-[12px] font-bold text-amber-900">ベース問題PDFも一緒に添付してください</p>
+                        <p className="text-[11px] text-amber-700 mt-0.5">
+                          指示文と合わせて、以下のPDF画像もChatGPTやClaudeに添付すると、より正確な類題が生成されます。
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {basePdfImages.map((img, i) => (
+                        <div key={i} className="relative rounded-lg overflow-hidden border border-amber-200/60 shadow-sm bg-white">
+                          <img
+                            src={`data:image/png;base64,${img}`}
+                            alt={`ベース問題 ページ ${i + 1}`}
+                            className="w-full h-auto block"
+                            style={{ minHeight: '60px' }}
+                          />
+                          <div className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/50 text-white text-[9px] font-bold">
+                            {i + 1}/{basePdfImages.length}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {basePdfFile && (
+                      <p className="text-[10px] text-amber-600 mt-2 text-center">
+                        元ファイル: {basePdfFile.name}（{basePdfPageCount}ページ）
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* メインエリア */}
               <div className="p-6 sm:p-8">
