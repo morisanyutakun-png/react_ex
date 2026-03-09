@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── モバイルでピンチズームを無効化 ── */
+html {
+  touch-action: manipulation;
+}
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari 向け追加対策 */
+  body { -webkit-text-size-adjust: 100%; }
+}
+
 /* ====================================================
    Design System — REM
    Blue-inspired · Light · Refined · Ergonomic
