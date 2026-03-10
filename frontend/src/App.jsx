@@ -452,7 +452,14 @@ export default function App() {
       <header className="header desktop-only">
         <div className="header-inner">
           <div className="logo" style={{cursor:'pointer'}} onClick={() => setScreen('main')}>
-            <div className="logo-mark"><Ico.Star /></div>
+            <div className="logo-mark">
+              <svg width="24" height="24" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round">
+                <circle cx="50" cy="50" r="7" fill="currentColor" stroke="none"/>
+                <ellipse cx="50" cy="50" rx="42" ry="16"/>
+                <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(60 50 50)"/>
+                <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(-60 50 50)"/>
+              </svg>
+            </div>
             <div>
               <div className="logo-text">物理AI</div>
               <div className="logo-sub">物理・数学・英語の類題をAIで</div>
@@ -639,8 +646,8 @@ export default function App() {
             </div>
 
             <div className="settings-app-info">
-              <div className="settings-app-version">類題生成 v1.0.0</div>
-              <div className="field-hint">Smart Problem Generator</div>
+              <div className="settings-app-version">⚛️ 物理AI v1.0.0</div>
+              <div className="field-hint">物理×AI 類題生成 — 高校・受験・大学対応</div>
             </div>
 
             <div className="mobile-sticky-action">
