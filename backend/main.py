@@ -5409,44 +5409,79 @@ def _build_practice_system_prompt(subject: str, topics: list, difficulty: str, n
 
 
 def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
-    """構造化された問題データからPDF用LaTeXドキュメントを構築する。"""
+    """構造化された問題データから、教員モード品質のPDF用LaTeXドキュメントを構築する。"""
+
+    # ─── 科目別アクセントカラー ───
+    color_map = {
+        '物理': ('6D28D9', '8B5CF6'),   # violet
+        '数学': ('1D4ED8', '3B82F6'),   # blue
+        '化学': ('047857', '10B981'),   # emerald
+    }
+    main_hex, accent_hex = color_map.get(subject, ('1A5276', '2563EB'))
+
     lines = [
         r'\documentclass[a4paper,11pt]{ltjsarticle}',
         r'\usepackage{amsmath,amssymb}',
         r'\usepackage{geometry}',
         r'\geometry{margin=2cm}',
-        r'\pagestyle{empty}',
+        r'\usepackage{parskip}',
+        r'\usepackage{fancyhdr}',
+        r'\usepackage{titlesec}',
+        r'\usepackage{xcolor}',
+        r'\usepackage{enumitem}',
+        rf'\definecolor{{mainblue}}{{HTML}}{{{main_hex}}}',
+        rf'\definecolor{{accentcolor}}{{HTML}}{{{accent_hex}}}',
+        r'\definecolor{rulecolor}{HTML}{2C3E50}',
+        r'\pagestyle{fancy}\fancyhf{}',
+        r'\renewcommand{\headrulewidth}{0.8pt}',
+        r'\renewcommand{\headrule}{\hbox to\headwidth{\color{mainblue}\leaders\hrule height \headrulewidth\hfill}}',
+        rf'\fancyhead[L]{{\small\color{{mainblue}}\textsf{{\textbf{{{subject} 練習問題}}}}}}',
+        r'\fancyhead[R]{\small\color{mainblue}\textsf{\thepage}}',
+        r'\setlength{\headheight}{14pt}',
+        r'\titleformat{\section}{\Large\bfseries\color{mainblue}}{}{0em}{}[\vspace{-0.5em}{\color{mainblue}\rule{\linewidth}{0.4pt}}]',
+        r'\titleformat{\subsection}{\large\bfseries\color{accentcolor}}{}{0em}{}',
+        r'\newcommand{\problem}[1]{\subsection*{\textcolor{accentcolor}{\textbf{問題 #1}}}}',
+        r'\newcommand{\answer}[1]{\noindent{\color{rulecolor}\rule{\linewidth}{0.4pt}}\subsection*{\textcolor{accentcolor}{問題 #1 の解答}}}',
+        '',
         r'\begin{document}',
-        r'\begin{center}',
-        rf'\textbf{{\Large {subject} 練習問題（{difficulty}）}}',
-        r'\end{center}',
-        r'\vspace{1em}',
+        r'\setlength{\parskip}{0.6em}',
+        '',
+        rf'\section*{{\textcolor{{mainblue}}{{{subject} 練習問題（{difficulty}）}}}}',
+        '',
     ]
+
+    # ─── 問題セクション ───
     for i, p in enumerate(problems, 1):
-        stem = (p.get('stem') or '').replace('$', r'$')
-        # 問題文の $ はLaTeXそのまま使えるのでアンエスケープ
-        stem = (p.get('stem') or '')
-        lines.append(rf'\noindent\textbf{{問{i}}}')
+        stem = p.get('stem') or ''
+        topic = p.get('topic') or ''
+        topic_label = rf'\hfill{{\small\color{{mainblue}}【{topic}】}}' if topic else ''
+        lines.append(rf'\problem{{{i}}}{topic_label}')
         lines.append('')
         lines.append(stem)
-        lines.append(r'\vspace{1em}')
+        lines.append(r'\vspace{0.8em}')
+        lines.append('')
+
     lines.append(r'\newpage')
-    lines.append(r'\begin{center}')
-    lines.append(r'\textbf{\Large 解答・解説}')
-    lines.append(r'\end{center}')
-    lines.append(r'\vspace{1em}')
+    lines.append('')
+    lines.append(r'\section*{\textcolor{mainblue}{解答・解説}}')
+    lines.append('')
+
+    # ─── 解答セクション ───
     for i, p in enumerate(problems, 1):
         answer = p.get('answer') or ''
         explanation = p.get('explanation') or ''
-        lines.append(rf'\noindent\textbf{{問{i} 解答}}')
+        lines.append(rf'\answer{{{i}}}')
         lines.append('')
-        lines.append(answer)
-        lines.append('')
-        if explanation:
-            lines.append(r'\noindent\textbf{解説}')
+        if answer:
+            lines.append(r'\paragraph{\textcolor{accentcolor}{解答}}')
+            lines.append(answer)
             lines.append('')
+        if explanation:
+            lines.append(r'\paragraph{\textcolor{accentcolor}{解説}}')
             lines.append(explanation)
-            lines.append(r'\vspace{1em}')
+            lines.append('')
+        lines.append(r'\vspace{0.8em}')
+
     lines.append(r'\end{document}')
     return '\n'.join(lines)
 
