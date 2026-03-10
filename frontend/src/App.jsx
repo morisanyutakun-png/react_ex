@@ -33,24 +33,24 @@ const Ico = {
    ──────────────────────────────────────────── */
 const ONBOARDING_SLIDES = [
   {
-    emoji: '🎓',
-    title: '類題生成へようこそ',
-    desc: 'AIの力で、既存の問題から類似問題を自動生成するツールです。教育現場での問題作成を効率化します。',
+    emoji: '⚛️',
+    title: '物理を制す、受験を制す',
+    desc: '高校物理・大学物理の類題をAIが瞬時に生成。力学・電磁気・波動・熱力学、あらゆる分野をPDF出力できます。',
+  },
+  {
+    emoji: '🎯',
+    title: '受験生・高校生・大学生へ',
+    desc: '共通テスト対策から大学物理まで幅広く対応。数学・英語などの他教科の類題生成にも使えます。',
   },
   {
     emoji: '📝',
     title: 'かんたん4ステップ',
-    desc: '1. 出題パターンを選ぶ → 2. 問題数・ベース問題を設定 → 3. AIに依頼 → 4. PDF完成！',
-  },
-  {
-    emoji: '🤖',
-    title: '外部AIサービスと連携',
-    desc: 'ChatGPTやClaudeなどの外部AIに指示文を送り、返ってきたLaTeXコードからPDFを生成します。AIの無料プランでもご利用いただけます。',
+    desc: '1. 物理の出題パターンを選ぶ → 2. 問題数・ベース問題を設定 → 3. AIに依頼 → 4. PDF完成！',
   },
   {
     emoji: '🚀',
-    title: 'さあ、始めましょう！',
-    desc: 'まずは出題パターンを選んで、最初の類題を作成してみましょう。',
+    title: 'さあ、物理の類題を作ろう！',
+    desc: 'まずは出題パターンを選んで、最初の類題を生成してみましょう。受験突破の第一歩がここから始まります。',
   },
 ]
 
@@ -454,8 +454,8 @@ export default function App() {
           <div className="logo" style={{cursor:'pointer'}} onClick={() => setScreen('main')}>
             <div className="logo-mark"><Ico.Star /></div>
             <div>
-              <div className="logo-text">類題生成</div>
-              <div className="logo-sub">Smart Problem Generator</div>
+              <div className="logo-text">物理AI</div>
+              <div className="logo-sub">物理・数学・英語の類題をAIで</div>
             </div>
           </div>
           <div className="header-actions">
@@ -476,7 +476,7 @@ export default function App() {
       {/* ── MOBILE TOP BAR ── */}
       <div className="mobile-top-bar mobile-only">
         <div className="mobile-top-title">
-          {screen === 'history' ? '生成履歴' : screen === 'settings' ? '設定' : screen === 'legal' ? (legalTab === 'terms' ? '利用規約' : 'プライバシーポリシー') : (STEPS[step - 1]?.label || '類題生成')}
+          {screen === 'history' ? '生成履歴' : screen === 'settings' ? '設定' : screen === 'legal' ? (legalTab === 'terms' ? '利用規約' : 'プライバシーポリシー') : (STEPS[step - 1]?.label || '物理AI')}
         </div>
         {screen === 'main' && (
           <div className="mobile-progress-line">
@@ -793,24 +793,43 @@ export default function App() {
             {step === 1 && (
               <div className="card anim-fade-up mobile-card">
                 <div className="card-header mobile-card-header">
-                  <span className="card-emoji">📝</span>
+                  <span className="card-emoji">⚛️</span>
                   <div className="card-title">出題パターンを選ぶ</div>
-                  <div className="card-desc mobile-card-desc">パターンを選択してください</div>
+                  <div className="card-desc mobile-card-desc">物理を中心に、数学・英語など各科目のパターンが揃っています</div>
+                </div>
+
+                {/* Physics Hero Banner */}
+                <div className="physics-hero-banner">
+                  <div className="physics-hero-content">
+                    <div className="physics-hero-title">⚛️ 物理の類題生成</div>
+                    <div className="physics-hero-subtitle">高校生・受験生・大学生向け</div>
+                  </div>
+                  <div className="physics-hero-pills">
+                    <span>力学</span>
+                    <span>電磁気</span>
+                    <span>波動</span>
+                    <span>熱力学</span>
+                  </div>
                 </div>
 
                 <div className="tip mobile-tip-compact">
                   <span className="tip-icon">💡</span>
-                  <div>科目・分野から目的に合ったものを選んでください</div>
+                  <div>物理（力学・電磁気・波動・熱力学）から選ぶことをおすすめします。他教科にも対応しています</div>
                 </div>
 
                 <div className="pattern-grid">
-                  {templates.map(t => {
+                  {[...templates].sort((a, b) => {
+                    const aPhys = (a.metadata?.subject || '').includes('物理') ? -1 : 0
+                    const bPhys = (b.metadata?.subject || '').includes('物理') ? -1 : 0
+                    return aPhys - bPhys
+                  }).map(t => {
                     const meta = t.metadata || {}
                     const isSelected = form.templateId === t.id
+                    const isPhysics = (meta.subject || '').includes('物理')
                     return (
                       <div
                         key={t.id}
-                        className={`pattern-card ${isSelected ? 'selected' : ''}`}
+                        className={`pattern-card ${isSelected ? 'selected' : ''} ${isPhysics ? 'physics' : ''}`}
                         onClick={() => upd('templateId', t.id)}
                       >
                         <div className="pattern-card-header">
@@ -821,7 +840,7 @@ export default function App() {
                           <div className="pattern-card-desc">{t.description}</div>
                         )}
                         <div className="pattern-card-tags">
-                          {meta.subject && <span className="pattern-tag">{meta.subject}</span>}
+                          {meta.subject && <span className={`pattern-tag ${isPhysics ? 'physics-tag' : ''}`}>{meta.subject}</span>}
                           {meta.field && <span className="pattern-tag">{meta.field}</span>}
                         </div>
                       </div>

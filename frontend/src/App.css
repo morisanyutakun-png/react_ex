@@ -1,5 +1,6 @@
 /* ==========================================
-   Design System — 類題生成アプリ
+   Design System — 物理AI 類題生成
+   高校生・受験生・大学生向け 物理特化UI
    Mobile-first, accessible, premium design
    ========================================== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -926,6 +927,82 @@ details[open] > .how-summary::before {
   background: var(--c-bg);
   color: var(--c-text-secondary);
   border: 1px solid var(--c-border);
+}
+
+/* ==========================================
+   Physics-specific Styles (物理AI ブランド)
+   ========================================== */
+
+/* Physics Hero Banner — Step 1 */
+.physics-hero-banner {
+  background: linear-gradient(135deg, #0E3A56 0%, #1A5276 60%, #2E86C1 100%);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(14,58,86,0.25);
+}
+.physics-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.physics-hero-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+.physics-hero-subtitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.physics-hero-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.physics-hero-pills span {
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+/* Physics-tagged pattern cards */
+.pattern-card.physics {
+  border-color: rgba(26,82,118,0.3);
+  background: linear-gradient(135deg, #f0f6fb 0%, #ffffff 100%);
+}
+.pattern-card.physics:hover {
+  border-color: var(--c-primary);
+  background: linear-gradient(135deg, #e3f0f9 0%, #f5faff 100%);
+  box-shadow: 0 2px 12px rgba(26,82,118,0.15);
+}
+.pattern-card.physics.selected {
+  border-color: var(--c-primary);
+  background: linear-gradient(135deg, #d4e9f7 0%, #ebf5fb 100%);
+  box-shadow: 0 0 0 3px rgba(26,82,118,0.2), 0 2px 8px rgba(26,82,118,0.12);
+}
+.pattern-card.physics .pattern-card-name {
+  color: var(--c-primary);
+}
+
+/* Physics subject tag */
+.pattern-tag.physics-tag {
+  background: rgba(26,82,118,0.1);
+  color: var(--c-primary);
+  border-color: rgba(26,82,118,0.25);
+  font-weight: 700;
 }
 .pattern-check {
   flex-shrink: 0;
