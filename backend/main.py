@@ -5390,22 +5390,32 @@ def _build_practice_system_prompt(subject: str, topics: list, difficulty: str, n
 【出力ルール】
 1. 必ず以下のJSON形式のみで出力してください。JSON以外のテキスト（前置き・説明等）は一切出力しないでください。
 2. 数式はLaTeX記法で書いてください（インライン: $...$、ディスプレイ: $$...$$）。
-3. 問題文（stem）は具体的で明確にしてください。
-4. 解答（answer）は最終的な答えを簡潔に記載してください。
-5. 解説（explanation）は解法の手順を段階的に示してください。受験生が「なぜそうなるか」を理解できるように。
-6. 各問題のtopicフィールドには、その問題が属する分野名を入れてください。
+3. ★★★重要: JSON文字列内のバックスラッシュ(\\)は必ず二重にエスケープしてください。
+   例: \\frac → \\\\frac, \\sin → \\\\sin, \\theta → \\\\theta, \\begin → \\\\begin
+   $\\\\frac{{1}}{{2}}$ のように書いてください。$\\frac{{1}}{{2}}$ は不正です。
+4. 問題文（stem）は具体的で明確にしてください。
+5. 解答（answer）は最終的な答えを簡潔に記載してください。
+6. 解説（explanation）は解法の手順を段階的に示してください。受験生が「なぜそうなるか」を理解できるように。
+7. 各問題のtopicフィールドには、その問題が属する分野名を入れてください。
+8. difficultyフィールドには難易度を入れてください（{difficulty}）。
 
 【JSON形式】
 {{
   "problems": [
     {{
-      "stem": "問題文（LaTeX数式使用可）",
+      "stem": "問題文（LaTeX数式使用可。\\\\を二重にすること）",
       "answer": "最終解答",
       "explanation": "解法の手順と説明",
-      "topic": "分野名"
+      "topic": "分野名",
+      "difficulty": "{difficulty}"
     }}
   ]
-}}"""
+}}
+
+【バックスラッシュ二重化の例】
+正しい: "stem": "質量 $m$ の物体に力 $F = m \\\\cdot a$ が…"
+正しい: "answer": "$x = \\\\frac{{-b \\\\pm \\\\sqrt{{b^2 - 4ac}}}}{{2a}}$"
+誤り:   "stem": "力 $F = m \\cdot a$"（\\c はJSONで不正）"""
 
 
 def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
@@ -5569,15 +5579,19 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
             _PRACTICE_JOBS[job_id]['error'] = 'AI からの応答が空です'
             return
 
-        # JSON パース
+        # JSON パース（LaTeX エスケープ修復付き）
         parsed = None
         # code fence 除去
         fenced = re.search(r'```(?:json)?\s*\n?([\s\S]*?)```', raw_text)
-        if fenced:
+        json_text = fenced.group(1).strip() if fenced else None
+        if json_text:
             try:
-                parsed = json.loads(fenced.group(1).strip())
-            except Exception:
-                pass
+                parsed = json.loads(json_text)
+            except json.JSONDecodeError:
+                try:
+                    parsed = json.loads(_fix_latex_json_escapes(json_text))
+                except Exception:
+                    pass
         if not parsed:
             brace_start = raw_text.find('{')
             if brace_start >= 0:
@@ -5588,10 +5602,14 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
                     elif raw_text[i] == '}':
                         depth -= 1
                     if depth == 0:
+                        candidate = raw_text[brace_start:i + 1]
                         try:
-                            parsed = json.loads(raw_text[brace_start:i + 1])
-                        except Exception:
-                            pass
+                            parsed = json.loads(candidate)
+                        except json.JSONDecodeError:
+                            try:
+                                parsed = json.loads(_fix_latex_json_escapes(candidate))
+                            except Exception:
+                                pass
                         break
 
         if not parsed or 'problems' not in parsed:
@@ -5689,19 +5707,42 @@ async def practice_render_prompt(req: PracticeGenerateRequest = Body(...)):
     return JSONResponse({'prompt': full_prompt})
 
 
+def _fix_latex_json_escapes(text: str) -> str:
+    """JSON文字列内のLaTeX バックスラッシュを正しくエスケープする。
+
+    問題点:
+    - \\sin → \\s はJSONで不正 → parse error
+    - \\frac → \\f はJSON form feed → silent corruption（\\frac ではなく制御文字+rac になる）
+    - \\theta → \\t はJSON tab → silent corruption
+    - \\neq → \\n はJSON newline → silent corruption
+    - \\begin → \\b はJSON backspace → silent corruption
+
+    修正:
+    Pass 1: 不正なJSONエスケープ（\\s, \\c, \\d 等）を \\\\s, \\\\c に変換
+    Pass 2: \\b, \\f, \\n, \\r, \\t の後にアルファベットが続く場合はLaTeXとみなし \\\\X に変換
+    """
+    # Pass 1: JSON標準エスケープ以外の \X → \\X
+    text = re.sub(r'\\(?!["\\bfnrtu/])', r'\\\\', text)
+    # Pass 2: \b,\f,\n,\r,\t + アルファベット → LaTeXコマンドとして二重エスケープ
+    # 例: \frac → \\frac, \theta → \\theta, \neq → \\neq
+    # 既にエスケープ済みの \\ は negative lookbehind で除外
+    text = re.sub(r'(?<!\\)\\([bfnrt])(?=[a-zA-Z])', r'\\\\\1', text)
+    return text
+
+
 @app.post('/api/practice/parse')
 async def practice_parse_json(payload: dict = Body(...)):
     """手動モード用: ユーザーが貼り付けたJSON/テキストをパースし、problems + latex を返す。"""
     raw = payload.get('raw_text', '')
     subject = payload.get('subject', '')
+    difficulty = payload.get('difficulty', '')
     if not raw.strip():
         return JSONResponse({'error': '入力が空です。'}, status_code=400)
 
     # JSON 抽出: code fence 除去
     text = raw.strip()
     if '```' in text:
-        import re as _re
-        m = _re.search(r'```(?:json)?\s*\n?(.*?)```', text, _re.DOTALL)
+        m = re.search(r'```(?:json)?\s*\n?([\s\S]*?)```', text)
         if m:
             text = m.group(1).strip()
     # brace 検出
@@ -5710,10 +5751,19 @@ async def practice_parse_json(payload: dict = Body(...)):
     if start >= 0 and end > start:
         text = text[start:end + 1]
 
+    # Step 1: そのまま試す
+    data = None
     try:
         data = json.loads(text)
-    except json.JSONDecodeError as e:
-        return JSONResponse({'error': f'JSON パースに失敗しました: {str(e)}'}, status_code=400)
+    except json.JSONDecodeError:
+        pass
+
+    # Step 2: LaTeX バックスラッシュを修復して再試行
+    if data is None:
+        try:
+            data = json.loads(_fix_latex_json_escapes(text))
+        except json.JSONDecodeError as e:
+            return JSONResponse({'error': f'JSON パースに失敗しました: {str(e)}'}, status_code=400)
 
     problems = data.get('problems', [])
     if not problems:
@@ -5721,7 +5771,7 @@ async def practice_parse_json(payload: dict = Body(...)):
 
     # LaTeX 構築
     try:
-        latex = _build_practice_latex(problems, subject)
+        latex = _build_practice_latex(problems, subject, difficulty or '応用')
     except Exception:
         latex = None
 

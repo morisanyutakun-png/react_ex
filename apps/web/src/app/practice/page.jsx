@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
    定数
 ───────────────────────────────────────────────────────────── */
 
-const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', SUMMARY: 'summary' };
+const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', EXAM: 'exam', SUMMARY: 'summary' };
 
 const PRACTICE_SUBJECTS = ['物理', '数学', '化学'];
 
@@ -34,6 +34,8 @@ const EXAM_LEVELS = [
 const SCORE = { CORRECT: 'correct', DELTA: 'delta', WRONG: 'wrong' };
 
 const GEN_MODE = { AUTO: 'auto', MANUAL: 'manual' };
+
+const PRACTICE_FORMAT = { DRILL: 'drill', EXAM: 'exam' };
 
 /* ─────────────────────────────────────────────────────────────
    セクション見出し
@@ -142,6 +144,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
   const [difficulty, setDifficulty] = useState('応用');
   const [numQ, setNumQ] = useState(5);
   const [genMode, setGenMode] = useState(isGuest ? GEN_MODE.MANUAL : GEN_MODE.AUTO);
+  const [practiceFormat, setPracticeFormat] = useState(PRACTICE_FORMAT.DRILL);
 
   const c = SUBJECT_COLOR[subject];
   const topicOptions = SUBJECT_TOPICS[subject] || [];
@@ -150,7 +153,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
     setTopics((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
 
   const handleStart = () => {
-    onStart({ subject, topics, difficulty, numQ, genMode });
+    onStart({ subject, topics, difficulty, numQ, genMode, practiceFormat });
   };
 
   return (
@@ -245,6 +248,63 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
         </div>
       </div>
 
+      {/* 練習形式 */}
+      <div className="mb-7">
+        <SectionLabel>練習形式</SectionLabel>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setPracticeFormat(PRACTICE_FORMAT.DRILL)}
+            className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-250
+              ${practiceFormat === PRACTICE_FORMAT.DRILL ? 'border-[#2563eb] bg-blue-50/50 shadow-md' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1] hover:shadow-sm'}`}
+          >
+            {practiceFormat === PRACTICE_FORMAT.DRILL && (
+              <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              </div>
+            )}
+            <div className="flex items-start gap-2.5">
+              <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-250 ${
+                practiceFormat === PRACTICE_FORMAT.DRILL ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50 text-[#64748b]'
+              }`}>
+                <span className="text-[16px]">📝</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-bold text-[#1e293b]">一問一答</div>
+                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">1問ずつ解いて即座に採点</div>
+              </div>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setPracticeFormat(PRACTICE_FORMAT.EXAM)}
+            className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-250
+              ${practiceFormat === PRACTICE_FORMAT.EXAM ? 'border-[#2563eb] bg-blue-50/50 shadow-md' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1] hover:shadow-sm'}`}
+          >
+            {practiceFormat === PRACTICE_FORMAT.EXAM && (
+              <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              </div>
+            )}
+            <div className="flex items-start gap-2.5">
+              <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-250 ${
+                practiceFormat === PRACTICE_FORMAT.EXAM ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50 text-[#64748b]'
+              }`}>
+                <span className="text-[16px]">📋</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-bold text-[#1e293b]">模試形式</div>
+                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">全問表示＋タイマーで本番演習</div>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {/* 科目タブ */}
       <div className="mb-7">
         <SectionLabel>科目</SectionLabel>
@@ -326,11 +386,13 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
         className="w-full py-4.5 rounded-2xl text-[16px] font-black text-white tracking-[-0.01em] shadow-xl transition-all duration-250 active:scale-[0.97] hover:shadow-2xl"
         style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 10px 30px ${c.ring}` }}
       >
-        練習を始める →
+        {practiceFormat === PRACTICE_FORMAT.EXAM ? '模試を始める →' : '練習を始める →'}
       </button>
 
       <p className="text-center text-[11px] text-[#94a3b8] mt-4 leading-relaxed">
-        {genMode === GEN_MODE.AUTO ? 'AIが問題を生成します（作るモードと同じアルゴリズム）' : 'プロンプトを生成 → ChatGPT等で実行 → 貼り付け'}
+        {practiceFormat === PRACTICE_FORMAT.EXAM
+          ? '全問一覧＋タイマーで本番さながらの演習'
+          : genMode === GEN_MODE.AUTO ? 'AIが問題を生成します（作るモードと同じアルゴリズム）' : 'プロンプトを生成 → ChatGPT等で実行 → 貼り付け'}
       </p>
 
       {/* 詳細モードへの導線 */}
@@ -352,7 +414,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
    手動モード: プロンプト & 貼り付け画面
 ───────────────────────────────────────────────────────────── */
 
-function PromptScreen({ prompt, subject, onParsed, onBack, promptLoading }) {
+function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoading }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const [copied, setCopied] = useState(false);
   const [pasteText, setPasteText] = useState('');
@@ -380,7 +442,7 @@ function PromptScreen({ prompt, subject, onParsed, onBack, promptLoading }) {
     setParsing(true);
     setParseError('');
     try {
-      const result = await practiceParseJson(pasteText, subject);
+      const result = await practiceParseJson(pasteText, subject, difficulty);
       if (result?.error) {
         setParseError(result.error);
       } else if (result?.problems?.length > 0) {
@@ -762,6 +824,185 @@ function FollowScreen({ problem, subject, onContinue, onSkip, isLoading }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   模試形式画面: 全問一覧 + タイマー
+───────────────────────────────────────────────────────────── */
+
+function ExamScreen({ problems, subject, onFinish, onQuit }) {
+  const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
+  const numQ = problems.length;
+  const initialTime = numQ <= 3 ? 15 * 60 : numQ <= 5 ? 30 * 60 : 60 * 60;
+  const [timeLeft, setTimeLeft] = useState(initialTime);
+  const [finished, setFinished] = useState(false);
+  const [examScores, setExamScores] = useState({}); // { index: SCORE.xxx }
+
+  // タイマー
+  useEffect(() => {
+    if (finished) return;
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) { setFinished(true); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [finished]);
+
+  const formatTime = (s) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${String(sec).padStart(2, '0')}`;
+  };
+
+  const handleFinishExam = () => setFinished(true);
+
+  const handleScoreChange = (idx, score) => {
+    setExamScores((prev) => ({ ...prev, [idx]: score }));
+  };
+
+  const handleSubmitScores = () => {
+    const scoreArray = problems.map((_, i) => examScores[i] || SCORE.DELTA);
+    onFinish(scoreArray);
+  };
+
+  const allScored = Object.keys(examScores).length === problems.length;
+  const timeWarning = timeLeft > 0 && timeLeft <= 60;
+  const timeDanger = timeLeft > 0 && timeLeft <= 30;
+  const pct = Math.max(0, (timeLeft / initialTime) * 100);
+
+  return (
+    <div className="max-w-[480px] mx-auto px-5 pt-6 pb-24">
+      {/* 固定ヘッダー: タイマー */}
+      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md -mx-5 px-5 pb-4 pt-2 border-b border-[#f1f5f9]">
+        <div className="flex items-center justify-between mb-2">
+          <BackButton onClick={onQuit} label="中断" />
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: finished ? '#16a34a' : timeDanger ? '#dc2626' : timeWarning ? '#d97706' : c.accent }} />
+            <span className={`text-[20px] font-black tabular-nums tracking-[-0.02em] ${timeDanger ? 'text-[#dc2626]' : timeWarning ? 'text-[#d97706]' : 'text-[#0f172a]'}`}>
+              {finished ? '終了' : formatTime(timeLeft)}
+            </span>
+          </div>
+          <span className="text-[12px] font-bold text-[#94a3b8]">{numQ}問</span>
+        </div>
+        {/* タイマーバー */}
+        {!finished && (
+          <div className="w-full h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-1000 ease-linear"
+                 style={{ width: `${pct}%`, background: timeDanger ? '#dc2626' : timeWarning ? '#d97706' : c.accent }} />
+          </div>
+        )}
+        {finished && (
+          <div className="text-center">
+            <p className="text-[12px] font-bold text-[#16a34a]">試験終了 — 各問題を自己採点してください</p>
+          </div>
+        )}
+      </div>
+
+      {/* 問題一覧 */}
+      <div className="space-y-5 mt-6">
+        {problems.map((problem, idx) => {
+          const stem = problem?.stem || problem?.text || problem?.question || '';
+          const answer = problem?.answer || problem?.solution || '';
+          const explanation = problem?.explanation || problem?.解説 || '';
+          const topic = problem?.topic || problem?.metadata?.field || '';
+          const scored = examScores[idx];
+
+          return (
+            <div key={idx} className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm transition-all duration-300"
+                 style={scored ? { borderColor: scored === SCORE.CORRECT ? '#86efac' : scored === SCORE.WRONG ? '#fca5a5' : '#fcd34d' } : {}}>
+              {/* 問題ヘッダー */}
+              <div className="flex items-center gap-2 px-5 pt-4 pb-2">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black text-white"
+                     style={{ background: c.accent }}>
+                  {idx + 1}
+                </div>
+                {topic && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ background: c.accent + '14', color: c.accent }}>
+                    {topic}
+                  </span>
+                )}
+                {scored && (
+                  <span className={`ml-auto text-[18px]`}>
+                    {scored === SCORE.CORRECT ? '○' : scored === SCORE.WRONG ? '×' : '△'}
+                  </span>
+                )}
+              </div>
+
+              {/* 問題文 */}
+              <div className="px-5 pb-4">
+                <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{stem}</LatexBlock>
+              </div>
+
+              {/* 解答（試験終了後） */}
+              {finished && (
+                <div className="border-t border-[#f1f5f9] px-5 py-4 bg-[#fafbff] space-y-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-black text-white"
+                         style={{ background: c.accent }}>A</div>
+                    <span className="text-[11px] font-bold" style={{ color: c.accent }}>解答</span>
+                  </div>
+                  <LatexBlock className="text-[13px] leading-[1.8] text-[#1e293b]">{answer}</LatexBlock>
+                  {explanation && (
+                    <details className="mt-2">
+                      <summary className="text-[11px] font-bold text-[#6366f1] cursor-pointer select-none hover:underline">
+                        💡 解説を見る
+                      </summary>
+                      <div className="mt-2 pl-2 border-l-2 border-[#e8eeff]">
+                        <LatexBlock className="text-[12px] leading-[1.8] text-[#475569]">{explanation}</LatexBlock>
+                      </div>
+                    </details>
+                  )}
+                  {/* 自己採点ボタン */}
+                  <div className="flex gap-2 mt-3">
+                    {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((sc) => {
+                      const map = {
+                        [SCORE.CORRECT]: { label: '○', bg: '#f0fdf4', border: '#86efac', text: '#16a34a', activeBg: '#16a34a' },
+                        [SCORE.DELTA]:   { label: '△', bg: '#fffbeb', border: '#fcd34d', text: '#d97706', activeBg: '#d97706' },
+                        [SCORE.WRONG]:   { label: '×', bg: '#fef2f2', border: '#fca5a5', text: '#dc2626', activeBg: '#dc2626' },
+                      };
+                      const m = map[sc];
+                      const active = scored === sc;
+                      return (
+                        <button key={sc} type="button" onClick={() => handleScoreChange(idx, sc)}
+                          className="flex-1 py-2.5 rounded-xl border-2 font-black text-[16px] transition-all duration-200 active:scale-[0.93]"
+                          style={{
+                            background: active ? m.activeBg : m.bg,
+                            borderColor: active ? m.activeBg : m.border,
+                            color: active ? 'white' : m.text
+                          }}>
+                          {m.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 下部ボタン */}
+      <div className="mt-8 space-y-3">
+        {!finished ? (
+          <button type="button" onClick={handleFinishExam}
+            className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97]"
+            style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}>
+            解き終わった → 解答を見る
+          </button>
+        ) : (
+          <button type="button" onClick={handleSubmitScores} disabled={!allScored}
+            className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 8px 24px ${c.ring}` }}>
+            {allScored ? '結果を見る →' : `全問採点してください（残り${numQ - Object.keys(examScores).length}問）`}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
    サマリー画面 E
 ───────────────────────────────────────────────────────────── */
 
@@ -900,7 +1141,8 @@ export default function PracticePage() {
   const extraQueue = useRef([]);
 
   /* ── AI問題生成 ── */
-  const fetchProblemsAI = useCallback(async ({ subject, topics, difficulty, numQ }) => {
+  const fetchProblemsAI = useCallback(async (cfg) => {
+    const { subject, topics, difficulty, numQ } = cfg;
     setScreen(SCREEN.LOADING);
     setLoadingStep(0);
     setError('');
@@ -941,7 +1183,7 @@ export default function PracticePage() {
       setScores([]);
       setShowAnswer(false);
       extraQueue.current = [];
-      setScreen(SCREEN.PROBLEM);
+      setScreen(cfg?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
     } catch (e) {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -985,8 +1227,8 @@ export default function PracticePage() {
     setScores([]);
     setShowAnswer(false);
     extraQueue.current = [];
-    setScreen(SCREEN.PROBLEM);
-  }, []);
+    setScreen(config?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+  }, [config]);
 
   /* ── 開始 ── */
   const handleStart = useCallback((cfg) => {
@@ -1049,6 +1291,12 @@ export default function PracticePage() {
       setShowAnswer(false);
     }
   }, [scores]);
+
+  /* ── 模試形式: 全問採点完了 ── */
+  const handleExamFinish = useCallback((scoreArray) => {
+    setScores(scoreArray);
+    setScreen(SCREEN.SUMMARY);
+  }, []);
 
   /* ── フォロー: 同じ単元をもう1問 ── */
   const handleFollowContinue = useCallback(async () => {
@@ -1137,6 +1385,7 @@ export default function PracticePage() {
       <PromptScreen
         prompt={manualPrompt}
         subject={subject}
+        difficulty={config?.difficulty}
         onParsed={handleManualParsed}
         onBack={handleRestart}
         promptLoading={promptLoading}
@@ -1168,6 +1417,17 @@ export default function PracticePage() {
         onContinue={handleFollowContinue}
         onSkip={handleFollowSkip}
         isLoading={followLoading}
+      />
+    );
+  }
+
+  if (screen === SCREEN.EXAM) {
+    return (
+      <ExamScreen
+        problems={problems}
+        subject={subject}
+        onFinish={handleExamFinish}
+        onQuit={handleQuit}
       />
     );
   }

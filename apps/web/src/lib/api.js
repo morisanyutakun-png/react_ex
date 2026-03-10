@@ -256,10 +256,10 @@ export async function practiceRenderPrompt(params) {
 /**
  * 手動モード用: ユーザーが貼り付けたJSONテキストをパースして problems + latex を返す
  */
-export async function practiceParseJson(rawText, subject) {
+export async function practiceParseJson(rawText, subject, difficulty) {
   return apiFetch('/api/practice/parse', {
     method: 'POST',
-    body: JSON.stringify({ raw_text: rawText, subject }),
+    body: JSON.stringify({ raw_text: rawText, subject, difficulty }),
   });
 }
 
