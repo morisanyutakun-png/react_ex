@@ -241,6 +241,43 @@ export async function generateSimilarProblem(problemStem, options = {}) {
   });
 }
 
+// ── Practice Mode (受験生向け AI 生成) ─────────────
+
+/**
+ * 受験生向け練習モード: AI で構造化問題を生成する（ポーリング方式）
+ */
+export async function practiceGenerate(params) {
+  const startData = await apiFetch('/api/practice/generate', {
+    method: 'POST',
+    body: JSON.stringify(params),
+    timeout: 30000,
+    noRetry: true,
+  });
+
+  const jobId = startData?.job_id;
+  if (!jobId) return startData;
+
+  const maxPolls = 100;
+  const pollInterval = 3000;
+  for (let i = 0; i < maxPolls; i++) {
+    await new Promise(r => setTimeout(r, pollInterval));
+    let status;
+    try {
+      status = await apiFetch(`/api/practice/generate/status/${jobId}`, { timeout: 15000 });
+    } catch (pollErr) {
+      if (i < maxPolls - 1) continue;
+      throw pollErr;
+    }
+    if (status?.status === 'completed') return status;
+    if (status?.status === 'error') {
+      const err = new Error(status.error || 'AI 生成に失敗しました');
+      err.data = status;
+      throw err;
+    }
+  }
+  throw new Error('AI 生成がタイムアウトしました。再度お試しください。');
+}
+
 // ── DB Editor ─────────────────────────────────────
 
 export async function fetchDbTables() {

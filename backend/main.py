@@ -5353,6 +5353,369 @@ async def generate_with_llm_status(job_id: str):
         return JSONResponse({'status': 'processing'})
 
 
+# ── 受験生向け練習モード: 1回のリクエストで問題生成 → JSON返却 ──────────
+
+class PracticeGenerateRequest(BaseModel):
+    subject: str = '物理'
+    topics: Optional[List[str]] = []
+    difficulty: str = '応用'
+    num_questions: int = 5
+    user_id: Optional[str] = None
+    model_tier: Optional[str] = 'auto'
+
+
+_PRACTICE_JOBS: Dict[str, Dict[str, Any]] = {}
+_PRACTICE_JOB_TTL = 600
+
+
+def _cleanup_old_practice_jobs():
+    now = time.time()
+    expired = [jid for jid, job in _PRACTICE_JOBS.items() if now - job.get('created_at', 0) > _PRACTICE_JOB_TTL]
+    for jid in expired:
+        _PRACTICE_JOBS.pop(jid, None)
+
+
+def _build_practice_system_prompt(subject: str, topics: list, difficulty: str, num_questions: int) -> str:
+    """受験生向け練習モード専用のシステムプロンプトを構築する。"""
+    topic_str = '、'.join(topics) if topics else '全分野'
+    return f"""あなたは大学受験の{subject}の問題作成のプロフェッショナルです。
+受験生が自学自習で使う練習問題を作成してください。
+
+【条件】
+- 科目: {subject}
+- 分野: {topic_str}
+- 難易度: {difficulty}
+- 問題数: {num_questions}問
+
+【出力ルール】
+1. 必ず以下のJSON形式のみで出力してください。JSON以外のテキスト（前置き・説明等）は一切出力しないでください。
+2. 数式はLaTeX記法で書いてください（インライン: $...$、ディスプレイ: $$...$$）。
+3. 問題文（stem）は具体的で明確にしてください。
+4. 解答（answer）は最終的な答えを簡潔に記載してください。
+5. 解説（explanation）は解法の手順を段階的に示してください。受験生が「なぜそうなるか」を理解できるように。
+6. 各問題のtopicフィールドには、その問題が属する分野名を入れてください。
+
+【JSON形式】
+{{
+  "problems": [
+    {{
+      "stem": "問題文（LaTeX数式使用可）",
+      "answer": "最終解答",
+      "explanation": "解法の手順と説明",
+      "topic": "分野名"
+    }}
+  ]
+}}"""
+
+
+def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
+    """構造化された問題データからPDF用LaTeXドキュメントを構築する。"""
+    lines = [
+        r'\documentclass[a4paper,11pt]{ltjsarticle}',
+        r'\usepackage{amsmath,amssymb}',
+        r'\usepackage{geometry}',
+        r'\geometry{margin=2cm}',
+        r'\pagestyle{empty}',
+        r'\begin{document}',
+        r'\begin{center}',
+        rf'\textbf{{\Large {subject} 練習問題（{difficulty}）}}',
+        r'\end{center}',
+        r'\vspace{1em}',
+    ]
+    for i, p in enumerate(problems, 1):
+        stem = (p.get('stem') or '').replace('$', r'$')
+        # 問題文の $ はLaTeXそのまま使えるのでアンエスケープ
+        stem = (p.get('stem') or '')
+        lines.append(rf'\noindent\textbf{{問{i}}}')
+        lines.append('')
+        lines.append(stem)
+        lines.append(r'\vspace{1em}')
+    lines.append(r'\newpage')
+    lines.append(r'\begin{center}')
+    lines.append(r'\textbf{\Large 解答・解説}')
+    lines.append(r'\end{center}')
+    lines.append(r'\vspace{1em}')
+    for i, p in enumerate(problems, 1):
+        answer = p.get('answer') or ''
+        explanation = p.get('explanation') or ''
+        lines.append(rf'\noindent\textbf{{問{i} 解答}}')
+        lines.append('')
+        lines.append(answer)
+        lines.append('')
+        if explanation:
+            lines.append(r'\noindent\textbf{解説}')
+            lines.append('')
+            lines.append(explanation)
+            lines.append(r'\vspace{1em}')
+    lines.append(r'\end{document}')
+    return '\n'.join(lines)
+
+
+async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
+                             resolved_tier: str, system_prompt: str,
+                             user_prompt: str, num_questions: int,
+                             user_id: str, subject: str, difficulty: str):
+    """バックグラウンドで OpenAI API を呼び出し、JSON問題データを _PRACTICE_JOBS に格納する。"""
+    openai_url = 'https://api.openai.com/v1/chat/completions'
+    _is_reasoning = bool(re.match(r'^(o1|o3|o4)', openai_model))
+
+    messages = []
+    if _is_reasoning:
+        messages.append({'role': 'developer', 'content': system_prompt})
+    else:
+        messages.append({'role': 'system', 'content': system_prompt})
+    messages.append({'role': 'user', 'content': user_prompt})
+
+    _dynamic_max_tokens = max(8192, 2000 * num_questions)
+    openai_payload = {
+        'model': openai_model,
+        'messages': messages,
+        'max_completion_tokens': _dynamic_max_tokens,
+    }
+    if not _is_reasoning:
+        openai_payload['temperature'] = 0.4
+
+    logger.info('Practice job %s: model=%s, max_tokens=%d', job_id, openai_model, _dynamic_max_tokens)
+
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(180.0, connect=30.0)) as client:
+            resp = await client.post(
+                openai_url,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {openai_key}',
+                },
+                json=openai_payload,
+            )
+
+        if resp.status_code != 200:
+            error_detail = f'HTTP {resp.status_code}'
+            try:
+                error_body = resp.json()
+                error_detail = error_body.get('error', {}).get('message', error_detail)
+            except Exception:
+                pass
+            logger.error('Practice job %s OpenAI error: %s', job_id, error_detail)
+            _PRACTICE_JOBS[job_id]['status'] = 'error'
+            _PRACTICE_JOBS[job_id]['error'] = f'OpenAI API エラー: {error_detail}'
+            return
+
+        body = resp.json()
+
+        # テキスト抽出（_run_llm_job と同じロジック）
+        raw_text = ''
+        choices = body.get('choices', [])
+        if choices:
+            message = choices[0].get('message') or {}
+            content = message.get('content')
+            if isinstance(content, list):
+                raw_text = '\n'.join(p.get('text', '') if isinstance(p, dict) else str(p) for p in content)
+            elif isinstance(content, str):
+                raw_text = content
+            if not raw_text:
+                reasoning = message.get('reasoning_content')
+                if reasoning:
+                    raw_text = reasoning
+
+        if not raw_text and isinstance(body.get('output'), list):
+            for out_item in body['output']:
+                if isinstance(out_item, dict) and out_item.get('type') == 'message':
+                    for c in (out_item.get('content') or []):
+                        if isinstance(c, dict) and c.get('type') in ('output_text', 'text'):
+                            raw_text += c.get('text', '')
+
+        if not raw_text and isinstance(body.get('output_text'), str):
+            raw_text = body['output_text']
+
+        raw_text = raw_text.strip() if raw_text else ''
+
+        if not raw_text:
+            _PRACTICE_JOBS[job_id]['status'] = 'error'
+            _PRACTICE_JOBS[job_id]['error'] = 'AI からの応答が空です'
+            return
+
+        # JSON パース
+        parsed = None
+        # code fence 除去
+        fenced = re.search(r'```(?:json)?\s*\n?([\s\S]*?)```', raw_text)
+        if fenced:
+            try:
+                parsed = json.loads(fenced.group(1).strip())
+            except Exception:
+                pass
+        if not parsed:
+            brace_start = raw_text.find('{')
+            if brace_start >= 0:
+                depth = 0
+                for i in range(brace_start, len(raw_text)):
+                    if raw_text[i] == '{':
+                        depth += 1
+                    elif raw_text[i] == '}':
+                        depth -= 1
+                    if depth == 0:
+                        try:
+                            parsed = json.loads(raw_text[brace_start:i + 1])
+                        except Exception:
+                            pass
+                        break
+
+        if not parsed or 'problems' not in parsed:
+            _PRACTICE_JOBS[job_id]['status'] = 'error'
+            _PRACTICE_JOBS[job_id]['error'] = 'AI応答のJSON解析に失敗しました'
+            return
+
+        problems = parsed['problems']
+        if not isinstance(problems, list) or len(problems) == 0:
+            _PRACTICE_JOBS[job_id]['status'] = 'error'
+            _PRACTICE_JOBS[job_id]['error'] = '問題が生成されませんでした'
+            return
+
+        # LaTeX ドキュメント構築（PDF用）
+        latex_doc = _build_practice_latex(problems, subject, difficulty)
+
+        # 使用回数インクリメント
+        if user_id:
+            _increment_usage(user_id)
+
+        updated_usage = _get_usage(user_id) if user_id else None
+
+        _PRACTICE_JOBS[job_id]['status'] = 'completed'
+        _PRACTICE_JOBS[job_id]['result'] = {
+            'problems': problems,
+            'latex': latex_doc,
+            'model': openai_model,
+            'model_tier': resolved_tier,
+            'usage': updated_usage,
+        }
+        logger.info('Practice job %s completed: %d problems (model=%s)', job_id, len(problems), openai_model)
+
+    except httpx.TimeoutException:
+        logger.error('Practice job %s timeout', job_id)
+        _PRACTICE_JOBS[job_id]['status'] = 'error'
+        _PRACTICE_JOBS[job_id]['error'] = 'OpenAI API がタイムアウトしました。再度お試しください。'
+    except Exception as e:
+        logger.exception('Practice job %s failed', job_id)
+        _PRACTICE_JOBS[job_id]['status'] = 'error'
+        _PRACTICE_JOBS[job_id]['error'] = f'生成中にエラーが発生しました: {str(e)}'
+
+
+@app.post('/api/practice/generate')
+async def practice_generate(req: PracticeGenerateRequest = Body(...)):
+    """受験生向け練習モード: 構造化JSON形式で問題を生成する。
+    ポーリング方式: 即座に job_id を返す。
+    """
+    user_id = req.user_id
+    if not user_id or user_id == 'guest':
+        return JSONResponse({
+            'error': 'AI自動生成を使用するにはアカウント登録とログインが必要です。',
+        }, status_code=403)
+
+    openai_key = os.getenv('OPENAI_API_KEY')
+    if not openai_key:
+        return JSONResponse({'error': 'OPENAI_API_KEY が設定されていません。'}, status_code=500)
+
+    # 使用回数チェック
+    usage_info = _get_usage(user_id)
+    if not usage_info.get('unlocked', False) and usage_info.get('remaining', 0) <= 0:
+        return JSONResponse({
+            'error': f'AI生成の無料利用上限（{usage_info["limit"]}回）に達しました。',
+            'usage': usage_info,
+        }, status_code=429)
+
+    # モデル解決
+    openai_model, resolved_tier = _resolve_model(req.model_tier or 'auto', req.subject)
+
+    # システムプロンプト構築
+    system_prompt = _build_practice_system_prompt(req.subject, req.topics or [], req.difficulty, req.num_questions)
+
+    # RAG: DB から参考問題を取得してユーザープロンプトに注入
+    user_prompt_parts = []
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        _is_sq = getattr(conn, '_is_sqlite', False)
+
+        topics = req.topics or []
+        if topics:
+            placeholders = ','.join(['%s'] * len(topics))
+            sql = (
+                f"SELECT stem, topic, difficulty FROM problems "
+                f"WHERE (subject = %s OR subject LIKE %s) AND topic IN ({placeholders}) "
+                f"AND stem IS NOT NULL AND stem != '' "
+                f"ORDER BY {'id DESC' if _is_sq else 'created_at DESC'} LIMIT %s"
+            )
+            cur.execute(sql, (req.subject, req.subject + '%', *topics, 10))
+        else:
+            sql = (
+                "SELECT stem, topic, difficulty FROM problems "
+                "WHERE (subject = %s OR subject LIKE %s) "
+                "AND stem IS NOT NULL AND stem != '' "
+                f"ORDER BY {'id DESC' if _is_sq else 'created_at DESC'} LIMIT %s"
+            )
+            cur.execute(sql, (req.subject, req.subject + '%', 10))
+
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        if rows:
+            user_prompt_parts.append('【参考: 過去の類似問題（出題の参考にしてください）】')
+            for r in rows[:5]:
+                snippet = (r[0] or '')[:400]
+                user_prompt_parts.append(f'- [{r[1] or "不明"}] {snippet}')
+            user_prompt_parts.append('')
+    except Exception as e:
+        logger.warning('Practice RAG failed (non-fatal): %s', e)
+
+    topic_str = '、'.join(req.topics) if req.topics else '全分野'
+    user_prompt_parts.append(
+        f'{req.subject}（{topic_str}）の{req.difficulty}レベルの問題を{req.num_questions}問、'
+        f'上記のJSON形式で出力してください。'
+    )
+    user_prompt = '\n'.join(user_prompt_parts)
+
+    # ジョブ作成
+    _cleanup_old_practice_jobs()
+    job_id = uuid.uuid4().hex
+    _PRACTICE_JOBS[job_id] = {
+        'status': 'processing',
+        'result': None,
+        'error': None,
+        'created_at': time.time(),
+    }
+
+    asyncio.create_task(_run_practice_job(
+        job_id=job_id,
+        openai_key=openai_key,
+        openai_model=openai_model,
+        resolved_tier=resolved_tier,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        num_questions=req.num_questions,
+        user_id=user_id,
+        subject=req.subject,
+        difficulty=req.difficulty,
+    ))
+
+    logger.info('Practice job %s started (model=%s, subject=%s)', job_id, openai_model, req.subject)
+    return JSONResponse({'job_id': job_id, 'status': 'processing'})
+
+
+@app.get('/api/practice/generate/status/{job_id}')
+async def practice_generate_status(job_id: str):
+    """ポーリング用: 練習モード生成ジョブのステータスを返す。"""
+    job = _PRACTICE_JOBS.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail='ジョブが見つかりません')
+
+    if job['status'] == 'completed':
+        return JSONResponse({'status': 'completed', **job['result']})
+    elif job['status'] == 'error':
+        return JSONResponse({'status': 'error', 'error': job['error']}, status_code=200)
+    else:
+        return JSONResponse({'status': 'processing'})
+
+
 @app.post('/api/generate_pdf')
 def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
     """Generate a PDF from an array of generated items. Payload: { generated: [ {latex, stem, explanation?} ], title?: str }

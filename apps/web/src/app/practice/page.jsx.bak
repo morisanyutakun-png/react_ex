@@ -2,24 +2,23 @@
 
 import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { searchProblems, practiceGenerate, generatePdf } from '@/lib/api';
-import { SUBJECT_TOPICS } from '@/lib/constants';
+import { searchProblems } from '@/lib/api';
+import { SUBJECT_TOPICS, DIFFICULTIES } from '@/lib/constants';
 import { LatexBlock } from '@/components/LatexRenderer';
 import { MobileNavLinks } from '@/components/ui';
-import { useAuth } from '@/contexts/AuthContext';
 
 /* ─────────────────────────────────────────────────────────────
    定数
 ───────────────────────────────────────────────────────────── */
 
-const SCREEN = { SELECT: 'select', LOADING: 'loading', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', SUMMARY: 'summary' };
+const SCREEN = { SELECT: 'select', LOADING: 'loading', PROBLEM: 'problem', ANSWER: 'answer', SUMMARY: 'summary' };
 
 const PRACTICE_SUBJECTS = ['物理', '数学', '化学'];
 
 const SUBJECT_COLOR = {
-  '物理': { accent: '#8b5cf6', light: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', gradient: 'from-violet-500 to-violet-600', ring: '#8b5cf620', glow: 'rgba(139,92,246,0.15)' },
-  '数学': { accent: '#3b82f6', light: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   gradient: 'from-blue-500 to-blue-600',   ring: '#3b82f620', glow: 'rgba(59,130,246,0.15)' },
-  '化学': { accent: '#10b981', light: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600', ring: '#10b98120', glow: 'rgba(16,185,129,0.15)' },
+  '物理': { accent: '#8b5cf6', light: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', gradient: 'from-violet-500 to-violet-600', ring: '#8b5cf620' },
+  '数学': { accent: '#3b82f6', light: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   gradient: 'from-blue-500 to-blue-600',   ring: '#3b82f620' },
+  '化学': { accent: '#10b981', light: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600', ring: '#10b98120' },
 };
 
 // 難易度を受験生の言語で表現
@@ -33,8 +32,6 @@ const EXAM_LEVELS = [
 ];
 
 const SCORE = { CORRECT: 'correct', DELTA: 'delta', WRONG: 'wrong' };
-
-const GEN_MODE = { AUTO: 'auto', MANUAL: 'manual' };
 
 /* ─────────────────────────────────────────────────────────────
    小コンポーネント
@@ -75,13 +72,13 @@ function TopicChip({ label, selected, onClick, accent }) {
   );
 }
 
-function ProgressBar({ current, total, accent }) {
+function ProgressBar({ current, total }) {
   const pct = total > 0 ? (current / total) * 100 : 0;
   return (
     <div className="w-full h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-500"
-        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${accent || '#8b5cf6'}, ${accent || '#6366f1'}cc)` }}
+        style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #8b5cf6, #6366f1)' }}
       />
     </div>
   );
@@ -89,31 +86,20 @@ function ProgressBar({ current, total, accent }) {
 
 function ScoreButton({ type, onClick }) {
   const map = {
-    [SCORE.CORRECT]: { label: '解けた', icon: '○', bg: '#f0fdf4', border: '#86efac', text: '#16a34a' },
-    [SCORE.DELTA]:   { label: '惜しい', icon: '△', bg: '#fffbeb', border: '#fcd34d', text: '#d97706' },
-    [SCORE.WRONG]:   { label: 'わからない', icon: '×', bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' },
+    [SCORE.CORRECT]: { label: '解けた', icon: '○', bg: '#f0fdf4', border: '#86efac', text: '#16a34a', active: '#22c55e' },
+    [SCORE.DELTA]:   { label: '惜しい', icon: '△', bg: '#fffbeb', border: '#fcd34d', text: '#d97706', active: '#f59e0b' },
+    [SCORE.WRONG]:   { label: 'わからない', icon: '×', bg: '#fef2f2', border: '#fca5a5', text: '#dc2626', active: '#ef4444' },
   };
   const s = map[type];
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex-1 flex flex-col items-center gap-1.5 py-4 rounded-2xl border-2 font-bold transition-all duration-150 active:scale-95"
+      className="flex-1 flex flex-col items-center gap-1 py-3 rounded-2xl border-2 font-bold transition-all duration-150 active:scale-95"
       style={{ background: s.bg, borderColor: s.border, color: s.text }}
     >
-      <span className="text-[24px] leading-none">{s.icon}</span>
+      <span className="text-[22px] leading-none">{s.icon}</span>
       <span className="text-[11px]">{s.label}</span>
-    </button>
-  );
-}
-
-function BackButton({ onClick, label = '終了' }) {
-  return (
-    <button type="button" onClick={onClick} className="flex items-center gap-1 text-[13px] text-[#94a3b8] hover:text-[#64748b] transition-colors">
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-      </svg>
-      {label}
     </button>
   );
 }
@@ -122,12 +108,11 @@ function BackButton({ onClick, label = '終了' }) {
    選択画面 A
 ───────────────────────────────────────────────────────────── */
 
-function SelectScreen({ onStart, isAuthenticated, isGuest }) {
+function SelectScreen({ onStart }) {
   const [subject, setSubject] = useState('物理');
   const [topics, setTopics] = useState([]);
   const [difficulty, setDifficulty] = useState('応用');
   const [numQ, setNumQ] = useState(5);
-  const [genMode, setGenMode] = useState(isGuest ? GEN_MODE.MANUAL : GEN_MODE.AUTO);
 
   const c = SUBJECT_COLOR[subject];
   const topicOptions = SUBJECT_TOPICS[subject] || [];
@@ -136,85 +121,18 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
     setTopics((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
 
   const handleStart = () => {
-    onStart({ subject, topics, difficulty, numQ, genMode });
+    onStart({ subject, topics, difficulty, numQ });
   };
 
   return (
-    <div className="max-w-[480px] mx-auto px-5 pt-8 pb-20">
+    <div className="max-w-[480px] mx-auto px-5 pt-10 pb-16">
 
       {/* ヘッダー */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
-               style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)` }}>
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-[22px] font-black text-[#0f172a] tracking-[-0.03em] leading-tight">
-              今日は何を練習する？
-            </h1>
-            <p className="text-[12px] text-[#94a3b8] mt-0.5">選んだらすぐ問題が出てくる</p>
-          </div>
-        </div>
-      </div>
-
-      {/* 生成モード切替 */}
-      <div className="mb-6">
-        <div className="text-[11px] font-bold text-[#94a3b8] tracking-[0.08em] uppercase mb-2.5">生成モード</div>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => !isGuest && setGenMode(GEN_MODE.AUTO)}
-            disabled={isGuest}
-            className={`text-left p-3.5 rounded-2xl border-2 transition-all duration-200
-              ${genMode === GEN_MODE.AUTO ? 'border-[#2563eb] bg-blue-50/40' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1]'}
-              ${isGuest ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            <div className="flex items-start gap-2.5">
-              <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-200 ${
-                genMode === GEN_MODE.AUTO ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50/60 text-[#64748b]'
-              }`}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-[#1e293b]">AI 自動生成</div>
-                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">ワンクリックで問題を自動作成</div>
-                {isGuest && (
-                  <div className="text-[10px] text-amber-600 mt-1 flex items-center gap-1">
-                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                    </svg>
-                    ログインが必要
-                  </div>
-                )}
-              </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setGenMode(GEN_MODE.MANUAL)}
-            className={`text-left p-3.5 rounded-2xl border-2 transition-all duration-200
-              ${genMode === GEN_MODE.MANUAL ? 'border-[#2563eb] bg-blue-50/40' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1]'}`}
-          >
-            <div className="flex items-start gap-2.5">
-              <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-200 ${
-                genMode === GEN_MODE.MANUAL ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50/60 text-[#64748b]'
-              }`}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-[#1e293b]">手動</div>
-                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">DBから問題を取得して練習</div>
-              </div>
-            </div>
-          </button>
-        </div>
+        <h1 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em] leading-tight">
+          今日は何を練習する？
+        </h1>
+        <p className="text-[13px] text-[#94a3b8] mt-1.5">単元と難易度を選ぶだけ。すぐ始められる。</p>
       </div>
 
       {/* 科目タブ */}
@@ -298,7 +216,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
       </button>
 
       <p className="text-center text-[11px] text-[#94a3b8] mt-3">
-        {genMode === GEN_MODE.AUTO ? 'AIが問題を生成します（作るモードと同じアルゴリズム）' : 'DBから問題を取得します'}
+        DBから問題を取得します。AI生成問題は「作る」から
       </p>
 
       {/* 詳細モードへの導線 */}
@@ -320,47 +238,20 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
    ローディング画面
 ───────────────────────────────────────────────────────────── */
 
-function LoadingScreen({ subject, genMode, loadingStep }) {
+function LoadingScreen({ subject }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
-  const isAI = genMode === GEN_MODE.AUTO;
-
-  const steps = isAI
-    ? [
-        { label: 'プロンプトを構築中…', icon: '🧠' },
-        { label: 'AIが問題を生成中…',   icon: '✨' },
-        { label: '仕上げ中…',           icon: '📝' },
-      ]
-    : [{ label: 'DBから問題を取得中…', icon: '🔍' }];
-
-  const activeStep = Math.min(loadingStep || 0, steps.length - 1);
-
   return (
     <div className="max-w-[480px] mx-auto px-5 pt-20 flex flex-col items-center gap-6">
-      <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-[28px] animate-pulse"
-           style={{ background: c.glow }}>
-        {steps[activeStep].icon}
+      <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+           style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)` }}>
+        <svg className="w-7 h-7 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
       </div>
       <div className="text-center">
-        <p className="text-[16px] font-bold text-[#1e293b]">{steps[activeStep].label}</p>
-        {isAI && (
-          <div className="flex items-center justify-center gap-2 mt-4">
-            {steps.map((s, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <div
-                  className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${i <= activeStep ? '' : 'opacity-30'}`}
-                  style={{ backgroundColor: i <= activeStep ? c.accent : '#cbd5e1' }}
-                />
-                {i < steps.length - 1 && (
-                  <div className={`w-8 h-0.5 rounded transition-all duration-500 ${i < activeStep ? '' : 'opacity-30'}`}
-                       style={{ backgroundColor: i < activeStep ? c.accent : '#cbd5e1' }} />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        <p className="text-[11px] text-[#94a3b8] mt-3">
-          {isAI ? '教員モードと同じアルゴリズムで生成しています' : '最適な問題を選んでいます'}
-        </p>
+        <p className="text-[16px] font-bold text-[#1e293b]">問題を取得中...</p>
+        <p className="text-[12px] text-[#94a3b8] mt-1">DBから最適な問題を選んでいます</p>
       </div>
     </div>
   );
@@ -370,7 +261,7 @@ function LoadingScreen({ subject, genMode, loadingStep }) {
    問題画面 B + 解答画面 C
 ───────────────────────────────────────────────────────────── */
 
-function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswer, onScore, onSkip, onQuit }) {
+function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswer, onScore }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const stem = problem?.stem || problem?.text || problem?.question || '';
   const answer = problem?.answer || problem?.solution || '';
@@ -380,14 +271,6 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
 
   return (
     <div className="max-w-[480px] mx-auto px-5 pt-8 pb-16">
-
-      {/* ヘッダー */}
-      <div className="flex items-center justify-between mb-4">
-        <BackButton onClick={onQuit} label="終了" />
-        <span className="text-[12px] font-bold text-[#94a3b8]">
-          {index + 1} / {total}
-        </span>
-      </div>
 
       {/* プログレス */}
       <div className="mb-6">
@@ -403,12 +286,15 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
               <span className="text-[11px] text-[#94a3b8] font-medium">{diffLabel}</span>
             )}
           </div>
+          <span className="text-[12px] font-bold text-[#94a3b8]">
+            {index + 1} / {total}
+          </span>
         </div>
-        <ProgressBar current={index + (showAnswer ? 1 : 0.5)} total={total} accent={c.accent} />
+        <ProgressBar current={index + (showAnswer ? 1 : 0.5)} total={total} />
       </div>
 
       {/* 問題本文 */}
-      <div className={`bg-white rounded-2xl border border-[#e2e8f0] p-5 mb-5 shadow-sm transition-opacity duration-300 ${showAnswer ? 'opacity-60' : ''}`}>
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 mb-5 shadow-sm">
         <div className="text-[11px] font-bold text-[#94a3b8] tracking-[0.06em] uppercase mb-3">問題</div>
         {stem ? (
           <LatexBlock className="text-[14px] leading-[1.9] text-[#1e293b]">{stem}</LatexBlock>
@@ -459,11 +345,6 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
               <ScoreButton type={SCORE.WRONG}   onClick={() => onScore(SCORE.WRONG)} />
             </div>
           </div>
-
-          {/* スキップ */}
-          <button type="button" onClick={() => onSkip && onSkip()} className="w-full py-2 text-[12px] text-[#94a3b8] hover:text-[#64748b] mt-2 transition-colors">
-            スキップ（△扱い）
-          </button>
         </div>
       )}
     </div>
@@ -474,7 +355,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
    弱点フォロー画面 D（×のとき）
 ───────────────────────────────────────────────────────────── */
 
-function FollowScreen({ problem, subject, onContinue, onSkip, isLoading }) {
+function FollowScreen({ problem, subject, onContinue, onSkip }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const topic = problem?.topic || problem?.metadata?.field || '同じ単元';
   return (
@@ -487,11 +368,10 @@ function FollowScreen({ problem, subject, onContinue, onSkip, isLoading }) {
       <button
         type="button"
         onClick={onContinue}
-        disabled={isLoading}
-        className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-lg mb-3 transition-all active:scale-[0.98] disabled:opacity-60"
+        className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-lg mb-3 transition-all active:scale-[0.98]"
         style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)` }}
       >
-        {isLoading ? '取得中…' : '同じ単元をもう1問 →'}
+        同じ単元をもう1問 →
       </button>
       <button type="button" onClick={onSkip} className="w-full py-3 text-[13px] text-[#94a3b8] hover:text-[#64748b] transition-colors">
         次の問題へ進む
@@ -504,7 +384,7 @@ function FollowScreen({ problem, subject, onContinue, onSkip, isLoading }) {
    サマリー画面 E
 ───────────────────────────────────────────────────────────── */
 
-function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexForPdf, onDownloadPdf, pdfLoading }) {
+function SummaryScreen({ scores, problems, subject, onRetry, onRestart }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const correct = scores.filter((s) => s === SCORE.CORRECT).length;
   const delta   = scores.filter((s) => s === SCORE.DELTA).length;
@@ -557,20 +437,6 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
       )}
 
       {/* アクション */}
-      {latexForPdf && (
-        <button
-          type="button"
-          onClick={onDownloadPdf}
-          disabled={pdfLoading}
-          className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-lg mb-3 transition-all active:scale-[0.98] disabled:opacity-60 flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-          </svg>
-          {pdfLoading ? 'PDF生成中…' : 'PDFでダウンロード'}
-        </button>
-      )}
       <button
         type="button"
         onClick={onRetry}
@@ -593,33 +459,27 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
 ───────────────────────────────────────────────────────────── */
 
 export default function PracticePage() {
-  const { user, isAuthenticated, isGuest } = useAuth();
   const [screen, setScreen]     = useState(SCREEN.SELECT);
-  const [config, setConfig]     = useState(null);   // { subject, topics, difficulty, numQ, genMode }
+  const [config, setConfig]     = useState(null);   // { subject, topics, difficulty, numQ }
   const [problems, setProblems] = useState([]);
   const [current, setCurrent]   = useState(0);
   const [scores, setScores]     = useState([]);
   const [showAnswer, setShowAnswer] = useState(false);
   const [error, setError]       = useState('');
-  const [loadingStep, setLoadingStep] = useState(0);
-  const [latexForPdf, setLatexForPdf] = useState(null);
-  const [pdfLoading, setPdfLoading]   = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
   // × 後のフォローアップ用に追加問題をキューに積む
   const extraQueue = useRef([]);
 
-  /* ── DB問題取得 ── */
-  const fetchProblemsDB = useCallback(async ({ subject, topics, difficulty, numQ }) => {
+  /* ── 問題取得 ── */
+  const fetchProblems = useCallback(async ({ subject, topics, difficulty, numQ }) => {
     setScreen(SCREEN.LOADING);
-    setLoadingStep(0);
     setError('');
-    setLatexForPdf(null);
     try {
-      const params = { subject, difficulty, limit: numQ * 2 };
+      const params = { subject, difficulty, limit: numQ * 2 }; // 多めに取って shuffle
       if (topics.length === 1) params.topic = topics[0];
       const data = await searchProblems(params);
       let items = data?.results || data?.problems || (Array.isArray(data) ? data : []);
 
+      // トピック複数指定の場合はフィルタ
       if (topics.length > 1) {
         items = items.filter((p) => topics.includes(p?.topic || p?.metadata?.field));
       }
@@ -649,72 +509,68 @@ export default function PracticePage() {
     }
   }, []);
 
-  /* ── AI問題生成 ── */
-  const fetchProblemsAI = useCallback(async ({ subject, topics, difficulty, numQ }) => {
-    setScreen(SCREEN.LOADING);
-    setLoadingStep(0);
-    setError('');
-    setLatexForPdf(null);
-
-    // ステップアニメーション
-    const t1 = setTimeout(() => setLoadingStep(1), 2000);
-    const t2 = setTimeout(() => setLoadingStep(2), 8000);
-
-    try {
-      const result = await practiceGenerate({
-        subject,
-        topics: topics.length > 0 ? topics : undefined,
-        difficulty,
-        num_questions: numQ,
-        user_id: user?.id,
-      });
-
-      clearTimeout(t1);
-      clearTimeout(t2);
-
-      if (!result || result.status === 'error') {
-        setError(result?.error || 'AI生成に失敗しました。もう一度お試しください。');
-        setScreen(SCREEN.SELECT);
-        return;
-      }
-
-      const items = result.problems || [];
-      if (items.length === 0) {
-        setError('AIが問題を生成できませんでした。条件を変えて試してください。');
-        setScreen(SCREEN.SELECT);
-        return;
-      }
-
-      setProblems(items);
-      setLatexForPdf(result.latex || null);
-      setCurrent(0);
-      setScores([]);
-      setShowAnswer(false);
-      extraQueue.current = [];
-      setScreen(SCREEN.PROBLEM);
-    } catch (e) {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      setError(`AI生成に失敗しました: ${e.message}`);
-      setScreen(SCREEN.SELECT);
-    }
-  }, [user]);
-
   /* ── 開始 ── */
   const handleStart = useCallback((cfg) => {
     setConfig(cfg);
-    if (cfg.genMode === GEN_MODE.AUTO) {
-      fetchProblemsAI(cfg);
-    } else {
-      fetchProblemsDB(cfg);
-    }
-  }, [fetchProblemsAI, fetchProblemsDB]);
+    fetchProblems(cfg);
+  }, [fetchProblems]);
 
   /* ── 解答表示 ── */
   const handleShowAnswer = useCallback(() => setShowAnswer(true), []);
 
-  /* ── 次へ進む共通ロジック ── */
-  const advanceToNext = useCallback(() => {
+  /* ── 自己採点 ── */
+  const handleScore = useCallback((score) => {
+    const newScores = [...scores, score];
+    setScores(newScores);
+
+    if (score === SCORE.WRONG) {
+      // × → フォローアップ画面へ
+      setScreen(SCREEN.ANSWER); // 一時的に ANSWER を flow-marker として使用
+      // フォローアップに遷移
+      setTimeout(() => setScreen('follow'), 0);
+      return;
+    }
+
+    // ○ or △ → 次の問題 or サマリー
+    const next = current + 1;
+    if (next >= problems.length && extraQueue.current.length === 0) {
+      setScreen(SCREEN.SUMMARY);
+    } else {
+      if (next < problems.length) {
+        setCurrent(next);
+      } else {
+        // extraQueue から次の問題を積む
+        const extra = extraQueue.current.shift();
+        const newProblems = [...problems, extra];
+        setProblems(newProblems);
+        setCurrent(next);
+      }
+      setShowAnswer(false);
+      setScreen(SCREEN.PROBLEM);
+    }
+  }, [scores, current, problems]);
+
+  /* ── フォロー: 同じ単元をもう1問 ── */
+  const handleFollowContinue = useCallback(async () => {
+    const cur = problems[current];
+    const topic = cur?.topic || cur?.metadata?.field;
+    try {
+      const params = { subject: config.subject, limit: 5 };
+      if (topic) params.topic = topic;
+      const data = await searchProblems(params);
+      const items = data?.results || data?.problems || (Array.isArray(data) ? data : []);
+      // すでに解いた問題を除外
+      const used = new Set(problems.map((p) => p?.id).filter(Boolean));
+      const fresh = items.filter((p) => !used.has(p?.id));
+      if (fresh.length > 0) {
+        extraQueue.current.push(fresh[0]);
+      }
+    } catch { /* エラーでも続行 */ }
+    handleFollowSkip();
+  }, [problems, current, config]);
+
+  /* ── フォロー: スキップ ── */
+  const handleFollowSkip = useCallback(() => {
     const next = current + 1;
     if (next >= problems.length && extraQueue.current.length === 0) {
       setScreen(SCREEN.SUMMARY);
@@ -723,7 +579,8 @@ export default function PracticePage() {
         setCurrent(next);
       } else {
         const extra = extraQueue.current.shift();
-        setProblems((prev) => [...prev, extra]);
+        const newProblems = [...problems, extra];
+        setProblems(newProblems);
         setCurrent(next);
       }
       setShowAnswer(false);
@@ -731,83 +588,10 @@ export default function PracticePage() {
     }
   }, [current, problems]);
 
-  /* ── 自己採点 ── */
-  const handleScore = useCallback((score) => {
-    setScores((prev) => [...prev, score]);
-
-    if (score === SCORE.WRONG) {
-      setScreen(SCREEN.FOLLOW);
-      return;
-    }
-
-    advanceToNext();
-  }, [advanceToNext]);
-
-  /* ── スキップ（△扱い） ── */
-  const handleSkip = useCallback(() => {
-    setScores((prev) => [...prev, SCORE.DELTA]);
-    advanceToNext();
-  }, [advanceToNext]);
-
-  /* ── 途中終了 ── */
-  const handleQuit = useCallback(() => {
-    if (scores.length > 0) {
-      setScreen(SCREEN.SUMMARY);
-    } else {
-      setScreen(SCREEN.SELECT);
-      setProblems([]);
-      setScores([]);
-      setCurrent(0);
-      setShowAnswer(false);
-    }
-  }, [scores]);
-
-  /* ── フォロー: 同じ単元をもう1問 ── */
-  const handleFollowContinue = useCallback(async () => {
-    setFollowLoading(true);
-    const cur = problems[current];
-    const topic = cur?.topic || cur?.metadata?.field;
-    try {
-      const params = { subject: config.subject, limit: 5 };
-      if (topic) params.topic = topic;
-      const data = await searchProblems(params);
-      const items = data?.results || data?.problems || (Array.isArray(data) ? data : []);
-      const used = new Set(problems.map((p) => p?.id).filter(Boolean));
-      const fresh = items.filter((p) => !used.has(p?.id));
-      if (fresh.length > 0) {
-        extraQueue.current.push(fresh[0]);
-      }
-    } catch { /* エラーでも続行 */ }
-    setFollowLoading(false);
-    advanceToNext();
-  }, [problems, current, config, advanceToNext]);
-
-  /* ── フォロー: スキップ ── */
-  const handleFollowSkip = useCallback(() => {
-    advanceToNext();
-  }, [advanceToNext]);
-
-  /* ── PDFダウンロード ── */
-  const handleDownloadPdf = useCallback(async () => {
-    if (!latexForPdf) return;
-    setPdfLoading(true);
-    try {
-      const resp = await generatePdf(latexForPdf);
-      if (resp?.pdf_url) {
-        window.open(resp.pdf_url, '_blank');
-      } else if (resp?.url) {
-        window.open(resp.url, '_blank');
-      }
-    } catch (e) {
-      console.error('PDF生成エラー:', e);
-    }
-    setPdfLoading(false);
-  }, [latexForPdf]);
-
   /* ── リトライ（同じ設定で再取得） ── */
   const handleRetry = useCallback(() => {
-    if (config) handleStart(config);
-  }, [config, handleStart]);
+    if (config) fetchProblems(config);
+  }, [config, fetchProblems]);
 
   /* ── リスタート（選択画面へ） ── */
   const handleRestart = useCallback(() => {
@@ -816,12 +600,10 @@ export default function PracticePage() {
     setScores([]);
     setCurrent(0);
     setShowAnswer(false);
-    setLatexForPdf(null);
   }, []);
 
   /* ── レンダー ── */
   const subject = config?.subject || '物理';
-  const genMode = config?.genMode || GEN_MODE.MANUAL;
 
   if (screen === SCREEN.SELECT) {
     return (
@@ -833,12 +615,12 @@ export default function PracticePage() {
             </div>
           </div>
         )}
-        <SelectScreen onStart={handleStart} isAuthenticated={isAuthenticated} isGuest={isGuest} />
+        <SelectScreen onStart={handleStart} />
       </>
     );
   }
 
-  if (screen === SCREEN.LOADING) return <LoadingScreen subject={subject} genMode={genMode} loadingStep={loadingStep} />;
+  if (screen === SCREEN.LOADING) return <LoadingScreen subject={subject} />;
 
   if (screen === SCREEN.PROBLEM || screen === SCREEN.ANSWER) {
     return (
@@ -850,20 +632,17 @@ export default function PracticePage() {
         showAnswer={showAnswer}
         onShowAnswer={handleShowAnswer}
         onScore={handleScore}
-        onSkip={handleSkip}
-        onQuit={handleQuit}
       />
     );
   }
 
-  if (screen === SCREEN.FOLLOW) {
+  if (screen === 'follow') {
     return (
       <FollowScreen
         problem={problems[current]}
         subject={subject}
         onContinue={handleFollowContinue}
         onSkip={handleFollowSkip}
-        isLoading={followLoading}
       />
     );
   }
@@ -876,9 +655,6 @@ export default function PracticePage() {
         subject={subject}
         onRetry={handleRetry}
         onRestart={handleRestart}
-        latexForPdf={latexForPdf}
-        onDownloadPdf={handleDownloadPdf}
-        pdfLoading={pdfLoading}
       />
     );
   }
