@@ -5599,6 +5599,103 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
         _PRACTICE_JOBS[job_id]['error'] = f'生成中にエラーが発生しました: {str(e)}'
 
 
+@app.post('/api/practice/prompt')
+async def practice_render_prompt(req: PracticeGenerateRequest = Body(...)):
+    """手動モード用: プロンプトのみを返す（LLM呼び出しなし）。ゲストでも利用可能。"""
+    system_prompt = _build_practice_system_prompt(
+        req.subject, req.topics or [], req.difficulty, req.num_questions
+    )
+
+    # RAG: DB から参考問題を取得
+    user_prompt_parts = []
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        _is_sq = getattr(conn, '_is_sqlite', False)
+        topics = req.topics or []
+        if topics:
+            placeholders = ','.join(['%s'] * len(topics))
+            sql = (
+                f"SELECT stem, topic, difficulty FROM problems "
+                f"WHERE (subject = %s OR subject LIKE %s) AND topic IN ({placeholders}) "
+                f"AND stem IS NOT NULL AND stem != '' "
+                f"ORDER BY {'id DESC' if _is_sq else 'created_at DESC'} LIMIT %s"
+            )
+            cur.execute(sql, (req.subject, req.subject + '%', *topics, 10))
+        else:
+            sql = (
+                "SELECT stem, topic, difficulty FROM problems "
+                "WHERE (subject = %s OR subject LIKE %s) "
+                "AND stem IS NOT NULL AND stem != '' "
+                f"ORDER BY {'id DESC' if _is_sq else 'created_at DESC'} LIMIT %s"
+            )
+            cur.execute(sql, (req.subject, req.subject + '%', 10))
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        if rows:
+            user_prompt_parts.append('【参考: 過去の類似問題（出題の参考にしてください）】')
+            for r in rows[:5]:
+                snippet = (r[0] or '')[:400]
+                user_prompt_parts.append(f'- [{r[1] or "不明"}] {snippet}')
+            user_prompt_parts.append('')
+    except Exception as e:
+        logger.warning('Practice prompt RAG failed (non-fatal): %s', e)
+
+    topic_str = '、'.join(req.topics) if req.topics else '全分野'
+    user_prompt_parts.append(
+        f'{req.subject}（{topic_str}）の{req.difficulty}レベルの問題を{req.num_questions}問、'
+        f'上記のJSON形式で出力してください。'
+    )
+    user_prompt = '\n'.join(user_prompt_parts)
+
+    # system + user を1つの指示文にまとめて返す
+    full_prompt = system_prompt + '\n\n---\n\n' + user_prompt
+    return JSONResponse({'prompt': full_prompt})
+
+
+@app.post('/api/practice/parse')
+async def practice_parse_json(payload: dict = Body(...)):
+    """手動モード用: ユーザーが貼り付けたJSON/テキストをパースし、problems + latex を返す。"""
+    raw = payload.get('raw_text', '')
+    subject = payload.get('subject', '')
+    if not raw.strip():
+        return JSONResponse({'error': '入力が空です。'}, status_code=400)
+
+    # JSON 抽出: code fence 除去
+    text = raw.strip()
+    if '```' in text:
+        import re as _re
+        m = _re.search(r'```(?:json)?\s*\n?(.*?)```', text, _re.DOTALL)
+        if m:
+            text = m.group(1).strip()
+    # brace 検出
+    start = text.find('{')
+    end = text.rfind('}')
+    if start >= 0 and end > start:
+        text = text[start:end + 1]
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as e:
+        return JSONResponse({'error': f'JSON パースに失敗しました: {str(e)}'}, status_code=400)
+
+    problems = data.get('problems', [])
+    if not problems:
+        return JSONResponse({'error': 'problems 配列が見つかりません。'}, status_code=400)
+
+    # LaTeX 構築
+    try:
+        latex = _build_practice_latex(problems, subject)
+    except Exception:
+        latex = None
+
+    return JSONResponse({
+        'problems': problems,
+        'latex': latex,
+    })
+
+
 @app.post('/api/practice/generate')
 async def practice_generate(req: PracticeGenerateRequest = Body(...)):
     """受験生向け練習モード: 構造化JSON形式で問題を生成する。

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { searchProblems, practiceGenerate, generatePdf } from '@/lib/api';
+import { searchProblems, practiceGenerate, practiceRenderPrompt, practiceParseJson, generatePdf } from '@/lib/api';
 import { SUBJECT_TOPICS } from '@/lib/constants';
 import { LatexBlock } from '@/components/LatexRenderer';
 import { MobileNavLinks } from '@/components/ui';
@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
    定数
 ───────────────────────────────────────────────────────────── */
 
-const SCREEN = { SELECT: 'select', LOADING: 'loading', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', SUMMARY: 'summary' };
+const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', SUMMARY: 'summary' };
 
 const PRACTICE_SUBJECTS = ['物理', '数学', '化学'];
 
@@ -210,7 +210,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-bold text-[#1e293b]">手動</div>
-                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">DBから問題を取得して練習</div>
+                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">AIへの指示文を取得して自分で送る</div>
               </div>
             </div>
           </button>
@@ -298,7 +298,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
       </button>
 
       <p className="text-center text-[11px] text-[#94a3b8] mt-3">
-        {genMode === GEN_MODE.AUTO ? 'AIが問題を生成します（作るモードと同じアルゴリズム）' : 'DBから問題を取得します'}
+        {genMode === GEN_MODE.AUTO ? 'AIが問題を生成します（作るモードと同じアルゴリズム）' : 'プロンプトを生成 → ChatGPT等で実行 → 貼り付け'}
       </p>
 
       {/* 詳細モードへの導線 */}
@@ -312,6 +312,144 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
       </div>
 
       <MobileNavLinks currentPath="/practice" />
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   手動モード: プロンプト & 貼り付け画面
+───────────────────────────────────────────────────────────── */
+
+function PromptScreen({ prompt, subject, onParsed, onBack, promptLoading }) {
+  const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
+  const [copied, setCopied] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [parsing, setParsing] = useState(false);
+  const [parseError, setParseError] = useState('');
+
+  const handleCopy = async () => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(prompt);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = prompt;
+        ta.style.position = 'fixed'; ta.style.left = '-9999px'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {}
+  };
+
+  const handleParse = async () => {
+    if (!pasteText.trim()) return;
+    setParsing(true);
+    setParseError('');
+    try {
+      const result = await practiceParseJson(pasteText, subject);
+      if (result?.error) {
+        setParseError(result.error);
+      } else if (result?.problems?.length > 0) {
+        onParsed(result.problems, result.latex || null);
+      } else {
+        setParseError('problems 配列が空です。AIの出力をそのまま貼り付けてください。');
+      }
+    } catch (e) {
+      setParseError(`パースに失敗しました: ${e.message}`);
+    }
+    setParsing(false);
+  };
+
+  if (promptLoading) {
+    return (
+      <div className="max-w-[480px] mx-auto px-5 pt-20 flex flex-col items-center gap-6">
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-[28px] animate-pulse"
+             style={{ background: c.glow }}>
+          🧠
+        </div>
+        <p className="text-[16px] font-bold text-[#1e293b]">プロンプトを生成中…</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-[480px] mx-auto px-5 pt-8 pb-20">
+      {/* ヘッダー */}
+      <div className="flex items-center justify-between mb-6">
+        <BackButton onClick={onBack} label="戻る" />
+        <span className="text-[12px] font-bold text-[#94a3b8]">手動モード</span>
+      </div>
+
+      {/* ステップ1: プロンプトコピー */}
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden mb-6 shadow-sm">
+        <div className="p-4 border-b border-[#f1f5f9] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white"
+                 style={{ background: c.accent }}>1</div>
+            <span className="text-[13px] font-bold text-[#1e293b]">指示文をコピー</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 border"
+            style={copied
+              ? { background: '#f0fdf4', borderColor: '#86efac', color: '#16a34a' }
+              : { background: '#f8fafc', borderColor: '#e2e8f0', color: '#64748b' }}
+          >
+            {copied ? (
+              <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>コピー済み</>
+            ) : (
+              <><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg>コピー</>
+            )}
+          </button>
+        </div>
+        <div className="p-4 max-h-[200px] overflow-y-auto">
+          <pre className="text-[11px] leading-[1.6] text-[#475569] whitespace-pre-wrap font-mono break-all">{prompt}</pre>
+        </div>
+        <div className="px-4 pb-4">
+          <p className="text-[11px] text-[#94a3b8]">↑ これを ChatGPT や Claude に貼り付けて実行してください</p>
+        </div>
+      </div>
+
+      {/* ステップ2: AIの出力を貼り付け */}
+      <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-[#f1f5f9]">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black text-white"
+                 style={{ background: c.accent }}>2</div>
+            <span className="text-[13px] font-bold text-[#1e293b]">AIの出力を貼り付け</span>
+          </div>
+          <p className="text-[11px] text-[#94a3b8] mt-1 ml-8">AIから返ってきたJSON出力をそのまま貼り付けてください</p>
+        </div>
+        <div className="p-4">
+          <textarea
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            rows={8}
+            className="w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-[12px] font-mono text-[#1e293b] placeholder:text-[#94a3b8] focus:outline-none focus:ring-2 focus:ring-offset-1 resize-none"
+            style={{ focusRingColor: c.accent }}
+            placeholder='{&#10;  &quot;problems&quot;: [&#10;    { &quot;stem&quot;: &quot;...&quot;, &quot;answer&quot;: &quot;...&quot;, ... }&#10;  ]&#10;}'
+          />
+
+          {parseError && (
+            <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-[11px] text-red-700 font-medium">
+              {parseError}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleParse}
+            disabled={!pasteText.trim() || parsing}
+            className="w-full mt-4 py-3.5 rounded-2xl text-[14px] font-black text-white shadow-lg transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)` }}
+          >
+            {parsing ? 'パース中…' : '問題を読み込んで練習開始 →'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -605,49 +743,10 @@ export default function PracticePage() {
   const [latexForPdf, setLatexForPdf] = useState(null);
   const [pdfLoading, setPdfLoading]   = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [manualPrompt, setManualPrompt] = useState('');
+  const [promptLoading, setPromptLoading] = useState(false);
   // × 後のフォローアップ用に追加問題をキューに積む
   const extraQueue = useRef([]);
-
-  /* ── DB問題取得 ── */
-  const fetchProblemsDB = useCallback(async ({ subject, topics, difficulty, numQ }) => {
-    setScreen(SCREEN.LOADING);
-    setLoadingStep(0);
-    setError('');
-    setLatexForPdf(null);
-    try {
-      const params = { subject, difficulty, limit: numQ * 2 };
-      if (topics.length === 1) params.topic = topics[0];
-      const data = await searchProblems(params);
-      let items = data?.results || data?.problems || (Array.isArray(data) ? data : []);
-
-      if (topics.length > 1) {
-        items = items.filter((p) => topics.includes(p?.topic || p?.metadata?.field));
-      }
-
-      // Fisher-Yates shuffle
-      for (let i = items.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [items[i], items[j]] = [items[j], items[i]];
-      }
-      items = items.slice(0, numQ);
-
-      if (items.length === 0) {
-        setError('この条件に合う問題がDBに見つかりませんでした。条件を変えて試してください。');
-        setScreen(SCREEN.SELECT);
-        return;
-      }
-
-      setProblems(items);
-      setCurrent(0);
-      setScores([]);
-      setShowAnswer(false);
-      extraQueue.current = [];
-      setScreen(SCREEN.PROBLEM);
-    } catch (e) {
-      setError(`問題の取得に失敗しました: ${e.message}`);
-      setScreen(SCREEN.SELECT);
-    }
-  }, []);
 
   /* ── AI問題生成 ── */
   const fetchProblemsAI = useCallback(async ({ subject, topics, difficulty, numQ }) => {
@@ -700,15 +799,53 @@ export default function PracticePage() {
     }
   }, [user]);
 
+  /* ── 手動モード: プロンプト生成 ── */
+  const fetchManualPrompt = useCallback(async ({ subject, topics, difficulty, numQ }) => {
+    setPromptLoading(true);
+    setScreen(SCREEN.PROMPT);
+    setError('');
+    setLatexForPdf(null);
+    try {
+      const result = await practiceRenderPrompt({
+        subject,
+        topics: topics.length > 0 ? topics : undefined,
+        difficulty,
+        num_questions: numQ,
+      });
+      setManualPrompt(result?.prompt || '');
+      // 自動コピー
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(result?.prompt || '');
+        }
+      } catch {}
+    } catch (e) {
+      setError(`プロンプト生成に失敗しました: ${e.message}`);
+      setScreen(SCREEN.SELECT);
+    }
+    setPromptLoading(false);
+  }, []);
+
+  /* ── 手動モード: JSON貼り付け → 問題開始 ── */
+  const handleManualParsed = useCallback((parsedProblems, latex) => {
+    setProblems(parsedProblems);
+    setLatexForPdf(latex);
+    setCurrent(0);
+    setScores([]);
+    setShowAnswer(false);
+    extraQueue.current = [];
+    setScreen(SCREEN.PROBLEM);
+  }, []);
+
   /* ── 開始 ── */
   const handleStart = useCallback((cfg) => {
     setConfig(cfg);
     if (cfg.genMode === GEN_MODE.AUTO) {
       fetchProblemsAI(cfg);
     } else {
-      fetchProblemsDB(cfg);
+      fetchManualPrompt(cfg);
     }
-  }, [fetchProblemsAI, fetchProblemsDB]);
+  }, [fetchProblemsAI, fetchManualPrompt]);
 
   /* ── 解答表示 ── */
   const handleShowAnswer = useCallback(() => setShowAnswer(true), []);
@@ -817,6 +954,7 @@ export default function PracticePage() {
     setCurrent(0);
     setShowAnswer(false);
     setLatexForPdf(null);
+    setManualPrompt('');
   }, []);
 
   /* ── レンダー ── */
@@ -839,6 +977,18 @@ export default function PracticePage() {
   }
 
   if (screen === SCREEN.LOADING) return <LoadingScreen subject={subject} genMode={genMode} loadingStep={loadingStep} />;
+
+  if (screen === SCREEN.PROMPT) {
+    return (
+      <PromptScreen
+        prompt={manualPrompt}
+        subject={subject}
+        onParsed={handleManualParsed}
+        onBack={handleRestart}
+        promptLoading={promptLoading}
+      />
+    );
+  }
 
   if (screen === SCREEN.PROBLEM || screen === SCREEN.ANSWER) {
     return (

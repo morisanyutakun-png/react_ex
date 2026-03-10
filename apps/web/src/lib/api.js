@@ -244,6 +244,26 @@ export async function generateSimilarProblem(problemStem, options = {}) {
 // ── Practice Mode (受験生向け AI 生成) ─────────────
 
 /**
+ * 手動モード用: プロンプトのみを生成して返す（LLM呼び出しなし）
+ */
+export async function practiceRenderPrompt(params) {
+  return apiFetch('/api/practice/prompt', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
+}
+
+/**
+ * 手動モード用: ユーザーが貼り付けたJSONテキストをパースして problems + latex を返す
+ */
+export async function practiceParseJson(rawText, subject) {
+  return apiFetch('/api/practice/parse', {
+    method: 'POST',
+    body: JSON.stringify({ raw_text: rawText, subject }),
+  });
+}
+
+/**
  * 受験生向け練習モード: AI で構造化問題を生成する（ポーリング方式）
  */
 export async function practiceGenerate(params) {
