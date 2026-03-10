@@ -8,10 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export const NAV_ITEMS = [
   { href: '/',          label: 'ホーム',   icon: <Icons.Home className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Home className="w-[21px] h-[21px]" /> },
+  { href: '/practice',  label: '練習する', icon: <Icons.Search className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Search className="w-[21px] h-[21px]" /> },
   { href: '/user',      label: 'つくる',   icon: <Icons.User className="w-[14px] h-[14px]" />, mobileIcon: <Icons.User className="w-[21px] h-[21px]" /> },
   { href: '/dev',       label: '磨く',     icon: <Icons.Dev className="w-[14px] h-[14px]" />,  mobileIcon: <Icons.Dev className="w-[21px] h-[21px]" /> },
   { href: '/search',    label: 'さがす',   icon: <Icons.Search className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Search className="w-[21px] h-[21px]" /> },
-  { href: '/db-editor', label: 'データ',   icon: <Icons.Table className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Table className="w-[21px] h-[21px]" /> },
   { href: '/help',      label: 'ヘルプ',   icon: <Icons.Book className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Book className="w-[21px] h-[21px]" /> },
 ];
 

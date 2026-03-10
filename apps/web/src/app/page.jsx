@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { MobileNavLinks } from '@/components/ui';
 
@@ -267,25 +267,27 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* [5] Dual CTA — つくる / 磨く を並列配置（等価重み付け） */}
+            {/* [5] メインCTA — 練習する（受験生向け）+ サブ（教員向け） */}
             <div className="stagger-item" style={{ animationDelay: '320ms' }}>
-              <div className="grid grid-cols-2 gap-3 max-w-[400px] mx-auto">
-                <Link href="/user" className="landing-cta-primary group">
+              <div className="max-w-[400px] mx-auto">
+                {/* メインCTA: 練習する */}
+                <Link href="/practice" className="landing-cta-primary group block mb-3">
+                  <span className="relative z-10 flex flex-col items-center gap-1.5">
+                    <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+                    </svg>
+                    <span className="text-[15px] sm:text-[16px] font-bold">物理の類題を練習する</span>
+                    <span className="text-[10px] font-medium opacity-70">単元・難易度を選ぶだけ</span>
+                  </span>
+                </Link>
+                {/* サブCTA: つくる（教員向け） */}
+                <Link href="/user" className="landing-cta-tune group block">
                   <span className="relative z-10 flex flex-col items-center gap-1.5">
                     <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                     </svg>
-                    <span className="text-[14px] sm:text-[15px] font-bold">問題をつくる</span>
-                    <span className="text-[10px] font-medium opacity-70">AI自動生成</span>
-                  </span>
-                </Link>
-                <Link href="/dev" className="landing-cta-tune group">
-                  <span className="relative z-10 flex flex-col items-center gap-1.5">
-                    <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                    </svg>
-                    <span className="text-[14px] sm:text-[15px] font-bold">品質を磨く</span>
-                    <span className="text-[10px] font-medium opacity-70">精度分析・改善</span>
+                    <span className="text-[14px] sm:text-[15px] font-bold">PDF問題を作成する</span>
+                    <span className="text-[10px] font-medium opacity-70">教員・詳細設定モード</span>
                   </span>
                 </Link>
               </div>
