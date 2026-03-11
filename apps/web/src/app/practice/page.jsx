@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { searchProblems, practiceGenerate, practiceRenderPrompt, practiceParseJson, generatePdf } from '@/lib/api';
 import { SUBJECT_TOPICS } from '@/lib/constants';
@@ -135,277 +135,435 @@ function BackButton({ onClick, label = '終了' }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   選択画面 A
+   選択画面 A — ウィザード型 4ステップ
 ───────────────────────────────────────────────────────────── */
 
+const WIZARD_SUBJECT_DEFS = [
+  { name: '物理', emoji: '⚡', tag: '理科', desc: '力学・電磁気・波動・熱力学' },
+  { name: '数学', emoji: '∑', tag: '数学', desc: '微積・確率・数列・ベクトル' },
+  { name: '化学', emoji: '⚗️', tag: '理科', desc: '有機・無機・物理化学・計算' },
+];
+
+const DIFF_ICONS = ['📗', '📘', '📙', '📕', '🔥', '🏆'];
+
+function WizardHeader({ step, accent }) {
+  const labels = ['科目', '単元', '難易度', '確認'];
+  return (
+    <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-[#f1f5f9]">
+      {/* step dots + progress bar */}
+      <div className="flex items-center justify-center gap-2 mb-3">
+        {labels.map((label, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div
+              className={`flex items-center justify-center rounded-full font-black text-[10px] transition-all duration-400 ease-out
+                ${i === step ? 'w-8 h-8 text-white shadow-lg scale-110'
+                  : i < step ? 'w-6 h-6 text-white opacity-80'
+                  : 'w-6 h-6 bg-[#f1f5f9] text-[#b0bec5]'}`}
+              style={i <= step ? { background: i < step ? accent + 'aa' : accent, boxShadow: i === step ? `0 4px 14px ${accent}55` : 'none' } : {}}
+            >
+              {i < step ? (
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              ) : i + 1}
+            </div>
+            {i < labels.length - 1 && (
+              <div
+                className="h-0.5 rounded-full transition-all duration-500"
+                style={{ width: 18, background: i < step ? accent : '#e2e8f0' }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+      {/* thin progress bar */}
+      <div className="w-full h-1 bg-[#f1f5f9] rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-600 ease-out"
+          style={{ width: `${((step + 1) / 4) * 100}%`, background: accent }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function SelectScreen({ onStart, isAuthenticated, isGuest }) {
-  const [subject, setSubject] = useState('物理');
+  const [step, setStep] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+  const [subject, setSubject] = useState(null);
   const [topics, setTopics] = useState([]);
-  const [difficulty, setDifficulty] = useState('応用');
+  const [difficulty, setDifficulty] = useState(null);
   const [numQ, setNumQ] = useState(5);
   const [genMode, setGenMode] = useState(isGuest ? GEN_MODE.MANUAL : GEN_MODE.AUTO);
   const [practiceFormat, setPracticeFormat] = useState(PRACTICE_FORMAT.DRILL);
 
-  const c = SUBJECT_COLOR[subject];
-  const topicOptions = SUBJECT_TOPICS[subject] || [];
+  const subDef = subject ? WIZARD_SUBJECT_DEFS.find(d => d.name === subject) : null;
+  const acc = subject ? SUBJECT_COLOR[subject].accent : '#7c3aed';
+  const ring = subject ? SUBJECT_COLOR[subject].ring : 'rgba(124,58,237,0.15)';
 
-  const toggleTopic = (t) =>
-    setTopics((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
+  const goStep = (n) => { setStep(n); setAnimKey(k => k + 1); };
+
+  const handleSubjectSelect = (s) => {
+    setSubject(s);
+    setTopics([]);
+    setTimeout(() => goStep(1), 220);
+  };
+
+  const handleDifficultySelect = (d) => {
+    setDifficulty(d);
+    setTimeout(() => goStep(3), 220);
+  };
 
   const handleStart = () => {
-    onStart({ subject, topics, difficulty, numQ, genMode, practiceFormat });
+    onStart({
+      subject: subject || '物理',
+      topics,
+      difficulty: difficulty || '応用',
+      numQ,
+      genMode,
+      practiceFormat,
+    });
   };
 
   return (
-    <div className="max-w-[480px] mx-auto px-5 pt-10 pb-24">
+    <div className="max-w-[480px] mx-auto min-h-screen">
+      <WizardHeader step={step} accent={acc} />
 
-      {/* ヘッダー */}
-      <div className="mb-10">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all duration-300"
-               style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 8px 24px ${c.ring}` }}>
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342" />
-            </svg>
-          </div>
+      {/* ── Step content with slide-up animation ── */}
+      <div key={animKey} className="px-5 pt-7 pb-28 animate-in fade-in slide-in-from-bottom-4 duration-300">
+
+        {/* ══ Step 0: 科目 ══ */}
+        {step === 0 && (
           <div>
-            <h1 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em] leading-tight">
-              今日は何を練習する？
-            </h1>
-            <p className="text-[13px] text-[#94a3b8] mt-1">選んだらすぐ問題が出てくる</p>
-          </div>
-        </div>
-      </div>
+            <div className="mb-8">
+              <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 1 / 4</p>
+              <h2 className="text-[28px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
+                今日は何を<br />練習する？
+              </h2>
+              <p className="text-[13px] text-[#94a3b8] mt-2">科目をタップ → 自動で次へ</p>
+            </div>
 
-      {/* 生成モード切替 */}
-      <div className="mb-7">
-        <SectionLabel>生成モード</SectionLabel>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => !isGuest && setGenMode(GEN_MODE.AUTO)}
-            disabled={isGuest}
-            className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-250
-              ${genMode === GEN_MODE.AUTO ? 'border-[#2563eb] bg-blue-50/50 shadow-md' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1] hover:shadow-sm'}
-              ${isGuest ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {genMode === GEN_MODE.AUTO && (
-              <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            <div className="space-y-3">
+              {WIZARD_SUBJECT_DEFS.map((s, i) => {
+                const col = SUBJECT_COLOR[s.name];
+                return (
+                  <button
+                    key={s.name}
+                    type="button"
+                    onClick={() => handleSubjectSelect(s.name)}
+                    className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-[#f1f5f9] bg-white shadow-sm transition-all duration-250 active:scale-[0.97] hover:shadow-lg group"
+                    style={{ animationDelay: `${i * 60}ms` }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = col.accent + '55'; e.currentTarget.style.boxShadow = `0 8px 28px ${col.ring}`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#f1f5f9'; e.currentTarget.style.boxShadow = ''; }}
+                  >
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0 shadow-sm"
+                      style={{ background: `linear-gradient(135deg, ${col.accent}18, ${col.accent}08)`, border: `1.5px solid ${col.accent}22` }}
+                    >
+                      {s.emoji}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-[18px] font-black text-[#0f172a]">{s.name}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: col.accent + '16', color: col.accent }}>{s.tag}</span>
+                      </div>
+                      <div className="text-[12px] text-[#64748b]">{s.desc}</div>
+                    </div>
+                    <svg className="w-5 h-5 text-[#cbd5e1] flex-shrink-0 group-hover:translate-x-1 group-hover:text-[#94a3b8] transition-all duration-200" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-center text-[11px] text-[#b0bec5] mt-8 flex items-center justify-center gap-1.5">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zm-7.518-.267A8.25 8.25 0 1120.25 10.5M8.288 14.212A5.25 5.25 0 1117.25 10.5" />
+              </svg>
+              タップで次のステップへ自動で進みます
+            </p>
+          </div>
+        )}
+
+        {/* ══ Step 1: 単元 ══ */}
+        {step === 1 && (
+          <div>
+            <div className="mb-6">
+              <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 2 / 4</p>
+              <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
+                <span style={{ color: acc }}>{subject}</span>の<br />どの単元をやる？
+              </h2>
+              <p className="text-[13px] text-[#94a3b8] mt-2">複数選択可 · 空欄 = 全単元ランダム</p>
+            </div>
+
+            {/* 全単元ボタン */}
+            <button
+              type="button"
+              onClick={() => setTopics([])}
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 mb-4 transition-all duration-250 ${
+                topics.length === 0
+                  ? 'text-white border-transparent shadow-lg'
+                  : 'bg-white border-[#e2e8f0] text-[#64748b] hover:border-[#cbd5e1]'
+              }`}
+              style={topics.length === 0 ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 6px 20px ${ring}` } : {}}
+            >
+              <span className="text-[18px]">{topics.length === 0 ? '✓' : '○'}</span>
+              <div className="flex-1 text-left">
+                <div className={`text-[13px] font-bold ${topics.length === 0 ? 'text-white' : ''}`}>全単元からランダム出題</div>
+                <div className={`text-[11px] mt-0.5 ${topics.length === 0 ? 'text-white/75' : 'text-[#94a3b8]'}`}>バランスよく全範囲を練習</div>
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${topics.length === 0 ? 'bg-white/20 text-white' : 'bg-[#f1f5f9] text-[#64748b]'}`}>おすすめ</span>
+            </button>
+
+            {/* 単元チップ */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              {(SUBJECT_TOPICS[subject] || []).map((t) => {
+                const sel = topics.includes(t);
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTopics((prev) => sel ? prev.filter((x) => x !== t) : [...prev, t])}
+                    className={`px-3.5 py-2 rounded-full text-[12px] font-semibold border-2 transition-all duration-200 active:scale-[0.95] ${
+                      sel ? 'text-white border-transparent shadow-sm' : 'bg-white text-[#64748b] border-[#e8edf2] hover:border-[#cbd5e1]'
+                    }`}
+                    style={sel ? { background: acc, boxShadow: `0 2px 8px ${ring}` } : {}}
+                  >
+                    {sel && <span className="mr-1 text-[10px]">✓</span>}
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
+
+            {topics.length > 0 && (
+              <div className="mb-5 px-4 py-3 rounded-xl text-[11px] text-[#64748b] bg-[#f8fafc] border border-[#f1f5f9] flex items-start gap-2">
+                <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
+                <span>
+                  <span className="font-bold" style={{ color: acc }}>{topics.join('・')}</span>
+                  <span className="ml-1">を選択中</span>
+                </span>
               </div>
             )}
-            <div className="flex items-start gap-2.5">
-              <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-250 ${
-                genMode === GEN_MODE.AUTO ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50 text-[#64748b]'
-              }`}>
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-[#1e293b]">AI 自動生成</div>
-                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">ワンクリックで問題を自動作成</div>
-                {isGuest && (
-                  <div className="text-[10px] text-amber-600 mt-1.5 flex items-center gap-1 font-medium">
-                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                    </svg>
-                    ログインが必要
-                  </div>
+
+            <button
+              type="button"
+              onClick={() => goStep(2)}
+              className="w-full py-4.5 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] hover:shadow-2xl"
+              style={{ background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 8px 28px ${ring}` }}
+            >
+              {topics.length === 0 ? '全単元で次へ →' : `${topics.length}単元を選択 · 次へ →`}
+            </button>
+          </div>
+        )}
+
+        {/* ══ Step 2: 難易度 ══ */}
+        {step === 2 && (
+          <div>
+            <div className="mb-6">
+              <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 3 / 4</p>
+              <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
+                難しさは<br />どのくらい？
+              </h2>
+              <p className="text-[13px] text-[#94a3b8] mt-2">タップで次へ自動で進みます</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {EXAM_LEVELS.map((lv, i) => {
+                const sel = difficulty === lv.value;
+                return (
+                  <button
+                    key={lv.value}
+                    type="button"
+                    onClick={() => handleDifficultySelect(lv.value)}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all duration-250 active:scale-[0.95] ${
+                      sel
+                        ? 'text-white border-transparent shadow-xl scale-[1.04]'
+                        : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-md'
+                    }`}
+                    style={sel ? { background: `linear-gradient(135deg, ${acc}, ${acc}dd)`, boxShadow: `0 8px 24px ${ring}` } : {}}
+                  >
+                    <div className="text-[22px] mb-2 leading-none">{DIFF_ICONS[i]}</div>
+                    <div className={`text-[14px] font-black ${sel ? 'text-white' : 'text-[#0f172a]'}`}>{lv.label}</div>
+                    <div className={`text-[11px] mt-0.5 ${sel ? 'text-white/80' : 'text-[#94a3b8]'}`}>{lv.sub}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ══ Step 3: 確認 ══ */}
+        {step === 3 && (
+          <div>
+            <div className="mb-6">
+              <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 4 / 4</p>
+              <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
+                あと少し！<br />最後の設定を
+              </h2>
+            </div>
+
+            {/* 選択内容サマリー */}
+            <div
+              className="rounded-2xl border-2 p-4 mb-6"
+              style={{ borderColor: acc + '35', background: acc + '07' }}
+            >
+              <p className="text-[10px] font-extrabold tracking-[0.1em] uppercase mb-3" style={{ color: acc }}>選択内容</p>
+              <div className="flex flex-wrap gap-2">
+                {subDef && (
+                  <span className="inline-flex items-center gap-1.5 text-[12px] font-bold px-3 py-1.5 rounded-full text-white" style={{ background: acc }}>
+                    <span>{subDef.emoji}</span>{subject}
+                  </span>
+                )}
+                {topics.length === 0 ? (
+                  <span className="text-[12px] font-semibold px-3 py-1.5 rounded-full bg-white border border-[#e2e8f0] text-[#64748b]">全単元</span>
+                ) : topics.map((t) => (
+                  <span key={t} className="text-[12px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: acc + '12', color: acc, borderColor: acc + '30' }}>{t}</span>
+                ))}
+                {difficulty && (
+                  <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-white border border-[#e2e8f0] text-[#1e293b]">
+                    {DIFF_ICONS[EXAM_LEVELS.findIndex(l => l.value === difficulty)]} {EXAM_LEVELS.find(l => l.value === difficulty)?.label}
+                  </span>
                 )}
               </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setGenMode(GEN_MODE.MANUAL)}
-            className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-250
-              ${genMode === GEN_MODE.MANUAL ? 'border-[#2563eb] bg-blue-50/50 shadow-md' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1] hover:shadow-sm'}`}
-          >
-            {genMode === GEN_MODE.MANUAL && (
-              <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-              </div>
-            )}
-            <div className="flex items-start gap-2.5">
-              <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-250 ${
-                genMode === GEN_MODE.MANUAL ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50 text-[#64748b]'
-              }`}>
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-[#1e293b]">手動</div>
-                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">AIへの指示文を取得して自分で送る</div>
-              </div>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* 練習形式 */}
-      <div className="mb-7">
-        <SectionLabel>練習形式</SectionLabel>
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setPracticeFormat(PRACTICE_FORMAT.DRILL)}
-            className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-250
-              ${practiceFormat === PRACTICE_FORMAT.DRILL ? 'border-[#2563eb] bg-blue-50/50 shadow-md' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1] hover:shadow-sm'}`}
-          >
-            {practiceFormat === PRACTICE_FORMAT.DRILL && (
-              <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-              </div>
-            )}
-            <div className="flex items-start gap-2.5">
-              <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-250 ${
-                practiceFormat === PRACTICE_FORMAT.DRILL ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50 text-[#64748b]'
-              }`}>
-                <span className="text-[16px]">📝</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-[#1e293b]">一問一答</div>
-                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">1問ずつ解いて即座に採点</div>
-              </div>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setPracticeFormat(PRACTICE_FORMAT.EXAM)}
-            className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-250
-              ${practiceFormat === PRACTICE_FORMAT.EXAM ? 'border-[#2563eb] bg-blue-50/50 shadow-md' : 'border-[#e2e8f0] bg-white hover:border-[#cbd5e1] hover:shadow-sm'}`}
-          >
-            {practiceFormat === PRACTICE_FORMAT.EXAM && (
-              <div className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#2563eb] flex items-center justify-center">
-                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-              </div>
-            )}
-            <div className="flex items-start gap-2.5">
-              <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 transition-all duration-250 ${
-                practiceFormat === PRACTICE_FORMAT.EXAM ? 'bg-[#2563eb] text-white shadow-md' : 'bg-blue-50 text-[#64748b]'
-              }`}>
-                <span className="text-[16px]">📋</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-[#1e293b]">模試形式</div>
-                <div className="text-[10px] text-[#64748b] mt-0.5 leading-snug">全問表示＋タイマーで本番演習</div>
-              </div>
-            </div>
-          </button>
-        </div>
-      </div>
-
-      {/* 科目タブ */}
-      <div className="mb-7">
-        <SectionLabel>科目</SectionLabel>
-        <div className="flex gap-2.5">
-          {PRACTICE_SUBJECTS.map((s) => (
-            <SubjectTab key={s} subject={s} selected={subject === s} onClick={() => { setSubject(s); setTopics([]); }} />
-          ))}
-        </div>
-      </div>
-
-      {/* 単元選択（複数可） */}
-      <div className="mb-7">
-        <SectionLabel extra={
-          topics.length > 0 ? (
-            <button type="button" onClick={() => setTopics([])} className="text-[11px] font-medium text-[#94a3b8] hover:text-[#64748b] transition-colors">すべて解除</button>
-          ) : null
-        }>単元</SectionLabel>
-        <div className="flex flex-wrap gap-2">
-          {topicOptions.map((t) => (
-            <TopicChip key={t} label={t} selected={topics.includes(t)} onClick={() => toggleTopic(t)} accent={c.accent} />
-          ))}
-        </div>
-        {topics.length === 0 && (
-          <p className="text-[11px] text-[#94a3b8] mt-2.5 flex items-center gap-1">
-            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-            </svg>
-            選択なし = 全単元からランダム出題
-          </p>
-        )}
-      </div>
-
-      {/* 難易度 */}
-      <div className="mb-8">
-        <SectionLabel>難易度</SectionLabel>
-        <div className="grid grid-cols-3 gap-2.5">
-          {EXAM_LEVELS.map((lv) => {
-            const sel = difficulty === lv.value;
-            return (
               <button
-                key={lv.value}
                 type="button"
-                onClick={() => setDifficulty(lv.value)}
-                className={`px-3 py-3 rounded-xl border text-left transition-all duration-250
-                  ${sel ? 'border-transparent text-white shadow-md scale-[1.02]' : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-sm'}`}
-                style={sel ? { background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 4px 16px ${c.ring}` } : {}}
+                onClick={() => goStep(0)}
+                className="mt-3 text-[11px] font-semibold underline underline-offset-2 opacity-60 hover:opacity-100 transition-opacity"
+                style={{ color: acc }}
               >
-                <div className={`text-[12px] font-bold ${sel ? 'text-white' : 'text-[#1e293b]'}`}>{lv.label}</div>
-                <div className={`text-[10px] mt-0.5 ${sel ? 'text-white/80' : 'text-[#94a3b8]'}`}>{lv.sub}</div>
+                選択をやり直す
               </button>
-            );
-          })}
-        </div>
-      </div>
+            </div>
 
-      {/* 問題数 */}
-      <div className="mb-10">
-        <SectionLabel>問題数</SectionLabel>
-        <div className="flex gap-2.5">
-          {[3, 5, 10].map((n) => (
+            {/* 問題数 */}
+            <div className="mb-5">
+              <p className="text-[11px] font-extrabold text-[#64748b] tracking-[0.1em] uppercase mb-3">問題数</p>
+              <div className="flex gap-2.5">
+                {[3, 5, 10].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setNumQ(n)}
+                    className={`flex-1 py-3.5 rounded-xl border-2 text-[14px] font-black transition-all duration-200 active:scale-[0.96] ${
+                      numQ === n ? 'text-white border-transparent shadow-md scale-[1.04]' : 'bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#cbd5e1]'
+                    }`}
+                    style={numQ === n ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 4px 16px ${ring}` } : {}}
+                  >
+                    {n}問
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 形式 */}
+            <div className="mb-5">
+              <p className="text-[11px] font-extrabold text-[#64748b] tracking-[0.1em] uppercase mb-3">練習形式</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  { val: PRACTICE_FORMAT.DRILL, icon: '📝', name: '一問一答', desc: '1問ずつ即採点' },
+                  { val: PRACTICE_FORMAT.EXAM,  icon: '📋', name: '模試形式', desc: '全問 · タイマー付き' },
+                ].map((f) => {
+                  const sel = practiceFormat === f.val;
+                  return (
+                    <button
+                      key={f.val}
+                      type="button"
+                      onClick={() => setPracticeFormat(f.val)}
+                      className={`p-3.5 rounded-xl border-2 text-left transition-all duration-200 active:scale-[0.96] ${
+                        sel ? 'border-transparent shadow-md' : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1]'
+                      }`}
+                      style={sel ? { background: acc + '10', borderColor: acc + '45' } : {}}
+                    >
+                      <div className="text-[20px] mb-1.5">{f.icon}</div>
+                      <div className={`text-[12px] font-black ${sel ? '' : 'text-[#1e293b]'}`} style={sel ? { color: acc } : {}}>{f.name}</div>
+                      <div className="text-[10px] text-[#94a3b8] mt-0.5">{f.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 生成モード */}
+            <div className="mb-7">
+              <p className="text-[11px] font-extrabold text-[#64748b] tracking-[0.1em] uppercase mb-3">生成モード</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  { val: GEN_MODE.AUTO,   icon: '✨', name: 'AI 自動生成', desc: 'ワンクリックで作成', locked: isGuest },
+                  { val: GEN_MODE.MANUAL, icon: '📋', name: '手動',        desc: 'ChatGPTに貼り付け', locked: false },
+                ].map((m) => {
+                  const sel = genMode === m.val && !m.locked;
+                  return (
+                    <button
+                      key={m.val}
+                      type="button"
+                      onClick={() => !m.locked && setGenMode(m.val)}
+                      disabled={m.locked}
+                      className={`p-3.5 rounded-xl border-2 text-left transition-all duration-200 ${
+                        m.locked ? 'opacity-45 cursor-not-allowed' : 'active:scale-[0.96]'
+                      } ${sel ? 'border-transparent shadow-md' : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1]'}`}
+                      style={sel ? { background: acc + '10', borderColor: acc + '45' } : {}}
+                    >
+                      <div className="text-[20px] mb-1.5">{m.icon}</div>
+                      <div className={`text-[12px] font-black ${sel ? '' : 'text-[#1e293b]'}`} style={sel ? { color: acc } : {}}>{m.name}</div>
+                      <div className="text-[10px] text-[#94a3b8] mt-0.5">{m.locked ? '🔒 ログインが必要' : m.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* スタートボタン */}
             <button
-              key={n}
               type="button"
-              onClick={() => setNumQ(n)}
-              className={`flex-1 py-3 rounded-xl border text-[13px] font-bold transition-all duration-250
-                ${numQ === n ? 'text-white border-transparent shadow-md scale-[1.02]' : 'bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-sm'}`}
-              style={numQ === n ? { background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 4px 16px ${c.ring}` } : {}}
+              onClick={handleStart}
+              className="w-full py-5 rounded-2xl text-[16px] font-black text-white shadow-2xl transition-all duration-250 active:scale-[0.97] hover:scale-[1.01] hover:shadow-2xl"
+              style={{ background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 12px 32px ${ring}` }}
             >
-              {n}問
+              {practiceFormat === PRACTICE_FORMAT.EXAM ? '模試を始める →' : '練習を始める →'}
             </button>
-          ))}
+
+            <p className="text-center text-[11px] text-[#94a3b8] mt-3.5 leading-relaxed">
+              {genMode === GEN_MODE.AUTO
+                ? 'AIが入試品質の問題を生成します'
+                : 'プロンプトを生成 → ChatGPT等で実行 → 貼り付け'}
+            </p>
+
+            <div className="mt-8 pt-5 border-t border-[#f1f5f9]">
+              <Link href="/user" className="group flex items-center justify-center gap-2 text-[12px] text-[#94a3b8] hover:text-[#64748b] transition-colors duration-200">
+                <svg className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5" />
+                </svg>
+                PDF生成・詳細設定モードはこちら（教員向け）
+              </Link>
+            </div>
+
+            <MobileNavLinks currentPath="/practice" />
+          </div>
+        )}
+
+      </div>
+
+      {/* ── 下部 戻るボタン（Step 1以降に固定表示） ── */}
+      {step > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
+          <div className="max-w-[480px] mx-auto px-5 pb-6 flex justify-start pointer-events-auto">
+            <button
+              type="button"
+              onClick={() => goStep(step - 1)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white border border-[#e2e8f0] shadow-md text-[12px] font-semibold text-[#64748b] hover:text-[#334155] hover:shadow-lg transition-all duration-200 active:scale-[0.96]"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+              戻る
+            </button>
+          </div>
         </div>
-      </div>
-
-      {/* スタートボタン */}
-      <button
-        type="button"
-        onClick={handleStart}
-        className="w-full py-4.5 rounded-2xl text-[16px] font-black text-white tracking-[-0.01em] shadow-xl transition-all duration-250 active:scale-[0.97] hover:shadow-2xl"
-        style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 10px 30px ${c.ring}` }}
-      >
-        {practiceFormat === PRACTICE_FORMAT.EXAM ? '模試を始める →' : '練習を始める →'}
-      </button>
-
-      <p className="text-center text-[11px] text-[#94a3b8] mt-4 leading-relaxed">
-        {practiceFormat === PRACTICE_FORMAT.EXAM
-          ? '全問一覧＋タイマーで本番さながらの演習'
-          : genMode === GEN_MODE.AUTO ? 'AIが問題を生成します（作るモードと同じアルゴリズム）' : 'プロンプトを生成 → ChatGPT等で実行 → 貼り付け'}
-      </p>
-
-      {/* 詳細モードへの導線 */}
-      <div className="mt-10 pt-6 border-t border-[#f1f5f9]">
-        <Link href="/user" className="group flex items-center justify-center gap-2 text-[12px] text-[#94a3b8] hover:text-[#64748b] transition-colors duration-200">
-          <svg className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5" />
-          </svg>
-          PDF生成・詳細設定モードはこちら（教員向け）
-        </Link>
-      </div>
-
-      <MobileNavLinks currentPath="/practice" />
+      )}
     </div>
   );
 }
