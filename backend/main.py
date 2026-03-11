@@ -8,7 +8,7 @@ import re
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi import Body
 import json
-from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse, FileResponse
+from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse, FileResponse, Response
 from pydantic import BaseModel
 from io import BytesIO
 import sys
@@ -5359,7 +5359,7 @@ class PracticeGenerateRequest(BaseModel):
     subject: str = '物理'
     topics: Optional[List[str]] = []
     difficulty: str = '応用'
-    num_questions: int = 5
+    num_questions: int = 3
     user_id: Optional[str] = None
     model_tier: Optional[str] = 'auto'
 
@@ -5951,6 +5951,9 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
 @app.post('/api/practice/prompt')
 async def practice_render_prompt(req: PracticeGenerateRequest = Body(...)):
     """手動モード用: プロンプトのみを返す（LLM呼び出しなし）。ゲストでも利用可能。"""
+    max_q = int(os.getenv('MAX_QUESTIONS_PER_GENERATION', '3'))
+    if req.num_questions > max_q:
+        req.num_questions = max_q
     system_prompt = _build_practice_system_prompt(
         req.subject, req.topics or [], req.difficulty, req.num_questions
     )
@@ -6112,6 +6115,11 @@ async def practice_generate(req: PracticeGenerateRequest = Body(...)):
             'error': f'AI生成の無料利用上限（{usage_info["limit"]}回）に達しました。',
             'usage': usage_info,
         }, status_code=429)
+
+    # 問題数上限
+    max_q = int(os.getenv('MAX_QUESTIONS_PER_GENERATION', '3'))
+    if req.num_questions > max_q:
+        req.num_questions = max_q
 
     # モデル解決
     openai_model, resolved_tier = _resolve_model(req.model_tier or 'auto', req.subject)

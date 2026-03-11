@@ -194,7 +194,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
   const [subject, setSubject] = useState(null);
   const [topics, setTopics] = useState([]);
   const [difficulty, setDifficulty] = useState(null);
-  const [numQ, setNumQ] = useState(5);
+  const [numQ, setNumQ] = useState(3);
   const [genMode, setGenMode] = useState(isGuest ? GEN_MODE.MANUAL : GEN_MODE.AUTO);
   const [practiceFormat, setPracticeFormat] = useState(PRACTICE_FORMAT.DRILL);
 
@@ -444,7 +444,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             <div className="mb-5">
               <p className="text-[11px] font-extrabold text-[#64748b] tracking-[0.1em] uppercase mb-3">問題数</p>
               <div className="flex gap-2.5">
-                {[3, 5, 10].map((n) => (
+                {[1, 2, 3].map((n) => (
                   <button
                     key={n}
                     type="button"
