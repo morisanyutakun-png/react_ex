@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { searchProblems, practiceGenerate, practiceRenderPrompt, practiceParseJson, generatePdf } from '@/lib/api';
 import { SUBJECT_TOPICS } from '@/lib/constants';
 import { LatexBlock } from '@/components/LatexRenderer';
+import TikzFigure from '@/components/TikzFigure';
 import { MobileNavLinks } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -803,6 +804,55 @@ function LoadingScreen({ subject, genMode, loadingStep }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   LatexTikzBlock — TikZ コードを含むテキストを分割して描画
+   通常テキスト → LatexBlock、TikZ 部分 → TikzFigure
+───────────────────────────────────────────────────────────── */
+
+const TIKZ_ENV_RE = /\\begin\{(tikzpicture|circuitikz|axis)\}[\s\S]*?\\end\{\1\}/g;
+
+function LatexTikzBlock({ children, className = '' }) {
+  const text = children || '';
+  if (!text) return null;
+
+  // Check if there is any TikZ at all
+  if (!TIKZ_ENV_RE.test(text)) {
+    return <LatexBlock className={className}>{text}</LatexBlock>;
+  }
+
+  // Reset regex lastIndex
+  TIKZ_ENV_RE.lastIndex = 0;
+
+  // Split into segments: text parts and tikz parts
+  const segments = [];
+  let lastIndex = 0;
+  let match;
+  while ((match = TIKZ_ENV_RE.exec(text)) !== null) {
+    // Text before this TikZ block
+    if (match.index > lastIndex) {
+      segments.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+    }
+    segments.push({ type: 'tikz', content: match[0] });
+    lastIndex = match.index + match[0].length;
+  }
+  // Remaining text after last TikZ block
+  if (lastIndex < text.length) {
+    segments.push({ type: 'text', content: text.slice(lastIndex) });
+  }
+
+  return (
+    <div className={className}>
+      {segments.map((seg, idx) =>
+        seg.type === 'tikz' ? (
+          <TikzFigure key={idx} tikzCode={seg.content} />
+        ) : (
+          <LatexBlock key={idx}>{seg.content}</LatexBlock>
+        )
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
    問題画面 B + 解答画面 C
 ───────────────────────────────────────────────────────────── */
 
@@ -877,6 +927,11 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           <p className="text-[13px] text-[#94a3b8] mb-4">問題文を読み込めませんでした</p>
         )}
 
+        {/* 図（TikZ） */}
+        {hasFigure && (
+          <TikzFigure tikzCode={problem.figure_tikz} className="mb-4" />
+        )}
+
         {/* 小問リスト（答え表示前は問題文のみ） */}
         {subproblems.length > 0 && (
           <div className="space-y-3 border-t pt-4" style={{ borderColor: c.accent + '22' }}>
@@ -946,7 +1001,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                       <div className="flex items-center gap-1.5 mb-2 pt-2">
                         <span className="text-[10px] font-bold text-[#6366f1] tracking-[0.05em] uppercase">解説</span>
                       </div>
-                      <LatexBlock className="text-[12px] leading-[1.85] text-[#475569]">{sp.explanation}</LatexBlock>
+                      <LatexTikzBlock className="text-[12px] leading-[1.85] text-[#475569]">{sp.explanation}</LatexTikzBlock>
                     </div>
                   )}
                 </div>
@@ -1140,6 +1195,9 @@ function ExamScreen({ problems, subject, onFinish, onQuit }) {
               {/* 問題文 + 小問 */}
               <div className="px-5 pb-4 space-y-2">
                 {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{stem}</LatexBlock>}
+                {problem?.figure_tikz && problem.figure_tikz !== 'null' && (
+                  <TikzFigure tikzCode={problem.figure_tikz} />
+                )}
                 {subproblems.length > 1 && (
                   <div className="space-y-1 border-t pt-2" style={{ borderColor: c.accent + '22' }}>
                     {subproblems.map((sp, si) => sp.question ? (
@@ -1171,7 +1229,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit }) {
                             解説を見る
                           </summary>
                           <div className="mt-1.5 pl-2 border-l-2 border-[#e8eeff]">
-                            <LatexBlock className="text-[11px] leading-[1.75] text-[#475569]">{sp.explanation}</LatexBlock>
+                            <LatexTikzBlock className="text-[11px] leading-[1.75] text-[#475569]">{sp.explanation}</LatexTikzBlock>
                           </div>
                         </details>
                       )}

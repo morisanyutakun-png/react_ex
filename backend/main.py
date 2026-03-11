@@ -7808,6 +7808,173 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         return JSONResponse({'error': 'pdf_generation_failed', 'detail': str(e)}, status_code=500)
 
 
+# ── TikZ → PNG rendering endpoint ──────────────────────────
+# In-memory cache: hash(tikz) → PNG bytes  (bounded LRU)
+_tikz_png_cache: Dict[str, bytes] = {}
+_TIKZ_CACHE_MAX = 200
+
+
+@app.post('/api/render_tikz')
+def render_tikz(payload: dict = Body(...)):
+    """Compile a TikZ snippet to a cropped PNG image.
+
+    Payload: { "tikz": "\\begin{tikzpicture}...\\end{tikzpicture}" }
+    Returns: image/png
+    """
+    tikz_code = (payload.get('tikz') or '').strip()
+    if not tikz_code:
+        return JSONResponse({'error': 'empty_tikz'}, status_code=400)
+
+    # Safety check – reject dangerous commands
+    if not _latex_sanitize_check(tikz_code):
+        return JSONResponse({'error': 'tikz_forbidden'}, status_code=400)
+
+    # Check cache
+    import hashlib
+    cache_key = hashlib.sha256(tikz_code.encode('utf-8')).hexdigest()
+    if cache_key in _tikz_png_cache:
+        return Response(content=_tikz_png_cache[cache_key], media_type='image/png')
+
+    # Build standalone LaTeX document
+    standalone_doc = (
+        "\\documentclass[border=8pt,convert={density=200,outext=.png}]{standalone}\n"
+        "\\usepackage{amsmath,amssymb,mathtools}\n"
+        "\\usepackage{tikz,pgfplots}\n"
+        "\\pgfplotsset{compat=newest}\n"
+        "\\usetikzlibrary{arrows.meta,calc,positioning,decorations.markings,patterns,angles,quotes,intersections,shapes}\n"
+        "\\usepackage[siunitx]{circuitikz}\n"
+        "\\usepackage{iftex}\n"
+        "\\ifPDFTeX\n"
+        "  \\usepackage[utf8]{inputenc}\n"
+        "  \\usepackage[T1]{fontenc}\n"
+        "  \\usepackage{CJKutf8}\n"
+        "  \\AtBeginDocument{\\begin{CJK*}{UTF8}{min}}\n"
+        "  \\AtEndDocument{\\end{CJK*}}\n"
+        "\\else\n"
+        "  \\usepackage{fontspec}\n"
+        "  \\ifLuaTeX\n"
+        "    \\usepackage{luatexja}\n"
+        "  \\else\n"
+        "    \\usepackage{xeCJK}\n"
+        "  \\fi\n"
+        "\\fi\n"
+        "\\begin{document}\n"
+        f"{tikz_code}\n"
+        "\\end{document}\n"
+    )
+
+    td = tempfile.mkdtemp(prefix='tikz_')
+    tex_path = os.path.join(td, 'figure.tex')
+    pdf_path = os.path.join(td, 'figure.pdf')
+    png_path = os.path.join(td, 'figure.png')
+
+    try:
+        with open(tex_path, 'w', encoding='utf-8') as f:
+            f.write(standalone_doc)
+
+        # Find LaTeX engine
+        _cloud_only = (
+            os.environ.get('CLOUD_LATEX_ONLY', '').strip() in ('1', 'true', 'yes')
+            or os.environ.get('RENDER', '').strip().lower() in ('true', '1', 'yes')
+        )
+        engine = None
+        engine_name = None
+        if not _cloud_only:
+            for cand in ('xelatex', 'lualatex', 'pdflatex'):
+                path = shutil.which(cand)
+                if path:
+                    engine = path
+                    engine_name = cand
+                    break
+
+        # Compile
+        compiled = False
+        if engine:
+            try:
+                subprocess.run(
+                    [engine_name, '-interaction=nonstopmode', '-halt-on-error',
+                     '-output-directory', td, tex_path],
+                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
+                )
+                compiled = os.path.exists(pdf_path)
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+                logger.warning('TikZ local compilation failed (%s): %s', engine_name, exc)
+
+        if not compiled:
+            # Cloud fallback
+            try:
+                cloud_resp = requests.post(
+                    'https://latex.ytotech.com/builds/sync',
+                    json={'compiler': 'xelatex', 'resources': [{'main': True, 'content': standalone_doc}]},
+                    timeout=60,
+                )
+                if cloud_resp.status_code in (200, 201) and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
+                    with open(pdf_path, 'wb') as pf:
+                        pf.write(cloud_resp.content)
+                    compiled = True
+                else:
+                    logger.error('Cloud TikZ compile failed: %s', cloud_resp.text[:500])
+            except Exception as cloud_exc:
+                logger.exception('Cloud TikZ request failed: %s', cloud_exc)
+
+        if not compiled or not os.path.exists(pdf_path):
+            return JSONResponse({'error': 'tikz_compilation_failed'}, status_code=500)
+
+        # Convert PDF → PNG
+        png_bytes = None
+
+        # Try pdftoppm (poppler)
+        pdftoppm = shutil.which('pdftoppm')
+        if pdftoppm:
+            try:
+                out_prefix = os.path.join(td, 'out')
+                subprocess.run(
+                    [pdftoppm, '-png', '-r', '200', '-singlefile', pdf_path, out_prefix],
+                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15,
+                )
+                out_png = out_prefix + '.png'
+                if os.path.exists(out_png):
+                    with open(out_png, 'rb') as pf:
+                        png_bytes = pf.read()
+            except Exception as e:
+                logger.warning('pdftoppm failed: %s', e)
+
+        # Try sips (macOS built-in)
+        if not png_bytes and shutil.which('sips'):
+            try:
+                subprocess.run(
+                    ['sips', '-s', 'format', 'png', pdf_path, '--out', png_path],
+                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15,
+                )
+                if os.path.exists(png_path):
+                    with open(png_path, 'rb') as pf:
+                        png_bytes = pf.read()
+            except Exception as e:
+                logger.warning('sips failed: %s', e)
+
+        # Fallback: return PDF if no PNG converter available
+        if not png_bytes:
+            with open(pdf_path, 'rb') as pf:
+                pdf_bytes = pf.read()
+            # Cache and return PDF
+            if len(_tikz_png_cache) >= _TIKZ_CACHE_MAX:
+                _tikz_png_cache.pop(next(iter(_tikz_png_cache)), None)
+            _tikz_png_cache[cache_key] = pdf_bytes
+            return Response(content=pdf_bytes, media_type='application/pdf')
+
+        # Cache PNG
+        if len(_tikz_png_cache) >= _TIKZ_CACHE_MAX:
+            _tikz_png_cache.pop(next(iter(_tikz_png_cache)), None)
+        _tikz_png_cache[cache_key] = png_bytes
+        return Response(content=png_bytes, media_type='image/png')
+
+    except Exception as e:
+        logger.exception('render_tikz failed')
+        return JSONResponse({'error': 'render_tikz_failed', 'detail': str(e)}, status_code=500)
+    finally:
+        shutil.rmtree(td, ignore_errors=True)
+
+
 class GenerateLatexRequest(BaseModel):
     prompt: str
     num: Optional[int] = 5
