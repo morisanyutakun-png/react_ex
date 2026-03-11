@@ -5390,41 +5390,53 @@ def _build_practice_system_prompt(subject: str, topics: list, difficulty: str, n
 LaTeX をそのまま書けます（バックスラッシュの二重化は不要）。
 
 ■ コンパイルを確実にするための絶対ルール:
-F1. \begin{tikzpicture}...\end{tikzpicture} の対応を必ず確認すること
+F1. \begin{tikzpicture}...\end{tikzpicture} の対応を必ず確認
 F2. すべての \draw, \fill, \node 文は ; で終わること（セミコロン必須）
-F3. 閉じた図形は --cycle で閉じること（例: \draw (0,0)--(3,0)--(3,2)--cycle;）
-F4. 矢印スタイルは [>=latex,->] または [->,>=stealth] を使う
-F5. node内の数式は $...$ で囲む（例: node[right]{$mg$}）
-F6. \usetikzlibrary は書かない（preambleに既に読み込み済み）
-F7. \usepackage は書かない（preamble済み）
-F8. circuitikz回路: to[battery1], to[R], to[C], to[L] 等を使い、最後の接続で閉ループにする
-F9. 色は red, blue, green!60!black, gray!30 等の標準色のみ使う
-F10. スケール: scale=0.9〜1.5 の範囲で調整（大きすぎ・小さすぎに注意）
+F3. 閉じた図形は --cycle で閉じる
+F4. 矢印: [>=stealth,->] を使う
+F5. node内の数式は $...$ で囲む
+F6. \usetikzlibrary, \usepackage は書かない（preamble済み）
+F7. circuitikz回路: to[battery1]/to[R]/to[C]/to[L] で閉ループ
+F8. 色: red, blue, green!60!black, gray!30 等の標準色のみ
 
-■ 物理図パターン（そのままコピー可能な正確な例）:
+■ バネの描き方（重要）:
+バネは必ず「螺旋コイル」を使う。decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt}
+※ decoration={zigzag} は絶対禁止。必ず coil を使うこと。
 
-【力学: 斜面上の物体と力の矢印】
+■ 物理図パターン（正確な例）:
+
+【力学: 斜面上の物体と力】
 \begin{tikzpicture}[>=stealth,scale=1.2]
   \fill[gray!15] (0,0)--(4,0)--(4,2.31)--cycle;
   \draw[thick] (0,0)--(4,0)--(4,2.31)--cycle;
   \draw[fill=gray!40,thick,rotate around={30:(2.3,1.33)}] (2.05,1.1) rectangle ++(0.6,0.6);
   \draw[->,red,very thick] (2.35,1.4)--++(0.52,0.3) node[right,black]{$N$};
   \draw[->,blue,very thick] (2.35,1.4)--++(0,-0.9) node[below,black]{$mg$};
-  \draw[->,green!60!black,very thick] (2.35,1.4)--++(-0.45,0.26) node[left,black]{$f$};
   \draw[thin] (0.6,0) arc[start angle=0,end angle=30,radius=0.6];
   \node at (0.85,0.18) {$\theta$};
 \end{tikzpicture}
 
-【力学: バネ+物体の系（水平）】
+【力学: 螺旋バネ+物体（水平）】
 \begin{tikzpicture}[>=stealth,scale=1.1]
   \fill[gray!20] (0,-0.15) rectangle (0.15,1.0);
   \draw[thick] (0.15,0)--(0.15,0.9);
-  \draw[thick,decorate,decoration={coil,aspect=0.4,segment length=6pt,amplitude=5pt}] (0.15,0.45)--(2.5,0.45);
+  \draw[thick,decorate,decoration={coil,aspect=0.35,segment length=5pt,amplitude=8pt}] (0.15,0.45)--(2.5,0.45);
   \draw[fill=blue!20,thick] (2.5,0.1) rectangle ++(0.7,0.7);
   \node at (2.85,0.45) {$m$};
   \draw[->,red,thick] (3.2,0.45)--++(0.8,0) node[right]{$F$};
   \draw[thick] (0,0)--(4.5,0);
-  \node at (1.32,0.75) {$k$};
+  \node at (1.32,0.78) {$k$};
+\end{tikzpicture}
+
+【力学: 螺旋バネ+物体（鉛直・つり下げ）】
+\begin{tikzpicture}[>=stealth,scale=1.1]
+  \fill[gray!20] (-0.6,3.2) rectangle (0.6,3.4);
+  \draw[thick] (-0.6,3.2)--(0.6,3.2);
+  \draw[thick,decorate,decoration={coil,aspect=0.35,segment length=5pt,amplitude=8pt}] (0,3.2)--(0,1.6);
+  \draw[fill=blue!20,thick] (-0.35,1.2) rectangle ++(0.7,0.4);
+  \node at (0,1.4) {$m$};
+  \draw[->,blue,thick] (0,1.2)--++(0,-0.8) node[below]{$mg$};
+  \node[right] at (0.4,2.4) {$k$};
 \end{tikzpicture}
 
 【電磁気: 直列回路（circuitikz）】
@@ -5439,27 +5451,22 @@ F10. スケール: scale=0.9〜1.5 の範囲で調整（大きすぎ・小さす
 
 【熱力学: P-V グラフ】
 \begin{tikzpicture}[>=stealth,scale=1.0]
-  \draw[->] (0,0)--(4.5,0) node[right]{$V$\,[L]};
-  \draw[->] (0,0)--(0,3.5) node[above]{$P$\,[Pa]};
-  \draw[blue,very thick] (0.8,2.8)--(0.8,0.9) node[midway,left,black]{等積};
-  \draw[red,very thick] (0.8,0.9)--(3.5,0.9) node[midway,below,black]{等圧};
-  \draw[green!60!black,very thick] (3.5,0.9)..controls(2.5,1.8)..(0.8,2.8) node[midway,above right,black]{等温};
-  \fill (0.8,2.8) circle (2pt);
-  \fill (0.8,0.9) circle (2pt);
-  \fill (3.5,0.9) circle (2pt);
-  \node[left] at (0,0.9) {$P_1$};
-  \node[left] at (0,2.8) {$P_2$};
-  \node[below] at (0.8,0) {$V_1$};
-  \node[below] at (3.5,0) {$V_2$};
+  \draw[->] (0,0)--(4.5,0) node[right]{$V$};
+  \draw[->] (0,0)--(0,3.5) node[above]{$P$};
+  \draw[blue,very thick] (0.8,2.8)--(0.8,0.9);
+  \draw[red,very thick] (0.8,0.9)--(3.5,0.9);
+  \draw[green!60!black,very thick] (3.5,0.9)..controls(2.5,1.8)..(0.8,2.8);
+  \fill (0.8,2.8) circle (2pt); \fill (0.8,0.9) circle (2pt); \fill (3.5,0.9) circle (2pt);
+  \node[left] at (0,0.9) {$P_1$}; \node[left] at (0,2.8) {$P_2$};
+  \node[below] at (0.8,0) {$V_1$}; \node[below] at (3.5,0) {$V_2$};
 \end{tikzpicture}
 
 【波動: 正弦波グラフ】
 \begin{tikzpicture}[>=stealth,scale=1.0]
-  \draw[->] (-0.3,0)--(5.5,0) node[right]{$x$\,[m]};
-  \draw[->] (0,-1.4)--(0,1.6) node[above]{$y$\,[m]};
+  \draw[->] (-0.3,0)--(5.5,0) node[right]{$x$};
+  \draw[->] (0,-1.4)--(0,1.6) node[above]{$y$};
   \draw[blue,very thick,domain=0:5,samples=100] plot(\x,{1.2*sin(2*pi*\x/2.5 r)});
   \draw[dashed,thin] (0,1.2)--++(5.5,0) node[right,black]{$A$};
-  \draw[dashed,thin] (0,-1.2)--++(5.5,0) node[right,black]{$-A$};
   \draw[<->,thin] (0,-1.6)--(2.5,-1.6) node[midway,below]{$\lambda$};
 \end{tikzpicture}
 
@@ -5563,6 +5570,12 @@ F4. 関数グラフは domain=a:b, samples=80 以上で描画
 ★★★ 最重要: JSON形式ではなく、以下の構造化マーカー付きLaTeXテキストで出力してください。
 LaTeXコマンドはそのまま書いてください（バックスラッシュの二重化は不要です）。
 
+★★★ マーカーに関する絶対ルール:
+- %%% マーカー行は必ず独立した行に書く（前後に他テキストを混在させない）
+- 問題本文・解答・解説の中に %%% を絶対に書かない
+- PROBLEM番号は必ず 1, 2, 3 ... と連番にする（スキップ禁止）
+- END PROBLEM N は対応するPROBLEM N の番号と一致させる
+
 1. 数式は LaTeX 記法（インライン: $...$、ディスプレイ: \\[...\\]）で書いてください。
 2. stem（状況設定）は実際の入試問題と同等の詳細な条件を記載してください。
    - 全ての数値・単位を明示（例: 質量 $m = 2.0\\,\\mathrm{{kg}}$, $g = 9.8\\,\\mathrm{{m/s^2}}$）
@@ -5647,12 +5660,17 @@ def _parse_latex_problems(raw_text: str) -> list:
         diff_m = re.search(r'%%%\s*DIFFICULTY:\s*(.*?)\s*%%%', block)
         difficulty = diff_m.group(1).strip() if diff_m else ''
 
-        # STEM: between %%% STEM %%% and the next %%% marker
-        stem_m = re.search(r'%%%\s*STEM\s*%%%([\s\S]*?)(?=%%%)', block)
+        # Recognized section keywords — used to build lookaheads so stray %%% in content don't break parsing
+        _known_kw = r'(?:TOPIC|DIFFICULTY|STEM|FIGURE|SUBPROBLEM|ANSWER|EXPLANATION|END\s+PROBLEM)'
+        _next_marker = r'(?=%%%\s*' + _known_kw + r')'          # lookahead
+        _next_or_end = r'(?:%%%\s*' + _known_kw + r'|$)'        # non-lookahead version for ANSWER/EXPLANATION
+
+        # STEM: between %%% STEM %%% and the next recognized marker
+        stem_m = re.search(r'%%%\s*STEM\s*%%%([\s\S]*?)' + _next_marker, block)
         stem = stem_m.group(1).strip() if stem_m else ''
 
-        # FIGURE: between %%% FIGURE %%% and the next %%% marker
-        figure_m = re.search(r'%%%\s*FIGURE\s*%%%([\s\S]*?)(?=%%%)', block)
+        # FIGURE: between %%% FIGURE %%% and the next recognized marker
+        figure_m = re.search(r'%%%\s*FIGURE\s*%%%([\s\S]*?)' + _next_marker, block)
         figure_tikz = figure_m.group(1).strip() if figure_m else None
         if figure_tikz and figure_tikz.lower() in ('', 'null', 'none', 'なし'):
             figure_tikz = None
@@ -5660,7 +5678,7 @@ def _parse_latex_problems(raw_text: str) -> list:
         # SUBPROBLEMS: extract each (N) trio of SUBPROBLEM/ANSWER/EXPLANATION
         subproblems = []
         sub_pattern = re.compile(
-            r'%%%\s*SUBPROBLEM\s*\((\d+)\)\s*%%%([\s\S]*?)(?=%%%)',
+            r'%%%\s*SUBPROBLEM\s*\((\d+)\)\s*%%%([\s\S]*?)' + _next_marker,
             re.IGNORECASE,
         )
         for sm in sub_pattern.finditer(block):
@@ -5669,14 +5687,14 @@ def _parse_latex_problems(raw_text: str) -> list:
 
             # Find matching ANSWER (N) and EXPLANATION (N)
             ans_pattern = re.compile(
-                r'%%%\s*ANSWER\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)(?=%%%|$)',
+                r'%%%\s*ANSWER\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
                 re.IGNORECASE,
             )
             ans_m = ans_pattern.search(block)
             answer = ans_m.group(1).strip() if ans_m else ''
 
             expl_pattern = re.compile(
-                r'%%%\s*EXPLANATION\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)(?=%%%|$)',
+                r'%%%\s*EXPLANATION\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
                 re.IGNORECASE,
             )
             expl_m = expl_pattern.search(block)
@@ -5923,14 +5941,15 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
         messages.append({'role': 'system', 'content': system_prompt})
     messages.append({'role': 'user', 'content': user_prompt})
 
-    _dynamic_max_tokens = max(8192, 2000 * num_questions)
+    # 3問×約1500トークン出力 + バッファ = 6000 程度で十分。コスト最適化のため上限を絞る。
+    _dynamic_max_tokens = max(4096, 1600 * num_questions)
     openai_payload = {
         'model': openai_model,
         'messages': messages,
         'max_completion_tokens': _dynamic_max_tokens,
     }
     if not _is_reasoning:
-        openai_payload['temperature'] = 0.4
+        openai_payload['temperature'] = 0.3  # 出力安定化のため低め
 
     logger.info('Practice job %s: model=%s, max_tokens=%d', job_id, openai_model, _dynamic_max_tokens)
 
@@ -6244,8 +6263,9 @@ async def practice_generate(req: PracticeGenerateRequest = Body(...)):
     if req.num_questions > max_q:
         req.num_questions = max_q
 
-    # モデル解決
-    openai_model, resolved_tier = _resolve_model(req.model_tier or 'auto', req.subject)
+    # モデル解決: 練習モードはコスト抑制のため、明示的な上位ティア指定がない限り lite (gpt-4o) を使用
+    _practice_default_tier = os.getenv('PRACTICE_MODEL_TIER', 'lite')
+    openai_model, resolved_tier = _resolve_model(req.model_tier or _practice_default_tier, req.subject)
 
     # システムプロンプト構築
     system_prompt = _build_practice_system_prompt(req.subject, req.topics or [], req.difficulty, req.num_questions)
