@@ -239,9 +239,9 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             <div className="mb-8">
               <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 1 / 4</p>
               <h2 className="text-[28px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
-                今日は何を<br />練習する？
+                今日も1問、<br />差をつけよう。
               </h2>
-              <p className="text-[13px] text-[#94a3b8] mt-2">科目をタップ → 自動で次へ</p>
+              <p className="text-[13px] text-[#64748b] mt-2">科目を選んでスタート ↓</p>
             </div>
 
             <div className="space-y-3">
@@ -521,24 +521,27 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             <button
               type="button"
               onClick={handleStart}
-              className="w-full py-5 rounded-2xl text-[16px] font-black text-white shadow-2xl transition-all duration-250 active:scale-[0.97] hover:scale-[1.01] hover:shadow-2xl"
+              className="w-full py-5 rounded-2xl text-[17px] font-black text-white shadow-2xl transition-all duration-250 active:scale-[0.97] hover:scale-[1.01] hover:shadow-2xl flex items-center justify-center gap-2"
               style={{ background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 12px 32px ${ring}` }}
             >
-              {practiceFormat === PRACTICE_FORMAT.EXAM ? '模試を始める →' : '練習を始める →'}
+              {practiceFormat === PRACTICE_FORMAT.EXAM ? '模試スタート' : '練習スタート'}
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
             </button>
 
-            <p className="text-center text-[11px] text-[#94a3b8] mt-3.5 leading-relaxed">
+            <p className="text-center text-[11px] text-[#94a3b8] mt-3 leading-relaxed">
               {genMode === GEN_MODE.AUTO
-                ? 'AIが入試品質の問題を生成します'
-                : 'プロンプトを生成 → ChatGPT等で実行 → 貼り付け'}
+                ? '✨ AIが入試品質の問題をリアルタイムで生成'
+                : '📋 プロンプトをコピー → ChatGPT等に貼り付け → 問題をインポート'}
             </p>
 
-            <div className="mt-8 pt-5 border-t border-[#f1f5f9]">
-              <Link href="/user" className="group flex items-center justify-center gap-2 text-[12px] text-[#94a3b8] hover:text-[#64748b] transition-colors duration-200">
+            <div className="mt-7 pt-5 border-t border-[#f1f5f9]">
+              <Link href="/user" className="group flex items-center justify-center gap-2 text-[11px] text-[#b0bec5] hover:text-[#64748b] transition-colors duration-200">
                 <svg className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5" />
                 </svg>
-                PDF生成・詳細設定モードはこちら（教員向け）
+                PDF生成・問題作成（教員・本格演習モード）
               </Link>
             </div>
 
@@ -1015,7 +1018,8 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
 
           {/* 自己採点 */}
           <div className="pt-2">
-            <div className="text-[13px] font-bold text-[#1e293b] mb-4 text-center">どうだった？</div>
+            <div className="text-[13px] font-black text-[#0f172a] mb-1 text-center">自己採点してね</div>
+            <p className="text-[10px] text-[#94a3b8] text-center mb-4">正直に答えることが成績アップの近道</p>
             <div className="flex gap-3">
               <ScoreButton type={SCORE.CORRECT} onClick={() => onScore(SCORE.CORRECT)} />
               <ScoreButton type={SCORE.DELTA}   onClick={() => onScore(SCORE.DELTA)} />
@@ -1024,7 +1028,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           </div>
 
           {/* スキップ */}
-          <button type="button" onClick={() => onSkip && onSkip()} className="w-full py-2.5 text-[12px] text-[#94a3b8] hover:text-[#64748b] transition-colors duration-200">
+          <button type="button" onClick={() => onSkip && onSkip()} className="w-full py-2.5 text-[11px] text-[#b0bec5] hover:text-[#64748b] transition-colors duration-200">
             スキップ（△扱い）
           </button>
         </div>
@@ -1296,6 +1300,17 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
   const wrong   = scores.filter((s) => s === SCORE.WRONG).length;
   const total   = scores.length;
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const [shared, setShared] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  // パーフェクト時にアニメーション
+  useEffect(() => {
+    if (correct === total && total > 0) {
+      setShowConfetti(true);
+      const t = setTimeout(() => setShowConfetti(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [correct, total]);
 
   // 弱点単元を抽出
   const weakTopics = problems
@@ -1304,95 +1319,184 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
     .filter(Boolean)
     .filter((v, i, a) => a.indexOf(v) === i);
 
-  const emoji = correct === total ? '🎯' : correct > total / 2 ? '💪' : '📖';
-  const message = correct === total ? 'パーフェクト！' : correct > total / 2 ? 'いい調子！' : '復習しよう！';
+  // 合格ライン/メッセージ
+  const getRating = () => {
+    if (pct === 100) return { emoji: '🏆', label: 'パーフェクト！', sub: '完璧な理解です。次のレベルへ！', color: '#f59e0b' };
+    if (pct >= 80)  return { emoji: '🎯', label: 'ほぼ完璧！',  sub: 'あと少しで完成度100%。もう一周！', color: c.accent };
+    if (pct >= 60)  return { emoji: '💪', label: 'いい調子！',  sub: '正答率60%超え。弱点を集中攻略しよう！', color: '#3b82f6' };
+    if (pct >= 40)  return { emoji: '📖', label: '基礎を固めよう', sub: '解説をよく読んで理解を深めよう。', color: '#d97706' };
+    return           { emoji: '🔁', label: 'もう一周やろう！', sub: 'インプットと反復が合格への近道。', color: '#dc2626' };
+  };
+  const rating = getRating();
+
+  const handleShare = async () => {
+    const text = `${subject}練習 ${total}問中${correct}問正解（${pct}%）${rating.emoji}\n受験AIで演習中！ #受験AI #${subject}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: '練習結果', text });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(text).catch(() => {});
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    }
+  };
 
   return (
-    <div className="max-w-[480px] mx-auto px-5 pt-10 pb-20">
+    <div className="max-w-[480px] mx-auto px-5 pt-8 pb-20 relative overflow-hidden">
+      {/* パーフェクト紙吹雪アニメーション */}
+      {showConfetti && (
+        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+          {[...Array(18)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2.5 h-2.5 rounded-sm animate-bounce"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `-${10 + Math.random() * 20}px`,
+                background: ['#f59e0b','#8b5cf6','#3b82f6','#10b981','#ef4444','#f97316'][i % 6],
+                animationDelay: `${Math.random() * 1.2}s`,
+                animationDuration: `${0.7 + Math.random() * 0.8}s`,
+                transform: `rotate(${Math.random() * 360}deg)`,
+                opacity: 0.85,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* ヘッダー */}
-      <div className="text-center mb-8">
-        <div className="text-[44px] mb-2">{emoji}</div>
-        <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em]">{message}</h2>
-        <p className="text-[13px] text-[#64748b] mt-1.5">{total}問中 {correct}問正解</p>
+      <div className="text-center mb-7">
+        <div
+          className="w-20 h-20 mx-auto mb-4 rounded-3xl flex items-center justify-center text-[36px] shadow-lg"
+          style={{ background: `linear-gradient(135deg, ${rating.color}18, ${rating.color}08)`, border: `2px solid ${rating.color}30` }}
+        >
+          {rating.emoji}
+        </div>
+        <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em]">{rating.label}</h2>
+        <p className="text-[13px] text-[#64748b] mt-1.5 leading-relaxed">{rating.sub}</p>
       </div>
 
-      {/* 正答率 円グラフ風 */}
-      <div className="flex justify-center mb-8">
+      {/* 正答率 円グラフ */}
+      <div className="flex justify-center mb-6">
         <div className="relative w-28 h-28">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f1f5f9" strokeWidth="3" />
-            <circle cx="18" cy="18" r="15.9" fill="none" stroke={c.accent} strokeWidth="3"
+            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f1f5f9" strokeWidth="3.5" />
+            <circle
+              cx="18" cy="18" r="15.9" fill="none"
+              stroke={rating.color}
+              strokeWidth="3.5"
               strokeDasharray={`${pct} ${100 - pct}`}
               strokeLinecap="round"
-              className="transition-all duration-1000 ease-out"
+              style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(0.22,1,0.36,1)' }}
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-[28px] font-black tracking-[-0.03em]" style={{ color: c.accent }}>{pct}</span>
+            <span className="text-[30px] font-black tracking-[-0.03em]" style={{ color: rating.color }}>{pct}</span>
             <span className="text-[10px] font-bold text-[#94a3b8] -mt-0.5">%</span>
           </div>
         </div>
       </div>
 
       {/* スコアカード */}
-      <div className="grid grid-cols-3 gap-3 mb-7">
-        <div className="bg-[#f0fdf4] rounded-2xl border border-[#86efac]/60 p-4 text-center transition-all hover:shadow-sm">
-          <div className="text-[30px] font-black text-[#16a34a]">{correct}</div>
-          <div className="text-[11px] font-bold text-[#16a34a] mt-0.5">○ 解けた</div>
+      <div className="grid grid-cols-3 gap-2.5 mb-6">
+        <div className="bg-[#f0fdf4] rounded-2xl border border-[#86efac]/60 p-4 text-center">
+          <div className="text-[32px] font-black text-[#16a34a] leading-none">{correct}</div>
+          <div className="text-[10px] font-bold text-[#16a34a] mt-1.5">○ 解けた</div>
         </div>
-        <div className="bg-[#fffbeb] rounded-2xl border border-[#fcd34d]/60 p-4 text-center transition-all hover:shadow-sm">
-          <div className="text-[30px] font-black text-[#d97706]">{delta}</div>
-          <div className="text-[11px] font-bold text-[#d97706] mt-0.5">△ 惜しい</div>
+        <div className="bg-[#fffbeb] rounded-2xl border border-[#fcd34d]/60 p-4 text-center">
+          <div className="text-[32px] font-black text-[#d97706] leading-none">{delta}</div>
+          <div className="text-[10px] font-bold text-[#d97706] mt-1.5">△ 惜しい</div>
         </div>
-        <div className="bg-[#fef2f2] rounded-2xl border border-[#fca5a5]/60 p-4 text-center transition-all hover:shadow-sm">
-          <div className="text-[30px] font-black text-[#dc2626]">{wrong}</div>
-          <div className="text-[11px] font-bold text-[#dc2626] mt-0.5">× わからない</div>
+        <div className="bg-[#fef2f2] rounded-2xl border border-[#fca5a5]/60 p-4 text-center">
+          <div className="text-[32px] font-black text-[#dc2626] leading-none">{wrong}</div>
+          <div className="text-[10px] font-bold text-[#dc2626] mt-1.5">× 要復習</div>
         </div>
       </div>
 
       {/* 弱点単元 */}
       {weakTopics.length > 0 && (
-        <div className="bg-gradient-to-br from-[#fef2f2] to-[#fff7ed] rounded-2xl border border-[#fca5a5]/40 p-5 mb-7">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[14px]">🔍</span>
-            <span className="text-[12px] font-bold text-[#dc2626] tracking-[0.04em]">復習候補</span>
+        <div className="bg-gradient-to-br from-[#fef2f2] to-[#fff7ed] rounded-2xl border border-[#fca5a5]/40 p-4 mb-5">
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="text-[13px]">🎯</span>
+            <span className="text-[12px] font-black text-[#dc2626] tracking-[0.04em] uppercase">今日の重点復習単元</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {weakTopics.map((t) => (
-              <span key={t} className="text-[12px] font-semibold px-3 py-1.5 rounded-full bg-white text-[#dc2626] border border-[#fca5a5]/50 shadow-sm">
+              <span key={t} className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-white text-[#dc2626] border border-[#fca5a5]/50 shadow-sm">
                 {t}
               </span>
             ))}
           </div>
+          <p className="text-[10px] text-[#f87171] mt-2.5 leading-relaxed">
+            間違えた単元を今日中にもう1問解くと記憶定着率が大幅に上がります
+          </p>
         </div>
       )}
 
+      {/* モチベーションメッセージ */}
+      <div className="bg-gradient-to-r from-[#f8faff] to-[#f0f4ff] rounded-2xl border border-[#e0e7ff] px-4 py-3 mb-6 flex items-center gap-3">
+        <span className="text-[20px] flex-shrink-0">✨</span>
+        <p className="text-[11px] text-[#4f46e5] font-semibold leading-relaxed">
+          {pct === 100
+            ? 'この調子で毎日続けよう！継続が合格への最短ルートです。'
+            : pct >= 60
+            ? '毎日少しずつでも続けることが、合格への確実な一歩です。'
+            : 'まずは解説を熟読。理解してから再チャレンジが効果的です。'}
+        </p>
+      </div>
+
       {/* アクション */}
       <div className="space-y-3">
+        <button
+          type="button"
+          onClick={onRetry}
+          className="w-full py-4.5 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] hover:shadow-2xl flex items-center justify-center gap-2"
+          style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)`, boxShadow: `0 8px 28px ${c.ring}` }}
+        >
+          <span>もう一周やる</span>
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </button>
+
+        {/* シェアボタン */}
+        <button
+          type="button"
+          onClick={handleShare}
+          className="w-full py-3.5 rounded-2xl text-[14px] font-black border-2 transition-all duration-250 active:scale-[0.97] flex items-center justify-center gap-2"
+          style={{
+            background: shared ? '#f0fdf4' : 'white',
+            borderColor: shared ? '#86efac' : '#e2e8f0',
+            color: shared ? '#16a34a' : '#475569',
+          }}
+        >
+          {shared ? (
+            <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>コピー完了！</>
+          ) : (
+            <><svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>結果をシェア</>
+          )}
+        </button>
+
         {latexForPdf && (
           <button
             type="button"
             onClick={onDownloadPdf}
             disabled={pdfLoading}
-            className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-60 flex items-center justify-center gap-2.5 hover:shadow-xl"
+            className="w-full py-3.5 rounded-2xl text-[13px] font-bold text-white shadow-md transition-all duration-250 active:scale-[0.97] disabled:opacity-60 flex items-center justify-center gap-2 hover:shadow-lg"
             style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            {pdfLoading ? 'PDF生成中…' : 'PDFでダウンロード'}
+            {pdfLoading ? 'PDF生成中…' : '問題をPDFで保存'}
           </button>
         )}
-        <button
-          type="button"
-          onClick={onRetry}
-          className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] hover:shadow-2xl"
-          style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 8px 24px ${c.ring}` }}
-        >
-          続けてもう一周 →
-        </button>
-        <button type="button" onClick={onRestart} className="w-full py-3 text-[13px] text-[#94a3b8] hover:text-[#475569] transition-colors duration-200">
-          単元を変えて練習する
+
+        <button type="button" onClick={onRestart} className="w-full py-3 text-[12px] text-[#94a3b8] hover:text-[#475569] transition-colors duration-200">
+          別の科目・単元で練習する
         </button>
       </div>
 

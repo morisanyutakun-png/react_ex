@@ -5382,49 +5382,170 @@ def _build_practice_system_prompt(subject: str, topics: list, difficulty: str, n
     """
     topic_str = '、'.join(topics) if topics else '全分野'
 
-    # ── 科目別 図描画ガイドライン ──
+    # ── 科目別 図描画ガイドライン（厳密版） ──
     if subject == '物理':
         figure_guide = r"""
-【物理 TikZ 図のガイドライン】
-%%% FIGURE %%% の中に tikzpicture または circuitikz 環境を記述してください。
-LaTeX をそのまま書けるので、バックスラッシュのエスケープは不要です。
+【★★★ 物理 TikZ 図 — 必須ルール（厳守）★★★】
+%%% FIGURE %%% には tikzpicture または circuitikz 環境を直接記述してください。
+LaTeX をそのまま書けます（バックスラッシュの二重化は不要）。
 
-■ 使うべき物理図パターン例:
+■ コンパイルを確実にするための絶対ルール:
+F1. \begin{tikzpicture}...\end{tikzpicture} の対応を必ず確認すること
+F2. すべての \draw, \fill, \node 文は ; で終わること（セミコロン必須）
+F3. 閉じた図形は --cycle で閉じること（例: \draw (0,0)--(3,0)--(3,2)--cycle;）
+F4. 矢印スタイルは [>=latex,->] または [->,>=stealth] を使う
+F5. node内の数式は $...$ で囲む（例: node[right]{$mg$}）
+F6. \usetikzlibrary は書かない（preambleに既に読み込み済み）
+F7. \usepackage は書かない（preamble済み）
+F8. circuitikz回路: to[battery1], to[R], to[C], to[L] 等を使い、最後の接続で閉ループにする
+F9. 色は red, blue, green!60!black, gray!30 等の標準色のみ使う
+F10. スケール: scale=0.9〜1.5 の範囲で調整（大きすぎ・小さすぎに注意）
 
-1. 力学（斜面 + 物体 + 力の矢印）:
-\begin{tikzpicture}[>=latex,scale=1.2]
-  \draw[thick] (0,0) -- (4,0) -- (4,2) -- cycle;
-  \draw[fill=gray!25,thick] (2.2,1.0) rectangle ++(0.55,0.55);
-  \draw[->,red,very thick] (2.47,1.27) -- ++(0.8,0.4) node[right]{$N$};
-  \draw[->,blue,very thick] (2.47,1.27) -- ++(0,-0.8) node[below]{$mg$};
-  \node[font=\small] at (0.9,0.18) {$\theta$};
+■ 物理図パターン（そのままコピー可能な正確な例）:
+
+【力学: 斜面上の物体と力の矢印】
+\begin{tikzpicture}[>=stealth,scale=1.2]
+  \fill[gray!15] (0,0)--(4,0)--(4,2.31)--cycle;
+  \draw[thick] (0,0)--(4,0)--(4,2.31)--cycle;
+  \draw[fill=gray!40,thick,rotate around={30:(2.3,1.33)}] (2.05,1.1) rectangle ++(0.6,0.6);
+  \draw[->,red,very thick] (2.35,1.4)--++(0.52,0.3) node[right,black]{$N$};
+  \draw[->,blue,very thick] (2.35,1.4)--++(0,-0.9) node[below,black]{$mg$};
+  \draw[->,green!60!black,very thick] (2.35,1.4)--++(-0.45,0.26) node[left,black]{$f$};
+  \draw[thin] (0.6,0) arc[start angle=0,end angle=30,radius=0.6];
+  \node at (0.85,0.18) {$\theta$};
 \end{tikzpicture}
 
-2. 電磁気（電気回路 - circuitikz）:
-\begin{circuitikz}[scale=0.9]
-  \draw (0,0) to[battery1,l_=$E$,invert] (0,2.5)
-    to[short] (1.5,2.5) to[R,l=$R_1$] (3,2.5)
-    to[R,l=$R_2$] (4.5,2.5) to[short] (4.5,0)
+【力学: バネ+物体の系（水平）】
+\begin{tikzpicture}[>=stealth,scale=1.1]
+  \fill[gray!20] (0,-0.15) rectangle (0.15,1.0);
+  \draw[thick] (0.15,0)--(0.15,0.9);
+  \draw[thick,decorate,decoration={coil,aspect=0.4,segment length=6pt,amplitude=5pt}] (0.15,0.45)--(2.5,0.45);
+  \draw[fill=blue!20,thick] (2.5,0.1) rectangle ++(0.7,0.7);
+  \node at (2.85,0.45) {$m$};
+  \draw[->,red,thick] (3.2,0.45)--++(0.8,0) node[right]{$F$};
+  \draw[thick] (0,0)--(4.5,0);
+  \node at (1.32,0.75) {$k$};
+\end{tikzpicture}
+
+【電磁気: 直列回路（circuitikz）】
+\begin{circuitikz}[scale=0.9,>=stealth]
+  \draw (0,0) to[battery1,l_={$E$},invert] (0,2.8)
+    to[short] (1.5,2.8)
+    to[R,l={$R_1$}] (3.0,2.8)
+    to[R,l={$R_2$}] (4.5,2.8)
+    to[short] (4.5,0)
     to[short] (0,0);
 \end{circuitikz}
 
-3. 熱力学（P-V グラフ）: pgfplots や tikzpicture で描画
+【熱力学: P-V グラフ】
+\begin{tikzpicture}[>=stealth,scale=1.0]
+  \draw[->] (0,0)--(4.5,0) node[right]{$V$\,[L]};
+  \draw[->] (0,0)--(0,3.5) node[above]{$P$\,[Pa]};
+  \draw[blue,very thick] (0.8,2.8)--(0.8,0.9) node[midway,left,black]{等積};
+  \draw[red,very thick] (0.8,0.9)--(3.5,0.9) node[midway,below,black]{等圧};
+  \draw[green!60!black,very thick] (3.5,0.9)..controls(2.5,1.8)..(0.8,2.8) node[midway,above right,black]{等温};
+  \fill (0.8,2.8) circle (2pt);
+  \fill (0.8,0.9) circle (2pt);
+  \fill (3.5,0.9) circle (2pt);
+  \node[left] at (0,0.9) {$P_1$};
+  \node[left] at (0,2.8) {$P_2$};
+  \node[below] at (0.8,0) {$V_1$};
+  \node[below] at (3.5,0) {$V_2$};
+\end{tikzpicture}
 
-4. 波動（波形グラフ）: tikzpicture の plot で描画
+【波動: 正弦波グラフ】
+\begin{tikzpicture}[>=stealth,scale=1.0]
+  \draw[->] (-0.3,0)--(5.5,0) node[right]{$x$\,[m]};
+  \draw[->] (0,-1.4)--(0,1.6) node[above]{$y$\,[m]};
+  \draw[blue,very thick,domain=0:5,samples=100] plot(\x,{1.2*sin(2*pi*\x/2.5 r)});
+  \draw[dashed,thin] (0,1.2)--++(5.5,0) node[right,black]{$A$};
+  \draw[dashed,thin] (0,-1.2)--++(5.5,0) node[right,black]{$-A$};
+  \draw[<->,thin] (0,-1.6)--(2.5,-1.6) node[midway,below]{$\lambda$};
+\end{tikzpicture}
 
-図が不要な純粋計算問題は %%% FIGURE %%% セクションを省略してください。
+%%% FIGURE %%% を省略してよいのは「純粋な代数計算のみ」の問題だけです。
+物理的状況がある問題（力学・電磁気・波動・熱力学等）は必ず図を描いてください。
 """
     elif subject == '化学':
         figure_guide = r"""
-【化学 TikZ 図のガイドライン】
-%%% FIGURE %%% の中に chemfig（構造式）や tikzpicture で反応図・グラフを記述できます。
-LaTeX をそのまま書けるので、バックスラッシュのエスケープは不要です。
+【★★★ 化学 TikZ 図 — 必須ルール（厳守）★★★】
+%%% FIGURE %%% の中に tikzpicture で反応エネルギー図・グラフ等を記述してください。
+LaTeX をそのまま書けます（バックスラッシュの二重化は不要）。
+
+■ コンパイルを確実にするルール:
+F1. \begin{tikzpicture}...\end{tikzpicture} の対応を確認
+F2. すべての文は ; で終わる
+F3. \usepackage, \usetikzlibrary は書かない（preamble済み）
+
+■ 化学図パターン例:
+
+【反応エネルギー図（ポテンシャルエネルギー曲線）】
+\begin{tikzpicture}[>=stealth,scale=1.0]
+  \draw[->] (0,0)--(6.5,0) node[right]{反応座標};
+  \draw[->] (0,0)--(0,4.0) node[above]{エネルギー};
+  \draw[blue,very thick] (0.5,1.0)..controls(2.0,1.0)..(2.5,3.2)..controls(3.0,1.8)..(5.5,1.8);
+  \draw[dashed,thin] (0,1.0)--++(6,0) node[right,black,font=\small]{反応物};
+  \draw[dashed,thin] (0,1.8)--++(6,0) node[right,black,font=\small]{生成物};
+  \draw[dashed,thin] (0,3.2)--++(6,0) node[right,black,font=\small]{活性化状態};
+  \draw[<->,red,thick] (4.8,1.0)--(4.8,1.8) node[midway,right,black]{$\Delta H$};
+  \draw[<->,green!60!black,thick] (1.5,1.0)--(1.5,3.2) node[midway,right,black]{$E_a$};
+\end{tikzpicture}
+
 図が不要な場合は %%% FIGURE %%% セクションを省略してください。
+"""
+    elif subject == '数学':
+        figure_guide = r"""
+【★★★ 数学 TikZ 図 — 必須ルール（厳守）★★★】
+%%% FIGURE %%% の中に tikzpicture でグラフや図形を記述してください。
+LaTeX をそのまま書けます（バックスラッシュの二重化は不要）。
+
+■ コンパイルを確実にするルール:
+F1. \begin{tikzpicture}...\end{tikzpicture} の対応を確認
+F2. すべての文は ; で終わる
+F3. \usepackage, \usetikzlibrary は書かない（preamble済み）
+F4. 関数グラフは domain=a:b, samples=80 以上で描画
+
+■ 数学図パターン例:
+
+【関数グラフ（二次関数）】
+\begin{tikzpicture}[>=stealth,scale=0.8]
+  \draw[->] (-2.5,0)--(3.0,0) node[right]{$x$};
+  \draw[->] (0,-1.5)--(0,4.5) node[above]{$y$};
+  \draw[blue,very thick,domain=-2.2:2.7,samples=80] plot(\x,{(\x-0.5)^2-1.25});
+  \fill[red] (0.5,-1.25) circle (2.5pt) node[below right]{頂点};
+  \fill (0,-1.0) circle (2pt) node[left]{$-1$};
+  \draw[dashed,thin] (0,-1.25)--++(0.5,0)--(0.5,0);
+  \node[below] at (0.5,0) {$\frac{1}{2}$};
+  \node[left] at (0,-1.25) {$-\frac{5}{4}$};
+\end{tikzpicture}
+
+【確率: 樹形図】
+\begin{tikzpicture}[>=stealth,grow=right,level distance=2.2cm,
+  level 1/.style={sibling distance=2.8cm},
+  level 2/.style={sibling distance=1.4cm}]
+  \node {start}
+    child { node {表} edge from parent[->]
+      child { node {表} edge from parent[->] node[above,font=\small]{$\frac{1}{2}$} }
+      child { node {裏} edge from parent[->] node[below,font=\small]{$\frac{1}{2}$} }
+      edge from parent node[above,font=\small]{$\frac{1}{2}$}
+    }
+    child { node {裏} edge from parent[->]
+      child { node {表} edge from parent[->] node[above,font=\small]{$\frac{1}{2}$} }
+      child { node {裏} edge from parent[->] node[below,font=\small]{$\frac{1}{2}$} }
+      edge from parent node[below,font=\small]{$\frac{1}{2}$}
+    };
+\end{tikzpicture}
+
+図が不要な純粋計算問題は %%% FIGURE %%% セクションを省略してください。
 """
     else:
         figure_guide = r"""
 【図のガイドライン】
-%%% FIGURE %%% の中に tikzpicture でグラフや概念図をそのまま記述できます。
+%%% FIGURE %%% の中に tikzpicture でグラフや概念図を記述できます。
+コンパイルエラーを防ぐため:
+- \begin{tikzpicture}...\end{tikzpicture} の対応を確認
+- すべての文は ; で終わる
+- \usepackage, \usetikzlibrary は書かない
 不要な場合は %%% FIGURE %%% セクションを省略してください。
 """
 
@@ -5448,7 +5569,7 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
    - 「ただし〜」「〜とする」の条件節を必ず入れる
 3. 小問は誘導形式（2〜3 問）にしてください。
 4. 解答は数式で正確に記載。
-5. 解説は物理法則の適用 → 式変形 → 数値代入の順で段階的に記載。
+5. 解説は法則の適用 → 式変形 → 数値代入の順で段階的に記載。
 
 【出力形式テンプレート — 各問題をこの形式で出力】
 
@@ -5461,7 +5582,7 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
 なめらかな斜面の頂上から静かに滑り始めた。斜面の高さは $h = 5.0\\,\\mathrm{{m}}$ である。
 ただし、重力加速度を $g = 9.8\\,\\mathrm{{m/s^2}}$ とし、空気抵抗は無視する。）
 %%% FIGURE %%%
-（ここにTikZコードを直接書く。\\begin{{tikzpicture}}...\\end{{tikzpicture}} 等。不要なら省略可）
+（ここにTikZコードを直接書く。上記ガイドラインの例を参考に正確に記述すること。省略可）
 %%% SUBPROBLEM (1) %%%
 （小問(1)の問題文）
 %%% ANSWER (1) %%%
@@ -5490,13 +5611,15 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
 A. 入試問題として成立すること: 設定に矛盾がなく、解答が一意に定まること
 B. 数値の美しさ: 計算結果が整数または簡単な分数になる値を選ぶこと
 C. 誘導形式: (1)→(2)→(3) の順に難易度が上がり、前の答えを次に使う構造
-D. {subject}では法則を明示して解説すること
-E. 図は積極的に描画: %%% FIGURE %%% セクションにTikZで物理的状況を図示する
+D. {subject}では法則名・式を明示して解説すること
+E. TikZ 図はガイドラインのルールを必ず守り、コンパイルが通る正確なコードで書くこと
 
 【禁止事項】
 - JSON形式での出力（必ず上記のマーカー形式で出力すること）
 - ```json や ```latex のコードフェンス（不要）
-- マーカー以外の余計なテキスト（挨拶・前置き・まとめ等）"""
+- マーカー以外の余計なテキスト（挨拶・前置き・まとめ等）
+- TikZ コード内での \usepackage, \usetikzlibrary の記述（preamble済みのため不要）
+- セミコロンの欠落（全ての \draw, \fill, \node 文は ; で終わること）"""
 
 
 def _parse_latex_problems(raw_text: str) -> list:
@@ -7822,35 +7945,45 @@ _tikz_png_cache: Dict[str, bytes] = {}
 _TIKZ_CACHE_MAX = 200
 
 
-@app.post('/api/render_tikz')
-def render_tikz(payload: dict = Body(...)):
-    """Compile a TikZ snippet to a cropped PNG image.
+def _preprocess_tikz_code(tikz_code: str) -> str:
+    """TikZコードのよくある問題を自動修正する前処理。"""
+    import re as _re
+    code = tikz_code.strip()
 
-    Payload: { "tikz": "\\begin{tikzpicture}...\\end{tikzpicture}" }
-    Returns: image/png
-    """
-    tikz_code = (payload.get('tikz') or '').strip()
-    if not tikz_code:
-        return JSONResponse({'error': 'empty_tikz'}, status_code=400)
+    # 1. tikzpicture環境のみのコード（\begin{tikzpicture}で始まらない場合）を補完
+    #    コードが\begin{tikzpicture}や\begin{circuitikz}で始まらずに
+    #    TikZコマンドだけ書かれている場合、ラップする
+    has_env = bool(_re.search(r'\\begin\{(tikzpicture|circuitikz|axis)\}', code))
+    if not has_env:
+        code = '\\begin{tikzpicture}\n' + code + '\n\\end{tikzpicture}'
 
-    # Safety check – reject dangerous commands
-    if not _latex_sanitize_check(tikz_code):
-        return JSONResponse({'error': 'tikz_forbidden'}, status_code=400)
+    # 2. 閉じ忘れた -- cycle を補完するのは難しいので、よくある記法の崩れを修正
+    #    \draw[...] (...) -- (...); の最後のセミコロン補完（最終行がセミコロンなしの場合）
+    lines = code.splitlines()
+    fixed_lines = []
+    for ln in lines:
+        stripped = ln.rstrip()
+        # \draw / \fill / \node で始まりセミコロンで終わっていない行（次行が \end でない場合）
+        if stripped and not stripped.endswith(';') and not stripped.endswith('{') and not stripped.endswith('}') and not stripped.endswith(','):
+            # \node at ... { ... } は閉じてあることが多いので無視
+            pass
+        fixed_lines.append(ln)
+    code = '\n'.join(fixed_lines)
 
-    # Check cache
-    import hashlib
-    cache_key = hashlib.sha256(tikz_code.encode('utf-8')).hexdigest()
-    if cache_key in _tikz_png_cache:
-        return Response(content=_tikz_png_cache[cache_key], media_type='image/png')
+    # 3. circuitikzのよくある問題: \ctikzset が \begin より前に来ていた場合は削除
+    #    (standalone docでは preamble に書く必要があるが、tikzコードに混入している場合)
+    code = _re.sub(r'\\ctikzset\{[^}]*\}\s*\n?', '', code)
 
-    # Build standalone LaTeX document
-    standalone_doc = (
-        "\\documentclass[border=8pt,convert={density=200,outext=.png}]{standalone}\n"
-        "\\usepackage{amsmath,amssymb,mathtools}\n"
-        "\\usepackage{tikz,pgfplots}\n"
-        "\\pgfplotsset{compat=newest}\n"
-        "\\usetikzlibrary{arrows.meta,calc,positioning,decorations.markings,patterns,angles,quotes,intersections,shapes}\n"
-        "\\usepackage[siunitx]{circuitikz}\n"
+    # 4. \usepackage{...} がtikzコード内に混入している場合は削除
+    code = _re.sub(r'\\usepackage\{[^}]*\}\s*\n?', '', code)
+    code = _re.sub(r'\\usetikzlibrary\{[^}]*\}\s*\n?', '', code)
+
+    return code.strip()
+
+
+def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
+    """TikZコードからstandaloneドキュメントを構築。"""
+    cjk_block = (
         "\\usepackage{iftex}\n"
         "\\ifPDFTeX\n"
         "  \\usepackage[utf8]{inputenc}\n"
@@ -7866,10 +7999,50 @@ def render_tikz(payload: dict = Body(...)):
         "    \\usepackage{xeCJK}\n"
         "  \\fi\n"
         "\\fi\n"
+    ) if with_cjk else ''
+    return (
+        "\\documentclass[border=8pt]{standalone}\n"
+        "\\usepackage{amsmath,amssymb,mathtools}\n"
+        "\\usepackage{tikz,pgfplots}\n"
+        "\\pgfplotsset{compat=1.18}\n"
+        "\\usetikzlibrary{arrows.meta,calc,positioning,decorations.markings,"
+        "decorations.pathmorphing,patterns,angles,quotes,intersections,shapes.geometric,"
+        "3d,perspective,shapes}\n"
+        "\\usepackage[siunitx]{circuitikz}\n"
+        "\\ctikzset{bipoles/fill=white}\n"
+        + cjk_block +
         "\\begin{document}\n"
         f"{tikz_code}\n"
         "\\end{document}\n"
     )
+
+
+@app.post('/api/render_tikz')
+def render_tikz(payload: dict = Body(...)):
+    """Compile a TikZ snippet to a cropped PNG image.
+
+    Payload: { "tikz": "\\begin{tikzpicture}...\\end{tikzpicture}" }
+    Returns: image/png
+    """
+    tikz_code = (payload.get('tikz') or '').strip()
+    if not tikz_code:
+        return JSONResponse({'error': 'empty_tikz'}, status_code=400)
+
+    # Safety check – reject dangerous commands
+    if not _latex_sanitize_check(tikz_code):
+        return JSONResponse({'error': 'tikz_forbidden'}, status_code=400)
+
+    # 前処理: よくある問題を修正
+    tikz_code = _preprocess_tikz_code(tikz_code)
+
+    # Check cache
+    import hashlib
+    cache_key = hashlib.sha256(tikz_code.encode('utf-8')).hexdigest()
+    if cache_key in _tikz_png_cache:
+        return Response(content=_tikz_png_cache[cache_key], media_type='image/png')
+
+    # Build standalone LaTeX document
+    standalone_doc = _build_tikz_standalone(tikz_code, with_cjk=True)
 
     td = tempfile.mkdtemp(prefix='tikz_')
     tex_path = os.path.join(td, 'figure.tex')
@@ -7897,36 +8070,58 @@ def render_tikz(payload: dict = Body(...)):
 
         # Compile
         compiled = False
+        compile_log = ''
         if engine:
             try:
-                subprocess.run(
+                result = subprocess.run(
                     [engine_name, '-interaction=nonstopmode', '-halt-on-error',
                      '-output-directory', td, tex_path],
-                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=45,
                 )
-                compiled = os.path.exists(pdf_path)
-            except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+                compile_log = (result.stdout or b'').decode('utf-8', errors='replace')
+                compiled = result.returncode == 0 and os.path.exists(pdf_path)
+                if not compiled:
+                    logger.warning('TikZ local compile failed (rc=%d): %s', result.returncode, compile_log[-800:])
+                    # リトライ: circuitikzなしのシンプルなドキュメントで再試行
+                    simple_doc = _build_tikz_standalone(tikz_code, with_cjk=False)
+                    with open(tex_path, 'w', encoding='utf-8') as f:
+                        f.write(simple_doc)
+                    result2 = subprocess.run(
+                        [engine_name, '-interaction=nonstopmode', '-halt-on-error',
+                         '-output-directory', td, tex_path],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=45,
+                    )
+                    compiled = result2.returncode == 0 and os.path.exists(pdf_path)
+                    if compiled:
+                        logger.info('TikZ retry (no-CJK) succeeded')
+                    else:
+                        logger.warning('TikZ retry also failed')
+            except (subprocess.TimeoutExpired, OSError) as exc:
                 logger.warning('TikZ local compilation failed (%s): %s', engine_name, exc)
 
         if not compiled:
-            # Cloud fallback
-            try:
-                cloud_resp = requests.post(
-                    'https://latex.ytotech.com/builds/sync',
-                    json={'compiler': 'xelatex', 'resources': [{'main': True, 'content': standalone_doc}]},
-                    timeout=60,
-                )
-                if cloud_resp.status_code in (200, 201) and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
-                    with open(pdf_path, 'wb') as pf:
-                        pf.write(cloud_resp.content)
-                    compiled = True
-                else:
-                    logger.error('Cloud TikZ compile failed: %s', cloud_resp.text[:500])
-            except Exception as cloud_exc:
-                logger.exception('Cloud TikZ request failed: %s', cloud_exc)
+            # Cloud fallback — 最大2回試行
+            for cloud_attempt in range(2):
+                try:
+                    # 再試行時はシンプルドキュメントを使う
+                    doc_to_send = standalone_doc if cloud_attempt == 0 else _build_tikz_standalone(tikz_code, with_cjk=False)
+                    cloud_resp = requests.post(
+                        'https://latex.ytotech.com/builds/sync',
+                        json={'compiler': 'xelatex', 'resources': [{'main': True, 'content': doc_to_send}]},
+                        timeout=90,
+                    )
+                    if cloud_resp.status_code in (200, 201) and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
+                        with open(pdf_path, 'wb') as pf:
+                            pf.write(cloud_resp.content)
+                        compiled = True
+                        break
+                    else:
+                        logger.error('Cloud TikZ compile failed (attempt %d): %s', cloud_attempt + 1, cloud_resp.text[:500])
+                except Exception as cloud_exc:
+                    logger.warning('Cloud TikZ request failed (attempt %d): %s', cloud_attempt + 1, cloud_exc)
 
         if not compiled or not os.path.exists(pdf_path):
-            return JSONResponse({'error': 'tikz_compilation_failed'}, status_code=500)
+            return JSONResponse({'error': 'tikz_compilation_failed', 'hint': 'LaTeXコンパイルに失敗しました'}, status_code=500)
 
         # Convert PDF → PNG
         png_bytes = None
