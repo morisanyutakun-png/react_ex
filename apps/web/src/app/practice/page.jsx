@@ -700,7 +700,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
       <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm">
         <div className="p-4 border-b border-[#f1f5f9]">
           <span className="text-[13px] font-bold text-[#1e293b]">📥 AIの出力を貼り付け</span>
-          <p className="text-[11px] text-[#94a3b8] mt-1">AIから返ってきたJSON出力をそのまま貼り付けてください</p>
+          <p className="text-[11px] text-[#94a3b8] mt-1">AIから返ってきた出力をそのまま貼り付けてください（マーカー形式・JSON形式 両方対応）</p>
         </div>
         <div className="p-4">
           <textarea
@@ -709,7 +709,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
             rows={8}
             className="w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-[12px] font-mono text-[#1e293b] placeholder:text-[#cbd5e1] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-transparent resize-none transition-all duration-200"
             style={{ '--tw-ring-color': c.accent + '60' }}
-            placeholder='{&#10;  &quot;problems&quot;: [&#10;    { &quot;stem&quot;: &quot;...&quot;, &quot;answer&quot;: &quot;...&quot;, ... }&#10;  ]&#10;}'
+            placeholder={'%%% PROBLEM 1 %%%\n%%% TOPIC: 力学 %%%\n%%% STEM %%%\n質量 $m$ の物体が...\n%%% SUBPROBLEM (1) %%%\n...\n%%% END PROBLEM 1 %%%'}
           />
 
           {parseError && (

@@ -5376,59 +5376,56 @@ def _cleanup_old_practice_jobs():
 
 
 def _build_practice_system_prompt(subject: str, topics: list, difficulty: str, num_questions: int) -> str:
-    """受験生向け練習モード専用のシステムプロンプトを構築する（高品質LaTeX・図付き・小問構造版）。"""
+    """受験生向け練習モード専用のシステムプロンプトを構築する。
+    LaTeX直接出力版: JSONにLaTeXを埋め込む方式を廃止し、
+    構造化マーカー付きの生LaTeXを出力させる。パースエラーが原理的に発生しない。
+    """
     topic_str = '、'.join(topics) if topics else '全分野'
 
-    # ── 科目別 図描画ガイドライン（raw文字列でバックスラッシュ混乱を防ぐ） ──
+    # ── 科目別 図描画ガイドライン ──
     if subject == '物理':
         figure_guide = r"""
 【物理 TikZ 図のガイドライン】
-figure_tikz フィールドに、問題の物理的状況を TikZ または circuitikz で描画してください。
-tikzpicture（または circuitikz）環境のみ記述します（\documentclass 等は不要）。
+%%% FIGURE %%% の中に tikzpicture または circuitikz 環境を記述してください。
+LaTeX をそのまま書けるので、バックスラッシュのエスケープは不要です。
 
-■ JSON 内バックスラッシュルール（絶対厳守）:
-  LaTeX の \begin{tikzpicture} → JSON 内では "\\begin{tikzpicture}"
-  LaTeX の \draw[thick]        → JSON 内では "\\draw[thick]"
-  LaTeX の \node               → JSON 内では "\\node"
-  LaTeX の \vec{F}             → JSON 内では "\\vec{F}"
-
-■ 必ず使うべき物理図パターン:
+■ 使うべき物理図パターン例:
 
 1. 力学（斜面 + 物体 + 力の矢印）:
-"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.2]\n  \\draw[thick] (0,0) -- (4,0) -- (4,2) -- cycle;\n  \\draw[fill=gray!25,thick] (2.2,1.0) rectangle ++(0.55,0.55);\n  \\draw[->,red,very thick] (2.47,1.27) -- ++(0.8,0.4) node[right]{$N$};\n  \\draw[->,blue,very thick] (2.47,1.27) -- ++(0,-0.8) node[below]{$mg$};\n  \\draw[->,green!60!black,very thick] (2.47,1.27) -- ++(0.9,0) node[right]{$F$};\n  \\node[font=\\small] at (0.9,0.18) {$\\theta$};\n\\end{tikzpicture}"
+\begin{tikzpicture}[>=latex,scale=1.2]
+  \draw[thick] (0,0) -- (4,0) -- (4,2) -- cycle;
+  \draw[fill=gray!25,thick] (2.2,1.0) rectangle ++(0.55,0.55);
+  \draw[->,red,very thick] (2.47,1.27) -- ++(0.8,0.4) node[right]{$N$};
+  \draw[->,blue,very thick] (2.47,1.27) -- ++(0,-0.8) node[below]{$mg$};
+  \node[font=\small] at (0.9,0.18) {$\theta$};
+\end{tikzpicture}
 
-2. 力学（ばね-質量系）:
-"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.1]\n  \\draw[thick] (0,-0.4) -- (0,0.4);\n  \\draw[thick,decoration={coil,aspect=0.5,segment length=5pt,amplitude=6pt},decorate] (0,0) -- (2.5,0);\n  \\draw[fill=gray!30,thick] (2.5,-0.35) rectangle ++(0.7,0.7) node[midway]{$m$};\n  \\draw[<->,dashed] (2.5,-0.6) -- ++(0.7,0) node[midway,below,font=\\small]{$x$};\n\\end{tikzpicture}"
+2. 電磁気（電気回路 - circuitikz）:
+\begin{circuitikz}[scale=0.9]
+  \draw (0,0) to[battery1,l_=$E$,invert] (0,2.5)
+    to[short] (1.5,2.5) to[R,l=$R_1$] (3,2.5)
+    to[R,l=$R_2$] (4.5,2.5) to[short] (4.5,0)
+    to[short] (0,0);
+\end{circuitikz}
 
-3. 電磁気（電気回路 - circuitikz）:
-"figure_tikz": "\\begin{circuitikz}[scale=0.9]\n  \\draw (0,0) to[battery1,l_=$E$,invert] (0,2.5)\n    to[short] (1.5,2.5) to[R,l=$R_1$] (3,2.5)\n    to[R,l=$R_2$] (4.5,2.5) to[short] (4.5,0)\n    to[short] (0,0);\n  \\draw (1.5,2.5) to[C,l=$C$] (1.5,0);\n\\end{circuitikz}"
+3. 熱力学（P-V グラフ）: pgfplots や tikzpicture で描画
 
-4. 電磁気（平行板コンデンサー）:
-"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.0]\n  \\draw[very thick] (0,0) -- (0,2); \\draw[very thick] (1.5,0) -- (1.5,2);\n  \\node[left,font=\\small] at (0,1) {$+Q$}; \\node[right,font=\\small] at (1.5,1) {$-Q$};\n  \\draw[->] (0.3,1) -- (1.2,1) node[midway,above,font=\\small]{$E$};\n  \\draw[<->] (0,-0.3) -- (1.5,-0.3) node[midway,below,font=\\small]{$d$};\n\\end{tikzpicture}"
+4. 波動（波形グラフ）: tikzpicture の plot で描画
 
-5. 熱力学（P-V グラフ）:
-"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.1]\n  \\draw[->] (0,0) -- (3.8,0) node[right]{$V\\,[\\mathrm{m}^3]$};\n  \\draw[->] (0,0) -- (0,3.2) node[above]{$P\\,[\\mathrm{Pa}]$};\n  \\draw[thick,blue] (0.5,2.5) -- (2.5,2.5) node[above right,font=\\small]{A$\\to$B 等圧};\n  \\draw[thick,red] (2.5,2.5) -- (2.5,0.6) node[right,font=\\small]{B$\\to$C 等積};\n  \\draw[thick,domain=0.5:2.5,samples=40,green!60!black] plot (\\x, {1.25/\\x+0.1}) node[right,font=\\small]{C$\\to$A 断熱};\n  \\foreach \\p/\\lab in {(0.5,2.5)/A,(2.5,2.5)/B,(2.5,0.6)/C} { \\fill \\p circle (2pt); \\node[above right,font=\\small] at \\p {$\\lab$}; }\n\\end{tikzpicture}"
-
-6. 波動（波形グラフ）:
-"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.0]\n  \\draw[->] (0,0) -- (5.5,0) node[right]{$x\\,[\\mathrm{m}]$};\n  \\draw[->] (0,-1.4) -- (0,1.6) node[above]{$y\\,[\\mathrm{m}]$};\n  \\draw[thick,blue,domain=0:4.71,samples=120] plot (\\x, {1.2*sin(deg(\\x*4/3))});\n  \\draw[dashed] (0,1.2) -- (4.71,1.2) node[right,font=\\small]{$A$};\n  \\draw[<->] (0,-1.2) -- (3.14,-1.2) node[midway,below,font=\\small]{$\\lambda$};\n\\end{tikzpicture}"
-
-7. 力学（滑車系）:
-"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.1]\n  \\draw[thick] (2,3) circle (0.3);\n  \\draw[thick] (0,2.5) rectangle ++(0.5,0.7) node[midway]{$m_1$};\n  \\draw[thick] (3.5,2.0) rectangle ++(0.5,0.7) node[midway]{$m_2$};\n  \\draw[thick] (0.25,3.2) -- (0.25,3) -- (1.7,3);\n  \\draw[thick] (2.3,3) -- (3.75,3) -- (3.75,2.7);\n  \\draw[thick] (1.7,2.7) -- (2.3,2.7);\n\\end{tikzpicture}"
-
-図が不要な純粋計算問題は "figure_tikz": null にしてください。
+図が不要な純粋計算問題は %%% FIGURE %%% セクションを省略してください。
 """
     elif subject == '化学':
         figure_guide = r"""
 【化学 TikZ 図のガイドライン】
-figure_tikz に chemfig（構造式）または tikzpicture で反応図・グラフを描画できます。
-純粋な計算問題では "figure_tikz": null にしてください。
-JSON 内バックスラッシュルール: LaTeX の \chemfig → JSON では "\\chemfig"
+%%% FIGURE %%% の中に chemfig（構造式）や tikzpicture で反応図・グラフを記述できます。
+LaTeX をそのまま書けるので、バックスラッシュのエスケープは不要です。
+図が不要な場合は %%% FIGURE %%% セクションを省略してください。
 """
     else:
         figure_guide = r"""
 【図のガイドライン】
-figure_tikz に tikzpicture でグラフや概念図を描画できます（任意）。
-JSON 内バックスラッシュ: LaTeX の \draw → JSON では "\\draw"。不要な場合は null。
+%%% FIGURE %%% の中に tikzpicture でグラフや概念図をそのまま記述できます。
+不要な場合は %%% FIGURE %%% セクションを省略してください。
 """
 
     return f"""あなたは日本の大学受験{subject}の問題作成の最高権威です。
@@ -5440,72 +5437,144 @@ JSON 内バックスラッシュ: LaTeX の \draw → JSON では "\\draw"。不
 - 難易度: {difficulty}
 - 問題数: {num_questions}問（各問題に小問 2〜3 問含む）
 {figure_guide}
-【出力ルール】
-1. 必ず以下の JSON 形式のみで出力してください。JSON 以外のテキストは一切出力しないでください。
-2. 数式は LaTeX 記法（インライン: $...$、ディスプレイ: $$...$$）で書いてください。
-3. ★★★絶対厳守: JSON 文字列内のバックスラッシュ(\\) は必ず \\\\ と二重に書くこと。
-   \\frac → \\\\frac, \\sin → \\\\sin, \\theta → \\\\theta, \\vec{{F}} → \\\\vec{{F}}
-   \\begin → \\\\begin, \\end → \\\\end, \\draw → \\\\draw
-   正しい: "$\\\\frac{{1}}{{2}}mv^2$"  誤り: "$\\frac{{1}}{{2}}mv^2$"（\\f は制御文字）
-4. stem（状況設定）は実際の入試問題と同等の詳細な条件を記載してください。
+【出力ルール — LaTeX直接出力（JSONは使わない）】
+
+★★★ 最重要: JSON形式ではなく、以下の構造化マーカー付きLaTeXテキストで出力してください。
+LaTeXコマンドはそのまま書いてください（バックスラッシュの二重化は不要です）。
+
+1. 数式は LaTeX 記法（インライン: $...$、ディスプレイ: \\[...\\]）で書いてください。
+2. stem（状況設定）は実際の入試問題と同等の詳細な条件を記載してください。
    - 全ての数値・単位を明示（例: 質量 $m = 2.0\\,\\mathrm{{kg}}$, $g = 9.8\\,\\mathrm{{m/s^2}}$）
    - 「ただし〜」「〜とする」の条件節を必ず入れる
-   - 物理法則の適用可否を明示する（例: 空気抵抗は無視する）
-5. figure_tikz: 物理的状況を TikZ で図示してください（上記ガイドライン参照）。
-   JSON 内では \\\\begin{{tikzpicture}}...\\\\end{{tikzpicture}} と書く。不要時は null。
-6. subproblems は誘導形式の小問配列（2〜3 問）にしてください。
-   各小問: label（"(1)"〜"(3)"）, question（小問文）, answer（解答値・式）, explanation（段階的解法）
-7. answer は数式で正確に（例: $v = \\\\sqrt{{2gh}} = 14\\,\\\\mathrm{{m/s}}$）。
-8. explanation は物理法則の適用 → 式変形 → 数値代入の順で段階的に記載。
-9. topic は具体的分野名（例: 力学・等加速度運動, 電磁気・コンデンサー回路）。
+3. 小問は誘導形式（2〜3 問）にしてください。
+4. 解答は数式で正確に記載。
+5. 解説は物理法則の適用 → 式変形 → 数値代入の順で段階的に記載。
 
-【JSON 形式】
-{{
-  "problems": [
-    {{
-      "stem": "詳細な状況設定（数値・単位・条件を全て明記）",
-      "figure_tikz": "\\\\begin{{tikzpicture}}[>=latex,scale=1.2]\\n  ...(TikZコード)...\\n\\\\end{{tikzpicture}} または null",
-      "subproblems": [
-        {{
-          "label": "(1)",
-          "question": "小問の問題文（基本的な問い）",
-          "answer": "$解答の式 = 数値\\,\\\\mathrm{{単位}}$",
-          "explanation": "\\\\textbf{{解法:}} 物理法則を適用 → 式変形 → 数値代入の順で詳細に説明"
-        }},
-        {{
-          "label": "(2)",
-          "question": "小問の問題文（(1)の結果を利用する応用問）",
-          "answer": "解答",
-          "explanation": "解法（段階的に）"
-        }},
-        {{
-          "label": "(3)",
-          "question": "小問の問題文（発展問）",
-          "answer": "解答",
-          "explanation": "解法"
-        }}
-      ],
-      "topic": "{topic_str}の具体的分野名",
-      "difficulty": "{difficulty}"
-    }}
-  ]
-}}
+【出力形式テンプレート — 各問題をこの形式で出力】
+
+%%% PROBLEM 1 %%%
+%%% TOPIC: 力学・等加速度運動 %%%
+%%% DIFFICULTY: {difficulty} %%%
+%%% STEM %%%
+（ここに状況設定の本文を書く。数式は $...$ や \\[...\\] で自由に使える。
+例: 質量 $m = 2.0\\,\\mathrm{{kg}}$ の物体が、傾き角 $\\theta = 30^\\circ$ の
+なめらかな斜面の頂上から静かに滑り始めた。斜面の高さは $h = 5.0\\,\\mathrm{{m}}$ である。
+ただし、重力加速度を $g = 9.8\\,\\mathrm{{m/s^2}}$ とし、空気抵抗は無視する。）
+%%% FIGURE %%%
+（ここにTikZコードを直接書く。\\begin{{tikzpicture}}...\\end{{tikzpicture}} 等。不要なら省略可）
+%%% SUBPROBLEM (1) %%%
+（小問(1)の問題文）
+%%% ANSWER (1) %%%
+（小問(1)の解答。数式OK: $v = \\sqrt{{2gh}} = 9.9\\,\\mathrm{{m/s}}$）
+%%% EXPLANATION (1) %%%
+（小問(1)の解説。段階的に記述）
+%%% SUBPROBLEM (2) %%%
+（小問(2)の問題文）
+%%% ANSWER (2) %%%
+（小問(2)の解答）
+%%% EXPLANATION (2) %%%
+（小問(2)の解説）
+%%% SUBPROBLEM (3) %%%
+（小問(3)の問題文。省略可）
+%%% ANSWER (3) %%%
+（小問(3)の解答）
+%%% EXPLANATION (3) %%%
+（小問(3)の解説）
+%%% END PROBLEM 1 %%%
+
+%%% PROBLEM 2 %%%
+...（同じ形式で続ける）
+%%% END PROBLEM 2 %%%
 
 【出題品質の絶対基準】
 A. 入試問題として成立すること: 設定に矛盾がなく、解答が一意に定まること
 B. 数値の美しさ: 計算結果が整数または簡単な分数になる値を選ぶこと
-   良い例: $m = 2.0\\,\\mathrm{{kg}}$, $v_0 = 5.0\\,\\mathrm{{m/s}}$, $g = 9.8\\,\\mathrm{{m/s^2}}$
 C. 誘導形式: (1)→(2)→(3) の順に難易度が上がり、前の答えを次に使う構造
-D. 物理では法則を明示: 運動方程式 $ma=F$, エネルギー保存 $\\\\frac{{1}}{{2}}mv^2 = mgh$,
-   運動量保存 $m_1v_1 + m_2v_2 = \\\\mathrm{{const}}$, ガウスの法則, ファラデーの法則 等
-E. 図は必ず描画: 物理問題は原則として figure_tikz を設定する（null は計算のみの場合）
+D. {subject}では法則を明示して解説すること
+E. 図は積極的に描画: %%% FIGURE %%% セクションにTikZで物理的状況を図示する
 
-【バックスラッシュ二重化 最終確認】
-正しい: "stem": "質量 $m = 2.0\\\\,\\\\mathrm{{kg}}$ の物体が初速 $v_0 = 0$ から..."
-正しい: "answer": "$v = \\\\sqrt{{2 \\\\times 9.8 \\\\times 5.0}} \\\\approx 9.9\\\\,\\\\mathrm{{m/s}}$"
-正しい: "explanation": "運動方程式 $ma = mg\\\\sin\\\\theta - \\\\mu mg\\\\cos\\\\theta$ より..."
-誤り:   "stem": "力 $F = m \\cdot a$"（\\c はバックスペース制御文字でJSON破損）
-誤り:   "answer": "$v = \\frac{{v_0}}{{2}}$"（\\f はform feed制御文字でJSON破損）"""
+【禁止事項】
+- JSON形式での出力（必ず上記のマーカー形式で出力すること）
+- ```json や ```latex のコードフェンス（不要）
+- マーカー以外の余計なテキスト（挨拶・前置き・まとめ等）"""
+
+
+def _parse_latex_problems(raw_text: str) -> list:
+    """構造化マーカー付き LaTeX テキストを問題配列にパースする。
+
+    %%% PROBLEM N %%% 〜 %%% END PROBLEM N %%% の各ブロックを解析し、
+    フロントエンドで使える problems 配列（stem, figure_tikz, subproblems, topic, difficulty）を返す。
+    JSON を使わないため、LaTeX のバックスラッシュ問題が原理的に発生しない。
+    """
+    problems = []
+
+    # 各 PROBLEM ブロックを抽出
+    problem_pattern = re.compile(
+        r'%%%\s*PROBLEM\s+(\d+)\s*%%%\s*\n([\s\S]*?)%%%\s*END\s+PROBLEM\s+\1\s*%%%',
+        re.IGNORECASE,
+    )
+    for m in problem_pattern.finditer(raw_text):
+        block = m.group(2)
+
+        # TOPIC
+        topic_m = re.search(r'%%%\s*TOPIC:\s*(.*?)\s*%%%', block)
+        topic = topic_m.group(1).strip() if topic_m else ''
+
+        # DIFFICULTY
+        diff_m = re.search(r'%%%\s*DIFFICULTY:\s*(.*?)\s*%%%', block)
+        difficulty = diff_m.group(1).strip() if diff_m else ''
+
+        # STEM: between %%% STEM %%% and the next %%% marker
+        stem_m = re.search(r'%%%\s*STEM\s*%%%([\s\S]*?)(?=%%%)', block)
+        stem = stem_m.group(1).strip() if stem_m else ''
+
+        # FIGURE: between %%% FIGURE %%% and the next %%% marker
+        figure_m = re.search(r'%%%\s*FIGURE\s*%%%([\s\S]*?)(?=%%%)', block)
+        figure_tikz = figure_m.group(1).strip() if figure_m else None
+        if figure_tikz and figure_tikz.lower() in ('', 'null', 'none', 'なし'):
+            figure_tikz = None
+
+        # SUBPROBLEMS: extract each (N) trio of SUBPROBLEM/ANSWER/EXPLANATION
+        subproblems = []
+        sub_pattern = re.compile(
+            r'%%%\s*SUBPROBLEM\s*\((\d+)\)\s*%%%([\s\S]*?)(?=%%%)',
+            re.IGNORECASE,
+        )
+        for sm in sub_pattern.finditer(block):
+            label = f'({sm.group(1)})'
+            question = sm.group(2).strip()
+
+            # Find matching ANSWER (N) and EXPLANATION (N)
+            ans_pattern = re.compile(
+                r'%%%\s*ANSWER\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)(?=%%%|$)',
+                re.IGNORECASE,
+            )
+            ans_m = ans_pattern.search(block)
+            answer = ans_m.group(1).strip() if ans_m else ''
+
+            expl_pattern = re.compile(
+                r'%%%\s*EXPLANATION\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)(?=%%%|$)',
+                re.IGNORECASE,
+            )
+            expl_m = expl_pattern.search(block)
+            explanation = expl_m.group(1).strip() if expl_m else ''
+
+            subproblems.append({
+                'label': label,
+                'question': question,
+                'answer': answer,
+                'explanation': explanation,
+            })
+
+        problems.append({
+            'stem': stem,
+            'figure_tikz': figure_tikz,
+            'subproblems': subproblems,
+            'topic': topic,
+            'difficulty': difficulty,
+        })
+
+    return problems
 
 
 def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
@@ -5799,48 +5868,55 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
             _PRACTICE_JOBS[job_id]['error'] = 'AI からの応答が空です'
             return
 
-        # JSON パース（LaTeX エスケープ修復付き）
-        parsed = None
-        # code fence 除去
-        fenced = re.search(r'```(?:json)?\s*\n?([\s\S]*?)```', raw_text)
-        json_text = fenced.group(1).strip() if fenced else None
-        if json_text:
-            try:
-                parsed = json.loads(json_text)
-            except json.JSONDecodeError:
+        # ── 構造化マーカー付き LaTeX をパース ──
+        # code fence がある場合は除去
+        clean_text = raw_text
+        if '```' in clean_text:
+            fenced = re.search(r'```(?:latex|tex)?\s*\n?([\s\S]*?)```', clean_text)
+            if fenced:
+                clean_text = fenced.group(1).strip()
+
+        # マーカー方式でパース
+        problems = _parse_latex_problems(clean_text)
+
+        # マーカーが見つからなかった場合、旧JSON方式にフォールバック
+        if not problems:
+            parsed = None
+            fenced = re.search(r'```(?:json)?\s*\n?([\s\S]*?)```', raw_text)
+            json_text = fenced.group(1).strip() if fenced else None
+            if json_text:
                 try:
-                    parsed = json.loads(_fix_latex_json_escapes(json_text))
-                except Exception:
-                    pass
-        if not parsed:
-            brace_start = raw_text.find('{')
-            if brace_start >= 0:
-                depth = 0
-                for i in range(brace_start, len(raw_text)):
-                    if raw_text[i] == '{':
-                        depth += 1
-                    elif raw_text[i] == '}':
-                        depth -= 1
-                    if depth == 0:
-                        candidate = raw_text[brace_start:i + 1]
-                        try:
-                            parsed = json.loads(candidate)
-                        except json.JSONDecodeError:
+                    parsed = json.loads(json_text)
+                except json.JSONDecodeError:
+                    try:
+                        parsed = json.loads(_fix_latex_json_escapes(json_text))
+                    except Exception:
+                        pass
+            if not parsed:
+                brace_start = raw_text.find('{')
+                if brace_start >= 0:
+                    depth = 0
+                    for i in range(brace_start, len(raw_text)):
+                        if raw_text[i] == '{':
+                            depth += 1
+                        elif raw_text[i] == '}':
+                            depth -= 1
+                        if depth == 0:
+                            candidate = raw_text[brace_start:i + 1]
                             try:
-                                parsed = json.loads(_fix_latex_json_escapes(candidate))
-                            except Exception:
-                                pass
-                        break
+                                parsed = json.loads(candidate)
+                            except json.JSONDecodeError:
+                                try:
+                                    parsed = json.loads(_fix_latex_json_escapes(candidate))
+                                except Exception:
+                                    pass
+                            break
+            if parsed and isinstance(parsed.get('problems'), list):
+                problems = parsed['problems']
 
-        if not parsed or 'problems' not in parsed:
+        if not problems:
             _PRACTICE_JOBS[job_id]['status'] = 'error'
-            _PRACTICE_JOBS[job_id]['error'] = 'AI応答のJSON解析に失敗しました'
-            return
-
-        problems = parsed['problems']
-        if not isinstance(problems, list) or len(problems) == 0:
-            _PRACTICE_JOBS[job_id]['status'] = 'error'
-            _PRACTICE_JOBS[job_id]['error'] = '問題が生成されませんでした'
+            _PRACTICE_JOBS[job_id]['error'] = 'AI応答の解析に失敗しました。再度お試しください。'
             return
 
         # LaTeX ドキュメント構築（PDF用）
@@ -5918,7 +5994,7 @@ async def practice_render_prompt(req: PracticeGenerateRequest = Body(...)):
     topic_str = '、'.join(req.topics) if req.topics else '全分野'
     user_prompt_parts.append(
         f'{req.subject}（{topic_str}）の{req.difficulty}レベルの問題を{req.num_questions}問、'
-        f'上記のJSON形式で出力してください。'
+        f'上記の構造化マーカー形式で出力してください。'
     )
     user_prompt = '\n'.join(user_prompt_parts)
 
@@ -5952,42 +6028,55 @@ def _fix_latex_json_escapes(text: str) -> str:
 
 @app.post('/api/practice/parse')
 async def practice_parse_json(payload: dict = Body(...)):
-    """手動モード用: ユーザーが貼り付けたJSON/テキストをパースし、problems + latex を返す。"""
+    """手動モード用: ユーザーが貼り付けたテキスト（構造化マーカー付きLaTeXまたはJSON）をパースし、
+    problems + latex を返す。LaTeXマーカー形式を優先的に試行する。"""
     raw = payload.get('raw_text', '')
     subject = payload.get('subject', '')
     difficulty = payload.get('difficulty', '')
     if not raw.strip():
         return JSONResponse({'error': '入力が空です。'}, status_code=400)
 
-    # JSON 抽出: code fence 除去
     text = raw.strip()
+
+    # code fence 除去
     if '```' in text:
-        m = re.search(r'```(?:json)?\s*\n?([\s\S]*?)```', text)
+        m = re.search(r'```(?:json|latex|tex)?\s*\n?([\s\S]*?)```', text)
         if m:
             text = m.group(1).strip()
-    # brace 検出
-    start = text.find('{')
-    end = text.rfind('}')
-    if start >= 0 and end > start:
-        text = text[start:end + 1]
 
-    # Step 1: そのまま試す
-    data = None
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError:
-        pass
+    # Step 1: 構造化マーカー付き LaTeX としてパース（優先）
+    problems = _parse_latex_problems(text)
 
-    # Step 2: LaTeX バックスラッシュを修復して再試行
-    if data is None:
-        try:
-            data = json.loads(_fix_latex_json_escapes(text))
-        except json.JSONDecodeError as e:
-            return JSONResponse({'error': f'JSON パースに失敗しました: {str(e)}'}, status_code=400)
-
-    problems = data.get('problems', [])
+    # Step 2: JSON フォールバック
     if not problems:
-        return JSONResponse({'error': 'problems 配列が見つかりません。'}, status_code=400)
+        json_text = text
+        start = json_text.find('{')
+        end = json_text.rfind('}')
+        if start >= 0 and end > start:
+            json_text = json_text[start:end + 1]
+
+        data = None
+        try:
+            data = json.loads(json_text)
+        except json.JSONDecodeError:
+            pass
+
+        if data is None:
+            try:
+                data = json.loads(_fix_latex_json_escapes(json_text))
+            except json.JSONDecodeError as e:
+                return JSONResponse({
+                    'error': f'パースに失敗しました: {str(e)}\n\n'
+                             'ヒント: LLMの出力を「構造化マーカー形式」で取得すると、'
+                             'LaTeXのバックスラッシュ問題を回避できます。'
+                             '手動モードでプロンプトを再生成してお試しください。'
+                }, status_code=400)
+
+        if data:
+            problems = data.get('problems', [])
+
+    if not problems:
+        return JSONResponse({'error': '問題データが見つかりません。'}, status_code=400)
 
     # LaTeX 構築
     try:
@@ -6003,7 +6092,7 @@ async def practice_parse_json(payload: dict = Body(...)):
 
 @app.post('/api/practice/generate')
 async def practice_generate(req: PracticeGenerateRequest = Body(...)):
-    """受験生向け練習モード: 構造化JSON形式で問題を生成する。
+    """受験生向け練習モード: 構造化マーカー付きLaTeX形式で問題を生成する。
     ポーリング方式: 即座に job_id を返す。
     """
     user_id = req.user_id
@@ -6072,7 +6161,7 @@ async def practice_generate(req: PracticeGenerateRequest = Body(...)):
     topic_str = '、'.join(req.topics) if req.topics else '全分野'
     user_prompt_parts.append(
         f'{req.subject}（{topic_str}）の{req.difficulty}レベルの問題を{req.num_questions}問、'
-        f'上記のJSON形式で出力してください。'
+        f'上記の構造化マーカー形式で出力してください。'
     )
     user_prompt = '\n'.join(user_prompt_parts)
 
