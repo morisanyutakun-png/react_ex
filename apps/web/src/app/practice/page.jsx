@@ -811,33 +811,30 @@ function LoadingScreen({ subject, genMode, loadingStep }) {
    通常テキスト → LatexBlock、TikZ 部分 → TikzFigure
 ───────────────────────────────────────────────────────────── */
 
-const TIKZ_ENV_RE = /\\begin\{(tikzpicture|circuitikz|axis)\}[\s\S]*?\\end\{\1\}/g;
-
 function LatexTikzBlock({ children, className = '' }) {
   const text = children || '';
   if (!text) return null;
 
-  // Check if there is any TikZ at all
-  if (!TIKZ_ENV_RE.test(text)) {
+  // 毎回新しい regex を生成して lastIndex の状態共有バグを防ぐ
+  const tikzRe = /\\begin\{(tikzpicture|circuitikz|axis)\}[\s\S]*?\\end\{\1\}/g;
+
+  // TikZ がなければそのまま LatexBlock へ
+  if (!tikzRe.test(text)) {
     return <LatexBlock className={className}>{text}</LatexBlock>;
   }
 
-  // Reset regex lastIndex
-  TIKZ_ENV_RE.lastIndex = 0;
-
-  // Split into segments: text parts and tikz parts
+  // 再度新しい regex で実際の分割処理
+  const tikzRe2 = /\\begin\{(tikzpicture|circuitikz|axis)\}[\s\S]*?\\end\{\1\}/g;
   const segments = [];
   let lastIndex = 0;
   let match;
-  while ((match = TIKZ_ENV_RE.exec(text)) !== null) {
-    // Text before this TikZ block
+  while ((match = tikzRe2.exec(text)) !== null) {
     if (match.index > lastIndex) {
       segments.push({ type: 'text', content: text.slice(lastIndex, match.index) });
     }
     segments.push({ type: 'tikz', content: match[0] });
     lastIndex = match.index + match[0].length;
   }
-  // Remaining text after last TikZ block
   if (lastIndex < text.length) {
     segments.push({ type: 'text', content: text.slice(lastIndex) });
   }
@@ -859,7 +856,7 @@ function LatexTikzBlock({ children, className = '' }) {
    問題画面 B + 解答画面 C
 ───────────────────────────────────────────────────────────── */
 
-function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswer, onScore, onSkip, onQuit }) {
+function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswer, onScore, onSkip, onQuit, latexForPdf, onDownloadPdf, pdfLoading }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const stem = problem?.stem || problem?.text || problem?.question || '';
   const topic = problem?.topic || problem?.metadata?.field || '';
@@ -883,6 +880,22 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
       <div className="flex items-center justify-between mb-5">
         <BackButton onClick={onQuit} label="終了" />
         <div className="flex items-center gap-2.5">
+          {/* PDFボタン（問題画面ヘッダー） */}
+          {latexForPdf && (
+            <button
+              type="button"
+              onClick={onDownloadPdf}
+              disabled={pdfLoading}
+              title="高品質PDFをダウンロード"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all duration-200 active:scale-[0.94] disabled:opacity-50"
+              style={{ background: '#f8faff', borderColor: c.accent + '40', color: c.accent }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              {pdfLoading ? '生成中…' : 'PDF'}
+            </button>
+          )}
           <span className="text-[13px] font-black tracking-[-0.01em]" style={{ color: c.accent }}>
             {index + 1}
           </span>
@@ -1027,6 +1040,32 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
             </div>
           </div>
 
+          {/* 高品質PDFバナー（解答表示時） */}
+          {latexForPdf && (
+            <div
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.98]"
+              style={{ background: 'linear-gradient(135deg, #0f172a08, #1e293b05)', borderColor: '#1e293b20' }}
+              onClick={onDownloadPdf}
+            >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}>
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] font-black text-[#1e293b]">
+                  {pdfLoading ? 'PDF生成中…' : '高品質PDFで保存'}
+                </div>
+                <div className="text-[10px] text-[#64748b] mt-0.5">
+                  LaTeX組版 · 美しい数式 · 印刷対応
+                </div>
+              </div>
+              <svg className="w-4 h-4 text-[#94a3b8] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </div>
+          )}
+
           {/* スキップ */}
           <button type="button" onClick={() => onSkip && onSkip()} className="w-full py-2.5 text-[11px] text-[#b0bec5] hover:text-[#64748b] transition-colors duration-200">
             スキップ（△扱い）
@@ -1088,7 +1127,7 @@ function FollowScreen({ problem, subject, onContinue, onSkip, isLoading }) {
    模試形式画面: 全問一覧 + タイマー
 ───────────────────────────────────────────────────────────── */
 
-function ExamScreen({ problems, subject, onFinish, onQuit }) {
+function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownloadPdf, pdfLoading }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const numQ = problems.length;
   const initialTime = numQ <= 3 ? 15 * 60 : numQ <= 5 ? 30 * 60 : 60 * 60;
@@ -1282,6 +1321,21 @@ function ExamScreen({ problems, subject, onFinish, onQuit }) {
             className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 8px 24px ${c.ring}` }}>
             {allScored ? '結果を見る →' : `全問採点してください（残り${numQ - Object.keys(examScores).length}問）`}
+          </button>
+        )}
+
+        {/* PDFダウンロード（模試画面でも使用可能） */}
+        {latexForPdf && (
+          <button
+            type="button"
+            onClick={onDownloadPdf}
+            disabled={pdfLoading}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[12px] font-bold border-2 border-[#1e293b20] text-[#475569] bg-white hover:bg-[#f8faff] transition-all duration-200 active:scale-[0.97] disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            {pdfLoading ? 'PDF生成中…' : '高品質PDFで保存'}
           </button>
         )}
       </div>
@@ -1485,13 +1539,32 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
             type="button"
             onClick={onDownloadPdf}
             disabled={pdfLoading}
-            className="w-full py-3.5 rounded-2xl text-[13px] font-bold text-white shadow-md transition-all duration-250 active:scale-[0.97] disabled:opacity-60 flex items-center justify-center gap-2 hover:shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}
+            className="w-full rounded-2xl text-[13px] font-bold text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-60 hover:shadow-xl overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            {pdfLoading ? 'PDF生成中…' : '問題をPDFで保存'}
+            <div className="flex items-center gap-3 px-5 py-4">
+              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+              </div>
+              <div className="flex-1 text-left">
+                <div className="text-[13px] font-black">
+                  {pdfLoading ? 'LaTeX組版中…' : '高品質PDFで保存'}
+                </div>
+                <div className="text-[10px] text-white/60 mt-0.5">
+                  {pdfLoading ? 'しばらくお待ちください' : 'LaTeX組版 · 美しい数式印刷 · 問題+解答付き'}
+                </div>
+              </div>
+              {!pdfLoading && (
+                <svg className="w-4 h-4 text-white/50 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              )}
+              {pdfLoading && (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin flex-shrink-0" />
+              )}
+            </div>
           </button>
         )}
 
@@ -1792,6 +1865,9 @@ export default function PracticePage() {
         onScore={handleScore}
         onSkip={handleSkip}
         onQuit={handleQuit}
+        latexForPdf={latexForPdf}
+        onDownloadPdf={handleDownloadPdf}
+        pdfLoading={pdfLoading}
       />
     );
   }
@@ -1815,6 +1891,9 @@ export default function PracticePage() {
         subject={subject}
         onFinish={handleExamFinish}
         onQuit={handleQuit}
+        latexForPdf={latexForPdf}
+        onDownloadPdf={handleDownloadPdf}
+        pdfLoading={pdfLoading}
       />
     );
   }
