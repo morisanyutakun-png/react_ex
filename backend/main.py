@@ -5618,8 +5618,8 @@ E. TikZ 図はガイドラインのルールを必ず守り、コンパイルが
 - JSON形式での出力（必ず上記のマーカー形式で出力すること）
 - ```json や ```latex のコードフェンス（不要）
 - マーカー以外の余計なテキスト（挨拶・前置き・まとめ等）
-- TikZ コード内での \usepackage, \usetikzlibrary の記述（preamble済みのため不要）
-- セミコロンの欠落（全ての \draw, \fill, \node 文は ; で終わること）"""
+- TikZ コード内での \\usepackage, \\usetikzlibrary の記述（preamble済みのため不要）
+- セミコロンの欠落（全ての \\draw, \\fill, \\node 文は ; で終わること）"""
 
 
 def _parse_latex_problems(raw_text: str) -> list:
