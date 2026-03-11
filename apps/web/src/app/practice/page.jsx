@@ -651,10 +651,19 @@ function LoadingScreen({ subject, genMode, loadingStep }) {
 function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswer, onScore, onSkip, onQuit }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const stem = problem?.stem || problem?.text || problem?.question || '';
-  const answer = problem?.answer || problem?.solution || '';
-  const explanation = problem?.explanation || problem?.解説 || '';
   const topic = problem?.topic || problem?.metadata?.field || '';
   const diffLabel = EXAM_LEVELS.find((l) => l.value === (problem?.difficulty || problem?.metadata?.difficulty))?.label || '';
+  const hasFigure = problem?.figure_tikz && problem.figure_tikz !== 'null';
+
+  // subproblems 対応: なければ旧形式の answer/explanation からラップ
+  const subproblems = (() => {
+    const subs = problem?.subproblems;
+    if (Array.isArray(subs) && subs.length > 0) return subs;
+    const a = problem?.answer || problem?.solution || '';
+    const e = problem?.explanation || problem?.解説 || '';
+    if (a || e) return [{ label: '', question: '', answer: a, explanation: e }];
+    return [];
+  })();
 
   return (
     <div className="max-w-[480px] mx-auto px-5 pt-8 pb-20">
@@ -685,6 +694,9 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           {diffLabel && (
             <span className="text-[11px] text-[#94a3b8] font-medium bg-[#f8fafc] px-2 py-0.5 rounded-full">{diffLabel}</span>
           )}
+          {hasFigure && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">図あり</span>
+          )}
         </div>
         <ProgressBar current={index + (showAnswer ? 1 : 0.5)} total={total} accent={c.accent} />
       </div>
@@ -699,10 +711,32 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           </div>
           <span className="text-[11px] font-bold text-[#94a3b8] tracking-[0.06em] uppercase">問題</span>
         </div>
+
+        {/* 状況設定 */}
         {stem ? (
-          <LatexBlock className="text-[14px] leading-[2] text-[#1e293b]">{stem}</LatexBlock>
+          <LatexBlock className="text-[14px] leading-[2] text-[#1e293b] mb-4">{stem}</LatexBlock>
         ) : (
-          <p className="text-[13px] text-[#94a3b8]">問題文を読み込めませんでした</p>
+          <p className="text-[13px] text-[#94a3b8] mb-4">問題文を読み込めませんでした</p>
+        )}
+
+        {/* 小問リスト（答え表示前は問題文のみ） */}
+        {subproblems.length > 0 && (
+          <div className="space-y-3 border-t pt-4" style={{ borderColor: c.accent + '22' }}>
+            {subproblems.map((sp, idx) => (
+              <div key={idx}>
+                {(sp.label || sp.question) && (
+                  <div className="flex gap-2">
+                    {sp.label && (
+                      <span className="text-[13px] font-black shrink-0" style={{ color: c.accent }}>{sp.label}</span>
+                    )}
+                    {sp.question && (
+                      <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{sp.question}</LatexBlock>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
@@ -726,33 +760,43 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
         </div>
       ) : (
         <div className="animate-in fade-in slide-in-from-bottom-3 duration-400 space-y-4">
-          {/* 解答 */}
-          <div className="bg-white rounded-2xl border border-[#e2e8f0] p-6 shadow-md"
-               style={{ boxShadow: `0 4px 16px ${c.ring}` }}>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black text-white"
-                   style={{ background: c.accent }}>
-                A
-              </div>
-              <span className="text-[11px] font-bold tracking-[0.06em] uppercase" style={{ color: c.accent }}>解答</span>
-            </div>
-            {answer ? (
-              <LatexBlock className="text-[14px] leading-[2] text-[#1e293b]">{answer}</LatexBlock>
-            ) : (
-              <p className="text-[13px] text-[#94a3b8]">解答データなし</p>
-            )}
-          </div>
-
-          {/* 解説 */}
-          {explanation && (
-            <div className="bg-[#fafbff] rounded-2xl border border-[#e8eeff] p-6 shadow-sm">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-[#6366f1] text-[11px] font-black text-white">
-                  💡
+          {/* 解答・解説（小問ごと） */}
+          {subproblems.length > 0 ? (
+            <div className="space-y-4">
+              {subproblems.map((sp, idx) => (
+                <div key={idx} className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-md"
+                     style={{ boxShadow: `0 4px 16px ${c.ring}` }}>
+                  {/* 解答ヘッダー */}
+                  <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-[#f1f5f9]">
+                    <div className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black text-white"
+                         style={{ background: c.accent }}>
+                      A
+                    </div>
+                    <span className="text-[11px] font-black tracking-[0.05em] uppercase" style={{ color: c.accent }}>
+                      {sp.label ? `解答 ${sp.label}` : '解答'}
+                    </span>
+                  </div>
+                  {/* 解答値 */}
+                  {sp.answer && (
+                    <div className="px-5 pt-3 pb-2">
+                      <LatexBlock className="text-[14px] leading-[2] text-[#1e293b] font-semibold">{sp.answer}</LatexBlock>
+                    </div>
+                  )}
+                  {/* 解説 */}
+                  {sp.explanation && (
+                    <div className="px-5 pb-4 pt-1 border-t border-[#f1f5f9] bg-[#fafbff]">
+                      <div className="flex items-center gap-1.5 mb-2 pt-2">
+                        <span className="text-[10px] font-bold text-[#6366f1] tracking-[0.05em] uppercase">解説</span>
+                      </div>
+                      <LatexBlock className="text-[12px] leading-[1.85] text-[#475569]">{sp.explanation}</LatexBlock>
+                    </div>
+                  )}
                 </div>
-                <span className="text-[11px] font-bold text-[#6366f1] tracking-[0.06em] uppercase">解説</span>
-              </div>
-              <LatexBlock className="text-[13px] leading-[1.9] text-[#475569]">{explanation}</LatexBlock>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-[#e2e8f0] p-6 shadow-md text-[13px] text-[#94a3b8]">
+              解答データなし
             </div>
           )}
 
@@ -901,10 +945,17 @@ function ExamScreen({ problems, subject, onFinish, onQuit }) {
       <div className="space-y-5 mt-6">
         {problems.map((problem, idx) => {
           const stem = problem?.stem || problem?.text || problem?.question || '';
-          const answer = problem?.answer || problem?.solution || '';
-          const explanation = problem?.explanation || problem?.解説 || '';
           const topic = problem?.topic || problem?.metadata?.field || '';
           const scored = examScores[idx];
+          // subproblems 対応
+          const subproblems = (() => {
+            const subs = problem?.subproblems;
+            if (Array.isArray(subs) && subs.length > 0) return subs;
+            const a = problem?.answer || problem?.solution || '';
+            const e = problem?.explanation || problem?.解説 || '';
+            if (a || e) return [{ label: '', question: '', answer: a, explanation: e }];
+            return [];
+          })();
 
           return (
             <div key={idx} className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm transition-all duration-300"
@@ -922,36 +973,52 @@ function ExamScreen({ problems, subject, onFinish, onQuit }) {
                   </span>
                 )}
                 {scored && (
-                  <span className={`ml-auto text-[18px]`}>
+                  <span className="ml-auto text-[18px]">
                     {scored === SCORE.CORRECT ? '○' : scored === SCORE.WRONG ? '×' : '△'}
                   </span>
                 )}
               </div>
 
-              {/* 問題文 */}
-              <div className="px-5 pb-4">
-                <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{stem}</LatexBlock>
+              {/* 問題文 + 小問 */}
+              <div className="px-5 pb-4 space-y-2">
+                {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{stem}</LatexBlock>}
+                {subproblems.length > 1 && (
+                  <div className="space-y-1 border-t pt-2" style={{ borderColor: c.accent + '22' }}>
+                    {subproblems.map((sp, si) => sp.question ? (
+                      <div key={si} className="flex gap-1.5">
+                        {sp.label && <span className="text-[12px] font-black shrink-0" style={{ color: c.accent }}>{sp.label}</span>}
+                        <LatexBlock className="text-[12px] leading-[1.8] text-[#334155]">{sp.question}</LatexBlock>
+                      </div>
+                    ) : null)}
+                  </div>
+                )}
               </div>
 
               {/* 解答（試験終了後） */}
               {finished && (
                 <div className="border-t border-[#f1f5f9] px-5 py-4 bg-[#fafbff] space-y-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-black text-white"
-                         style={{ background: c.accent }}>A</div>
-                    <span className="text-[11px] font-bold" style={{ color: c.accent }}>解答</span>
-                  </div>
-                  <LatexBlock className="text-[13px] leading-[1.8] text-[#1e293b]">{answer}</LatexBlock>
-                  {explanation && (
-                    <details className="mt-2">
-                      <summary className="text-[11px] font-bold text-[#6366f1] cursor-pointer select-none hover:underline">
-                        💡 解説を見る
-                      </summary>
-                      <div className="mt-2 pl-2 border-l-2 border-[#e8eeff]">
-                        <LatexBlock className="text-[12px] leading-[1.8] text-[#475569]">{explanation}</LatexBlock>
+                  {subproblems.map((sp, si) => (
+                    <div key={si}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black text-white"
+                             style={{ background: c.accent }}>A</div>
+                        <span className="text-[10px] font-bold" style={{ color: c.accent }}>
+                          {sp.label ? `解答 ${sp.label}` : '解答'}
+                        </span>
                       </div>
-                    </details>
-                  )}
+                      {sp.answer && <LatexBlock className="text-[13px] leading-[1.8] text-[#1e293b] font-semibold">{sp.answer}</LatexBlock>}
+                      {sp.explanation && (
+                        <details className="mt-1">
+                          <summary className="text-[10px] font-bold text-[#6366f1] cursor-pointer select-none hover:underline">
+                            解説を見る
+                          </summary>
+                          <div className="mt-1.5 pl-2 border-l-2 border-[#e8eeff]">
+                            <LatexBlock className="text-[11px] leading-[1.75] text-[#475569]">{sp.explanation}</LatexBlock>
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  ))}
                   {/* 自己採点ボタン */}
                   <div className="flex gap-2 mt-3">
                     {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((sc) => {

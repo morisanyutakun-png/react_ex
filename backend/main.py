@@ -5376,121 +5376,341 @@ def _cleanup_old_practice_jobs():
 
 
 def _build_practice_system_prompt(subject: str, topics: list, difficulty: str, num_questions: int) -> str:
-    """受験生向け練習モード専用のシステムプロンプトを構築する。"""
+    """受験生向け練習モード専用のシステムプロンプトを構築する（高品質LaTeX・図付き・小問構造版）。"""
     topic_str = '、'.join(topics) if topics else '全分野'
-    return f"""あなたは大学受験の{subject}の問題作成のプロフェッショナルです。
-受験生が自学自習で使う練習問題を作成してください。
 
-【条件】
+    # ── 科目別 図描画ガイドライン（raw文字列でバックスラッシュ混乱を防ぐ） ──
+    if subject == '物理':
+        figure_guide = r"""
+【物理 TikZ 図のガイドライン】
+figure_tikz フィールドに、問題の物理的状況を TikZ または circuitikz で描画してください。
+tikzpicture（または circuitikz）環境のみ記述します（\documentclass 等は不要）。
+
+■ JSON 内バックスラッシュルール（絶対厳守）:
+  LaTeX の \begin{tikzpicture} → JSON 内では "\\begin{tikzpicture}"
+  LaTeX の \draw[thick]        → JSON 内では "\\draw[thick]"
+  LaTeX の \node               → JSON 内では "\\node"
+  LaTeX の \vec{F}             → JSON 内では "\\vec{F}"
+
+■ 必ず使うべき物理図パターン:
+
+1. 力学（斜面 + 物体 + 力の矢印）:
+"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.2]\n  \\draw[thick] (0,0) -- (4,0) -- (4,2) -- cycle;\n  \\draw[fill=gray!25,thick] (2.2,1.0) rectangle ++(0.55,0.55);\n  \\draw[->,red,very thick] (2.47,1.27) -- ++(0.8,0.4) node[right]{$N$};\n  \\draw[->,blue,very thick] (2.47,1.27) -- ++(0,-0.8) node[below]{$mg$};\n  \\draw[->,green!60!black,very thick] (2.47,1.27) -- ++(0.9,0) node[right]{$F$};\n  \\node[font=\\small] at (0.9,0.18) {$\\theta$};\n\\end{tikzpicture}"
+
+2. 力学（ばね-質量系）:
+"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.1]\n  \\draw[thick] (0,-0.4) -- (0,0.4);\n  \\draw[thick,decoration={coil,aspect=0.5,segment length=5pt,amplitude=6pt},decorate] (0,0) -- (2.5,0);\n  \\draw[fill=gray!30,thick] (2.5,-0.35) rectangle ++(0.7,0.7) node[midway]{$m$};\n  \\draw[<->,dashed] (2.5,-0.6) -- ++(0.7,0) node[midway,below,font=\\small]{$x$};\n\\end{tikzpicture}"
+
+3. 電磁気（電気回路 - circuitikz）:
+"figure_tikz": "\\begin{circuitikz}[scale=0.9]\n  \\draw (0,0) to[battery1,l_=$E$,invert] (0,2.5)\n    to[short] (1.5,2.5) to[R,l=$R_1$] (3,2.5)\n    to[R,l=$R_2$] (4.5,2.5) to[short] (4.5,0)\n    to[short] (0,0);\n  \\draw (1.5,2.5) to[C,l=$C$] (1.5,0);\n\\end{circuitikz}"
+
+4. 電磁気（平行板コンデンサー）:
+"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.0]\n  \\draw[very thick] (0,0) -- (0,2); \\draw[very thick] (1.5,0) -- (1.5,2);\n  \\node[left,font=\\small] at (0,1) {$+Q$}; \\node[right,font=\\small] at (1.5,1) {$-Q$};\n  \\draw[->] (0.3,1) -- (1.2,1) node[midway,above,font=\\small]{$E$};\n  \\draw[<->] (0,-0.3) -- (1.5,-0.3) node[midway,below,font=\\small]{$d$};\n\\end{tikzpicture}"
+
+5. 熱力学（P-V グラフ）:
+"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.1]\n  \\draw[->] (0,0) -- (3.8,0) node[right]{$V\\,[\\mathrm{m}^3]$};\n  \\draw[->] (0,0) -- (0,3.2) node[above]{$P\\,[\\mathrm{Pa}]$};\n  \\draw[thick,blue] (0.5,2.5) -- (2.5,2.5) node[above right,font=\\small]{A$\\to$B 等圧};\n  \\draw[thick,red] (2.5,2.5) -- (2.5,0.6) node[right,font=\\small]{B$\\to$C 等積};\n  \\draw[thick,domain=0.5:2.5,samples=40,green!60!black] plot (\\x, {1.25/\\x+0.1}) node[right,font=\\small]{C$\\to$A 断熱};\n  \\foreach \\p/\\lab in {(0.5,2.5)/A,(2.5,2.5)/B,(2.5,0.6)/C} { \\fill \\p circle (2pt); \\node[above right,font=\\small] at \\p {$\\lab$}; }\n\\end{tikzpicture}"
+
+6. 波動（波形グラフ）:
+"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.0]\n  \\draw[->] (0,0) -- (5.5,0) node[right]{$x\\,[\\mathrm{m}]$};\n  \\draw[->] (0,-1.4) -- (0,1.6) node[above]{$y\\,[\\mathrm{m}]$};\n  \\draw[thick,blue,domain=0:4.71,samples=120] plot (\\x, {1.2*sin(deg(\\x*4/3))});\n  \\draw[dashed] (0,1.2) -- (4.71,1.2) node[right,font=\\small]{$A$};\n  \\draw[<->] (0,-1.2) -- (3.14,-1.2) node[midway,below,font=\\small]{$\\lambda$};\n\\end{tikzpicture}"
+
+7. 力学（滑車系）:
+"figure_tikz": "\\begin{tikzpicture}[>=latex,scale=1.1]\n  \\draw[thick] (2,3) circle (0.3);\n  \\draw[thick] (0,2.5) rectangle ++(0.5,0.7) node[midway]{$m_1$};\n  \\draw[thick] (3.5,2.0) rectangle ++(0.5,0.7) node[midway]{$m_2$};\n  \\draw[thick] (0.25,3.2) -- (0.25,3) -- (1.7,3);\n  \\draw[thick] (2.3,3) -- (3.75,3) -- (3.75,2.7);\n  \\draw[thick] (1.7,2.7) -- (2.3,2.7);\n\\end{tikzpicture}"
+
+図が不要な純粋計算問題は "figure_tikz": null にしてください。
+"""
+    elif subject == '化学':
+        figure_guide = r"""
+【化学 TikZ 図のガイドライン】
+figure_tikz に chemfig（構造式）または tikzpicture で反応図・グラフを描画できます。
+純粋な計算問題では "figure_tikz": null にしてください。
+JSON 内バックスラッシュルール: LaTeX の \chemfig → JSON では "\\chemfig"
+"""
+    else:
+        figure_guide = r"""
+【図のガイドライン】
+figure_tikz に tikzpicture でグラフや概念図を描画できます（任意）。
+JSON 内バックスラッシュ: LaTeX の \draw → JSON では "\\draw"。不要な場合は null。
+"""
+
+    return f"""あなたは日本の大学受験{subject}の問題作成の最高権威です。
+センター試験・共通テスト・国公立大二次・早慶の過去問と完全に同等の品質で練習問題を作成してください。
+
+【生成条件】
 - 科目: {subject}
 - 分野: {topic_str}
 - 難易度: {difficulty}
-- 問題数: {num_questions}問
-
+- 問題数: {num_questions}問（各問題に小問 2〜3 問含む）
+{figure_guide}
 【出力ルール】
-1. 必ず以下のJSON形式のみで出力してください。JSON以外のテキスト（前置き・説明等）は一切出力しないでください。
-2. 数式はLaTeX記法で書いてください（インライン: $...$、ディスプレイ: $$...$$）。
-3. ★★★重要: JSON文字列内のバックスラッシュ(\\)は必ず二重にエスケープしてください。
-   例: \\frac → \\\\frac, \\sin → \\\\sin, \\theta → \\\\theta, \\begin → \\\\begin
-   $\\\\frac{{1}}{{2}}$ のように書いてください。$\\frac{{1}}{{2}}$ は不正です。
-4. 問題文（stem）は具体的で明確にしてください。
-5. 解答（answer）は最終的な答えを簡潔に記載してください。
-6. 解説（explanation）は解法の手順を段階的に示してください。受験生が「なぜそうなるか」を理解できるように。
-7. 各問題のtopicフィールドには、その問題が属する分野名を入れてください。
-8. difficultyフィールドには難易度を入れてください（{difficulty}）。
+1. 必ず以下の JSON 形式のみで出力してください。JSON 以外のテキストは一切出力しないでください。
+2. 数式は LaTeX 記法（インライン: $...$、ディスプレイ: $$...$$）で書いてください。
+3. ★★★絶対厳守: JSON 文字列内のバックスラッシュ(\\) は必ず \\\\ と二重に書くこと。
+   \\frac → \\\\frac, \\sin → \\\\sin, \\theta → \\\\theta, \\vec{{F}} → \\\\vec{{F}}
+   \\begin → \\\\begin, \\end → \\\\end, \\draw → \\\\draw
+   正しい: "$\\\\frac{{1}}{{2}}mv^2$"  誤り: "$\\frac{{1}}{{2}}mv^2$"（\\f は制御文字）
+4. stem（状況設定）は実際の入試問題と同等の詳細な条件を記載してください。
+   - 全ての数値・単位を明示（例: 質量 $m = 2.0\\,\\mathrm{{kg}}$, $g = 9.8\\,\\mathrm{{m/s^2}}$）
+   - 「ただし〜」「〜とする」の条件節を必ず入れる
+   - 物理法則の適用可否を明示する（例: 空気抵抗は無視する）
+5. figure_tikz: 物理的状況を TikZ で図示してください（上記ガイドライン参照）。
+   JSON 内では \\\\begin{{tikzpicture}}...\\\\end{{tikzpicture}} と書く。不要時は null。
+6. subproblems は誘導形式の小問配列（2〜3 問）にしてください。
+   各小問: label（"(1)"〜"(3)"）, question（小問文）, answer（解答値・式）, explanation（段階的解法）
+7. answer は数式で正確に（例: $v = \\\\sqrt{{2gh}} = 14\\,\\\\mathrm{{m/s}}$）。
+8. explanation は物理法則の適用 → 式変形 → 数値代入の順で段階的に記載。
+9. topic は具体的分野名（例: 力学・等加速度運動, 電磁気・コンデンサー回路）。
 
-【JSON形式】
+【JSON 形式】
 {{
   "problems": [
     {{
-      "stem": "問題文（LaTeX数式使用可。\\\\を二重にすること）",
-      "answer": "最終解答",
-      "explanation": "解法の手順と説明",
-      "topic": "分野名",
+      "stem": "詳細な状況設定（数値・単位・条件を全て明記）",
+      "figure_tikz": "\\\\begin{{tikzpicture}}[>=latex,scale=1.2]\\n  ...(TikZコード)...\\n\\\\end{{tikzpicture}} または null",
+      "subproblems": [
+        {{
+          "label": "(1)",
+          "question": "小問の問題文（基本的な問い）",
+          "answer": "$解答の式 = 数値\\,\\\\mathrm{{単位}}$",
+          "explanation": "\\\\textbf{{解法:}} 物理法則を適用 → 式変形 → 数値代入の順で詳細に説明"
+        }},
+        {{
+          "label": "(2)",
+          "question": "小問の問題文（(1)の結果を利用する応用問）",
+          "answer": "解答",
+          "explanation": "解法（段階的に）"
+        }},
+        {{
+          "label": "(3)",
+          "question": "小問の問題文（発展問）",
+          "answer": "解答",
+          "explanation": "解法"
+        }}
+      ],
+      "topic": "{topic_str}の具体的分野名",
       "difficulty": "{difficulty}"
     }}
   ]
 }}
 
-【バックスラッシュ二重化の例】
-正しい: "stem": "質量 $m$ の物体に力 $F = m \\\\cdot a$ が…"
-正しい: "answer": "$x = \\\\frac{{-b \\\\pm \\\\sqrt{{b^2 - 4ac}}}}{{2a}}$"
-誤り:   "stem": "力 $F = m \\cdot a$"（\\c はJSONで不正）"""
+【出題品質の絶対基準】
+A. 入試問題として成立すること: 設定に矛盾がなく、解答が一意に定まること
+B. 数値の美しさ: 計算結果が整数または簡単な分数になる値を選ぶこと
+   良い例: $m = 2.0\\,\\mathrm{{kg}}$, $v_0 = 5.0\\,\\mathrm{{m/s}}$, $g = 9.8\\,\\mathrm{{m/s^2}}$
+C. 誘導形式: (1)→(2)→(3) の順に難易度が上がり、前の答えを次に使う構造
+D. 物理では法則を明示: 運動方程式 $ma=F$, エネルギー保存 $\\\\frac{{1}}{{2}}mv^2 = mgh$,
+   運動量保存 $m_1v_1 + m_2v_2 = \\\\mathrm{{const}}$, ガウスの法則, ファラデーの法則 等
+E. 図は必ず描画: 物理問題は原則として figure_tikz を設定する（null は計算のみの場合）
+
+【バックスラッシュ二重化 最終確認】
+正しい: "stem": "質量 $m = 2.0\\\\,\\\\mathrm{{kg}}$ の物体が初速 $v_0 = 0$ から..."
+正しい: "answer": "$v = \\\\sqrt{{2 \\\\times 9.8 \\\\times 5.0}} \\\\approx 9.9\\\\,\\\\mathrm{{m/s}}$"
+正しい: "explanation": "運動方程式 $ma = mg\\\\sin\\\\theta - \\\\mu mg\\\\cos\\\\theta$ より..."
+誤り:   "stem": "力 $F = m \\cdot a$"（\\c はバックスペース制御文字でJSON破損）
+誤り:   "answer": "$v = \\frac{{v_0}}{{2}}$"（\\f はform feed制御文字でJSON破損）"""
 
 
 def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
-    """構造化された問題データから、教員モード品質のPDF用LaTeXドキュメントを構築する。"""
+    """構造化された問題データから、入試問題品質のPDF用LaTeXドキュメントを構築する。
+    subproblems 配列・figure_tikz フィールドに対応。旧形式（answer/explanation トップレベル）とも互換。
+    """
 
     # ─── 科目別アクセントカラー ───
     color_map = {
-        '物理': ('6D28D9', '8B5CF6'),   # violet
-        '数学': ('1D4ED8', '3B82F6'),   # blue
-        '化学': ('047857', '10B981'),   # emerald
+        '物理': ('4C1D95', '7C3AED'),   # deep violet
+        '数学': ('1E3A8A', '2563EB'),   # deep blue
+        '化学': ('065F46', '059669'),   # deep emerald
     }
     main_hex, accent_hex = color_map.get(subject, ('1A5276', '2563EB'))
 
+    # TikZ/circuitikz が必要かどうか判定
+    has_tikz = any(
+        p.get('figure_tikz') and str(p.get('figure_tikz', '')).strip() not in ('', 'null', 'None')
+        for p in problems
+    )
+    has_circuit = any(
+        'circuitikz' in str(p.get('figure_tikz', ''))
+        for p in problems
+    )
+
     lines = [
         r'\documentclass[a4paper,11pt]{ltjsarticle}',
-        r'\usepackage{amsmath,amssymb}',
+        r'\usepackage{amsmath,amssymb,mathtools}',
+        r'\usepackage{physics}',          # \qty, \dv, \pdv, \abs, \norm 等
+        r'\usepackage{siunitx}',          # \SI{9.8}{m/s^2} 等の単位表記
+        r'\sisetup{per-mode=symbol}',
         r'\usepackage{geometry}',
-        r'\geometry{margin=2cm}',
+        r'\geometry{top=2cm,bottom=2.5cm,left=2cm,right=2cm}',
         r'\usepackage{parskip}',
+        r'\setlength{\parskip}{0.5em}',
         r'\usepackage{fancyhdr}',
         r'\usepackage{titlesec}',
         r'\usepackage{xcolor}',
         r'\usepackage{enumitem}',
-        rf'\definecolor{{mainblue}}{{HTML}}{{{main_hex}}}',
+        r'\usepackage{tcolorbox}',
+        r'\tcbuselibrary{skins,breakable}',
+        r'\usepackage{mdframed}',
+        r'\usepackage{array,booktabs}',   # 美しい表
+    ]
+
+    if has_tikz or True:   # 常に TikZ を読み込む（問題文内でも使われる可能性）
+        lines += [
+            r'\usepackage{tikz}',
+            r'\usetikzlibrary{arrows.meta,patterns,decorations.pathmorphing,decorations.markings,',
+            r'  calc,angles,quotes,shapes.geometric,positioning,3d,perspective}',
+            r'\usepackage{pgfplots}',
+            r'\pgfplotsset{compat=1.18}',
+        ]
+    if has_circuit or True:   # circuitikz も常に読み込む
+        lines += [
+            r'\usepackage{circuitikz}',
+            r'\ctikzset{resistors/scale=0.8,capacitors/scale=0.8,sources/scale=0.9}',
+        ]
+
+    lines += [
+        rf'\definecolor{{maincolor}}{{HTML}}{{{main_hex}}}',
         rf'\definecolor{{accentcolor}}{{HTML}}{{{accent_hex}}}',
-        r'\definecolor{rulecolor}{HTML}{2C3E50}',
+        r'\definecolor{answerbox}{HTML}{F0F4FF}',
+        r'\definecolor{explanbox}{HTML}{FAFFF4}',
+        r'\definecolor{rulegray}{HTML}{475569}',
+        '',
         r'\pagestyle{fancy}\fancyhf{}',
-        r'\renewcommand{\headrulewidth}{0.8pt}',
-        r'\renewcommand{\headrule}{\hbox to\headwidth{\color{mainblue}\leaders\hrule height \headrulewidth\hfill}}',
-        rf'\fancyhead[L]{{\small\color{{mainblue}}\textsf{{\textbf{{{subject} 練習問題}}}}}}',
-        r'\fancyhead[R]{\small\color{mainblue}\textsf{\thepage}}',
-        r'\setlength{\headheight}{14pt}',
-        r'\titleformat{\section}{\Large\bfseries\color{mainblue}}{}{0em}{}[\vspace{-0.5em}{\color{mainblue}\rule{\linewidth}{0.4pt}}]',
+        r'\renewcommand{\headrulewidth}{1.2pt}',
+        r'\renewcommand{\headrule}{\hbox to\headwidth{\color{maincolor}\leaders\hrule height\headrulewidth\hfill}}',
+        rf'\fancyhead[L]{{\small\color{{maincolor}}\textsf{{\textbf{{{subject} 練習問題 \textbar\ {difficulty}}}}}}}',
+        r'\fancyhead[R]{\small\color{maincolor}\textsf{\thepage}}',
+        r'\fancyfoot[C]{\small\color{rulegray}\textsf{AI 生成練習問題 — 自己採点用}}',
+        r'\setlength{\headheight}{16pt}',
+        '',
+        r'% ── セクション書式 ──',
+        r'\titleformat{\section}{\Large\bfseries\color{maincolor}}{}{0em}{}[{\color{maincolor}\rule{\linewidth}{0.6pt}}]',
         r'\titleformat{\subsection}{\large\bfseries\color{accentcolor}}{}{0em}{}',
-        r'\newcommand{\problem}[1]{\subsection*{\textcolor{accentcolor}{\textbf{問題 #1}}}}',
-        r'\newcommand{\answer}[1]{\noindent{\color{rulecolor}\rule{\linewidth}{0.4pt}}\subsection*{\textcolor{accentcolor}{問題 #1 の解答}}}',
+        '',
+        r'% ── カスタムコマンド ──',
+        # 問題番号ボックス
+        r'\newcommand{\problembox}[2]{%',
+        r'  \noindent\begin{tcolorbox}[enhanced,colback=maincolor!6,colframe=maincolor,',
+        r'    arc=3pt,left=6pt,right=6pt,top=4pt,bottom=4pt,breakable,',
+        r'    title={\bfseries\color{white} 問題\ #1\quad\normalfont\small\color{white!85!maincolor}【#2】},',
+        r'    coltitle=white,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
+        r'    boxed title style={colback=maincolor,arc=2pt}]}',
+        # 解答・解説ボックス
+        r'\newcommand{\solutionbox}[2]{%',
+        r'  \noindent\begin{tcolorbox}[enhanced,colback=answerbox,colframe=accentcolor!60,',
+        r'    arc=3pt,left=6pt,right=6pt,top=4pt,bottom=4pt,breakable,',
+        r'    title={\bfseries\color{accentcolor} 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】},',
+        r'    coltitle=accentcolor,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
+        r'    boxed title style={colback=answerbox,colframe=accentcolor!60,arc=2pt}]}',
+        # 小問ラベル
+        r'\newcommand{\subq}[1]{\medskip\noindent\textcolor{accentcolor}{\textbf{#1}}\ }',
+        r'\newcommand{\suba}[1]{\noindent\textcolor{accentcolor!80!black}{\textbf{#1}}\ }',
+        # 答えの枠線
+        r'\newcommand{\ansline}{\vspace{0.3em}\noindent\textcolor{accentcolor!40}{\rule{\linewidth}{0.4pt}}\vspace{0.2em}}',
         '',
         r'\begin{document}',
-        r'\setlength{\parskip}{0.6em}',
         '',
-        rf'\section*{{\textcolor{{mainblue}}{{{subject} 練習問題（{difficulty}）}}}}',
+        rf'\begin{{center}}',
+        rf'  {{\Large\bfseries\color{{maincolor}} {subject} 練習問題}} \\[4pt]',
+        rf'  {{\normalsize\color{{rulegray}} 難易度: {difficulty}\quad|\quad AI 生成}}',
+        rf'\end{{center}}',
+        r'\medskip',
+        r'\noindent{\color{maincolor}\rule{\linewidth}{1.2pt}}',
+        r'\bigskip',
         '',
     ]
 
     # ─── 問題セクション ───
+    lines.append(r'\section*{\textcolor{maincolor}{問題}}')
+    lines.append('')
+
     for i, p in enumerate(problems, 1):
         stem = p.get('stem') or ''
         topic = p.get('topic') or ''
-        topic_label = rf'\hfill{{\small\color{{mainblue}}【{topic}】}}' if topic else ''
-        lines.append(rf'\problem{{{i}}}{topic_label}')
-        lines.append('')
-        lines.append(stem)
-        lines.append(r'\vspace{0.8em}')
+        figure_tikz = p.get('figure_tikz') or ''
+        subproblems = p.get('subproblems') or []
+
+        # 旧形式との互換: subproblemsがない場合は answer/explanation をラップ
+        if not subproblems:
+            old_answer = p.get('answer') or ''
+            old_explanation = p.get('explanation') or ''
+            if old_answer or old_explanation:
+                subproblems = [{'label': '(1)', 'question': '', 'answer': old_answer, 'explanation': old_explanation}]
+
+        # 問題ボックス開始
+        lines.append(rf'\problembox{{{i}}}{{{topic}}}')
         lines.append('')
 
+        # 状況説明文
+        if stem:
+            lines.append(stem)
+            lines.append('')
+
+        # 図（figure_tikz）
+        if figure_tikz and str(figure_tikz).strip() not in ('', 'null', 'None'):
+            lines.append(r'\begin{center}')
+            lines.append(str(figure_tikz).strip())
+            lines.append(r'\end{center}')
+            lines.append('')
+
+        # 小問
+        for sp in subproblems:
+            label = sp.get('label', '')
+            question = sp.get('question', '')
+            if question:
+                lines.append(rf'\subq{{{label}}} {question}')
+                lines.append('')
+            # 解答欄の罫線
+            lines.append(r'\ansline')
+            lines.append('')
+
+        # 問題ボックス終了
+        lines.append(r'\end{tcolorbox}')
+        lines.append(r'\medskip')
+        lines.append('')
+
+    # ─── 解答・解説セクション（改ページ後） ───
     lines.append(r'\newpage')
     lines.append('')
-    lines.append(r'\section*{\textcolor{mainblue}{解答・解説}}')
+    lines.append(r'\section*{\textcolor{maincolor}{解答・解説}}')
     lines.append('')
 
-    # ─── 解答セクション ───
     for i, p in enumerate(problems, 1):
-        answer = p.get('answer') or ''
-        explanation = p.get('explanation') or ''
-        lines.append(rf'\answer{{{i}}}')
+        stem = p.get('stem') or ''
+        topic = p.get('topic') or ''
+        subproblems = p.get('subproblems') or []
+
+        if not subproblems:
+            old_answer = p.get('answer') or ''
+            old_explanation = p.get('explanation') or ''
+            if old_answer or old_explanation:
+                subproblems = [{'label': '(1)', 'question': '', 'answer': old_answer, 'explanation': old_explanation}]
+
+        lines.append(rf'\solutionbox{{{i}}}{{{topic}}}')
         lines.append('')
-        if answer:
-            lines.append(r'\paragraph{\textcolor{accentcolor}{解答}}')
-            lines.append(answer)
+
+        # 問題の要約（最初の50文字）
+        if stem:
+            stem_snip = stem[:80] + ('…' if len(stem) > 80 else '')
+            lines.append(rf'{{\small\color{{rulegray}}\textit{{設定: {stem_snip}}}}}')
             lines.append('')
-        if explanation:
-            lines.append(r'\paragraph{\textcolor{accentcolor}{解説}}')
-            lines.append(explanation)
+
+        for sp in subproblems:
+            label = sp.get('label', '')
+            answer = sp.get('answer', '')
+            explanation = sp.get('explanation', '')
+
+            if answer:
+                lines.append(rf'\noindent\colorbox{{accentcolor!10}}{{\textbf{{\textcolor{{accentcolor}}{{{label} 解答:}}}}}} {answer}')
+                lines.append('')
+            if explanation:
+                lines.append(rf'\noindent\textbf{{\textcolor{{accentcolor!70!black}}{{\small 解説}}}}')
+                lines.append('')
+                lines.append(rf'\noindent{{\small {explanation}}}')
+                lines.append('')
+            lines.append(r'\ansline')
             lines.append('')
-        lines.append(r'\vspace{0.8em}')
+
+        lines.append(r'\end{tcolorbox}')
+        lines.append(r'\medskip')
+        lines.append('')
 
     lines.append(r'\end{document}')
     return '\n'.join(lines)
