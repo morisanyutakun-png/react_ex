@@ -1655,26 +1655,26 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
           <div className="flex-1 min-h-0 flex flex-col">
             {/* 問題/解答 切り替えタブ（解答公開後のみ表示） */}
             {answersRevealed && answerPdfUrl && answerPdfUrl !== '__failed__' && (
-              <div className="flex-shrink-0 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#f8fafc] border-b border-[#e2e8f0]">
+              <div className="flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border-b-2 shadow-sm" style={{ borderColor: c.accent + '40' }}>
                 <button
                   type="button"
                   onClick={() => setViewingAnswer(false)}
-                  className="px-3 py-1 rounded-lg text-[11px] font-bold transition-all duration-150"
+                  className="px-5 py-2 rounded-xl text-[13px] font-black transition-all duration-200 shadow-sm"
                   style={!viewingAnswer
-                    ? { background: c.accent, color: 'white' }
-                    : { background: 'transparent', color: '#64748b' }}
+                    ? { background: c.accent, color: 'white', boxShadow: `0 2px 8px ${c.accent}44` }
+                    : { background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }}
                 >
-                  問題
+                  📝 問題
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewingAnswer(true)}
-                  className="px-3 py-1 rounded-lg text-[11px] font-bold transition-all duration-150"
+                  className="px-5 py-2 rounded-xl text-[13px] font-black transition-all duration-200 shadow-sm"
                   style={viewingAnswer
-                    ? { background: c.accent, color: 'white' }
-                    : { background: 'transparent', color: '#64748b' }}
+                    ? { background: c.accent, color: 'white', boxShadow: `0 2px 8px ${c.accent}44` }
+                    : { background: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }}
                 >
-                  解答・解説
+                  📖 解答・解説
                 </button>
               </div>
             )}

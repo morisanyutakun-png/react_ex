@@ -6237,8 +6237,9 @@ def _sanitize_figure_tikz(code: str) -> str:
             fixed.append(s)
             continue
         if re.match(r'\s*\\(draw|fill|node|path|coordinate|clip)\b', s):
-            # 行末が ; / { / } / , / % / \\ でなければ ; を追加
-            if s and s[-1] not in (';', '{', '}', ',', '%') and not s.endswith('\\\\'):
+            # 行末が ; / { / } / , / % / \\ / ] でなければ ; を追加
+            # ] は多行の \draw[...オプション...]\n (座標...) パターンで行末に来る
+            if s and s[-1] not in (';', '{', '}', ',', '%', ']') and not s.endswith('\\\\'):
                 s += ';'
         fixed.append(s)
     code = '\n'.join(fixed)
@@ -6490,34 +6491,6 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             lines.append(r'\medskip')
             lines.append('')
 
-        # ─── 自己採点表（problems モードのみ） ───
-        if mode == 'problems':
-            lines.append(r'\bigskip')
-            lines.append(r'\noindent{\color{maincolor}\rule{\linewidth}{0.6pt}}')
-            lines.append(r'\section*{\textcolor{maincolor}{自己採点表}}')
-            lines.append('')
-            # テーブル構築
-            lines.append(r'\begin{center}')
-            lines.append(r'\renewcommand{\arraystretch}{1.6}')
-            lines.append(r'\begin{tabular}{|c|c|c|c|c|}')
-            lines.append(r'\hline')
-            lines.append(r'\rowcolor{maincolor!10} \textbf{問題} & \textbf{小問} & \textbf{配点} & \textbf{○/×} & \textbf{得点} \\')
-            lines.append(r'\hline')
-            grand_total = 0
-            for i, p in enumerate(problems, 1):
-                subproblems_sc = _normalize_subproblems(p)
-                for sp in subproblems_sc:
-                    label = sp.get('label', '')
-                    pts = sp.get('points', 0)
-                    grand_total += pts
-                    lines.append(f'{i} & {label} & {pts}点 & \\hspace{{1.5cm}} & \\hspace{{1.5cm}} \\\\')
-                    lines.append(r'\hline')
-            lines.append(f'\\multicolumn{{2}}{{|c|}}{{\\textbf{{合計}}}} & \\textbf{{{grand_total}点}} & & \\\\')
-            lines.append(r'\hline')
-            lines.append(r'\end{tabular}')
-            lines.append(r'\end{center}')
-            lines.append('')
-
     # ─── 解答・解説セクション ───
     if mode in ('full', 'answers'):
         if mode == 'full':
@@ -6572,6 +6545,33 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             lines.append(r'\end{solutionbox}')
             lines.append(r'\medskip')
             lines.append('')
+
+    # ─── 自己採点表（解答解説の後に配置） ───
+    if mode in ('full', 'answers'):
+        lines.append(r'\bigskip')
+        lines.append(r'\noindent{\color{maincolor}\rule{\linewidth}{0.6pt}}')
+        lines.append(r'\section*{\textcolor{maincolor}{自己採点表}}')
+        lines.append('')
+        lines.append(r'\begin{center}')
+        lines.append(r'\renewcommand{\arraystretch}{1.6}')
+        lines.append(r'\begin{tabular}{|c|c|c|c|c|}')
+        lines.append(r'\hline')
+        lines.append(r'\rowcolor{maincolor!10} \textbf{問題} & \textbf{小問} & \textbf{配点} & \textbf{○/×} & \textbf{得点} \\')
+        lines.append(r'\hline')
+        grand_total = 0
+        for i, p in enumerate(problems, 1):
+            subproblems_sc = _normalize_subproblems(p)
+            for sp in subproblems_sc:
+                label = sp.get('label', '')
+                pts = sp.get('points', 0)
+                grand_total += pts
+                lines.append(f'{i} & {label} & {pts}点 & \\hspace{{1.5cm}} & \\hspace{{1.5cm}} \\\\')
+                lines.append(r'\hline')
+        lines.append(f'\\multicolumn{{2}}{{|c|}}{{\\textbf{{合計}}}} & \\textbf{{{grand_total}点}} & & \\\\')
+        lines.append(r'\hline')
+        lines.append(r'\end{tabular}')
+        lines.append(r'\end{center}')
+        lines.append('')
 
     lines.append(r'\end{document}')
     return '\n'.join(lines)
