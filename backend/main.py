@@ -6166,11 +6166,21 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'  title={\bfseries\color{accentcolor} 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】},',
         r'  coltitle=accentcolor,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
         r'  boxed title style={colback=answerbox,colframe=accentcolor!60,arc=2pt}}',
-        # 小問ラベル — \par で前のパラグラフを確実に終了してから改行
-        r'\newcommand{\subq}[1]{\par\medskip\noindent\textcolor{accentcolor}{\textbf{#1}}\\\relax}',
-        r'\newcommand{\suba}[1]{\par\smallskip\noindent\textcolor{accentcolor!80!black}{\textbf{#1}}\\\relax}',
+        # 小問ラベル — \par で前のパラグラフを確実に終了
+        r'\newcommand{\subq}[1]{\par\medskip\noindent\textcolor{accentcolor}{\textbf{#1}}\ }',
+        r'\newcommand{\suba}[1]{\par\smallskip\noindent\textcolor{accentcolor!80!black}{\textbf{#1}}\ }',
         # 答えの枠線 — \par で確実に段落を閉じてから罫線
         r'\newcommand{\ansline}{\par\vspace{0.3em}\noindent\textcolor{accentcolor!40}{\rule{\linewidth}{0.4pt}}\vspace{0.2em}}',
+        # 解答セクション用の色付きボックス
+        r'\newtcolorbox{ansblock}{enhanced,colback=accentcolor!4,colframe=accentcolor!35,',
+        r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
+        r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
+        r'\newtcolorbox{expblock}{enhanced,colback=green!3!white,colframe=green!30!black!20,',
+        r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
+        r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
+        r'\newtcolorbox{scrblock}{enhanced,colback=maincolor!4,colframe=maincolor!30,',
+        r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
+        r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
         '',
         r'\begin{document}',
         # LuaTeX-Ja: 本文内で和欧文間スペースを設定（プリアンブルより安全）
@@ -6248,20 +6258,14 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                     lines.append(r'\end{center}')
                     lines.append('')
 
-            # 小問 — 各小問を \subq ラベル + 改行 + 問題文 で出力
+            # 小問 — 各小問を \subq ラベル + 問題文 で1行出力
             for sp in subproblems:
                 label = sp.get('label', '')
                 question = _sanitize_practice_text(sp.get('question', ''))
                 points = sp.get('points', 0)
                 pts_str = f' \\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
-                # \subq{(N)} はラベル行を出力して \\ で改行する
-                lines.append(rf'\subq{{{label}}}')
-                if question:
-                    lines.append(f'{question}{pts_str}')
-                    lines.append('')
-                elif points:
-                    lines.append(f'{pts_str}')
-                    lines.append('')
+                lines.append(rf'\subq{{{label}}} {question}{pts_str}')
+                lines.append('')
                 # 解答欄の罫線
                 lines.append(r'\ansline')
                 lines.append('')
@@ -6331,24 +6335,23 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
 
                 if answer:
                     lines.append(rf'\par\medskip\noindent\colorbox{{accentcolor!10}}{{\textbf{{\textcolor{{accentcolor}}{{{label} 解答:}}}}}}{pts_str}')
-                    lines.append('')
-                    lines.append(rf'\noindent {answer}')
-                    lines.append('')
+                    lines.append(r'\begin{ansblock}')
+                    lines.append(rf'{answer}')
+                    lines.append(r'\end{ansblock}')
                 if explanation:
                     lines.append(rf'\par\smallskip\noindent\textbf{{\textcolor{{accentcolor!70!black}}{{\small 解説}}}}')
-                    lines.append('')
-                    lines.append(rf'\noindent{{\small {explanation}}}')
-                    lines.append('')
+                    lines.append(r'\begin{expblock}')
+                    lines.append(rf'{{\small {explanation}}}')
+                    lines.append(r'\end{expblock}')
                 if scoring_criteria:
                     lines.append(rf'\par\smallskip\noindent\colorbox{{maincolor!8}}{{\textbf{{\textcolor{{maincolor}}{{\small 配点基準}}}}}}')
-                    lines.append('')
+                    lines.append(r'\begin{scrblock}')
                     # 各行を箇条書き風に整形
                     for sc_line in scoring_criteria.split('\n'):
                         sc_line = sc_line.strip()
                         if sc_line:
-                            lines.append(rf'\noindent{{\small\color{{maincolor!80!black}} {sc_line}}}')
-                    lines.append('')
-                lines.append(r'\ansline')
+                            lines.append(rf'{{\small\color{{maincolor!80!black}} {sc_line}}}')
+                    lines.append(r'\end{scrblock}')
                 lines.append('')
 
             lines.append(r'\end{solutionbox}')
