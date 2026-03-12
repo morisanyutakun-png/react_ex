@@ -5745,7 +5745,20 @@ $v = \\sqrt{{2gh}} = 9.9\\,\\mathrm{{m/s}}$
 - (1)→(2)→(3) の誘導形式、前問の結果を次問で使う
 - TikZ: 全文は ; で終わる、\\usepackage/\\usetikzlibrary は書かない
 
-【禁止】JSON出力禁止 / コードフェンス禁止 / 余分なテキスト禁止 / %%% を本文中に使用禁止"""
+【★★★ LaTeX コンパイルを確実にするための絶対ルール ★★★】
+1. \\documentclass, \\usepackage, \\begin{{document}}, \\end{{document}} は絶対に書かない（preambleは自動付加される）
+2. \\newcommand, \\renewcommand, \\def は絶対に使わない
+3. \\textbf, \\textit, \\textcolor, \\colorbox, \\fbox 等の書式コマンドは使わない（プレーンテキスト＋数式のみ）
+4. \\begin{{itemize}}, \\begin{{enumerate}}, \\begin{{description}} は使わない（問題文はプレーンテキストで書く）
+5. \\noindent, \\vspace, \\hspace, \\medskip, \\bigskip 等のレイアウトコマンドは使わない
+6. 数式モード内で \\text{{}} の代わりに \\mathrm{{}} を使う
+7. \\left と \\right は必ずペアで使う。\\left{{ は \\left\\{{ と書く
+8. 分数 \\frac{{}}{{}} の中身は空にしない
+9. tikzpicture は %%% FIGURE %%% 内のみ。本文中に tikzpicture を書かない
+10. 解説・解答のテキストは自然な日本語の文章として書く（LaTeXコマンドで装飾しない）
+
+【禁止】JSON出力禁止 / コードフェンス禁止 / 余分なテキスト禁止 / %%% を本文中に使用禁止
+絶対に \\documentclass, \\begin{{document}}, \\end{{document}}, \\usepackage を出力に含めないこと。"""
 
 
 def _parse_latex_problems(raw_text: str) -> list:
@@ -5838,6 +5851,29 @@ def _parse_latex_problems(raw_text: str) -> list:
         })
 
     return problems
+
+
+def _sanitize_practice_text(text: str) -> str:
+    """LLM出力のテキスト（stem/answer/explanation）からコンパイル破壊要素を除去する。"""
+    if not text:
+        return text
+    # \documentclass, \usepackage, \begin{document}, \end{document} を除去
+    text = re.sub(r'\\documentclass\b[^\n]*\n?', '', text)
+    text = re.sub(r'\\usepackage\b[^\n]*\n?', '', text)
+    text = re.sub(r'\\begin\{document\}', '', text)
+    text = re.sub(r'\\end\{document\}', '', text)
+    text = re.sub(r'\\usetikzlibrary\b[^\n]*\n?', '', text)
+    # \newcommand, \renewcommand, \def を除去（定義行全体）
+    text = re.sub(r'\\(?:re)?newcommand\b[^\n]*\n?', '', text)
+    text = re.sub(r'\\def\\[a-zA-Z]+[^\n]*\n?', '', text)
+    # 空の \frac{}{} を除去
+    text = re.sub(r'\\frac\s*\{\s*\}\s*\{\s*\}', '', text)
+    # \left{ → \left\{  /  \right} → \right\}
+    text = re.sub(r'\\left\{', r'\\left\\{', text)
+    text = re.sub(r'\\right\}', r'\\right\\}', text)
+    # $$...$$ → \[...\]
+    text = re.sub(r'\$\$([\s\S]*?)\$\$', r'\\[\1\\]', text)
+    return text
 
 
 def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: str = 'full') -> str:
@@ -5982,7 +6018,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         lines.append('')
 
         for i, p in enumerate(problems, 1):
-            stem = p.get('stem') or ''
+            stem = _sanitize_practice_text(p.get('stem') or '')
             topic = p.get('topic') or ''
             figure_tikz = p.get('figure_tikz') or ''
             subproblems = _normalize_subproblems(p)
@@ -6007,7 +6043,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             # 小問
             for sp in subproblems:
                 label = sp.get('label', '')
-                question = sp.get('question', '')
+                question = _sanitize_practice_text(sp.get('question', ''))
                 points = sp.get('points', 0)
                 pts_str = f'\\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
                 if question:
@@ -6062,7 +6098,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         lines.append('')
 
         for i, p in enumerate(problems, 1):
-            stem = p.get('stem') or ''
+            stem = _sanitize_practice_text(p.get('stem') or '')
             topic = p.get('topic') or ''
             subproblems = _normalize_subproblems(p)
 
@@ -6077,8 +6113,8 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
 
             for sp in subproblems:
                 label = sp.get('label', '')
-                answer = sp.get('answer', '')
-                explanation = sp.get('explanation', '')
+                answer = _sanitize_practice_text(sp.get('answer', ''))
+                explanation = _sanitize_practice_text(sp.get('explanation', ''))
                 points = sp.get('points', 0)
                 pts_str = f' \\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
 

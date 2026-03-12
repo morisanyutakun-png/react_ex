@@ -512,13 +512,20 @@ export default function App() {
         {/* ══ HOME ダッシュボード ══ */}
         {screen === 'home' && (
           <div className="home-screen anim-fade-up">
-            <div className="home-hero">
+            <div className="home-hero physics-home-hero">
               <div className="home-hero-bg" />
               <div className="home-hero-content">
+                <div className="home-hero-badge">⚛️ 物理特化AI</div>
                 <div className="home-hero-greeting">{new Date().getHours() < 12 ? 'おはよう' : new Date().getHours() < 18 ? 'こんにちは' : 'おつかれさま'}、受験生。</div>
                 <div className="home-hero-motivation">{getTodayMotivation()}</div>
-                <button className="btn btn-hero" onClick={startPractice}><Ico.Play /> 演習を始める</button>
+                <button className="btn btn-hero" onClick={startPractice}><Ico.Play /> 今すぐ物理を解く</button>
               </div>
+            </div>
+
+            <div className="physics-tagline">
+              <div className="physics-tagline-title">🎯 物理で差をつけろ。</div>
+              <div className="physics-tagline-desc">力学・電磁気・波動・熱力学 — AIが君だけの類題を無限に生成。<br/>1日5分のスキマ演習で偏差値を上げる。</div>
+              <div className="physics-topic-pills"><span>⚡ 力学</span><span>🧲 電磁気</span><span>🌊 波動</span><span>🔥 熱力学</span><span>🔬 原子</span></div>
             </div>
 
             <div className="streak-card">
@@ -542,6 +549,22 @@ export default function App() {
               <div className="level-progress-label">{level.progress < 100 ? `次のランクまで あと ${level.nextXp - stats.xp} XP` : '最高ランク到達！'}</div>
             </div>
 
+            {/* 学習履歴・採点履歴へのアクセス */}
+            <div className="home-quick-links">
+              <button className="home-quick-link-btn" onClick={() => { setScreen('history'); setHistory(loadHistory()) }}>
+                <span className="home-quick-link-icon">🕐</span>
+                <span className="home-quick-link-text">生成履歴を見る</span>
+                <span className="home-quick-link-arrow">→</span>
+              </button>
+              {(stats.scoreHistory || []).length > 0 && (
+                <button className="home-quick-link-btn" onClick={() => { setScreen('history'); setHistory(loadHistory()) }}>
+                  <span className="home-quick-link-icon">📊</span>
+                  <span className="home-quick-link-text">採点履歴を確認</span>
+                  <span className="home-quick-link-arrow">→</span>
+                </button>
+              )}
+            </div>
+
             <div className="section-card"><div className="section-card-header"><Ico.BarChart /><span>今週の演習量</span></div><WeeklyActivity weeklyActivity={stats.weeklyActivity} /></div>
 
             {Object.keys(stats.subjectBreakdown).length > 0 && (
@@ -555,12 +578,6 @@ export default function App() {
                 </div>
               </div>
             )}
-
-            <div className="section-card shareable-section">
-              <div className="section-card-header"><Ico.Camera /><span>努力の証明カード</span></div>
-              <p className="shareable-instruction">スクショしてSNSでシェアしよう！</p>
-              <ShareableCard stats={stats} level={level} />
-            </div>
 
             {(stats.scoreHistory || []).length > 0 && (
               <div className="section-card">
@@ -579,6 +596,12 @@ export default function App() {
                 </div>
               </div>
             )}
+
+            <div className="section-card shareable-section">
+              <div className="section-card-header"><Ico.Camera /><span>努力の証明カード</span></div>
+              <p className="shareable-instruction">スクショしてSNSでシェアしよう！</p>
+              <ShareableCard stats={stats} level={level} />
+            </div>
 
             {stats.sessionLog?.length > 0 && (
               <div className="section-card">
@@ -753,85 +776,7 @@ export default function App() {
                 </div>
                 <div className="completion-streak"><span className="completion-streak-fire">🔥</span><span>{stats.currentStreak}日連続</span>{stats.currentStreak > 1 && <span className="completion-streak-bonus">継続ボーナス！</span>}</div>
 
-                {/* ── 自己採点セクション ── */}
-                {parsedProblems.length > 0 && (() => {
-                  const allSubs = []
-                  parsedProblems.forEach((p, pi) => {
-                    const subs = p.subproblems || []
-                    subs.forEach((sp, si) => allSubs.push({ pi, si, label: sp.label || `(${si+1})`, points: sp.points || 0, topic: p.topic || '' }))
-                  })
-                  const maxPoints = allSubs.reduce((s, x) => s + x.points, 0)
-                  const earnedPoints = allSubs.reduce((s, x) => {
-                    const key = `${x.pi}-${x.si}`
-                    return s + (subScores[key] === 'correct' ? x.points : subScores[key] === 'partial' ? Math.floor(x.points / 2) : 0)
-                  }, 0)
-                  const allScored = allSubs.length > 0 && allSubs.every(x => subScores[`${x.pi}-${x.si}`])
-                  const pct = maxPoints > 0 ? Math.round((earnedPoints / maxPoints) * 100) : 0
-                  const scoreSubmitted = subScores._submitted
-                  return (
-                    <div className="scoring-section">
-                      <div className="scoring-header">📝 自己採点</div>
-                      <div className="scoring-table">
-                        {parsedProblems.map((p, pi) => (
-                          <div key={pi} className="scoring-problem">
-                            <div className="scoring-problem-title">問題 {pi+1}{p.topic ? ` — ${p.topic}` : ''}</div>
-                            {(p.subproblems || []).map((sp, si) => {
-                              const key = `${pi}-${si}`
-                              const pts = sp.points || 0
-                              return (
-                                <div key={key} className="scoring-row">
-                                  <span className="scoring-label">{sp.label || `(${si+1})`}</span>
-                                  <span className="scoring-pts">{pts}点</span>
-                                  <div className="scoring-btns">
-                                    <button className={`score-btn score-correct${subScores[key]==='correct'?' active':''}`} onClick={() => setSubScores(s => ({...s, [key]: s[key]==='correct'?undefined:'correct'}))} disabled={scoreSubmitted}>○</button>
-                                    <button className={`score-btn score-partial${subScores[key]==='partial'?' active':''}`} onClick={() => setSubScores(s => ({...s, [key]: s[key]==='partial'?undefined:'partial'}))} disabled={scoreSubmitted}>△</button>
-                                    <button className={`score-btn score-wrong${subScores[key]==='wrong'?' active':''}`} onClick={() => setSubScores(s => ({...s, [key]: s[key]==='wrong'?undefined:'wrong'}))} disabled={scoreSubmitted}>×</button>
-                                  </div>
-                                  <span className="scoring-earned">
-                                    {subScores[key] === 'correct' ? pts : subScores[key] === 'partial' ? Math.floor(pts/2) : subScores[key] === 'wrong' ? 0 : '-'}
-                                  </span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        ))}
-                      </div>
-                      <div className={`scoring-total ${pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : allScored ? 'needs-work' : ''}`}>
-                        <span>合計: {earnedPoints} / {maxPoints} 点</span>
-                        {allScored && <span className="scoring-pct">({pct}%)</span>}
-                      </div>
-                      {allScored && !scoreSubmitted && (
-                        <button className="btn btn-primary btn-block" onClick={() => {
-                          setSubScores(s => ({ ...s, _submitted: true }))
-                          const entry = {
-                            date: new Date().toISOString(),
-                            subject: templateMeta?.subject || '',
-                            maxPoints, earnedPoints, pct,
-                            problems: parsedProblems.map((p, pi) => ({
-                              topic: p.topic,
-                              subs: (p.subproblems||[]).map((sp, si) => ({
-                                label: sp.label, points: sp.points || 0,
-                                result: subScores[`${pi}-${si}`] || 'wrong',
-                              })),
-                            })),
-                          }
-                          setStats(addScoreToStats(stats, entry))
-                          notify(`採点完了: ${earnedPoints}/${maxPoints}点 (${pct}%)`, 'success')
-                        }}>✅ 採点を記録する</button>
-                      )}
-                      {scoreSubmitted && <div className="scoring-submitted">✅ 採点を記録しました</div>}
-                    </div>
-                  )
-                })()}
-
-                {/* ── 手応え評価 ── */}
-                <div className="completion-rating">
-                  <div className="completion-rating-label">この演習の手応えは？</div>
-                  <div className="completion-rating-stars">{[1,2,3,4,5].map(n => <button key={n} className={`rating-star ${selfRating>=n?'active':''}`} onClick={() => setSelfRating(n)}>★</button>)}</div>
-                  <div className="completion-rating-hint">{selfRating===0?'':selfRating<=2?'苦手分野を重点的にやろう':selfRating<=4?'いい調子！続けよう':'完璧！次のパターンに挑戦しよう'}</div>
-                </div>
-                <button className="btn btn-outline btn-block" onClick={() => setShowShareCard(v=>!v)}><Ico.Camera /> {showShareCard?'共有カードを隠す':'努力の証明カードを表示'}</button>
-                {showShareCard && <div className="completion-share anim-fade-up"><ShareableCard stats={stats} level={level} /><div className="completion-share-hint">↑ スクショしてSNSでシェアしよう！</div></div>}
+                {/* ── PDF閲覧セクション（自己採点の前に配置） ── */}
                 {(answerLatex || fullLatex) && (
                   <div className="pdf-mode-tabs">
                     <button className={`pdf-mode-tab${pdfViewMode==='problems'?' active':''}`} onClick={() => setPdfViewMode('problems')}>📝 問題のみ</button>
@@ -839,8 +784,8 @@ export default function App() {
                     <button className={`pdf-mode-tab${pdfViewMode==='full'?' active':''}`} onClick={() => setPdfViewMode('full')}>📋 問題＋解答</button>
                   </div>
                 )}
-                <div className="mobile-sticky-action">
-                  {pdfViewMode === 'problems' && (
+                <div className="pdf-action-area">
+                  {pdfViewMode === 'problems' && pdfUrl && (
                     <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
                   )}
                   {pdfViewMode === 'answers' && !answerPdfUrl && answerLatex && (
@@ -865,6 +810,107 @@ export default function App() {
                   {pdfViewMode === 'full' && !fullLatex && (
                     <div className="pdf-mode-hint">フルモードのデータがありません</div>
                   )}
+                </div>
+
+                {/* ── 自己採点セクション（数値入力版） ── */}
+                {parsedProblems.length > 0 && (() => {
+                  const allSubs = []
+                  parsedProblems.forEach((p, pi) => {
+                    const subs = p.subproblems || []
+                    subs.forEach((sp, si) => allSubs.push({ pi, si, label: sp.label || `(${si+1})`, points: sp.points || 0, topic: p.topic || '' }))
+                  })
+                  const maxPoints = allSubs.reduce((s, x) => s + x.points, 0)
+                  const earnedPoints = allSubs.reduce((s, x) => {
+                    const key = `${x.pi}-${x.si}`
+                    const v = subScores[key]
+                    return s + (typeof v === 'number' ? v : 0)
+                  }, 0)
+                  const allScored = allSubs.length > 0 && allSubs.every(x => {
+                    const v = subScores[`${x.pi}-${x.si}`]
+                    return typeof v === 'number'
+                  })
+                  const pct = maxPoints > 0 ? Math.round((earnedPoints / maxPoints) * 100) : 0
+                  const scoreSubmitted = subScores._submitted
+                  return (
+                    <div className="scoring-section">
+                      <div className="scoring-header">📝 自己採点（解答を確認してから採点しよう）</div>
+                      <div className="scoring-table">
+                        {parsedProblems.map((p, pi) => (
+                          <div key={pi} className="scoring-problem">
+                            <div className="scoring-problem-title">問題 {pi+1}{p.topic ? ` — ${p.topic}` : ''}</div>
+                            {(p.subproblems || []).map((sp, si) => {
+                              const key = `${pi}-${si}`
+                              const pts = sp.points || 0
+                              const val = subScores[key]
+                              return (
+                                <div key={key} className="scoring-row">
+                                  <span className="scoring-label">{sp.label || `(${si+1})`}</span>
+                                  <span className="scoring-pts">配点: {pts}点</span>
+                                  <div className="scoring-input-wrap">
+                                    <input
+                                      type="number"
+                                      className="scoring-input"
+                                      min={0}
+                                      max={pts}
+                                      step={1}
+                                      placeholder="—"
+                                      value={typeof val === 'number' ? val : ''}
+                                      onChange={e => {
+                                        const raw = e.target.value
+                                        if (raw === '') {
+                                          setSubScores(s => { const n = {...s}; delete n[key]; return n })
+                                        } else {
+                                          const num = Math.max(0, Math.min(pts, parseInt(raw, 10) || 0))
+                                          setSubScores(s => ({...s, [key]: num}))
+                                        }
+                                      }}
+                                      disabled={scoreSubmitted}
+                                    />
+                                    <span className="scoring-input-max">/ {pts}</span>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                      <div className={`scoring-total ${pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : allScored ? 'needs-work' : ''}`}>
+                        <span>合計: {earnedPoints} / {maxPoints} 点</span>
+                        {allScored && <span className="scoring-pct">({pct}%)</span>}
+                      </div>
+                      {allScored && !scoreSubmitted && (
+                        <button className="btn btn-primary btn-block" onClick={() => {
+                          setSubScores(s => ({ ...s, _submitted: true }))
+                          const entry = {
+                            date: new Date().toISOString(),
+                            subject: templateMeta?.subject || '',
+                            maxPoints, earnedPoints, pct,
+                            problems: parsedProblems.map((p, pi) => ({
+                              topic: p.topic,
+                              subs: (p.subproblems||[]).map((sp, si) => ({
+                                label: sp.label, points: sp.points || 0,
+                                earned: typeof subScores[`${pi}-${si}`] === 'number' ? subScores[`${pi}-${si}`] : 0,
+                              })),
+                            })),
+                          }
+                          setStats(addScoreToStats(stats, entry))
+                          notify(`採点完了: ${earnedPoints}/${maxPoints}点 (${pct}%)`, 'success')
+                        }}>✅ 採点を記録する</button>
+                      )}
+                      {scoreSubmitted && <div className="scoring-submitted">✅ 採点を記録しました</div>}
+                    </div>
+                  )
+                })()}
+
+                {/* ── 手応え評価 ── */}
+                <div className="completion-rating">
+                  <div className="completion-rating-label">この演習の手応えは？</div>
+                  <div className="completion-rating-stars">{[1,2,3,4,5].map(n => <button key={n} className={`rating-star ${selfRating>=n?'active':''}`} onClick={() => setSelfRating(n)}>★</button>)}</div>
+                  <div className="completion-rating-hint">{selfRating===0?'':selfRating<=2?'苦手分野を重点的にやろう':selfRating<=4?'いい調子！続けよう':'完璧！次のパターンに挑戦しよう'}</div>
+                </div>
+                <button className="btn btn-outline btn-block" onClick={() => setShowShareCard(v=>!v)}><Ico.Camera /> {showShareCard?'共有カードを隠す':'努力の証明カードを表示'}</button>
+                {showShareCard && <div className="completion-share anim-fade-up"><ShareableCard stats={stats} level={level} /><div className="completion-share-hint">↑ スクショしてSNSでシェアしよう！</div></div>}
+                <div className="mobile-sticky-action">
                   <button className="btn btn-primary btn-block btn-lg" onClick={() => { resetWizard(); setStep(1) }}><Ico.Zap /> 続けて演習する</button>
                   <button className="btn btn-outline btn-block" onClick={() => { resetWizard(); setScreen('home') }}><Ico.Home /> ホームに戻る</button>
                 </div>
