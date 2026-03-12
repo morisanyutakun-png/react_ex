@@ -5783,9 +5783,10 @@ def _parse_latex_problems(raw_text: str) -> list:
     return problems
 
 
-def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
+def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: str = 'full') -> str:
     """構造化された問題データから、入試問題品質のPDF用LaTeXドキュメントを構築する。
     subproblems 配列・figure_tikz フィールドに対応。旧形式（answer/explanation トップレベル）とも互換。
+    mode: 'full'=問題+解答, 'problems'=問題のみ, 'answers'=解答のみ
     """
 
     # ─── 科目別アクセントカラー ───
@@ -5815,7 +5816,12 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
         r'\usepackage{geometry}',
         r'\geometry{top=2cm,bottom=2.5cm,left=2cm,right=2cm}',
         r'\usepackage{parskip}',
-        r'\setlength{\parskip}{0.5em}',
+        r'\setlength{\parskip}{0.3em}',
+        r'\setlength{\parindent}{0pt}',
+        r'\usepackage{microtype}',
+        r'\usepackage{adjustbox}',
+        # LuaTeX-Ja: 和欧文間スペースを詰めて読みやすく
+        r'\ltjsetparameter{xkanjiskip={0pt plus 0.12em minus 0.06em}}',
         r'\usepackage{fancyhdr}',
         r'\usepackage{titlesec}',
         r'\usepackage{xcolor}',
@@ -5833,6 +5839,12 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
             r'  calc,angles,quotes,shapes.geometric,positioning,3d,perspective}',
             r'\usepackage{pgfplots}',
             r'\pgfplotsset{compat=1.18}',
+            # TikZのデフォルト設定：精度・一貫性向上
+            r'\tikzset{',
+            r'  every picture/.style={line width=0.7pt, >=latex},',
+            r'  every node/.style={font=\small},',
+            r'  every path/.style={line cap=round, line join=round},',
+            r'}',
         ]
     if has_circuit or True:   # circuitikz も常に読み込む
         lines += [
@@ -5850,7 +5862,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
         r'\pagestyle{fancy}\fancyhf{}',
         r'\renewcommand{\headrulewidth}{1.2pt}',
         r'\renewcommand{\headrule}{\hbox to\headwidth{\color{maincolor}\leaders\hrule height\headrulewidth\hfill}}',
-        rf'\fancyhead[L]{{\small\color{{maincolor}}\textsf{{\textbf{{{subject} 練習問題 \textbar\ {difficulty}}}}}}}',
+        rf'\fancyhead[L]{{\small\color{{maincolor}}\textsf{{\textbf{{{subject} {"解答・解説" if mode == "answers" else "練習問題"} \textbar\ {difficulty}}}}}}}',
         r'\fancyhead[R]{\small\color{maincolor}\textsf{\thepage}}',
         r'\fancyfoot[C]{\small\color{rulegray}\textsf{AI 生成練習問題 — 自己採点用}}',
         r'\setlength{\headheight}{16pt}',
@@ -5882,8 +5894,16 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
         '',
         r'\begin{document}',
         '',
+    ]
+
+    # ─── タイトルブロック ───
+    if mode == 'answers':
+        title_text = f'{subject} 解答・解説'
+    else:
+        title_text = f'{subject} 練習問題'
+    lines += [
         rf'\begin{{center}}',
-        rf'  {{\Large\bfseries\color{{maincolor}} {subject} 練習問題}} \\[4pt]',
+        rf'  {{\Large\bfseries\color{{maincolor}} {title_text}}} \\[4pt]',
         rf'  {{\normalsize\color{{rulegray}} 難易度: {difficulty}\quad|\quad AI 生成}}',
         rf'\end{{center}}',
         r'\medskip',
@@ -5892,100 +5912,102 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str) -> str:
         '',
     ]
 
+    def _normalize_subproblems(p):
+        subs = p.get('subproblems') or []
+        if not subs:
+            old_answer = p.get('answer') or ''
+            old_explanation = p.get('explanation') or ''
+            if old_answer or old_explanation:
+                subs = [{'label': '(1)', 'question': '', 'answer': old_answer, 'explanation': old_explanation}]
+        return subs
+
     # ─── 問題セクション ───
-    lines.append(r'\section*{\textcolor{maincolor}{問題}}')
-    lines.append('')
-
-    for i, p in enumerate(problems, 1):
-        stem = p.get('stem') or ''
-        topic = p.get('topic') or ''
-        figure_tikz = p.get('figure_tikz') or ''
-        subproblems = p.get('subproblems') or []
-
-        # 旧形式との互換: subproblemsがない場合は answer/explanation をラップ
-        if not subproblems:
-            old_answer = p.get('answer') or ''
-            old_explanation = p.get('explanation') or ''
-            if old_answer or old_explanation:
-                subproblems = [{'label': '(1)', 'question': '', 'answer': old_answer, 'explanation': old_explanation}]
-
-        # 問題ボックス開始
-        lines.append(rf'\problembox{{{i}}}{{{topic}}}')
+    if mode in ('full', 'problems'):
+        lines.append(r'\section*{\textcolor{maincolor}{問題}}')
         lines.append('')
 
-        # 状況説明文
-        if stem:
-            lines.append(stem)
+        for i, p in enumerate(problems, 1):
+            stem = p.get('stem') or ''
+            topic = p.get('topic') or ''
+            figure_tikz = p.get('figure_tikz') or ''
+            subproblems = _normalize_subproblems(p)
+
+            # 問題ボックス開始
+            lines.append(rf'\problembox{{{i}}}{{{topic}}}')
             lines.append('')
 
-        # 図（figure_tikz）
-        if figure_tikz and str(figure_tikz).strip() not in ('', 'null', 'None'):
-            lines.append(r'\begin{center}')
-            lines.append(str(figure_tikz).strip())
-            lines.append(r'\end{center}')
-            lines.append('')
-
-        # 小問
-        for sp in subproblems:
-            label = sp.get('label', '')
-            question = sp.get('question', '')
-            if question:
-                lines.append(rf'\subq{{{label}}} {question}')
+            # 状況説明文
+            if stem:
+                lines.append(stem)
                 lines.append('')
-            # 解答欄の罫線
-            lines.append(r'\ansline')
+
+            # 図（figure_tikz）- adjustboxで幅制限し、台上配置を保証
+            if figure_tikz and str(figure_tikz).strip() not in ('', 'null', 'None'):
+                fig_code = str(figure_tikz).strip()
+                lines.append(r'\begin{center}')
+                lines.append(r'\adjustbox{max width=0.82\linewidth}{%')
+                lines.append(fig_code)
+                lines.append(r'}% end adjustbox')
+                lines.append(r'\end{center}')
+                lines.append('')
+
+            # 小問
+            for sp in subproblems:
+                label = sp.get('label', '')
+                question = sp.get('question', '')
+                if question:
+                    lines.append(rf'\subq{{{label}}} {question}')
+                    lines.append('')
+                # 解答欄の罫線
+                lines.append(r'\ansline')
+                lines.append('')
+
+            # 問題ボックス終了
+            lines.append(r'\end{tcolorbox}')
+            lines.append(r'\medskip')
             lines.append('')
 
-        # 問題ボックス終了
-        lines.append(r'\end{tcolorbox}')
-        lines.append(r'\medskip')
+    # ─── 解答・解説セクション ───
+    if mode in ('full', 'answers'):
+        if mode == 'full':
+            lines.append(r'\newpage')
+            lines.append('')
+        lines.append(r'\section*{\textcolor{maincolor}{解答・解説}}')
         lines.append('')
 
-    # ─── 解答・解説セクション（改ページ後） ───
-    lines.append(r'\newpage')
-    lines.append('')
-    lines.append(r'\section*{\textcolor{maincolor}{解答・解説}}')
-    lines.append('')
+        for i, p in enumerate(problems, 1):
+            stem = p.get('stem') or ''
+            topic = p.get('topic') or ''
+            subproblems = _normalize_subproblems(p)
 
-    for i, p in enumerate(problems, 1):
-        stem = p.get('stem') or ''
-        topic = p.get('topic') or ''
-        subproblems = p.get('subproblems') or []
-
-        if not subproblems:
-            old_answer = p.get('answer') or ''
-            old_explanation = p.get('explanation') or ''
-            if old_answer or old_explanation:
-                subproblems = [{'label': '(1)', 'question': '', 'answer': old_answer, 'explanation': old_explanation}]
-
-        lines.append(rf'\solutionbox{{{i}}}{{{topic}}}')
-        lines.append('')
-
-        # 問題の要約（最初の50文字）
-        if stem:
-            stem_snip = stem[:80] + ('…' if len(stem) > 80 else '')
-            lines.append(rf'{{\small\color{{rulegray}}\textit{{設定: {stem_snip}}}}}')
+            lines.append(rf'\solutionbox{{{i}}}{{{topic}}}')
             lines.append('')
 
-        for sp in subproblems:
-            label = sp.get('label', '')
-            answer = sp.get('answer', '')
-            explanation = sp.get('explanation', '')
+            # 問題の要約（最初の80文字）
+            if stem:
+                stem_snip = stem[:80] + ('…' if len(stem) > 80 else '')
+                lines.append(rf'{{\small\color{{rulegray}}\textit{{設定: {stem_snip}}}}}')
+                lines.append('')
 
-            if answer:
-                lines.append(rf'\noindent\colorbox{{accentcolor!10}}{{\textbf{{\textcolor{{accentcolor}}{{{label} 解答:}}}}}} {answer}')
+            for sp in subproblems:
+                label = sp.get('label', '')
+                answer = sp.get('answer', '')
+                explanation = sp.get('explanation', '')
+
+                if answer:
+                    lines.append(rf'\noindent\colorbox{{accentcolor!10}}{{\textbf{{\textcolor{{accentcolor}}{{{label} 解答:}}}}}} {answer}')
+                    lines.append('')
+                if explanation:
+                    lines.append(rf'\noindent\textbf{{\textcolor{{accentcolor!70!black}}{{\small 解説}}}}')
+                    lines.append('')
+                    lines.append(rf'\noindent{{\small {explanation}}}')
+                    lines.append('')
+                lines.append(r'\ansline')
                 lines.append('')
-            if explanation:
-                lines.append(rf'\noindent\textbf{{\textcolor{{accentcolor!70!black}}{{\small 解説}}}}')
-                lines.append('')
-                lines.append(rf'\noindent{{\small {explanation}}}')
-                lines.append('')
-            lines.append(r'\ansline')
+
+            lines.append(r'\end{tcolorbox}')
+            lines.append(r'\medskip')
             lines.append('')
-
-        lines.append(r'\end{tcolorbox}')
-        lines.append(r'\medskip')
-        lines.append('')
 
     lines.append(r'\end{document}')
     return '\n'.join(lines)
@@ -6127,7 +6149,9 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
             return
 
         # LaTeX ドキュメント構築（PDF用）
-        latex_doc = _build_practice_latex(problems, subject, difficulty)
+        latex_doc = _build_practice_latex(problems, subject, difficulty, mode='full')
+        latex_problems_doc = _build_practice_latex(problems, subject, difficulty, mode='problems')
+        latex_answers_doc = _build_practice_latex(problems, subject, difficulty, mode='answers')
 
         # 使用回数インクリメント
         if user_id:
@@ -6139,6 +6163,8 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
         _PRACTICE_JOBS[job_id]['result'] = {
             'problems': problems,
             'latex': latex_doc,
+            'latex_problems': latex_problems_doc,
+            'latex_answers': latex_answers_doc,
             'model': openai_model,
             'model_tier': resolved_tier,
             'usage': updated_usage,
@@ -6288,15 +6314,26 @@ async def practice_parse_json(payload: dict = Body(...)):
     if not problems:
         return JSONResponse({'error': '問題データが見つかりません。'}, status_code=400)
 
-    # LaTeX 構築
+    diff = difficulty or '応用'
+    # LaTeX 構築: 問題のみ・解答のみ・フルの3種
     try:
-        latex = _build_practice_latex(problems, subject, difficulty or '応用')
+        latex_problems = _build_practice_latex(problems, subject, diff, mode='problems')
+    except Exception:
+        latex_problems = None
+    try:
+        latex_answers = _build_practice_latex(problems, subject, diff, mode='answers')
+    except Exception:
+        latex_answers = None
+    try:
+        latex = _build_practice_latex(problems, subject, diff, mode='full')
     except Exception:
         latex = None
 
     return JSONResponse({
         'problems': problems,
         'latex': latex,
+        'latex_problems': latex_problems,
+        'latex_answers': latex_answers,
     })
 
 

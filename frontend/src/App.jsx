@@ -291,6 +291,9 @@ export default function App() {
   const [ragCtx, setRagCtx] = useState(null)
   const [llmOutput, setLlmOutput] = useState('')
   const [pdfUrl, setPdfUrl] = useState('')
+  const [answerPdfUrl, setAnswerPdfUrl] = useState('')
+  const [answerLatex, setAnswerLatex] = useState('')
+  const [answerLoading, setAnswerLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [showHelp, setShowHelp] = useState(false)
@@ -359,25 +362,63 @@ export default function App() {
 
   const generatePdf = async () => {
     if (!llmOutput.trim()) return notify('LaTeXコードを貼り付けてください', 'error')
-    setLoading(true); setLoadingMsg('PDFを生成中...')
+    setLoading(true); setLoadingMsg('問題PDFを生成中...')
     try {
+      // まず構造化マーカー形式としてパース試行
+      const subject = templateMeta?.subject || ''
+      const parseR = await fetch('/api/practice/parse', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_text: llmOutput, subject, difficulty: '応用' })
+      })
+      if (parseR.ok) {
+        const parsed = await parseR.json()
+        if (parsed.latex_problems && parsed.latex_answers) {
+          // 問題のみPDFを生成
+          const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: parsed.latex_problems, title: '練習問題', return_url: true }) })
+          if (r.ok) {
+            const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+            setPdfUrl(url)
+            setAnswerLatex(parsed.latex_answers)
+            setAnswerPdfUrl('')
+            setStep(4)
+            saveToHistory({ templateName: selectedTemplate?.name || form.templateId, numQuestions: form.numQuestions, latexPreset: form.latexPreset, pdfUrl: url })
+            setHistory(loadHistory())
+            const session = { templateName: selectedTemplate?.name || form.templateId, subject, numQuestions: form.numQuestions, duration: sessionTime }
+            const xpG = session.numQuestions * 10 + Math.floor(session.duration / 60) * 5
+            setSessionXpGain(xpG); setStats(addSessionToStats(stats, session)); notify(`+${xpG} XP 獲得！`, 'success')
+          } else { const d = await r.json().catch(() => null); notify('PDF生成失敗: ' + (d?.detail || d?.error || ''), 'error') }
+          setLoading(false); return
+        }
+      }
+      // パース失敗時: 従来通り生LaTeXを直接コンパイル
       const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: llmOutput, title: 'Generated Problem', return_url: true, latex_preset: form.latexPreset || 'exam' }) })
       if (r.ok) {
         const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
-        setPdfUrl(url); setStep(4)
+        setPdfUrl(url); setAnswerLatex(''); setAnswerPdfUrl(''); setStep(4)
         saveToHistory({ templateName: selectedTemplate?.name || form.templateId, numQuestions: form.numQuestions, latexPreset: form.latexPreset, pdfUrl: url })
         setHistory(loadHistory())
         const session = { templateName: selectedTemplate?.name || form.templateId, subject: templateMeta?.subject || '', numQuestions: form.numQuestions, duration: sessionTime }
         const xpG = session.numQuestions * 10 + Math.floor(session.duration / 60) * 5
-        setSessionXpGain(xpG)
-        setStats(addSessionToStats(stats, session))
-        notify(`+${xpG} XP 獲得！`, 'success')
+        setSessionXpGain(xpG); setStats(addSessionToStats(stats, session)); notify(`+${xpG} XP 獲得！`, 'success')
       } else { const d = await r.json().catch(() => null); notify('PDF生成失敗: ' + (d?.detail || d?.error || ''), 'error') }
     } catch { notify('PDF生成エラー', 'error') }
     setLoading(false)
   }
 
-  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false) }
+  const generateAnswerPdf = async () => {
+    if (!answerLatex) return
+    setAnswerLoading(true)
+    try {
+      const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: answerLatex, title: '解答・解説', return_url: true }) })
+      if (r.ok) {
+        const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+        setAnswerPdfUrl(url)
+      } else { const d = await r.json().catch(() => null); notify('解答PDF生成失敗: ' + (d?.detail || ''), 'error') }
+    } catch { notify('解答PDF生成エラー', 'error') }
+    setAnswerLoading(false)
+  }
+
+  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false) }
   const startPractice = () => { resetWizard(); setScreen('practice') }
 
   const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
@@ -660,7 +701,15 @@ export default function App() {
                 <button className="btn btn-outline btn-block" onClick={() => setShowShareCard(v=>!v)}><Ico.Camera /> {showShareCard?'共有カードを隠す':'努力の証明カードを表示'}</button>
                 {showShareCard && <div className="completion-share anim-fade-up"><ShareableCard stats={stats} level={level} /><div className="completion-share-hint">↑ スクショしてSNSでシェアしよう！</div></div>}
                 <div className="mobile-sticky-action">
-                  <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> PDFを開く</a>
+                  <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
+                  {answerLatex && !answerPdfUrl && (
+                    <button className="btn btn-primary btn-block btn-lg" onClick={generateAnswerPdf} disabled={answerLoading}>
+                      {answerLoading ? '解答PDF生成中...' : '📖 回答解説を見る'}
+                    </button>
+                  )}
+                  {answerPdfUrl && (
+                    <a href={answerPdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg"><Ico.ExternalLink /> 解答・解説PDFを開く</a>
+                  )}
                   <button className="btn btn-primary btn-block btn-lg" onClick={() => { resetWizard(); setStep(1) }}><Ico.Zap /> 続けて演習する</button>
                   <button className="btn btn-outline btn-block" onClick={() => { resetWizard(); setScreen('home') }}><Ico.Home /> ホームに戻る</button>
                 </div>
