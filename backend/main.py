@@ -2910,6 +2910,8 @@ _LATEX_PHYSICS_DIAGRAM_RULES = (
     "     力の方向: 物理法則に厳密に従う（重力=下, 垂直抗力=面に垂直, 摩擦=面に平行）。\n"
     "     矢印の長さ: 力の大きさに比例。全ベクトルの縮尺を統一する。\n"
     "PD3. 物体形状: 質点=circle(2pt), 直方体=rectangle, 円=circle, ばね=coil decoration。\n"
+    "     ★バネは必ず coil decoration で螺旋を描くこと: decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt}\n"
+    "     zigzag / snake は絶対禁止。\n"
     "PD4. 角度: arc で円弧を描き $\\theta$ を配置。始角と終角を物理的に正確に指定。\n"
     "PD5. ★★ 接触・設置の厳守ルール（最重要）:\n"
     "     物体が面の上に「置かれている」場合、物体の底辺のy座標と面のy座標を\n"
@@ -3565,7 +3567,7 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
         'name': 'TikZ（図形・図解）',
         'usepackage': (
             '\\usepackage{tikz}\n'
-            '\\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,patterns}'
+            '\\usetikzlibrary{arrows.meta,positioning,calc,shapes.geometric,patterns,decorations.pathmorphing}'
         ),
         'prompt_hint': (
             'TikZ が利用可能。\\begin{tikzpicture}...\\end{tikzpicture} で図を描く。\n'
@@ -5450,9 +5452,37 @@ F11. 角度表示: arc を使い、始角と終角を物理的に正確に指定
     \node at (0.95,0.18) {$\theta$};
 F12. ラベルは物理量記号（$F$, $v$, $m$, $\theta$ 等）のみ使う。日本語ラベル禁止
 
-■ バネの描き方（重要）:
-バネは必ず「螺旋コイル」を使う。decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt}
-※ decoration={zigzag} は絶対禁止。必ず coil を使うこと。
+■ バネの描き方（★★★ 最重要 — 違反=物理的に不正確な図 ★★★）:
+バネは必ず「螺旋コイル（coil decoration）」で描く。ジグザグ（zigzag）は絶対禁止。
+必ず以下の形式を使うこと:
+
+\draw[thick,decorate,decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt}]
+    (始点x, 始点y) -- (終点x, 終点y);
+
+パラメータの意味:
+- aspect=0.35: 螺旋の前後比（0.35で自然なコイル形状）
+- segment length=5pt: コイル1巻きの長さ（5pt推奨）
+- amplitude=8pt: コイルの振れ幅（7〜9pt推奨）
+
+★ 壁に固定された水平バネ:
+\draw[thick,decorate,decoration={coil,aspect=0.35,segment length=5pt,amplitude=7pt}]
+    (壁面x, 高さy)--(物体左端x, 高さy);
+\node at (中間x, 高さy+0.27) {$k$};
+
+★ 天井からの鉛直バネ:
+\draw[thick,decorate,decoration={coil,aspect=0.35,segment length=5pt,amplitude=8pt}]
+    (x, 天井y)--(x, 物体上端y);
+\node[right] at (x+0.45, 中間y) {$k$};
+
+★ 2つのバネで挟まれた物体:
+左バネ: (壁x, y)--(物体左端x, y)
+右バネ: (物体右端x, y)--(壁x, y)
+
+禁止事項:
+× decoration={zigzag} — ジグザグはバネではない
+× 直線だけでバネを表現 — 螺旋を描くこと
+× snake decoration — coil のみ使用
+× バネのラベル省略 — 必ず $k$ を明示
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ■ 座標計算の絶対原則（リアルな図の核心）:
@@ -5856,39 +5886,54 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
 【出力形式（各問題を下記のマーカー形式で出力）】
 
 %%% PROBLEM 1 %%%
-%%% TOPIC: 力学・等加速度運動 %%%
+%%% TOPIC: 力学・運動方程式 %%%
 %%% DIFFICULTY: {difficulty} %%%
 %%% STEM %%%
-質量 $m = 2.0\\,\\mathrm{{kg}}$ の物体が傾き角 $\\theta = 30^\\circ$ のなめらかな斜面を静かに滑り始めた。高さ $h = 5.0\\,\\mathrm{{m}}$、重力加速度 $g = 9.8\\,\\mathrm{{m/s^2}}$。
+質量 $m$ の物体が、ばね定数 $k$ のばねの一端に取り付けられ、なめらかな水平面上に置かれている。ばねの自然長からの伸びを $x$ とする。時刻 $t = 0$ で物体を自然長の位置から距離 $A$ だけ引いて静かに放した。ただし、重力加速度を $g$ とする。
 %%% FIGURE %%%
 （TikZコードをここに直書き。不要なら省略）
 %%% SUBPROBLEM (1) %%%
-斜面を滑り降りたときの速さを求めよ。
+物体の運動方程式を $m$, $k$, $x$ を用いて表せ。
 %%% POINTS (1) %%%
-10
+8
 %%% ANSWER (1) %%%
-$v = \\sqrt{{2gh}} = 9.9\\,\\mathrm{{m/s}}$
+$m\\ddot{{x}} = -kx$（または $m\\frac{{d^2 x}}{{dt^2}} = -kx$）
 %%% EXPLANATION (1) %%%
-エネルギー保存則 $mgh = \\frac{{1}}{{2}}mv^2$ より $v = \\sqrt{{2 \\times 9.8 \\times 5.0}} \\approx 9.9\\,\\mathrm{{m/s}}$。
+ばねの復元力は $F=-kx$ であり、ニュートンの第二法則 $F=ma$ より $m\\ddot{{x}} = -kx$ が得られる。
 %%% SCORING (1) %%%
-エネルギー保存則の式を正しく立てた: +5点
-$v$ について正しく解いた: +3点
-数値を代入し正しい答えを得た: +2点（計算ミスのみ: −1点）
+復元力 $F=-kx$ を正しく書いた: +4点
+運動方程式 $m\\ddot{{x}}=-kx$ を正しく導いた: +4点
 %%% SUBPROBLEM (2) %%%
-（小問2）
+この運動の周期 $T$ を $m$, $k$ を用いて表せ。
 %%% POINTS (2) %%%
-15
+8
 %%% ANSWER (2) %%%
-（解答）
+$T = 2\\pi\\sqrt{{\\frac{{m}}{{k}}}}$
 %%% EXPLANATION (2) %%%
-（解説）
+(1)の運動方程式は角振動数 $\\omega = \\sqrt{{\\frac{{k}}{{m}}}}$ の単振動を表す。周期は $T = \\frac{{2\\pi}}{{\\omega}} = 2\\pi\\sqrt{{\\frac{{m}}{{k}}}}$ となる。
 %%% SCORING (2) %%%
-（配点基準: 各ステップの得点配分と部分点条件を記載）
+角振動数 $\\omega=\\sqrt{{k/m}}$ を求めた: +4点
+周期 $T=2\\pi/\\omega$ から正しい式を導いた: +4点
+%%% SUBPROBLEM (3) %%%
+物体が自然長の位置を通過する瞬間の速さ $v$ を $A$, $k$, $m$ を用いて表せ。
+%%% POINTS (3) %%%
+9
+%%% ANSWER (3) %%%
+$v = A\\sqrt{{\\frac{{k}}{{m}}}}$
+%%% EXPLANATION (3) %%%
+力学的エネルギー保存則より $\\frac{{1}}{{2}}kA^2 = \\frac{{1}}{{2}}mv^2$ が成り立つ。これを $v$ について解くと $v = A\\sqrt{{\\frac{{k}}{{m}}}}$ が得られる。
+%%% SCORING (3) %%%
+エネルギー保存則の式を正しく立てた: +4点
+$v$ について正しく整理した: +5点（式変形の途中まで正しい: +2点）
 %%% END PROBLEM 1 %%%
 
 %%% PROBLEM 2 %%%
 （以降同じ形式）
 %%% END PROBLEM 2 %%%
+
+★★★ 重要: 解答は文字式で表す問題を中心に出題してください。
+物理量の関係式や導出過程を問う問題を優先し、数値を代入して計算するだけの問題は避けてください。
+「〜を $m$, $g$, $\\theta$ を用いて表せ」「〜の式を導け」のような出題を心がけてください。
 
 【品質基準】
 - 設定に矛盾なく解答が一意に定まること
@@ -6169,6 +6214,18 @@ def _sanitize_figure_tikz(code: str) -> str:
     code = re.sub(r'\\documentclass\b[^\n]*\n?', '', code)
     code = re.sub(r'\\begin\{document\}', '', code)
     code = re.sub(r'\\end\{document\}', '', code)
+
+    # バネ描画の自動修正: zigzag/snake → coil（螺旋）に置換
+    code = re.sub(
+        r'decoration\s*=\s*\{?\s*zigzag\b',
+        r'decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt',
+        code
+    )
+    code = re.sub(
+        r'decoration\s*=\s*\{?\s*snake\b',
+        r'decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt',
+        code
+    )
 
     # \draw / \fill / \node / \path / \coordinate で始まる行に
     # セミコロンが欠けている場合は自動補完する
@@ -8640,6 +8697,18 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
     # 4. \usepackage{...} がtikzコード内に混入している場合は削除
     code = _re.sub(r'\\usepackage\{[^}]*\}\s*\n?', '', code)
     code = _re.sub(r'\\usetikzlibrary\{[^}]*\}\s*\n?', '', code)
+
+    # 5. バネ描画: zigzag/snake → coil（螺旋）に自動修正
+    code = _re.sub(
+        r'decoration\s*=\s*\{?\s*zigzag\b',
+        r'decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt',
+        code
+    )
+    code = _re.sub(
+        r'decoration\s*=\s*\{?\s*snake\b',
+        r'decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt',
+        code
+    )
 
     return code.strip()
 

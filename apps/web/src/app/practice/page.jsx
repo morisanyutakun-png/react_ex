@@ -695,7 +695,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
       if (result?.error) {
         setParseError(result.error);
       } else if (result?.problems?.length > 0) {
-        onParsed(result.problems, result.latex || null);
+        onParsed(result.problems, result.latex_problems || result.latex || null, result.latex_answers || result.latex || null);
       } else {
         setParseError('problems 配列が空です。AIの出力をそのまま貼り付けてください。');
       }
@@ -1652,11 +1652,44 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
           </div>
         ) : effectiveUrl ? (
           /* PDF が生成できた場合: iframe で埋め込み表示（モバイル最適化） */
-          <iframe
-            src={effectiveUrl}
-            title="練習問題 PDF"
-            className="practice-pdf-iframe"
-          />
+          <div className="flex-1 min-h-0 flex flex-col">
+            {/* 問題/解答 切り替えタブ（解答公開後のみ表示） */}
+            {answersRevealed && answerPdfUrl && answerPdfUrl !== '__failed__' && (
+              <div className="flex-shrink-0 flex items-center justify-center gap-1 px-3 py-1.5 bg-[#f8fafc] border-b border-[#e2e8f0]">
+                <button
+                  type="button"
+                  onClick={() => setViewingAnswer(false)}
+                  className="px-3 py-1 rounded-lg text-[11px] font-bold transition-all duration-150"
+                  style={!viewingAnswer
+                    ? { background: c.accent, color: 'white' }
+                    : { background: 'transparent', color: '#64748b' }}
+                >
+                  問題
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewingAnswer(true)}
+                  className="px-3 py-1 rounded-lg text-[11px] font-bold transition-all duration-150"
+                  style={viewingAnswer
+                    ? { background: c.accent, color: 'white' }
+                    : { background: 'transparent', color: '#64748b' }}
+                >
+                  解答・解説
+                </button>
+              </div>
+            )}
+            {answerPdfLoading && (
+              <div className="flex-shrink-0 flex items-center justify-center gap-2 px-3 py-2 bg-[#fffbeb] border-b border-[#fcd34d]">
+                <div className="w-4 h-4 border-2 border-[#e2e8f0] rounded-full animate-spin" style={{ borderTopColor: c.accent }} />
+                <span className="text-[11px] font-bold text-[#92400e]">解答 PDF を生成中…</span>
+              </div>
+            )}
+            <iframe
+              src={effectiveUrl}
+              title="練習問題 PDF"
+              className="practice-pdf-iframe flex-1"
+            />
+          </div>
         ) : (
           /* PDF 失敗フォールバック: 問題カードを直接表示 */
           <div className="px-4 py-5 space-y-5 max-w-[640px] mx-auto">
@@ -1702,7 +1735,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                         ) : null)}
                       </div>
                     )}
-                    {finished && subproblems.map((sp, si) => (
+                    {(finished || answersRevealed) && subproblems.map((sp, si) => (
                       <div key={si} className="border-t pt-3 mt-2" style={{ borderColor: c.accent + '22' }}>
                         {sp.answer && (
                           <div className="mb-1">
@@ -1741,8 +1774,8 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                 </div>
               );
             })}
-            {!finished && (
-              <button type="button" onClick={() => setFinished(true)}
+            {!finished && !answersRevealed && (
+              <button type="button" onClick={() => { setFinished(true); setAnswersRevealed(true); onRevealAnswer(); }}
                 className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97]"
                 style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}>
                 解き終わった → 解答を見る
@@ -2339,23 +2372,23 @@ export default function PracticePage() {
   }, []);
 
   /* ── 手動モード: JSON貼り付け → 問題開始 ── */
-  const handleManualParsed = useCallback(async (parsedProblems, latex) => {
+  const handleManualParsed = useCallback(async (parsedProblems, latexProbs, latexAns) => {
     setProblems(parsedProblems);
-    setLatexForPdf(latex);
-    setLatexAnswers(latex); // 手動モードは全文を解答 PDF にも使う
+    setLatexForPdf(latexProbs);
+    setLatexAnswers(latexAns);
     setAnswerPdfUrl(null);
     setCurrent(0);
     setScores([]);
     setPointScores([]);
     setShowAnswer(false);
     extraQueue.current = [];
-    if (latex) {
+    if (latexProbs) {
       setPdfUrl(null);
       setPdfLoading(true);
       startPdfProgress();
       setScreen(SCREEN.PDF);
       try {
-        const pdfData = await generatePdf(latex);
+        const pdfData = await generatePdf(latexProbs);
         finishPdfProgress(true);
         setPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
       } catch (_) {
