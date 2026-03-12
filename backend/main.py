@@ -6117,6 +6117,43 @@ def _sanitize_practice_text(text: str) -> str:
     # 未対応のフォント系コマンドを除去
     text = re.sub(r'\\(?:textcolor|colorbox)\{[^}]*\}\{([^}]*)\}', r'\1', text)
     text = re.sub(r'\\(?:fbox|mbox)\{([^}]*)\}', r'\1', text)
+
+    # ── 裸ブラケット display math 変換 ──
+    # LLM が \[...\] ではなく [...] で display math を出力するケースに対応
+    # 行単位で処理: 行頭の [ → \[、行末の ] → \]
+    _math_indicators = re.compile(r'[=^_&]|\\(?:frac|sqrt|sum|int|lim|sin|cos|tan|log|ln|exp|mathrm|text|left|right|begin|end|cdot|times|div|pm|mp|approx|neq|leq|geq)')
+    lines = text.split('\n')
+    out_lines = []
+    i = 0
+    while i < len(lines):
+        stripped = lines[i].strip()
+        # パターン1: 行が "[" のみ → 複数行 display math 開始
+        if stripped == '[':
+            # 対応する "]" のみの行を探す
+            j = i + 1
+            while j < len(lines) and lines[j].strip() != ']':
+                j += 1
+            if j < len(lines) and lines[j].strip() == ']':
+                inner = '\n'.join(lines[i + 1:j])
+                if _math_indicators.search(inner):
+                    out_lines.append('\\[')
+                    out_lines.extend(lines[i + 1:j])
+                    out_lines.append('\\]')
+                    i = j + 1
+                    continue
+        # パターン2: 単一行 [ math_content ]
+        m = re.match(r'^(\s*)\[(.+)\]\s*$', lines[i])
+        if m:
+            indent, content = m.group(1), m.group(2)
+            # LaTeX コマンドのオプション引数ではないことを確認
+            if _math_indicators.search(content) and not re.match(r'^\\[a-zA-Z]+\[', lines[i].strip()):
+                out_lines.append(f'{indent}\\[{content}\\]')
+                i += 1
+                continue
+        out_lines.append(lines[i])
+        i += 1
+    text = '\n'.join(out_lines)
+
     return text
 
 
@@ -6163,6 +6200,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\tcbuselibrary{skins,breakable}',
         r'\usepackage{mdframed}',
         r'\usepackage{array,booktabs}',   # 美しい表
+        r'\usepackage{colortbl}',          # \rowcolor
     ]
 
     if has_tikz or True:   # 常に TikZ を読み込む（問題文内でも使われる可能性）
