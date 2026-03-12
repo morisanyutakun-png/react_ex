@@ -5439,6 +5439,16 @@ F5. node内の数式は $...$ で囲む
 F6. \usetikzlibrary, \usepackage は書かない（preamble済み）
 F7. circuitikz回路: to[battery1]/to[R]/to[C]/to[L] で閉ループ
 F8. 色: red, blue, green!60!black, gray!30 等の標準色のみ
+F9. 床面ハッチング: 面の下に \fill[pattern=north east lines] で斜線を入れる（必須）
+    \fill[pattern=north east lines] (-0.2,-0.15) rectangle (5.5,0);
+    \draw[thick] (-0.2,0)--(5.5,0);
+F10. 力の分解: 元ベクトル=実線, 分解成分=dashed, 直角マーク=小正方形(0.2単位)
+    \draw[dashed,>=stealth,->] (P)--(Px) node[below]{$F_x$};
+    \draw ($(Px)+(0,0.2)$)--++(0.2,0)--++(0,-0.2); % 直角マーク
+F11. 角度表示: arc を使い、始角と終角を物理的に正確に指定すること
+    \draw (0.65,0) arc[start angle=0,end angle=30,radius=0.65];
+    \node at (0.95,0.18) {$\theta$};
+F12. ラベルは物理量記号（$F$, $v$, $m$, $\theta$ 等）のみ使う。日本語ラベル禁止
 
 ■ バネの描き方（重要）:
 バネは必ず「螺旋コイル」を使う。decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt}
@@ -5584,16 +5594,52 @@ C5. 斜面面上の基点: 底から距離 s の点 = (s·cosθ, s·sinθ)
   \draw[->,red,thick] (2.0,0.4)--++(0.7,0) node[right]{$T$};
 \end{tikzpicture}
 
+【波動: 正弦波・横波の描画】
+\begin{tikzpicture}[>=stealth,scale=1.0]
+  \draw[->] (-0.3,0)--(7.5,0) node[right]{$x$};
+  \draw[->] (0,-1.5)--(0,1.8) node[above]{$y$};
+  \draw[blue,very thick,domain=0:6.28,samples=100] plot(\x,{sin(\x r)});
+  \draw[dashed,thin] (0,1)--++(6.28,0);
+  \draw[dashed,thin] (0,-1)--++(6.28,0);
+  \draw[<->] (0,-1.3)--(6.28,-1.3) node[midway,below]{$\lambda$};
+  \draw[<->] (-0.5,0)--(-0.5,1) node[midway,left]{$A$};
+  \fill (0,0) circle (2pt);
+  \fill (6.28,0) circle (2pt);
+\end{tikzpicture}
+
+【波動: レンズと光路図（凸レンズ）】
+\begin{tikzpicture}[>=stealth,scale=0.9]
+  % 光軸
+  \draw[->] (-4,0)--(5,0) node[right]{光軸};
+  % レンズ（凸）
+  \draw[thick,blue] (0,-2) to[out=10,in=-10] (0,2);
+  \draw[thick,blue] (0,2) to[out=190,in=170] (0,-2);
+  % 焦点
+  \fill (2,0) circle (2pt) node[below]{$f$};
+  \fill (-2,0) circle (2pt) node[below]{$f$};
+  % 物体
+  \draw[->,red,very thick] (-3,0)--(-3,1.5) node[above]{物体};
+  % 光線
+  \draw[orange,thick] (-3,1.5)--(0,1.5)--(5,-1.0);
+  \draw[orange,thick] (-3,1.5)--(0,0)--(5,2.5);
+\end{tikzpicture}
+
 %%% FIGURE %%% を省略してよいのは「純粋な代数計算のみ」の問題だけです。
 物理的状況がある問題（力学・電磁気・波動・熱力学等）は必ず図を描いてください。
-波動・グラフ: \draw[domain=0:5,samples=100] plot(\x,{sin(...)}) で正弦波を描くこと。
+グラフ: \draw[domain=a:b,samples=100] plot(\x,{func}) で正確に描くこと。
 
 ★ 最終確認チェックリスト（図を書いたら必ず確認）:
+□ \begin{tikzpicture} と \end{tikzpicture} が 1対1 で対応しているか
+□ \begin{scope} と \end{scope} が 1対1 で対応しているか
 □ 物体の底面が台/斜面/床の表面に接触しているか（内部侵入していないか）
 □ 法線力 N は斜面に対して垂直方向を向いているか
-□ 重力 mg は真下を向いているか
+□ 重力 mg は真下を向いているか（世界座標で (0,-1) 方向）
 □ scope[shift,rotate] を使った斜面上配置では法線力も scope 内で真上を向いているか
-□ すべての \draw 文が ; で終わっているか
+□ すべての \draw, \fill, \node 文が ; で終わっているか
+□ --cycle で閉じるべき図形は --cycle で閉じているか
+□ node 内の数式は $...$ で囲んでいるか
+□ 床面に \fill[pattern=north east lines] のハッチングがあるか
+□ 座標計算をコメントで書いて検算したか
 """
     elif subject == '化学':
         figure_guide = r"""
@@ -5687,6 +5733,35 @@ F4. 関数グラフは domain=a:b, samples=80 以上で描画
 - 難易度: {difficulty}
 - 問題数: {num_questions}問（各問題に小問 2〜3 問含む）
 {figure_guide}
+【数式の記法ルール（厳守）】
+- インライン数式: $a^2 + b^2 = c^2$
+- ディスプレイ数式: \\[...\\] を使用。$$ は絶対禁止。
+- 分数: \\frac{{分子}}{{分母}} — 必ず2つの {{}} を書く
+  ○正: \\frac{{x+1}}{{x-1}}  ← {{分子}}{{分母}}が必須
+  ×誤: \\frac x+1 x-1       ← {{}} なしは禁止
+  ×誤: \\frac{{}}{{x}}       ← 空の分子・分母は禁止
+  ×誤: \\frac{{x}}           ← 分母の {{}} が欠落
+- 入れ子分数: \\frac{{\\frac{{a}}{{b}}}}{{c}} — 各 \\frac に必ず2つの {{}}
+- 関数名: 必ずバックスラッシュ付き \\sin, \\cos, \\tan, \\log, \\ln, \\exp, \\lim, \\arctan
+  ×誤: sin x  ○正: \\sin x
+- 添字: 2文字以上は {{}} で囲む: $x_1$, $x_{{10}}$, $a_{{ij}}$
+- 根号: \\sqrt{{x}}, \\sqrt[3]{{x}}
+- 積分: \\int_0^1 f(x) \\, dx
+- 掛け算: \\times, \\cdot
+- 単位: \\mathrm{{}} で記述: $9.8\\,\\mathrm{{m/s^2}}$
+- align*/cases 等の行末改行: \\\\ のみ。\\\\[2mm] 等の寸法付き改行は禁止
+
+【ネスト・環境整合ルール（厳守 — 違反=コンパイルエラー）】
+N1. \\begin{{X}} を書いたら、必ず同じ環境名で \\end{{X}} を書く
+    ×誤: \\begin{{align*}}...\\end{{equation}} ← 環境名不一致
+N2. 中括弧 {{}} は開いたら必ず閉じる。出力完了前に {{ と }} の数を数えて一致を確認
+N3. 環境のネスト順序を厳守: 内側の環境は外側より先に閉じる
+    ○正: \\begin{{A}}\\begin{{B}}...\\end{{B}}\\end{{A}}
+    ×誤: \\begin{{A}}\\begin{{B}}...\\end{{A}}\\end{{B}} ← 順序逆
+N4. tikzpicture 内の \\begin{{scope}}...\\end{{scope}} も必ずペアで閉じる
+N5. \\left と \\right は必ずペアで使う（片方だけは禁止）
+N6. \\frac{{A}}{{B}} の A, B は絶対に空にしない
+
 【出力ルール — LaTeX直接出力（JSONは使わない）】
 
 ★★★ 最重要: JSON形式ではなく、以下の構造化マーカー付きLaTeXテキストで出力してください。
@@ -5765,11 +5840,26 @@ $v$ について正しく解いた: +3点
 5. \\noindent, \\vspace, \\hspace, \\medskip, \\bigskip 等のレイアウトコマンドは使わない
 6. 数式モード内で \\text{{}} の代わりに \\mathrm{{}} を使う
 7. \\left と \\right は必ずペアで使う。\\left{{ は \\left\\{{ と書く
-8. 分数 \\frac{{}}{{}} の中身は空にしない
+8. 分数 \\frac{{}}{{}} の中身は空にしない。\\frac{{x}} のように分母だけ欠落するのも禁止
 9. tikzpicture は %%% FIGURE %%% 内のみ。本文中に tikzpicture を書かない
 10. 解説・解答のテキストは自然な日本語の文章として書く（LaTeXコマンドで装飾しない）
+11. $$ は使わない。ディスプレイ数式は必ず \\[...\\] を使う
+12. align* や cases の行末改行は \\\\ のみ。\\\\[2mm] 等の寸法付き改行は禁止
+13. \\begin{{X}} と \\end{{X}} の環境名は必ず一致させる。\\begin{{scope}} には \\end{{scope}}
+14. 中括弧 {{ と }} の数が必ず一致すること。出力完了前にカウントして検算
+15. 添字2文字以上は {{}} で囲む: $x_1$ は OK、$x_{{10}}$, $a_{{ij}}$ のように
 
-【禁止】JSON出力禁止 / コードフェンス禁止 / 余分なテキスト禁止 / %%% を本文中に使用禁止
+【出力前の最終チェック】
+☐ \\begin と \\end の数・環境名が全て一致しているか
+☐ {{ と }} の数が一致しているか
+☐ \\frac{{}}{{}} に空の引数がないか
+☐ \\left と \\right がペアになっているか
+☐ $$ を使っていないか（\\[...\\] を使う）
+☐ 関数名に \\ がついているか（\\sin, \\cos, \\log 等）
+☐ 単位に \\mathrm{{}} を使っているか
+☐ tikzpicture が %%% FIGURE %%% 内のみにあるか
+
+【禁止】JSON出力禁止 / コードフェンス禁止 / 余分なテキスト禁止 / %%% を本文中に使用禁止 / tcolorbox禁止 / mdframed禁止
 絶対に \\documentclass, \\begin{{document}}, \\end{{document}}, \\usepackage を出力に含めないこと。"""
 
 
