@@ -294,6 +294,10 @@ export default function App() {
   const [answerPdfUrl, setAnswerPdfUrl] = useState('')
   const [answerLatex, setAnswerLatex] = useState('')
   const [answerLoading, setAnswerLoading] = useState(false)
+  const [fullLatex, setFullLatex] = useState('')
+  const [fullPdfUrl, setFullPdfUrl] = useState('')
+  const [fullPdfLoading, setFullPdfLoading] = useState(false)
+  const [pdfViewMode, setPdfViewMode] = useState('problems')
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [showHelp, setShowHelp] = useState(false)
@@ -380,6 +384,9 @@ export default function App() {
             setPdfUrl(url)
             setAnswerLatex(parsed.latex_answers)
             setAnswerPdfUrl('')
+            setFullLatex(parsed.latex || '')
+            setFullPdfUrl('')
+            setPdfViewMode('problems')
             setStep(4)
             saveToHistory({ templateName: selectedTemplate?.name || form.templateId, numQuestions: form.numQuestions, latexPreset: form.latexPreset, pdfUrl: url })
             setHistory(loadHistory())
@@ -394,7 +401,7 @@ export default function App() {
       const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: llmOutput, title: 'Generated Problem', return_url: true, latex_preset: form.latexPreset || 'exam' }) })
       if (r.ok) {
         const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
-        setPdfUrl(url); setAnswerLatex(''); setAnswerPdfUrl(''); setStep(4)
+        setPdfUrl(url); setAnswerLatex(''); setAnswerPdfUrl(''); setFullLatex(''); setFullPdfUrl(''); setStep(4)
         saveToHistory({ templateName: selectedTemplate?.name || form.templateId, numQuestions: form.numQuestions, latexPreset: form.latexPreset, pdfUrl: url })
         setHistory(loadHistory())
         const session = { templateName: selectedTemplate?.name || form.templateId, subject: templateMeta?.subject || '', numQuestions: form.numQuestions, duration: sessionTime }
@@ -418,7 +425,20 @@ export default function App() {
     setAnswerLoading(false)
   }
 
-  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false) }
+  const generateFullPdf = async () => {
+    if (!fullLatex) return
+    setFullPdfLoading(true)
+    try {
+      const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: fullLatex, title: '練習問題（問題＋解答）', return_url: true }) })
+      if (r.ok) {
+        const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+        setFullPdfUrl(url)
+      } else { const d = await r.json().catch(() => null); notify('PDF生成失敗: ' + (d?.detail || ''), 'error') }
+    } catch { notify('PDF生成エラー', 'error') }
+    setFullPdfLoading(false)
+  }
+
+  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setPdfViewMode('problems'); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false) }
   const startPractice = () => { resetWizard(); setScreen('practice') }
 
   const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
@@ -700,15 +720,38 @@ export default function App() {
                 </div>
                 <button className="btn btn-outline btn-block" onClick={() => setShowShareCard(v=>!v)}><Ico.Camera /> {showShareCard?'共有カードを隠す':'努力の証明カードを表示'}</button>
                 {showShareCard && <div className="completion-share anim-fade-up"><ShareableCard stats={stats} level={level} /><div className="completion-share-hint">↑ スクショしてSNSでシェアしよう！</div></div>}
+                {(answerLatex || fullLatex) && (
+                  <div className="pdf-mode-tabs">
+                    <button className={`pdf-mode-tab${pdfViewMode==='problems'?' active':''}`} onClick={() => setPdfViewMode('problems')}>📝 問題のみ</button>
+                    <button className={`pdf-mode-tab${pdfViewMode==='answers'?' active':''}`} onClick={() => setPdfViewMode('answers')}>📖 解答・解説</button>
+                    <button className={`pdf-mode-tab${pdfViewMode==='full'?' active':''}`} onClick={() => setPdfViewMode('full')}>📋 問題＋解答</button>
+                  </div>
+                )}
                 <div className="mobile-sticky-action">
-                  <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
-                  {answerLatex && !answerPdfUrl && (
+                  {pdfViewMode === 'problems' && (
+                    <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
+                  )}
+                  {pdfViewMode === 'answers' && !answerPdfUrl && answerLatex && (
                     <button className="btn btn-primary btn-block btn-lg" onClick={generateAnswerPdf} disabled={answerLoading}>
-                      {answerLoading ? '解答PDF生成中...' : '📖 回答解説を見る'}
+                      {answerLoading ? '解答PDF生成中...' : '📖 解答・解説PDFを生成'}
                     </button>
                   )}
-                  {answerPdfUrl && (
-                    <a href={answerPdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg"><Ico.ExternalLink /> 解答・解説PDFを開く</a>
+                  {pdfViewMode === 'answers' && answerPdfUrl && (
+                    <a href={answerPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 解答・解説PDFを開く</a>
+                  )}
+                  {pdfViewMode === 'answers' && !answerLatex && (
+                    <div className="pdf-mode-hint">解答・解説データがありません</div>
+                  )}
+                  {pdfViewMode === 'full' && !fullPdfUrl && fullLatex && (
+                    <button className="btn btn-primary btn-block btn-lg" onClick={generateFullPdf} disabled={fullPdfLoading}>
+                      {fullPdfLoading ? 'PDF生成中...' : '📋 問題＋解答PDFを生成'}
+                    </button>
+                  )}
+                  {pdfViewMode === 'full' && fullPdfUrl && (
+                    <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題＋解答PDFを開く</a>
+                  )}
+                  {pdfViewMode === 'full' && !fullLatex && (
+                    <div className="pdf-mode-hint">フルモードのデータがありません</div>
                   )}
                   <button className="btn btn-primary btn-block btn-lg" onClick={() => { resetWizard(); setStep(1) }}><Ico.Zap /> 続けて演習する</button>
                   <button className="btn btn-outline btn-block" onClick={() => { resetWizard(); setScreen('home') }}><Ico.Home /> ホームに戻る</button>

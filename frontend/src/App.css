@@ -401,6 +401,13 @@ body{font-family:var(--ff);color:var(--c-text);background:var(--c-bg);line-heigh
 .completion-share{padding:0 16px 16px}
 .completion-share-hint{text-align:center;font-size:12px;color:var(--c-text-muted);margin-top:8px}
 
+/* PDF Mode Tabs */
+.pdf-mode-tabs{display:flex;gap:4px;background:var(--c-bg);border-radius:10px;padding:4px;margin:16px 16px 0}
+.pdf-mode-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px 8px;border:none;border-radius:8px;background:transparent;font-family:var(--ff);font-size:13px;font-weight:600;color:var(--c-text-sub);cursor:pointer;transition:all var(--transition)}
+.pdf-mode-tab.active{background:var(--c-surface);color:var(--c-accent);box-shadow:var(--shadow-sm)}
+.pdf-mode-tab:hover:not(.active){color:var(--c-text)}
+.pdf-mode-hint{text-align:center;padding:12px;font-size:13px;color:var(--c-text-muted);font-weight:500}
+
 /* ════════════════════════════════════════════
    MOBILE STICKY
    ════════════════════════════════════════════ */

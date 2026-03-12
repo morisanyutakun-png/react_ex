@@ -542,6 +542,28 @@ def _repair_latex_nesting(latex: str) -> str:
 
     s = latex
 
+    # ── 0. \\newcommand / \\renewcommand 定義内の領域を特定 ──
+    # マクロ定義内の \\begin{env} は実際の環境開始ではないためスキップする
+    def _find_newcommand_regions(text):
+        regions = []
+        for m_nc in re.finditer(r'\\(?:re)?new(?:command|tcolorbox|tcbox)\{[^}]*\}(?:\[\d+\])*\{', text):
+            start = m_nc.end() - 1
+            depth = 1
+            i = m_nc.end()
+            while i < len(text) and depth > 0:
+                if text[i] == '{' and (i == 0 or text[i-1] != '\\'):
+                    depth += 1
+                elif text[i] == '}' and (i == 0 or text[i-1] != '\\'):
+                    depth -= 1
+                i += 1
+            regions.append((start, i))
+        return regions
+
+    newcmd_regions = _find_newcommand_regions(s)
+
+    def _inside_newcommand(pos):
+        return any(start <= pos < end for start, end in newcmd_regions)
+
     # ── 1. \\begin/\\end のバランス修復 ──
     begin_pattern = re.compile(r'\\begin\{(\w+)\}')
     end_pattern = re.compile(r'\\end\{(\w+)\}')
@@ -549,19 +571,40 @@ def _repair_latex_nesting(latex: str) -> str:
     # document環境は特別扱い（すでに対処済みの場合が多い）
     skip_envs = {'document'}
 
+    # マクロ定義内で使われている環境名を収集
+    macro_envs = set()
+    for m_be in begin_pattern.finditer(s):
+        if _inside_newcommand(m_be.start()):
+            macro_envs.add(m_be.group(1))
+
     # 全begin/endを走査してスタックで検証
     lines = s.split('\n')
     env_stack = []  # (env_name, line_index)
     orphan_ends = []  # (env_name, line_index) - 対応するbeginがないend
 
+    # 各行の開始位置（元テキスト中でのオフセット）を計算
+    line_offsets = []
+    offset = 0
+    for line in lines:
+        line_offsets.append(offset)
+        offset += len(line) + 1  # +1 for newline
+
     for i, line in enumerate(lines):
         for m in begin_pattern.finditer(line):
             env_name = m.group(1)
             if env_name not in skip_envs:
-                env_stack.append((env_name, i))
+                abs_pos = line_offsets[i] + m.start()
+                if not _inside_newcommand(abs_pos):
+                    env_stack.append((env_name, i))
         for m in end_pattern.finditer(line):
             env_name = m.group(1)
             if env_name in skip_envs:
+                continue
+            abs_pos = line_offsets[i] + m.start()
+            if _inside_newcommand(abs_pos):
+                continue
+            # マクロ定義内環境の \end はスキップ（対応する \begin がマクロ内にある）
+            if env_name in macro_envs and (not env_stack or env_stack[-1][0] != env_name):
                 continue
             # スタックから対応するbeginを探す（後ろから）
             found = False
@@ -5818,10 +5861,6 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\usepackage{parskip}',
         r'\setlength{\parskip}{0.3em}',
         r'\setlength{\parindent}{0pt}',
-        r'\usepackage{microtype}',
-        r'\usepackage{adjustbox}',
-        # LuaTeX-Ja: 和欧文間スペースを詰めて読みやすく
-        r'\ltjsetparameter{xkanjiskip={0pt plus 0.12em minus 0.06em}}',
         r'\usepackage{fancyhdr}',
         r'\usepackage{titlesec}',
         r'\usepackage{xcolor}',
@@ -5871,21 +5910,21 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\titleformat{\section}{\Large\bfseries\color{maincolor}}{}{0em}{}[{\color{maincolor}\rule{\linewidth}{0.6pt}}]',
         r'\titleformat{\subsection}{\large\bfseries\color{accentcolor}}{}{0em}{}',
         '',
-        r'% ── カスタムコマンド ──',
-        # 問題番号ボックス
-        r'\newcommand{\problembox}[2]{%',
-        r'  \noindent\begin{tcolorbox}[enhanced,colback=maincolor!6,colframe=maincolor,',
-        r'    arc=3pt,left=6pt,right=6pt,top=4pt,bottom=4pt,breakable,',
-        r'    title={\bfseries\color{white} 問題\ #1\quad\normalfont\small\color{white!85!maincolor}【#2】},',
-        r'    coltitle=white,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
-        r'    boxed title style={colback=maincolor,arc=2pt}]}',
+        r'% ── カスタム環境 ──',
+        # 問題番号ボックス（newtcolorbox で定義 → \begin{problembox}/\end{problembox} で使用）
+        r'\newtcolorbox{problembox}[2]{enhanced,colback=maincolor!6,colframe=maincolor,',
+        r'  arc=3pt,left=6pt,right=6pt,top=4pt,bottom=4pt,breakable,',
+        r'  before=\noindent,',
+        r'  title={\bfseries\color{white} 問題\ #1\quad\normalfont\small\color{white!85!maincolor}【#2】},',
+        r'  coltitle=white,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
+        r'  boxed title style={colback=maincolor,arc=2pt}}',
         # 解答・解説ボックス
-        r'\newcommand{\solutionbox}[2]{%',
-        r'  \noindent\begin{tcolorbox}[enhanced,colback=answerbox,colframe=accentcolor!60,',
-        r'    arc=3pt,left=6pt,right=6pt,top=4pt,bottom=4pt,breakable,',
-        r'    title={\bfseries\color{accentcolor} 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】},',
-        r'    coltitle=accentcolor,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
-        r'    boxed title style={colback=answerbox,colframe=accentcolor!60,arc=2pt}]}',
+        r'\newtcolorbox{solutionbox}[2]{enhanced,colback=answerbox,colframe=accentcolor!60,',
+        r'  arc=3pt,left=6pt,right=6pt,top=4pt,bottom=4pt,breakable,',
+        r'  before=\noindent,',
+        r'  title={\bfseries\color{accentcolor} 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】},',
+        r'  coltitle=accentcolor,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
+        r'  boxed title style={colback=answerbox,colframe=accentcolor!60,arc=2pt}}',
         # 小問ラベル
         r'\newcommand{\subq}[1]{\medskip\noindent\textcolor{accentcolor}{\textbf{#1}}\ }',
         r'\newcommand{\suba}[1]{\noindent\textcolor{accentcolor!80!black}{\textbf{#1}}\ }',
@@ -5893,6 +5932,8 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\newcommand{\ansline}{\vspace{0.3em}\noindent\textcolor{accentcolor!40}{\rule{\linewidth}{0.4pt}}\vspace{0.2em}}',
         '',
         r'\begin{document}',
+        # LuaTeX-Ja: 本文内で和欧文間スペースを設定（プリアンブルより安全）
+        r'\ltjsetparameter{xkanjiskip=0pt plus 0.12em minus 0.06em}',
         '',
     ]
 
@@ -5932,8 +5973,8 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             figure_tikz = p.get('figure_tikz') or ''
             subproblems = _normalize_subproblems(p)
 
-            # 問題ボックス開始
-            lines.append(rf'\problembox{{{i}}}{{{topic}}}')
+            # 問題ボックス開始（\begin{problembox} 環境）
+            lines.append(rf'\begin{{problembox}}{{{i}}}{{{topic}}}')
             lines.append('')
 
             # 状況説明文
@@ -5941,13 +5982,11 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 lines.append(stem)
                 lines.append('')
 
-            # 図（figure_tikz）- adjustboxで幅制限し、台上配置を保証
+            # 図（figure_tikz）
             if figure_tikz and str(figure_tikz).strip() not in ('', 'null', 'None'):
                 fig_code = str(figure_tikz).strip()
                 lines.append(r'\begin{center}')
-                lines.append(r'\adjustbox{max width=0.82\linewidth}{%')
                 lines.append(fig_code)
-                lines.append(r'}% end adjustbox')
                 lines.append(r'\end{center}')
                 lines.append('')
 
@@ -5963,7 +6002,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 lines.append('')
 
             # 問題ボックス終了
-            lines.append(r'\end{tcolorbox}')
+            lines.append(r'\end{problembox}')
             lines.append(r'\medskip')
             lines.append('')
 
@@ -5980,7 +6019,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             topic = p.get('topic') or ''
             subproblems = _normalize_subproblems(p)
 
-            lines.append(rf'\solutionbox{{{i}}}{{{topic}}}')
+            lines.append(rf'\begin{{solutionbox}}{{{i}}}{{{topic}}}')
             lines.append('')
 
             # 問題の要約（最初の80文字）
@@ -6005,7 +6044,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 lines.append(r'\ansline')
                 lines.append('')
 
-            lines.append(r'\end{tcolorbox}')
+            lines.append(r'\end{solutionbox}')
             lines.append(r'\medskip')
             lines.append('')
 
