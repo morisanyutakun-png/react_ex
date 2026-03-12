@@ -5475,6 +5475,25 @@ C5. 斜面面上の基点: 底から距離 s の点 = (s·cosθ, s·sinθ)
     θ=30°, s=2.5: 基点 = (2.17, 1.25)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 糸・滑車・接触の物理的正確性ルール（絶対厳守）:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+P1. 物体は必ず面（床・台・斜面）の「上」に描く。物体の最下端 y ≥ 面の y（床が y=0 なら物体底辺 y=0）
+    × 物体が床の中や下に埋まっている図は絶対禁止
+P2. 吊り下げ物体は滑車・台の端より「下」に描く。台面 y=0 なら吊り下げ物体は y<0 の空間に自然に垂れる
+P3. 滑車は「台や壁の端」に固定する。滑車中心の座標を明示コメントで書くこと
+    例: % 滑車中心 (4.3, 0.35), 半径 r=0.2
+P4. 糸の経路ルール（最重要）:
+    a) 糸は物体の接続点→滑車の接線点まで「直線」で描く
+    b) 滑車部分では円弧に沿って曲がり、反対側の接線点から次の直線が出る
+    c) 水平方向から滑車に入る糸: 接線点は滑車の真横（中心と同じ y, 中心 x ± r）
+    d) 鉛直方向に出る糸: 接線点は滑車の真下（中心 x, 中心 y - r）
+    e) 糸が物体や壁を「貫通」してはならない
+P5. 糸は「たるまない」= 常にピンと張った直線。曲線で描かない（滑車接触部を除く）
+P6. 台の端から吊り下げる場合: 台の端に明確な「角」を描き、台面と側面の境界を示す
+    \draw[thick] (4.5,0)--(4.5,-2.0); % 台の右側面
+P7. 定滑車の支持構造を描く: 天井・壁・台からの支柱 \draw[thick] で滑車を支える
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ■ 物理図パターン（精密な例）:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -5571,27 +5590,67 @@ C5. 斜面面上の基点: 底から距離 s の点 = (s·cosθ, s·sinθ)
   \fill (3.5,0.9) circle (2pt) node[below]{C};
 \end{tikzpicture}
 
-【力学: 糸で繋いだ2物体（滑車）】
+【力学: 台上の物体+定滑車+吊り下げ物体（糸の経路を厳密に）】
+% 構造: 台面 y=0, 台右端 x=4.5, 滑車中心 (4.5, 0.5) 半径 r=0.25
+% 糸の経路: 物体A右面 → 水平に → 滑車接線(右端,真横 y=0.5) → 円弧90° → 滑車真下(4.5,0.25) → 鉛直に → 物体B上面
+% 物体B: 台の右側面の外、y<0 の空間に吊り下がる
 \begin{tikzpicture}[>=stealth,scale=1.0]
-  % 台（水平面）
-  \fill[gray!10] (0,-0.2) rectangle (4.5,0);
-  \draw[thick] (0,0)--(4.5,0);
-  % 滑車（右端）
-  \draw[thick] (4.3,0)--(4.3,0.15);
-  \fill[gray!30] (4.3,0.35) circle (0.2);
-  \draw[thick] (4.3,0.35) circle (0.2);
-  % 物体A（水平）
-  \draw[fill=blue!20,thick] (1.0,0) rectangle ++(1.0,0.8);
-  \node at (1.5,0.4) {$m_A$};
-  % 糸
-  \draw[thick] (2.0,0.55)--(4.3,0.55)--(4.3,0.15);
-  % 物体B（垂直・宙づり）
-  \draw[fill=red!20,thick] (4.05,-1.2) rectangle ++(0.5,0.7);
-  \node at (4.3,-0.85) {$m_B$};
-  % 重力矢印
-  \draw[->,blue,thick] (4.3,-1.2)--++(0,-0.6) node[below]{$m_B g$};
-  % Aの張力矢印
-  \draw[->,red,thick] (2.0,0.4)--++(0.7,0) node[right]{$T$};
+  % 台（水平面 y=0）+ ハッチング
+  \fill[pattern=north east lines] (-0.2,-0.2) rectangle (4.5,0);
+  \draw[thick] (-0.2,0)--(4.5,0);
+  % 台の右側面（角を明示）
+  \draw[thick] (4.5,0)--(4.5,-2.0);
+  % 滑車（台右端に固定）: 中心 (4.5, 0.5), 半径 0.25
+  \draw[thick] (4.5,0)--(4.5,0.25); % 支柱
+  \fill[gray!30] (4.5,0.5) circle (0.25);
+  \draw[thick] (4.5,0.5) circle (0.25);
+  \fill (4.5,0.5) circle (1.5pt); % 軸
+  % 物体A（台面上, 底辺 y=0）
+  \draw[fill=blue!20,thick] (1.2,0) rectangle ++(1.0,0.8);
+  \node at (1.7,0.4) {$m_A$};
+  % 糸の経路（物理的に正確）
+  % (1) A右面中央 (2.2, 0.5) → 滑車接線点・真横 (4.25, 0.5): 水平直線
+  \draw[thick] (2.2,0.5)--(4.25,0.5);
+  % (2) 滑車に沿って90°円弧: (4.25,0.5) → (4.5,0.25)
+  \draw[thick] (4.25,0.5) arc[start angle=180,end angle=270,radius=0.25];
+  % (3) 滑車真下 (4.5,0.25) → 物体B上面 (4.5,-0.6): 鉛直直線
+  \draw[thick] (4.5,0.25)--(4.5,-0.6);
+  % 物体B（吊り下げ, 上面 y=-0.6, 底面 y=-1.3）
+  \draw[fill=red!20,thick] (4.15,-1.3) rectangle ++(0.7,0.7);
+  \node at (4.5,-0.95) {$m_B$};
+  % 力の矢印
+  \draw[->,blue,thick] (4.5,-1.3)--++(0,-0.6) node[below]{$m_B g$};
+  \draw[->,red,thick] (2.2,0.4)--++(0.8,0) node[above]{$T$};
+  \draw[->,blue,thick] (1.7,0)--++(0,-0.6) node[below]{$m_A g$};
+\end{tikzpicture}
+
+【力学: アトウッド機（天井定滑車+左右吊り下げ）】
+% 構造: 天井 y=3.0, 滑車中心 (2.5, 2.7) 半径 r=0.3
+% 糸: 左物体上面 → 上へ → 滑車左接線(2.2,2.7) → 円弧 → 滑車右接線(2.8,2.7) → 下へ → 右物体上面
+\begin{tikzpicture}[>=stealth,scale=1.0]
+  % 天井
+  \fill[pattern=north east lines] (0,3.0) rectangle (5.0,3.2);
+  \draw[thick] (0,3.0)--(5.0,3.0);
+  % 滑車（天井から吊り下げ）: 中心 (2.5, 2.7), 半径 0.3
+  \draw[thick] (2.5,3.0)--(2.5,2.7); % 支柱
+  \fill[gray!30] (2.5,2.7) circle (0.3);
+  \draw[thick] (2.5,2.7) circle (0.3);
+  \fill (2.5,2.7) circle (1.5pt); % 軸
+  % 左の糸（鉛直）: 滑車左接線 (2.2,2.7) から下へ
+  \draw[thick] (2.2,2.7)--(2.2,1.2);
+  % 右の糸（鉛直）: 滑車右接線 (2.8,2.7) から下へ
+  \draw[thick] (2.8,2.7)--(2.8,0.7);
+  % 滑車上の円弧（左接線→右接線, 上側を通る）
+  \draw[thick] (2.2,2.7) arc[start angle=180,end angle=0,radius=0.3];
+  % 物体1（左, 上面 y=1.2）
+  \draw[fill=blue!20,thick] (1.85,0.5) rectangle ++(0.7,0.7);
+  \node at (2.2,0.85) {$m_1$};
+  % 物体2（右, 上面 y=0.7）
+  \draw[fill=red!20,thick] (2.45,0.0) rectangle ++(0.7,0.7);
+  \node at (2.8,0.35) {$m_2$};
+  % 力の矢印
+  \draw[->,blue,thick] (2.2,0.5)--++(0,-0.6) node[below]{$m_1 g$};
+  \draw[->,blue,thick] (2.8,0.0)--++(0,-0.6) node[below]{$m_2 g$};
 \end{tikzpicture}
 
 【波動: 正弦波・横波の描画】
@@ -5632,9 +5691,13 @@ C5. 斜面面上の基点: 底から距離 s の点 = (s·cosθ, s·sinθ)
 □ \begin{tikzpicture} と \end{tikzpicture} が 1対1 で対応しているか
 □ \begin{scope} と \end{scope} が 1対1 で対応しているか
 □ 物体の底面が台/斜面/床の表面に接触しているか（内部侵入していないか）
+□ 吊り下げ物体は滑車/台端より下の空間にあり、床や台の中に埋まっていないか
 □ 法線力 N は斜面に対して垂直方向を向いているか
 □ 重力 mg は真下を向いているか（世界座標で (0,-1) 方向）
 □ scope[shift,rotate] を使った斜面上配置では法線力も scope 内で真上を向いているか
+□ 糸の経路: 物体→滑車接線→円弧→滑車接線→次の直線、と物理的に正しい経路か
+□ 糸が壁・台・他の物体を貫通していないか
+□ 滑車に支柱（天井/壁/台からの支持構造）が描かれているか
 □ すべての \draw, \fill, \node 文が ; で終わっているか
 □ --cycle で閉じるべき図形は --cycle で閉じているか
 □ node 内の数式は $...$ で囲んでいるか
@@ -6103,11 +6166,11 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'  title={\bfseries\color{accentcolor} 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】},',
         r'  coltitle=accentcolor,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
         r'  boxed title style={colback=answerbox,colframe=accentcolor!60,arc=2pt}}',
-        # 小問ラベル
-        r'\newcommand{\subq}[1]{\medskip\noindent\textcolor{accentcolor}{\textbf{#1}}\ }',
-        r'\newcommand{\suba}[1]{\noindent\textcolor{accentcolor!80!black}{\textbf{#1}}\ }',
-        # 答えの枠線
-        r'\newcommand{\ansline}{\vspace{0.3em}\noindent\textcolor{accentcolor!40}{\rule{\linewidth}{0.4pt}}\vspace{0.2em}}',
+        # 小問ラベル — \par で前のパラグラフを確実に終了してから改行
+        r'\newcommand{\subq}[1]{\par\medskip\noindent\textcolor{accentcolor}{\textbf{#1}}\\\relax}',
+        r'\newcommand{\suba}[1]{\par\smallskip\noindent\textcolor{accentcolor!80!black}{\textbf{#1}}\\\relax}',
+        # 答えの枠線 — \par で確実に段落を閉じてから罫線
+        r'\newcommand{\ansline}{\par\vspace{0.3em}\noindent\textcolor{accentcolor!40}{\rule{\linewidth}{0.4pt}}\vspace{0.2em}}',
         '',
         r'\begin{document}',
         # LuaTeX-Ja: 本文内で和欧文間スペースを設定（プリアンブルより安全）
@@ -6185,17 +6248,19 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                     lines.append(r'\end{center}')
                     lines.append('')
 
-            # 小問
+            # 小問 — 各小問を \subq ラベル + 改行 + 問題文 で出力
             for sp in subproblems:
                 label = sp.get('label', '')
                 question = _sanitize_practice_text(sp.get('question', ''))
                 points = sp.get('points', 0)
-                pts_str = f'\\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
+                pts_str = f' \\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
+                # \subq{(N)} はラベル行を出力して \\ で改行する
+                lines.append(rf'\subq{{{label}}}')
                 if question:
-                    lines.append(rf'\subq{{{label}}} {question}{pts_str}')
+                    lines.append(f'{question}{pts_str}')
                     lines.append('')
                 elif points:
-                    lines.append(rf'\noindent {pts_str}')
+                    lines.append(f'{pts_str}')
                     lines.append('')
                 # 解答欄の罫線
                 lines.append(r'\ansline')
@@ -6265,15 +6330,17 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 pts_str = f' \\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
 
                 if answer:
-                    lines.append(rf'\noindent\colorbox{{accentcolor!10}}{{\textbf{{\textcolor{{accentcolor}}{{{label} 解答:}}}}}}{pts_str} {answer}')
+                    lines.append(rf'\par\medskip\noindent\colorbox{{accentcolor!10}}{{\textbf{{\textcolor{{accentcolor}}{{{label} 解答:}}}}}}{pts_str}')
+                    lines.append('')
+                    lines.append(rf'\noindent {answer}')
                     lines.append('')
                 if explanation:
-                    lines.append(rf'\noindent\textbf{{\textcolor{{accentcolor!70!black}}{{\small 解説}}}}')
+                    lines.append(rf'\par\smallskip\noindent\textbf{{\textcolor{{accentcolor!70!black}}{{\small 解説}}}}')
                     lines.append('')
                     lines.append(rf'\noindent{{\small {explanation}}}')
                     lines.append('')
                 if scoring_criteria:
-                    lines.append(rf'\noindent\colorbox{{maincolor!8}}{{\textbf{{\textcolor{{maincolor}}{{\small 配点基準}}}}}}')
+                    lines.append(rf'\par\smallskip\noindent\colorbox{{maincolor!8}}{{\textbf{{\textcolor{{maincolor}}{{\small 配点基準}}}}}}')
                     lines.append('')
                     # 各行を箇条書き風に整形
                     for sc_line in scoring_criteria.split('\n'):
