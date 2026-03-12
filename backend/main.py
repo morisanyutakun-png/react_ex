@@ -5708,7 +5708,11 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
    例: 小問3つなら 8+8+9=25、小問2つなら 12+13=25 のように合計25点にする。
 5. 解答は数式で正確に記載。
 6. 解説は法則の適用 → 式変形 → 数値代入の順で段階的に記載。
-7. 数式以外の装飾コマンド（\\textbf, \\textit, \\noindent, \\begin{{itemize}} 等）は使わず、プレーンテキスト＋数式（$...$, \\[...\\]）のみで書いてください。
+7. 各小問に %%% SCORING (N) %%% マーカーで配点基準を必ず記載。部分点の条件を具体的に示す。
+   - 「正しい式を立てた: +○点」「正しい数値を代入: +○点」「最終答えが正しい: +○点」のように段階的に配分
+   - 部分点がある場合はその条件も明記（例: 式は正しいが計算ミス → −2点）
+   - 合計が %%% POINTS (N) %%% と一致すること
+8. 数式以外の装飾コマンド（\\textbf, \\textit, \\noindent, \\begin{{itemize}} 等）は使わず、プレーンテキスト＋数式（$...$, \\[...\\]）のみで書いてください。
 
 【出力形式（各問題を下記のマーカー形式で出力）】
 
@@ -5727,6 +5731,10 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
 $v = \\sqrt{{2gh}} = 9.9\\,\\mathrm{{m/s}}$
 %%% EXPLANATION (1) %%%
 エネルギー保存則 $mgh = \\frac{{1}}{{2}}mv^2$ より $v = \\sqrt{{2 \\times 9.8 \\times 5.0}} \\approx 9.9\\,\\mathrm{{m/s}}$。
+%%% SCORING (1) %%%
+エネルギー保存則の式を正しく立てた: +5点
+$v$ について正しく解いた: +3点
+数値を代入し正しい答えを得た: +2点（計算ミスのみ: −1点）
 %%% SUBPROBLEM (2) %%%
 （小問2）
 %%% POINTS (2) %%%
@@ -5735,6 +5743,8 @@ $v = \\sqrt{{2gh}} = 9.9\\,\\mathrm{{m/s}}$
 （解答）
 %%% EXPLANATION (2) %%%
 （解説）
+%%% SCORING (2) %%%
+（配点基準: 各ステップの得点配分と部分点条件を記載）
 %%% END PROBLEM 1 %%%
 
 %%% PROBLEM 2 %%%
@@ -5789,7 +5799,7 @@ def _parse_latex_problems(raw_text: str) -> list:
         difficulty = diff_m.group(1).strip() if diff_m else ''
 
         # Recognized section keywords — used to build lookaheads so stray %%% in content don't break parsing
-        _known_kw = r'(?:TOPIC|DIFFICULTY|STEM|FIGURE|SUBPROBLEM|POINTS|ANSWER|EXPLANATION|END\s+PROBLEM)'
+        _known_kw = r'(?:TOPIC|DIFFICULTY|STEM|FIGURE|SUBPROBLEM|POINTS|ANSWER|EXPLANATION|SCORING|END\s+PROBLEM)'
         _next_marker = r'(?=%%%\s*' + _known_kw + r')'          # lookahead
         _next_or_end = r'(?:%%%\s*' + _known_kw + r'|$)'        # non-lookahead version for ANSWER/EXPLANATION
 
@@ -5836,12 +5846,21 @@ def _parse_latex_problems(raw_text: str) -> list:
             pts_m = pts_pattern.search(block)
             points = int(pts_m.group(1).strip()) if pts_m else 0
 
+            # SCORING (N) — 配点基準・部分点
+            scoring_pattern = re.compile(
+                r'%%%\s*SCORING\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
+                re.IGNORECASE,
+            )
+            scoring_m = scoring_pattern.search(block)
+            scoring_criteria = scoring_m.group(1).strip() if scoring_m else ''
+
             subproblems.append({
                 'label': label,
                 'question': question,
                 'answer': answer,
                 'explanation': explanation,
                 'points': points,
+                'scoring_criteria': scoring_criteria,
             })
 
         problems.append({
@@ -6151,6 +6170,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 label = sp.get('label', '')
                 answer = _sanitize_practice_text(sp.get('answer', ''))
                 explanation = _sanitize_practice_text(sp.get('explanation', ''))
+                scoring_criteria = _sanitize_practice_text(sp.get('scoring_criteria', ''))
                 points = sp.get('points', 0)
                 pts_str = f' \\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
 
@@ -6161,6 +6181,15 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                     lines.append(rf'\noindent\textbf{{\textcolor{{accentcolor!70!black}}{{\small 解説}}}}')
                     lines.append('')
                     lines.append(rf'\noindent{{\small {explanation}}}')
+                    lines.append('')
+                if scoring_criteria:
+                    lines.append(rf'\noindent\colorbox{{maincolor!8}}{{\textbf{{\textcolor{{maincolor}}{{\small 配点基準}}}}}}')
+                    lines.append('')
+                    # 各行を箇条書き風に整形
+                    for sc_line in scoring_criteria.split('\n'):
+                        sc_line = sc_line.strip()
+                        if sc_line:
+                            lines.append(rf'\noindent{{\small\color{{maincolor!80!black}} {sc_line}}}')
                     lines.append('')
                 lines.append(r'\ansline')
                 lines.append('')

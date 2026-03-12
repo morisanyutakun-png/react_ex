@@ -1110,6 +1110,25 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                       <LatexTikzBlock className="text-[12px] leading-[1.85] text-[#475569]">{sp.explanation}</LatexTikzBlock>
                     </div>
                   )}
+                  {/* 配点基準 */}
+                  {sp.scoring_criteria && (
+                    <div className="px-5 pb-4 pt-2 border-t border-blue-100 bg-blue-50/40">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-[10px] font-bold text-blue-600 tracking-[0.05em]">配点基準{sp.points > 0 ? ` [${sp.points}点]` : ''}</span>
+                      </div>
+                      <div className="space-y-1">
+                        {sp.scoring_criteria.split('\n').filter(Boolean).map((line, li) => (
+                          <div key={li} className="text-[11px] text-blue-800/80 leading-[1.6] pl-1 flex gap-1.5">
+                            <span className="text-blue-400 flex-shrink-0">•</span>
+                            <LatexBlock className="flex-1">{line.trim()}</LatexBlock>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1416,6 +1435,21 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
                           </div>
                         </details>
                       )}
+                      {sp.scoring_criteria && (
+                        <details className="mt-1">
+                          <summary className="text-[10px] font-bold text-blue-500 cursor-pointer select-none hover:underline">
+                            配点基準{sp.points > 0 ? ` [${sp.points}点]` : ''}
+                          </summary>
+                          <div className="mt-1.5 pl-2 border-l-2 border-blue-200 space-y-0.5">
+                            {sp.scoring_criteria.split('\n').filter(Boolean).map((line, li) => (
+                              <div key={li} className="text-[10px] text-blue-700/80 leading-[1.5] flex gap-1">
+                                <span className="text-blue-400">•</span>
+                                <LatexBlock className="flex-1">{line.trim()}</LatexBlock>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
                     </div>
                   ))}
                   {/* 自己採点 */}
@@ -1675,6 +1709,21 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
                             <summary className="text-[10px] font-bold text-[#6366f1] cursor-pointer select-none hover:underline">解説を見る</summary>
                             <div className="mt-1.5 pl-2 border-l-2 border-[#e8eeff]">
                               <LatexTikzBlock className="text-[11px] leading-[1.75] text-[#475569]">{sp.explanation}</LatexTikzBlock>
+                            </div>
+                          </details>
+                        )}
+                        {sp.scoring_criteria && (
+                          <details className="mt-1">
+                            <summary className="text-[10px] font-bold text-blue-500 cursor-pointer select-none hover:underline">
+                              配点基準{sp.points > 0 ? ` [${sp.points}点]` : ''}
+                            </summary>
+                            <div className="mt-1.5 pl-2 border-l-2 border-blue-200 space-y-0.5">
+                              {sp.scoring_criteria.split('\n').filter(Boolean).map((line, li) => (
+                                <div key={li} className="text-[10px] text-blue-700/80 leading-[1.5] flex gap-1">
+                                  <span className="text-blue-400">•</span>
+                                  <LatexBlock className="flex-1">{line.trim()}</LatexBlock>
+                                </div>
+                              ))}
                             </div>
                           </details>
                         )}
