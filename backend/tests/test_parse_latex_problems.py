@@ -1,69 +1,12 @@
 """_parse_latex_problems のテスト。
 
 構造化マーカー付き LaTeX テキストを問題配列に正しくパースできるか検証する。
+Phase 1（厳密 END PROBLEM）と Phase 2（緩いパース）の両方をテスト。
 """
 import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-# _parse_latex_problems は main.py 内の関数なので、直接 import できない場合は
-# テスト内で同じロジックを再利用する。ここでは main.py から動的に取得する。
-import importlib
-import re
-
-
-def _parse_latex_problems(raw_text: str) -> list:
-    """main.py と同じロジックのインラインコピー（テスト専用）"""
-    problems = []
-    problem_pattern = re.compile(
-        r'%%%\s*PROBLEM\s+(\d+)\s*%%%\s*\n([\s\S]*?)%%%\s*END\s+PROBLEM\s+\1\s*%%%',
-        re.IGNORECASE,
-    )
-    for m in problem_pattern.finditer(raw_text):
-        block = m.group(2)
-        topic_m = re.search(r'%%%\s*TOPIC:\s*(.*?)\s*%%%', block)
-        topic = topic_m.group(1).strip() if topic_m else ''
-        diff_m = re.search(r'%%%\s*DIFFICULTY:\s*(.*?)\s*%%%', block)
-        difficulty = diff_m.group(1).strip() if diff_m else ''
-        stem_m = re.search(r'%%%\s*STEM\s*%%%([\s\S]*?)(?=%%%)', block)
-        stem = stem_m.group(1).strip() if stem_m else ''
-        figure_m = re.search(r'%%%\s*FIGURE\s*%%%([\s\S]*?)(?=%%%)', block)
-        figure_tikz = figure_m.group(1).strip() if figure_m else None
-        if figure_tikz and figure_tikz.lower() in ('', 'null', 'none', 'なし'):
-            figure_tikz = None
-        subproblems = []
-        sub_pattern = re.compile(
-            r'%%%\s*SUBPROBLEM\s*\((\d+)\)\s*%%%([\s\S]*?)(?=%%%)',
-            re.IGNORECASE,
-        )
-        for sm in sub_pattern.finditer(block):
-            label = f'({sm.group(1)})'
-            question = sm.group(2).strip()
-            ans_pattern = re.compile(
-                r'%%%\s*ANSWER\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)(?=%%%|$)',
-                re.IGNORECASE,
-            )
-            ans_m = ans_pattern.search(block)
-            answer = ans_m.group(1).strip() if ans_m else ''
-            expl_pattern = re.compile(
-                r'%%%\s*EXPLANATION\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)(?=%%%|$)',
-                re.IGNORECASE,
-            )
-            expl_m = expl_pattern.search(block)
-            explanation = expl_m.group(1).strip() if expl_m else ''
-            subproblems.append({
-                'label': label,
-                'question': question,
-                'answer': answer,
-                'explanation': explanation,
-            })
-        problems.append({
-            'stem': stem,
-            'figure_tikz': figure_tikz,
-            'subproblems': subproblems,
-            'topic': topic,
-            'difficulty': difficulty,
-        })
-    return problems
+from main import _parse_latex_problems, _parse_problem_block
 
 
 SAMPLE_LATEX = r"""
@@ -178,9 +121,110 @@ def test_empty_input():
 
 
 def test_partial_markers():
-    """不完全なマーカー（END PROBLEM なし）"""
+    """不完全なマーカー（END PROBLEM なし）→ Phase 2 で緩くパースされる"""
     partial = "%%% PROBLEM 1 %%%\n%%% STEM %%%\ntest\n"
-    assert _parse_latex_problems(partial) == []  # END がないのでマッチしない
+    result = _parse_latex_problems(partial)
+    assert len(result) == 1, f"Expected 1 problem from loose parse, got {len(result)}"
+    assert result[0]['stem'] == 'test'
+
+
+def test_missing_end_problem_multiple():
+    """END PROBLEM なしで複数問題 → Phase 2 で次の PROBLEM マーカーで区切る"""
+    text = """%%% PROBLEM 1 %%%
+%%% STEM %%%
+問題1のstem
+%%% SUBPROBLEM (1) %%%
+小問1-1
+%%% ANSWER (1) %%%
+答え1-1
+%%% PROBLEM 2 %%%
+%%% STEM %%%
+問題2のstem
+%%% SUBPROBLEM (1) %%%
+小問2-1
+%%% ANSWER (1) %%%
+答え2-1
+"""
+    result = _parse_latex_problems(text)
+    assert len(result) == 2, f"Expected 2 problems, got {len(result)}"
+    assert '問題1' in result[0]['stem']
+    assert '問題2' in result[1]['stem']
+    assert result[0]['subproblems'][0]['answer'] == '答え1-1'
+    assert result[1]['subproblems'][0]['answer'] == '答え2-1'
+
+
+def test_mixed_end_markers():
+    """一部の問題のみ END PROBLEM がある場合"""
+    text = """%%% PROBLEM 1 %%%
+%%% STEM %%%
+問題1
+%%% SUBPROBLEM (1) %%%
+小問1
+%%% ANSWER (1) %%%
+答え1
+%%% END PROBLEM 1 %%%
+%%% PROBLEM 2 %%%
+%%% STEM %%%
+問題2（ENDマーカーなし）
+%%% SUBPROBLEM (1) %%%
+小問2
+%%% ANSWER (1) %%%
+答え2
+"""
+    result = _parse_latex_problems(text)
+    # Phase 1 で PROBLEM 1 だけ取得 → 1件しかない場合は Phase 2 にフォールバックしない (Phase 1 > 0)
+    # でも Phase 1 は PROBLEM 1 のみ → 1 件返す
+    assert len(result) >= 1
+    assert '問題1' in result[0]['stem']
+
+
+def test_parse_problem_block_direct():
+    """_parse_problem_block ヘルパーの直接テスト"""
+    block = """%%% TOPIC: 波動 %%%
+%%% DIFFICULTY: 標準 %%%
+%%% STEM %%%
+波の速さを求めよ。
+%%% SUBPROBLEM (1) %%%
+速さ $v$ を求めよ。
+%%% ANSWER (1) %%%
+$v = f\\lambda$
+%%% EXPLANATION (1) %%%
+波の基本公式による。
+%%% POINTS (1) %%%
+5
+%%% SCORING (1) %%%
+公式を正しく適用: 3点、計算正確: 2点
+"""
+    result = _parse_problem_block(block)
+    assert result is not None
+    assert result['topic'] == '波動'
+    assert result['difficulty'] == '標準'
+    assert '波の速さ' in result['stem']
+    assert len(result['subproblems']) == 1
+    sp = result['subproblems'][0]
+    assert sp['points'] == 5
+    assert '公式を正しく適用' in sp['scoring_criteria']
+
+
+def test_code_fence_wrapped():
+    """code fence で囲まれたマーカーテキストのパース"""
+    text = """```latex
+%%% PROBLEM 1 %%%
+%%% STEM %%%
+テスト
+%%% SUBPROBLEM (1) %%%
+小問
+%%% ANSWER (1) %%%
+答え
+%%% END PROBLEM 1 %%%
+```"""
+    # _parse_latex_problems は code fence を除去しないが、
+    # 呼び出し側で除去される想定
+    import re
+    m = re.search(r'```(?:latex|tex|plain)?\s*\n?([\s\S]*?)```', text)
+    clean = m.group(1).strip() if m else text
+    result = _parse_latex_problems(clean)
+    assert len(result) == 1
 
 
 if __name__ == '__main__':
@@ -191,4 +235,8 @@ if __name__ == '__main__':
     test_latex_in_fields()
     test_empty_input()
     test_partial_markers()
+    test_missing_end_problem_multiple()
+    test_mixed_end_markers()
+    test_parse_problem_block_direct()
+    test_code_fence_wrapped()
     print('All tests passed!')

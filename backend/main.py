@@ -5932,99 +5932,152 @@ def _parse_latex_problems(raw_text: str) -> list:
     %%% PROBLEM N %%% 〜 %%% END PROBLEM N %%% の各ブロックを解析し、
     フロントエンドで使える problems 配列（stem, figure_tikz, subproblems, topic, difficulty）を返す。
     JSON を使わないため、LaTeX のバックスラッシュ問題が原理的に発生しない。
+
+    堅牢化: END PROBLEM マーカーが欠落していても次の PROBLEM マーカーまたは末尾をブロック終端として処理。
     """
     problems = []
 
-    # 各 PROBLEM ブロックを抽出
+    # ──────────────────────────────────────────────
+    # Phase 1: 厳密な END PROBLEM マーカーでブロック抽出
+    # ──────────────────────────────────────────────
     problem_pattern = re.compile(
         r'%%%\s*PROBLEM\s+(\d+)\s*%%%\s*\n([\s\S]*?)%%%\s*END\s+PROBLEM\s+\1\s*%%%',
         re.IGNORECASE,
     )
     for m in problem_pattern.finditer(raw_text):
         block = m.group(2)
+        parsed = _parse_problem_block(block)
+        if parsed:
+            problems.append(parsed)
 
-        # TOPIC
-        topic_m = re.search(r'%%%\s*TOPIC:\s*(.*?)\s*%%%', block)
-        topic = topic_m.group(1).strip() if topic_m else ''
+    if problems:
+        return problems
 
-        # DIFFICULTY
-        diff_m = re.search(r'%%%\s*DIFFICULTY:\s*(.*?)\s*%%%', block)
-        difficulty = diff_m.group(1).strip() if diff_m else ''
-
-        # Recognized section keywords — used to build lookaheads so stray %%% in content don't break parsing
-        _known_kw = r'(?:TOPIC|DIFFICULTY|STEM|FIGURE|SUBPROBLEM|POINTS|ANSWER|EXPLANATION|SCORING|END\s+PROBLEM)'
-        _next_marker = r'(?=%%%\s*' + _known_kw + r')'          # lookahead
-        _next_or_end = r'(?:%%%\s*' + _known_kw + r'|$)'        # non-lookahead version for ANSWER/EXPLANATION
-
-        # STEM: between %%% STEM %%% and the next recognized marker
-        stem_m = re.search(r'%%%\s*STEM\s*%%%([\s\S]*?)' + _next_marker, block)
-        stem = stem_m.group(1).strip() if stem_m else ''
-
-        # FIGURE: between %%% FIGURE %%% and the next recognized marker
-        figure_m = re.search(r'%%%\s*FIGURE\s*%%%([\s\S]*?)' + _next_marker, block)
-        figure_tikz = figure_m.group(1).strip() if figure_m else None
-        if figure_tikz and figure_tikz.lower() in ('', 'null', 'none', 'なし'):
-            figure_tikz = None
-
-        # SUBPROBLEMS: extract each (N) trio of SUBPROBLEM/ANSWER/EXPLANATION
-        subproblems = []
-        sub_pattern = re.compile(
-            r'%%%\s*SUBPROBLEM\s*\((\d+)\)\s*%%%([\s\S]*?)' + _next_marker,
-            re.IGNORECASE,
-        )
-        for sm in sub_pattern.finditer(block):
-            label = f'({sm.group(1)})'
-            question = sm.group(2).strip()
-
-            # Find matching ANSWER (N) and EXPLANATION (N)
-            ans_pattern = re.compile(
-                r'%%%\s*ANSWER\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
-                re.IGNORECASE,
-            )
-            ans_m = ans_pattern.search(block)
-            answer = ans_m.group(1).strip() if ans_m else ''
-
-            expl_pattern = re.compile(
-                r'%%%\s*EXPLANATION\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
-                re.IGNORECASE,
-            )
-            expl_m = expl_pattern.search(block)
-            explanation = expl_m.group(1).strip() if expl_m else ''
-
-            # POINTS (N)
-            pts_pattern = re.compile(
-                r'%%%\s*POINTS\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%(\s*\d+)',
-                re.IGNORECASE,
-            )
-            pts_m = pts_pattern.search(block)
-            points = int(pts_m.group(1).strip()) if pts_m else 0
-
-            # SCORING (N) — 配点基準・部分点
-            scoring_pattern = re.compile(
-                r'%%%\s*SCORING\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
-                re.IGNORECASE,
-            )
-            scoring_m = scoring_pattern.search(block)
-            scoring_criteria = scoring_m.group(1).strip() if scoring_m else ''
-
-            subproblems.append({
-                'label': label,
-                'question': question,
-                'answer': answer,
-                'explanation': explanation,
-                'points': points,
-                'scoring_criteria': scoring_criteria,
-            })
-
-        problems.append({
-            'stem': stem,
-            'figure_tikz': figure_tikz,
-            'subproblems': subproblems,
-            'topic': topic,
-            'difficulty': difficulty,
-        })
+    # ──────────────────────────────────────────────
+    # Phase 2: END PROBLEM が欠落 → 次の PROBLEM 開始 or 末尾で区切る（緩いパース）
+    # ──────────────────────────────────────────────
+    starts = list(re.finditer(r'%%%\s*PROBLEM\s+(\d+)\s*%%%', raw_text, re.IGNORECASE))
+    if starts:
+        for idx_s, sm in enumerate(starts):
+            block_start = sm.end()
+            # 対応する END PROBLEM があれば使う
+            end_pat = re.compile(r'%%%\s*END\s+PROBLEM\s+' + re.escape(sm.group(1)) + r'\s*%%%', re.IGNORECASE)
+            end_m = end_pat.search(raw_text, block_start)
+            if end_m:
+                block_end = end_m.start()
+            elif idx_s + 1 < len(starts):
+                block_end = starts[idx_s + 1].start()
+            else:
+                block_end = len(raw_text)
+            block = raw_text[block_start:block_end]
+            parsed = _parse_problem_block(block)
+            if parsed:
+                problems.append(parsed)
 
     return problems
+
+
+def _parse_problem_block(block: str) -> dict | None:
+    """1つの PROBLEM ブロック内テキストをパースして問題 dict を返す。"""
+
+    # TOPIC
+    topic_m = re.search(r'%%%\s*TOPIC:\s*(.*?)\s*%%%', block)
+    topic = topic_m.group(1).strip() if topic_m else ''
+
+    # DIFFICULTY
+    diff_m = re.search(r'%%%\s*DIFFICULTY:\s*(.*?)\s*%%%', block)
+    difficulty = diff_m.group(1).strip() if diff_m else ''
+
+    # Recognized section keywords — used to build lookaheads so stray %%% in content don't break parsing
+    _known_kw = r'(?:TOPIC|DIFFICULTY|STEM|FIGURE|SUBPROBLEM|POINTS|ANSWER|EXPLANATION|SCORING|END\s+PROBLEM)'
+    _next_marker = r'(?=%%%\s*' + _known_kw + r')'          # lookahead
+    _next_or_end = r'(?:%%%\s*' + _known_kw + r'|$)'        # non-lookahead version for ANSWER/EXPLANATION
+
+    # STEM: between %%% STEM %%% and the next recognized marker
+    stem_m = re.search(r'%%%\s*STEM\s*%%%([\s\S]*?)' + _next_marker, block)
+    if not stem_m:
+        # 緩いパース: 次のマーカーまで取る (lookahead なし)
+        stem_m = re.search(r'%%%\s*STEM\s*%%%([\s\S]*?)(?:%%%|$)', block)
+    stem = stem_m.group(1).strip() if stem_m else ''
+
+    # FIGURE: between %%% FIGURE %%% and the next recognized marker
+    figure_m = re.search(r'%%%\s*FIGURE\s*%%%([\s\S]*?)' + _next_marker, block)
+    if not figure_m:
+        figure_m = re.search(r'%%%\s*FIGURE\s*%%%([\s\S]*?)(?:%%%|$)', block)
+    figure_tikz = figure_m.group(1).strip() if figure_m else None
+    if figure_tikz and figure_tikz.lower() in ('', 'null', 'none', 'なし'):
+        figure_tikz = None
+
+    # SUBPROBLEMS: extract each (N) trio of SUBPROBLEM/ANSWER/EXPLANATION
+    subproblems = []
+    sub_pattern = re.compile(
+        r'%%%\s*SUBPROBLEM\s*\((\d+)\)\s*%%%([\s\S]*?)' + _next_marker,
+        re.IGNORECASE,
+    )
+    sub_matches = list(sub_pattern.finditer(block))
+    if not sub_matches:
+        # 緩いパース: lookahead なしで再試行
+        sub_pattern_loose = re.compile(
+            r'%%%\s*SUBPROBLEM\s*\((\d+)\)\s*%%%([\s\S]*?)(?=%%%\s*(?:SUBPROBLEM|POINTS|ANSWER|EXPLANATION|SCORING|END|PROBLEM)|$)',
+            re.IGNORECASE,
+        )
+        sub_matches = list(sub_pattern_loose.finditer(block))
+
+    for sm in sub_matches:
+        label = f'({sm.group(1)})'
+        question = sm.group(2).strip()
+
+        # Find matching ANSWER (N) and EXPLANATION (N)
+        ans_pattern = re.compile(
+            r'%%%\s*ANSWER\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
+            re.IGNORECASE,
+        )
+        ans_m = ans_pattern.search(block)
+        answer = ans_m.group(1).strip() if ans_m else ''
+
+        expl_pattern = re.compile(
+            r'%%%\s*EXPLANATION\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
+            re.IGNORECASE,
+        )
+        expl_m = expl_pattern.search(block)
+        explanation = expl_m.group(1).strip() if expl_m else ''
+
+        # POINTS (N)
+        pts_pattern = re.compile(
+            r'%%%\s*POINTS\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%(\s*\d+)',
+            re.IGNORECASE,
+        )
+        pts_m = pts_pattern.search(block)
+        points = int(pts_m.group(1).strip()) if pts_m else 0
+
+        # SCORING (N) — 配点基準・部分点
+        scoring_pattern = re.compile(
+            r'%%%\s*SCORING\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%([\s\S]*?)' + _next_or_end,
+            re.IGNORECASE,
+        )
+        scoring_m = scoring_pattern.search(block)
+        scoring_criteria = scoring_m.group(1).strip() if scoring_m else ''
+
+        subproblems.append({
+            'label': label,
+            'question': question,
+            'answer': answer,
+            'explanation': explanation,
+            'points': points,
+            'scoring_criteria': scoring_criteria,
+        })
+
+    # stem も subproblems も取れなかった場合は無効なブロック
+    if not stem and not subproblems:
+        return None
+
+    return {
+        'stem': stem,
+        'figure_tikz': figure_tikz,
+        'subproblems': subproblems,
+        'topic': topic,
+        'difficulty': difficulty,
+    }
 
 
 def _sanitize_practice_text(text: str) -> str:
@@ -6447,54 +6500,28 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
             return
 
         # ── 構造化マーカー付き LaTeX をパース ──
-        # code fence がある場合は除去
+        # code fence がある場合は除去（複数フェンス対応）
         clean_text = raw_text
         if '```' in clean_text:
-            fenced = re.search(r'```(?:latex|tex)?\s*\n?([\s\S]*?)```', clean_text)
+            fenced = re.search(r'```(?:latex|tex|plain)?\s*\n?([\s\S]*?)```', clean_text)
             if fenced:
                 clean_text = fenced.group(1).strip()
 
-        # マーカー方式でパース
+        # マーカー方式でパース（code fence 除去後 → 生テキストの順で試行）
         problems = _parse_latex_problems(clean_text)
+        if not problems and clean_text != raw_text:
+            problems = _parse_latex_problems(raw_text)
 
         # マーカーが見つからなかった場合、旧JSON方式にフォールバック
         if not problems:
-            parsed = None
-            fenced = re.search(r'```(?:json)?\s*\n?([\s\S]*?)```', raw_text)
-            json_text = fenced.group(1).strip() if fenced else None
-            if json_text:
-                try:
-                    parsed = json.loads(json_text)
-                except json.JSONDecodeError:
-                    try:
-                        parsed = json.loads(_fix_latex_json_escapes(json_text))
-                    except Exception:
-                        pass
-            if not parsed:
-                brace_start = raw_text.find('{')
-                if brace_start >= 0:
-                    depth = 0
-                    for i in range(brace_start, len(raw_text)):
-                        if raw_text[i] == '{':
-                            depth += 1
-                        elif raw_text[i] == '}':
-                            depth -= 1
-                        if depth == 0:
-                            candidate = raw_text[brace_start:i + 1]
-                            try:
-                                parsed = json.loads(candidate)
-                            except json.JSONDecodeError:
-                                try:
-                                    parsed = json.loads(_fix_latex_json_escapes(candidate))
-                                except Exception:
-                                    pass
-                            break
+            parsed = _try_parse_json_fallback(raw_text)
             if parsed and isinstance(parsed.get('problems'), list):
                 problems = parsed['problems']
 
         if not problems:
+            logger.warning('Practice job %s: all parse methods failed. raw_text[:300]=%s', job_id, raw_text[:300])
             _PRACTICE_JOBS[job_id]['status'] = 'error'
-            _PRACTICE_JOBS[job_id]['error'] = 'AI応答の解析に失敗しました。再度お試しください。'
+            _PRACTICE_JOBS[job_id]['error'] = 'AI応答の解析に失敗しました。再度お試しください。\n\nヒント: 「手動モード」でプロンプトを再生成して試すと、より安定して動作します。'
             return
 
         # LaTeX ドキュメント構築（PDF用）
@@ -6588,6 +6615,43 @@ async def practice_render_prompt(req: PracticeGenerateRequest = Body(...)):
     return JSONResponse({'prompt': full_prompt})
 
 
+def _try_parse_json_fallback(raw_text: str) -> dict | None:
+    """JSON フォールバック: code fence 内JSON → 直接parse → brace-depth → _fix_latex_json_escapes の順で試行。"""
+    # 1. code fence 内 JSON
+    fenced = re.search(r'```(?:json)?\s*\n?([\s\S]*?)```', raw_text)
+    if fenced:
+        json_text = fenced.group(1).strip()
+        for attempt_text in [json_text, _fix_latex_json_escapes(json_text)]:
+            try:
+                parsed = json.loads(attempt_text)
+                if isinstance(parsed, dict):
+                    return parsed
+            except (json.JSONDecodeError, Exception):
+                pass
+
+    # 2. brace-depth matching (最外側の { ... } を抽出)
+    brace_start = raw_text.find('{')
+    if brace_start >= 0:
+        depth = 0
+        for i in range(brace_start, len(raw_text)):
+            if raw_text[i] == '{':
+                depth += 1
+            elif raw_text[i] == '}':
+                depth -= 1
+            if depth == 0:
+                candidate = raw_text[brace_start:i + 1]
+                for attempt_text in [candidate, _fix_latex_json_escapes(candidate)]:
+                    try:
+                        parsed = json.loads(attempt_text)
+                        if isinstance(parsed, dict):
+                            return parsed
+                    except (json.JSONDecodeError, Exception):
+                        pass
+                break
+
+    return None
+
+
 def _fix_latex_json_escapes(text: str) -> str:
     """JSON文字列内のLaTeX バックスラッシュを正しくエスケープする。
 
@@ -6625,43 +6689,30 @@ async def practice_parse_json(payload: dict = Body(...)):
 
     # code fence 除去
     if '```' in text:
-        m = re.search(r'```(?:json|latex|tex)?\s*\n?([\s\S]*?)```', text)
+        m = re.search(r'```(?:json|latex|tex|plain)?\s*\n?([\s\S]*?)```', text)
         if m:
             text = m.group(1).strip()
 
     # Step 1: 構造化マーカー付き LaTeX としてパース（優先）
     problems = _parse_latex_problems(text)
+    # code fence 除去前のテキストでも再試行
+    if not problems and text != raw.strip():
+        problems = _parse_latex_problems(raw.strip())
 
-    # Step 2: JSON フォールバック
+    # Step 2: JSON フォールバック（共通ヘルパー使用）
     if not problems:
-        json_text = text
-        start = json_text.find('{')
-        end = json_text.rfind('}')
-        if start >= 0 and end > start:
-            json_text = json_text[start:end + 1]
-
-        data = None
-        try:
-            data = json.loads(json_text)
-        except json.JSONDecodeError:
-            pass
-
-        if data is None:
-            try:
-                data = json.loads(_fix_latex_json_escapes(json_text))
-            except json.JSONDecodeError as e:
-                return JSONResponse({
-                    'error': f'パースに失敗しました: {str(e)}\n\n'
-                             'ヒント: LLMの出力を「構造化マーカー形式」で取得すると、'
-                             'LaTeXのバックスラッシュ問題を回避できます。'
-                             '手動モードでプロンプトを再生成してお試しください。'
-                }, status_code=400)
-
-        if data:
-            problems = data.get('problems', [])
+        data = _try_parse_json_fallback(raw.strip())
+        if data and isinstance(data.get('problems'), list):
+            problems = data['problems']
 
     if not problems:
-        return JSONResponse({'error': '問題データが見つかりません。'}, status_code=400)
+        logger.warning('practice_parse_json: all parse methods failed. text[:300]=%s', text[:300])
+        return JSONResponse({
+            'error': 'パースに失敗しました。\n\n'
+                     'ヒント: LLMの出力が「%%% PROBLEM 1 %%%」「%%% STEM %%%」などの'
+                     '構造化マーカー形式になっているか確認してください。\n'
+                     '手動モードでプロンプトを再生成してお試しください。'
+        }, status_code=400)
 
     diff = difficulty or '応用'
     # LaTeX 構築: 問題のみ・解答のみ・フルの3種

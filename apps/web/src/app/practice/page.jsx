@@ -1551,6 +1551,8 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
   const [scores, setScores] = useState({});
   const [pScores, setPScores] = useState({}); // { idx: { earned, max } }
   const [finished, setFinished] = useState(false);
+  const [scorePanelOpen, setScorePanelOpen] = useState(false);
+  const iframeContainerRef = useRef(null);
 
   // 配点のある問題があるかチェック
   const anyPoints = problems.some((p) => getTotalPoints(p) > 0);
@@ -1571,21 +1573,21 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', maxWidth: 900, margin: '0 auto' }}>
+    <div className="practice-pdf-layout">
       {/* ── ヘッダー ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#e2e8f0] bg-white flex-shrink-0">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[#e2e8f0] bg-white flex-shrink-0">
         <BackButton onClick={onQuit} label="終了" />
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
-          <span className="text-[12px] font-bold text-[#64748b]">
-            {subject} 練習問題{pdfFailed ? ' — カード表示' : ' — LaTeX PDF'}
+          <span className="text-[11px] sm:text-[12px] font-bold text-[#64748b]">
+            {subject}{pdfFailed ? ' カード表示' : ' PDF'}
           </span>
         </div>
-        <div className="w-16" />
+        <div className="w-14 sm:w-16" />
       </div>
 
       {/* ── PDF または カードフォールバック ── */}
-      <div className="flex-1 min-h-0 bg-[#f1f5f9] overflow-y-auto">
+      <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-[#f1f5f9] overflow-y-auto practice-pdf-content">
         {pdfLoading ? (
           <div className="h-full flex flex-col items-center justify-center px-6">
             <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-[#e2e8f0] px-6 py-7 flex flex-col gap-5">
@@ -1642,12 +1644,11 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
             </div>
           </div>
         ) : pdfUrl ? (
-          /* PDF が生成できた場合: iframe で埋め込み表示 */
+          /* PDF が生成できた場合: iframe で埋め込み表示（モバイル最適化） */
           <iframe
             src={pdfUrl}
             title="練習問題 PDF"
-            className="w-full border-0"
-            style={{ display: 'block', height: '100%', minHeight: '60vh' }}
+            className="practice-pdf-iframe"
           />
         ) : (
           /* PDF 失敗フォールバック: 問題カードを直接表示 */
@@ -1744,9 +1745,20 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
         )}
       </div>
 
-      {/* ── 採点パネル ── */}
-      <div className="flex-shrink-0 bg-white border-t border-[#e2e8f0] px-4 pt-3 pb-4">
-        <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.1em] uppercase mb-2">自己採点</p>
+      {/* ── 採点パネル (モバイル: 折りたたみ可) ── */}
+      <div className="flex-shrink-0 bg-white border-t border-[#e2e8f0] practice-score-panel">
+        <button
+          type="button"
+          className="w-full flex items-center justify-between sm:hidden px-4 py-2.5"
+          onClick={() => setScorePanelOpen(!scorePanelOpen)}
+        >
+          <span className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.1em] uppercase">自己採点</span>
+          <svg className={`w-4 h-4 text-[#94a3b8] transition-transform duration-200 ${scorePanelOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+          </svg>
+        </button>
+        <div className={`px-3 sm:px-4 pb-3 sm:pb-4 ${scorePanelOpen ? '' : 'hidden sm:block'}`}>
+        <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.1em] uppercase mb-2 hidden sm:block">自己採点</p>
 
         {anyPoints ? (
           /* 配点ベースの得点入力 */
@@ -1839,11 +1851,12 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
             const pointArray = problems.map((_, i) => pScores[i] || null);
             onFinish(scoreArray, pointArray);
           }}
-          className="w-full mt-2 py-3.5 rounded-2xl text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full mt-2 py-3 sm:py-3.5 rounded-2xl text-[13px] sm:text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ background: allScored ? `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)` : '#e2e8f0', boxShadow: allScored ? `0 6px 20px ${c.ring}` : 'none' }}
         >
           {allScored ? '採点して結果を見る →' : `まだ採点が完了していません`}
         </button>
+        </div>
       </div>
     </div>
   );
