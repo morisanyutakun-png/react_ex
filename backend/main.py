@@ -5403,40 +5403,88 @@ F8. 色: red, blue, green!60!black, gray!30 等の標準色のみ
 バネは必ず「螺旋コイル」を使う。decoration={coil, aspect=0.35, segment length=5pt, amplitude=8pt}
 ※ decoration={zigzag} は絶対禁止。必ず coil を使うこと。
 
-■ 物理図パターン（正確な例）:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 座標計算の絶対原則（リアルな図の核心）:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+C1. 物体は台・斜面・床の「表面ぴったり」に配置する（内部侵入は厳禁）
+C2. 斜面（角度θ°）上の物体配置は必ず \begin{scope}[shift={(x,y)},rotate=θ] を使う
+    → shift 点 = 斜面面上の基点座標、rotate = 斜面角度
+    → scope 内で y=0 が斜面面になる。物体を (-w/2, 0) rectangle ++(w, h) で配置すれば底辺が斜面上に乗る
+C3. 力の矢印方向（絶対に守ること）:
+    - 重力 mg: 常に真下 → 世界座標で (0, -1) 方向 → \draw[->] (cx,cy)--++(0,-Lmg)
+    - 法線力 N: 斜面に垂直・斜面から離れる方向 → scope内なら真上 (0, +1) 方向 → \draw[->] (0,h/2)--++(0,LN)
+      または世界座標で (-sinθ, cosθ) 方向 → θ=30°なら ++(-0.45*s, 0.78*s)
+    - 摩擦力 f: 斜面に平行 → scope内なら横方向 (±1, 0) → \draw[->] (0,h/2)--++(±Lf, 0)
+    - 張力 T: 紐の方向
+C4. 斜面角 θ の頂点座標: 三角形底辺長 L → 頂点 (L, L*tanθ)
+    θ=30°: tan30°≈0.577 → L=4 なら頂点 (4, 2.31)
+    θ=45°: tan45°=1.000 → L=3 なら頂点 (3, 3.00)
+    θ=60°: tan60°≈1.732 → L=3 なら頂点 (3, 5.20)
+C5. 斜面面上の基点: 底から距離 s の点 = (s·cosθ, s·sinθ)
+    θ=30°, s=2.5: 基点 = (2.17, 1.25)
 
-【力学: 斜面上の物体と力】
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 物理図パターン（精密な例）:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+【力学: 斜面上の物体と力（θ=30°, scope方式で正確配置）】
+% 斜面: (0,0)-(4,0)-(4,2.31) の直角三角形（角30°）
+% 物体中心の世界座標: shift(2.17,1.25)+rotate30 で (0,0.3) → (2.02, 1.51)
+% N方向: scope内で真上 → 世界座標では (-sin30°,cos30°)=(-0.5,0.866) と一致
 \begin{tikzpicture}[>=stealth,scale=1.2]
   \fill[gray!15] (0,0)--(4,0)--(4,2.31)--cycle;
   \draw[thick] (0,0)--(4,0)--(4,2.31)--cycle;
-  \draw[fill=gray!40,thick,rotate around={30:(2.3,1.33)}] (2.05,1.1) rectangle ++(0.6,0.6);
-  \draw[->,red,very thick] (2.35,1.4)--++(0.52,0.3) node[right,black]{$N$};
-  \draw[->,blue,very thick] (2.35,1.4)--++(0,-0.9) node[below,black]{$mg$};
-  \draw[thin] (0.6,0) arc[start angle=0,end angle=30,radius=0.6];
-  \node at (0.85,0.18) {$\theta$};
+  \draw[thin] (0.65,0) arc[start angle=0,end angle=30,radius=0.65];
+  \node at (0.95,0.18) {$\theta$};
+  % 斜面上の物体（scope/rotate で底面を斜面に正確に合わせる）
+  \begin{scope}[shift={(2.17,1.25)},rotate=30]
+    \draw[fill=blue!20,thick] (-0.3,0) rectangle ++(0.6,0.6);
+    \node at (0,0.3) {$m$};
+    % 法線力: scope内で真上（= 世界座標で斜面に垂直）
+    \draw[->,red,very thick] (0,0.3)--++(0,1.0) node[above]{$N$};
+    % 摩擦力: scope内で斜面方向（上向き）
+    \draw[->,green!60!black,thick] (-0.3,0.3)--++(-1.0,0) node[left]{$f$};
+  \end{scope}
+  % 重力: 世界座標で真下（物体中心≈(2.02,1.51)から）
+  \draw[->,blue,very thick] (2.02,1.51)--++(0,-1.0) node[below]{$mg$};
 \end{tikzpicture}
 
-【力学: 螺旋バネ+物体（水平）】
+【力学: 水平面上の物体（押す力）】
 \begin{tikzpicture}[>=stealth,scale=1.1]
-  \fill[gray!20] (0,-0.15) rectangle (0.15,1.0);
-  \draw[thick] (0.15,0)--(0.15,0.9);
-  \draw[thick,decorate,decoration={coil,aspect=0.35,segment length=5pt,amplitude=8pt}] (0.15,0.45)--(2.5,0.45);
-  \draw[fill=blue!20,thick] (2.5,0.1) rectangle ++(0.7,0.7);
-  \node at (2.85,0.45) {$m$};
-  \draw[->,red,thick] (3.2,0.45)--++(0.8,0) node[right]{$F$};
-  \draw[thick] (0,0)--(4.5,0);
-  \node at (1.32,0.78) {$k$};
+  \fill[gray!10] (-0.2,-0.15) rectangle (5.5,0);
+  \draw[thick] (-0.2,0)--(5.5,0);
+  \draw[fill=orange!20,thick] (1.5,0) rectangle ++(1.0,1.0);
+  \node at (2.0,0.5) {$m$};
+  \draw[->,red,very thick] (2.5,0.5)--++(1.2,0) node[right]{$F$};
+  \draw[->,blue,thick] (2.0,0.5)--++(0,-0.8) node[below]{$mg$};
+  \draw[->,green!60!black,thick] (2.0,1.0)--++(0,0.7) node[above]{$N$};
+\end{tikzpicture}
+
+【力学: 螺旋バネ+物体（水平・床に接地）】
+\begin{tikzpicture}[>=stealth,scale=1.1]
+  \fill[gray!20] (0,-0.15) rectangle (0.15,0.85);
+  \draw[thick] (0.15,-0.1)--(0.15,0.85);
+  \fill[gray!10] (-0.2,-0.1) rectangle (5.0,0);
+  \draw[thick] (-0.2,0)--(5.0,0);
+  \draw[thick,decorate,decoration={coil,aspect=0.35,segment length=5pt,amplitude=7pt}]
+    (0.15,0.35)--(2.2,0.35);
+  \draw[fill=blue!20,thick] (2.2,0) rectangle ++(0.7,0.7);
+  \node at (2.55,0.35) {$m$};
+  \draw[->,red,thick] (2.9,0.35)--++(0.9,0) node[right]{$F$};
+  \node at (1.17,0.62) {$k$};
 \end{tikzpicture}
 
 【力学: 螺旋バネ+物体（鉛直・つり下げ）】
 \begin{tikzpicture}[>=stealth,scale=1.1]
-  \fill[gray!20] (-0.6,3.2) rectangle (0.6,3.4);
-  \draw[thick] (-0.6,3.2)--(0.6,3.2);
-  \draw[thick,decorate,decoration={coil,aspect=0.35,segment length=5pt,amplitude=8pt}] (0,3.2)--(0,1.6);
-  \draw[fill=blue!20,thick] (-0.35,1.2) rectangle ++(0.7,0.4);
-  \node at (0,1.4) {$m$};
-  \draw[->,blue,thick] (0,1.2)--++(0,-0.8) node[below]{$mg$};
-  \node[right] at (0.4,2.4) {$k$};
+  \fill[gray!20] (-0.7,3.2) rectangle (0.7,3.45);
+  \draw[thick] (-0.7,3.2)--(0.7,3.2);
+  \draw[thick,decorate,decoration={coil,aspect=0.35,segment length=5pt,amplitude=8pt}]
+    (0,3.2)--(0,1.65);
+  \draw[fill=blue!20,thick] (-0.35,1.25) rectangle ++(0.7,0.4);
+  \node at (0,1.45) {$m$};
+  \draw[->,blue,thick] (0,1.25)--++(0,-0.85) node[below]{$mg$};
+  \draw[->,red,thick] (0,1.65)--++(0,0.7) node[right]{$T$};
+  \node[right] at (0.45,2.4) {$k$};
 \end{tikzpicture}
 
 【電磁気: 直列回路（circuitikz）】
@@ -5449,19 +5497,62 @@ F8. 色: red, blue, green!60!black, gray!30 等の標準色のみ
     to[short] (0,0);
 \end{circuitikz}
 
+【電磁気: 並列回路（circuitikz）】
+\begin{circuitikz}[scale=0.85,>=stealth]
+  \draw (0,0) to[battery1,l_={$E$},invert] (0,3.0)
+    to[short] (4.5,3.0)
+    to[short] (4.5,0)
+    to[short] (0,0);
+  \draw (1.5,3.0) to[R,l={$R_1$}] (1.5,0);
+  \draw (3.0,3.0) to[R,l={$R_2$}] (3.0,0);
+\end{circuitikz}
+
 【熱力学: P-V グラフ】
 \begin{tikzpicture}[>=stealth,scale=1.0]
   \draw[->] (0,0)--(4.5,0) node[right]{$V$};
   \draw[->] (0,0)--(0,3.5) node[above]{$P$};
   \draw[blue,very thick] (0.8,2.8)--(0.8,0.9) node[midway,left]{等積};
   \draw[red,very thick] (0.8,0.9)--(3.5,0.9) node[midway,below]{等圧};
-  \draw[green!60!black,very thick] (3.5,0.9)..controls(2.5,1.8)..(0.8,2.8);
-  \fill (0.8,2.8) circle (2pt); \fill (0.8,0.9) circle (2pt); \fill (3.5,0.9) circle (2pt);
+  \draw[green!60!black,very thick] (3.5,0.9)..controls(2.5,1.8)..(0.8,2.8)
+    node[midway,right]{断熱};
+  \fill (0.8,2.8) circle (2pt) node[left]{A};
+  \fill (0.8,0.9) circle (2pt) node[left]{B};
+  \fill (3.5,0.9) circle (2pt) node[below]{C};
+\end{tikzpicture}
+
+【力学: 糸で繋いだ2物体（滑車）】
+\begin{tikzpicture}[>=stealth,scale=1.0]
+  % 台（水平面）
+  \fill[gray!10] (0,-0.2) rectangle (4.5,0);
+  \draw[thick] (0,0)--(4.5,0);
+  % 滑車（右端）
+  \draw[thick] (4.3,0)--(4.3,0.15);
+  \fill[gray!30] (4.3,0.35) circle (0.2);
+  \draw[thick] (4.3,0.35) circle (0.2);
+  % 物体A（水平）
+  \draw[fill=blue!20,thick] (1.0,0) rectangle ++(1.0,0.8);
+  \node at (1.5,0.4) {$m_A$};
+  % 糸
+  \draw[thick] (2.0,0.55)--(4.3,0.55)--(4.3,0.15);
+  % 物体B（垂直・宙づり）
+  \draw[fill=red!20,thick] (4.05,-1.2) rectangle ++(0.5,0.7);
+  \node at (4.3,-0.85) {$m_B$};
+  % 重力矢印
+  \draw[->,blue,thick] (4.3,-1.2)--++(0,-0.6) node[below]{$m_B g$};
+  % Aの張力矢印
+  \draw[->,red,thick] (2.0,0.4)--++(0.7,0) node[right]{$T$};
 \end{tikzpicture}
 
 %%% FIGURE %%% を省略してよいのは「純粋な代数計算のみ」の問題だけです。
 物理的状況がある問題（力学・電磁気・波動・熱力学等）は必ず図を描いてください。
 波動・グラフ: \draw[domain=0:5,samples=100] plot(\x,{sin(...)}) で正弦波を描くこと。
+
+★ 最終確認チェックリスト（図を書いたら必ず確認）:
+□ 物体の底面が台/斜面/床の表面に接触しているか（内部侵入していないか）
+□ 法線力 N は斜面に対して垂直方向を向いているか
+□ 重力 mg は真下を向いているか
+□ scope[shift,rotate] を使った斜面上配置では法線力も scope 内で真上を向いているか
+□ すべての \draw 文が ; で終わっているか
 """
     elif subject == '化学':
         figure_guide = r"""

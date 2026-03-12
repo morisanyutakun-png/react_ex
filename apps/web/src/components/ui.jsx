@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useBranding } from '@/contexts/BrandingContext';
 
 /* ─────────────────────────────────────────────────
    共通UIコンポーネント群 (Apple-inspired · Light · Refined)
@@ -536,11 +538,60 @@ const MOBILE_NAV = [
 ];
 
 export function MobileNavLinks({ currentPath = '' }) {
+  const { user, isAuthenticated, isGuest, logout } = useAuth();
+  const { primaryColor } = useBranding();
+
   const items = MOBILE_NAV.filter(n =>
     currentPath === '/' ? n.href !== '/' : !currentPath.startsWith(n.href)
   );
+
   return (
     <div className="sm:hidden mt-8 mb-4">
+      {/* ── 認証バー ── */}
+      <div className="flex items-center justify-between px-1 mb-4">
+        {isAuthenticated ? (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-black flex-shrink-0"
+                   style={{ background: primaryColor }}>
+                {(user?.display_name || user?.email || 'U')[0].toUpperCase()}
+              </div>
+              <span className="text-[13px] font-semibold text-[#334155] truncate max-w-[140px]">
+                {user?.display_name || user?.email?.split('@')[0] || 'ユーザー'}
+              </span>
+            </div>
+            <button
+              onClick={logout}
+              className="text-[11px] font-semibold text-[#94a3b8] px-3 py-1.5 rounded-full border border-[#e2e8f0] bg-white active:scale-95 transition-all"
+            >
+              ログアウト
+            </button>
+          </>
+        ) : isGuest ? (
+          <>
+            <span className="text-[12px] text-[#94a3b8] font-medium">ゲスト利用中</span>
+            <Link
+              href="/login"
+              className="text-[12px] font-black text-white px-4 py-1.5 rounded-full active:scale-95 transition-all shadow-sm"
+              style={{ background: primaryColor }}
+            >
+              ログイン
+            </Link>
+          </>
+        ) : (
+          <>
+            <span className="text-[12px] text-[#94a3b8]">ログインしていません</span>
+            <Link
+              href="/login"
+              className="text-[12px] font-black text-white px-4 py-1.5 rounded-full active:scale-95 transition-all shadow-sm"
+              style={{ background: primaryColor }}
+            >
+              ログイン
+            </Link>
+          </>
+        )}
+      </div>
+
       <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest mb-3 px-1">メニュー</p>
       <div className="grid grid-cols-3 gap-2">
         {items.map(({ href, label, icon }) => (

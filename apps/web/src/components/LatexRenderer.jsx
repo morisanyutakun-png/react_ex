@@ -96,6 +96,27 @@ const KATEX_OPTS_BASE = {
 function renderLatexToHtml(text) {
   if (!text) return '';
 
+  // 全マッチを収集
+  const matches = [];
+
+  // ── ブロック数式環境: \begin{equation/align/gather/...}...\end{...} ──
+  // KaTeX に環境全体を渡す（displayMode: true で描画）
+  const ENV_NAMES = 'equation|align|gather|multline|eqnarray';
+  const envRe = new RegExp(
+    `\\\\begin\\{(${ENV_NAMES})(\\*?)\\}[\\s\\S]*?\\\\end\\{\\1\\2\\}`,
+    'g'
+  );
+  let em;
+  while ((em = envRe.exec(text)) !== null) {
+    matches.push({
+      start: em.index,
+      end: em.index + em[0].length,
+      latex: em[0],   // 環境全体を KaTeX に渡す
+      display: true,
+    });
+  }
+
+  // ── その他の数式パターン ──
   const patterns = [
     { regex: /\$\$([\s\S]*?)\$\$/g, display: true },
     { regex: /\\\[([\s\S]*?)\\\]/g, display: true },
@@ -103,8 +124,6 @@ function renderLatexToHtml(text) {
     { regex: /\\\(([\s\S]*?)\\\)/g, display: false },
   ];
 
-  // 全マッチを収集
-  const matches = [];
   for (const { regex, display } of patterns) {
     const re = new RegExp(regex.source, regex.flags);
     let m;

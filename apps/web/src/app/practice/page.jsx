@@ -1350,13 +1350,15 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
 function PdfViewScreen({ pdfUrl, pdfLoading, subject, problems, onFinish, onQuit }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const [scores, setScores] = useState({});
+  const [finished, setFinished] = useState(false);
   const allScored = problems.length > 0 && Object.keys(scores).length === problems.length;
+  const pdfFailed = !pdfLoading && !pdfUrl;
 
   const scoreLabel = { [SCORE.CORRECT]: '○', [SCORE.DELTA]: '△', [SCORE.WRONG]: '×' };
   const scoreColor = {
-    [SCORE.CORRECT]: { bg: '#f0fdf4', border: '#86efac', text: '#16a34a' },
-    [SCORE.DELTA]:   { bg: '#fffbeb', border: '#fcd34d', text: '#d97706' },
-    [SCORE.WRONG]:   { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' },
+    [SCORE.CORRECT]: { bg: '#f0fdf4', border: '#86efac', text: '#16a34a', active: '#16a34a' },
+    [SCORE.DELTA]:   { bg: '#fffbeb', border: '#fcd34d', text: '#d97706', active: '#d97706' },
+    [SCORE.WRONG]:   { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626', active: '#dc2626' },
   };
 
   return (
@@ -1366,13 +1368,15 @@ function PdfViewScreen({ pdfUrl, pdfLoading, subject, problems, onFinish, onQuit
         <BackButton onClick={onQuit} label="終了" />
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
-          <span className="text-[12px] font-bold text-[#64748b]">{subject} 練習問題 — LaTeX PDF</span>
+          <span className="text-[12px] font-bold text-[#64748b]">
+            {subject} 練習問題{pdfFailed ? ' — カード表示' : ' — LaTeX PDF'}
+          </span>
         </div>
         <div className="w-16" />
       </div>
 
-      {/* ── PDF iframe ── */}
-      <div className="flex-1 min-h-0 bg-[#f1f5f9]">
+      {/* ── PDF または カードフォールバック ── */}
+      <div className="flex-1 min-h-0 bg-[#f1f5f9] overflow-y-auto">
         {pdfLoading ? (
           <div className="h-full flex flex-col items-center justify-center gap-4">
             <div className="w-12 h-12 border-4 border-[#e2e8f0] rounded-full animate-spin"
@@ -1381,17 +1385,89 @@ function PdfViewScreen({ pdfUrl, pdfLoading, subject, problems, onFinish, onQuit
             <p className="text-[11px] text-[#94a3b8]">美しい数式・TikZ 図を PDF に変換しています</p>
           </div>
         ) : pdfUrl ? (
+          /* PDF が生成できた場合: iframe で埋め込み表示 */
           <iframe
             src={pdfUrl}
             title="練習問題 PDF"
-            className="w-full h-full border-0"
-            style={{ display: 'block' }}
+            className="w-full border-0"
+            style={{ display: 'block', height: '100%', minHeight: '60vh' }}
           />
         ) : (
-          <div className="h-full flex flex-col items-center justify-center gap-3 text-center px-8">
-            <span className="text-[32px]">📄</span>
-            <p className="text-[14px] font-bold text-[#475569]">PDF の生成に失敗しました</p>
-            <p className="text-[12px] text-[#94a3b8]">バックエンドでの LaTeX コンパイルエラーの可能性があります</p>
+          /* PDF 失敗フォールバック: 問題カードを直接表示 */
+          <div className="px-4 py-5 space-y-5 max-w-[640px] mx-auto">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              LaTeX PDF の生成に失敗しました。問題をカード形式で表示しています。
+            </div>
+            {problems.map((problem, idx) => {
+              const stem = problem?.stem || problem?.text || problem?.question || '';
+              const topic = problem?.topic || '';
+              const subproblems = (() => {
+                const subs = problem?.subproblems;
+                if (Array.isArray(subs) && subs.length > 0) return subs;
+                const a = problem?.answer || problem?.solution || '';
+                const e = problem?.explanation || '';
+                if (a || e) return [{ label: '', question: '', answer: a, explanation: e }];
+                return [];
+              })();
+              return (
+                <div key={idx} className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+                  <div className="flex items-center gap-2 px-5 pt-4 pb-2">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black text-white"
+                         style={{ background: c.accent }}>{idx + 1}</div>
+                    {topic && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: c.accent + '14', color: c.accent }}>{topic}</span>
+                    )}
+                  </div>
+                  <div className="px-5 pb-4 space-y-2">
+                    {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{stem}</LatexBlock>}
+                    {problem?.figure_tikz && problem.figure_tikz !== 'null' && (
+                      <TikzFigure tikzCode={problem.figure_tikz} />
+                    )}
+                    {subproblems.length > 0 && (
+                      <div className="space-y-1 border-t pt-2" style={{ borderColor: c.accent + '22' }}>
+                        {subproblems.map((sp, si) => sp.question ? (
+                          <div key={si} className="flex gap-1.5">
+                            {sp.label && <span className="text-[12px] font-black shrink-0" style={{ color: c.accent }}>{sp.label}</span>}
+                            <LatexBlock className="text-[12px] leading-[1.8] text-[#334155]">{sp.question}</LatexBlock>
+                          </div>
+                        ) : null)}
+                      </div>
+                    )}
+                    {finished && subproblems.map((sp, si) => (
+                      <div key={si} className="border-t pt-3 mt-2" style={{ borderColor: c.accent + '22' }}>
+                        {sp.answer && (
+                          <div className="mb-1">
+                            <span className="text-[10px] font-bold" style={{ color: c.accent }}>
+                              {sp.label ? `解答 ${sp.label}` : '解答'}
+                            </span>
+                            <LatexBlock className="text-[13px] leading-[1.8] text-[#1e293b] font-semibold">{sp.answer}</LatexBlock>
+                          </div>
+                        )}
+                        {sp.explanation && (
+                          <details className="mt-1">
+                            <summary className="text-[10px] font-bold text-[#6366f1] cursor-pointer select-none hover:underline">解説を見る</summary>
+                            <div className="mt-1.5 pl-2 border-l-2 border-[#e8eeff]">
+                              <LatexTikzBlock className="text-[11px] leading-[1.75] text-[#475569]">{sp.explanation}</LatexTikzBlock>
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            {!finished && (
+              <button type="button" onClick={() => setFinished(true)}
+                className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97]"
+                style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}>
+                解き終わった → 解答を見る
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1414,7 +1490,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, subject, problems, onFinish, onQuit
                       onClick={() => setScores((prev) => ({ ...prev, [idx]: s }))}
                       className="w-9 h-9 rounded-full text-[14px] font-black border-2 transition-all duration-150 active:scale-90"
                       style={selected
-                        ? { background: sc.bg, borderColor: sc.border, color: sc.text, transform: 'scale(1.1)' }
+                        ? { background: sc.active, borderColor: sc.active, color: 'white', transform: 'scale(1.1)' }
                         : { background: 'white', borderColor: '#e2e8f0', color: '#cbd5e1' }}
                     >
                       {scoreLabel[s]}
@@ -1751,12 +1827,12 @@ export default function PracticePage() {
           const pdfData = await generatePdf(latex);
           setPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
         } catch (_pdfErr) {
-          // PDF 生成失敗 → カード表示にフォールバック
-          setScreen(cfg?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+          // PDF 生成失敗 → PDF 画面のままカードフォールバック表示（pdfUrl=null で表示切替）
+          setPdfUrl(null);
         }
         setPdfLoading(false);
       } else {
-        setScreen(cfg?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+        setScreen(SCREEN.PDF); // latex がなくても PDF 画面でカード表示
       }
     } catch (e) {
       clearTimeout(t1);
@@ -1809,11 +1885,11 @@ export default function PracticePage() {
         const pdfData = await generatePdf(latex);
         setPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
       } catch (_) {
-        setScreen(config?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+        setPdfUrl(null);
       }
       setPdfLoading(false);
     } else {
-      setScreen(config?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+      setScreen(SCREEN.PDF); // latex なしでもPDF画面でカード表示
     }
   }, [config]);
 
