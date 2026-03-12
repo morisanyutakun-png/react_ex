@@ -7857,8 +7857,11 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         )
         engine = None
         engine_name = None
+        # ltjsarticle (LuaTeX-ja) requires lualatex; prefer it over xelatex for such docs
+        _needs_lualatex = bool(re.search(r'\\documentclass[^{]*\{ltjsarticle\}', fixed_body))
         if not _cloud_only:
-            for cand in ('xelatex', 'lualatex', 'pdflatex'):
+            candidates = ('lualatex', 'xelatex', 'pdflatex') if _needs_lualatex else ('xelatex', 'lualatex', 'pdflatex')
+            for cand in candidates:
                 path = shutil.which(cand)
                 if path:
                     engine = path
@@ -7913,11 +7916,13 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         def _try_cloud_compilation(body_tex: str) -> 'Response | None':
             """Attempt cloud LaTeX compilation. Returns a Response on success, None on failure."""
             logger.info('Attempting cloud compilation via latex.ytotech.com...')
+            # ltjsarticle requires lualatex; default to xelatex for everything else
+            _cloud_compiler = 'lualatex' if re.search(r'\\documentclass[^{]*\{ltjsarticle\}', body_tex) else 'xelatex'
             try:
                 cloud_resp = requests.post(
                     'https://latex.ytotech.com/builds/sync',
                     json={
-                        'compiler': 'xelatex',
+                        'compiler': _cloud_compiler,
                         'resources': [{'main': True, 'content': body_tex}],
                     },
                     timeout=60,

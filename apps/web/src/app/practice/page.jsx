@@ -1347,7 +1347,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
    PDF 埋め込み練習画面 — LaTeX 組版 PDF をページ内に表示
 ───────────────────────────────────────────────────────────── */
 
-function PdfViewScreen({ pdfUrl, pdfLoading, subject, problems, onFinish, onQuit }) {
+function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onFinish, onQuit }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const [scores, setScores] = useState({});
   const [finished, setFinished] = useState(false);
@@ -1378,11 +1378,59 @@ function PdfViewScreen({ pdfUrl, pdfLoading, subject, problems, onFinish, onQuit
       {/* ── PDF または カードフォールバック ── */}
       <div className="flex-1 min-h-0 bg-[#f1f5f9] overflow-y-auto">
         {pdfLoading ? (
-          <div className="h-full flex flex-col items-center justify-center gap-4">
-            <div className="w-12 h-12 border-4 border-[#e2e8f0] rounded-full animate-spin"
-                 style={{ borderTopColor: c.accent }} />
-            <p className="text-[14px] font-bold text-[#64748b]">LaTeX 組版中…</p>
-            <p className="text-[11px] text-[#94a3b8]">美しい数式・TikZ 図を PDF に変換しています</p>
+          <div className="h-full flex flex-col items-center justify-center px-6">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-[#e2e8f0] px-6 py-7 flex flex-col gap-5">
+              {/* アイコン + タイトル */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                     style={{ background: c.accent + '14' }}>
+                  <div className="w-5 h-5 border-[3px] border-[#e2e8f0] rounded-full animate-spin"
+                       style={{ borderTopColor: c.accent }} />
+                </div>
+                <div>
+                  <p className="text-[13px] font-bold text-[#1e293b]">LaTeX PDF を生成中</p>
+                  <p className="text-[11px] text-[#94a3b8] mt-0.5">
+                    {pdfProgress < 15 ? 'LaTeX 文書を構築中...' :
+                     pdfProgress < 35 ? '数式・記号をレンダリング中...' :
+                     pdfProgress < 60 ? 'TikZ 図・グラフを処理中...' :
+                     pdfProgress < 80 ? 'PDF コンパイル中...' :
+                     pdfProgress < 95 ? '仕上げ処理中...' : '完了'}
+                  </p>
+                </div>
+              </div>
+              {/* プログレスバー */}
+              <div className="space-y-1.5">
+                <div className="w-full h-2 bg-[#f1f5f9] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${Math.max(4, pdfProgress)}%`, background: c.accent }}
+                  />
+                </div>
+                <p className="text-[10px] text-[#94a3b8] text-right">{pdfProgress}%</p>
+              </div>
+              {/* ステップ一覧 */}
+              <div className="flex flex-col gap-1.5">
+                {[
+                  { label: 'LaTeX 文書を構築',    done: pdfProgress >= 15 },
+                  { label: '数式・記号をレンダリング', done: pdfProgress >= 35 },
+                  { label: 'TikZ 図・グラフを処理', done: pdfProgress >= 60 },
+                  { label: 'PDF コンパイル',      done: pdfProgress >= 80 },
+                  { label: '仕上げ処理',          done: pdfProgress >= 95 },
+                ].map(({ label: stepLabel, done }) => (
+                  <div key={stepLabel} className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
+                         style={{ background: done ? c.accent : '#e2e8f0' }}>
+                      {done && (
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-[11px]" style={{ color: done ? '#1e293b' : '#94a3b8' }}>{stepLabel}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ) : pdfUrl ? (
           /* PDF が生成できた場合: iframe で埋め込み表示 */
@@ -1767,11 +1815,41 @@ export default function PracticePage() {
   const [latexForPdf, setLatexForPdf] = useState(null);
   const [pdfUrl, setPdfUrl]           = useState(null);
   const [pdfLoading, setPdfLoading]   = useState(false);
+  const [pdfProgress, setPdfProgress] = useState(0);
+  const pdfProgressTimer = useRef(null);
   const [followLoading, setFollowLoading] = useState(false);
   const [manualPrompt, setManualPrompt] = useState('');
   const [promptLoading, setPromptLoading] = useState(false);
   // × 後のフォローアップ用に追加問題をキューに積む
   const extraQueue = useRef([]);
+
+  /* ── PDF 生成プログレス管理 ── */
+  const startPdfProgress = useCallback(() => {
+    if (pdfProgressTimer.current) clearInterval(pdfProgressTimer.current);
+    setPdfProgress(0);
+    // 段階的に進める: 最初は速く、後半は遅くなる
+    const schedule = [
+      { at: 800,  val: 12 },
+      { at: 2000, val: 28 },
+      { at: 4000, val: 48 },
+      { at: 7000, val: 62 },
+      { at: 12000, val: 75 },
+      { at: 20000, val: 85 },
+      { at: 35000, val: 92 },
+    ];
+    const timers = schedule.map(({ at, val }) =>
+      setTimeout(() => setPdfProgress(val), at)
+    );
+    pdfProgressTimer.current = { _timers: timers };
+  }, []);
+
+  const finishPdfProgress = useCallback((success) => {
+    if (pdfProgressTimer.current?._timers) {
+      pdfProgressTimer.current._timers.forEach(clearTimeout);
+    }
+    pdfProgressTimer.current = null;
+    setPdfProgress(success ? 100 : 0);
+  }, []);
 
   /* ── AI問題生成 ── */
   const fetchProblemsAI = useCallback(async (cfg) => {
@@ -1822,12 +1900,15 @@ export default function PracticePage() {
       if (latex) {
         setPdfUrl(null);
         setPdfLoading(true);
+        startPdfProgress();
         setScreen(SCREEN.PDF);
         try {
           const pdfData = await generatePdf(latex);
+          finishPdfProgress(true);
           setPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
         } catch (_pdfErr) {
           // PDF 生成失敗 → PDF 画面のままカードフォールバック表示（pdfUrl=null で表示切替）
+          finishPdfProgress(false);
           setPdfUrl(null);
         }
         setPdfLoading(false);
@@ -1840,7 +1921,7 @@ export default function PracticePage() {
       setError(`AI生成に失敗しました: ${e.message}`);
       setScreen(SCREEN.SELECT);
     }
-  }, [user]);
+  }, [user, startPdfProgress, finishPdfProgress]);
 
   /* ── 手動モード: プロンプト生成 ── */
   const fetchManualPrompt = useCallback(async ({ subject, topics, difficulty, numQ }) => {
@@ -1880,18 +1961,21 @@ export default function PracticePage() {
     if (latex) {
       setPdfUrl(null);
       setPdfLoading(true);
+      startPdfProgress();
       setScreen(SCREEN.PDF);
       try {
         const pdfData = await generatePdf(latex);
+        finishPdfProgress(true);
         setPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
       } catch (_) {
+        finishPdfProgress(false);
         setPdfUrl(null);
       }
       setPdfLoading(false);
     } else {
       setScreen(SCREEN.PDF); // latex なしでもPDF画面でカード表示
     }
-  }, [config]);
+  }, [config, startPdfProgress, finishPdfProgress]);
 
   /* ── 開始 ── */
   const handleStart = useCallback((cfg) => {
@@ -2049,6 +2133,7 @@ export default function PracticePage() {
       <PdfViewScreen
         pdfUrl={pdfUrl}
         pdfLoading={pdfLoading}
+        pdfProgress={pdfProgress}
         subject={subject}
         problems={problems}
         onFinish={(scoreArray) => { setScores(scoreArray); setScreen(SCREEN.SUMMARY); }}
