@@ -383,7 +383,7 @@ export default function UserModePage() {
   });
   // 認証ユーザーの場合は authUser.id を使う
   const effectiveUserId = (isAuthenticated && authUser?.id) ? authUser.id : userId;
-  const [usage, setUsage] = useState({ generation_count: 0, limit: 3, remaining: 3, unlocked: false });
+  const [usage, setUsage] = useState({ generation_count: 0, limit: 10, remaining: 10, unlocked: false });
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockPassword, setUnlockPassword] = useState('');
   const [unlockError, setUnlockError] = useState('');
@@ -584,6 +584,7 @@ export default function UserModePage() {
   const [pdfUrl, setPdfUrl] = useState('');
   const [generating, setGenerating] = useState(false);
   const [pdfWorking, setPdfWorking] = useState(false);
+  const [genProgress, setGenProgress] = useState(0);
 
   /* ── 手動モード用 ── */
   const [llmOutput, setLlmOutput] = useState('');
@@ -765,9 +766,11 @@ export default function UserModePage() {
     setGenerating(true);
     setGeneratedLatex('');
     setPdfUrl('');
+    setGenProgress(0);
     setStep(7);
 
     setStatus('ステップ 1/3: AIへの指示文を作成中...');
+    setGenProgress(5);
     let generatedPrompt = '';
     let latexResult = '';
     try {
@@ -817,6 +820,7 @@ export default function UserModePage() {
       } else {
         setStatus('ステップ 1/3 完了');
       }
+      setGenProgress(33);
     } catch (e) {
       setStatus(`指示文の作成に失敗しました: ${e.message}`);
       setGenerating(false);
@@ -830,6 +834,11 @@ export default function UserModePage() {
     }
 
     setStatus('ステップ 2/3: AI が問題を生成中...');
+    setGenProgress(36);
+    // ステップ2は時間がかかるため、36→65%をゆっくり自動進行させる
+    const step2Timer = setInterval(() => {
+      setGenProgress(prev => prev < 65 ? prev + 0.4 : prev);
+    }, 300);
     try {
       const llmParams = {
         prompt: generatedPrompt,
@@ -873,7 +882,10 @@ export default function UserModePage() {
         setGeneratedLatex(data.latex);
         setLlmOutput(data.latex);
       }
+      clearInterval(step2Timer);
+      setGenProgress(66);
     } catch (e) {
+      clearInterval(step2Timer);
       // 429 = 使用回数上限
       if (e.data?.usage || e.message?.includes('無料利用回数')) {
         if (e.data?.usage) setUsage(e.data.usage);
@@ -889,13 +901,14 @@ export default function UserModePage() {
 
     // ── ステップ 3/3: PDF 生成（別リクエストでタイムアウト回避）──
     setStatus('ステップ 3/3: PDF を生成中...');
+    setGenProgress(69);
     try {
       if (latexResult) {
         const pdfData = await generatePdf(latexResult);
         if (pdfData?.pdf_url) {
           setPdfUrl(pdfData.pdf_url);
-          window.open(pdfData.pdf_url, '_blank');
-          setStatus('PDF を生成・表示しました');
+          setGenProgress(100);
+          setStatus('PDF を生成しました');
         } else {
           setStatus('LaTeX生成完了（PDF生成失敗）');
         }
@@ -1088,6 +1101,7 @@ export default function UserModePage() {
     setRenderContext(null);
     setLlmOutput('');
     setStatus('');
+    setGenProgress(0);
     setSelectedBaseProblem(null);
     setBaseFilterQuery('');
     setMatchedProblems([]);
@@ -3917,9 +3931,9 @@ export default function UserModePage() {
       {step === 7 && generating && (
         <div className="wizard-section-enter">
           <div className="card-glossy generating-glow">
-            <div className="flex flex-col items-center justify-center py-24 px-8 relative z-10">
-              {/* スピナー — enhanced */}
-              <div className="relative mb-8">
+            <div className="flex flex-col items-center justify-center py-16 px-8 relative z-10">
+              {/* スピナー */}
+              <div className="relative mb-6">
                 <div className="absolute inset-[-20px] rounded-full border-2 border-purple-300/20 animate-ping" style={{ animationDuration: '2s' }} />
                 <div className="absolute inset-[-12px] rounded-full border-2 border-[#2563eb]/15 animate-pulse" />
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 relative w-16 h-16 rounded-2xl flex items-center justify-center"
@@ -3930,15 +3944,50 @@ export default function UserModePage() {
                   </svg>
                 </div>
               </div>
-              <p className="text-lg font-extrabold text-[#1e293b] mb-2 tracking-[-0.02em]">AI が問題を生成しています</p>
-              <p className="text-sm text-[#1e293b] font-medium">{status}</p>
-              <div className="flex items-center gap-2 mt-4">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0s' }} />
-                  <div className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '0.15s' }} />
-                  <div className="w-2 h-2 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: '0.3s' }} />
+              <p className="text-lg font-extrabold text-[#1e293b] mb-1 tracking-[-0.02em]">AI が問題を生成しています</p>
+              <p className="text-sm text-[#64748b] mb-6">{status}</p>
+
+              {/* プログレスバー */}
+              <div className="w-full max-w-sm mb-5">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-xs font-bold text-[#475569]">進捗</span>
+                  <span className="text-xs font-bold text-indigo-600">{Math.round(genProgress)}%</span>
                 </div>
-                <p className="text-[13px] text-[#94a3b8]">しばらくお待ちください</p>
+                <div className="w-full h-2.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{ width: `${genProgress}%`, background: 'linear-gradient(90deg, #6366f1, #a855f7, #ec4899)' }}
+                  />
+                </div>
+              </div>
+
+              {/* ステップ別インジケーター */}
+              <div className="w-full max-w-sm space-y-2">
+                {[
+                  { label: 'AIへの指示文を作成', doneAt: 33, activeFrom: 5 },
+                  { label: 'AI が問題を生成', doneAt: 66, activeFrom: 36 },
+                  { label: 'PDF を生成', doneAt: 100, activeFrom: 69 },
+                ].map((s, i) => {
+                  const done = genProgress >= s.doneAt;
+                  const active = !done && genProgress >= s.activeFrom;
+                  return (
+                    <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${done ? 'bg-emerald-50/70' : active ? 'bg-indigo-50/70' : 'bg-[#f8fafc]'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all duration-300 ${done ? 'bg-emerald-500 text-white' : active ? 'bg-indigo-500 text-white' : 'bg-[#e2e8f0] text-[#94a3b8]'}`}>
+                        {done ? '✓' : i + 1}
+                      </div>
+                      <span className={`text-xs font-medium flex-1 transition-colors duration-300 ${done ? 'text-emerald-700' : active ? 'text-indigo-700 font-bold' : 'text-[#94a3b8]'}`}>
+                        {s.label}
+                      </span>
+                      {active && (
+                        <div className="flex gap-0.5">
+                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: '0s' }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '0.15s' }} />
+                          <div className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce" style={{ animationDelay: '0.3s' }} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -4077,14 +4126,22 @@ export default function UserModePage() {
                 </div>
               <div className="space-y-4">
                 {pdfUrl && (
-                  <a
-                    href={pdfUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center justify-center gap-2 p-4 bg-[#2563eb]/[0.08] text-[#1e293b] rounded-xl border border-[#2563eb]/20 font-bold hover:bg-[#2563eb]/[0.08] transition-colors"
-                  >
-                    <Icons.Pdf /> PDF を別タブで開く
-                  </a>
+                  <div>
+                    <iframe
+                      src={pdfUrl}
+                      className="w-full rounded-xl border border-[#2563eb]/20"
+                      style={{ height: '70vh', minHeight: 400 }}
+                      title="生成されたPDF"
+                    />
+                    <a
+                      href={pdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 flex items-center justify-center gap-2 p-3 bg-[#f8fafc] text-[#64748b] rounded-xl border border-[#e2e8f0] text-sm font-medium hover:bg-[#f1f5f9] transition-colors"
+                    >
+                      <Icons.Pdf className="w-4 h-4" /> 別タブで開く
+                    </a>
+                  </div>
                 )}
 
                 <details className="group">

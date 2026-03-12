@@ -4514,7 +4514,7 @@ _ensure_usage_table()
 
 def _get_usage(user_id: str) -> dict:
     """ユーザーの使用状況を取得する。"""
-    limit = int(os.getenv('AI_GENERATION_LIMIT', '3'))
+    limit = int(os.getenv('AI_GENERATION_LIMIT', '10'))
     try:
         conn = connect_db()
         cur = conn.cursor()
