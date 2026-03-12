@@ -912,7 +912,7 @@ export default function App() {
 
       {/* ── Mobile Bottom Nav ── */}
       <nav className="mobile-bottom-nav mobile-only">
-        <button className={`mobile-nav-item ${screen==='home'?'active':''}`} onClick={() => setScreen('home')}><span className="mobile-nav-icon">🏠</span><span className="mobile-nav-label"><span style={{color: "var(--accent-color)"}}>[</span> HOME <span style={{color: "var(--accent-color)"}}>]</span></span></button>
+        <button className={`mobile-nav-item ${screen==='home'?'active':''}`} onClick={() => setScreen('home')}><span className="mobile-nav-icon">🏠</span><span className="mobile-nav-label">HOME</span></button>
         <button className={`mobile-nav-item ${screen==='practice'?'active':''}`} onClick={startPractice}><span className="mobile-nav-icon">📝</span><span className="mobile-nav-label">演習</span></button>
         <button className={`mobile-nav-item ${screen==='history'?'active':''}`} onClick={() => { setScreen('history'); setHistory(loadHistory()) }}><span className="mobile-nav-icon">🕐</span><span className="mobile-nav-label">履歴</span></button>
         <button className={`mobile-nav-item ${screen==='settings'||screen==='legal'?'active':''}`} onClick={() => setScreen('settings')}><span className="mobile-nav-icon">⚙️</span><span className="mobile-nav-label">設定</span></button>
