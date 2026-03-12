@@ -5473,23 +5473,8 @@ C4. 斜面角 θ の頂点座標: 三角形底辺長 L → 頂点 (L, L*tanθ)
     θ=60°: tan60°≈1.732 → L=3 なら頂点 (3, 5.20)
 C5. 斜面面上の基点: 底から距離 s の点 = (s·cosθ, s·sinθ)
     θ=30°, s=2.5: 基点 = (2.17, 1.25)
-C6. 滑車の接線点計算（必ず数値で検算してから描く）:
-    滑車中心 C=(cx,cy), 半径 r
-    - 水平糸→右から入る: 接線点 = (cx-r, cy) ← 左側
-    - 水平糸→左から入る: 接線点 = (cx+r, cy) ← 右側
-    - 鉛直に落ちる糸:    接線点 = (cx,   cy-r) ← 真下
-    - 鉛直に上がる糸:    接線点 = (cx,   cy+r) ← 真上
-    例: C=(4.5,0.5), r=0.25 → 水平接線=(4.25,0.5), 鉛直接線=(4.5,0.25)
-    ✓ 必ずコメントに座標値を書いて検算すること
-C7. 円弧の向き（arc）:
-    start angle → end angle は「糸が曲がる方向」に一致させる
-    - 水平→下向きへ曲がる（右滑車）: start=180°, end=270°, radius=r
-    - 上向き→水平へ曲がる（右滑車）: start=270°, end=360°, radius=r
-    - アトウッド（天井滑車, 左→右）: start=180°, end=0°, radius=r
-C8. TikZ座標計算を図の上部にコメントとして必ず書くこと:
-    % 滑車中心 (cx, cy), 半径 r=R
-    % 物体A中心 (ax, ay), 接続点 (ax+wa/2, ay)
-    % 接線点(水平) = (cx-r, cy)  接線点(鉛直) = (cx, cy-r)
+    θ=45°, s=2.0: 基点 = (1.41, 1.41)
+    ※ 滑車接線点は P3/P4 を参照（水平糸 → 中心 x±r で同 y, 鉛直糸 → 中心 y−r）
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ■ 糸・滑車・接触の物理的正確性ルール（絶対厳守）:
@@ -5700,101 +5685,6 @@ P7. 定滑車の支持構造を描く: 天井・壁・台からの支柱 \draw[t
   \draw[orange,thick] (-3,1.5)--(0,0)--(5,2.5);
 \end{tikzpicture}
 
-【力学: 等速円運動（向心力・速度ベクトル）】
-% 半径 R の円軌道、物体位置 θ=60°
-% 物体座標: (R*cos60°, R*sin60°) = (0.9, 1.56) (R=1.8)
-% 速度方向: (-sin60°, cos60°) = (-0.866, 0.5) （接線方向）
-% 向心力方向: (-cos60°, -sin60°) = (-0.5, -0.866) （中心方向）
-\begin{tikzpicture}[>=stealth,scale=1.1]
-  \draw[->] (-2.5,0)--(2.5,0) node[right]{$x$};
-  \draw[->] (0,-2.5)--(0,2.5) node[above]{$y$};
-  \draw[dashed,gray,thin] (0,0) circle (1.8);
-  \fill (0,0) circle (2pt) node[below left,font=\small]{O};
-  % 物体（θ=60°の位置: (0.9,1.559)）
-  \draw[fill=blue!20,thick] (0.65,1.409) rectangle ++(0.5,0.5);
-  \node[right] at (1.2,1.659) {$m$};
-  % 半径線（コメント: 中心(0,0)→物体中心(0.90,1.659)）
-  \draw[->,gray,thick] (0,0)--(0.90,1.659) node[midway,left,font=\small]{$R$};
-  % 速度ベクトル（接線方向: (-sin60°,cos60°)=(-0.866,0.5)）
-  \draw[->,red,very thick] (0.90,1.659)--++(-1.04,0.60) node[above]{$v$};
-  % 向心力（中心方向: (-cos60°,-sin60°)=(-0.5,-0.866)）
-  \draw[->,blue,very thick] (0.90,1.659)++(-0.1,-0.1)--+(-0.75,-1.30) node[left]{$F$};
-  % 角度表示
-  \draw[thin] (0.65,0) arc[start angle=0,end angle=60,radius=0.65];
-  \node[font=\small] at (0.55,0.25) {$\theta$};
-\end{tikzpicture}
-
-【力学: 斜面上の物体+滑車+吊り下げ（θ=30°の例）】
-% 斜面: (0,0)-(5,0)-(5,2.89) 底辺5, tanθ=tan30°≈0.577, 高さ=5*0.577=2.89
-% 物体A斜面上: shift(2.17,1.25)+rotate30 で配置（底辺中点 s=2.5 の基点）
-% 滑車: 斜面頂部 (5,2.89) 近傍, 中心 (5.15, 2.89), 半径 r=0.25
-% 物体B: 滑車右側に吊り下げ, B上面 y=2.89 - r - 0.1 = 2.54 から下
-\begin{tikzpicture}[>=stealth,scale=1.0]
-  % 斜面（θ=30°: 底辺5, 高さ2.89）
-  \fill[gray!15] (0,0)--(5,0)--(5,2.89)--cycle;
-  \draw[thick] (0,0)--(5,0)--(5,2.89)--cycle;
-  \fill[pattern=north east lines] (-0.2,-0.2) rectangle (5.3,0);
-  \draw[thick] (-0.2,0)--(5.3,0);
-  % 角度
-  \draw[thin] (0.65,0) arc[start angle=0,end angle=30,radius=0.65];
-  \node[font=\small] at (1.0,0.18) {$\theta$};
-  % 物体A（斜面上: s=2.5, 基点(2.17,1.25), rotate30）
-  \begin{scope}[shift={(2.17,1.25)},rotate=30]
-    \draw[fill=blue!20,thick] (-0.3,0) rectangle ++(0.6,0.6);
-    \node at (0,0.3) {$A$};
-    % 法線力（scope内で真上 = 世界座標で斜面に垂直）
-    \draw[->,red,very thick] (0,0.3)--++(0,1.0) node[above]{$N$};
-    % 摩擦力（上向き）
-    \draw[->,green!60!black,thick] (-0.3,0.3)--++(-0.8,0) node[left]{$f$};
-    % 張力（斜面上向き）
-    \draw[->,orange,thick] (0.3,0.3)--++(0.9,0) node[right]{$T$};
-  \end{scope}
-  % 重力（世界座標で真下, A中心≈(2.0,1.51)）
-  \draw[->,blue,very thick] (2.0,1.51)--++(0,-1.0) node[below]{$m_A g$};
-  % 滑車（斜面頂部: 中心(5.15,2.89), r=0.25）
-  \draw[thick] (5,2.89)--(5.15,2.89); % 支柱
-  \fill[gray!30] (5.15,2.89) circle (0.25);
-  \draw[thick] (5.15,2.89) circle (0.25);
-  \fill (5.15,2.89) circle (1.5pt);
-  % 糸（Aから滑車, 斜面に沿って上昇）
-  % 斜面上の接線点: 滑車左端付近 (4.95,2.89) 近似
-  \draw[thick] (2.47,1.51)--(4.90,2.89);
-  % 糸（滑車から物体B: 真下 (5.15, 2.64)→下）
-  \draw[thick] (5.15,2.64)--(5.15,1.8);
-  % 物体B（吊り下げ: 上面y=1.8）
-  \draw[fill=red!20,thick] (4.80,1.1) rectangle ++(0.7,0.7);
-  \node at (5.15,1.45) {$B$};
-  \draw[->,blue,thick] (5.15,1.1)--++(0,-0.6) node[below]{$m_B g$};
-\end{tikzpicture}
-
-【力学: 放物運動（水平投射または斜め投射）】
-% 初速v0, 仰角θ=45°で投射。x方向等速, y方向等加速度
-% 軌跡: y = x*tan(45°) - g/(2*v0²*cos²45°)*x² ≈ x - 0.2x² (v0²=5g/2とした場合)
-% 最高点: x = v0²*sinθ*cosθ/g, y_max = v0²*sin²θ/(2g)
-\begin{tikzpicture}[>=stealth,scale=0.9]
-  \fill[pattern=north east lines] (-0.2,-0.25) rectangle (5.5,0);
-  \draw[thick] (-0.2,0)--(5.5,0);
-  \draw[->] (-0.3,0)--(5.5,0) node[right]{$x$};
-  \draw[->] (0,-0.3)--(0,3.5) node[above]{$y$};
-  % 軌跡（θ=45°, y=x-0.2x²として描画）
-  \draw[blue,very thick,domain=0:5.0,samples=80] plot(\x,{\x-0.2*\x*\x});
-  % 初速度分解（原点から）
-  \draw[->,red,very thick] (0,0)--++(1.4,1.4) node[above right]{$v_0$};
-  \draw[->,orange,dashed,thick] (0,0)--++(1.4,0) node[below]{$v_{0x}$};
-  \draw[->,green!60!black,dashed,thick] (1.4,0)--++(0,1.4) node[right]{$v_{0y}$};
-  % 仰角
-  \draw[thin] (0.7,0) arc[start angle=0,end angle=45,radius=0.7];
-  \node[font=\small] at (0.95,0.22) {$\theta$};
-  % 最高点（x=2.5, y=1.25 のとき）
-  \fill[red] (2.5,1.25) circle (2.5pt);
-  \node[above,font=\small] at (2.5,1.25) {最高点};
-  \draw[dashed,thin] (2.5,0)--(2.5,1.25);
-  \node[below,font=\small] at (2.5,0) {$R_x$};
-  % 着地点
-  \fill (5.0,0) circle (2.5pt) node[below right,font=\small]{着地};
-  \draw[<->,thin] (0,-0.2)--(5.0,-0.2) node[midway,below,font=\small]{$R=2v_{0x}t_{\max}$};
-\end{tikzpicture}
-
 %%% FIGURE %%% を省略してよいのは「純粋な代数計算のみ」の問題だけです。
 物理的状況がある問題（力学・電磁気・波動・熱力学等）は必ず図を描いてください。
 グラフ: \draw[domain=a:b,samples=100] plot(\x,{func}) で正確に描くこと。
@@ -5814,7 +5704,6 @@ P7. 定滑車の支持構造を描く: 天井・壁・台からの支柱 \draw[t
 □ --cycle で閉じるべき図形は --cycle で閉じているか
 □ node 内の数式は $...$ で囲んでいるか
 □ 床面に \fill[pattern=north east lines] のハッチングがあるか
-□ 座標計算をコメントで書いて検算したか
 """
     elif subject == '化学':
         figure_guide = r"""
@@ -6269,6 +6158,72 @@ def _sanitize_practice_text(text: str) -> str:
     return text
 
 
+def _sanitize_figure_tikz(code: str) -> str:
+    """TikZ/circuitikz 図コードの典型的なコンパイルエラーを自動修復する。"""
+    if not code:
+        return code
+
+    # 危険なコマンドを除去
+    code = re.sub(r'\\usepackage\b[^\n]*\n?', '', code)
+    code = re.sub(r'\\usetikzlibrary\b[^\n]*\n?', '', code)
+    code = re.sub(r'\\documentclass\b[^\n]*\n?', '', code)
+    code = re.sub(r'\\begin\{document\}', '', code)
+    code = re.sub(r'\\end\{document\}', '', code)
+
+    # \draw / \fill / \node / \path / \coordinate で始まる行に
+    # セミコロンが欠けている場合は自動補完する
+    lines = code.split('\n')
+    fixed = []
+    for line in lines:
+        s = line.rstrip()
+        if s.lstrip().startswith('%'):
+            fixed.append(s)
+            continue
+        if re.match(r'\s*\\(draw|fill|node|path|coordinate|clip)\b', s):
+            # 行末が ; / { / } / , / % / \\ でなければ ; を追加
+            if s and s[-1] not in (';', '{', '}', ',', '%') and not s.endswith('\\\\'):
+                s += ';'
+        fixed.append(s)
+    code = '\n'.join(fixed)
+
+    # \begin{scope} ↔ \end{scope} のバランス修正
+    nb_s = len(re.findall(r'\\begin\{scope\}', code))
+    ne_s = len(re.findall(r'\\end\{scope\}', code))
+    if nb_s > ne_s:
+        code += '\n' + '\\end{scope}\n' * (nb_s - ne_s)
+    elif ne_s > nb_s:
+        excess = ne_s - nb_s
+        for _ in range(excess):
+            idx = code.rfind('\\end{scope}')
+            if idx >= 0:
+                code = code[:idx] + code[idx + len('\\end{scope}'):]
+
+    # \begin{tikzpicture} ↔ \end{tikzpicture} のバランス修正
+    nb_t = len(re.findall(r'\\begin\{tikzpicture\}', code))
+    ne_t = len(re.findall(r'\\end\{tikzpicture\}', code))
+    if nb_t > ne_t:
+        code += '\n' + '\\end{tikzpicture}\n' * (nb_t - ne_t)
+
+    # \begin{circuitikz} ↔ \end{circuitikz} のバランス修正
+    nb_c = len(re.findall(r'\\begin\{circuitikz\}', code))
+    ne_c = len(re.findall(r'\\end\{circuitikz\}', code))
+    if nb_c > ne_c:
+        code += '\n' + '\\end{circuitikz}\n' * (nb_c - ne_c)
+
+    # 中括弧 { / } の数チェック: 不均衡の場合は図を空にして安全に失敗させない
+    open_b = code.count('{') - code.count('\\{')
+    close_b = code.count('}') - code.count('\\}')
+    # コメント行を除いたカウントで極端に不均衡な場合はスキップ
+    non_comment = '\n'.join(l for l in code.split('\n') if not l.lstrip().startswith('%'))
+    nb_open = non_comment.count('{')
+    nb_close = non_comment.count('}')
+    if abs(nb_open - nb_close) > 10:
+        # 中括弧が著しく不均衡 → 図ブロックごと除去してコンパイルを守る
+        return ''
+
+    return code.strip()
+
+
 def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: str = 'full') -> str:
     """構造化された問題データから、入試問題品質のPDF用LaTeXドキュメントを構築する。
     subproblems 配列・figure_tikz フィールドに対応。旧形式（answer/explanation トップレベル）とも互換。
@@ -6296,9 +6251,16 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
     lines = [
         r'\documentclass[a4paper,11pt]{ltjsarticle}',
         r'\usepackage{amsmath,amssymb,mathtools}',
-        r'\usepackage{physics}',          # \qty, \dv, \pdv, \abs, \norm 等
+        # physics パッケージは siunitx v3 と \qty が競合するため使わない。
+        # よく使うコマンドを個別定義する。
         r'\usepackage{siunitx}',          # \SI{9.8}{m/s^2} 等の単位表記
-        r'\sisetup{per-mode=symbol}',
+        r'\sisetup{per-mode=symbol,detect-all}',
+        # physics 代替マクロ（siunitx と非競合）
+        r'\newcommand{\dv}[2]{\dfrac{d#1}{d#2}}',
+        r'\newcommand{\pdv}[2]{\dfrac{\partial #1}{\partial #2}}',
+        r'\newcommand{\abs}[1]{\left|#1\right|}',
+        r'\newcommand{\norm}[1]{\left\|#1\right\|}',
+        r'\newcommand{\vb}[1]{\boldsymbol{#1}}',
         r'\usepackage{geometry}',
         r'\geometry{top=2cm,bottom=2.5cm,left=2cm,right=2cm}',
         r'\usepackage{parskip}',
@@ -6310,7 +6272,6 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\usepackage{enumitem}',
         r'\usepackage{tcolorbox}',
         r'\tcbuselibrary{skins,breakable}',
-        r'\usepackage{mdframed}',
         r'\usepackage{array,booktabs}',   # 美しい表
         r'\usepackage{colortbl}',          # \rowcolor
     ]
@@ -6318,15 +6279,14 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
     if has_tikz or True:   # 常に TikZ を読み込む（問題文内でも使われる可能性）
         lines += [
             r'\usepackage{tikz}',
-            r'\usetikzlibrary{arrows.meta,patterns,decorations.pathmorphing,decorations.markings,',
-            r'  calc,angles,quotes,shapes.geometric,positioning,3d,perspective}',
+            r'\usetikzlibrary{arrows.meta,patterns,decorations.pathmorphing,decorations.markings,'
+            r'calc,angles,quotes,shapes.geometric,positioning,3d}',
             r'\usepackage{pgfplots}',
             r'\pgfplotsset{compat=1.18}',
-            # TikZのデフォルト設定：精度・一貫性向上
+            # TikZのデフォルト設定
             r'\tikzset{',
-            r'  every picture/.style={line width=0.7pt, >=latex},',
+            r'  every picture/.style={line width=0.7pt},',
             r'  every node/.style={font=\small},',
-            r'  every path/.style={line cap=round, line join=round},',
             r'}',
         ]
     if has_circuit or True:   # circuitikz も常に読み込む
@@ -6436,30 +6396,25 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 lines.append(stem)
                 lines.append('')
 
-            # 図（figure_tikz）— TikZ コードのサニタイズと安全ラップ
+            # 図（figure_tikz）— TikZ コードをサニタイズして安全にラップ
             if figure_tikz and str(figure_tikz).strip() not in ('', 'null', 'None'):
-                fig_code = str(figure_tikz).strip()
-                # TikZ コード内の危険なコマンドを除去
-                fig_code = re.sub(r'\\usepackage\b[^\n]*\n?', '', fig_code)
-                fig_code = re.sub(r'\\usetikzlibrary\b[^\n]*\n?', '', fig_code)
-                fig_code = re.sub(r'\\documentclass\b[^\n]*\n?', '', fig_code)
-                fig_code = re.sub(r'\\begin\{document\}', '', fig_code)
-                fig_code = re.sub(r'\\end\{document\}', '', fig_code)
-                # tikzpicture/circuitikz が含まれているか確認
-                has_env = re.search(r'\\begin\{(tikzpicture|circuitikz|axis)\}', fig_code)
-                if has_env:
-                    lines.append(r'\begin{center}')
-                    lines.append(fig_code)
-                    lines.append(r'\end{center}')
-                    lines.append('')
-                # 環境がない場合は tikzpicture で囲む
-                elif fig_code and not fig_code.startswith('%'):
-                    lines.append(r'\begin{center}')
-                    lines.append(r'\begin{tikzpicture}[>=stealth]')
-                    lines.append(fig_code)
-                    lines.append(r'\end{tikzpicture}')
-                    lines.append(r'\end{center}')
-                    lines.append('')
+                fig_code = _sanitize_figure_tikz(str(figure_tikz).strip())
+                if fig_code:
+                    # tikzpicture/circuitikz/axis 環境が含まれているか確認
+                    has_env = re.search(r'\\begin\{(tikzpicture|circuitikz|axis)\}', fig_code)
+                    if has_env:
+                        lines.append(r'\begin{center}')
+                        lines.append(fig_code)
+                        lines.append(r'\end{center}')
+                        lines.append('')
+                    # 環境がない場合は tikzpicture で囲む
+                    elif not fig_code.startswith('%'):
+                        lines.append(r'\begin{center}')
+                        lines.append(r'\begin{tikzpicture}[>=stealth]')
+                        lines.append(fig_code)
+                        lines.append(r'\end{tikzpicture}')
+                        lines.append(r'\end{center}')
+                        lines.append('')
 
             # 小問 — 各小問を \subq ラベル + 問題文 で1行出力
             for sp in subproblems:

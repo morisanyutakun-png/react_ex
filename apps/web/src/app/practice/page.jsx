@@ -1546,13 +1546,20 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
    PDF 埋め込み練習画面 — LaTeX 組版 PDF をページ内に表示
 ───────────────────────────────────────────────────────────── */
 
-function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onFinish, onQuit }) {
+function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPdfLoading, onRevealAnswer, subject, problems, onFinish, onQuit }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const [scores, setScores] = useState({});
   const [pScores, setPScores] = useState({}); // { idx: { earned, max } }
+  const [answersRevealed, setAnswersRevealed] = useState(false);
   const [finished, setFinished] = useState(false);
   const [scorePanelOpen, setScorePanelOpen] = useState(false);
   const iframeContainerRef = useRef(null);
+
+  // 解答 PDF が生成されたら自動で表示状態に
+  const [viewingAnswer, setViewingAnswer] = useState(false);
+  const effectiveUrl = viewingAnswer && answerPdfUrl && answerPdfUrl !== '__failed__'
+    ? answerPdfUrl
+    : pdfUrl;
 
   // 配点のある問題があるかチェック
   const anyPoints = problems.some((p) => getTotalPoints(p) > 0);
@@ -1643,10 +1650,10 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
               </div>
             </div>
           </div>
-        ) : pdfUrl ? (
+        ) : effectiveUrl ? (
           /* PDF が生成できた場合: iframe で埋め込み表示（モバイル最適化） */
           <iframe
-            src={pdfUrl}
+            src={effectiveUrl}
             title="練習問題 PDF"
             className="practice-pdf-iframe"
           />
@@ -1745,7 +1752,25 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
         )}
       </div>
 
-      {/* ── 採点パネル (モバイル: 折りたたみ可) ── */}
+      {/* ── 解答・解説を見るボタン / 採点パネル ── */}
+      {!answersRevealed && !pdfLoading ? (
+        /* まだ解答を見ていない → 解答確認ボタンを表示 */
+        <div className="flex-shrink-0 bg-white border-t border-[#e2e8f0] px-4 py-3">
+          <button
+            type="button"
+            onClick={() => {
+              setAnswersRevealed(true);
+              setViewingAnswer(true);
+              onRevealAnswer();
+            }}
+            className="w-full py-3.5 rounded-2xl text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97]"
+            style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 6px 20px ${c.ring}` }}
+          >
+            📖 解答・解説を見て採点する
+          </button>
+        </div>
+      ) : (
+      /* ── 採点パネル (モバイル: 折りたたみ可) ── */
       <div className="flex-shrink-0 bg-white border-t border-[#e2e8f0] practice-score-panel">
         <button
           type="button"
@@ -1858,6 +1883,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
         </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
@@ -2150,10 +2176,13 @@ export default function PracticePage() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [error, setError]       = useState('');
   const [loadingStep, setLoadingStep] = useState(0);
-  const [latexForPdf, setLatexForPdf] = useState(null);
-  const [pdfUrl, setPdfUrl]           = useState(null);
-  const [pdfLoading, setPdfLoading]   = useState(false);
-  const [pdfProgress, setPdfProgress] = useState(0);
+  const [latexForPdf, setLatexForPdf]     = useState(null);
+  const [latexAnswers, setLatexAnswers]   = useState(null);
+  const [pdfUrl, setPdfUrl]               = useState(null);
+  const [answerPdfUrl, setAnswerPdfUrl]   = useState(null);
+  const [answerPdfLoading, setAnswerPdfLoading] = useState(false);
+  const [pdfLoading, setPdfLoading]       = useState(false);
+  const [pdfProgress, setPdfProgress]     = useState(0);
   const pdfProgressTimer = useRef(null);
   const [followLoading, setFollowLoading] = useState(false);
   const [manualPrompt, setManualPrompt] = useState('');
@@ -2230,8 +2259,12 @@ export default function PracticePage() {
       }
 
       setProblems(items);
-      const latex = result.latex || null;
-      setLatexForPdf(latex);
+      // 問題のみの PDF を先に表示し、解答は別途生成する
+      const latexProbs = result.latex_problems || result.latex || null;
+      const latexAns   = result.latex_answers  || result.latex || null;
+      setLatexForPdf(latexProbs);
+      setLatexAnswers(latexAns);
+      setAnswerPdfUrl(null);
       setCurrent(0);
       setScores([]);
       setPointScores([]);
@@ -2239,17 +2272,16 @@ export default function PracticePage() {
       extraQueue.current = [];
 
       // LaTeX が返ってきたら自動で PDF 生成 → PDF 埋め込み画面へ
-      if (latex) {
+      if (latexProbs) {
         setPdfUrl(null);
         setPdfLoading(true);
         startPdfProgress();
         setScreen(SCREEN.PDF);
         try {
-          const pdfData = await generatePdf(latex);
+          const pdfData = await generatePdf(latexProbs);
           finishPdfProgress(true);
           setPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
         } catch (_pdfErr) {
-          // PDF 生成失敗 → PDF 画面のままカードフォールバック表示（pdfUrl=null で表示切替）
           finishPdfProgress(false);
           setPdfUrl(null);
         }
@@ -2264,6 +2296,20 @@ export default function PracticePage() {
       setScreen(SCREEN.SELECT);
     }
   }, [user, startPdfProgress, finishPdfProgress]);
+
+  /* ── 解答 PDF を生成・表示 ── */
+  const handleRevealAnswer = useCallback(async () => {
+    if (!latexAnswers) return;
+    if (answerPdfUrl) return; // already generated
+    setAnswerPdfLoading(true);
+    try {
+      const pdfData = await generatePdf(latexAnswers);
+      setAnswerPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
+    } catch (_) {
+      setAnswerPdfUrl('__failed__');
+    }
+    setAnswerPdfLoading(false);
+  }, [latexAnswers, answerPdfUrl]);
 
   /* ── 手動モード: プロンプト生成 ── */
   const fetchManualPrompt = useCallback(async ({ subject, topics, difficulty, numQ }) => {
@@ -2296,6 +2342,8 @@ export default function PracticePage() {
   const handleManualParsed = useCallback(async (parsedProblems, latex) => {
     setProblems(parsedProblems);
     setLatexForPdf(latex);
+    setLatexAnswers(latex); // 手動モードは全文を解答 PDF にも使う
+    setAnswerPdfUrl(null);
     setCurrent(0);
     setScores([]);
     setPointScores([]);
@@ -2478,7 +2526,9 @@ export default function PracticePage() {
     setCurrent(0);
     setShowAnswer(false);
     setLatexForPdf(null);
+    setLatexAnswers(null);
     setPdfUrl(null);
+    setAnswerPdfUrl(null);
     setManualPrompt('');
   }, []);
 
@@ -2512,6 +2562,9 @@ export default function PracticePage() {
         pdfUrl={pdfUrl}
         pdfLoading={pdfLoading}
         pdfProgress={pdfProgress}
+        answerPdfUrl={answerPdfUrl}
+        answerPdfLoading={answerPdfLoading}
+        onRevealAnswer={handleRevealAnswer}
         subject={subject}
         problems={problems}
         onFinish={(scoreArray, pointArray) => { setScores(scoreArray); setPointScores(pointArray || scoreArray.map(() => null)); setScreen(SCREEN.SUMMARY); }}
