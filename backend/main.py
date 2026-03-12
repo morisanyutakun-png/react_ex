@@ -5703,9 +5703,10 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
    - 全ての数値・単位を明示（例: 質量 $m = 2.0\\,\\mathrm{{kg}}$, $g = 9.8\\,\\mathrm{{m/s^2}}$）
    - 「ただし〜」「〜とする」の条件節を必ず入れる
 3. 小問は誘導形式（2〜3 問）にしてください。
-4. 解答は数式で正確に記載。
-5. 解説は法則の適用 → 式変形 → 数値代入の順で段階的に記載。
-6. 数式以外の装飾コマンド（\\textbf, \\textit, \\noindent, \\begin{{itemize}} 等）は使わず、プレーンテキスト＋数式（$...$, \\[...\\]）のみで書いてください。
+4. 各小問には配点を設定してください（1問あたりの合計を25点とし、小問ごとに配分）。
+5. 解答は数式で正確に記載。
+6. 解説は法則の適用 → 式変形 → 数値代入の順で段階的に記載。
+7. 数式以外の装飾コマンド（\\textbf, \\textit, \\noindent, \\begin{{itemize}} 等）は使わず、プレーンテキスト＋数式（$...$, \\[...\\]）のみで書いてください。
 
 【出力形式（各問題を下記のマーカー形式で出力）】
 
@@ -5718,12 +5719,16 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
 （TikZコードをここに直書き。不要なら省略）
 %%% SUBPROBLEM (1) %%%
 斜面を滑り降りたときの速さを求めよ。
+%%% POINTS (1) %%%
+10
 %%% ANSWER (1) %%%
 $v = \\sqrt{{2gh}} = 9.9\\,\\mathrm{{m/s}}$
 %%% EXPLANATION (1) %%%
 エネルギー保存則 $mgh = \\frac{{1}}{{2}}mv^2$ より $v = \\sqrt{{2 \\times 9.8 \\times 5.0}} \\approx 9.9\\,\\mathrm{{m/s}}$。
 %%% SUBPROBLEM (2) %%%
 （小問2）
+%%% POINTS (2) %%%
+15
 %%% ANSWER (2) %%%
 （解答）
 %%% EXPLANATION (2) %%%
@@ -5769,7 +5774,7 @@ def _parse_latex_problems(raw_text: str) -> list:
         difficulty = diff_m.group(1).strip() if diff_m else ''
 
         # Recognized section keywords — used to build lookaheads so stray %%% in content don't break parsing
-        _known_kw = r'(?:TOPIC|DIFFICULTY|STEM|FIGURE|SUBPROBLEM|ANSWER|EXPLANATION|END\s+PROBLEM)'
+        _known_kw = r'(?:TOPIC|DIFFICULTY|STEM|FIGURE|SUBPROBLEM|POINTS|ANSWER|EXPLANATION|END\s+PROBLEM)'
         _next_marker = r'(?=%%%\s*' + _known_kw + r')'          # lookahead
         _next_or_end = r'(?:%%%\s*' + _known_kw + r'|$)'        # non-lookahead version for ANSWER/EXPLANATION
 
@@ -5808,11 +5813,20 @@ def _parse_latex_problems(raw_text: str) -> list:
             expl_m = expl_pattern.search(block)
             explanation = expl_m.group(1).strip() if expl_m else ''
 
+            # POINTS (N)
+            pts_pattern = re.compile(
+                r'%%%\s*POINTS\s*\(' + re.escape(sm.group(1)) + r'\)\s*%%%(\s*\d+)',
+                re.IGNORECASE,
+            )
+            pts_m = pts_pattern.search(block)
+            points = int(pts_m.group(1).strip()) if pts_m else 0
+
             subproblems.append({
                 'label': label,
                 'question': question,
                 'answer': answer,
                 'explanation': explanation,
+                'points': points,
             })
 
         problems.append({
@@ -5994,8 +6008,13 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             for sp in subproblems:
                 label = sp.get('label', '')
                 question = sp.get('question', '')
+                points = sp.get('points', 0)
+                pts_str = f'\\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
                 if question:
-                    lines.append(rf'\subq{{{label}}} {question}')
+                    lines.append(rf'\subq{{{label}}} {question}{pts_str}')
+                    lines.append('')
+                elif points:
+                    lines.append(rf'\noindent {pts_str}')
                     lines.append('')
                 # 解答欄の罫線
                 lines.append(r'\ansline')
@@ -6004,6 +6023,34 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             # 問題ボックス終了
             lines.append(r'\end{problembox}')
             lines.append(r'\medskip')
+            lines.append('')
+
+        # ─── 自己採点表（problems モードのみ） ───
+        if mode == 'problems':
+            lines.append(r'\bigskip')
+            lines.append(r'\noindent{\color{maincolor}\rule{\linewidth}{0.6pt}}')
+            lines.append(r'\section*{\textcolor{maincolor}{自己採点表}}')
+            lines.append('')
+            # テーブル構築
+            lines.append(r'\begin{center}')
+            lines.append(r'\renewcommand{\arraystretch}{1.6}')
+            lines.append(r'\begin{tabular}{|c|c|c|c|c|}')
+            lines.append(r'\hline')
+            lines.append(r'\rowcolor{maincolor!10} \textbf{問題} & \textbf{小問} & \textbf{配点} & \textbf{○/×} & \textbf{得点} \\')
+            lines.append(r'\hline')
+            grand_total = 0
+            for i, p in enumerate(problems, 1):
+                subproblems_sc = _normalize_subproblems(p)
+                for sp in subproblems_sc:
+                    label = sp.get('label', '')
+                    pts = sp.get('points', 0)
+                    grand_total += pts
+                    lines.append(f'{i} & {label} & {pts}点 & \\hspace{{1.5cm}} & \\hspace{{1.5cm}} \\\\')
+                    lines.append(r'\hline')
+            lines.append(f'\\multicolumn{{2}}{{|c|}}{{\\textbf{{合計}}}} & \\textbf{{{grand_total}点}} & & \\\\')
+            lines.append(r'\hline')
+            lines.append(r'\end{tabular}')
+            lines.append(r'\end{center}')
             lines.append('')
 
     # ─── 解答・解説セクション ───
@@ -6032,9 +6079,11 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 label = sp.get('label', '')
                 answer = sp.get('answer', '')
                 explanation = sp.get('explanation', '')
+                points = sp.get('points', 0)
+                pts_str = f' \\hfill {{\\small\\color{{rulegray}}[{points}点]}}' if points else ''
 
                 if answer:
-                    lines.append(rf'\noindent\colorbox{{accentcolor!10}}{{\textbf{{\textcolor{{accentcolor}}{{{label} 解答:}}}}}} {answer}')
+                    lines.append(rf'\noindent\colorbox{{accentcolor!10}}{{\textbf{{\textcolor{{accentcolor}}{{{label} 解答:}}}}}}{pts_str} {answer}')
                     lines.append('')
                 if explanation:
                     lines.append(rf'\noindent\textbf{{\textcolor{{accentcolor!70!black}}{{\small 解説}}}}')

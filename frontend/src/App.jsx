@@ -42,6 +42,8 @@ const DEFAULT_STATS = {
   totalProblems: 0, totalSessions: 0, currentStreak: 0, maxStreak: 0,
   lastActiveDate: null, weeklyActivity: {}, subjectBreakdown: {},
   totalTimeSeconds: 0, xp: 0, sessionLog: [],
+  scoreHistory: [],
+  totalPoints: 0, totalEarned: 0,
 }
 
 function loadStats() {
@@ -73,6 +75,18 @@ function addSessionToStats(stats, session) {
     ...updateStreak(stats), totalProblems: stats.totalProblems + session.numQuestions,
     totalSessions: stats.totalSessions + 1, totalTimeSeconds: stats.totalTimeSeconds + (session.duration || 0),
     weeklyActivity: wa, subjectBreakdown: sb, xp: stats.xp + xpGain, sessionLog: log,
+  }
+  saveStats(updated)
+  return updated
+}
+
+function addScoreToStats(stats, scoreEntry) {
+  const sh = [...(stats.scoreHistory || []), scoreEntry].slice(-200)
+  const updated = {
+    ...stats,
+    scoreHistory: sh,
+    totalPoints: (stats.totalPoints || 0) + scoreEntry.maxPoints,
+    totalEarned: (stats.totalEarned || 0) + scoreEntry.earnedPoints,
   }
   saveStats(updated)
   return updated
@@ -298,6 +312,8 @@ export default function App() {
   const [fullPdfUrl, setFullPdfUrl] = useState('')
   const [fullPdfLoading, setFullPdfLoading] = useState(false)
   const [pdfViewMode, setPdfViewMode] = useState('problems')
+  const [parsedProblems, setParsedProblems] = useState([])
+  const [subScores, setSubScores] = useState({})
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [showHelp, setShowHelp] = useState(false)
@@ -387,6 +403,8 @@ export default function App() {
             setFullLatex(parsed.latex || '')
             setFullPdfUrl('')
             setPdfViewMode('problems')
+            setParsedProblems(parsed.problems || [])
+            setSubScores({})
             setStep(4)
             saveToHistory({ templateName: selectedTemplate?.name || form.templateId, numQuestions: form.numQuestions, latexPreset: form.latexPreset, pdfUrl: url })
             setHistory(loadHistory())
@@ -438,7 +456,7 @@ export default function App() {
     setFullPdfLoading(false)
   }
 
-  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setPdfViewMode('problems'); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false) }
+  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setPdfViewMode('problems'); setParsedProblems([]); setSubScores({}); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false) }
   const startPractice = () => { resetWizard(); setScreen('practice') }
 
   const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
@@ -513,6 +531,9 @@ export default function App() {
               <div className="quick-stat-card"><div className="quick-stat-icon"><Ico.BookOpen /></div><div className="quick-stat-value">{stats.totalProblems}</div><div className="quick-stat-label">総演習問題</div></div>
               <div className="quick-stat-card"><div className="quick-stat-icon"><Ico.Clock /></div><div className="quick-stat-value">{formatTime(stats.totalTimeSeconds)}</div><div className="quick-stat-label">総学習時間</div></div>
               <div className="quick-stat-card"><div className="quick-stat-icon"><Ico.Target /></div><div className="quick-stat-value">{stats.totalSessions}</div><div className="quick-stat-label">セッション</div></div>
+              {(stats.totalPoints || 0) > 0 && (
+                <div className="quick-stat-card"><div className="quick-stat-icon">📊</div><div className="quick-stat-value">{Math.round(((stats.totalEarned || 0) / stats.totalPoints) * 100)}%</div><div className="quick-stat-label">平均正答率</div></div>
+              )}
             </div>
 
             <div className="level-card">
@@ -540,6 +561,24 @@ export default function App() {
               <p className="shareable-instruction">スクショしてSNSでシェアしよう！</p>
               <ShareableCard stats={stats} level={level} />
             </div>
+
+            {(stats.scoreHistory || []).length > 0 && (
+              <div className="section-card">
+                <div className="section-card-header">📊<span>採点履歴</span></div>
+                <div className="score-history-list">
+                  {(stats.scoreHistory || []).slice(-10).reverse().map((s, i) => (
+                    <div key={i} className="score-history-item">
+                      <div className="score-history-info">
+                        <div className="score-history-subj">{s.subject || '演習'}</div>
+                        <div className="score-history-date">{new Date(s.date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}</div>
+                      </div>
+                      <div className={`score-history-bar-track`}><div className={`score-history-bar-fill ${s.pct >= 80 ? 'excellent' : s.pct >= 50 ? 'good' : 'needs-work'}`} style={{width: `${s.pct}%`}} /></div>
+                      <div className={`score-history-pct ${s.pct >= 80 ? 'excellent' : s.pct >= 50 ? 'good' : 'needs-work'}`}>{s.earnedPoints}/{s.maxPoints} ({s.pct}%)</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {stats.sessionLog?.length > 0 && (
               <div className="section-card">
@@ -713,6 +752,79 @@ export default function App() {
                   <div className="level-progress-bar"><div className="level-progress-fill" style={{width:`${level.progress}%`}} /></div>
                 </div>
                 <div className="completion-streak"><span className="completion-streak-fire">🔥</span><span>{stats.currentStreak}日連続</span>{stats.currentStreak > 1 && <span className="completion-streak-bonus">継続ボーナス！</span>}</div>
+
+                {/* ── 自己採点セクション ── */}
+                {parsedProblems.length > 0 && (() => {
+                  const allSubs = []
+                  parsedProblems.forEach((p, pi) => {
+                    const subs = p.subproblems || []
+                    subs.forEach((sp, si) => allSubs.push({ pi, si, label: sp.label || `(${si+1})`, points: sp.points || 0, topic: p.topic || '' }))
+                  })
+                  const maxPoints = allSubs.reduce((s, x) => s + x.points, 0)
+                  const earnedPoints = allSubs.reduce((s, x) => {
+                    const key = `${x.pi}-${x.si}`
+                    return s + (subScores[key] === 'correct' ? x.points : subScores[key] === 'partial' ? Math.floor(x.points / 2) : 0)
+                  }, 0)
+                  const allScored = allSubs.length > 0 && allSubs.every(x => subScores[`${x.pi}-${x.si}`])
+                  const pct = maxPoints > 0 ? Math.round((earnedPoints / maxPoints) * 100) : 0
+                  const scoreSubmitted = subScores._submitted
+                  return (
+                    <div className="scoring-section">
+                      <div className="scoring-header">📝 自己採点</div>
+                      <div className="scoring-table">
+                        {parsedProblems.map((p, pi) => (
+                          <div key={pi} className="scoring-problem">
+                            <div className="scoring-problem-title">問題 {pi+1}{p.topic ? ` — ${p.topic}` : ''}</div>
+                            {(p.subproblems || []).map((sp, si) => {
+                              const key = `${pi}-${si}`
+                              const pts = sp.points || 0
+                              return (
+                                <div key={key} className="scoring-row">
+                                  <span className="scoring-label">{sp.label || `(${si+1})`}</span>
+                                  <span className="scoring-pts">{pts}点</span>
+                                  <div className="scoring-btns">
+                                    <button className={`score-btn score-correct${subScores[key]==='correct'?' active':''}`} onClick={() => setSubScores(s => ({...s, [key]: s[key]==='correct'?undefined:'correct'}))} disabled={scoreSubmitted}>○</button>
+                                    <button className={`score-btn score-partial${subScores[key]==='partial'?' active':''}`} onClick={() => setSubScores(s => ({...s, [key]: s[key]==='partial'?undefined:'partial'}))} disabled={scoreSubmitted}>△</button>
+                                    <button className={`score-btn score-wrong${subScores[key]==='wrong'?' active':''}`} onClick={() => setSubScores(s => ({...s, [key]: s[key]==='wrong'?undefined:'wrong'}))} disabled={scoreSubmitted}>×</button>
+                                  </div>
+                                  <span className="scoring-earned">
+                                    {subScores[key] === 'correct' ? pts : subScores[key] === 'partial' ? Math.floor(pts/2) : subScores[key] === 'wrong' ? 0 : '-'}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                      <div className={`scoring-total ${pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : allScored ? 'needs-work' : ''}`}>
+                        <span>合計: {earnedPoints} / {maxPoints} 点</span>
+                        {allScored && <span className="scoring-pct">({pct}%)</span>}
+                      </div>
+                      {allScored && !scoreSubmitted && (
+                        <button className="btn btn-primary btn-block" onClick={() => {
+                          setSubScores(s => ({ ...s, _submitted: true }))
+                          const entry = {
+                            date: new Date().toISOString(),
+                            subject: templateMeta?.subject || '',
+                            maxPoints, earnedPoints, pct,
+                            problems: parsedProblems.map((p, pi) => ({
+                              topic: p.topic,
+                              subs: (p.subproblems||[]).map((sp, si) => ({
+                                label: sp.label, points: sp.points || 0,
+                                result: subScores[`${pi}-${si}`] || 'wrong',
+                              })),
+                            })),
+                          }
+                          setStats(addScoreToStats(stats, entry))
+                          notify(`採点完了: ${earnedPoints}/${maxPoints}点 (${pct}%)`, 'success')
+                        }}>✅ 採点を記録する</button>
+                      )}
+                      {scoreSubmitted && <div className="scoring-submitted">✅ 採点を記録しました</div>}
+                    </div>
+                  )
+                })()}
+
+                {/* ── 手応え評価 ── */}
                 <div className="completion-rating">
                   <div className="completion-rating-label">この演習の手応えは？</div>
                   <div className="completion-rating-stars">{[1,2,3,4,5].map(n => <button key={n} className={`rating-star ${selfRating>=n?'active':''}`} onClick={() => setSelfRating(n)}>★</button>)}</div>
