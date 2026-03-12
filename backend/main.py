@@ -2878,7 +2878,7 @@ _LATEX_PHYSICS_DIAGRAM_RULES = (
     "     \\draw[thick] (0,0) rectangle (2,1.5);  % 物体（底辺y=0で床に接触）\n"
     "     斜面上の物体: 物体の底辺が斜面の線分上に正確に乗るよう座標計算する。\n"
     "PD6. 力の分解: 実線=元ベクトル, 破線[dashed]=分解成分, 直角マーク=小正方形(0.2単位)。\n"
-    "PD7. 回路図: circuitikz使用。\\ctikzset{bipoles/fill=white}必須。\n"
+    "PD7. 回路図: circuitikz使用。\n"
     "PD8. グラフ: pgfplots使用。軸に物理量と単位: xlabel={$t$ [s]}。\n"
     "PD9. 座標計算: 描画前にコメントで全座標を計算し検算すること。\n"
     "     % === 座標計算 ===\n"
@@ -3562,8 +3562,7 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
         'name': 'CircuiTikZ（回路図）',
         'usepackage': (
             '\\usepackage{tikz}\n'
-            '\\usepackage[siunitx]{circuitikz}\n'
-            '\\ctikzset{bipoles/fill=white}'
+            '\\usepackage[siunitx]{circuitikz}'
         ),
         'prompt_hint': (
             'CircuiTikZ が利用可能。\\begin{circuitikz}...\\end{circuitikz} で電気回路図を描く。\n'
@@ -3590,8 +3589,7 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '並列回路など、母線（水平/垂直の配線）と素子枝が交差する回路では\n'
             '素子の内部を導線が貫通して表示される問題が発生する。\n'
             '以下のルールを厳守すること:\n\n'
-            'W1. \\ctikzset{bipoles/fill=white} をプリアンブルに必ず記述する。\n'
-            '    これにより全素子の内部背景が白塗りになり、背後の線が隠れる。\n'
+            'W1. 素子の描画順序に注意し、素子を含む枝を後から描画する。\n'
             'W2. ★描画順序★: 母線（素子を含まない配線）を先に描画し、\n'
             '    素子を含む枝を後から描画する。後から描画した素子の白背景が\n'
             '    先に描画した母線の線を隠すため、導線貫通が起きない。\n'
@@ -5664,6 +5662,7 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
 3. 小問は誘導形式（2〜3 問）にしてください。
 4. 解答は数式で正確に記載。
 5. 解説は法則の適用 → 式変形 → 数値代入の順で段階的に記載。
+6. 数式以外の装飾コマンド（\\textbf, \\textit, \\noindent, \\begin{{itemize}} 等）は使わず、プレーンテキスト＋数式（$...$, \\[...\\]）のみで書いてください。
 
 【出力形式（各問題を下記のマーカー形式で出力）】
 
@@ -7157,57 +7156,68 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 return '\n'.join(lines)
             tex = _emphasize_english_instructions(tex)
 
-            # 2) Remove \usepackage{CJKutf8} and CJK environment wrappers (XeLaTeX incompatible)
-            tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{CJKutf8\}\s*\n?', '', tex)
-            tex = re.sub(r'\\begin\{CJK\}\{[^}]*\}\{[^}]*\}\s*\n?', '', tex)
-            tex = re.sub(r'\\end\{CJK\}\s*\n?', '', tex)
+            # ── Detect LuaTeX-ja documents (ltjsarticle etc.) ──
+            # ltjsarticle internally loads luatexja, which is INCOMPATIBLE with
+            # xeCJK (XeLaTeX-only). Steps 2-6 inject fontspec/xeCJK and must be
+            # skipped for LuaTeX-ja documents.
+            _is_luatexja_doc = bool(re.search(
+                r'\\documentclass[^{]*\{ltjsarticle\}|\\documentclass[^{]*\{ltjarticle\}'
+                r'|\\usepackage(\[[^\]]*\])?\{luatexja\}',
+                tex
+            ))
 
-            # 3) Remove \IfFontExistsTF blocks (replace with just the first choice)
-            #    Pattern: \IfFontExistsTF{Font}{TrueBody}{FalseBody}
-            def _simplify_iffont(m):
-                true_body = m.group(1)
-                return true_body
-            # Iteratively resolve nested \IfFontExistsTF (up to 5 levels)
-            for _ in range(5):
-                prev = tex
-                tex = re.sub(
-                    r'\\IfFontExistsTF\{[^}]*\}\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}',
-                    _simplify_iffont, tex
+            if not _is_luatexja_doc:
+                # 2) Remove \usepackage{CJKutf8} and CJK environment wrappers (XeLaTeX incompatible)
+                tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{CJKutf8\}\s*\n?', '', tex)
+                tex = re.sub(r'\\begin\{CJK\}\{[^}]*\}\{[^}]*\}\s*\n?', '', tex)
+                tex = re.sub(r'\\end\{CJK\}\s*\n?', '', tex)
+
+                # 3) Remove \IfFontExistsTF blocks (replace with just the first choice)
+                #    Pattern: \IfFontExistsTF{Font}{TrueBody}{FalseBody}
+                def _simplify_iffont(m):
+                    true_body = m.group(1)
+                    return true_body
+                # Iteratively resolve nested \IfFontExistsTF (up to 5 levels)
+                for _ in range(5):
+                    prev = tex
+                    tex = re.sub(
+                        r'\\IfFontExistsTF\{[^}]*\}\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}',
+                        _simplify_iffont, tex
+                    )
+                    if tex == prev:
+                        break
+
+                # 4) Extract and remove ALL \setmainfont / \setCJKmainfont / \setmainjfont
+                #    lines from their current positions. We will re-insert them in
+                #    the correct position (after fontspec/xeCJK, before \begin{document}).
+                tex = re.sub(r'\\setmainfont\{[^}]*\}\s*\n?', '', tex)
+                tex = re.sub(r'\\setCJKmainfont\{[^}]*\}\s*\n?', '', tex)
+                tex = re.sub(r'\\setmainjfont\{[^}]*\}\s*\n?', '', tex)
+                tex = re.sub(r'\\setsansfont\{[^}]*\}\s*\n?', '', tex)
+
+                # 5) Ensure fontspec and xeCJK are present (add if missing).
+                #    fontspec MUST be loaded before xeCJK. Remove any existing
+                #    fontspec/xeCJK declarations and re-insert them in the correct
+                #    order right before \begin{document}.
+                tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{fontspec\}\s*\n?', '', tex)
+                tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{xeCJK\}\s*\n?', '', tex)
+                if '\\begin{document}' in tex:
+                    font_preamble = '\\usepackage{fontspec}\n\\usepackage{xeCJK}\n'
+                    tex = tex.replace('\\begin{document}', font_preamble + '\\begin{document}')
+
+                # 6) Insert safe CJK font declaration right before \begin{document}
+                #    Use \IfFontExistsTF so it works on any OS.
+                safe_font_block = (
+                    '\\IfFontExistsTF{Hiragino Mincho ProN}'
+                    '{\\setCJKmainfont{Hiragino Mincho ProN}}'
+                    '{\\IfFontExistsTF{IPAexMincho}'
+                    '{\\setCJKmainfont{IPAexMincho}}'
+                    '{\\IfFontExistsTF{Noto Serif CJK JP}'
+                    '{\\setCJKmainfont{Noto Serif CJK JP}}'
+                    '{}}}\n'
                 )
-                if tex == prev:
-                    break
-
-            # 4) Extract and remove ALL \setmainfont / \setCJKmainfont / \setmainjfont
-            #    lines from their current positions. We will re-insert them in
-            #    the correct position (after fontspec/xeCJK, before \begin{document}).
-            tex = re.sub(r'\\setmainfont\{[^}]*\}\s*\n?', '', tex)
-            tex = re.sub(r'\\setCJKmainfont\{[^}]*\}\s*\n?', '', tex)
-            tex = re.sub(r'\\setmainjfont\{[^}]*\}\s*\n?', '', tex)
-            tex = re.sub(r'\\setsansfont\{[^}]*\}\s*\n?', '', tex)
-
-            # 5) Ensure fontspec and xeCJK are present (add if missing).
-            #    fontspec MUST be loaded before xeCJK. Remove any existing
-            #    fontspec/xeCJK declarations and re-insert them in the correct
-            #    order right before \begin{document}.
-            tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{fontspec\}\s*\n?', '', tex)
-            tex = re.sub(r'\\usepackage(\[[^\]]*\])?\{xeCJK\}\s*\n?', '', tex)
-            if '\\begin{document}' in tex:
-                font_preamble = '\\usepackage{fontspec}\n\\usepackage{xeCJK}\n'
-                tex = tex.replace('\\begin{document}', font_preamble + '\\begin{document}')
-
-            # 6) Insert safe CJK font declaration right before \begin{document}
-            #    Use \IfFontExistsTF so it works on any OS.
-            safe_font_block = (
-                '\\IfFontExistsTF{Hiragino Mincho ProN}'
-                '{\\setCJKmainfont{Hiragino Mincho ProN}}'
-                '{\\IfFontExistsTF{IPAexMincho}'
-                '{\\setCJKmainfont{IPAexMincho}}'
-                '{\\IfFontExistsTF{Noto Serif CJK JP}'
-                '{\\setCJKmainfont{Noto Serif CJK JP}}'
-                '{}}}\n'
-            )
-            if '\\setCJKmainfont' not in tex and '\\begin{document}' in tex:
-                tex = tex.replace('\\begin{document}', safe_font_block + '\\begin{document}')
+                if '\\setCJKmainfont' not in tex and '\\begin{document}' in tex:
+                    tex = tex.replace('\\begin{document}', safe_font_block + '\\begin{document}')
 
             # 6) Convert bare bracket display math [ ... ] → \[ ... \]
             #    This is the most common and critical LLM mistake.
@@ -7516,32 +7526,10 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
             tex = _fix_circuitikz_closed_loops(tex)
 
-            # 7f-2) ★ CircuiTikZ bipoles/fill=white enforcer ★
-            #     Ensure \ctikzset{bipoles/fill=white} is present when circuitikz is used,
-            #     to prevent wires from showing through component bodies.
-            def _ensure_circuitikz_fill_white(tex_str):
-                r"""If circuitikz is used but \ctikzset{bipoles/fill=white} is missing,
-                insert it right after the \usepackage line for circuitikz.
-                Also ensures it appears before \begin{circuitikz} if no usepackage line found."""
-                if 'circuitikz' not in tex_str:
-                    return tex_str
-                if 'bipoles/fill=white' in tex_str:
-                    return tex_str  # already present
-                # Try to insert after \usepackage{circuitikz} or \usepackage[...]{circuitikz}
-                pkg_pat = r'(\\usepackage(?:\[.*?\])?\{circuitikz\})'
-                m_pkg = re.search(pkg_pat, tex_str)
-                if m_pkg:
-                    insert_pos = m_pkg.end()
-                    tex_str = tex_str[:insert_pos] + '\n\\ctikzset{bipoles/fill=white}' + tex_str[insert_pos:]
-                else:
-                    # No usepackage line found, insert before first \begin{circuitikz}
-                    m_env = re.search(r'\\begin\{circuitikz\}', tex_str)
-                    if m_env:
-                        insert_pos = m_env.start()
-                        tex_str = tex_str[:insert_pos] + '\\ctikzset{bipoles/fill=white}\n' + tex_str[insert_pos:]
-                return tex_str
-
-            tex = _ensure_circuitikz_fill_white(tex)
+            # 7f-2) ★ CircuiTikZ bipoles/fill=white remover ★
+            #     bipoles/fill was removed in circuitikz 1.x+. Remove any
+            #     \ctikzset{bipoles/fill=white} lines to prevent pgfkeys errors.
+            tex = re.sub(r'\\ctikzset\{bipoles/fill=white\}\s*\n?', '', tex)
 
             # 7g) ★ TikZ coordinate consistency checker ★
             #     For tikzpicture environments, verify that paths using -- connect
@@ -7774,18 +7762,61 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
                 - Remove orphan \\end{env} that have no matching \\begin{env}
                 - Add missing \\end{env} for unclosed environments (before \\end{document})
+                - Skip \\begin/\\end inside \\newcommand definitions (they are not real begins)
+                - Never remove \\end{document}
                 """
                 # Build a list of (position, 'begin'|'end', env_name, full_match)
                 token_re = re.compile(r'\\(begin|end)\{([^}]+)\}')
                 tokens = [(m.start(), m.group(1), m.group(2), m.group(0)) for m in token_re.finditer(tex_str)]
 
+                # Identify regions inside \newcommand / \renewcommand definitions
+                # These contain \begin{...} that don't represent actual environment starts
+                def _find_newcommand_regions(s):
+                    """Find character ranges inside \\newcommand{...}{BODY} definitions."""
+                    regions = []
+                    for m in re.finditer(r'\\(?:re)?newcommand\{[^}]*\}(?:\[\d+\])?\{', s):
+                        start = m.end() - 1  # the opening { of the body
+                        depth = 1
+                        i = m.end()
+                        while i < len(s) and depth > 0:
+                            if s[i] == '{' and (i == 0 or s[i-1] != '\\'):
+                                depth += 1
+                            elif s[i] == '}' and (i == 0 or s[i-1] != '\\'):
+                                depth -= 1
+                            i += 1
+                        regions.append((start, i))
+                    return regions
+
+                newcmd_regions = _find_newcommand_regions(tex_str)
+
+                def _inside_newcommand(pos):
+                    return any(start <= pos < end for start, end in newcmd_regions)
+
+                # Collect environment names that have \begin{} inside \newcommand
+                # These will have \end{} in the body that look like orphans but are valid
+                macro_envs = set()
+                for pos, kind, env, full in tokens:
+                    if kind == 'begin' and _inside_newcommand(pos):
+                        macro_envs.add(env)
+
+                # Filter out tokens inside \newcommand definitions
+                real_tokens = [(pos, kind, env, full) for pos, kind, env, full in tokens
+                               if not _inside_newcommand(pos)]
+
                 stack = []
                 orphan_ends = []  # positions of \end{...} to remove
 
-                for pos, kind, env, full in tokens:
+                for pos, kind, env, full in real_tokens:
                     if kind == 'begin':
                         stack.append((pos, env))
                     else:  # end
+                        # Never treat \end{document} as orphan
+                        if env == 'document' and not stack:
+                            continue
+                        # Skip orphan detection for envs opened inside \newcommand
+                        # (their \end appears in the body and looks like an orphan)
+                        if env in macro_envs and (not stack or stack[-1][1] != env):
+                            continue
                         if stack and stack[-1][1] == env:
                             stack.pop()
                         elif stack:
@@ -8099,7 +8130,6 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "decorations.pathmorphing,patterns,angles,quotes,intersections,shapes.geometric,"
         "3d,perspective,shapes}\n"
         "\\usepackage[siunitx]{circuitikz}\n"
-        "\\ctikzset{bipoles/fill=white}\n"
         + cjk_block +
         "\\begin{document}\n"
         f"{tikz_code}\n"

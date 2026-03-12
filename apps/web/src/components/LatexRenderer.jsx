@@ -92,6 +92,41 @@ const KATEX_OPTS_BASE = {
   macros: KATEX_MACROS,
 };
 
+/* ─── 非数式テキスト中の LaTeX コマンドを HTML に変換 ─────────────── */
+// AI が生成する解説テキストには \textbf{}, \textit{} 等の LaTeX コマンドが
+// 数式外に現れることがある。これらを HTML に変換してから表示する。
+function convertNonMathLatex(str) {
+  // \textbf{...} → <strong>...</strong>
+  str = str.replace(/\\textbf\{([^}]*)\}/g, (_, c) => `<strong>${sanitizeTagContent(c)}</strong>`);
+  // \textit{...}, \emph{...} → <em>...</em>
+  str = str.replace(/\\textit\{([^}]*)\}/g, (_, c) => `<em>${sanitizeTagContent(c)}</em>`);
+  str = str.replace(/\\emph\{([^}]*)\}/g, (_, c) => `<em>${sanitizeTagContent(c)}</em>`);
+  // \underline{...} → <u>...</u>
+  str = str.replace(/\\underline\{([^}]*)\}/g, (_, c) => `<u>${sanitizeTagContent(c)}</u>`);
+  // \textcolor{color}{...} → <span style="color:...">...</span>
+  str = str.replace(/\\textcolor\{([^}]*)\}\{([^}]*)\}/g, (_, color, c) => {
+    const safeColor = color.replace(/[^a-zA-Z0-9#.,() -]/g, '');
+    return `<span style="color:${safeColor}">${sanitizeTagContent(c)}</span>`;
+  });
+  // \noindent, \par → remove / newline
+  str = str.replace(/\\noindent\b\s*/g, '');
+  str = str.replace(/\\par\b\s*/g, '\n');
+  // \quad, \qquad → spaces
+  str = str.replace(/\\qquad\b/g, '\u2003\u2003');
+  str = str.replace(/\\quad\b/g, '\u2003');
+  // \hspace{...}, \vspace{...} → remove
+  str = str.replace(/\\[hv]space\*?\{[^}]*\}/g, '');
+  // \medskip, \bigskip, \smallskip → newline
+  str = str.replace(/\\(medskip|bigskip|smallskip)\b\s*/g, '\n');
+  // \text{...} outside math → plain text (leave content)
+  str = str.replace(/\\text\{([^}]*)\}/g, '$1');
+  return str;
+}
+
+function sanitizeTagContent(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 /* ─── テキストを math/non-math セグメントに分割 ───────────────────── */
 function renderLatexToHtml(text) {
   if (!text) return '';
@@ -148,7 +183,10 @@ function renderLatexToHtml(text) {
   const parts = [];
   for (const m of filtered) {
     if (m.start > pos) {
-      parts.push(escapeHtml(text.slice(pos, m.start)));
+      // 非数式テキスト: LaTeX コマンドを HTML に変換してからエスケープ
+      const nonMathText = text.slice(pos, m.start);
+      const converted = convertNonMathLatex(nonMathText);
+      parts.push(escapeHtmlPreserveMarkup(converted));
     }
     try {
       const html = katex.renderToString(m.latex, {
@@ -167,7 +205,9 @@ function renderLatexToHtml(text) {
     pos = m.end;
   }
   if (pos < text.length) {
-    parts.push(escapeHtml(text.slice(pos)));
+    const nonMathText = text.slice(pos);
+    const converted = convertNonMathLatex(nonMathText);
+    parts.push(escapeHtmlPreserveMarkup(converted));
   }
 
   return parts.join('');
@@ -180,6 +220,18 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/\n/g, '<br/>');
+}
+
+// convertNonMathLatex が生成した HTML タグを保持しつつ、
+// それ以外のテキスト部分のみ HTML エスケープする
+function escapeHtmlPreserveMarkup(str) {
+  // HTML タグ（<strong>, </em> 等）とそれ以外を分離
+  return str.split(/(<[^>]+>)/g).map((part, i) => {
+    // 奇数インデックスは HTML タグなのでそのまま
+    if (i % 2 === 1) return part;
+    // テキスト部分をエスケープ
+    return escapeHtml(part);
+  }).join('');
 }
 
 /**
