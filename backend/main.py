@@ -5453,25 +5453,15 @@ F8. 色: red, blue, green!60!black, gray!30 等の標準色のみ
 \begin{tikzpicture}[>=stealth,scale=1.0]
   \draw[->] (0,0)--(4.5,0) node[right]{$V$};
   \draw[->] (0,0)--(0,3.5) node[above]{$P$};
-  \draw[blue,very thick] (0.8,2.8)--(0.8,0.9);
-  \draw[red,very thick] (0.8,0.9)--(3.5,0.9);
+  \draw[blue,very thick] (0.8,2.8)--(0.8,0.9) node[midway,left]{等積};
+  \draw[red,very thick] (0.8,0.9)--(3.5,0.9) node[midway,below]{等圧};
   \draw[green!60!black,very thick] (3.5,0.9)..controls(2.5,1.8)..(0.8,2.8);
   \fill (0.8,2.8) circle (2pt); \fill (0.8,0.9) circle (2pt); \fill (3.5,0.9) circle (2pt);
-  \node[left] at (0,0.9) {$P_1$}; \node[left] at (0,2.8) {$P_2$};
-  \node[below] at (0.8,0) {$V_1$}; \node[below] at (3.5,0) {$V_2$};
-\end{tikzpicture}
-
-【波動: 正弦波グラフ】
-\begin{tikzpicture}[>=stealth,scale=1.0]
-  \draw[->] (-0.3,0)--(5.5,0) node[right]{$x$};
-  \draw[->] (0,-1.4)--(0,1.6) node[above]{$y$};
-  \draw[blue,very thick,domain=0:5,samples=100] plot(\x,{1.2*sin(2*pi*\x/2.5 r)});
-  \draw[dashed,thin] (0,1.2)--++(5.5,0) node[right,black]{$A$};
-  \draw[<->,thin] (0,-1.6)--(2.5,-1.6) node[midway,below]{$\lambda$};
 \end{tikzpicture}
 
 %%% FIGURE %%% を省略してよいのは「純粋な代数計算のみ」の問題だけです。
 物理的状況がある問題（力学・電磁気・波動・熱力学等）は必ず図を描いてください。
+波動・グラフ: \draw[domain=0:5,samples=100] plot(\x,{sin(...)}) で正弦波を描くこと。
 """
     elif subject == '化学':
         figure_guide = r"""
@@ -5584,55 +5574,40 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
 4. 解答は数式で正確に記載。
 5. 解説は法則の適用 → 式変形 → 数値代入の順で段階的に記載。
 
-【出力形式テンプレート — 各問題をこの形式で出力】
+【出力形式（各問題を下記のマーカー形式で出力）】
 
 %%% PROBLEM 1 %%%
 %%% TOPIC: 力学・等加速度運動 %%%
 %%% DIFFICULTY: {difficulty} %%%
 %%% STEM %%%
-（ここに状況設定の本文を書く。数式は $...$ や \\[...\\] で自由に使える。
-例: 質量 $m = 2.0\\,\\mathrm{{kg}}$ の物体が、傾き角 $\\theta = 30^\\circ$ の
-なめらかな斜面の頂上から静かに滑り始めた。斜面の高さは $h = 5.0\\,\\mathrm{{m}}$ である。
-ただし、重力加速度を $g = 9.8\\,\\mathrm{{m/s^2}}$ とし、空気抵抗は無視する。）
+質量 $m = 2.0\\,\\mathrm{{kg}}$ の物体が傾き角 $\\theta = 30^\\circ$ のなめらかな斜面を静かに滑り始めた。高さ $h = 5.0\\,\\mathrm{{m}}$、重力加速度 $g = 9.8\\,\\mathrm{{m/s^2}}$。
 %%% FIGURE %%%
-（ここにTikZコードを直接書く。上記ガイドラインの例を参考に正確に記述すること。省略可）
+（TikZコードをここに直書き。不要なら省略）
 %%% SUBPROBLEM (1) %%%
-（小問(1)の問題文）
+斜面を滑り降りたときの速さを求めよ。
 %%% ANSWER (1) %%%
-（小問(1)の解答。数式OK: $v = \\sqrt{{2gh}} = 9.9\\,\\mathrm{{m/s}}$）
+$v = \\sqrt{{2gh}} = 9.9\\,\\mathrm{{m/s}}$
 %%% EXPLANATION (1) %%%
-（小問(1)の解説。段階的に記述）
+エネルギー保存則 $mgh = \\frac{{1}}{{2}}mv^2$ より $v = \\sqrt{{2 \\times 9.8 \\times 5.0}} \\approx 9.9\\,\\mathrm{{m/s}}$。
 %%% SUBPROBLEM (2) %%%
-（小問(2)の問題文）
+（小問2）
 %%% ANSWER (2) %%%
-（小問(2)の解答）
+（解答）
 %%% EXPLANATION (2) %%%
-（小問(2)の解説）
-%%% SUBPROBLEM (3) %%%
-（小問(3)の問題文。省略可）
-%%% ANSWER (3) %%%
-（小問(3)の解答）
-%%% EXPLANATION (3) %%%
-（小問(3)の解説）
+（解説）
 %%% END PROBLEM 1 %%%
 
 %%% PROBLEM 2 %%%
-...（同じ形式で続ける）
+（以降同じ形式）
 %%% END PROBLEM 2 %%%
 
-【出題品質の絶対基準】
-A. 入試問題として成立すること: 設定に矛盾がなく、解答が一意に定まること
-B. 数値の美しさ: 計算結果が整数または簡単な分数になる値を選ぶこと
-C. 誘導形式: (1)→(2)→(3) の順に難易度が上がり、前の答えを次に使う構造
-D. {subject}では法則名・式を明示して解説すること
-E. TikZ 図はガイドラインのルールを必ず守り、コンパイルが通る正確なコードで書くこと
+【品質基準】
+- 設定に矛盾なく解答が一意に定まること
+- 計算結果が整数または簡単な分数になる数値を選ぶ
+- (1)→(2)→(3) の誘導形式、前問の結果を次問で使う
+- TikZ: 全文は ; で終わる、\usepackage/\usetikzlibrary は書かない
 
-【禁止事項】
-- JSON形式での出力（必ず上記のマーカー形式で出力すること）
-- ```json や ```latex のコードフェンス（不要）
-- マーカー以外の余計なテキスト（挨拶・前置き・まとめ等）
-- TikZ コード内での \\usepackage, \\usetikzlibrary の記述（preamble済みのため不要）
-- セミコロンの欠落（全ての \\draw, \\fill, \\node 文は ; で終わること）"""
+【禁止】JSON出力禁止 / コードフェンス禁止 / 余分なテキスト禁止 / %%% を本文中に使用禁止"""
 
 
 def _parse_latex_problems(raw_text: str) -> list:
@@ -6263,9 +6238,8 @@ async def practice_generate(req: PracticeGenerateRequest = Body(...)):
     if req.num_questions > max_q:
         req.num_questions = max_q
 
-    # モデル解決: 練習モードはコスト抑制のため、明示的な上位ティア指定がない限り lite (gpt-4o) を使用
-    _practice_default_tier = os.getenv('PRACTICE_MODEL_TIER', 'lite')
-    openai_model, resolved_tier = _resolve_model(req.model_tier or _practice_default_tier, req.subject)
+    # モデル解決
+    openai_model, resolved_tier = _resolve_model(req.model_tier or 'auto', req.subject)
 
     # システムプロンプト構築
     system_prompt = _build_practice_system_prompt(req.subject, req.topics or [], req.difficulty, req.num_questions)

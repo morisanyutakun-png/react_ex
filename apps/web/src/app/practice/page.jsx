@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
    定数
 ───────────────────────────────────────────────────────────── */
 
-const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', EXAM: 'exam', SUMMARY: 'summary' };
+const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', EXAM: 'exam', SUMMARY: 'summary', PDF: 'pdf' };
 
 const PRACTICE_SUBJECTS = ['物理', '数学', '化学'];
 
@@ -1344,6 +1344,102 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
 }
 
 /* ─────────────────────────────────────────────────────────────
+   PDF 埋め込み練習画面 — LaTeX 組版 PDF をページ内に表示
+───────────────────────────────────────────────────────────── */
+
+function PdfViewScreen({ pdfUrl, pdfLoading, subject, problems, onFinish, onQuit }) {
+  const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
+  const [scores, setScores] = useState({});
+  const allScored = problems.length > 0 && Object.keys(scores).length === problems.length;
+
+  const scoreLabel = { [SCORE.CORRECT]: '○', [SCORE.DELTA]: '△', [SCORE.WRONG]: '×' };
+  const scoreColor = {
+    [SCORE.CORRECT]: { bg: '#f0fdf4', border: '#86efac', text: '#16a34a' },
+    [SCORE.DELTA]:   { bg: '#fffbeb', border: '#fcd34d', text: '#d97706' },
+    [SCORE.WRONG]:   { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626' },
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', maxWidth: 900, margin: '0 auto' }}>
+      {/* ── ヘッダー ── */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#e2e8f0] bg-white flex-shrink-0">
+        <BackButton onClick={onQuit} label="終了" />
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
+          <span className="text-[12px] font-bold text-[#64748b]">{subject} 練習問題 — LaTeX PDF</span>
+        </div>
+        <div className="w-16" />
+      </div>
+
+      {/* ── PDF iframe ── */}
+      <div className="flex-1 min-h-0 bg-[#f1f5f9]">
+        {pdfLoading ? (
+          <div className="h-full flex flex-col items-center justify-center gap-4">
+            <div className="w-12 h-12 border-4 border-[#e2e8f0] rounded-full animate-spin"
+                 style={{ borderTopColor: c.accent }} />
+            <p className="text-[14px] font-bold text-[#64748b]">LaTeX 組版中…</p>
+            <p className="text-[11px] text-[#94a3b8]">美しい数式・TikZ 図を PDF に変換しています</p>
+          </div>
+        ) : pdfUrl ? (
+          <iframe
+            src={pdfUrl}
+            title="練習問題 PDF"
+            className="w-full h-full border-0"
+            style={{ display: 'block' }}
+          />
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center gap-3 text-center px-8">
+            <span className="text-[32px]">📄</span>
+            <p className="text-[14px] font-bold text-[#475569]">PDF の生成に失敗しました</p>
+            <p className="text-[12px] text-[#94a3b8]">バックエンドでの LaTeX コンパイルエラーの可能性があります</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── 採点パネル ── */}
+      <div className="flex-shrink-0 bg-white border-t border-[#e2e8f0] px-4 pt-3 pb-4">
+        <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.1em] uppercase mb-2">自己採点</p>
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {problems.map((p, idx) => (
+            <div key={idx} className="flex flex-col items-center gap-1 flex-shrink-0">
+              <span className="text-[10px] font-bold text-[#94a3b8]">問{idx + 1}</span>
+              <div className="flex gap-1">
+                {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((s) => {
+                  const sc = scoreColor[s];
+                  const selected = scores[idx] === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setScores((prev) => ({ ...prev, [idx]: s }))}
+                      className="w-9 h-9 rounded-full text-[14px] font-black border-2 transition-all duration-150 active:scale-90"
+                      style={selected
+                        ? { background: sc.bg, borderColor: sc.border, color: sc.text, transform: 'scale(1.1)' }
+                        : { background: 'white', borderColor: '#e2e8f0', color: '#cbd5e1' }}
+                    >
+                      {scoreLabel[s]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={!allScored}
+          onClick={() => onFinish(problems.map((_, i) => scores[i] || SCORE.DELTA))}
+          className="w-full mt-2 py-3.5 rounded-2xl text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{ background: allScored ? `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)` : '#e2e8f0', boxShadow: allScored ? `0 6px 20px ${c.ring}` : 'none' }}
+        >
+          {allScored ? '採点して結果を見る →' : `あと ${problems.length - Object.keys(scores).length} 問採点してください`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
    サマリー画面 E
 ───────────────────────────────────────────────────────────── */
 
@@ -1593,6 +1689,7 @@ export default function PracticePage() {
   const [error, setError]       = useState('');
   const [loadingStep, setLoadingStep] = useState(0);
   const [latexForPdf, setLatexForPdf] = useState(null);
+  const [pdfUrl, setPdfUrl]           = useState(null);
   const [pdfLoading, setPdfLoading]   = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [manualPrompt, setManualPrompt] = useState('');
@@ -1638,12 +1735,29 @@ export default function PracticePage() {
       }
 
       setProblems(items);
-      setLatexForPdf(result.latex || null);
+      const latex = result.latex || null;
+      setLatexForPdf(latex);
       setCurrent(0);
       setScores([]);
       setShowAnswer(false);
       extraQueue.current = [];
-      setScreen(cfg?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+
+      // LaTeX が返ってきたら自動で PDF 生成 → PDF 埋め込み画面へ
+      if (latex) {
+        setPdfUrl(null);
+        setPdfLoading(true);
+        setScreen(SCREEN.PDF);
+        try {
+          const pdfData = await generatePdf(latex);
+          setPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
+        } catch (_pdfErr) {
+          // PDF 生成失敗 → カード表示にフォールバック
+          setScreen(cfg?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+        }
+        setPdfLoading(false);
+      } else {
+        setScreen(cfg?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+      }
     } catch (e) {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -1680,14 +1794,27 @@ export default function PracticePage() {
   }, []);
 
   /* ── 手動モード: JSON貼り付け → 問題開始 ── */
-  const handleManualParsed = useCallback((parsedProblems, latex) => {
+  const handleManualParsed = useCallback(async (parsedProblems, latex) => {
     setProblems(parsedProblems);
     setLatexForPdf(latex);
     setCurrent(0);
     setScores([]);
     setShowAnswer(false);
     extraQueue.current = [];
-    setScreen(config?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+    if (latex) {
+      setPdfUrl(null);
+      setPdfLoading(true);
+      setScreen(SCREEN.PDF);
+      try {
+        const pdfData = await generatePdf(latex);
+        setPdfUrl(pdfData?.pdf_url || pdfData?.url || null);
+      } catch (_) {
+        setScreen(config?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+      }
+      setPdfLoading(false);
+    } else {
+      setScreen(config?.practiceFormat === PRACTICE_FORMAT.EXAM ? SCREEN.EXAM : SCREEN.PROBLEM);
+    }
   }, [config]);
 
   /* ── 開始 ── */
@@ -1813,6 +1940,7 @@ export default function PracticePage() {
     setCurrent(0);
     setShowAnswer(false);
     setLatexForPdf(null);
+    setPdfUrl(null);
     setManualPrompt('');
   }, []);
 
@@ -1839,6 +1967,19 @@ export default function PracticePage() {
   }
 
   if (screen === SCREEN.LOADING) return <LoadingScreen subject={subject} genMode={genMode} loadingStep={loadingStep} />;
+
+  if (screen === SCREEN.PDF) {
+    return (
+      <PdfViewScreen
+        pdfUrl={pdfUrl}
+        pdfLoading={pdfLoading}
+        subject={subject}
+        problems={problems}
+        onFinish={(scoreArray) => { setScores(scoreArray); setScreen(SCREEN.SUMMARY); }}
+        onQuit={handleQuit}
+      />
+    );
+  }
 
   if (screen === SCREEN.PROMPT) {
     return (
