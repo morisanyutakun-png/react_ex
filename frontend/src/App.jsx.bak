@@ -1,1745 +1,936 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import './App.css'
+
+/* ────────────────────────────────────────────
+   SVG Icons (inline, no dep needed)
+   ──────────────────────────────────────────── */
+const Ico = {
+  Check: (p) => <svg width={p?.s||18} height={p?.s||18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
+  Copy: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>,
+  Upload: () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+  FileText: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>,
+  ArrowRight: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+  ArrowLeft: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>,
+  ExternalLink: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
+  RotateCcw: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>,
+  Star: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+  Help: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
+  Database: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
+  Pdf: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15v-2h2a1 1 0 1 0 0-2H9v6"/></svg>,
+  Skip: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>,
+  Zap: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  ChevronDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
+  ChevronUp: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,
+  Clock: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
+  Settings: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  Shield: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  Trash: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
+  WifiOff: () => <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>,
+  Home: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
+  Play: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+  BarChart: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>,
+  Target: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+  BookOpen: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+  Camera: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>,
+}
+
+/* ────────────────────────────────────────────
+   Stats / Gamification System
+   ──────────────────────────────────────────── */
+const STATS_KEY = 'examgen_stats'
+const DEFAULT_STATS = {
+  totalProblems: 0, totalSessions: 0, currentStreak: 0, maxStreak: 0,
+  lastActiveDate: null, weeklyActivity: {}, subjectBreakdown: {},
+  totalTimeSeconds: 0, xp: 0, sessionLog: [],
+  scoreHistory: [],
+  totalPoints: 0, totalEarned: 0,
+}
+
+function loadStats() {
+  try { return { ...DEFAULT_STATS, ...JSON.parse(localStorage.getItem(STATS_KEY) || '{}') } }
+  catch { return { ...DEFAULT_STATS } }
+}
+function saveStats(s) { localStorage.setItem(STATS_KEY, JSON.stringify(s)) }
+function getToday() { return new Date().toISOString().slice(0, 10) }
+
+function updateStreak(stats) {
+  const today = getToday()
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  if (stats.lastActiveDate === today) return stats
+  if (stats.lastActiveDate === yesterday) {
+    return { ...stats, currentStreak: stats.currentStreak + 1, maxStreak: Math.max(stats.maxStreak, stats.currentStreak + 1), lastActiveDate: today }
+  }
+  return { ...stats, currentStreak: 1, maxStreak: Math.max(stats.maxStreak, 1), lastActiveDate: today }
+}
+
+function addSessionToStats(stats, session) {
+  const today = getToday()
+  const wa = { ...stats.weeklyActivity }
+  wa[today] = (wa[today] || 0) + session.numQuestions
+  const sb = { ...stats.subjectBreakdown }
+  if (session.subject) sb[session.subject] = (sb[session.subject] || 0) + session.numQuestions
+  const log = [...(stats.sessionLog || []), { ...session, date: new Date().toISOString() }].slice(-100)
+  const xpGain = session.numQuestions * 10 + Math.floor(session.duration / 60) * 5
+  const updated = {
+    ...updateStreak(stats), totalProblems: stats.totalProblems + session.numQuestions,
+    totalSessions: stats.totalSessions + 1, totalTimeSeconds: stats.totalTimeSeconds + (session.duration || 0),
+    weeklyActivity: wa, subjectBreakdown: sb, xp: stats.xp + xpGain, sessionLog: log,
+  }
+  saveStats(updated)
+  return updated
+}
+
+function addScoreToStats(stats, scoreEntry) {
+  const sh = [...(stats.scoreHistory || []), scoreEntry].slice(-200)
+  const updated = {
+    ...stats,
+    scoreHistory: sh,
+    totalPoints: (stats.totalPoints || 0) + scoreEntry.maxPoints,
+    totalEarned: (stats.totalEarned || 0) + scoreEntry.earnedPoints,
+  }
+  saveStats(updated)
+  return updated
+}
+
+function getLevel(xp) {
+  const levels = [
+    { min: 0, name: '入門', rank: 'D', emoji: '🌱' },
+    { min: 50, name: '初級', rank: 'C', emoji: '📘' },
+    { min: 150, name: '中級', rank: 'B', emoji: '📗' },
+    { min: 400, name: '上級', rank: 'A', emoji: '📕' },
+    { min: 800, name: '達人', rank: 'S', emoji: '⭐' },
+    { min: 1500, name: '極', rank: 'SS', emoji: '🏆' },
+    { min: 3000, name: '神', rank: 'SSS', emoji: '👑' },
+  ]
+  let lvl = levels[0]
+  for (const l of levels) { if (xp >= l.min) lvl = l }
+  const idx = levels.indexOf(lvl)
+  const next = levels[idx + 1]
+  const progress = next ? ((xp - lvl.min) / (next.min - lvl.min)) * 100 : 100
+  return { ...lvl, progress: Math.min(100, progress), nextXp: next?.min || lvl.min, currentXp: xp }
+}
+
+function getLast7Days() {
+  const days = []
+  for (let i = 6; i >= 0; i--) days.push(new Date(Date.now() - i * 86400000).toISOString().slice(0, 10))
+  return days
+}
+
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60)
+  if (h > 0) return `${h}h${m}m`
+  return `${m}m`
+}
+
+const MOTIVATIONAL = [
+  '努力は裏切らない。今日も1問、差をつけよう。',
+  '合格への最短距離は、今日の1問から。',
+  '周りが休んでいる時こそ、差がつく。',
+  'この1問が、本番の1点を生む。',
+  '昨日の自分を超えろ。',
+  '量は質に転化する。手を動かせ。',
+  'やった分だけ、自信になる。',
+  '本番で「やっておけばよかった」と思わないために。',
+  '誰かが今日もやっている。あなたは？',
+  'あと1問。それが合否を分ける。',
+]
+
+function getTodayMotivation() {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000)
+  return MOTIVATIONAL[dayOfYear % MOTIVATIONAL.length]
+}
+
+/* ────────────────────────────────────────────
+   Onboarding
+   ──────────────────────────────────────────── */
+const ONBOARDING_SLIDES = [
+  { emoji: '🔥', title: '受験を制するのは、\n圧倒的な演習量。', desc: 'AIが物理・数学・英語の類題を瞬時に生成。あらゆる分野を無限に演習できます。' },
+  { emoji: '📊', title: '努力を「見える化」する', desc: '学習量・連続日数・到達レベルをすべて記録。成長を数字で実感し、スクショでシェアしよう。' },
+  { emoji: '📝', title: 'かんたん4ステップ', desc: '1. パターンを選ぶ → 2. 問題数を設定 → 3. AIに依頼 → 4. PDF完成！\n最短30秒で類題が手に入る。' },
+  { emoji: '🚀', title: '今日から差をつけろ。', desc: '合格する人は、今日始める人。\nまずは1問、類題を作ってみよう。' },
+]
+
+function OnboardingScreen({ onComplete }) {
+  const [si, setSi] = useState(0)
+  const s = ONBOARDING_SLIDES[si]
+  return (
+    <div className="onboarding-overlay">
+      <div className="onboarding-card anim-scale-in">
+        <div className="onboarding-slide anim-fade-up" key={si}>
+          <div className="onboarding-emoji">{s.emoji}</div>
+          <h2 className="onboarding-title">{s.title}</h2>
+          <p className="onboarding-desc">{s.desc}</p>
+        </div>
+        <div className="onboarding-dots">
+          {ONBOARDING_SLIDES.map((_, i) => <div key={i} className={`onboarding-dot ${i === si ? 'active' : ''}`} />)}
+        </div>
+        <div className="onboarding-actions">
+          {si > 0 && <button className="btn btn-ghost" onClick={() => setSi(i => i - 1)}>戻る</button>}
+          <button className="btn btn-primary btn-lg btn-block" onClick={si === ONBOARDING_SLIDES.length - 1 ? onComplete : () => setSi(i => i + 1)}>
+            {si === ONBOARDING_SLIDES.length - 1 ? '演習を始める' : '次へ'} <Ico.ArrowRight />
+          </button>
+        </div>
+        <button className="onboarding-skip" onClick={onComplete}>スキップ</button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Offline Banner ── */
+function OfflineBanner() {
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
+  useEffect(() => {
+    const off = () => setIsOffline(true), on = () => setIsOffline(false)
+    window.addEventListener('offline', off); window.addEventListener('online', on)
+    return () => { window.removeEventListener('offline', off); window.removeEventListener('online', on) }
+  }, [])
+  if (!isOffline) return null
+  return <div className="offline-banner"><Ico.WifiOff /><div><div className="offline-title">オフラインです</div><div className="offline-desc">接続を確認してください。</div></div></div>
+}
+
+/* ── LocalStorage helpers ── */
+const HISTORY_KEY = 'examgen_history', MAX_HISTORY = 50
+function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]') } catch { return [] } }
+function saveToHistory(entry) { const h = loadHistory(); h.unshift({ ...entry, id: Date.now(), createdAt: new Date().toISOString() }); if (h.length > MAX_HISTORY) h.length = MAX_HISTORY; localStorage.setItem(HISTORY_KEY, JSON.stringify(h)) }
+function deleteFromHistory(id) { localStorage.setItem(HISTORY_KEY, JSON.stringify(loadHistory().filter(h => h.id !== id))) }
+function clearHistory() { localStorage.removeItem(HISTORY_KEY) }
+
+const SETTINGS_KEY = 'examgen_settings'
+const DEFAULT_SETTINGS = { defaultNumQuestions: 3, defaultLatexPreset: 'exam', defaultBaseMode: 'skip' }
+function loadSettings() { try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') } } catch { return { ...DEFAULT_SETTINGS } } }
+function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)) }
+
+/* ── Small components ── */
+function Toast({ msg, type, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t) }, [onClose])
+  return <div className="toast-wrap"><div className={`toast ${type}`}>{type === 'success' && <Ico.Check />}{type === 'error' && <span style={{fontSize:16}}>✕</span>}{type === 'info' && <span style={{fontSize:16}}>ℹ</span>}<span>{msg}</span></div></div>
+}
+
+function LoadingOverlay({ text }) {
+  return <div className="loading-overlay"><div className="spinner" /><div className="loading-text">{text || '処理中...'}</div></div>
+}
+
+/* ── Shareable Stats Card ── */
+function ShareableCard({ stats, level }) {
+  const d = new Date()
+  const dateStr = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`
+  return (
+    <div className="shareable-card">
+      <div className="shareable-bg" />
+      <div className="shareable-content">
+        <div className="shareable-header">
+          <div className="shareable-app-name">⚛️ 物理AI</div>
+          <div className="shareable-date">{dateStr}</div>
+        </div>
+        <div className="shareable-level-badge">
+          <span className="shareable-level-emoji">{level.emoji}</span>
+          <span className="shareable-level-rank">Rank {level.rank}</span>
+          <span className="shareable-level-name">{level.name}</span>
+        </div>
+        <div className="shareable-stats-row">
+          <div className="shareable-stat"><div className="shareable-stat-value">{stats.currentStreak}</div><div className="shareable-stat-label">日連続</div></div>
+          <div className="shareable-stat-divider" />
+          <div className="shareable-stat"><div className="shareable-stat-value">{stats.totalProblems}</div><div className="shareable-stat-label">問演習</div></div>
+          <div className="shareable-stat-divider" />
+          <div className="shareable-stat"><div className="shareable-stat-value">{formatTime(stats.totalTimeSeconds)}</div><div className="shareable-stat-label">総学習</div></div>
+        </div>
+        <div className="shareable-motivation">{getTodayMotivation()}</div>
+        <div className="shareable-footer">#物理AI #受験勉強 #努力の証明</div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Weekly Activity ── */
+function WeeklyActivity({ weeklyActivity }) {
+  const days = getLast7Days()
+  const dayNames = ['月', '火', '水', '木', '金', '土', '日']
+  const max = Math.max(1, ...days.map(d => weeklyActivity[d] || 0))
+  return (
+    <div className="weekly-activity">
+      <div className="weekly-bars">
+        {days.map((d) => {
+          const count = weeklyActivity[d] || 0
+          const height = count > 0 ? Math.max(12, (count / max) * 100) : 4
+          return (
+            <div key={d} className={`weekly-bar-group ${d === getToday() ? 'today' : ''}`}>
+              <div className="weekly-bar-count">{count > 0 ? count : ''}</div>
+              <div className="weekly-bar-track"><div className={`weekly-bar-fill ${count > 0 ? 'active' : ''}`} style={{ height: `${height}%` }} /></div>
+              <div className="weekly-bar-label">{dayNames[(new Date(d).getDay() + 6) % 7]}</div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* ── Session Timer Hook ── */
+function useSessionTimer(isActive) {
+  const [elapsed, setElapsed] = useState(0)
+  const startRef = useRef(null)
+  useEffect(() => {
+    if (isActive) {
+      startRef.current = Date.now()
+      const iv = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000)
+      return () => clearInterval(iv)
+    } else { setElapsed(0); startRef.current = null }
+  }, [isActive])
+  return elapsed
+}
+
+function formatTimer(s) { return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` }
+
+/* ════════════════════════════════════════════
+   Main App
+   ════════════════════════════════════════════ */
+const PRESET_EMOJI = { exam: '📝', worksheet: '📋', flashcard: '🃏', mock_exam: '📊', report: '📖', simple: '✏️', default: '📄' }
+const presetEmoji = (id) => PRESET_EMOJI[id] || PRESET_EMOJI.default
 
 export default function App() {
-  // keep state minimal and relevant for this UI
-  const [docId, setDocId] = useState('')
-  const [status, setStatus] = useState('')
-  const [docEntries, setDocEntries] = useState([])
-  const [fullText, setFullText] = useState('')
-  const [ragInjectEnabled, setRagInjectEnabled] = useState(true)
-  const [renderContext, setRenderContext] = useState(null)
+  const [toast, setToast] = useState(null)
   const [templates, setTemplates] = useState([])
-  const [selectedTemplateId, setSelectedTemplateId] = useState('')
-  const [subjects, setSubjects] = useState(['数学','物理','英語','化学','生物'])
-  const [difficulties, setDifficulties] = useState(['易','普通','難'])
-  const [selectedSubject, setSelectedSubject] = useState('数学')
-  const [selectedDifficulty, setSelectedDifficulty] = useState('普通')
-  // map difficulty labels to numeric hints for RAG re-ranking
-  const DIFFICULTY_MAP = { '易': 0.2, '普通': 0.5, '難': 0.8 }
-  // userDifficultyNumeric is used by assemblePromptWithRag; keep it in sync when difficulty label changes
-  useEffect(() => {
-    const v = DIFFICULTY_MAP[selectedDifficulty]
-    setUserDifficultyNumeric(v !== undefined ? String(v) : '')
-  }, [selectedDifficulty])
-  const [generatedPrompt, setGeneratedPrompt] = useState('')
+  const [latexPresets, setLatexPresets] = useState([])
+  const [screen, setScreen] = useState('home')
+  const [legalTab, setLegalTab] = useState('terms')
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('examgen_onboarded'))
+  const [history, setHistory] = useState(() => loadHistory())
+  const [settings, setSettings] = useState(() => loadSettings())
+  const [stats, setStats] = useState(() => loadStats())
+
+  const [step, setStep] = useState(1)
+  const initS = loadSettings()
+  const [form, setForm] = useState({ templateId: '', numQuestions: initS.defaultNumQuestions, latexPreset: initS.defaultLatexPreset })
+  const [prompt, setPrompt] = useState('')
+  const [ragCtx, setRagCtx] = useState(null)
   const [llmOutput, setLlmOutput] = useState('')
-  const [expectedOutput, setExpectedOutput] = useState('')
-  const [tuningScore, setTuningScore] = useState('')
-  const [tuningNotes, setTuningNotes] = useState('')
-  const [tuningPromptFull, setTuningPromptFull] = useState('')
-  const [customFields, setCustomFields] = useState([]) // array of {key, value}
-  // new-template form state (dev-mode) — simplified: subject + field only
-  const [showNewTemplateForm, setShowNewTemplateForm] = useState(false)
-  const [newTplSubject, setNewTplSubject] = useState('')
-  const [newTplField, setNewTplField] = useState('')  // e.g. 微分積分, 力学, etc.
-  const [newTplSaving, setNewTplSaving] = useState(false)
-  
-  const [mode, setMode] = useState('user')
-  // tuning profile controls
-  const [tuningProfile, setTuningProfile] = useState('json_only')
-  const [tuningIncludeRefs, setTuningIncludeRefs] = useState(true)
-  // NOTE: removed the upload LaTeX checkbox — we always send pasted output as `latex`
-  const [numQuestions, setNumQuestions] = useState(1)
-  // Generation controls for user-mode 'infinite generator'
-  const [genNum, setGenNum] = useState(5)
-  const [genMinDifficulty, setGenMinDifficulty] = useState('')
-  const [genMaxDifficulty, setGenMaxDifficulty] = useState('')
-  const [generationStyle, setGenerationStyle] = useState('short_problem_statement')
-  const [prohibitedTags, setProhibitedTags] = useState('')
-  const [includeExplanations, setIncludeExplanations] = useState(false)
-  const [generatedItems, setGeneratedItems] = useState([])
-  const [autoInsertGenerated, setAutoInsertGenerated] = useState(false)
-  // simple paste-to-pdf UI state
-  const [rawLatex, setRawLatex] = useState('')
-  const [pdfWorking, setPdfWorking] = useState(false)
-  const [lastPdfUrl, setLastPdfUrl] = useState('')
-  const [retrievedChunks, setRetrievedChunks] = useState([])
-  const [expandedChunks, setExpandedChunks] = useState({})
-  const [difficultyMatchWeight, setDifficultyMatchWeight] = useState(0.6)
-  const [trickinessWeight, setTrickinessWeight] = useState(0.0)
-  const [textWeight, setTextWeight] = useState(0.5)
-  const [topK, setTopK] = useState(5)
-  const [autoPrependGuidance, setAutoPrependGuidance] = useState(true)
-  // simplified: advanced options are replaced by a compact inline form below
-  const [showRetrievedPanel, setShowRetrievedPanel] = useState(false)
-  const [showDifficultyDetails, setShowDifficultyDetails] = useState(false)
-  const [showDocItems, setShowDocItems] = useState(false)
-  const [showRagSummary, setShowRagSummary] = useState(false)
-  const [previewRendered, setPreviewRendered] = useState(null)
-  const [previewContext, setPreviewContext] = useState(null)
-  const [showTemplatePreview, setShowTemplatePreview] = useState(false)
-  const [userDifficultyNumeric, setUserDifficultyNumeric] = useState('')
-  const [userTrickinessNumeric, setUserTrickinessNumeric] = useState('')
-  // UI compacting toggles
-  const [showPromptHint, setShowPromptHint] = useState(false)
-  const [showWorkflowSteps, setShowWorkflowSteps] = useState(false)
-  const [userOutputFormat, setUserOutputFormat] = useState('latex')
+  const [pdfUrl, setPdfUrl] = useState('')
+  const [answerPdfUrl, setAnswerPdfUrl] = useState('')
+  const [answerLatex, setAnswerLatex] = useState('')
+  const [answerLoading, setAnswerLoading] = useState(false)
+  const [fullLatex, setFullLatex] = useState('')
+  const [fullPdfUrl, setFullPdfUrl] = useState('')
+  const [fullPdfLoading, setFullPdfLoading] = useState(false)
+  const [parsedProblems, setParsedProblems] = useState([])
+  const [subScores, setSubScores] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [loadingMsg, setLoadingMsg] = useState('')
+  const [showHelp, setShowHelp] = useState(false)
+  const [showPromptSection, setShowPromptSection] = useState(true)
+  const [baseMode, setBaseMode] = useState(initS.defaultBaseMode || 'skip')
+  const [baseProblems, setBaseProblems] = useState([])
+  const [selectedBaseProblem, setSelectedBaseProblem] = useState(null)
+  const [basePdfData, setBasePdfData] = useState(null)
+  const [basePdfDragOver, setBasePdfDragOver] = useState(false)
+  const basePdfRef = useRef(null)
+  const [selfRating, setSelfRating] = useState(0)
+  const [showShareCard, setShowShareCard] = useState(false)
+  const [sessionXpGain, setSessionXpGain] = useState(0)
+  const [showScoring, setShowScoring] = useState(false)
 
-  // fetch templates on mount
-  const refreshTemplates = async ()=>{
-    try{
-      const res = await fetch('/api/templates')
-      const j = await res.json()
-      if(res.ok){
-        const tpls = j.templates || []
-        setTemplates(tpls)
-        if(!selectedTemplateId && tpls.length>0){ setSelectedTemplateId(tpls[0].id) }
-        return tpls
-      }
-    }catch(e){ console.warn('templates fetch failed', e) }
-    return []
-  }
+  const isPracticing = screen === 'practice' && step >= 1 && step <= 3
+  const sessionTime = useSessionTimer(isPracticing)
 
-  // convenience: call refreshTemplates and select the first template if none selected
-  const reloadTemplatesAndSelect = async () => {
-    await refreshTemplates()
-    if(!selectedTemplateId){
-      // pick the first template if any
-      const tpls = (templates && templates.length) ? templates : []
-      if(tpls.length > 0){ setSelectedTemplateId(tpls[0].id) }
-    }
-  }
+  const notify = (msg, type = 'info') => setToast({ msg, type })
+  const upd = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const level = getLevel(stats.xp)
 
-  useEffect(()=>{
-    let mounted = true
-    refreshTemplates()
-    return ()=>{ mounted = false }
+  const completeOnboarding = () => { localStorage.setItem('examgen_onboarded', '1'); setShowOnboarding(false) }
+
+  const fetchTemplates = useCallback(async () => {
+    try { const r = await fetch('/api/templates'); const d = await r.json(); if (r.ok && d.templates?.length) { setTemplates(d.templates); if (!form.templateId) upd('templateId', d.templates[0].id) } } catch (e) { console.error(e) }
+  }, [])
+  const fetchPresets = useCallback(async () => {
+    try { const r = await fetch('/api/latex_presets'); const d = await r.json(); if (r.ok && d.presets?.length) setLatexPresets(d.presets) } catch (e) { console.error(e) }
+  }, [])
+  useEffect(() => { fetchTemplates(); fetchPresets() }, [])
+
+  const fetchBaseProblems = useCallback(async (tid) => {
+    if (!tid) return
+    try { const r = await fetch(`/api/problems_by_pattern?template_id=${encodeURIComponent(tid)}&limit=20`); const d = await r.json(); if (r.ok) setBaseProblems(d.problems || []) } catch (e) { console.error(e) }
   }, [])
 
-  // helper: save a new template via backend dev API — auto-generates everything from subject+field
-  const saveNewTemplate = async (subject, field) => {
-    const s = String(subject || '').trim()
-    if(!s){ setStatus('教科を選択してください'); return }
-    const f = String(field || '').trim()
+  const uploadBasePdf = async (file) => {
+    if (!file) return; if (!file.name.toLowerCase().endsWith('.pdf')) return notify('PDFファイルのみ可能です', 'error')
+    setLoading(true); setLoadingMsg('PDFを検証中...')
+    const fd = new FormData(); fd.append('file', file)
+    try { const r = await fetch('/api/validate_base_pdf', { method: 'POST', body: fd }); const d = await r.json(); if (r.ok) { setBasePdfData(d); notify(`${d.filename}を読み込みました`, 'success') } else notify(d.detail || '検証失敗', 'error') } catch { notify('アップロードエラー', 'error') }
+    setLoading(false); if (basePdfRef.current) basePdfRef.current.value = ''
+  }
+  const onBasePdfDrop = (e) => { e.preventDefault(); setBasePdfDragOver(false); uploadBasePdf(e.dataTransfer.files?.[0]) }
 
-    // build all fields automatically
-    const label = f ? `${s}（${f}）` : s
-    const name = `${label} テンプレート`
-    const id = (f ? `${s}_${f}` : s).toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\u3040-\u9fff\-]/g,'') || ('tpl_' + Date.now())
-    const desc = `${label} の問題を生成するテンプレート（自動生成）`
-    const fieldLine = f ? `分野: ${f}\n` : ''
-    const prompt = [
-      `科目: {subject}`,
-      f ? `分野: ${f}` : null,
-      `難易度: {difficulty}`,
-      `出題数: {num_questions}`,
-      ``,
-      `指示:`,
-      `以下の条件で${label}の問題を出題してください。`,
-      f ? `特に「${f}」の範囲を重点的に扱ってください。` : null,
-      ``,
-      `- 出力形式: LaTeX（\\documentclass から \\end{document} まで完全な文書）`,
-      `- 問題と解答・解説を必ず含めること`,
-      `- 問題数は {num_questions} 問とする`,
-      `- 難易度は「{difficulty}」レベルに合わせること`,
-      ``,
-      `## 問題`,
-      `\\begin{enumerate}`,
-      `  \\item （ここに問題文）`,
-      `\\end{enumerate}`,
-      ``,
-      `## 解答・解説`,
-      `\\begin{enumerate}`,
-      `  \\item \\textbf{解答}: ...  \\textbf{解説}: ...`,
-      `\\end{enumerate}`,
-    ].filter(l => l !== null).join('\n')
-
-    const body = {
-      id,
-      name,
-      description: desc,
-      prompt,
-      metadata: { subject: s, field: f || null, auto_generated: true },
-    }
-
-    setNewTplSaving(true)
-    setStatus(`テンプレート「${label}」を保存中...`)
+  const generatePrompt = async () => {
+    if (!form.templateId) return notify('テンプレートを選んでください', 'error')
+    setLoading(true); setLoadingMsg('AIへの指示文を作成中...')
     try {
-      const res = await fetch('/api/template', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      const j = await res.json().catch(()=>null)
-      if(!res.ok){ setStatus('テンプレート保存失敗: ' + (j && (j.detail||j.error) ? (j.detail||j.error) : res.statusText)); setNewTplSaving(false); return }
-      setStatus(`✅ テンプレート「${label}」を作成しました`)
-      await refreshTemplates()
-      setSelectedTemplateId(id)
-      setNewTplSubject('')
-      setNewTplField('')
-      setShowNewTemplateForm(false)
-    } catch(e) { setStatus('テンプレート保存中にエラー: '+e.message) }
-    setNewTplSaving(false)
+      let sourceText = ''
+      if (baseMode === 'db' && selectedBaseProblem) sourceText = `【ベース問題】\n${selectedBaseProblem.stem || ''}\n${selectedBaseProblem.solution_outline || ''}`
+      else if (baseMode === 'pdf' && basePdfData?.extracted_text) sourceText = basePdfData.extracted_text
+      const body = { template_id: form.templateId, num_questions: form.numQuestions, rag_inject: true, source_text: sourceText || undefined, user_mode: true, latex_preset: form.latexPreset || 'exam' }
+      const r = await fetch('/api/template_render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const d = await r.json()
+      if (r.ok) {
+        let rp = d.rendered_prompt || d.rendered
+        if (baseMode === 'pdf' && basePdfData) rp += '\n\n【重要：添付PDFについて】\n添付PDFがベースライン問題です。同じスタイルで新しい類似問題を作成してください。'
+        setPrompt(rp); setRagCtx(d.context); setStep(3); setShowPromptSection(true); notify('指示文を生成しました', 'success')
+      } else notify('エラー: ' + (d.detail || r.statusText), 'error')
+    } catch { notify('通信エラー', 'error') }
+    setLoading(false)
   }
 
-  const generatePromptFromTemplate = async () => {
-    if(!selectedTemplateId){ setStatus('テンプレートを選択してください'); return }
-    setStatus('テンプレートをレンダリングしています...')
-    try{
-      // Build base body
-  const body = { template_id: selectedTemplateId, subject: selectedSubject, difficulty: selectedDifficulty, num_questions: numQuestions, rag_inject: ragInjectEnabled, difficulty_match_weight: Number(difficultyMatchWeight), trickiness_weight: Number(trickinessWeight), top_k: Number(topK) }
-      // attach user numeric hints when present
-      if(userDifficultyNumeric !== ''){
-        const v = Number(userDifficultyNumeric)
-        if(!Number.isNaN(v)) body.user_difficulty = v
-      }
-      if(userTrickinessNumeric !== ''){
-        const v2 = Number(userTrickinessNumeric)
-        if(!Number.isNaN(v2)) body.user_trickiness = v2
-      }
-      let tempDocId = null
-      // If RAG is enabled but no docId is set, ask server to create a recent-sample index and use it
-      if(ragInjectEnabled && !docId){
-        setStatus('DB からサンプルを取得して RAG 用インデックスを作成しています...')
-        try{
-          const rr = await fetch('/api/reindex_recent', { method: 'POST' })
-          const rj = await rr.json()
-          if(rr.ok && rj.doc_id){
-            tempDocId = rj.doc_id
-            body.doc_id = tempDocId
-          } else {
-            // no recent sample available; leave body without doc_id and let server attempt sampling
-          }
-        }catch(e){
-          console.warn('reindex_recent failed', e)
-        }
-      } else if(ragInjectEnabled && docId){
-        body.doc_id = docId
-      }
+  const copyPrompt = async () => { try { await navigator.clipboard.writeText(prompt); notify('コピーしました', 'success') } catch { notify('コピー失敗', 'error') } }
 
-      const res = await fetch('/api/template_render', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      const j = await res.json()
-      if(!res.ok){ setStatus('テンプレートレンダリングエラー: '+(j.detail||res.statusText)); return }
-      // backend returns 'rendered_prompt' (older frontends used 'rendered')
-      const rendered = j.rendered_prompt || j.rendered || ''
-      const ctx = j.context || null
-      setRenderContext(ctx)
-      // 自動挿入が有効な場合は、返却された renderContext を元にガイダンスを先頭に挿入する
-  const sanitizedRendered = sanitizeTemplateText(rendered)
-  if(autoPrependGuidance && ctx){
-        try{
-          const lines = []
-          lines.push('【統合ガイダンス（要約）】')
-          if(ctx.user_difficulty !== undefined && ctx.user_difficulty !== null && ctx.user_difficulty !== ''){
-            lines.push(`- ユーザー指定難易度: ${ctx.user_difficulty}`)
-          }
-          if(ctx.difficulty_numeric !== undefined && ctx.difficulty_numeric !== null && ctx.difficulty_numeric !== ''){
-            lines.push(`- DB 推定難易度: ${ctx.difficulty_numeric}`)
-          }
-          if(ctx.user_trickiness !== undefined && ctx.user_trickiness !== null && ctx.user_trickiness !== ''){
-            lines.push(`- ユーザー指定ひっかけ度: ${ctx.user_trickiness}`)
-          }
-          if(ctx.trickiness !== undefined && ctx.trickiness !== null && ctx.trickiness !== ''){
-            lines.push(`- DB 推定ひっかけ度: ${ctx.trickiness}`)
-          }
-          lines.push('\n指示: ユーザー指定があれば優先し、DB 推定は誤答パターンや出題スタイルの参考にしてください。')
-          const g = lines.join('\n')
-          setGeneratedPrompt(g + '\n\n' + sanitizedRendered)
-        }catch(e){
-          // 何らかの理由で組み立てに失敗したら通常のレンダリング文字列だけを使う
-          setGeneratedPrompt(rendered)
-        }
-      } else {
-        setGeneratedPrompt(sanitizedRendered)
-      }
-      setStatus('プロンプト生成完了')
-      return sanitizedRendered
-    }catch(e){ setStatus('テンプレート生成エラー: '+e.message) }
-  }
-
-  const copyToClipboard = async (text) => {
-    try{ await navigator.clipboard.writeText(text); setStatus('クリップボードにコピーしました') }catch(e){ setStatus('コピーに失敗しました: '+e.message) }
-  }
-
-  const assemblePromptWithRag = async () => {
-    const question = generatedPrompt || ''
-    if(!question) return setStatus('プロンプト/質問を先に生成してください')
-    setStatus('RAG を取得中...')
-    try{
-  // include target difficulty/trickiness so server-side retrieval can re-rank by attributes
-  const body = { question, top_k: Number(topK), use_vector: ragInjectEnabled }
-
-  // prefer explicit user numeric hints; otherwise fall back to server-rendered context estimates
-  const maybeUserDiff = (userDifficultyNumeric !== '') ? Number(userDifficultyNumeric) : null
-  const maybeUserTrick = (userTrickinessNumeric !== '') ? Number(userTrickinessNumeric) : null
-  const ctxDiff = renderContext && (renderContext.difficulty_numeric !== undefined) ? Number(renderContext.difficulty_numeric) : null
-  const ctxTrick = renderContext && (renderContext.trickiness_numeric !== undefined) ? Number(renderContext.trickiness_numeric) : null
-
-  if(maybeUserDiff !== null && !Number.isNaN(maybeUserDiff)){
-    body.target_difficulty = maybeUserDiff
-  } else if(ctxDiff !== null && !Number.isNaN(ctxDiff)){
-    body.target_difficulty = ctxDiff
-  }
-
-  if(maybeUserTrick !== null && !Number.isNaN(maybeUserTrick)){
-    body.target_trickiness = maybeUserTrick
-  } else if(ctxTrick !== null && !Number.isNaN(ctxTrick)){
-    body.target_trickiness = ctxTrick
-  }
-
-  // include rerank weights if specified
-  body.difficulty_match_weight = Number(difficultyMatchWeight)
-  body.trickiness_weight = Number(trickinessWeight)
-  body.text_weight = Number(textWeight)
-  if(docId) body.doc_id = docId
-      const res = await fetch('/api/assemble_prompt', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      const j = await res.json()
-      if(!res.ok){ setStatus('RAG 組み込み失敗: '+(j.detail||res.statusText)); return }
-      // prefer summarized prompt for readability
-  const p = sanitizeTemplateText(j.prompt_summarized || j.prompt || '')
-      if(p){
-        // 自動挿入が有効なら既存の renderContext を元にガイダンスを先頭に挿入
-        // update renderContext from server if provided
-        if(j.context) setRenderContext(j.context)
-        if(autoPrependGuidance && (j.context || renderContext)){
-          try{
-            const ctx = j.context || renderContext
-            const lines = []
-            lines.push('【統合ガイダンス（要約）】')
-            if(ctx.user_difficulty !== undefined && ctx.user_difficulty !== null && ctx.user_difficulty !== ''){
-              lines.push(`- ユーザー指定難易度: ${ctx.user_difficulty}`)
-            }
-            if(ctx.difficulty_numeric !== undefined && ctx.difficulty_numeric !== null && ctx.difficulty_numeric !== ''){
-              lines.push(`- DB 推定難易度: ${ctx.difficulty_numeric}`)
-            }
-            if(ctx.user_trickiness !== undefined && ctx.user_trickiness !== null && ctx.user_trickiness !== ''){
-              lines.push(`- ユーザー指定ひっかけ度: ${ctx.user_trickiness}`)
-            }
-            if(ctx.trickiness !== undefined && ctx.trickiness !== null && ctx.trickiness !== ''){
-              lines.push(`- DB 推定ひっかけ度: ${ctx.trickiness}`)
-            }
-            lines.push('\n指示: ユーザー指定があれば優先し、DB 推定は誤答パターンや出題スタイルの参考にしてください。')
-            const g = lines.join('\n')
-            setGeneratedPrompt(g + '\n\n' + p)
-          }catch(e){ setGeneratedPrompt(p) }
-        } else {
-          setGeneratedPrompt(p)
-        }
-        setRetrievedChunks(j.retrieved || [])
-        setStatus('RAG 注入済みのプロンプトを取得しました')
-      } else {
-        setStatus('RAG 応答にプロンプトが含まれていません')
-      }
-    }catch(e){ setStatus('RAG 組み込み中にエラー: '+e.message) }
-  }
-
-  const toggleChunk = (i) => {
-    setExpandedChunks(prev => ({...prev, [i]: !prev[i]}))
-  }
-
-  const expandAll = () => {
-    const m = {}
-    retrievedChunks.forEach((_, i)=> m[i]=true)
-    setExpandedChunks(m)
-  }
-
-  const collapseAll = () => { setExpandedChunks({}) }
-
-  const scoreColor = (score) => {
-    // map score (assumed roughly 0..1) to green->yellow->red
-    if(score === null || score === undefined || Number.isNaN(Number(score))) return '#eee'
-    let s = Number(score)
-    // clamp
-    if(s < -1) s = -1
-    if(s > 1) s = 1
-    // normalize  -1..1 -> 0..1
-    const t = (s + 1) / 2
-    const r = Math.round(255 * (1 - t))
-    const g = Math.round(200 * t + 55 * (1 - t))
-    const b = 80
-    return `rgb(${r},${g},${b})`
-  }
-
-  // human-friendly label for difficulty numeric (0..1)
-  const difficultyLabel = (v) => {
-    if(v === null || v === undefined || v === '') return '—'
-    const n = Number(v)
-    if(Number.isNaN(n)) return String(v)
-    if(n < 0.18) return '非常に易い (1)'
-    if(n < 0.36) return '易い (2)'
-    if(n < 0.55) return '普通 (3)'
-    if(n < 0.75) return '難しい (4)'
-    return '非常に難しい (5)'
-  }
-
-  const buildGuidanceTextFromContext = (ctx) => {
-    if(!ctx) return ''
-    const lines = []
-    lines.push('【統合ガイダンス（要約）】')
-    if(ctx.user_difficulty !== undefined && ctx.user_difficulty !== null && ctx.user_difficulty !== ''){
-      lines.push(`- ユーザー指定難易度: ${ctx.user_difficulty} (${difficultyLabel(ctx.user_difficulty)})`)
-    }
-    if(ctx.difficulty_numeric !== undefined && ctx.difficulty_numeric !== null && ctx.difficulty_numeric !== ''){
-      lines.push(`- DB 推定難易度: ${ctx.difficulty_numeric} (${difficultyLabel(ctx.difficulty_numeric)})`)
-    }
-    if(ctx.user_trickiness !== undefined && ctx.user_trickiness !== null && ctx.user_trickiness !== ''){
-      lines.push(`- ユーザー指定ひっかけ度: ${ctx.user_trickiness}`)
-    }
-    if(ctx.trickiness !== undefined && ctx.trickiness !== null && ctx.trickiness !== ''){
-      lines.push(`- DB 推定ひっかけ度: ${ctx.trickiness}`)
-    }
-    // short actionable rule
-    lines.push('\n指示: ユーザー指定があれば優先し、DB 推定は誤答パターンや出題スタイルの参考にしてください。難易度が高い場合は多段階の推論を要求し、ひっかけ度が高い場合は典型的な誤答を誘う選択肢を含めるが、必ず解説で落とし穴を明示する。')
-    return lines.join('\n')
-  }
-
-  const prependGuidanceToPrompt = () => {
-    if(!renderContext) return setStatus('renderContext がありません')
-    const g = buildGuidanceTextFromContext(renderContext)
-    if(!g) return setStatus('ガイダンスを生成できません')
-    setGeneratedPrompt(prev => (g + '\n\n' + (prev || '')))
-    setStatus('生成プロンプトの先頭にガイダンスを挿入しました')
-  }
-
-  const insertChunkToPrompt = (i) => {
-    const c = retrievedChunks[i]
-    if(!c) return setStatus('該当チャンクがありません')
-    const text = (c.text || '').trim()
-    setGeneratedPrompt(prev => (prev ? prev + '\n\n' + text : text))
-    setStatus(`チャンク ${i+1} をプロンプトに追加しました`)
-  }
-
-  const appendRetrievedToPrompt = () => {
-    if(!retrievedChunks || retrievedChunks.length===0) return setStatus('参照候補がありません')
-    const texts = retrievedChunks.map(c=> (c.text||'').trim()).filter(Boolean).join('\n\n---\n\n')
-    if(!texts) return setStatus('挿入可能なテキストがありません')
-    setGeneratedPrompt(prev => (prev ? prev + '\n\n' + texts : texts))
-    setStatus('取得済みの参照をプロンプトに追加しました')
-  }
-
-  // プレースホルダのクリック挿入機能は廃止しました。
-  // テンプレートはサーバ側でレンダリングされ、RAG 注入は下のチェックボックスで制御します。
-
-  // selected template preview
-  const selectedTemplate = templates.find(t => t.id === selectedTemplateId) || null
-
-  const fetchTemplatePreview = async () => {
-    if(!selectedTemplateId) return setStatus('テンプレートを選択してください')
-    setStatus('プレビューを取得しています...')
-    try{
-      const body = { template_id: selectedTemplateId, subject: selectedSubject, difficulty: selectedDifficulty, num_questions: numQuestions, rag_inject: false, difficulty_match_weight: Number(difficultyMatchWeight), trickiness_weight: Number(trickinessWeight), top_k: Number(topK) }
-      if(userDifficultyNumeric !== ''){ const v = Number(userDifficultyNumeric); if(!Number.isNaN(v)) body.user_difficulty = v }
-      if(userTrickinessNumeric !== ''){ const v2 = Number(userTrickinessNumeric); if(!Number.isNaN(v2)) body.user_trickiness = v2 }
-      // include doc_id if present to allow server-side placeholder filling from DB
-      if(docId) body.doc_id = docId
-      const res = await fetch('/api/template_render', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      const j = await res.json()
-      if(!res.ok){ setStatus('プレビュー取得エラー: '+(j.detail||res.statusText)); return }
-      // prefer 'rendered_prompt' but accept older 'rendered'
-      setPreviewRendered(sanitizeTemplateText(j.rendered_prompt || j.rendered || null))
-      setPreviewContext(j.context || null)
-      setStatus('プレビュー更新完了')
-    }catch(e){ setStatus('プレビュー取得失敗: '+e.message) }
-  }
-
-  const sanitizeTemplateText = (text) => {
-    if(!text) return text
-    try{
-      // Remove sections that start with '##項目' or '##指示' (and following lines until next '##' header or end)
-      let out = String(text).replace(/##\s*項目[\s\S]*?(?=(\n##\s)|$)/g, '').replace(/##\s*指示[\s\S]*?(?=(\n##\s)|$)/g, '').trim()
-
-      // If user requested LaTeX output, strip any strict JSON enforcement blocks commonly used in dev templates.
-      if(userOutputFormat === 'latex'){
-        // Remove blocks that begin with '必須出力ルール' up to the following '注意:' or '有効な出力例' or end.
-        out = out.replace(/必須出力ルール[\s\S]*?(?=(\n注意:|\n有効な出力例|$))/g, '')
-        // Also remove explicit '有効な出力例' blocks that show JSON examples
-        out = out.replace(/有効な出力例[\s\S]*?(?=(\n注意:|$))/g, '')
-        // remove leftover multiple blank lines
-        out = out.replace(/\n{3,}/g, '\n\n').trim()
-
-        // Insert a clear LaTeX output instruction so that users see the intended format
-        // ── 最強 LaTeX 出力プロンプト ──
-        // 実際に観測された LLM の出力ミスをすべて網羅し、具体的な NG/OK 例を示す。
-        const latexInstruction = [
-          '',
-          '═══════════════════════════════════════════════',
-          '出力形式: LaTeX（コンパイル保証版・xelatex 対応）',
-          '═══════════════════════════════════════════════',
-          '',
-          '【絶対ルール — 1つでも違反すると PDF 生成が失敗します】',
-          '',
-          '■ 出力形式',
-          '- 生の LaTeX コードだけを返すこと。JSON / Markdown / コードフェンス (```) / 説明文は一切不可。',
-          '- 必ず完全な文書として出力すること（\\documentclass から \\end{document} まで）。断片は不可。',
-          '',
-          '■ 文書構成（この順序を厳守・省略不可）',
-          '  1. preamble（\\documentclass 〜 \\begin{document}）',
-          '  2. \\section*{問題}',
-          '  3. \\begin{enumerate} ... \\end{enumerate}',
-          '  4. \\clearpage',
-          '  5. \\section*{解答・解説}',
-          '  6. \\begin{enumerate} ... \\end{enumerate}',
-          '  7. \\end{document}',
-          '- 上記以外の \\section / \\subsection / 見出し / コメント行(%) を追加しないこと。',
-          '- 問題の \\item 数と解答の \\item 数は必ず一致させること。',
-          '- 解答側の各 \\item には \\textbf{解答}: と \\textbf{解説}: を必ず含めること。',
-          '',
-          '■ preamble テンプレート（このまま使うこと）',
-          '\\documentclass[a4paper,11pt]{article}',
-          '\\usepackage[margin=18mm]{geometry}',
-          '\\usepackage{amsmath,amssymb}',
-          '\\usepackage{enumitem}',
-          '\\usepackage{fontspec}',
-          '\\usepackage{xeCJK}',
-          '\\IfFontExistsTF{Hiragino Sans}{%',
-          '  \\setCJKmainfont{Hiragino Sans}',
-          '  \\setCJKsansfont{Hiragino Sans}',
-          '  \\setCJKmonofont{Hiragino Sans}',
-          '}{\\IfFontExistsTF{Noto Sans CJK JP}{%',
-          '  \\setCJKmainfont{Noto Sans CJK JP}',
-          '  \\setCJKsansfont{Noto Sans CJK JP}',
-          '  \\setCJKmonofont{Noto Sans CJK JP}',
-          '}{}}',
-          '\\setlength{\\parindent}{0pt}',
-          '\\setlist[enumerate]{itemsep=10pt}',
-          '',
-          '■ 数式ルール（最重要 — ここが最大のエラー原因）',
-          '',
-          '  ● インライン数式: 必ず $...$ で囲む',
-          '    NG: f(x)=x^2-1      ← コンパイルエラー (Missing $ inserted)',
-          '    OK: $f(x)=x^2-1$',
-          '',
-          '  ● ディスプレイ数式: 必ず \\[ ... \\] で囲む',
-          '    NG: [  f(x) = x^2 ]         ← 角括弧だけでは数式モードにならない！',
-          '    NG: \\begin{aligned}...      ← aligned を数式モード外で使うとエラー',
-          '    OK: \\[ f(x) = x^2 \\]',
-          '    OK: \\[ \\begin{aligned} ... \\end{aligned} \\]',
-          '',
-          '  ● 複数行の式変形: \\[ \\begin{aligned} ... \\end{aligned} \\] を使う',
-          '    OK例:',
-          '    \\[',
-          '    \\begin{aligned}',
-          '    f(x) &= x^2 - 8x + 7 \\\\',
-          '          &= (x-4)^2 - 9',
-          '    \\end{aligned}',
-          '    \\]',
-          '    - 行末の改行は必ず \\\\ (バックスラッシュ2つ)。\\ 1つだけは絶対NG。',
-          '    - aligned 環境の最終行には \\\\ を付けない（付けると空行エラー）。',
-          '',
-          '  ● 絶対に裸の角括弧 [ ... ] を display math の代わりに使わないこと。',
-          '    角括弧は LaTeX では「オプション引数」を意味するため、数式として解釈されない。',
-          '',
-          '■ 改行ルール',
-          '  - 文中で改行したい場合: \\\\ (バックスラッシュ2つ) または \\par。',
-          '  - \\ 1つだけ + 改行 は「壊れたコマンド」になる。絶対に使わない。',
-          '    NG: そのとき $x=4$。\\',
-          '        \\textbf{解説}  ← \\ と \\textbf が結合して未定義コマンドになる',
-          '    OK: そのとき $x=4$。\\\\',
-          '        \\textbf{解説}',
-          '',
-          '■ 環境・中括弧の対応',
-          '  - すべての \\begin{X} に対応する \\end{X} を書くこと。',
-          '  - 数式環境内の { と } の数は完全に一致させること。',
-          '    NG: \\frac{x+1{2}   ← } が1つ足りない',
-          '    OK: \\frac{x+1}{2}',
-          '',
-          '■ \\left / \\right とデリミタ（超重要）',
-          '  - \\left と \\right の直後には必ずデリミタ記号を置くこと。',
-          '  - 中括弧をデリミタとして使う場合は \\left\\{ ... \\right\\} と書く。',
-          '    NG: \\left{ ... \\right}     ← Missing delimiter エラーになる！',
-          '    OK: \\left\\{ ... \\right\\}',
-          '    OK: \\left( ... \\right)',
-          '  - \\left と \\right は必ずペアにすること。片方だけは不可。',
-          '',
-          '■ フォント指定',
-          '  - 上記 preamble テンプレートのフォント指定をそのまま使うこと。',
-          '  - \\setCJKmainfont 等を直接（\\IfFontExistsTF なしで）書かないこと。',
-          '    フォントが存在しない環境でコンパイルが即死する。',
-          '',
-          '■ その他の禁止事項',
-          '  - TAB文字を使わない（スペースのみ使用）。',
-          '  - \\write18 / \\input / \\include / \\catcode 等の低レベル命令は使用不可。',
-          '  - \\newcommand で独自コマンドを定義しない（テンプレート外の命令を増やさない）。',
-          '',
-          '■ セルフチェックリスト（出力前に必ず確認）',
-          '  □ \\documentclass で始まり \\end{document} で終わっているか？',
-          '  □ すべての数式が $...$ か \\[...\\] か数式環境内にあるか？',
-          '  □ 裸の角括弧 [ ] を display math に使っていないか？',
-          '  □ \\\\ は2つセットか？（\\ 1つだけで終わる行がないか？）',
-          '  □ \\begin と \\end が1対1で対応しているか？',
-          '  □ { と } の数が一致しているか？',
-          '  □ \\setCJKmainfont 等が \\IfFontExistsTF 内にあるか？',
-          '  □ 問題数と解答数が一致しているか？',
-          '',
-          '═══════════════════════════════════════════════',
-          '',
-        ].join('\n')
-        // Prepend the instruction so it's visible at the top of the prompt area
-        // Also inject the user-selected number of problems so the LLM must follow it exactly.
-        const problemCountLine = (typeof numQuestions === 'number' && Number.isFinite(numQuestions) && numQuestions > 0)
-          ? `- 要求: 出力は必ず ${numQuestions} 問とする（問題数を厳密に合わせてください）。`
-          : '- 要求: 出力する問題数が指定されていれば、その数に厳密に従ってください。'
-        out = problemCountLine + '\n' + latexInstruction + out
-      }
-
-      return out
-    }catch(e){ return text }
-  }
-
-  // デバッグ用: API の生レスポンスを新しいウィンドウに表示する
-  const showRawApiResponse = async () => {
-    if(!docId) return setStatus('doc_id がありません')
-    // 同期的にウィンドウを開く
-    const w = window.open('', '_blank', 'width=700,height=500')
-    if(!w){ setStatus('ポップアップがブロックされています'); return }
-  try{ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>生 API レスポンス</title></head><body><pre>読み込み中...</pre></body></html>'); w.document.close() }catch(e){}
-    setStatus('API を取得中...')
-    try{
-      const res = await fetch(`/api/doc/${docId}/entries`)
-      const j = await res.json()
-      const pretty = JSON.stringify(j, null, 2)
-      try{ w.document.open(); w.document.write(`<pre style="white-space:pre-wrap;">${pretty}</pre>`); w.document.close() }catch(e){ }
-      setStatus('API レスポンスを表示しました')
-    }catch(e){ setStatus('API取得エラー: '+e.message); try{ w.document.open(); w.document.write(`<p>エラー: ${String(e.message)}</p>`); w.document.close() }catch(_){ } }
-  }
-
-  // --- Simple paste-and-generate PDF (user-mode) ---
-  const compileRawLatex = async () => {
-    if(!rawLatex || rawLatex.trim()==='') return setStatus('LaTeX を貼り付けてください')
-    setPdfWorking(true)
-    setStatus('PDF を生成中...')
-    // Open a provisional window synchronously to avoid popup blockers.
-    const win = window.open('', '_blank', 'width=900,height=700')
-    if(!win){
-      setStatus('ポップアップがブロックされています。ブラウザでポップアップを許可してください。')
-    } else {
-      // show an immediate loading message so the user doesn't see a blank page
-      try{
-        win.document.open();
-        win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>PDF を生成中</title></head><body><p>PDF を生成しています。しばらくお待ちください...</p></body></html>');
-        win.document.close();
-      }catch(e){ /* ignore if cross-window write fails */ }
-    }
-    try{
-      const body = { latex: rawLatex, title: (selectedTemplate && selectedTemplate.title) ? selectedTemplate.title : 'Pasted LaTeX', return_url: true }
-      const res = await fetch('/api/generate_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      if(res.ok){
-        const contentType = res.headers.get('content-type') || ''
-        if(contentType.includes('application/json')){
-          const j = await res.json()
-          if(j.pdf_url){
-            // expose URL for manual opening
-            setLastPdfUrl(j.pdf_url)
-            console.log('PDF url returned:', j.pdf_url)
-            // navigate provisional window to the pdf url if allowed
-            try{
-              if(win){
-                win.location.href = j.pdf_url
-                setStatus('PDF を新しいタブで開きました')
-              } else {
-                // if no provisional window (blocked), try to open new tab; may be blocked
-                const n = window.open(j.pdf_url, '_blank')
-                if(n) setStatus('PDF を新しいタブで開きました')
-                else setStatus('PDF を開くポップアップがブロックされました。下のリンクを使って手動で開いてください。')
-              }
-            }catch(e){
-              console.warn('navigation to pdf_url failed', e)
-              // best-effort: try to embed the PDF in the provisional window using an iframe
-              const embedPdfInWin = async () => {
-                if(!win) return
-                try{
-                  // quick check that the PDF URL is accessible
-                  const ok = await fetch(j.pdf_url, { method: 'HEAD' }).catch(()=>null)
-                  let useBlob = false
-                  if(!ok || !(ok.status && ok.status >=200 && ok.status < 400)){
-                    // fallback to blob fetch if HEAD failed
-                    useBlob = true
-                  } else {
-                    const cd = ok.headers.get('content-disposition') || ''
-                    // if server suggests attachment, prefer blob workaround to force preview
-                    if(cd.toLowerCase().includes('attachment')){
-                      useBlob = true
-                    }
-                  }
-
-                  let src = j.pdf_url
-                  if(useBlob){
-                    try{
-                      const bres = await fetch(j.pdf_url).catch(()=>null)
-                      if(bres && bres.ok){
-                        const blob = await bres.blob()
-                        src = URL.createObjectURL(blob)
-                      } else {
-                        // leave src as original URL
-                      }
-                    }catch(err){
-                      // ignore, fall back to direct URL
-                    }
-                  }
-
-                  const html = `<!doctype html><html><head><meta charset="utf-8"><title>PDF を生成しました</title><style>body,html{height:100%;margin:0}iframe{width:100%;height:100%;border:none}</style></head><body>` +
-                    `<iframe src="${src}"></iframe>` +
-                    `</body></html>`
-                  win.document.open(); win.document.write(html); win.document.close();
-                  setStatus('PDF が生成されました（ウィンドウ内に表示されない場合は表示リンクをクリックしてください）')
-                }catch(err){
-                  console.warn('failed to embed PDF in window', err)
-                  try{ win.document.open(); win.document.write(`<p>PDF を生成しました。<a href="${j.pdf_url}" target="_blank">こちらを開く</a></p>`); win.document.close() }catch(_){ }
-                  setStatus('PDF を生成しました（手動でリンクを開いてください）')
-                }
-              }
-              embedPdfInWin()
-             }
-           } else {
-            setStatus('PDF の URL が返されませんでした')
-            if(win) { try{ win.close() }catch(_){} }
-          }
-        } else {
-          // fallback: stream pdf blob
-          const blob = await res.blob()
-          const url = URL.createObjectURL(blob)
-          try{
-            if(win){
-              // navigate the provisional window to the blob URL
-              win.location.href = url
-            } else {
-              window.open(url, '_blank')
-            }
-          }catch(e){ window.open(url, '_blank') }
-          setStatus('PDF を新しいタブで開きました')
-        }
-      } else {
-        // try to parse JSON error (includes stdout/stderr on compile failures)
-        let j = null
-        try{ j = await res.json() }catch(_){ }
-        if(j){
-          const detail = j.error || j.detail || JSON.stringify(j)
-          let extra = ''
-          if(j.stdout) extra += '\nSTDOUT:\n' + j.stdout
-          if(j.stderr) extra += '\nSTDERR:\n' + j.stderr
-          setStatus('PDF 生成失敗: ' + detail)
-          // open a debug window with full info
-          const w = win || window.open('', '_blank', 'width=900,height=600')
-          if(w){
-            try{ w.document.open(); w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>PDF 生成エラー</title></head><body><h3>PDF 生成失敗</h3><pre>'+ (detail + extra).replace(/</g,'&lt;') +'</pre></body></html>'); w.document.close() }catch(e){}
-          }
-        } else {
-          setStatus('PDF 生成に失敗しました: ' + res.statusText)
-        }
-      }
-    }catch(e){ setStatus('PDF 生成エラー: '+e.message) }
-    setPdfWorking(false)
-  }
-
-  const fetchFullTextById = async (id) => {
-    if (!id) return
-    setStatus('全文取得中...')
+  const generatePdf = async () => {
+    if (!llmOutput.trim()) return notify('LaTeXコードを貼り付けてください', 'error')
+    setLoading(true); setLoadingMsg('問題PDFを生成中...')
     try {
-      const res = await fetch(`/api/doc/${id}`)
-      if (!res.ok) { setStatus('全文取得失敗'); return }
-      const j = await res.json()
-      // 保存して UI に表示できるようにする
-      setFullText(j.text || '')
-      setStatus('全文取得完了')
-    } catch (e) { setStatus('全文取得中にエラー: '+e.message) }
-  }
-
-  const onUploadPastedOutput = async () => {
-    if(!llmOutput) return setStatus('まず LLM の出力を貼り付けてください')
-    setStatus('アップロード中...')
-    try{
-      // Always send as `latex` so the server can apply its LaTeX->plain_text fallback
-      // and we avoid client-side gating that caused upload failures.
-      const body = { latex: llmOutput }
-      const res = await fetch('/api/upload_json', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      const j = await res.json()
-      if(!res.ok){ setStatus('アップロード失敗: '+(j.detail||res.statusText)); return }
-      setDocId(j.doc_id)
-      setStatus('アップロード成功: doc_id=' + j.doc_id + ' chunks=' + j.chunks)
-      if(j.doc_id){
-        await fetchFullTextById(j.doc_id)
-        // 自動で DB 挿入パイプラインを実行する（チャンクがある場合のみ）
-        if(j.chunks && j.chunks > 0){
-          setStatus('チャンクあり、自動でパイプラインを実行します...')
-          await runPipeline()
-        }else{
-          setStatus('チャンクがありません。LaTeX→plain 変換結果を確認してください。')
+      // まず構造化マーカー形式としてパース試行
+      const subject = templateMeta?.subject || ''
+      const parseR = await fetch('/api/practice/parse', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_text: llmOutput, subject, difficulty: '応用' })
+      })
+      if (parseR.ok) {
+        const parsed = await parseR.json()
+        if (parsed.latex_problems && parsed.latex_answers) {
+          // 問題のみPDFを生成
+          const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: parsed.latex_problems, title: '練習問題', return_url: true }) })
+          if (r.ok) {
+            const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+            setPdfUrl(url)
+            setAnswerLatex(parsed.latex_answers)
+            setAnswerPdfUrl('')
+            setFullLatex(parsed.latex || '')
+            setFullPdfUrl('')
+            setParsedProblems(parsed.problems || [])
+            setSubScores({})
+            setStep(4)
+            saveToHistory({ templateName: selectedTemplate?.name || form.templateId, numQuestions: form.numQuestions, latexPreset: form.latexPreset, pdfUrl: url })
+            setHistory(loadHistory())
+            const session = { templateName: selectedTemplate?.name || form.templateId, subject, numQuestions: form.numQuestions, duration: sessionTime }
+            const xpG = session.numQuestions * 10 + Math.floor(session.duration / 60) * 5
+            setSessionXpGain(xpG); setStats(addSessionToStats(stats, session)); notify(`+${xpG} XP 獲得！`, 'success')
+          } else { const d = await r.json().catch(() => null); notify('PDF生成失敗: ' + (d?.detail || d?.error || ''), 'error') }
+          setLoading(false); return
         }
       }
-    }catch(e){ setStatus('アップロード中にエラー: '+e.message) }
+      // パース失敗時: 従来通り生LaTeXを直接コンパイル
+      const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: llmOutput, title: 'Generated Problem', return_url: true, latex_preset: form.latexPreset || 'exam' }) })
+      if (r.ok) {
+        const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+        setPdfUrl(url); setAnswerLatex(''); setAnswerPdfUrl(''); setFullLatex(''); setFullPdfUrl(''); setStep(4)
+        saveToHistory({ templateName: selectedTemplate?.name || form.templateId, numQuestions: form.numQuestions, latexPreset: form.latexPreset, pdfUrl: url })
+        setHistory(loadHistory())
+        const session = { templateName: selectedTemplate?.name || form.templateId, subject: templateMeta?.subject || '', numQuestions: form.numQuestions, duration: sessionTime }
+        const xpG = session.numQuestions * 10 + Math.floor(session.duration / 60) * 5
+        setSessionXpGain(xpG); setStats(addSessionToStats(stats, session)); notify(`+${xpG} XP 獲得！`, 'success')
+      } else { const d = await r.json().catch(() => null); notify('PDF生成失敗: ' + (d?.detail || d?.error || ''), 'error') }
+    } catch { notify('PDF生成エラー', 'error') }
+    setLoading(false)
   }
 
-  const submitTuningLog = async () => {
-    if(!llmOutput) return setStatus('まず LLM の出力を貼り付けてください')
-    // include generatedPrompt if present, otherwise use full tuning prompt or preview
-    const promptToSend = generatedPrompt || tuningPromptFull || previewRendered || ''
-    setStatus('チューニングログを送信しています...')
-    try{
-      // build metadata: include doc/template/subject plus any user-provided custom fields
-      const metadata = {
-        doc_id: docId || null,
-        template_id: selectedTemplateId || null,
-        subject: selectedSubject || null,
-      }
-      if(Array.isArray(customFields)){
-        customFields.forEach(cf => {
-          if(cf && cf.key){
-            // avoid overwriting core keys unintentionally
-            if(['doc_id','template_id','subject'].includes(cf.key)) return
-            metadata[cf.key] = cf.value
-          }
-        })
-      }
-
-      const body = {
-        prompt: promptToSend,
-        model_output: llmOutput,
-        expected_output: expectedOutput || undefined,
-        score: tuningScore !== '' ? Number(tuningScore) : undefined,
-        notes: tuningNotes || undefined,
-        metadata
-      }
-      const res = await fetch('/api/tuning/log', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      const j = await res.json()
-      if(!res.ok){ setStatus('送信失敗: '+(j.detail||res.statusText)); return }
-      setStatus('チューニングログを保存しました id=' + (j.id||j))
-      // optionally clear expected/score/notes but keep llmOutput for further edits
-      setExpectedOutput('')
-      setTuningScore('')
-      setTuningNotes('')
-    }catch(e){ setStatus('送信中にエラー: '+e.message) }
+  const generateAnswerPdf = async () => {
+    if (!answerLatex) return
+    setAnswerLoading(true)
+    try {
+      const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: answerLatex, title: '解答・解説', return_url: true }) })
+      if (r.ok) {
+        const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+        setAnswerPdfUrl(url)
+      } else { const d = await r.json().catch(() => null); notify('解答PDF生成失敗: ' + (d?.detail || ''), 'error') }
+    } catch { notify('解答PDF生成エラー', 'error') }
+    setAnswerLoading(false)
   }
 
-  const fetchTuningPrompt = async () => {
-    // Always fetch full tuning prompt. If no generatedPrompt exists but a template is selected,
-    // render the template first so users can just click this button.
-    let question = generatedPrompt || previewRendered || ''
-    if(!question && selectedTemplateId){
-      const rendered = await generatePromptFromTemplate()
-      question = rendered || previewRendered || ''
-    }
-    if(!question) return setStatus('まず生成プロンプトまたはテンプレートを生成してください')
-    setStatus('チューニング用（フル）プロンプトを取得しています...')
-    try{
-  // build metadata to send (include custom fields)
-  const metadataForRequest = {
-    doc_id: docId || null,
-    template_id: selectedTemplateId || null,
-    subject: selectedSubject || null,
-  }
-  if(Array.isArray(customFields)){
-    customFields.forEach(cf => { if(cf && cf.key){ if(['doc_id','template_id','subject'].includes(cf.key)) return; metadataForRequest[cf.key] = cf.value } })
+  const generateFullPdf = async () => {
+    if (!fullLatex) return
+    setFullPdfLoading(true)
+    try {
+      const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: fullLatex, title: '練習問題（問題＋解答）', return_url: true }) })
+      if (r.ok) {
+        const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+        setFullPdfUrl(url)
+      } else { const d = await r.json().catch(() => null); notify('PDF生成失敗: ' + (d?.detail || ''), 'error') }
+    } catch { notify('PDF生成エラー', 'error') }
+    setFullPdfLoading(false)
   }
 
-  // target difficulty/trickiness preference: prefer explicit user numeric hints then renderContext estimates
-  const maybeUserDiff = (userDifficultyNumeric !== '') ? Number(userDifficultyNumeric) : null
-  const maybeUserTrick = (userTrickinessNumeric !== '') ? Number(userTrickinessNumeric) : null
-  const ctxDiff = renderContext && (renderContext.difficulty_numeric !== undefined) ? Number(renderContext.difficulty_numeric) : null
-  const ctxTrick = renderContext && (renderContext.trickiness_numeric !== undefined) ? Number(renderContext.trickiness_numeric) : null
+  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setParsedProblems([]); setSubScores({}); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false); setShowScoring(false) }
+  const startPractice = () => { resetWizard(); setScreen('practice') }
 
-  const body = { 
-    question, 
-    top_k: Number(topK), 
-    use_vector: true, 
-    tuning_mode: true, 
-    tuning_profile: tuningProfile, 
-    tuning_include_refs: tuningIncludeRefs, 
-    expected_output: expectedOutput || undefined,
-    metadata: metadataForRequest,
-    difficulty_match_weight: Number(difficultyMatchWeight),
-    trickiness_weight: Number(trickinessWeight),
-  }
-  if(maybeUserDiff !== null && !Number.isNaN(maybeUserDiff)) body.target_difficulty = maybeUserDiff
-  else if(ctxDiff !== null && !Number.isNaN(ctxDiff)) body.target_difficulty = ctxDiff
-  if(maybeUserTrick !== null && !Number.isNaN(maybeUserTrick)) body.target_trickiness = maybeUserTrick
-  else if(ctxTrick !== null && !Number.isNaN(ctxTrick)) body.target_trickiness = ctxTrick
-  if(docId) body.doc_id = docId
-      const res = await fetch('/api/assemble_prompt', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      const j = await res.json()
-      if(!res.ok){ setStatus('チューニングプロンプト取得失敗: '+(j.detail||res.statusText)); return }
-      const p = j.prompt_tuning || j.prompt_tuning_summarized || ''
-      setTuningPromptFull(p)
-      setStatus('チューニング用（フル）プロンプトを取得しました')
-    }catch(e){ setStatus('チューニングプロンプト取得中にエラー: '+e.message) }
-  }
-
-  // Auto-refresh tuning prompt when relevant inputs change (so changing profile is reflected immediately).
-  // Debounced short delay to avoid spamming the backend when the user is still interacting.
-  useEffect(() => {
-    // Only auto-refresh when there's an existing generated prompt or a preview to base the tuning prompt on
-    if(!(generatedPrompt || previewRendered)) return
-    let mounted = true
-    const id = setTimeout(() => {
-      if(!mounted) return
-      try{ fetchTuningPrompt() }catch(e){ /* ignore */ }
-    }, 350)
-    return () => { mounted = false; clearTimeout(id) }
-  }, [tuningProfile, tuningIncludeRefs, expectedOutput, difficultyMatchWeight, trickinessWeight, userDifficultyNumeric, userTrickinessNumeric, JSON.stringify(customFields || [])])
-
-  // Developer helper removed: use the tuning-section "チューニングプロンプト生成（フル）" button instead.
-
-  const fetchDocEntries = async ()=>{
-    if(!docId) return setStatus('doc_id がありません')
-    setStatus('DB を取得中...')
-    try{
-      const res = await fetch(`/api/doc/${docId}/entries`)
-      const j = await res.json()
-      if(!res.ok){ setStatus('DB取得エラー: '+(j.detail||j.error||res.statusText)); return [] }
-      setDocEntries(j.rows || [])
-      setStatus('DB取得完了')
-      return j.rows || []
-    }catch(e){ setStatus('DB取得中にエラー: '+e.message); return [] }
-  }
-
-  const runPipeline = async () => {
-    if(!docId) return setStatus('doc_id がありません')
-    setStatus('パイプラインを起動しています...')
-    try{
-      const res = await fetch(`/api/doc/${docId}/pipeline`, { method: 'POST' })
-      const j = await res.json()
-      if(!res.ok){ setStatus('パイプラインエラー: '+(j.detail||j.error||res.statusText)); console.error('pipeline start error', j); return }
-
-      // If server performed synchronous insertion it may return completed/inserted info directly
-      if(j.status === 'completed' || j.inserted || (j.ids && j.ids.length>0)){
-        const insertedCount = j.inserted || (j.ids && j.ids.length) || 0
-        setStatus(`同期挿入完了: ${insertedCount} 行`)
-        await fetchDocEntries()
-        return
-      }
-
-      // Otherwise the server queued a background job. Try to extract job id and poll it.
-      const job_id = j.job_id || j.jobId || j.id || (j.job && j.job.id)
-      if(!job_id){
-        setStatus('パイプライン開始（ジョブIDなし）。サーバ応答をコンソールで確認してください。')
-        console.log('pipeline response', j)
-        // still try to fetch entries once
-        await fetchDocEntries()
-        return
-      }
-
-      setStatus('パイプラインがキューされました: job_id=' + job_id)
-
-      // Poll the admin job endpoint for detailed status (longer timeout here)
-      for(let i=0;i<30;i++){
-        await new Promise(r=>setTimeout(r, 1000))
-        try{
-          const pj = await fetch(`/api/pipeline/${job_id}`)
-          const pjjson = await pj.json()
-          if(pj.ok && pjjson.job){
-            const st = pjjson.job.status
-            if(st === 'completed'){
-              setStatus('バックグラウンドジョブ完了')
-              await fetchDocEntries()
-              return
-            }
-            if(st === 'failed'){
-              setStatus('ジョブ失敗: ' + (pjjson.job.message || pjjson.job.result || '詳細はコンソール'))
-              console.error('pipeline job failed', pjjson)
-              return
-            }
-            // update UI with intermediate status
-            setStatus(`ジョブ状態: ${st} (経過 ${i+1}s)`) 
-            continue
-          }
-
-          // Fallback: check doc status for inserted_ids if admin job endpoint not available
-          const sres = await fetch(`/api/doc/${docId}/status`)
-          const sj = await sres.json()
-          if(sres.ok && sj.inserted_ids && sj.inserted_ids.length>0){
-            setStatus(`挿入完了: ${sj.inserted_ids.length} 行`)
-            await fetchDocEntries()
-            return
-          }
-        }catch(e){
-          console.warn('job poll error', e)
-        }
-      }
-
-      // timed out polling
-      await fetchDocEntries()
-      setStatus('パイプライン完了を待機しました（タイムアウト） - DB を確認してください')
-
-    }catch(e){ setStatus('パイプライン起動中にエラー: '+e.message); console.error(e) }
-  }
-
-  const openDocEntriesWindow = async ()=>{
-    if(!docId) return setStatus('doc_id がありません')
-
-    // 同期的にウィンドウを開く（非同期 fetch の前に）
-    const w = window.open('', '_blank', 'width=900,height=700')
-    if(!w){ setStatus('ポップアップがブロックされています'); return }
-
-  try{ w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>DB エントリ</title></head><body><p>読み込み中...</p></body></html>'); w.document.close() }catch(e){}
-
-    setStatus('DB を取得中...')
-    try{
-      // 常に最新を取得
-      const res = await fetch(`/api/doc/${docId}/entries`)
-      const j = await res.json()
-      if(!res.ok){
-        setStatus('DB取得エラー: '+(j.detail||j.error||res.statusText))
-        try{ w.document.open(); w.document.write(`<p>DB取得エラー: ${String(j.detail||j.error||res.statusText||'Unknown')}</p>`); w.document.close() }catch(_){ }
-        return
-      }
-
-      const rows = j.rows || []
-      setDocEntries(rows)
-
-      const escapeHtml = (unsafe) => {
-        if(unsafe === null || unsafe === undefined) return ''
-        return String(unsafe).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c] })
-      }
-
-      let rowsHtml = ''
-      if(rows.length === 0){
-        rowsHtml = `<tr><td colspan="7" style="text-align:center;color:#666">(エントリなし)</td></tr>`
-      }else{
-        rowsHtml = rows.map(r=> `<tr><td>${escapeHtml(r.id)}</td><td>${escapeHtml(r.source)}</td><td>${escapeHtml(r.page)}</td><td><pre style="white-space:pre-wrap;max-width:600px">${escapeHtml(r.snippet||'')}</pre></td><td><pre style="white-space:pre-wrap;max-width:600px">${escapeHtml(r.solution||'')}</pre></td><td>${escapeHtml(r.difficulty||'')}</td><td>${escapeHtml(r.trickiness||'')}</td></tr>`).join('')
-      }
-
-      const html = `<!doctype html><html><head><meta charset="utf-8"><title>DB エントリ</title><style>body{font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;padding:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:6px;text-align:left}pre{margin:0}</style></head><body><h2>doc ${escapeHtml(docId)} のエントリ</h2><table><thead><tr><th>ID</th><th>ソース</th><th>ページ</th><th>問題</th><th>解答</th><th>難易度</th><th>ひっかけ度</th></tr></thead><tbody>${rowsHtml}</tbody></table></body></html>`
-
-      try{ w.document.open(); w.document.write(html); w.document.close() }catch(e){ }
-      setStatus('新しいウィンドウで表示しました')
-    }catch(e){
-      setStatus('DB取得中にエラー: '+e.message)
-      try{ w.document.open(); w.document.write(`<p>エラー: ${String(e.message)}</p>`); w.document.close() }catch(_){ }
-    }
-  }
-
-  // Custom fields helpers for supervised tuning labels
-  const addCustomField = () => {
-    setCustomFields(prev => ([...(prev || []), { key: '', value: '' }]))
-  }
-  const updateCustomField = (idx, field, val) => {
-    setCustomFields(prev => {
-      const a = (prev || []).slice()
-      a[idx] = { ...(a[idx] || {}), [field]: val }
-      return a
-    })
-  }
-  const removeCustomField = (idx) => {
-    setCustomFields(prev => (prev || []).filter((_, i) => i !== idx))
-  }
-
-  const [evalCases, setEvalCases] = useState([])
-  const [evalAdminToken, setEvalAdminToken] = useState('')
-  const [evalLoading, setEvalLoading] = useState(false)
-
-  const fetchEvalCases = async () => {
-    setEvalLoading(true)
-    try{
-      const res = await fetch('/api/eval_candidates')
-      const j = await res.json()
-      if(!res.ok){ setStatus('評価候補取得失敗: '+(j.detail||res.statusText)); setEvalLoading(false); return }
-      setEvalCases(j.cases || [])
-      setStatus('評価候補を読み込みました (' + (j.cases? j.cases.length : 0) + ')')
-    }catch(e){ setStatus('評価候補取得エラー: '+e.message) }
-    setEvalLoading(false)
-  }
-
-  const toggleRelevant = (caseIdx, candidateId) => {
-    setEvalCases(prev => {
-      const copy = JSON.parse(JSON.stringify(prev || []))
-      const c = copy[caseIdx]
-      if(!c) return prev
-      c.relevant_ids = c.relevant_ids || []
-      const i = c.relevant_ids.indexOf(candidateId)
-      if(i >= 0) c.relevant_ids.splice(i, 1)
-      else c.relevant_ids.push(candidateId)
-      return copy
-    })
-  }
-
-  const autofillRelevant = (caseIdx) => {
-    setEvalCases(prev => {
-      const copy = JSON.parse(JSON.stringify(prev || []))
-      const c = copy[caseIdx]
-      if(!c) return prev
-      c.relevant_ids = [c.source_id]
-      return copy
-    })
-  }
-
-  const clearRelevant = (caseIdx) => {
-    setEvalCases(prev => {
-      const copy = JSON.parse(JSON.stringify(prev || []))
-      const c = copy[caseIdx]
-      if(!c) return prev
-      c.relevant_ids = []
-      return copy
-    })
-  }
-
-  const saveEvalCases = async () => {
-    setEvalLoading(true)
-    try{
-      const res = await fetch('/api/eval_candidates', { method: 'POST', headers: {'Content-Type':'application/json', 'x-admin-token': evalAdminToken }, body: JSON.stringify(evalCases) })
-      const j = await res.json()
-      if(!res.ok){ setStatus('保存失敗: '+(j.detail||res.statusText)); setEvalLoading(false); return }
-      setStatus('評価候補を保存しました (' + (j.count||0) + ')')
-    }catch(e){ setStatus('保存エラー: '+e.message) }
-    setEvalLoading(false)
-  }
-
-  const generateEvalCandidates = async (n=200, topk=10) => {
-    setEvalLoading(true)
-    try{
-      const res = await fetch(`/api/eval_candidates/generate?n=${n}&topk=${topk}&autofill=1`, { method: 'POST', headers: {'x-admin-token': evalAdminToken || ''} })
-      const j = await res.json()
-      if(!res.ok){ setStatus('生成失敗: '+(j.detail||res.statusText)); setEvalLoading(false); return }
-      setStatus('生成完了: cases=' + (j.cases||0))
-      await fetchEvalCases()
-    }catch(e){ setStatus('生成エラー: '+e.message) }
-    setEvalLoading(false)
-  }
-
-  const [llmRunResult, setLlmRunResult] = useState(null)
-  const [autoInsertOnRun, setAutoInsertOnRun] = useState(false)
-
-  const runLLM = async () => {
-    const p = tuningPromptFull || generatedPrompt || previewRendered || ''
-    if(!p) return setStatus('まずプロンプトを生成してください')
-    setStatus('LLM を実行して検証しています...')
-    try{
-      const body = { prompt: p, model_name: null, auto_insert: autoInsertOnRun }
-      const res = await fetch('/api/tuning/run', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      const j = await res.json()
-      if(!res.ok){ setStatus('LLM 実行失敗: '+(j.detail||res.statusText)); return }
-      setLlmRunResult(j)
-      setStatus('LLM 実行完了')
-    }catch(e){ setStatus('LLM 実行中にエラー: '+e.message) }
-  }
-
-  const generatePdfFromOutput = async () => {
-    // prefer generatedItems (array of {latex,...}), else use llmOutput as single latex item
-    let items = []
-    if(Array.isArray(generatedItems) && generatedItems.length){
-      // ensure each has latex
-      items = generatedItems.map(it => ({ latex: it.latex || it.stem || '', stem: it.stem || undefined, explanation: it.explanation || undefined }))
-    } else if(llmOutput && llmOutput.trim()){
-      items = [{ latex: llmOutput }]
-    } else {
-      return setStatus('PDF生成する LaTeX 出力がありません')
-    }
-    setStatus('PDF を生成中...')
-    try{
-      const body = { generated: items, title: 'Generated Problems' }
-      const res = await fetch('/api/generate_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-      if(!res.ok){
-        const j = await res.json().catch(()=>null)
-        const err = j && (j.error || j.detail) ? (j.error || j.detail) : res.statusText
-        setStatus('PDF 生成失敗: '+err)
-        return
-      }
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      // open in new tab/window
-      const w = window.open(url, '_blank')
-      if(!w){
-        // fallback: create iframe
-        const iframe = document.createElement('iframe')
-        iframe.style.width = '100%'
-        iframe.style.height = '100vh'
-        iframe.src = url
-        document.body.appendChild(iframe)
-      }
-      setStatus('PDF を表示しました')
-      // revoke object URL after some time
-      setTimeout(()=> URL.revokeObjectURL(url), 60000)
-    }catch(e){
-      setStatus('PDF 生成エラー: '+e.message)
-    }
-  }
+  const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
+  const selectedTemplate = templates.find(t => t.id === form.templateId)
+  const templateMeta = selectedTemplate?.metadata || {}
+  const STEPS = [{ n: 1, label: 'パターン選択' }, { n: 2, label: '問題設定' }, { n: 3, label: 'AI依頼' }, { n: 4, label: '完了' }]
 
   return (
-    <div className="app">
-      <h1>RAG テンプレート & DB 確認</h1>
-      {/* ステータス表示 */}
-      <div style={{marginBottom:10, color:'#0a58ca'}}>{status}</div>
+    <div className="app-shell">
+      {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+      {loading && <LoadingOverlay text={loadingMsg} />}
+      {showOnboarding && <OnboardingScreen onComplete={completeOnboarding} />}
+      <OfflineBanner />
 
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8}}>
-        <div style={{display:'flex', gap:8}}>
-          <button onClick={()=>setMode('user')} style={{padding:'6px 10px', background: mode==='user' ? '#0a58ca' : '#f0f0f0', color: mode==='user' ? '#fff' : '#000', borderRadius:6, border:'none'}}>ユーザモード</button>
-          <button onClick={()=>setMode('dev')} style={{padding:'6px 10px', background: mode==='dev' ? '#0a58ca' : '#f0f0f0', color: mode==='dev' ? '#fff' : '#000', borderRadius:6, border:'none'}}>開発モード</button>
+      {/* ── HEADER (desktop) ── */}
+      <header className="header desktop-only">
+        <div className="header-inner">
+          <div className="logo" style={{cursor:'pointer'}} onClick={() => setScreen('home')}>
+            <div className="logo-mark">
+              <svg width="24" height="24" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round">
+                <circle cx="50" cy="50" r="7" fill="currentColor" stroke="none"/><ellipse cx="50" cy="50" rx="42" ry="16"/><ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(-60 50 50)"/>
+              </svg>
+            </div>
+            <div><div className="logo-text">物理AI</div><div className="logo-sub">受験生のための類題生成</div></div>
+          </div>
+          <div className="header-actions">
+            <div className="header-xp-badge"><span>{level.emoji}</span><span className="header-xp-rank">{level.rank}</span><span className="header-xp-val">{stats.xp} XP</span></div>
+            <button className="btn btn-ghost" onClick={() => { setScreen('history'); setHistory(loadHistory()) }} title="履歴"><Ico.Clock /></button>
+            <button className="btn btn-ghost" onClick={() => setScreen('settings')} title="設定"><Ico.Settings /></button>
+          </div>
         </div>
-        <div style={{background:'#f0f8ff', padding:12, borderRadius:6}}>
-          <strong>{mode === 'user' ? 'ワークフロー（簡易）' : '開発ワークフロー'}</strong>
+      </header>
+
+      {/* ── MOBILE TOP BAR ── */}
+      <div className="mobile-top-bar mobile-only">
+        <div className="mobile-top-inner">
+          {screen === 'home' ? (
+            <div className="mobile-top-home"><span className="mobile-top-logo">⚛️ 物理AI</span><div className="mobile-top-xp"><span>{level.emoji}</span><span>{stats.xp} XP</span></div></div>
+          ) : (
+            <div className="mobile-top-title">{screen === 'history' ? '生成履歴' : screen === 'settings' ? '設定' : screen === 'legal' ? (legalTab === 'terms' ? '利用規約' : 'プライバシーポリシー') : screen === 'practice' ? (STEPS[step - 1]?.label || '演習') : ''}</div>
+          )}
+          {screen === 'practice' && (
+            <>
+              <div className="mobile-progress-line"><div className="mobile-progress-fill" style={{width: `${(step / STEPS.length) * 100}%`}} /></div>
+              {step <= 3 && <div className="mobile-timer"><Ico.Clock /> {formatTimer(sessionTime)}</div>}
+            </>
+          )}
         </div>
       </div>
-      <div style={{marginBottom:12}}>
-        {mode === 'user' ? (
-          <ol style={{margin: '8px 0 0 18px'}}>
-            <li>テンプレートを選択し、科目・難易度を指定してプロンプトを生成</li>
-            <li>外部の ChatGPT 等に貼り付けて実行、出力を本画面に貼り付ける</li>
-            <li>出力を <em>貼り付けた出力をアップロード</em> で教材として登録（開発モードは別画面）</li>
-          </ol>
-        ) : (
-          <ol style={{margin: '8px 0 0 18px'}}>
-            <li>テンプレートレンダリング、RAG、チューニングログの管理など開発向けツールを表示します</li>
-            <li>DB の詳細確認やパイプライン起動、raw API 表示などは開発モード内で操作してください</li>
-          </ol>
+
+      <div className="main-content">
+
+        {/* ══ HOME ダッシュボード ══ */}
+        {screen === 'home' && (
+          <div className="home-screen anim-fade-up">
+            <div className="home-hero physics-home-hero">
+              <div className="home-hero-bg" />
+              <div className="home-hero-content">
+                <div className="home-hero-badge">⚛️ 物理特化AI</div>
+                <div className="home-hero-greeting">{new Date().getHours() < 12 ? 'おはよう' : new Date().getHours() < 18 ? 'こんにちは' : 'おつかれさま'}、受験生。</div>
+                <div className="home-hero-motivation">{getTodayMotivation()}</div>
+                <button className="btn btn-hero" onClick={startPractice}><Ico.Play /> 今すぐ物理を解く</button>
+              </div>
+            </div>
+
+            <div className="physics-tagline">
+              <div className="physics-tagline-title">🎯 物理で差をつけろ。</div>
+              <div className="physics-tagline-desc">力学・電磁気・波動・熱力学 — AIが君だけの類題を無限に生成。<br/>1日5分のスキマ演習で偏差値を上げる。</div>
+              <div className="physics-topic-pills"><span>⚡ 力学</span><span>🧲 電磁気</span><span>🌊 波動</span><span>🔥 熱力学</span><span>🔬 原子</span></div>
+            </div>
+
+            <div className="streak-card">
+              <div className="streak-main"><div className="streak-fire">🔥</div><div className="streak-info"><div className="streak-count">{stats.currentStreak}</div><div className="streak-label">日連続</div></div></div>
+              <div className="streak-sub">{stats.currentStreak === 0 ? '今日から連続記録を始めよう！' : stats.currentStreak >= 7 ? `${stats.currentStreak}日連続！周りと差がついてる。` : stats.currentStreak >= 3 ? `${stats.currentStreak}日連続！この調子。` : '連続記録スタート！明日もやれば2日目。'}</div>
+              {stats.maxStreak > stats.currentStreak && <div className="streak-max">最高記録: {stats.maxStreak}日連続</div>}
+            </div>
+
+            <div className="quick-stats">
+              <div className="quick-stat-card"><div className="quick-stat-icon"><Ico.BookOpen /></div><div className="quick-stat-value">{stats.totalProblems}</div><div className="quick-stat-label">総演習問題</div></div>
+              <div className="quick-stat-card"><div className="quick-stat-icon"><Ico.Clock /></div><div className="quick-stat-value">{formatTime(stats.totalTimeSeconds)}</div><div className="quick-stat-label">総学習時間</div></div>
+              <div className="quick-stat-card"><div className="quick-stat-icon"><Ico.Target /></div><div className="quick-stat-value">{stats.totalSessions}</div><div className="quick-stat-label">セッション</div></div>
+              {(stats.totalPoints || 0) > 0 && (
+                <div className="quick-stat-card"><div className="quick-stat-icon">📊</div><div className="quick-stat-value">{Math.round(((stats.totalEarned || 0) / stats.totalPoints) * 100)}%</div><div className="quick-stat-label">平均正答率</div></div>
+              )}
+            </div>
+
+            <div className="level-card">
+              <div className="level-header"><div className="level-info"><span className="level-emoji">{level.emoji}</span><span className="level-rank-badge">Rank {level.rank}</span><span className="level-name">{level.name}</span></div><div className="level-xp">{stats.xp} XP</div></div>
+              <div className="level-progress-bar"><div className="level-progress-fill" style={{width: `${level.progress}%`}} /></div>
+              <div className="level-progress-label">{level.progress < 100 ? `次のランクまで あと ${level.nextXp - stats.xp} XP` : '最高ランク到達！'}</div>
+            </div>
+
+            {/* 学習履歴・採点履歴へのアクセス */}
+            <div className="home-quick-links">
+              <button className="home-quick-link-btn" onClick={() => { setScreen('history'); setHistory(loadHistory()) }}>
+                <span className="home-quick-link-icon">🕐</span>
+                <span className="home-quick-link-text">生成履歴を見る</span>
+                <span className="home-quick-link-arrow">→</span>
+              </button>
+              {(stats.scoreHistory || []).length > 0 && (
+                <button className="home-quick-link-btn" onClick={() => { setScreen('history'); setHistory(loadHistory()) }}>
+                  <span className="home-quick-link-icon">📊</span>
+                  <span className="home-quick-link-text">採点履歴を確認</span>
+                  <span className="home-quick-link-arrow">→</span>
+                </button>
+              )}
+            </div>
+
+            <div className="section-card"><div className="section-card-header"><Ico.BarChart /><span>今週の演習量</span></div><WeeklyActivity weeklyActivity={stats.weeklyActivity} /></div>
+
+            {Object.keys(stats.subjectBreakdown).length > 0 && (
+              <div className="section-card">
+                <div className="section-card-header"><Ico.Target /><span>科目別演習</span></div>
+                <div className="subject-bars">
+                  {Object.entries(stats.subjectBreakdown).sort(([,a],[,b]) => b - a).map(([subj, count]) => {
+                    const mx = Math.max(...Object.values(stats.subjectBreakdown))
+                    return <div key={subj} className="subject-bar-row"><div className="subject-bar-label">{subj}</div><div className="subject-bar-track"><div className="subject-bar-fill" style={{width: `${(count / mx) * 100}%`}} /></div><div className="subject-bar-count">{count}問</div></div>
+                  })}
+                </div>
+              </div>
+            )}
+
+            {(stats.scoreHistory || []).length > 0 && (
+              <div className="section-card">
+                <div className="section-card-header">📊<span>採点履歴</span></div>
+                <div className="score-history-list">
+                  {(stats.scoreHistory || []).slice(-10).reverse().map((s, i) => (
+                    <div key={i} className="score-history-item">
+                      <div className="score-history-info">
+                        <div className="score-history-subj">{s.subject || '演習'}</div>
+                        <div className="score-history-date">{new Date(s.date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}</div>
+                      </div>
+                      <div className={`score-history-bar-track`}><div className={`score-history-bar-fill ${s.pct >= 80 ? 'excellent' : s.pct >= 50 ? 'good' : 'needs-work'}`} style={{width: `${s.pct}%`}} /></div>
+                      <div className={`score-history-pct ${s.pct >= 80 ? 'excellent' : s.pct >= 50 ? 'good' : 'needs-work'}`}>{s.earnedPoints}/{s.maxPoints} ({s.pct}%)</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="section-card shareable-section">
+              <div className="section-card-header"><Ico.Camera /><span>努力の証明カード</span></div>
+              <p className="shareable-instruction">スクショしてSNSでシェアしよう！</p>
+              <ShareableCard stats={stats} level={level} />
+            </div>
+
+            {stats.sessionLog?.length > 0 && (
+              <div className="section-card">
+                <div className="section-card-header"><Ico.Clock /><span>最近のセッション</span></div>
+                <div className="recent-sessions">
+                  {stats.sessionLog.slice(-5).reverse().map((s, i) => (
+                    <div key={i} className="recent-session-item">
+                      <div className="recent-session-info"><div className="recent-session-name">{s.templateName}</div><div className="recent-session-meta">{s.numQuestions}問 ・ {s.duration ? formatTime(s.duration) : '-'} ・ {new Date(s.date).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' })}</div></div>
+                      <div className="recent-session-xp">+{s.numQuestions * 10 + Math.floor((s.duration||0) / 60) * 5} XP</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="home-cta"><button className="btn btn-primary btn-block btn-lg" onClick={startPractice}><Ico.Zap /> 今すぐ演習する</button><div className="home-cta-sub">1セッション5分〜。スキマ時間で差をつけろ。</div></div>
+          </div>
+        )}
+
+        {/* ══ HISTORY ══ */}
+        {screen === 'history' && (
+          <div className="card anim-fade-up">
+            <div className="card-header"><span className="card-emoji">🕐</span><div className="card-title">生成履歴</div><div className="card-desc">過去に生成したPDFの一覧</div></div>
+            {history.length > 0 ? (
+              <>
+                <div className="history-list">
+                  {history.map(h => (
+                    <div key={h.id} className="history-item">
+                      <div className="history-item-info"><div className="history-item-name">{presetEmoji(h.latexPreset)} {h.templateName}</div><div className="history-item-meta">{h.numQuestions}問 ・ {new Date(h.createdAt).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</div></div>
+                      <div className="history-item-actions">
+                        {h.pdfUrl && <a href={h.pdfUrl} target="_blank" rel="noreferrer" className="btn btn-outline" style={{padding:'6px 12px',fontSize:12}}><Ico.ExternalLink /> 開く</a>}
+                        <button className="btn btn-ghost" style={{padding:'6px 8px',color:'var(--c-danger)'}} onClick={() => { deleteFromHistory(h.id); setHistory(loadHistory()) }}><Ico.Trash /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button className="btn btn-outline btn-block" style={{marginTop: 16}} onClick={() => { if (window.confirm('全ての履歴を削除しますか？')) { clearHistory(); setHistory([]) } }}>履歴をすべて削除</button>
+              </>
+            ) : <div className="base-empty"><div className="base-empty-icon"><Ico.Clock /></div><div>まだ生成履歴がありません</div><div className="field-hint">PDFを生成すると記録されます</div></div>}
+            <div className="mobile-sticky-action"><button className="btn btn-primary btn-block btn-lg" onClick={() => setScreen('home')}><Ico.ArrowLeft /> ホームに戻る</button></div>
+          </div>
+        )}
+
+        {/* ══ SETTINGS ══ */}
+        {screen === 'settings' && (
+          <div className="card anim-fade-up">
+            <div className="card-header"><span className="card-emoji">⚙️</span><div className="card-title">設定</div><div className="card-desc">アプリの動作をカスタマイズ</div></div>
+            <div className="field" style={{marginBottom:20}}><label className="field-label">デフォルト問題数</label><div className="num-questions-selector">{[1,2,3,5,10].map(n => <button key={n} className={`num-btn ${settings.defaultNumQuestions===n?'active':''}`} onClick={() => { const s = { ...settings, defaultNumQuestions: n }; setSettings(s); saveSettings(s) }}>{n}問</button>)}</div></div>
+            <div className="field" style={{marginBottom:20}}><label className="field-label">デフォルト出力形式</label><div className="preset-chips">{latexPresets.map(p => <button key={p.id} className={`preset-chip ${settings.defaultLatexPreset===p.id?'active':''}`} onClick={() => { const s = { ...settings, defaultLatexPreset: p.id }; setSettings(s); saveSettings(s) }}><span className="preset-chip-emoji">{presetEmoji(p.id)}</span><span className="preset-chip-label">{p.name}</span></button>)}</div></div>
+            <div className="field" style={{marginBottom:20}}><label className="field-label">デフォルトベース問題モード</label><div className="base-mode-tabs">{[{key:'db',icon:<Ico.Database />,label:'DB'},{key:'pdf',icon:<Ico.Pdf />,label:'PDF'},{key:'skip',icon:<Ico.Skip />,label:'スキップ'}].map(m => <button key={m.key} className={`base-mode-tab ${settings.defaultBaseMode===m.key?'active':''}`} onClick={() => { const s = { ...settings, defaultBaseMode: m.key }; setSettings(s); saveSettings(s) }}>{m.icon}<span>{m.label}</span></button>)}</div></div>
+            <div className="settings-divider" />
+            <div className="field" style={{marginBottom:20}}><label className="field-label">データ管理</label><button className="btn btn-outline btn-block" style={{marginBottom:8}} onClick={() => { if(window.confirm('学習データをリセットしますか？')) { setStats(DEFAULT_STATS); saveStats(DEFAULT_STATS); notify('リセットしました','info') } }}>学習データをリセット</button></div>
+            <div className="settings-divider" />
+            <div className="field" style={{marginBottom:20}}><label className="field-label">その他</label><button className="btn btn-outline btn-block" style={{marginBottom:8}} onClick={() => { setScreen('legal'); setLegalTab('terms') }}><Ico.Shield /> 利用規約</button><button className="btn btn-outline btn-block" style={{marginBottom:8}} onClick={() => { setScreen('legal'); setLegalTab('privacy') }}><Ico.Shield /> プライバシーポリシー</button><button className="btn btn-outline btn-block" onClick={() => setShowOnboarding(true)}>チュートリアルを再表示</button></div>
+            <div className="settings-app-info"><div className="settings-app-version">⚛️ 物理AI v2.0</div><div className="field-hint">受験生のための類題生成AI</div></div>
+            <div className="mobile-sticky-action"><button className="btn btn-primary btn-block btn-lg" onClick={() => setScreen('home')}><Ico.ArrowLeft /> ホームに戻る</button></div>
+          </div>
+        )}
+
+        {/* ══ LEGAL ══ */}
+        {screen === 'legal' && (
+          <div className="card anim-fade-up">
+            <div className="legal-tabs"><button className={`legal-tab ${legalTab==='terms'?'active':''}`} onClick={() => setLegalTab('terms')}>利用規約</button><button className={`legal-tab ${legalTab==='privacy'?'active':''}`} onClick={() => setLegalTab('privacy')}>プライバシーポリシー</button></div>
+            {legalTab === 'terms' && <div className="legal-content anim-fade-up"><h3>利用規約</h3><p className="legal-date">最終更新日: 2025年1月1日</p><h4>第1条</h4><p>本規約は本アプリの利用条件を定めるものです。</p><h4>第2条</h4><p>本サービスは教育目的で問題の類題を生成するためのツールです。</p><h4>第3条</h4><p>法令違反、運営妨害、不正利用を禁じます。</p><h4>第4条</h4><p>本サービスは「現状有姿」で提供されます。</p></div>}
+            {legalTab === 'privacy' && <div className="legal-content anim-fade-up"><h3>プライバシーポリシー</h3><p className="legal-date">最終更新日: 2025年1月1日</p><p>生成履歴や設定はローカルストレージに保存されます。サーバーに個人情報は保存しません。</p></div>}
+            <div className="mobile-sticky-action"><button className="btn btn-primary btn-block btn-lg" onClick={() => setScreen('settings')}><Ico.ArrowLeft /> 設定に戻る</button></div>
+          </div>
+        )}
+
+        {/* ══ PRACTICE (演習モード) ══ */}
+        {screen === 'practice' && (
+          <>
+            {step <= 3 && <div className="session-timer-bar desktop-only"><div className="session-timer-inner"><Ico.Clock /><span>セッション: {formatTimer(sessionTime)}</span></div></div>}
+            <div className="progress-bar desktop-only">
+              {STEPS.map((s, i) => (
+                <React.Fragment key={s.n}>
+                  <div className={`progress-step ${step===s.n?'active':''} ${step>s.n?'done clickable':''}`} onClick={() => step > s.n && setStep(s.n)}>
+                    <div className="progress-dot">{step > s.n ? <Ico.Check s={14} /> : s.n}</div><div className="progress-name">{s.label}</div>
+                  </div>
+                  {i < STEPS.length - 1 && <div className={`progress-line ${step > s.n ? 'filled' : ''}`} />}
+                </React.Fragment>
+              ))}
+            </div>
+
+            {/* STEP 1 */}
+            {step === 1 && (
+              <div className="card anim-fade-up mobile-card">
+                <div className="card-header mobile-card-header"><span className="card-emoji">⚛️</span><div className="card-title">出題パターンを選ぶ</div><div className="card-desc mobile-card-desc">得意分野を伸ばす？ 苦手を潰す？ 戦略的に選べ。</div></div>
+                <div className="physics-hero-banner"><div className="physics-hero-content"><div className="physics-hero-title">⚛️ 物理の類題生成</div><div className="physics-hero-subtitle">受験生の武器になる</div></div><div className="physics-hero-pills"><span>力学</span><span>電磁気</span><span>波動</span><span>熱力学</span></div></div>
+                <div className="tip mobile-tip-compact"><span className="tip-icon">💡</span><div>苦手分野から攻めるのが合格への近道。5問以上で定着率UP</div></div>
+                <div className="pattern-grid">
+                  {[...templates].sort((a,b) => {const aP=(a.metadata?.subject||'').includes('物理')?-1:0;const bP=(b.metadata?.subject||'').includes('物理')?-1:0;return aP-bP}).map(t => {
+                    const m = t.metadata||{}, sel = form.templateId===t.id, phys = (m.subject||'').includes('物理')
+                    return <div key={t.id} className={`pattern-card ${sel?'selected':''} ${phys?'physics':''}`} onClick={() => upd('templateId',t.id)}><div className="pattern-card-header"><div className="pattern-card-name">{t.name||t.id}</div>{sel && <div className="pattern-check"><Ico.Check s={14}/></div>}</div>{t.description && <div className="pattern-card-desc">{t.description}</div>}<div className="pattern-card-tags">{m.subject && <span className={`pattern-tag ${phys?'physics-tag':''}`}>{m.subject}</span>}{m.field && <span className="pattern-tag">{m.field}</span>}</div></div>
+                  })}
+                </div>
+                <div className="mobile-sticky-action"><button className="btn btn-primary btn-block btn-lg" onClick={() => { if(form.templateId){fetchBaseProblems(form.templateId);setStep(2)} }} disabled={!form.templateId}>次へ進む <Ico.ArrowRight /></button></div>
+              </div>
+            )}
+
+            {/* STEP 2 */}
+            {step === 2 && (
+              <div className="card anim-fade-up">
+                <div className="card-header"><span className="card-emoji">⚙️</span><div className="card-title">問題数・ベース問題を設定</div><div className="card-desc">量は質に転化する。多めがコツ。</div></div>
+                {selectedTemplate && <div className="selected-pattern-badge"><span>選択中：</span><strong>{selectedTemplate.name||selectedTemplate.id}</strong>{templateMeta.subject && <span className="pattern-tag">{templateMeta.subject}</span>}</div>}
+                <div className="field" style={{marginBottom:20}}>
+                  <label className="field-label">問題数</label>
+                  <div className="num-questions-selector">{[1,2,3,5,10].map(n => <button key={n} className={`num-btn ${form.numQuestions===n?'active':''}`} onClick={() => upd('numQuestions',n)}>{n}問</button>)}</div>
+                  <div className="field-hint" style={{marginTop:8}}>カスタム：<input className="input" type="number" min={1} max={10} value={form.numQuestions} onChange={e=>upd('numQuestions',Math.min(10,Math.max(1,Number(e.target.value))))} style={{width:80,display:'inline-block',marginLeft:8,padding:'6px 10px'}}/></div>
+                </div>
+                <div className="field" style={{marginBottom:20}}>
+                  <label className="field-label">出力形式</label>
+                  <div className="preset-chips">{latexPresets.map(p => <button key={p.id} className={`preset-chip ${form.latexPreset===p.id?'active':''}`} onClick={() => upd('latexPreset',p.id)} title={p.description}><span className="preset-chip-emoji">{presetEmoji(p.id)}</span><span className="preset-chip-label">{p.name}</span></button>)}</div>
+                  {currentPreset && <div className="field-hint">{currentPreset.description}</div>}
+                </div>
+                <div className="field" style={{marginBottom:20}}>
+                  <label className="field-label">ベース問題</label>
+                  <div className="card-desc" style={{marginBottom:12,fontSize:13}}>参考にする問題を選ぶか、スキップも可能です。</div>
+                  <div className="base-mode-tabs">
+                    <button className={`base-mode-tab ${baseMode==='db'?'active':''}`} onClick={() => setBaseMode('db')}><Ico.Database /><span>DB</span></button>
+                    <button className={`base-mode-tab ${baseMode==='pdf'?'active':''}`} onClick={() => setBaseMode('pdf')}><Ico.Pdf /><span>PDF</span></button>
+                    <button className={`base-mode-tab ${baseMode==='skip'?'active':''}`} onClick={() => {setBaseMode('skip');setSelectedBaseProblem(null);setBasePdfData(null)}}><Ico.Skip /><span>スキップ</span></button>
+                  </div>
+                  {baseMode==='db' && <div className="base-content anim-fade-up">{baseProblems.length > 0 ? <><div className="base-db-hint">同じパターンから1つ選択</div><div className="base-problem-list">{baseProblems.map(p => <div key={p.id} className={`base-problem-card ${selectedBaseProblem?.id===p.id?'selected':''}`} onClick={() => setSelectedBaseProblem(selectedBaseProblem?.id===p.id?null:p)}><div className="base-problem-stem">{p.stem}</div><div className="base-problem-meta">{p.subject && <span className="pattern-tag">{p.subject}</span>}{p.topic && <span className="pattern-tag">{p.topic}</span>}{p.difficulty!=null && <span className="pattern-tag">難易度:{(p.difficulty*100).toFixed(0)}%</span>}</div>{selectedBaseProblem?.id===p.id && <div className="base-problem-check"><Ico.Check s={16}/></div>}</div>)}</div></> : <div className="base-empty"><div className="base-empty-icon"><Ico.Database /></div><div>この分野の問題がありません</div><div className="field-hint">PDFかスキップを選択してください</div></div>}</div>}
+                  {baseMode==='pdf' && <div className="base-content anim-fade-up"><div className="tip tip-info" style={{marginBottom:16}}><span className="tip-icon">📋</span><div>PDF<strong>3ページ以下</strong>のみ</div></div>{!basePdfData ? <div className={`upload-area ${basePdfDragOver?'drag-over':''}`} onClick={() => basePdfRef.current?.click()} onDrop={onBasePdfDrop} onDragOver={e=>{e.preventDefault();setBasePdfDragOver(true)}} onDragLeave={() => setBasePdfDragOver(false)}><input ref={basePdfRef} type="file" accept=".pdf" onChange={e=>uploadBasePdf(e.target.files?.[0])}/><div className="upload-icon"><Ico.Upload /></div><div className="upload-label"><strong>タップ</strong>or<strong>ドラッグ</strong></div><div className="upload-formats">PDF（3ページ以下）</div></div> : <div className="base-pdf-preview"><div className="base-pdf-info"><div className="base-pdf-filename"><Ico.FileText /> {basePdfData.filename}</div><div className="base-pdf-pages">{basePdfData.page_count}ページ</div><button className="btn btn-ghost" style={{padding:'4px 10px',fontSize:12}} onClick={() => setBasePdfData(null)}>削除</button></div>{basePdfData.images?.length > 0 && <div className="base-pdf-thumbnails">{basePdfData.images.map((img,i) => <div key={i} className="base-pdf-thumb"><img src={`data:image/png;base64,${img}`} alt={`P${i+1}`}/><div className="base-pdf-thumb-label">P{i+1}</div></div>)}</div>}</div>}</div>}
+                  {baseMode==='skip' && <div className="base-content anim-fade-up"><div className="base-skip-notice"><Ico.Skip /><div><strong>ベース問題なしで生成</strong><div className="field-hint">RAGのみで指示文を作成</div></div></div></div>}
+                </div>
+                <div className="mobile-sticky-action"><div className="btn-row btn-row-2"><button className="btn btn-outline btn-lg" onClick={() => setStep(1)}><Ico.ArrowLeft /> 戻る</button><button className="btn btn-primary btn-lg" onClick={generatePrompt} disabled={loading||(baseMode==='db'&&!selectedBaseProblem)||(baseMode==='pdf'&&!basePdfData)}>指示文を作成 <Ico.ArrowRight /></button></div></div>
+              </div>
+            )}
+
+            {/* STEP 3 */}
+            {step === 3 && (
+              <div className="card anim-fade-up mobile-card">
+                <div className="card-header mobile-card-header"><span className="card-emoji">🤖</span><div className="card-title">AIに依頼 → 結果を入力</div><div className="card-desc mobile-card-desc">ここが一番大事。AIの出力を貼り付けよう。</div></div>
+                <div className="mobile-section">
+                  <div className="mobile-section-label"><span className="mobile-section-badge">A</span>指示文をコピーしてAIに送信</div>
+                  <div className="mobile-action-group">
+                    <button className="btn btn-primary btn-block btn-lg" onClick={copyPrompt}><Ico.Copy /> 指示文をコピー</button>
+                    <div className="mobile-ai-links"><a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="mobile-ai-link"><Ico.ExternalLink /> ChatGPT</a><a href="https://claude.ai/" target="_blank" rel="noreferrer" className="mobile-ai-link"><Ico.ExternalLink /> Claude</a></div>
+                  </div>
+                  {baseMode==='pdf'&&basePdfData && <div className="mobile-alert"><span className="mobile-alert-icon">📎</span>PDF「{basePdfData.filename}」もAIに添付</div>}
+                  <button className="mobile-toggle-preview" onClick={() => setShowPromptSection(p=>!p)}>{showPromptSection?'指示文を隠す':'指示文を見る'} {showPromptSection?<Ico.ChevronUp />:<Ico.ChevronDown />}</button>
+                  {showPromptSection && <div className="prompt-preview anim-fade-up">{prompt}</div>}
+                  <div className="step4-badges">{ragCtx?.chunk_count>0 && <span className="rag-badge">📚 {ragCtx.chunk_count}件参照</span>}{currentPreset && <span className="rag-badge">📄 {currentPreset.name}</span>}{baseMode==='db'&&selectedBaseProblem && <span className="rag-badge">🎯 ベース問題済</span>}</div>
+                </div>
+                <div className="mobile-divider" />
+                <div className="mobile-section">
+                  <div className="mobile-section-label"><span className="mobile-section-badge mobile-section-badge-b">B</span>AIの出力を貼り付け</div>
+                  <div className="field"><textarea className="input manual-textarea" placeholder={"\\documentclass{article}\n...\n\\end{document}"} value={llmOutput} onChange={e=>setLlmOutput(e.target.value)} />{llmOutput.trim() && <div className="latex-validation-hints"><span className={llmOutput.includes('\\documentclass')?'hint-ok':'hint-warn'}>{llmOutput.includes('\\documentclass')?'✅':'⚠️'} documentclass</span><span className={llmOutput.includes('\\end{document}')?'hint-ok':'hint-warn'}>{llmOutput.includes('\\end{document}')?'✅':'⚠️'} end</span></div>}</div>
+                </div>
+                <div className="mobile-sticky-action"><button className="btn btn-success btn-block btn-lg" onClick={generatePdf} disabled={loading||!llmOutput.trim()}><Ico.Zap /> PDF を生成する</button><button className="btn btn-outline btn-block" onClick={() => setStep(2)}><Ico.ArrowLeft /> 戻る</button></div>
+              </div>
+            )}
+
+            {/* STEP 4 - 演習フロー */}
+            {step === 4 && (
+              <div className="card anim-fade-up mobile-card completion-card">
+                {/* ── ヘッダー ── */}
+                <div className="completion-hero">
+                  <div className="success-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  <div className="completion-title">演習スタート！</div>
+                  <div className="completion-subtitle">問題を解き、解答を確認して採点しよう。</div>
+                </div>
+                <div className="completion-stats">
+                  <div className="completion-stat"><div className="completion-stat-value">{form.numQuestions}</div><div className="completion-stat-label">問題数</div></div>
+                  <div className="completion-stat"><div className="completion-stat-value">{formatTimer(sessionTime)}</div><div className="completion-stat-label">所要時間</div></div>
+                  <div className="completion-stat xp-stat"><div className="completion-stat-value">+{sessionXpGain}</div><div className="completion-stat-label">XP獲得</div></div>
+                </div>
+                <div className="completion-level">
+                  <div className="completion-level-header"><span>{level.emoji} Rank {level.rank} — {level.name}</span><span>{stats.xp} XP</span></div>
+                  <div className="level-progress-bar"><div className="level-progress-fill" style={{width:`${level.progress}%`}} /></div>
+                </div>
+                <div className="completion-streak"><span className="completion-streak-fire">🔥</span><span>{stats.currentStreak}日連続</span>{stats.currentStreak > 1 && <span className="completion-streak-bonus">継続ボーナス！</span>}</div>
+
+                {/* ── STEP 1: 問題を解く ── */}
+                <div className="practice-step">
+                  <div className="practice-step-label">
+                    <span className="practice-step-num">STEP 1</span>
+                    <span className="practice-step-title">問題を解く</span>
+                  </div>
+                  {pdfUrl
+                    ? <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
+                    : <div className="pdf-mode-hint">問題PDFがありません</div>
+                  }
+                </div>
+
+                {/* ── STEP 2: 解答・解説を確認する ── */}
+                <div className="practice-step">
+                  <div className="practice-step-label">
+                    <span className="practice-step-num">STEP 2</span>
+                    <span className="practice-step-title">解答・解説を確認する</span>
+                  </div>
+                  {!showScoring
+                    ? <button className="btn btn-outline btn-block btn-lg answer-reveal-btn" onClick={() => { setShowScoring(true); if (answerLatex && !answerPdfUrl) generateAnswerPdf() }}>
+                        📖 解答・解説を見て採点する
+                      </button>
+                    : <div className="answer-section">
+                        {answerLoading && <div className="answer-gen-loading"><div className="spinner" style={{width:18,height:18,borderWidth:2}} /><span>解答PDF生成中...</span></div>}
+                        {!answerLoading && answerPdfUrl && <a href={answerPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 解答・解説PDFを開く</a>}
+                        {!answerLoading && !answerPdfUrl && answerLatex && <button className="btn btn-outline btn-block" onClick={generateAnswerPdf} disabled={answerLoading}>📖 解答PDFを再生成</button>}
+                        {!answerLatex && fullLatex && !fullPdfUrl && <button className="btn btn-outline btn-block" onClick={generateFullPdf} disabled={fullPdfLoading}>{fullPdfLoading ? 'PDF生成中...' : '📋 問題＋解答PDFを生成'}</button>}
+                        {!answerLatex && fullPdfUrl && <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題＋解答PDFを開く</a>}
+                        {!answerLatex && !fullLatex && <div className="pdf-mode-hint">解答データがありません</div>}
+                      </div>
+                  }
+                </div>
+
+                {/* ── STEP 3: 自己採点 (解答確認後に表示) ── */}
+                {showScoring && parsedProblems.length > 0 && (() => {
+                  const allSubs = []
+                  parsedProblems.forEach((p, pi) => {
+                    ;(p.subproblems || []).forEach((sp, si) => allSubs.push({ pi, si, label: sp.label || `(${si+1})`, points: sp.points || 0 }))
+                  })
+                  const maxPoints = allSubs.reduce((s, x) => s + x.points, 0)
+                  const earnedPoints = allSubs.reduce((s, x) => {
+                    const v = subScores[`${x.pi}-${x.si}`]
+                    return s + (typeof v === 'number' ? v : 0)
+                  }, 0)
+                  const allScored = allSubs.length > 0 && allSubs.every(x => typeof subScores[`${x.pi}-${x.si}`] === 'number')
+                  const pct = maxPoints > 0 ? Math.round((earnedPoints / maxPoints) * 100) : 0
+                  const scoreSubmitted = subScores._submitted
+                  return (
+                    <div className="practice-step scoring-phase">
+                      <div className="practice-step-label">
+                        <span className="practice-step-num">STEP 3</span>
+                        <span className="practice-step-title">自己採点</span>
+                      </div>
+                      <div className="scoring-table">
+                        {parsedProblems.map((p, pi) => (
+                          <div key={pi} className="scoring-problem">
+                            <div className="scoring-problem-title">問題 {pi+1}{p.topic ? ` — ${p.topic}` : ''}</div>
+                            {(p.subproblems || []).map((sp, si) => {
+                              const key = `${pi}-${si}`
+                              const pts = sp.points || 0
+                              const val = subScores[key]
+                              return (
+                                <div key={key} className="scoring-row">
+                                  <div className="scoring-row-left">
+                                    <span className="scoring-label">{sp.label || `(${si+1})`}</span>
+                                    <span className="scoring-pts-badge">{pts}点</span>
+                                  </div>
+                                  <div className="scoring-btn-group">
+                                    <button className={`score-btn score-correct${val === pts ? ' selected' : ''}`} onClick={() => setSubScores(s => ({...s, [key]: pts}))} disabled={scoreSubmitted} title="正解（全点）">○</button>
+                                    {pts > 1 && <button className={`score-btn score-partial${typeof val === 'number' && val > 0 && val < pts ? ' selected' : ''}`} onClick={() => setSubScores(s => ({...s, [key]: Math.max(1, Math.floor(pts/2))}))} disabled={scoreSubmitted} title="部分点">△</button>}
+                                    <button className={`score-btn score-wrong${val === 0 ? ' selected' : ''}`} onClick={() => setSubScores(s => ({...s, [key]: 0}))} disabled={scoreSubmitted} title="不正解（0点）">×</button>
+                                  </div>
+                                  {typeof val === 'number' && <span className={`scoring-earned-val${val === pts ? ' correct' : val === 0 ? ' wrong' : ' partial'}`}>{val}点</span>}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                      <div className={`scoring-total ${pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : allScored ? 'needs-work' : ''}`}>
+                        <span>合計: {earnedPoints} / {maxPoints} 点</span>
+                        {allScored && <span className="scoring-pct">({pct}%)</span>}
+                      </div>
+                      {allScored && !scoreSubmitted && (
+                        <button className="btn btn-primary btn-block" style={{marginTop:10}} onClick={() => {
+                          setSubScores(s => ({ ...s, _submitted: true }))
+                          const entry = {
+                            date: new Date().toISOString(),
+                            subject: templateMeta?.subject || '',
+                            maxPoints, earnedPoints, pct,
+                            problems: parsedProblems.map((p, pi) => ({
+                              topic: p.topic,
+                              subs: (p.subproblems||[]).map((sp, si) => ({
+                                label: sp.label, points: sp.points || 0,
+                                earned: typeof subScores[`${pi}-${si}`] === 'number' ? subScores[`${pi}-${si}`] : 0,
+                              })),
+                            })),
+                          }
+                          setStats(addScoreToStats(stats, entry))
+                          notify(`採点完了: ${earnedPoints}/${maxPoints}点 (${pct}%)`, 'success')
+                        }}>✅ 採点を記録する</button>
+                      )}
+                      {scoreSubmitted && (
+                        <div className={`scoring-result-banner ${pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : 'needs-work'}`}>
+                          <div className="scoring-result-pct">{pct}%</div>
+                          <div className="scoring-result-msg">{pct >= 80 ? '素晴らしい！完璧な仕上がり！' : pct >= 50 ? 'よく頑張った！次に繋げよう！' : '苦手分野を重点的に復習しよう！'}</div>
+                          <div className="scoring-result-score">{earnedPoints} / {maxPoints}点</div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
+
+                {/* ── 手応え評価 ── */}
+                <div className="completion-rating">
+                  <div className="completion-rating-label">この演習の手応えは？</div>
+                  <div className="completion-rating-stars">{[1,2,3,4,5].map(n => <button key={n} className={`rating-star ${selfRating>=n?'active':''}`} onClick={() => setSelfRating(n)}>★</button>)}</div>
+                  <div className="completion-rating-hint">{selfRating===0?'':selfRating<=2?'苦手分野を重点的にやろう':selfRating<=4?'いい調子！続けよう':'完璧！次のパターンに挑戦しよう'}</div>
+                </div>
+                <button className="btn btn-outline btn-block" onClick={() => setShowShareCard(v=>!v)}><Ico.Camera /> {showShareCard?'共有カードを隠す':'努力の証明カードを表示'}</button>
+                {showShareCard && <div className="completion-share anim-fade-up"><ShareableCard stats={stats} level={level} /><div className="completion-share-hint">↑ スクショしてSNSでシェアしよう！</div></div>}
+                <div className="mobile-sticky-action">
+                  <button className="btn btn-primary btn-block btn-lg" onClick={() => { resetWizard(); setStep(1) }}><Ico.Zap /> 続けて演習する</button>
+                  <button className="btn btn-outline btn-block" onClick={() => { resetWizard(); setScreen('home') }}><Ico.Home /> ホームに戻る</button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* --- テンプレート / モード別 UI --- */}
-      {mode === 'user' && (
-        <section>
-          <h3>（ユーザ向け）テンプレートからプロンプトを生成</h3>
-          <div style={{marginBottom:8}}>
-            <label style={{fontWeight:600}}>テンプレート</label>
-            <div style={{display:'flex', gap:8, alignItems:'center', marginTop:6}}>
-              <select value={selectedTemplateId} onChange={(e)=>{ setSelectedTemplateId(e.target.value); }} style={{minWidth:240}}>
-                <option value="">-- テンプレートを選択 --</option>
-                {templates.map(t=> (<option key={t.id} value={t.id}>{t.name || t.id}</option>))}
-              </select>
-              <button onClick={generatePromptFromTemplate} disabled={!selectedTemplateId}>プロンプトを生成</button>
-              <button onClick={async()=>{ setStatus('テンプレート再読み込み中...'); const tpls = await refreshTemplates(); if(tpls && tpls.length>0){ setStatus('テンプレートを更新しました'); if(!selectedTemplateId) setSelectedTemplateId(tpls[0].id) } else { setStatus('テンプレートが見つかりませんでした') } }} className="small-btn">再読み込み</button>
-              {templates.length === 0 && (<span style={{color:'#666', marginLeft:10}}>テンプレートが見つかりません。サーバーの templates.json を確認してください。</span>)}
-            </div>
-          </div>
+      {/* ── Help FAB ── */}
+      <button className="help-floating desktop-only" onClick={() => setShowHelp(true)} title="ヘルプ"><Ico.Help /></button>
 
-          <div style={{marginTop:8}}>
-            <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:8}}>
-              <label style={{display:'flex', alignItems:'center', gap:6}}>科目:
-                <select value={selectedSubject} onChange={(e)=>setSelectedSubject(e.target.value)} style={{marginLeft:6}}>
-                  {subjects.map(s=> (<option key={s} value={s}>{s}</option>))}
-                </select>
-              </label>
-              <label style={{display:'flex', alignItems:'center', gap:6}}>難易度:
-                <select value={selectedDifficulty} onChange={(e)=>setSelectedDifficulty(e.target.value)} style={{marginLeft:6}}>
-                  {difficulties.map(d=> (<option key={d} value={d}>{d}</option>))}
-                </select>
-              </label>
-              <label style={{display:'flex', alignItems:'center', gap:6}}>出題数:
-                <input type="number" value={numQuestions} onChange={(e)=>setNumQuestions(Number(e.target.value))} style={{width:80}} min={1} />
-              </label>
-              <label style={{display:'flex', alignItems:'center', gap:6}}>出力形式:
-                <select value={userOutputFormat} onChange={(e)=>setUserOutputFormat(e.target.value)} style={{marginLeft:6}}>
-                  <option value="latex">LaTeX（ユーザ向け）</option>
-                  <option value="json">JSON（開発者向け）</option>
-                </select>
-              </label>
-            </div>
+      {/* ── Mobile Bottom Nav ── */}
+      <nav className="mobile-bottom-nav mobile-only">
+        <button className={`mobile-nav-item ${screen==='home'?'active':''}`} onClick={() => setScreen('home')}><span className="mobile-nav-icon">🏠</span><span className="mobile-nav-label">ホーム</span></button>
+        <button className={`mobile-nav-item ${screen==='practice'?'active':''}`} onClick={startPractice}><span className="mobile-nav-icon">📝</span><span className="mobile-nav-label">演習</span></button>
+        <button className={`mobile-nav-item ${screen==='history'?'active':''}`} onClick={() => { setScreen('history'); setHistory(loadHistory()) }}><span className="mobile-nav-icon">🕐</span><span className="mobile-nav-label">履歴</span></button>
+        <button className={`mobile-nav-item ${screen==='settings'||screen==='legal'?'active':''}`} onClick={() => setScreen('settings')}><span className="mobile-nav-icon">⚙️</span><span className="mobile-nav-label">設定</span></button>
+        <button className="mobile-nav-item" onClick={() => setShowHelp(true)}><span className="mobile-nav-icon">❓</span><span className="mobile-nav-label">ヘルプ</span></button>
+      </nav>
 
-            <label>生成されたプロンプト</label>
-            <textarea className="prompt-textarea" value={generatedPrompt} onChange={(e)=>setGeneratedPrompt(e.target.value)} rows={8} />
-            <div style={{display:'flex', gap:8, marginTop:8}}>
-              <button onClick={()=>copyToClipboard(generatedPrompt)} className="small-btn" disabled={!generatedPrompt}>コピー</button>
-              <button onClick={assemblePromptWithRag} className="small-btn">RAG を注入</button>
-            </div>
-          </div>
-
-          <div style={{marginTop:12}}>
-            <label style={{display:'block', fontWeight:600}}>LLM の出力（ChatGPT 等からコピーした LaTeX / テキストをここに貼り付けてください）</label>
-            <textarea
-              placeholder={"例: \\begin{enumerate}\\item x^2-5x+6=0\\begin{answer}x=2,3\\end{answer}\\end{enumerate}\\n貼り付けたら「アップロード」で DB に保存できます。"}
-              value={llmOutput}
-              onChange={(e)=>{ setLlmOutput(e.target.value); }}
-              rows={6}
-              style={{width:'100%', fontFamily: 'monospace'}}
-            />
-
-            <div style={{marginTop:8, display:'flex', gap:8, alignItems:'center'}}>
-              <button style={{marginLeft:8}} onClick={async ()=>{ if(llmOutput && llmOutput.trim()) { setRawLatex(llmOutput); } await compileRawLatex() }} className="small-btn" disabled={!(llmOutput && llmOutput.trim()) && !(Array.isArray(generatedItems) && generatedItems.length)}>PDF を生成して表示</button>
-              {/* 生成プロンプトを貼り付け欄へ挿入 ボタンを廃止（UI を簡素化） */}
-            </div>
-
-            <div style={{marginTop:8, color:'#666', fontSize:13}}>
-              ヒント: ChatGPT 等からコピーした LaTeX をここに貼り付けて「PDF を生成して表示」を押すと、サーバでコンパイルして PDF を表示します（開発向けの DB 保存は省略しています）。
-            </div>
-          </div>
-        </section>
+      {/* ── Help Modal ── */}
+      {showHelp && (
+        <div className="help-modal-overlay" onClick={() => setShowHelp(false)}><div className="help-modal" onClick={e => e.stopPropagation()}>
+          <div className="help-header"><h2>ヘルプ</h2><button onClick={() => setShowHelp(false)}>×</button></div>
+          <div className="help-content"><dl>
+            <dt>Q: 外部AIは必須？</dt><dd>はい。問題の生成はChatGPT/Claude等の外部AIが行います。</dd>
+            <dt>Q: XPの仕組みは？</dt><dd>1問=10XP、演習1分=5XP。継続でランクUP。</dd>
+            <dt>Q: ストリークとは？</dt><dd>毎日PDF生成で連続日数カウント。1日休むとリセット。</dd>
+            <dt>Q: PDF生成失敗する</dt><dd>コードブロック記号(```)を削除し、\\documentclass〜\\end&#123;document&#125;を確認。</dd>
+          </dl></div>
+        </div></div>
       )}
-
-      {mode === 'dev' && (
-        <>
-
-
-          {/* --- プロンプト生成（開発） --- */}
-          <div style={{marginTop:12, padding:12, border:'1px solid #eee', borderRadius:6, background:'#fff'}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <strong>プロンプト生成（開発）</strong>
-              <div style={{color:'#666', fontSize:12}}>テンプレートを選択してすぐ生成できます</div>
-            </div>
-            <div style={{display:'flex', gap:12, alignItems:'center', marginTop:8}}>
-              <select value={selectedTemplateId} onChange={(e)=>{ setSelectedTemplateId(e.target.value); }} style={{minWidth:280}}>
-                <option value="">-- テンプレートを選択 --</option>
-                {templates.map(t=> (<option key={t.id} value={t.id}>{t.name || t.id}</option>))}
-              </select>
-
-              <label style={{display:'flex', alignItems:'center', gap:6}}>科目:
-                <select value={selectedSubject} onChange={(e)=>setSelectedSubject(e.target.value)}>
-                  {subjects.map(s=> (<option key={s} value={s}>{s}</option>))}
-                </select>
-              </label>
-
-              <label style={{display:'flex', alignItems:'center', gap:6}}>難易度:
-                <select value={selectedDifficulty} onChange={(e)=>setSelectedDifficulty(e.target.value)}>
-                  {difficulties.map(d=> (<option key={d} value={d}>{d}</option>))}
-                </select>
-              </label>
-
-              <label style={{display:'flex', alignItems:'center', gap:6}}>数:
-                <input type="number" value={numQuestions} onChange={(e)=>setNumQuestions(Number(e.target.value))} style={{width:60}} min={1} />
-              </label>
-
-              {/* 生成ボタンはチューニングセクションの「チューニングプロンプト生成（フル）」を使ってください */}
-
-              {/* 新規テンプレート作成トグル */}
-              <div style={{marginLeft:8}}>
-                <button className="small-btn" style={{background: showNewTemplateForm ? '#dc3545' : '#198754', color:'#fff', border:'none'}} onClick={()=>setShowNewTemplateForm(s=>!s)}>{showNewTemplateForm ? '✕ 閉じる' : '＋ テンプレート追加'}</button>
-              </div>
-            </div>
-
-            {/* 新規テンプレート作成フォーム — 教科＋分野だけ。他は全自動。 */}
-            {showNewTemplateForm ? (
-              <div style={{marginTop:10, padding:14, border:'2px solid #198754', borderRadius:8, background:'#f0faf4'}}>
-                <div style={{fontWeight:700, fontSize:15, marginBottom:10, color:'#198754'}}>📝 テンプレート追加（教科を選ぶだけ！）</div>
-                <div style={{display:'flex', gap:12, alignItems:'flex-end', flexWrap:'wrap'}}>
-
-                  {/* 教科セレクト */}
-                  <div style={{display:'flex', flexDirection:'column'}}>
-                    <label style={{fontSize:13, fontWeight:600, marginBottom:4}}>教科 *</label>
-                    <select
-                      value={newTplSubject}
-                      onChange={(e)=>setNewTplSubject(e.target.value)}
-                      style={{padding:'6px 10px', borderRadius:4, border:'1px solid #ccc', minWidth:160, fontSize:14}}
-                    >
-                      <option value="">-- 選択 --</option>
-                      {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-                      <option value="__custom">その他（自由入力）</option>
-                    </select>
-                  </div>
-
-                  {/* 自由入力の教科（「その他」選択時のみ） */}
-                  {newTplSubject === '__custom' && (
-                    <div style={{display:'flex', flexDirection:'column'}}>
-                      <label style={{fontSize:13, fontWeight:600, marginBottom:4}}>教科名を入力</label>
-                      <input
-                        id="newTplCustomSubject"
-                        style={{padding:'6px 10px', borderRadius:4, border:'1px solid #ccc', width:180, fontSize:14}}
-                        placeholder="例: 情報科学"
-                      />
-                    </div>
-                  )}
-
-                  {/* 分野（任意） */}
-                  <div style={{display:'flex', flexDirection:'column'}}>
-                    <label style={{fontSize:13, fontWeight:600, marginBottom:4}}>分野（任意）</label>
-                    <input
-                      value={newTplField}
-                      onChange={(e)=>setNewTplField(e.target.value)}
-                      style={{padding:'6px 10px', borderRadius:4, border:'1px solid #ccc', width:200, fontSize:14}}
-                      placeholder="例: 微分積分, 力学, 文法"
-                    />
-                  </div>
-
-                  {/* 作成ボタン */}
-                  <button
-                    style={{padding:'8px 20px', borderRadius:6, border:'none', background:'#198754', color:'#fff', fontWeight:700, fontSize:14, cursor: newTplSaving ? 'wait' : 'pointer', opacity: newTplSaving ? 0.6 : 1}}
-                    disabled={newTplSaving || (!newTplSubject)}
-                    onClick={()=>{
-                      const subj = newTplSubject === '__custom'
-                        ? (document.getElementById('newTplCustomSubject')?.value || '').trim()
-                        : newTplSubject
-                      if(!subj){ setStatus('教科を入力してください'); return }
-                      saveNewTemplate(subj, newTplField)
-                    }}
-                  >
-                    {newTplSaving ? '保存中...' : '作成'}
-                  </button>
-                </div>
-
-                <div style={{marginTop:10, color:'#555', fontSize:12}}>
-                  教科を選んで「作成」を押すだけ。テンプレート名・ID・本文は自動生成されます。分野を指定するとその範囲に特化したテンプレートになります。
-                </div>
-              </div>
-            ) : null}
-
-            <div style={{marginTop:8, display:'flex', alignItems:'center', gap:8}}>
-              <button className="info-toggle small-btn" onClick={()=>setShowPromptHint(p=>!p)}>{showPromptHint ? 'ヒントを閉じる' : 'ヒント'}</button>
-              {showPromptHint ? (
-                <div className="hint-box muted" style={{flex:1}}>
-                  テンプレートはサーバ側の <code>backend/templates.json</code> または管理 API <code>/api/template</code> で管理します。編集はローカルで即時反映されます。
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          {/* --- 簡易チューニングワークフロー（簡潔で迷わない UI） --- */}
-          <div style={{marginTop:12, padding:12, border:'1px solid #e6eef8', borderRadius:6, background:'#fbfdff'}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <strong>簡易チューニングワークフロー ✅</strong>
-            </div>
-            <div style={{marginTop:8, display:'flex', alignItems:'center', gap:8}}>
-              <div className="muted">ワークフロー: プロンプト生成 → チューニングプロンプト取得 → モデル出力を保存</div>
-              <button className="info-toggle small-btn" onClick={()=>setShowWorkflowSteps(s=>!s)}>{showWorkflowSteps ? '手順を閉じる' : '手順を見る'}</button>
-            </div>
-            {showWorkflowSteps ? (
-              <ol style={{margin:'8px 0 0 18px'}}>
-                <li>テンプレートや RAG でプロンプトを生成する</li>
-                <li>「チューニングプロンプト生成（要約/フル）」で目的に応じたプロンプトを作る</li>
-                <li>モデル出力を貼り付けて「保存（JSONL + DB）」で記録する</li>
-              </ol>
-            ) : null}
-
-            <div style={{display:'flex', gap:8, marginTop:10, alignItems:'center'}}>
-              <label style={{display:'flex', alignItems:'center', gap:8}}>プロファイル:
-                <select value={tuningProfile} onChange={(e)=>setTuningProfile(e.target.value)} style={{marginLeft:6}}>
-                  <option value="json_only">Strict JSON（機械判定向け）</option>
-                  <option value="explain_then_json">解説＋JSON（説明付き）</option>
-                  <option value="short_answer">短い回答（人間向け）</option>
-                </select>
-              </label>
-              <label style={{display:'flex', alignItems:'center', gap:6}}><input type="checkbox" checked={tuningIncludeRefs} onChange={(e)=>setTuningIncludeRefs(e.target.checked)} /> 参照を含める</label>
-              <button onClick={fetchTuningPrompt} className="small-btn">チューニングプロンプト生成（フル）</button>
-              <label style={{display:'flex', alignItems:'center', gap:8}}><input type="checkbox" checked={autoInsertOnRun} onChange={(e)=>setAutoInsertOnRun(e.target.checked)} /> 自動保存</label>
-              <button onClick={runLLM} className="small-btn">LLM 実行（検証）</button>
-                 {/* フルチューニングを貼り付けボタンは削除（チューニングボタン単独で処理します） */}
-              <button onClick={async ()=>{ try{ await navigator.clipboard.writeText(tuningPromptFull||generatedPrompt||previewRendered||''); setStatus('プロンプトをコピーしました') }catch(e){ setStatus('コピー失敗') } }} className="small-btn" disabled={!(tuningPromptFull||generatedPrompt||previewRendered)}>プロンプトをコピー</button>
-              <button onClick={submitTuningLog} className="small-btn" disabled={!llmOutput}>出力を貼り付けて保存（JSONL + DB）</button>
-            </div>
-
-            <div style={{display:'flex', gap:12, marginTop:8}}>
-              <div style={{display:'flex', flexDirection:'column', gap:6}}>
-                <label style={{fontSize:13}}>再ランキング重み（即時反映）</label>
-                <div style={{display:'flex', gap:8, alignItems:'center'}}>
-                  <div style={{width:140}}>テキスト: <strong>{textWeight.toFixed(1)}</strong></div>
-                  <input type="range" min="0" max="2" step="0.1" value={textWeight} onChange={(e)=>setTextWeight(Number(e.target.value))} />
-                </div>
-                <div style={{display:'flex', gap:8, alignItems:'center'}}>
-                  <div style={{width:140}}>難易度: <strong>{difficultyMatchWeight.toFixed(1)}</strong></div>
-                  <input type="range" min="0" max="2" step="0.1" value={difficultyMatchWeight} onChange={(e)=>setDifficultyMatchWeight(Number(e.target.value))} />
-                </div>
-                <div style={{display:'flex', gap:8, alignItems:'center'}}>
-                  <div style={{width:140}}>ひっかけ度: <strong>{trickinessWeight.toFixed(1)}</strong></div>
-                  <input type="range" min="0" max="2" step="0.1" value={trickinessWeight} onChange={(e)=>setTrickinessWeight(Number(e.target.value))} />
-                </div>
-                <div style={{display:'flex', gap:8, marginTop:6}}>
-                  <button onClick={assemblePromptWithRag} className="small-btn">再ランキングを適用</button>
-                  <button onClick={()=>{ setTextWeight(0.5); setDifficultyMatchWeight(0.5); setTrickinessWeight(0.5); setStatus('重みをデフォルトに戻しました') }} className="small-btn">デフォルトに戻す</button>
-                </div>
-              </div>
-
-                 <div style={{flex:1}}>
-                   <textarea value={tuningPromptFull||generatedPrompt||previewRendered||''} readOnly rows={8} className="prompt-textarea" />
-
-                   {/* Compact structured advanced inputs (always visible, simpler than previous freeform block) */}
-                   <div style={{marginTop:10, padding:8, borderTop:'1px dashed #d5e6f5'}}>
-
-                     {/* Paste model output for tuning here (shared state with user-mode) */}
-                     <div style={{marginBottom:8}}>
-                       <label style={{fontSize:13, fontWeight:600}}>モデル出力（ここに貼り付けてください）</label>
-                       <textarea placeholder="モデルの出力をここに貼り付け（JSON / プレーンテキスト / LaTeX 等）" value={llmOutput} onChange={(e)=>setLlmOutput(e.target.value)} rows={6} style={{width:'100%', fontFamily:'monospace', marginTop:6}} />
-                       <div style={{display:'flex', gap:8, alignItems:'center', marginTop:6}}>
-                         <button onClick={onUploadPastedOutput} className="small-btn" disabled={!llmOutput}>アップロード（DB 保存）</button>
-                         <button onClick={async ()=>{ try{ await navigator.clipboard.writeText(llmOutput||''); setStatus('モデル出力をコピーしました') }catch(e){ setStatus('コピー失敗') } }} className="small-btn" disabled={!llmOutput}>出力をコピー</button>
-                       </div>
-                     </div>
-
-                     <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:8}}>
-                       <div style={{display:'flex', flexDirection:'column', minWidth:200}}>
-                         <label style={{fontSize:13}}>期待出力（短文）</label>
-                         <input value={expectedOutput} onChange={(e)=>setExpectedOutput(e.target.value)} placeholder="例: JSON with keys answer_brief,explanation" />
-                       </div>
-                       <div style={{display:'flex', flexDirection:'column', minWidth:120}}>
-                         <label style={{fontSize:13}}>スコア</label>
-                         <input type="number" step="0.1" min="0" max="1" value={tuningScore} onChange={(e)=>setTuningScore(e.target.value)} style={{width:100}} placeholder="0.0-1.0" />
-                       </div>
-                       <div style={{flex:1, minWidth:220}}>
-                         <label style={{fontSize:13}}>メモ</label>
-                         <input value={tuningNotes} onChange={(e)=>setTuningNotes(e.target.value)} placeholder="短いメモ（任意）" />
-                       </div>
-                       <div style={{display:'flex', gap:8}}>
-                         <button onClick={async ()=>{ try{ await navigator.clipboard.writeText(tuningPromptFull||generatedPrompt||previewRendered||''); setStatus('プロンプトをコピーしました'); }catch(e){ setStatus('コピー失敗') } }} className="small-btn" disabled={!(tuningPromptFull||generatedPrompt||previewRendered)}>プロンプトをコピー</button>
-                         <button onClick={submitTuningLog} className="small-btn" disabled={!llmOutput}>出力を貼り付けて保存</button>
-                         <button onClick={addCustomField} className="small-btn">カスタムラベルを追加</button>
-                       </div>
-                     </div>
-
-                     {/* Custom fields editor (key/value pairs) */}
-                     <div style={{display:'flex', flexDirection:'column', gap:6}}>
-                       { (customFields || []).map((cf, idx) => (
-                         <div key={idx} style={{display:'flex', gap:6, alignItems:'center'}}>
-                           <input placeholder="key" value={cf.key || ''} onChange={(e)=>updateCustomField(idx, 'key', e.target.value)} style={{width:140}} />
-                           <input placeholder="value" value={cf.value || ''} onChange={(e)=>updateCustomField(idx, 'value', e.target.value)} style={{flex:1}} />
-                           <button onClick={()=>removeCustomField(idx)} className="small-btn">削除</button>
-                         </div>
-                       )) }
-                       { (customFields || []).length === 0 ? <div style={{color:'#666', fontSize:12}}>カスタムラベルがありません。必要なら「カスタムラベルを追加」を押してください。</div> : null }
-                     </div>
-
-                   </div>
-                 </div>
-
-                 <div className="side-panel card" style={{width:320}}>
-                   <div style={{marginBottom:10}}>
-                     <strong className="section-title">プロファイル説明</strong>
-                     <div style={{marginTop:6, color:'#333'}}>
-                       {tuningProfile === 'json_only' && (
-                         <div>厳格な JSON 出力を期待します。スキーマ: <code>{`{solution_outline, stem_latex, metadata}`}</code></div>
-                       )}
-                       {tuningProfile === 'explain_then_json' && (
-                         <div>まず簡潔な解説を日本語で出力し、続けて機械判定可能な JSON を返す構成を期待します。</div>
-                       )}
-                       {tuningProfile === 'short_answer' && (
-                         <div>短い回答（人間向け）を優先します。JSON を期待しないプロファイルです。</div>
-                       )}
-                     </div>
-                   </div>
-
-                   <div style={{marginBottom:10}}>
-                     <strong className="section-title">期待スキーマ（例）</strong>
-                     <pre style={{whiteSpace:'pre-wrap', marginTop:6, fontSize:12}}>
-{tuningProfile === 'json_only' ? '{\n  "solution_outline": "...",\n  "stem_latex": "... (or null)",\n  "metadata": { "references": [{"id": 123, "snippet":"..."}], "confidence": 0.9 }\n}' : tuningProfile === 'explain_then_json' ? '答え（1-2文）\n解説（短め）\n\nJSON:\n{"solution_outline":"...","stem_latex":null,"metadata":{"confidence":0.9}}' : '短い日本語の回答（1-2文）'}
-                     </pre>
-                   </div>
-
-                 </div>
-               </div>
-
-               {/* 詳細（オプション）は簡略化済み（上のコンパクトフォームを使用） */}
-
-             </div>
-
-             <hr />
-
-             {/* --- DB 確認セクション --- */}
-             <section>
-               <h3>DB 確認</h3>
-               <div style={{marginBottom:8}}>現在の doc_id: <code>{docId || '（未登録）'}</code></div>
-               <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:8}}>
-                 <button onClick={fetchDocEntries} disabled={!docId}>DB 行を取得</button>
-                 <button onClick={openDocEntriesWindow} disabled={!docId}>新しいウィンドウで開く</button>
-                 <button onClick={runPipeline} disabled={!docId}>パイプライン実行（DB 挿入）</button>
-                 <button onClick={showRawApiResponse} disabled={!docId}>生 API を表示</button>
-               </div>
-
-               {docEntries && docEntries.length>0 ? (
-                 <div style={{background:'#f7f7f7', padding:8, border:'1px solid #eee'}}>
-                   <h5>挿入された行</h5>
-                   <table style={{width:'100%'}}>
-                     <thead><tr><th>ID</th><th>ソース</th><th>ページ</th><th>スニペット</th><th>解答</th><th>難易度</th><th>引っ掛け度</th></tr></thead>
-                     <tbody>
-                       {docEntries.map(r=> (
-                         <tr key={r.id}><td><code>{r.id}</code></td><td>{r.source}</td><td>{r.page}</td><td style={{maxWidth:400}}><pre style={{whiteSpace:'pre-wrap'}}>{r.snippet}</pre></td><td style={{maxWidth:400}}><pre style={{whiteSpace:'pre-wrap'}}>{r.solution}</pre></td><td>{r.difficulty}</td><td>{r.trickiness}</td></tr>
-                       ))}
-                     </tbody>
-                   </table>
-                 </div>
-               ) : (
-                 <div style={{color:'#666'}}>まだ挿入された行はありません。教材を登録するとここに表示されます。</div>
-               )}
-
-               {/* Retrieved candidates panel */}
-               {retrievedChunks && retrievedChunks.length>0 ? (
-                 <div style={{marginTop:12, padding:12, border:'1px solid #eee', borderRadius:6, background:'#fff'}}>
-                   <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                     <strong>取得された参照候補（{retrievedChunks.length}件）</strong>
-                     <div style={{display:'flex', gap:8}}>
-                       <button onClick={expandAll} className="small-btn">展開</button>
-                       <button onClick={collapseAll} className="small-btn">折りたたむ</button>
-                       <button onClick={appendRetrievedToPrompt} className="small-btn">全てをプロンプトに追加</button>
-                     </div>
-                   </div>
-                   <div style={{marginTop:8, display:'grid', gridTemplateColumns:'1fr', gap:8}}>
-                     {retrievedChunks.map((c, i) => (
-                       <div key={i} style={{border:'1px solid #f0f0f0', padding:8, borderRadius:6, display:'flex', gap:8, alignItems:'flex-start'}}>
-                         <div style={{width:56, textAlign:'center'}}>
-                           <div style={{fontSize:12, color:'#555'}}>id</div>
-                           <div style={{fontWeight:600}}><code>{c.id}</code></div>
-                           <div style={{fontSize:12, color:'#666', marginTop:6}}>score {typeof c.final_score !== 'undefined' ? (Number(c.final_score).toFixed(2)) : (typeof c.score !== 'undefined' ? Number(c.score).toFixed(2) : '')}</div>
-                         </div>
-                         <div style={{flex:1}}>
-                           <div style={{display:'flex', justifyContent:'space-between', gap:8}}>
-                             <div style={{fontSize:14, fontWeight:600}}>{(c.text || '').slice(0, 220).replace(/\n/g,' ')}</div>
-                             <div style={{textAlign:'right'}}>
-                               <div style={{fontSize:12}}>{c.difficulty ? `難度: ${difficultyLabel(c.difficulty)}` : ''}</div>
-                               <div style={{fontSize:12}}>引っ掛け度: {typeof c.trickiness !== 'undefined' && c.trickiness !== null ? c.trickiness : '—'}</div>
-                             </div>
-                           </div>
-                           {expandedChunks[i] ? (
-                             <div style={{marginTop:8}}>
-                               <pre style={{whiteSpace:'pre-wrap'}}>{c.text}</pre>
-                               <div style={{display:'flex', gap:8, marginTop:6}}>
-                                 <button onClick={()=>insertChunkToPrompt(i)} className="small-btn">挿入</button>
-                                 <button onClick={async ()=>{ try{ await navigator.clipboard.writeText(c.text||''); setStatus('コピーしました') }catch(e){ setStatus('コピーできません') } }} className="small-btn">コピー</button>
-                                 <button onClick={()=>setPreviewRendered(c.text||'')} className="small-btn">プレビュー</button>
-                               </div>
-                             </div>
-                           ) : null}
-                         </div>
-                       </div>
-                     ))}
-                   </div>
-                 </div>
-               ) : null}
-             </section>
-
-          <hr />
-
-          <section>
-            <h3>評価セット（編集）</h3>
-            <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:8}}>
-              <button onClick={fetchEvalCases} className="small-btn">読み込み</button>
-              <button onClick={()=>generateEvalCandidates(200,10)} className="small-btn">自動生成 (200)</button>
-              <button onClick={saveEvalCases} className="small-btn" disabled={evalLoading}>保存</button>
-              <div style={{marginLeft:12}}>
-                <label style={{fontSize:12}}>管理トークン: <input value={evalAdminToken} onChange={(e)=>setEvalAdminToken(e.target.value)} placeholder="x-admin-token" style={{width:240}} /></label>
-              </div>
-            </div>
-
-            { evalCases && evalCases.length>0 ? (
-              <div style={{marginTop:6}}>
-                <div style={{fontSize:13, color:'#666', marginBottom:8}}>案件数: {evalCases.length}</div>
-                <div style={{display:'grid', gap:8}}>
-                  {evalCases.map((c, idx)=> (
-                    <div key={idx} style={{border:'1px solid #eee', padding:8, borderRadius:6}}>
-                      <div style={{display:'flex', justifyContent:'space-between'}}>
-                        <div><strong>Q#{idx+1}</strong> <span style={{color:'#666'}}>{(c.query || '').slice(0,140)}</span></div>
-                        <div style={{display:'flex', gap:8}}>
-                          <button onClick={()=>autofillRelevant(idx)} className="small-btn">auto-fill</button>
-                          <button onClick={()=>clearRelevant(idx)} className="small-btn">clear</button>
-                        </div>
-                      </div>
-                      <div style={{marginTop:8}}>
-                        <div style={{fontSize:12, color:'#444'}}>candidates:</div>
-                        <div style={{display:'flex', gap:8, flexWrap:'wrap', marginTop:6}}>
-                          { (c.candidates || []).map((cid)=> (
-                            <label key={cid} style={{display:'flex', alignItems:'center', gap:6, padding:6, border:'1px solid #f0f0f0', borderRadius:4}}>
-                              <input type="checkbox" checked={(c.relevant_ids||[]).includes(cid)} onChange={()=>toggleRelevant(idx, cid)} />
-                              <span style={{fontSize:13}}>{cid}</span>
-                            </label>
-                          )) }
-                        </div>
-                      </div>
-                    </div>
-                  )) }
-                </div>
-              </div>
-            ) : (
-              <div style={{color:'#666'}}>評価候補がありません。読み込むか自動生成してください。</div>
-            ) }
-
-          </section>
-
-          {/* --- 生成された問題の一括挿入機能 --- */}
-          <div style={{marginTop:12, padding:12, border:'1px solid #e6f7d4', borderRadius:6, background:'#f9fff9'}}>
-            <strong>生成された問題の一括挿入</strong>
-            <div style={{marginTop:8, color:'#333'}}>
-              生成された問題をまとめてデータベースに挿入します。<br />
-              （注意）すでに存在する問題と重複する可能性があります。<br />
-              挿入後は、<strong>必ず DB 確認</strong> セクションで結果を確認してください。
-            </div>
-
-            <div style={{marginTop:10, display:'flex', gap:8, alignItems:'center'}}>
-              <button onClick={async ()=>{
-                setStatus('生成された問題を一括挿入中...')
-                try{
-                  // 一時的に表示件数を増やす（パフォーマンス改善のため）
-                  const savedGenNum = genNum
-                  setGenNum(200)
-                  // 一括挿入リクエストを送信
-                  const body = { items: generatedItems.map(g => ({ stem: g.stem, stem_latex: g.latex, difficulty: g.difficulty, metadata: { generated_from: generatedPrompt } })) }
-                  const res = await fetch('/api/tuning/save_problems', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-                  const j = await res.json()
-                  if(!res.ok){ setStatus('一括挿入失敗: '+(j.detail||res.statusText)); return }
-                  setStatus('一括挿入成功: ' + (j.inserted_count || 0) + ' 件挿入')
-                  // 再取得
-                  await fetchDocEntries()
-                  // 元に戻す
-                  setGenNum(savedGenNum)
-                }catch(e){ setStatus('一括挿入中にエラー: '+e.message) }
-              }} className="small-btn" disabled={generatedItems.length===0}>
-                一括挿入
-              </button>
-
-              <div style={{flex:1, color:'#666', fontSize:13}}>
-                {generatedItems.length} 件の問題が生成されています。
-              </div>
-            </div>
-          </div>
-
-          <div style={{marginTop:12}}>
-              { generatedItems && generatedItems.length > 0 ? (
-                <div style={{border:'1px solid #eef', padding:8, borderRadius:6, marginTop:8}}>
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                    <strong>生成された問題（{generatedItems.length}件）</strong>
-                    <div style={{display:'flex', gap:8}}>
-                      <button className="small-btn" onClick={async ()=>{
-                        // bulk PDF download
-                        setStatus('PDF を生成中...')
-                        try{
-                          const res = await fetch('/api/generate_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ generated: generatedItems, title: '生成問題' }) })
-                          if(!res.ok){ const j = await res.json(); setStatus('PDF生成失敗: '+(j.detail||j.error||res.statusText)); return }
-                          const blob = await res.blob()
-                          const url = window.URL.createObjectURL(blob)
-                          const a = document.createElement('a')
-                          a.href = url
-                          a.download = 'generated.pdf'
-                          document.body.appendChild(a)
-                          a.click()
-                          a.remove()
-                          window.URL.revokeObjectURL(url)
-                          setStatus('PDF ダウンロード開始')
-                        }catch(e){ setStatus('PDF生成中にエラー: '+e.message) }
-                      }}>生成をPDFでダウンロード</button>
-                      <button className="small-btn" onClick={()=>{
-                        const w = window.open('', '_blank')
-                        const html = `<!doctype html><html><head><meta charset="utf-8"><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><h3>生成プレビュー</h3>${generatedItems.map(it=>`<div style="margin-bottom:12px"><div>${it.stem ? `<div><strong>${it.stem}</strong></div>` : ''}<div>\\[${it.latex ? it.latex : ''}\\]</div>${it.explanation ? `<div><em>${it.explanation}</em></div>` : ''}</div>`).join('')}</body></html>`
-                        w.document.write(html)
-                        w.document.close()
-                      }}>プレビュー</button>
-                    </div>
-                  </div>
-
-                  <div style={{marginTop:8, display:'grid', gap:6}}>
-                    {generatedItems.map((it, idx)=> (
-                      <div key={idx} style={{display:'flex', justifyContent:'space-between', gap:8, alignItems:'center'}}>
-                        <div style={{flex:1}}><code style={{whiteSpace:'pre-wrap'}}>{it.latex ? (it.latex.length>240 ? it.latex.slice(0,240)+'...' : it.latex) : (it.stem || '')}</code></div>
-                        <div style={{display:'flex', gap:8}}>
-                          <button className="small-btn" onClick={()=>{
-                            const w = window.open('', '_blank')
-                            const html = `<!doctype html><html><head><meta charset="utf-8"><script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script></head><body><div>\\[${it.latex ? it.latex : ''}\\]</div></body></html>`
-                            w.document.write(html)
-                            w.document.close()
-                          }}>プレビュー</button>
-                          <button className="small-btn" onClick={async ()=>{
-                            setStatus('挿入中...')
-                            try{
-                              const body = { parsed_output: { problem: { stem: it.stem || null, stem_latex: it.latex || null }, final_answer: null, checks: [] } }
-                              const res = await fetch('/api/tuning/save_problem', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) })
-                              const j = await res.json()
-                              if(!res.ok){ setStatus('挿入失敗: '+(j.detail||j.error||res.statusText)); return }
-                              setStatus('挿入成功 id=' + (j.inserted_id || j.inserted_id))
-                            }catch(e){ setStatus('挿入中にエラー: '+e.message) }
-                          }}>挿入</button>
-                          <button className="small-btn" onClick={async ()=>{
-                            setStatus('PDF を生成中...')
-                            try{
-                              const res = await fetch('/api/generate_pdf', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ generated: [it], title: '生成問題' }) })
-                              if(!res.ok){ const j = await res.json(); setStatus('PDF生成失敗: '+(j.detail||j.error||res.statusText)); return }
-                              const blob = await res.blob()
-                              const url = window.URL.createObjectURL(blob)
-                              const a = document.createElement('a')
-                              a.href = url
-                              a.download = `generated_${idx+1}.pdf`
-                              document.body.appendChild(a)
-                              a.click()
-                              a.remove()
-                              window.URL.revokeObjectURL(url)
-                              setStatus('PDF ダウンロード開始')
-                            }catch(e){ setStatus('PDF生成中にエラー: '+e.message) }
-                          }}>PDF</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null }
-            </div>
-          </>
-      )}
-
-      {/* 最後に生成した PDF のリンク（ポップアップブロック時の補助） */}
-      {lastPdfUrl ? (
-        <div style={{marginTop:12, padding:12, border:'1px solid #d1e7dd', borderRadius:6, background:'#f8f9fa'}}>
-          <div style={{color:'#0f5132', fontWeight:600}}>PDF 生成完了</div>
-          <div style={{marginTop:6, color:'#333'}}>
-            生成された PDF を以下のリンクからダウンロードできます（ポップアップブロック時の補助）:
-            <div style={{marginTop:4}}>
-              <a href={lastPdfUrl} target="_blank" rel="noreferrer" style={{color:'#0d6efd', textDecoration:'underline'}}>{lastPdfUrl}</a>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }
