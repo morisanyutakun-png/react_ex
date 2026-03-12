@@ -1,24 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { MobileNavLinks } from '@/components/ui';
 
 /* ═══════════════════════════════════════════════════════════════
-   REM — Landing Page
-   
-   Design Principles Applied:
-   ─────────────────────────────────────────────────────────────
-   1. Pre-attentive Processing  → 1秒で価値が伝わるVisual Hierarchy
-   2. Hick's Law               → 選択肢を1つに（CTA一本化）
-   3. F-Pattern Scanning        → 左上→右→左下の自然な視線導線
-   4. Von Restorff Effect       → CTA を孤立・強調で記憶定着
-   5. Miller's Law              → Above-the-fold 情報を5±2チャンクに
-   6. Fitts' Law                → CTA は大きく、親指到達域に配置
-   7. Social Proof / Anchoring  → 数字で信頼性を先行呈示
-   8. Zeigarnik Effect          → ステップを見せて完了欲求を喚起
-   9. Aesthetic-Usability       → 美しい＝信頼できるの認知バイアス活用
-  10. Progressive Disclosure     → 詳細は fold 以降で段階的に開示
+   REM — Landing Page (物理受験生特化)
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─── Stripe-style Gradient Mesh Background ─── */
@@ -193,10 +180,22 @@ function ToolLink({ href, icon, label, desc }) {
 
 
 /* ═══════════════════════════════════════════════════════════════
-   PAGE BODY
+   PAGE BODY — 物理受験生特化ランディングページ
    ═══════════════════════════════════════════════════════════════ */
 export default function HomePage() {
   const containerRef = useScrollReveal();
+  const [historyCount, setHistoryCount] = useState(0);
+
+  // localStorage から学習履歴件数を取得
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('rem_practice_history');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data)) setHistoryCount(data.length);
+      }
+    } catch {}
+  }, []);
 
   return (
     <div ref={containerRef} className="relative min-h-screen overflow-hidden">
@@ -211,22 +210,11 @@ export default function HomePage() {
         <div className="max-w-[560px] w-full mx-auto">
 
           {/* ══════════════════════════════════════════════════════════
-             ABOVE THE FOLD — 1秒で伝わるヒーローセクション
-             
-             心理学: Pre-attentive Processing
-             → 色・サイズ・位置の3つの視覚チャネルで瞬時に情報を伝達
-             
-             構造:
-               [1] 信頼シグナル（カテゴリーラベル）
-               [2] メインヘッドライン（何ができるか）
-               [3] サブコピー（どうやるか + 何が得られるか）
-               [4] 社会的証明（具体的数字）
-               [5] CTA ボタン（行動誘導）
-               [6] 視覚的証明（PDF モックアップ）
+             ABOVE THE FOLD — ヒーローセクション (物理特化)
              ══════════════════════════════════════════════════════════ */}
           <section className="pt-10 sm:pt-16 pb-10 sm:pb-16">
-            
-            {/* [1] REM Brand Mark — ブランド認知の定着 */}
+
+            {/* Brand Mark */}
             <div className="text-center mb-6 stagger-item" style={{ animationDelay: '0ms' }}>
               <div className="inline-flex flex-col items-center gap-1">
                 <span className="text-[32px] sm:text-[40px] font-black tracking-[-0.06em] leading-none gradient-text-hero-animated">REM</span>
@@ -234,53 +222,84 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* [2] メインヘッドライン — 具体の法則: 抽象語を排除し、行動/結果を明示 */}
+            {/* ヘッドライン — 物理受験生にフォーカス */}
             <div className="text-center stagger-item" style={{ animationDelay: '80ms' }}>
-              <h1 className="text-[30px] sm:text-[42px] font-black tracking-[-0.04em] leading-[1.15] text-[#0f172a] mb-3">
-                試験問題を、<span className="gradient-text-hero-animated">1分で完成。</span>
+              <h1 className="text-[28px] sm:text-[40px] font-black tracking-[-0.04em] leading-[1.15] text-[#0f172a] mb-3">
+                物理の得点力を、<span className="gradient-text-hero-animated">AIで伸ばす。</span>
               </h1>
             </div>
 
-            {/* [3] サブコピー — Processing Fluency: 短文で処理速度を最大化 */}
+            {/* サブコピー */}
             <div className="text-center stagger-item" style={{ animationDelay: '160ms' }}>
               <p className="text-[15px] sm:text-[17px] text-[#475569] leading-[1.7] max-w-[400px] mx-auto mb-2" style={{ fontFeatureSettings: '"palt"' }}>
-                教科と難易度を選ぶだけ。<br />
-                AIが問題・解答・解説を作成し、<br />
-                <strong className="text-[#1e293b] font-bold">印刷可能なPDF</strong>がそのまま完成します。
+                単元と難易度を選ぶだけで、<br />
+                力学・電磁気・波動・熱力学の<br />
+                <strong className="text-[#1e293b] font-bold">入試レベルの類題</strong>がすぐ解ける。
               </p>
             </div>
 
-            {/* [4] 社会的証明 — Social Proof & Anchoring: SVGアイコン + 数字 */}
+            {/* ソーシャルプルーフ — 物理特化 */}
             <div className="stagger-item" style={{ animationDelay: '240ms' }}>
               <div className="flex items-center justify-center gap-4 sm:gap-7 my-7 sm:my-9">
                 <TrustMetric
+                  icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L10.5 21.75 12 13.5H3.75z" /></svg>}
+                  value="物理" label="AI演習" />
+                <div className="w-[1px] h-8 bg-[#e2e8f0]" />
+                <TrustMetric
+                  icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                  value="1分" label="で類題生成" />
+                <div className="w-[1px] h-8 bg-[#e2e8f0]" />
+                <TrustMetric
                   icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84" /></svg>}
-                  value="9教科" label="対応" />
-                <div className="w-[1px] h-8 bg-[#e2e8f0]" />
-                <TrustMetric
-                  icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
-                  value="PDF" label="即時出力" />
-                <div className="w-[1px] h-8 bg-[#e2e8f0]" />
-                <TrustMetric
-                  icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5" /></svg>}
-                  value="過去問" label="AI分析" />
+                  value="配点付" label="自己採点" />
               </div>
             </div>
 
-            {/* [5] メインCTA — 練習する（受験生向け）+ サブ（教員向け） */}
+            {/* メインCTA */}
             <div className="stagger-item" style={{ animationDelay: '320ms' }}>
               <div className="max-w-[400px] mx-auto">
-                {/* メインCTA: 練習する */}
                 <Link href="/practice" className="landing-cta-primary group block mb-3">
                   <span className="relative z-10 flex flex-col items-center gap-1.5">
                     <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
                     </svg>
                     <span className="text-[15px] sm:text-[16px] font-bold">物理の類題を練習する</span>
-                    <span className="text-[10px] font-medium opacity-70">単元・難易度を選ぶだけ</span>
+                    <span className="text-[10px] font-medium opacity-70">単元・難易度を選ぶだけ → 即スタート</span>
                   </span>
                 </Link>
-                {/* サブCTA: つくる（教員向け） */}
+
+                {/* 学習履歴カード */}
+                {historyCount > 0 && (
+                  <Link href="/history" className="block mb-3 px-4 py-3 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-purple-50 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-4.5 h-4.5 text-violet-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] font-black text-violet-800">学習履歴を見る</div>
+                        <div className="text-[10px] text-violet-500 font-medium mt-0.5">{historyCount}回の演習記録あり</div>
+                      </div>
+                      <svg className="w-4 h-4 text-violet-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                    </div>
+                  </Link>
+                )}
+
+                {/* 履歴がない場合のリンク */}
+                {historyCount === 0 && (
+                  <Link href="/history" className="block mb-3 text-center text-[11px] text-violet-500 hover:text-violet-700 transition-colors">
+                    <span className="inline-flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z" />
+                      </svg>
+                      学習履歴
+                    </span>
+                  </Link>
+                )}
+
                 <Link href="/user" className="landing-cta-tune group block">
                   <span className="relative z-10 flex flex-col items-center gap-1.5">
                     <svg className="w-5 h-5 opacity-80" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -296,7 +315,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* [6] 視覚的証明 — Picture Superiority Effect: テキストより画像は6倍記憶される */}
+            {/* PDF Mockup */}
             <div className="mt-8 sm:mt-10 stagger-item" style={{ animationDelay: '400ms' }}>
               <AnimatedPdfMockup />
             </div>
@@ -304,15 +323,37 @@ export default function HomePage() {
 
 
           {/* ══════════════════════════════════════════════════════════
-             BELOW THE FOLD — Progressive Disclosure
+             こんな受験生におすすめ — ターゲティング
              ══════════════════════════════════════════════════════════ */}
+          <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
+            <div className="text-center mb-8">
+              <span className="section-label">For you</span>
+              <h2 className="text-[22px] sm:text-[26px] font-black text-[#0f172a] tracking-[-0.03em] mt-3">
+                こんな受験生におすすめ
+              </h2>
+            </div>
+            <div className="space-y-3">
+              {[
+                { emoji: '😤', text: '物理の過去問を解き切ったけど、もっと類題が欲しい' },
+                { emoji: '📉', text: '模試で物理だけ偏差値が伸びない…' },
+                { emoji: '🤯', text: '力学は分かるのに電磁気で毎回落とす' },
+                { emoji: '⏰', text: '試験直前、苦手単元だけ集中的に演習したい' },
+              ].map(({ emoji, text }) => (
+                <div key={text} className="flex items-center gap-3 bg-white/80 backdrop-blur rounded-2xl border border-[#e2e8f0] px-4 py-3.5 shadow-sm">
+                  <span className="text-[22px] flex-shrink-0">{emoji}</span>
+                  <span className="text-[13px] font-semibold text-[#334155] leading-snug">{text}</span>
+                </div>
+              ))}
+            </div>
+          </section>
 
-          {/* ── HOW IT WORKS — Zeigarnik Effect: ステップを見せて完了欲求を喚起 ── */}
+
+          {/* ── HOW IT WORKS — 3ステップ ── */}
           <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
             <div className="text-center mb-8">
               <span className="section-label">How it works</span>
               <h2 className="text-[22px] sm:text-[26px] font-black text-[#0f172a] tracking-[-0.03em] mt-3">
-                たった3ステップで完成
+                たった3ステップで演習開始
               </h2>
             </div>
 
@@ -323,12 +364,12 @@ export default function HomePage() {
                 <div className="landing-step-connector" />
                 <div className="landing-step-content">
                   <div className="flex items-center gap-2 mb-1">
-                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
                     </svg>
-                    <h3 className="text-[14px] font-bold text-[#1e293b]">選ぶ</h3>
+                    <h3 className="text-[14px] font-bold text-[#1e293b]">単元・難易度を選ぶ</h3>
                   </div>
-                  <p className="text-[12px] text-[#64748b] leading-relaxed">教科・難易度・問題数を選択。出題パターンのテンプレートが指示を自動構築</p>
+                  <p className="text-[12px] text-[#64748b] leading-relaxed">力学・電磁気・波動・熱力学から選択。共通テスト〜東大レベルまで6段階</p>
                 </div>
               </div>
 
@@ -338,12 +379,12 @@ export default function HomePage() {
                 <div className="landing-step-connector" />
                 <div className="landing-step-content">
                   <div className="flex items-center gap-2 mb-1">
-                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
                     </svg>
-                    <h3 className="text-[14px] font-bold text-[#1e293b]">AIが生成</h3>
+                    <h3 className="text-[14px] font-bold text-[#1e293b]">AIが入試問題を生成</h3>
                   </div>
-                  <p className="text-[12px] text-[#64748b] leading-relaxed">過去問データを参考に、問題・解答・解説をLaTeX形式で自動作成。図表も挿入可能</p>
+                  <p className="text-[12px] text-[#64748b] leading-relaxed">過去問データベースを元に、配点付きの類題を自動作成。TikZ図付き</p>
                 </div>
               </div>
 
@@ -355,21 +396,21 @@ export default function HomePage() {
                     <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <h3 className="text-[14px] font-bold text-[#1e293b]">PDF完成</h3>
+                    <h3 className="text-[14px] font-bold text-[#1e293b]">解いて自己採点</h3>
                   </div>
-                  <p className="text-[12px] text-[#64748b] leading-relaxed">そのまま印刷・配布できる高品質PDFを出力。ダウンロードもワンクリック</p>
+                  <p className="text-[12px] text-[#64748b] leading-relaxed">解答・解説をチェック → 得点入力で自己採点。弱点単元を自動抽出</p>
                 </div>
               </div>
             </div>
           </section>
 
 
-          {/* ── WHAT YOU GET — 具体的な約束事を4つのチャンクで提示 ── */}
+          {/* ── 物理の全分野をカバー ── */}
           <section className="pb-12 sm:pb-16">
             <div className="text-center mb-8 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-              <span className="section-label">What you get</span>
+              <span className="section-label">Coverage</span>
               <h2 className="text-[22px] sm:text-[26px] font-black text-[#0f172a] tracking-[-0.03em] mt-3">
-                このアプリが約束すること
+                物理の全分野をAIでカバー
               </h2>
             </div>
 
@@ -377,140 +418,84 @@ export default function HomePage() {
               <BenefitCard
                 icon={
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
                   </svg>
                 }
-                title="作成時間 1/10"
-                desc="手作業なら数時間かかる問題作成を、1分以内に完了"
+                title="力学"
+                desc="運動方程式・エネルギー保存・衝突・円運動・万有引力"
                 delay={0}
               />
               <BenefitCard
                 icon={
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L10.5 21.75 12 13.5H3.75z" />
                   </svg>
                 }
-                title="PDF即出力"
-                desc="印刷してそのまま配布できる、学術品質のPDFが完成"
+                title="電磁気"
+                desc="クーロン力・回路・電磁誘導・交流・コンデンサー"
                 delay={60}
               />
               <BenefitCard
                 icon={
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                   </svg>
                 }
-                title="9教科対応"
-                desc="数学・物理・化学・生物・英語・国語・社会・情報・医学"
+                title="波動"
+                desc="ドップラー効果・干渉・回折・レンズ・光波"
                 delay={120}
               />
               <BenefitCard
                 icon={
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M3.75 21h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v13.5A1.5 1.5 0 003.75 21z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1.001A3.75 3.75 0 0012 18z" />
                   </svg>
                 }
-                title="図表も自動"
-                desc="TikZ図・化学構造式・回路図・グラフを自動挿入"
+                title="熱力学"
+                desc="気体の法則・熱サイクル・エントロピー・状態変化"
                 delay={180}
               />
             </div>
           </section>
 
 
-          {/* ── OUTPUT SHOWCASE — 出力物の3パターン提示 ── */}
-          <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-            <div className="text-center mb-8">
-              <span className="section-label">Output formats</span>
-              <h2 className="text-[22px] sm:text-[26px] font-black text-[#0f172a] tracking-[-0.03em] mt-3">
-                こんなPDFが手に入ります
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-              <OutputCard
-                icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>}
-                title="試験問題"
-                desc="テスト・入試形式"
-                lines={
-                  <>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="h-1.5 w-10 rounded bg-[#1e293b]/20" />
-                      <div className="text-[6px] font-bold px-1 py-0.5 rounded bg-blue-50 text-blue-600">100点</div>
-                    </div>
-                    <div className="h-[0.5px] w-full bg-[#e2e8f0]" />
-                    {[1,2,3].map(n => (
-                      <div key={n} className="flex items-center gap-1 mt-1">
-                        <div className="w-2.5 h-2.5 rounded-full bg-blue-100 flex items-center justify-center text-[5px] font-bold text-blue-600 flex-shrink-0">{n}</div>
-                        <div className="flex-1 h-1 rounded bg-[#94a3b8]/15" />
-                      </div>
-                    ))}
-                  </>
-                }
-              />
-              <OutputCard
-                icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z" /></svg>}
-                title="演習プリント"
-                desc="ワークシート形式"
-                lines={
-                  <>
-                    <div className="h-1.5 w-12 rounded bg-[#1e293b]/20 mb-1" />
-                    <div className="grid grid-cols-2 gap-1 flex-1">
-                      {[1,2,3,4].map(n => (
-                        <div key={n} className="bg-[#f8fafc] rounded border border-dashed border-[#e2e8f0] p-1">
-                          <div className="text-[5px] text-[#94a3b8]">({n})</div>
-                          <div className="h-2 border-b border-[#e2e8f0] mt-0.5" />
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                }
-              />
-              <OutputCard
-                icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M12 17.25h8.25" /></svg>}
-                title="一問一答"
-                desc="暗記カード形式"
-                lines={
-                  <>
-                    <div className="h-1.5 w-10 rounded bg-[#1e293b]/20 mb-1" />
-                    {[1,2,3].map(n => (
-                      <div key={n} className="flex items-center gap-1 py-0.5 border-b border-[#f1f5f9]">
-                        <div className="text-[5px] font-bold text-blue-500 w-2">{n}.</div>
-                        <div className="flex-1 h-1 rounded bg-[#94a3b8]/15" />
-                        <div className="w-[0.5px] h-2.5 bg-[#e2e8f0]" />
-                        <div className="w-5 h-1 rounded bg-emerald-200/50" />
-                      </div>
-                    ))}
-                  </>
-                }
-              />
-            </div>
-          </section>
-
-
-          {/* ── SECOND CTA — 中盤での行動喚起（Dual 並列CTA再掲） ── */}
+          {/* ── シェア＆拡散 CTA ── */}
           <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
             <div className="landing-mid-cta">
               <div className="text-center mb-5">
+                <div className="text-[36px] mb-2">🔥</div>
                 <h3 className="text-[18px] sm:text-[20px] font-black text-[#0f172a] tracking-[-0.02em] mb-2">
-                  今すぐ始めませんか？
+                  友だちにも教えてあげよう
                 </h3>
-                <p className="text-[13px] text-[#64748b]">登録不要。選ぶだけで、1分後にはPDFが手元に届きます。</p>
+                <p className="text-[13px] text-[#64748b] leading-relaxed">
+                  一緒に演習する仲間がいると、続けやすくなる。<br />
+                  物理で困ってる友だちにシェアしよう。
+                </p>
               </div>
               <div className="grid grid-cols-2 gap-2.5">
-                <Link href="/user" className="landing-cta-secondary group">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const text = '物理の入試対策にめっちゃ使える！AIが類題を無限に出してくれるサービス見つけた 🔥\n#REM #物理 #受験勉強';
+                    if (navigator.share) { navigator.share({ title: 'REM', text }).catch(() => {}); }
+                    else { navigator.clipboard.writeText(text + '\n' + window.location.href).catch(() => {}); }
+                  }}
+                  className="landing-cta-secondary group"
+                >
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    <span className="text-[13px] font-bold">問題をつくる</span>
-                    <svg className="w-3.5 h-3.5 opacity-50 group-hover:translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
                     </svg>
+                    <span className="text-[13px] font-bold">シェアする</span>
                   </span>
-                </Link>
-                <Link href="/dev" className="landing-cta-secondary-alt group">
+                </button>
+                <Link href="/practice" className="landing-cta-secondary-alt group">
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" /></svg>
-                    <span className="text-[13px] font-bold">品質を磨く</span>
+                    <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
+                    </svg>
+                    <span className="text-[13px] font-bold">演習する</span>
                     <svg className="w-3.5 h-3.5 opacity-50 group-hover:translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
@@ -521,7 +506,7 @@ export default function HomePage() {
           </section>
 
 
-          {/* ── TOOLS — Secondary features (Progressive Disclosure) ── */}
+          {/* ── TOOLS ── */}
           <section className="pb-16 sm:pb-20">
             <div className="text-center mb-6 scroll-reveal" style={{ transitionDelay: '0ms' }}>
               <span className="section-label">Tools</span>
@@ -532,6 +517,16 @@ export default function HomePage() {
 
             <div className="space-y-2.5 scroll-reveal" style={{ transitionDelay: '60ms' }}>
               <ToolLink
+                href="/history"
+                icon={
+                  <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                }
+                label="学習履歴"
+                desc="過去の演習結果・成長グラフを確認"
+              />
+              <ToolLink
                 href="/search"
                 icon={
                   <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="none">
@@ -541,18 +536,6 @@ export default function HomePage() {
                 }
                 label="問題をさがす"
                 desc="登録済みの過去問をキーワード検索"
-              />
-              <ToolLink
-                href="/db-editor"
-                icon={
-                  <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="none">
-                    <ellipse cx="12" cy="6.5" rx="8" ry="3" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M4 6.5v11c0 1.66 3.58 3 8 3s8-1.34 8-3v-11" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M4 12.5c0 1.66 3.58 3 8 3s8-1.34 8-3" stroke="currentColor" strokeWidth="1.2" opacity="0.35"/>
-                  </svg>
-                }
-                label="データ管理"
-                desc="過去問データベースの編集・追加"
               />
               <ToolLink
                 href="/help"
@@ -573,7 +556,7 @@ export default function HomePage() {
               <span className="relative flex h-1.5 w-1.5">
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#2563eb]"></span>
               </span>
-              <span className="text-[11px] font-medium text-[#94a3b8] tracking-[0.02em]">REM — Rapid Exam Maker</span>
+              <span className="text-[11px] font-medium text-[#94a3b8] tracking-[0.02em]">REM — 物理受験生のためのAI演習</span>
             </div>
           </div>
           <MobileNavLinks currentPath="/" />

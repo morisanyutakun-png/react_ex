@@ -5703,7 +5703,9 @@ LaTeXコマンドはそのまま書いてください（バックスラッシュ
    - 全ての数値・単位を明示（例: 質量 $m = 2.0\\,\\mathrm{{kg}}$, $g = 9.8\\,\\mathrm{{m/s^2}}$）
    - 「ただし〜」「〜とする」の条件節を必ず入れる
 3. 小問は誘導形式（2〜3 問）にしてください。
-4. 各小問には配点を設定してください（1問あたりの合計を25点とし、小問ごとに配分）。
+4. 各小問には配点を必ず設定してください。1問あたりの合計は25点とし、小問ごとに配分してください。
+   %%% POINTS (N) %%% マーカーで各小問の配点を必ず明記すること。配点 0 は禁止です。
+   例: 小問3つなら 8+8+9=25、小問2つなら 12+13=25 のように合計25点にする。
 5. 解答は数式で正確に記載。
 6. 解説は法則の適用 → 式変形 → 数値代入の順で段階的に記載。
 7. 数式以外の装飾コマンド（\\textbf, \\textit, \\noindent, \\begin{{itemize}} 等）は使わず、プレーンテキスト＋数式（$...$, \\[...\\]）のみで書いてください。
@@ -5871,8 +5873,25 @@ def _sanitize_practice_text(text: str) -> str:
     # \left{ → \left\{  /  \right} → \right\}
     text = re.sub(r'\\left\{', r'\\left\\{', text)
     text = re.sub(r'\\right\}', r'\\right\\}', text)
+    # 二重エスケープ防止
+    text = re.sub(r'\\left\\\\\{', r'\\left\\{', text)
+    text = re.sub(r'\\right\\\\\}', r'\\right\\}', text)
     # $$...$$ → \[...\]
     text = re.sub(r'\$\$([\s\S]*?)\$\$', r'\\[\1\\]', text)
+    # \textbf{}, \textit{}, \textcolor{}{} 等の装飾コマンドをテキストのみに変換
+    text = re.sub(r'\\textbf\{([^}]*)\}', r'\1', text)
+    text = re.sub(r'\\textit\{([^}]*)\}', r'\1', text)
+    text = re.sub(r'\\noindent\s*', '', text)
+    # \begin{itemize/enumerate} → プレーンテキスト化
+    text = re.sub(r'\\begin\{(?:itemize|enumerate)\}(?:\[[^\]]*\])?\s*', '', text)
+    text = re.sub(r'\\end\{(?:itemize|enumerate)\}\s*', '', text)
+    text = re.sub(r'\\item\s*', '・', text)
+    # \vspace, \hspace, \medskip, \bigskip 等のレイアウトコマンドを除去
+    text = re.sub(r'\\(?:vspace|hspace)\*?\{[^}]*\}\s*', '', text)
+    text = re.sub(r'\\(?:medskip|bigskip|smallskip)\s*', '', text)
+    # 未対応のフォント系コマンドを除去
+    text = re.sub(r'\\(?:textcolor|colorbox)\{[^}]*\}\{([^}]*)\}', r'\1', text)
+    text = re.sub(r'\\(?:fbox|mbox)\{([^}]*)\}', r'\1', text)
     return text
 
 
@@ -6032,13 +6051,30 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 lines.append(stem)
                 lines.append('')
 
-            # 図（figure_tikz）
+            # 図（figure_tikz）— TikZ コードのサニタイズと安全ラップ
             if figure_tikz and str(figure_tikz).strip() not in ('', 'null', 'None'):
                 fig_code = str(figure_tikz).strip()
-                lines.append(r'\begin{center}')
-                lines.append(fig_code)
-                lines.append(r'\end{center}')
-                lines.append('')
+                # TikZ コード内の危険なコマンドを除去
+                fig_code = re.sub(r'\\usepackage\b[^\n]*\n?', '', fig_code)
+                fig_code = re.sub(r'\\usetikzlibrary\b[^\n]*\n?', '', fig_code)
+                fig_code = re.sub(r'\\documentclass\b[^\n]*\n?', '', fig_code)
+                fig_code = re.sub(r'\\begin\{document\}', '', fig_code)
+                fig_code = re.sub(r'\\end\{document\}', '', fig_code)
+                # tikzpicture/circuitikz が含まれているか確認
+                has_env = re.search(r'\\begin\{(tikzpicture|circuitikz|axis)\}', fig_code)
+                if has_env:
+                    lines.append(r'\begin{center}')
+                    lines.append(fig_code)
+                    lines.append(r'\end{center}')
+                    lines.append('')
+                # 環境がない場合は tikzpicture で囲む
+                elif fig_code and not fig_code.startswith('%'):
+                    lines.append(r'\begin{center}')
+                    lines.append(r'\begin{tikzpicture}[>=stealth]')
+                    lines.append(fig_code)
+                    lines.append(r'\end{tikzpicture}')
+                    lines.append(r'\end{center}')
+                    lines.append('')
 
             # 小問
             for sp in subproblems:

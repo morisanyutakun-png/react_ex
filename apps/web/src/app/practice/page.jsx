@@ -38,6 +38,24 @@ const GEN_MODE = { AUTO: 'auto', MANUAL: 'manual' };
 
 const PRACTICE_FORMAT = { DRILL: 'drill', EXAM: 'exam' };
 
+/* ── 配点からスコア判定を導出するヘルパー ── */
+function deriveScoreFromPoints(earned, max) {
+  if (max <= 0) return SCORE.DELTA;
+  const ratio = earned / max;
+  if (ratio >= 0.8) return SCORE.CORRECT;
+  if (ratio >= 0.3) return SCORE.DELTA;
+  return SCORE.WRONG;
+}
+
+/* ── 問題の合計配点を取得 ── */
+function getTotalPoints(problem) {
+  const subs = problem?.subproblems;
+  if (Array.isArray(subs) && subs.length > 0) {
+    return subs.reduce((s, sp) => s + (sp.points || 0), 0);
+  }
+  return 0;
+}
+
 /* ─────────────────────────────────────────────────────────────
    セクション見出し
 ───────────────────────────────────────────────────────────── */
@@ -121,6 +139,75 @@ function ScoreButton({ type, onClick }) {
       <span className="text-[28px] leading-none">{s.icon}</span>
       <span className="text-[11px] font-bold">{s.label}</span>
     </button>
+  );
+}
+
+/* ── 得点入力コンポーネント（自己採点） ── */
+function ScoreInput({ subproblems, onSubmit, accent }) {
+  const [inputScores, setInputScores] = useState({});
+  const totalMax = subproblems.reduce((s, sp) => s + (sp.points || 0), 0);
+  const totalEarned = subproblems.reduce((s, sp, i) => s + (Number(inputScores[i]) || 0), 0);
+  const allFilled = subproblems.every((_, i) => inputScores[i] !== undefined && inputScores[i] !== '');
+
+  const handleChange = (idx, val) => {
+    const max = subproblems[idx]?.points || 0;
+    const num = val === '' ? '' : Math.max(0, Math.min(max, Number(val) || 0));
+    setInputScores((prev) => ({ ...prev, [idx]: num }));
+  };
+
+  const handleSubmit = () => {
+    const earned = subproblems.reduce((s, sp, i) => s + (Number(inputScores[i]) || 0), 0);
+    onSubmit(earned, totalMax);
+  };
+
+  // 配点がない場合（全部0）はフォールバック
+  if (totalMax === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-md">
+      <div className="text-[13px] font-black text-[#0f172a] mb-1 text-center">自己採点</div>
+      <p className="text-[10px] text-[#94a3b8] text-center mb-4">各小問の得点を入力してください</p>
+
+      <div className="space-y-3 mb-4">
+        {subproblems.map((sp, idx) => (
+          <div key={idx} className="flex items-center gap-3">
+            <span className="text-[12px] font-bold w-8 text-right" style={{ color: accent }}>{sp.label || `(${idx + 1})`}</span>
+            <div className="flex-1 flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={sp.points || 0}
+                value={inputScores[idx] ?? ''}
+                onChange={(e) => handleChange(idx, e.target.value)}
+                placeholder="0"
+                className="w-16 h-9 rounded-lg border-2 border-[#e2e8f0] text-center text-[14px] font-bold text-[#0f172a] focus:outline-none focus:border-violet-400 transition-colors"
+                style={inputScores[idx] !== undefined && inputScores[idx] !== '' ? { borderColor: accent + '60' } : {}}
+              />
+              <span className="text-[12px] text-[#94a3b8] font-medium">/ {sp.points || 0}点</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 合計 */}
+      <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] mb-4">
+        <span className="text-[12px] font-bold text-[#64748b]">合計</span>
+        <span className="text-[18px] font-black" style={{ color: accent }}>{totalEarned} / {totalMax}点</span>
+      </div>
+
+      <button
+        type="button"
+        disabled={!allFilled}
+        onClick={handleSubmit}
+        className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ background: allFilled ? `linear-gradient(135deg, ${accent}, ${accent}bb)` : '#e2e8f0', boxShadow: allFilled ? `0 8px 28px ${accent}30` : 'none' }}
+      >
+        {allFilled ? '採点する →' : '全小問を入力してください'}
+      </button>
+    </div>
   );
 }
 
@@ -856,7 +943,7 @@ function LatexTikzBlock({ children, className = '' }) {
    問題画面 B + 解答画面 C
 ───────────────────────────────────────────────────────────── */
 
-function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswer, onScore, onSkip, onQuit, latexForPdf, onDownloadPdf, pdfLoading }) {
+function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswer, onScore, onScorePoints, onSkip, onQuit, latexForPdf, onDownloadPdf, onCompileExplanation, explanationPdfLoading, pdfLoading }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const stem = problem?.stem || problem?.text || problem?.question || '';
   const topic = problem?.topic || problem?.metadata?.field || '';
@@ -959,7 +1046,10 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                       <span className="text-[13px] font-black shrink-0" style={{ color: c.accent }}>{sp.label}</span>
                     )}
                     {sp.question && (
-                      <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{sp.question}</LatexBlock>
+                      <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b] flex-1">{sp.question}</LatexBlock>
+                    )}
+                    {sp.points > 0 && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#f8fafc] text-[#94a3b8] border border-[#e2e8f0] self-start shrink-0 ml-auto">{sp.points}点</span>
                     )}
                   </div>
                 )}
@@ -1029,15 +1119,55 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
             </div>
           )}
 
-          {/* 自己採点 */}
-          <div className="pt-2">
-            <div className="text-[13px] font-black text-[#0f172a] mb-1 text-center">自己採点してね</div>
-            <p className="text-[10px] text-[#94a3b8] text-center mb-4">正直に答えることが成績アップの近道</p>
-            <div className="flex gap-3">
-              <ScoreButton type={SCORE.CORRECT} onClick={() => onScore(SCORE.CORRECT)} />
-              <ScoreButton type={SCORE.DELTA}   onClick={() => onScore(SCORE.DELTA)} />
-              <ScoreButton type={SCORE.WRONG}   onClick={() => onScore(SCORE.WRONG)} />
+          {/* 解説PDF化ボタン（自己採点前） */}
+          {latexForPdf && (
+            <div
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl border cursor-pointer transition-all duration-200 hover:shadow-md active:scale-[0.98]"
+              style={{ background: 'linear-gradient(135deg, #6366f108, #8b5cf605)', borderColor: '#6366f130' }}
+              onClick={onCompileExplanation}
+            >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #6366f1, #7c3aed)' }}>
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] font-black text-[#4f46e5]">
+                  {explanationPdfLoading ? '解説PDF生成中…' : '解説をPDFで見る'}
+                </div>
+                <div className="text-[10px] text-[#818cf8] mt-0.5">
+                  解答・解説を美しいLaTeX PDFで確認
+                </div>
+              </div>
+              {explanationPdfLoading ? (
+                <div className="w-4 h-4 border-2 border-[#818cf8]/30 border-t-[#6366f1] rounded-full animate-spin flex-shrink-0" />
+              ) : (
+                <svg className="w-4 h-4 text-[#a5b4fc] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              )}
             </div>
+          )}
+
+          {/* 自己採点 — 得点入力 or ○△× フォールバック */}
+          <div className="pt-2">
+            {getTotalPoints(problem) > 0 ? (
+              <ScoreInput
+                subproblems={subproblems}
+                onSubmit={(earned, max) => onScorePoints(earned, max)}
+                accent={c.accent}
+              />
+            ) : (
+              <>
+                <div className="text-[13px] font-black text-[#0f172a] mb-1 text-center">自己採点してね</div>
+                <p className="text-[10px] text-[#94a3b8] text-center mb-4">正直に答えることが成績アップの近道</p>
+                <div className="flex gap-3">
+                  <ScoreButton type={SCORE.CORRECT} onClick={() => onScore(SCORE.CORRECT)} />
+                  <ScoreButton type={SCORE.DELTA}   onClick={() => onScore(SCORE.DELTA)} />
+                  <ScoreButton type={SCORE.WRONG}   onClick={() => onScore(SCORE.WRONG)} />
+                </div>
+              </>
+            )}
           </div>
 
           {/* 高品質PDFバナー（解答表示時） */}
@@ -1134,6 +1264,9 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
   const [timeLeft, setTimeLeft] = useState(initialTime);
   const [finished, setFinished] = useState(false);
   const [examScores, setExamScores] = useState({}); // { index: SCORE.xxx }
+  const [examPointScores, setExamPointScores] = useState({}); // { index: { earned, max } }
+
+  const anyPoints = problems.some((p) => getTotalPoints(p) > 0);
 
   // タイマー
   useEffect(() => {
@@ -1160,11 +1293,18 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
   };
 
   const handleSubmitScores = () => {
-    const scoreArray = problems.map((_, i) => examScores[i] || SCORE.DELTA);
-    onFinish(scoreArray);
+    const scoreArray = problems.map((p, i) => {
+      if (examPointScores[i]) return deriveScoreFromPoints(examPointScores[i].earned, examPointScores[i].max);
+      return examScores[i] || SCORE.DELTA;
+    });
+    const pointArray = problems.map((_, i) => examPointScores[i] || null);
+    onFinish(scoreArray, pointArray);
   };
 
-  const allScored = Object.keys(examScores).length === problems.length;
+  const allScored = problems.every((p, i) => {
+    if (anyPoints && getTotalPoints(p) > 0) return examPointScores[i] != null;
+    return examScores[i] != null;
+  });
   const timeWarning = timeLeft > 0 && timeLeft <= 60;
   const timeDanger = timeLeft > 0 && timeLeft <= 30;
   const pct = Math.max(0, (timeLeft / initialTime) * 100);
@@ -1278,29 +1418,54 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
                       )}
                     </div>
                   ))}
-                  {/* 自己採点ボタン */}
-                  <div className="flex gap-2 mt-3">
-                    {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((sc) => {
-                      const map = {
-                        [SCORE.CORRECT]: { label: '○', bg: '#f0fdf4', border: '#86efac', text: '#16a34a', activeBg: '#16a34a' },
-                        [SCORE.DELTA]:   { label: '△', bg: '#fffbeb', border: '#fcd34d', text: '#d97706', activeBg: '#d97706' },
-                        [SCORE.WRONG]:   { label: '×', bg: '#fef2f2', border: '#fca5a5', text: '#dc2626', activeBg: '#dc2626' },
-                      };
-                      const m = map[sc];
-                      const active = scored === sc;
+                  {/* 自己採点 */}
+                  {(() => {
+                    const maxPts = getTotalPoints(problem);
+                    if (anyPoints && maxPts > 0) {
+                      // 得点入力モード
                       return (
-                        <button key={sc} type="button" onClick={() => handleScoreChange(idx, sc)}
-                          className="flex-1 py-2.5 rounded-xl border-2 font-black text-[16px] transition-all duration-200 active:scale-[0.93]"
-                          style={{
-                            background: active ? m.activeBg : m.bg,
-                            borderColor: active ? m.activeBg : m.border,
-                            color: active ? 'white' : m.text
-                          }}>
-                          {m.label}
-                        </button>
+                        <div className="flex items-center gap-3 mt-3">
+                          <span className="text-[11px] font-bold text-[#64748b]">得点：</span>
+                          <input
+                            type="number" min={0} max={maxPts}
+                            value={examPointScores[idx]?.earned ?? ''}
+                            onChange={(e) => {
+                              const v = Math.max(0, Math.min(maxPts, parseInt(e.target.value) || 0));
+                              setExamPointScores((prev) => ({ ...prev, [idx]: { earned: v, max: maxPts } }));
+                            }}
+                            placeholder="0"
+                            className="w-16 text-center text-[14px] font-bold border border-[#e2e8f0] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#8b5cf6]"
+                          />
+                          <span className="text-[12px] text-[#94a3b8]">/ {maxPts}点</span>
+                        </div>
                       );
-                    })}
-                  </div>
+                    }
+                    // ○△× モード
+                    return (
+                      <div className="flex gap-2 mt-3">
+                        {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((sc) => {
+                          const map = {
+                            [SCORE.CORRECT]: { label: '○', bg: '#f0fdf4', border: '#86efac', text: '#16a34a', activeBg: '#16a34a' },
+                            [SCORE.DELTA]:   { label: '△', bg: '#fffbeb', border: '#fcd34d', text: '#d97706', activeBg: '#d97706' },
+                            [SCORE.WRONG]:   { label: '×', bg: '#fef2f2', border: '#fca5a5', text: '#dc2626', activeBg: '#dc2626' },
+                          };
+                          const m = map[sc];
+                          const active = scored === sc;
+                          return (
+                            <button key={sc} type="button" onClick={() => handleScoreChange(idx, sc)}
+                              className="flex-1 py-2.5 rounded-xl border-2 font-black text-[16px] transition-all duration-200 active:scale-[0.93]"
+                              style={{
+                                background: active ? m.activeBg : m.bg,
+                                borderColor: active ? m.activeBg : m.border,
+                                color: active ? 'white' : m.text
+                              }}>
+                              {m.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -1320,7 +1485,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
           <button type="button" onClick={handleSubmitScores} disabled={!allScored}
             className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 8px 24px ${c.ring}` }}>
-            {allScored ? '結果を見る →' : `全問採点してください（残り${numQ - Object.keys(examScores).length}問）`}
+            {allScored ? '結果を見る →' : '全問採点してください'}
           </button>
         )}
 
@@ -1350,8 +1515,18 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
 function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onFinish, onQuit }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const [scores, setScores] = useState({});
+  const [pScores, setPScores] = useState({}); // { idx: { earned, max } }
   const [finished, setFinished] = useState(false);
-  const allScored = problems.length > 0 && Object.keys(scores).length === problems.length;
+
+  // 配点のある問題があるかチェック
+  const anyPoints = problems.some((p) => getTotalPoints(p) > 0);
+
+  // 得点入力済みかどうか
+  const allScored = problems.length > 0 && problems.every((_, i) => {
+    if (anyPoints && getTotalPoints(problems[i]) > 0) return pScores[i] != null;
+    return scores[i] != null;
+  });
+
   const pdfFailed = !pdfLoading && !pdfUrl;
 
   const scoreLabel = { [SCORE.CORRECT]: '○', [SCORE.DELTA]: '△', [SCORE.WRONG]: '×' };
@@ -1523,7 +1698,59 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
       {/* ── 採点パネル ── */}
       <div className="flex-shrink-0 bg-white border-t border-[#e2e8f0] px-4 pt-3 pb-4">
         <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.1em] uppercase mb-2">自己採点</p>
-        <div className="flex gap-2 overflow-x-auto pb-2">
+
+        {anyPoints ? (
+          /* 配点ベースの得点入力 */
+          <div className="space-y-2 max-h-48 overflow-y-auto pb-2">
+            {problems.map((p, idx) => {
+              const maxPts = getTotalPoints(p);
+              if (maxPts > 0) {
+                return (
+                  <div key={idx} className="flex items-center gap-3">
+                    <span className="text-[11px] font-bold text-[#64748b] w-10 shrink-0">問{idx + 1}</span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={maxPts}
+                      value={pScores[idx]?.earned ?? ''}
+                      onChange={(e) => {
+                        const v = Math.max(0, Math.min(maxPts, parseInt(e.target.value) || 0));
+                        setPScores((prev) => ({ ...prev, [idx]: { earned: v, max: maxPts } }));
+                      }}
+                      placeholder="得点"
+                      className="w-16 text-center text-[13px] font-bold border border-[#e2e8f0] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#8b5cf6]"
+                    />
+                    <span className="text-[11px] text-[#94a3b8]">/ {maxPts}点</span>
+                  </div>
+                );
+              }
+              // 配点なし→○△×
+              return (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-[#64748b] w-10 shrink-0">問{idx + 1}</span>
+                  <div className="flex gap-1">
+                    {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((s) => {
+                      const sc = scoreColor[s];
+                      const selected = scores[idx] === s;
+                      return (
+                        <button key={s} type="button"
+                          onClick={() => setScores((prev) => ({ ...prev, [idx]: s }))}
+                          className="w-8 h-8 rounded-full text-[13px] font-black border-2 transition-all duration-150 active:scale-90"
+                          style={selected
+                            ? { background: sc.active, borderColor: sc.active, color: 'white' }
+                            : { background: 'white', borderColor: '#e2e8f0', color: '#cbd5e1' }}>
+                          {scoreLabel[s]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* 従来の ○△× モード */
+          <div className="flex gap-2 overflow-x-auto pb-2">
           {problems.map((p, idx) => (
             <div key={idx} className="flex flex-col items-center gap-1 flex-shrink-0">
               <span className="text-[10px] font-bold text-[#94a3b8]">問{idx + 1}</span>
@@ -1549,14 +1776,24 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
             </div>
           ))}
         </div>
+        )}
+
         <button
           type="button"
           disabled={!allScored}
-          onClick={() => onFinish(problems.map((_, i) => scores[i] || SCORE.DELTA))}
+          onClick={() => {
+            // スコア配列と得点データを構築
+            const scoreArray = problems.map((p, i) => {
+              if (pScores[i]) return deriveScoreFromPoints(pScores[i].earned, pScores[i].max);
+              return scores[i] || SCORE.DELTA;
+            });
+            const pointArray = problems.map((_, i) => pScores[i] || null);
+            onFinish(scoreArray, pointArray);
+          }}
           className="w-full mt-2 py-3.5 rounded-2xl text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ background: allScored ? `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)` : '#e2e8f0', boxShadow: allScored ? `0 6px 20px ${c.ring}` : 'none' }}
         >
-          {allScored ? '採点して結果を見る →' : `あと ${problems.length - Object.keys(scores).length} 問採点してください`}
+          {allScored ? '採点して結果を見る →' : `まだ採点が完了していません`}
         </button>
       </div>
     </div>
@@ -1567,13 +1804,20 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, subject, problems, onF
    サマリー画面 E
 ───────────────────────────────────────────────────────────── */
 
-function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexForPdf, onDownloadPdf, pdfLoading }) {
+function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexForPdf, onDownloadPdf, pdfLoading, pointScores }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const correct = scores.filter((s) => s === SCORE.CORRECT).length;
   const delta   = scores.filter((s) => s === SCORE.DELTA).length;
   const wrong   = scores.filter((s) => s === SCORE.WRONG).length;
   const total   = scores.length;
-  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+  // 得点ベースの集計
+  const hasPointData = pointScores && pointScores.some((p) => p !== null);
+  const totalEarned = hasPointData ? pointScores.reduce((s, p) => s + (p?.earned || 0), 0) : 0;
+  const totalMax    = hasPointData ? pointScores.reduce((s, p) => s + (p?.max || 0), 0) : 0;
+  const pct = hasPointData && totalMax > 0
+    ? Math.round((totalEarned / totalMax) * 100)
+    : total > 0 ? Math.round((correct / total) * 100) : 0;
   const [shared, setShared] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -1593,6 +1837,26 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
     .filter(Boolean)
     .filter((v, i, a) => a.indexOf(v) === i);
 
+  // 学習履歴を localStorage に保存
+  useEffect(() => {
+    try {
+      const prev = JSON.parse(localStorage.getItem('rem_practice_history') || '[]');
+      const entry = {
+        subject,
+        difficulty: problems[0]?.metadata?.difficulty || '',
+        earnedPoints: hasPointData ? totalEarned : correct,
+        maxPoints: hasPointData ? totalMax : total,
+        numProblems: total,
+        date: new Date().toISOString(),
+        weakTopics,
+      };
+      prev.push(entry);
+      // 直近200件のみ保持
+      if (prev.length > 200) prev.splice(0, prev.length - 200);
+      localStorage.setItem('rem_practice_history', JSON.stringify(prev));
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 合格ライン/メッセージ
   const getRating = () => {
     if (pct === 100) return { emoji: '🏆', label: 'パーフェクト！', sub: '完璧な理解です。次のレベルへ！', color: '#f59e0b' };
@@ -1604,7 +1868,10 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
   const rating = getRating();
 
   const handleShare = async () => {
-    const text = `${subject}練習 ${total}問中${correct}問正解（${pct}%）${rating.emoji}\n受験AIで演習中！ #受験AI #${subject}`;
+    const scoreText = hasPointData && totalMax > 0
+      ? `${totalEarned}/${totalMax}点（${pct}%）`
+      : `${total}問中${correct}問正解（${pct}%）`;
+    const text = `${subject}練習 ${scoreText}${rating.emoji}\n受験AIで演習中！ #受験AI #${subject}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: '練習結果', text });
@@ -1675,6 +1942,15 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
       </div>
 
       {/* スコアカード */}
+      {hasPointData && totalMax > 0 ? (
+        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 mb-6 text-center">
+          <div className="text-[11px] font-bold text-[#94a3b8] mb-1 tracking-[0.05em]">得点</div>
+          <div className="text-[36px] font-black text-[#0f172a] leading-none">
+            {totalEarned}<span className="text-[18px] text-[#94a3b8] font-bold"> / {totalMax}</span>
+          </div>
+          <div className="text-[12px] text-[#64748b] mt-2">{total}問 ─ ○{correct} △{delta} ×{wrong}</div>
+        </div>
+      ) : (
       <div className="grid grid-cols-3 gap-2.5 mb-6">
         <div className="bg-[#f0fdf4] rounded-2xl border border-[#86efac]/60 p-4 text-center">
           <div className="text-[32px] font-black text-[#16a34a] leading-none">{correct}</div>
@@ -1688,8 +1964,8 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
           <div className="text-[32px] font-black text-[#dc2626] leading-none">{wrong}</div>
           <div className="text-[10px] font-bold text-[#dc2626] mt-1.5">× 要復習</div>
         </div>
-      </div>
-
+        </div>
+      )}
       {/* 弱点単元 */}
       {weakTopics.length > 0 && (
         <div className="bg-gradient-to-br from-[#fef2f2] to-[#fff7ed] rounded-2xl border border-[#fca5a5]/40 p-4 mb-5">
@@ -1820,6 +2096,9 @@ export default function PracticePage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [manualPrompt, setManualPrompt] = useState('');
   const [promptLoading, setPromptLoading] = useState(false);
+  const [explanationPdfLoading, setExplanationPdfLoading] = useState(false);
+  // 得点入力による採点結果 { earnedPoints, maxPoints } per problem
+  const [pointScores, setPointScores] = useState([]);
   // × 後のフォローアップ用に追加問題をキューに積む
   const extraQueue = useRef([]);
 
@@ -1893,6 +2172,7 @@ export default function PracticePage() {
       setLatexForPdf(latex);
       setCurrent(0);
       setScores([]);
+      setPointScores([]);
       setShowAnswer(false);
       extraQueue.current = [];
 
@@ -1956,6 +2236,7 @@ export default function PracticePage() {
     setLatexForPdf(latex);
     setCurrent(0);
     setScores([]);
+    setPointScores([]);
     setShowAnswer(false);
     extraQueue.current = [];
     if (latex) {
@@ -2011,6 +2292,7 @@ export default function PracticePage() {
   /* ── 自己採点 ── */
   const handleScore = useCallback((score) => {
     setScores((prev) => [...prev, score]);
+    setPointScores((prev) => [...prev, null]); // no point data for ○△× mode
 
     if (score === SCORE.WRONG) {
       setScreen(SCREEN.FOLLOW);
@@ -2019,6 +2301,37 @@ export default function PracticePage() {
 
     advanceToNext();
   }, [advanceToNext]);
+
+  /* ── 得点入力による自己採点 ── */
+  const handleScorePoints = useCallback((earned, max) => {
+    const score = deriveScoreFromPoints(earned, max);
+    setScores((prev) => [...prev, score]);
+    setPointScores((prev) => [...prev, { earned, max }]);
+
+    if (score === SCORE.WRONG) {
+      setScreen(SCREEN.FOLLOW);
+      return;
+    }
+
+    advanceToNext();
+  }, [advanceToNext]);
+
+  /* ── 解説コンパイル（解説部分をPDF化） ── */
+  const handleCompileExplanation = useCallback(async () => {
+    if (!latexForPdf) return;
+    setExplanationPdfLoading(true);
+    try {
+      // generate_pdf に answers モード用の LaTeX を渡す
+      // latexForPdf は full 版なので、そのまま送って PDF 取得
+      const resp = await generatePdf(latexForPdf);
+      if (resp?.pdf_url || resp?.url) {
+        window.open(resp.pdf_url || resp.url, '_blank');
+      }
+    } catch (e) {
+      console.error('解説PDF生成エラー:', e);
+    }
+    setExplanationPdfLoading(false);
+  }, [latexForPdf]);
 
   /* ── スキップ（△扱い） ── */
   const handleSkip = useCallback(() => {
@@ -2034,14 +2347,16 @@ export default function PracticePage() {
       setScreen(SCREEN.SELECT);
       setProblems([]);
       setScores([]);
+      setPointScores([]);
       setCurrent(0);
       setShowAnswer(false);
     }
   }, [scores]);
 
   /* ── 模試形式: 全問採点完了 ── */
-  const handleExamFinish = useCallback((scoreArray) => {
+  const handleExamFinish = useCallback((scoreArray, pointArray) => {
     setScores(scoreArray);
+    setPointScores(pointArray || scoreArray.map(() => null));
     setScreen(SCREEN.SUMMARY);
   }, []);
 
@@ -2097,6 +2412,7 @@ export default function PracticePage() {
     setScreen(SCREEN.SELECT);
     setProblems([]);
     setScores([]);
+    setPointScores([]);
     setCurrent(0);
     setShowAnswer(false);
     setLatexForPdf(null);
@@ -2136,7 +2452,7 @@ export default function PracticePage() {
         pdfProgress={pdfProgress}
         subject={subject}
         problems={problems}
-        onFinish={(scoreArray) => { setScores(scoreArray); setScreen(SCREEN.SUMMARY); }}
+        onFinish={(scoreArray, pointArray) => { setScores(scoreArray); setPointScores(pointArray || scoreArray.map(() => null)); setScreen(SCREEN.SUMMARY); }}
         onQuit={handleQuit}
       />
     );
@@ -2165,10 +2481,13 @@ export default function PracticePage() {
         showAnswer={showAnswer}
         onShowAnswer={handleShowAnswer}
         onScore={handleScore}
+        onScorePoints={handleScorePoints}
         onSkip={handleSkip}
         onQuit={handleQuit}
         latexForPdf={latexForPdf}
         onDownloadPdf={handleDownloadPdf}
+        onCompileExplanation={handleCompileExplanation}
+        explanationPdfLoading={explanationPdfLoading}
         pdfLoading={pdfLoading}
       />
     );
@@ -2211,6 +2530,7 @@ export default function PracticePage() {
         latexForPdf={latexForPdf}
         onDownloadPdf={handleDownloadPdf}
         pdfLoading={pdfLoading}
+        pointScores={pointScores}
       />
     );
   }
