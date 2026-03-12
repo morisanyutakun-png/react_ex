@@ -311,7 +311,6 @@ export default function App() {
   const [fullLatex, setFullLatex] = useState('')
   const [fullPdfUrl, setFullPdfUrl] = useState('')
   const [fullPdfLoading, setFullPdfLoading] = useState(false)
-  const [pdfViewMode, setPdfViewMode] = useState('problems')
   const [parsedProblems, setParsedProblems] = useState([])
   const [subScores, setSubScores] = useState({})
   const [loading, setLoading] = useState(false)
@@ -327,6 +326,7 @@ export default function App() {
   const [selfRating, setSelfRating] = useState(0)
   const [showShareCard, setShowShareCard] = useState(false)
   const [sessionXpGain, setSessionXpGain] = useState(0)
+  const [showScoring, setShowScoring] = useState(false)
 
   const isPracticing = screen === 'practice' && step >= 1 && step <= 3
   const sessionTime = useSessionTimer(isPracticing)
@@ -402,7 +402,6 @@ export default function App() {
             setAnswerPdfUrl('')
             setFullLatex(parsed.latex || '')
             setFullPdfUrl('')
-            setPdfViewMode('problems')
             setParsedProblems(parsed.problems || [])
             setSubScores({})
             setStep(4)
@@ -456,7 +455,7 @@ export default function App() {
     setFullPdfLoading(false)
   }
 
-  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setPdfViewMode('problems'); setParsedProblems([]); setSubScores({}); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false) }
+  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setParsedProblems([]); setSubScores({}); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false); setShowScoring(false) }
   const startPractice = () => { resetWizard(); setScreen('practice') }
 
   const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
@@ -757,13 +756,14 @@ export default function App() {
               </div>
             )}
 
-            {/* STEP 4 - 完了 */}
+            {/* STEP 4 - 演習フロー */}
             {step === 4 && (
               <div className="card anim-fade-up mobile-card completion-card">
+                {/* ── ヘッダー ── */}
                 <div className="completion-hero">
                   <div className="success-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-                  <div className="completion-title">演習完了！</div>
-                  <div className="completion-subtitle">おつかれさま。この1セッションが合格に近づく1歩。</div>
+                  <div className="completion-title">演習スタート！</div>
+                  <div className="completion-subtitle">問題を解き、解答を確認して採点しよう。</div>
                 </div>
                 <div className="completion-stats">
                   <div className="completion-stat"><div className="completion-stat-value">{form.numQuestions}</div><div className="completion-stat-label">問題数</div></div>
@@ -776,64 +776,59 @@ export default function App() {
                 </div>
                 <div className="completion-streak"><span className="completion-streak-fire">🔥</span><span>{stats.currentStreak}日連続</span>{stats.currentStreak > 1 && <span className="completion-streak-bonus">継続ボーナス！</span>}</div>
 
-                {/* ── PDF閲覧セクション（自己採点の前に配置） ── */}
-                {(answerLatex || fullLatex) && (
-                  <div className="pdf-mode-tabs">
-                    <button className={`pdf-mode-tab${pdfViewMode==='problems'?' active':''}`} onClick={() => setPdfViewMode('problems')}>📝 問題のみ</button>
-                    <button className={`pdf-mode-tab${pdfViewMode==='answers'?' active':''}`} onClick={() => setPdfViewMode('answers')}>📖 解答・解説</button>
-                    <button className={`pdf-mode-tab${pdfViewMode==='full'?' active':''}`} onClick={() => setPdfViewMode('full')}>📋 問題＋解答</button>
+                {/* ── STEP 1: 問題を解く ── */}
+                <div className="practice-step">
+                  <div className="practice-step-label">
+                    <span className="practice-step-num">STEP 1</span>
+                    <span className="practice-step-title">問題を解く</span>
                   </div>
-                )}
-                <div className="pdf-action-area">
-                  {pdfViewMode === 'problems' && pdfUrl && (
-                    <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
-                  )}
-                  {pdfViewMode === 'answers' && !answerPdfUrl && answerLatex && (
-                    <button className="btn btn-primary btn-block btn-lg" onClick={generateAnswerPdf} disabled={answerLoading}>
-                      {answerLoading ? '解答PDF生成中...' : '📖 解答・解説PDFを生成'}
-                    </button>
-                  )}
-                  {pdfViewMode === 'answers' && answerPdfUrl && (
-                    <a href={answerPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 解答・解説PDFを開く</a>
-                  )}
-                  {pdfViewMode === 'answers' && !answerLatex && (
-                    <div className="pdf-mode-hint">解答・解説データがありません</div>
-                  )}
-                  {pdfViewMode === 'full' && !fullPdfUrl && fullLatex && (
-                    <button className="btn btn-primary btn-block btn-lg" onClick={generateFullPdf} disabled={fullPdfLoading}>
-                      {fullPdfLoading ? 'PDF生成中...' : '📋 問題＋解答PDFを生成'}
-                    </button>
-                  )}
-                  {pdfViewMode === 'full' && fullPdfUrl && (
-                    <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題＋解答PDFを開く</a>
-                  )}
-                  {pdfViewMode === 'full' && !fullLatex && (
-                    <div className="pdf-mode-hint">フルモードのデータがありません</div>
-                  )}
+                  {pdfUrl
+                    ? <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
+                    : <div className="pdf-mode-hint">問題PDFがありません</div>
+                  }
                 </div>
 
-                {/* ── 自己採点セクション（数値入力版） ── */}
-                {parsedProblems.length > 0 && (() => {
+                {/* ── STEP 2: 解答・解説を確認する ── */}
+                <div className="practice-step">
+                  <div className="practice-step-label">
+                    <span className="practice-step-num">STEP 2</span>
+                    <span className="practice-step-title">解答・解説を確認する</span>
+                  </div>
+                  {!showScoring
+                    ? <button className="btn btn-outline btn-block btn-lg answer-reveal-btn" onClick={() => { setShowScoring(true); if (answerLatex && !answerPdfUrl) generateAnswerPdf() }}>
+                        📖 解答・解説を見て採点する
+                      </button>
+                    : <div className="answer-section">
+                        {answerLoading && <div className="answer-gen-loading"><div className="spinner" style={{width:18,height:18,borderWidth:2}} /><span>解答PDF生成中...</span></div>}
+                        {!answerLoading && answerPdfUrl && <a href={answerPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 解答・解説PDFを開く</a>}
+                        {!answerLoading && !answerPdfUrl && answerLatex && <button className="btn btn-outline btn-block" onClick={generateAnswerPdf} disabled={answerLoading}>📖 解答PDFを再生成</button>}
+                        {!answerLatex && fullLatex && !fullPdfUrl && <button className="btn btn-outline btn-block" onClick={generateFullPdf} disabled={fullPdfLoading}>{fullPdfLoading ? 'PDF生成中...' : '📋 問題＋解答PDFを生成'}</button>}
+                        {!answerLatex && fullPdfUrl && <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題＋解答PDFを開く</a>}
+                        {!answerLatex && !fullLatex && <div className="pdf-mode-hint">解答データがありません</div>}
+                      </div>
+                  }
+                </div>
+
+                {/* ── STEP 3: 自己採点 (解答確認後に表示) ── */}
+                {showScoring && parsedProblems.length > 0 && (() => {
                   const allSubs = []
                   parsedProblems.forEach((p, pi) => {
-                    const subs = p.subproblems || []
-                    subs.forEach((sp, si) => allSubs.push({ pi, si, label: sp.label || `(${si+1})`, points: sp.points || 0, topic: p.topic || '' }))
+                    ;(p.subproblems || []).forEach((sp, si) => allSubs.push({ pi, si, label: sp.label || `(${si+1})`, points: sp.points || 0 }))
                   })
                   const maxPoints = allSubs.reduce((s, x) => s + x.points, 0)
                   const earnedPoints = allSubs.reduce((s, x) => {
-                    const key = `${x.pi}-${x.si}`
-                    const v = subScores[key]
+                    const v = subScores[`${x.pi}-${x.si}`]
                     return s + (typeof v === 'number' ? v : 0)
                   }, 0)
-                  const allScored = allSubs.length > 0 && allSubs.every(x => {
-                    const v = subScores[`${x.pi}-${x.si}`]
-                    return typeof v === 'number'
-                  })
+                  const allScored = allSubs.length > 0 && allSubs.every(x => typeof subScores[`${x.pi}-${x.si}`] === 'number')
                   const pct = maxPoints > 0 ? Math.round((earnedPoints / maxPoints) * 100) : 0
                   const scoreSubmitted = subScores._submitted
                   return (
-                    <div className="scoring-section">
-                      <div className="scoring-header">📝 自己採点（解答を確認してから採点しよう）</div>
+                    <div className="practice-step scoring-phase">
+                      <div className="practice-step-label">
+                        <span className="practice-step-num">STEP 3</span>
+                        <span className="practice-step-title">自己採点</span>
+                      </div>
                       <div className="scoring-table">
                         {parsedProblems.map((p, pi) => (
                           <div key={pi} className="scoring-problem">
@@ -844,30 +839,16 @@ export default function App() {
                               const val = subScores[key]
                               return (
                                 <div key={key} className="scoring-row">
-                                  <span className="scoring-label">{sp.label || `(${si+1})`}</span>
-                                  <span className="scoring-pts">配点: {pts}点</span>
-                                  <div className="scoring-input-wrap">
-                                    <input
-                                      type="number"
-                                      className="scoring-input"
-                                      min={0}
-                                      max={pts}
-                                      step={1}
-                                      placeholder="—"
-                                      value={typeof val === 'number' ? val : ''}
-                                      onChange={e => {
-                                        const raw = e.target.value
-                                        if (raw === '') {
-                                          setSubScores(s => { const n = {...s}; delete n[key]; return n })
-                                        } else {
-                                          const num = Math.max(0, Math.min(pts, parseInt(raw, 10) || 0))
-                                          setSubScores(s => ({...s, [key]: num}))
-                                        }
-                                      }}
-                                      disabled={scoreSubmitted}
-                                    />
-                                    <span className="scoring-input-max">/ {pts}</span>
+                                  <div className="scoring-row-left">
+                                    <span className="scoring-label">{sp.label || `(${si+1})`}</span>
+                                    <span className="scoring-pts-badge">{pts}点</span>
                                   </div>
+                                  <div className="scoring-btn-group">
+                                    <button className={`score-btn score-correct${val === pts ? ' selected' : ''}`} onClick={() => setSubScores(s => ({...s, [key]: pts}))} disabled={scoreSubmitted} title="正解（全点）">○</button>
+                                    {pts > 1 && <button className={`score-btn score-partial${typeof val === 'number' && val > 0 && val < pts ? ' selected' : ''}`} onClick={() => setSubScores(s => ({...s, [key]: Math.max(1, Math.floor(pts/2))}))} disabled={scoreSubmitted} title="部分点">△</button>}
+                                    <button className={`score-btn score-wrong${val === 0 ? ' selected' : ''}`} onClick={() => setSubScores(s => ({...s, [key]: 0}))} disabled={scoreSubmitted} title="不正解（0点）">×</button>
+                                  </div>
+                                  {typeof val === 'number' && <span className={`scoring-earned-val${val === pts ? ' correct' : val === 0 ? ' wrong' : ' partial'}`}>{val}点</span>}
                                 </div>
                               )
                             })}
@@ -879,7 +860,7 @@ export default function App() {
                         {allScored && <span className="scoring-pct">({pct}%)</span>}
                       </div>
                       {allScored && !scoreSubmitted && (
-                        <button className="btn btn-primary btn-block" onClick={() => {
+                        <button className="btn btn-primary btn-block" style={{marginTop:10}} onClick={() => {
                           setSubScores(s => ({ ...s, _submitted: true }))
                           const entry = {
                             date: new Date().toISOString(),
@@ -897,7 +878,13 @@ export default function App() {
                           notify(`採点完了: ${earnedPoints}/${maxPoints}点 (${pct}%)`, 'success')
                         }}>✅ 採点を記録する</button>
                       )}
-                      {scoreSubmitted && <div className="scoring-submitted">✅ 採点を記録しました</div>}
+                      {scoreSubmitted && (
+                        <div className={`scoring-result-banner ${pct >= 80 ? 'excellent' : pct >= 50 ? 'good' : 'needs-work'}`}>
+                          <div className="scoring-result-pct">{pct}%</div>
+                          <div className="scoring-result-msg">{pct >= 80 ? '素晴らしい！完璧な仕上がり！' : pct >= 50 ? 'よく頑張った！次に繋げよう！' : '苦手分野を重点的に復習しよう！'}</div>
+                          <div className="scoring-result-score">{earnedPoints} / {maxPoints}点</div>
+                        </div>
+                      )}
                     </div>
                   )
                 })()}
