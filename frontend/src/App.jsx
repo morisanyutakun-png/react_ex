@@ -783,7 +783,16 @@ export default function App() {
                     <span className="practice-step-title">問題を解く</span>
                   </div>
                   {pdfUrl
-                    ? <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
+                    ? <>
+                        <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
+                        <div className="pdf-embed-wrapper">
+                          <iframe
+                            src={`${pdfUrl}#toolbar=0&view=FitH&zoom=page-width`}
+                            className="pdf-embed-frame"
+                            title="問題PDF"
+                          />
+                        </div>
+                      </>
                     : <div className="pdf-mode-hint">問題PDFがありません</div>
                   }
                 </div>
