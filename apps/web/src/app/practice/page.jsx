@@ -237,7 +237,7 @@ const DIFF_ICONS = ['📗', '📘', '📙', '📕', '🔥', '🏆'];
 function WizardHeader({ step, accent }) {
   const labels = ['科目', '単元', '難易度', '確認'];
   return (
-    <div className="sticky top-0 z-20 bg-[#0d1117]/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-[#1e2d4a]">
+    <div className="sticky top-0 z-20 bg-[#0d1f14]/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-[#1e2d1a]">
       {/* step dots + progress bar */}
       <div className="flex items-center justify-center gap-2 mb-3">
         {labels.map((label, i) => (
@@ -339,25 +339,30 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     key={s.name}
                     type="button"
                     onClick={() => handleSubjectSelect(s.name)}
-                    className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-[#1e2d4a] bg-[#111827] shadow-sm transition-all duration-250 active:scale-[0.97] hover:shadow-lg group"
-                    style={{ animationDelay: `${i * 60}ms` }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = col.accent + '55'; e.currentTarget.style.boxShadow = `0 8px 28px ${col.ring}`; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1e2d4a'; e.currentTarget.style.boxShadow = ''; }}
+                    className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 shadow-md transition-all duration-250 active:scale-[0.97] hover:shadow-xl group"
+                    style={{
+                      animationDelay: `${i * 60}ms`,
+                      background: `linear-gradient(135deg, ${col.accent}22 0%, ${col.accent}0d 100%)`,
+                      borderColor: col.accent + '60',
+                      boxShadow: `0 4px 16px ${col.accent}18`,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = col.accent + 'aa'; e.currentTarget.style.boxShadow = `0 8px 28px ${col.accent}35`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = col.accent + '60'; e.currentTarget.style.boxShadow = `0 4px 16px ${col.accent}18`; }}
                   >
                     <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0 shadow-sm"
-                      style={{ background: `linear-gradient(135deg, ${col.accent}18, ${col.accent}08)`, border: `1.5px solid ${col.accent}22` }}
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0 shadow-md"
+                      style={{ background: `linear-gradient(135deg, ${col.accent}55, ${col.accent}33)`, border: `1.5px solid ${col.accent}66` }}
                     >
                       {s.emoji}
                     </div>
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2 mb-0.5">
                         <span className="text-[18px] font-black text-[#e2e8ff]">{s.name}</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: col.accent + '16', color: col.accent }}>{s.tag}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: col.accent + '33', color: col.accent }}>{s.tag}</span>
                       </div>
-                      <div className="text-[12px] text-[#64748b]">{s.desc}</div>
+                      <div className="text-[12px] text-[#94a3b8]">{s.desc}</div>
                     </div>
-                    <svg className="w-5 h-5 text-[#cbd5e1] flex-shrink-0 group-hover:translate-x-1 group-hover:text-[#94a3b8] transition-all duration-200" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 flex-shrink-0 group-hover:translate-x-1 transition-all duration-200" style={{ color: col.accent }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
                   </button>
@@ -390,18 +395,19 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
               type="button"
               onClick={() => setTopics([])}
               className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 mb-4 transition-all duration-250 ${
-                topics.length === 0
-                  ? 'text-white border-transparent shadow-lg'
-                  : 'bg-[#111827] border-[#1e2d4a] text-[#8892b8] hover:border-[#2d4570]'
+                topics.length === 0 ? 'text-white border-transparent shadow-lg' : 'hover:shadow-md'
               }`}
-              style={topics.length === 0 ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 6px 20px ${ring}` } : {}}
+              style={topics.length === 0
+                ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 6px 20px ${ring}` }
+                : { background: `${acc}15`, borderColor: acc + '44', color: acc }}
             >
               <span className="text-[18px]">{topics.length === 0 ? '✓' : '○'}</span>
               <div className="flex-1 text-left">
                 <div className={`text-[13px] font-bold ${topics.length === 0 ? 'text-white' : ''}`}>全単元からランダム出題</div>
                 <div className={`text-[11px] mt-0.5 ${topics.length === 0 ? 'text-white/75' : 'text-[#94a3b8]'}`}>バランスよく全範囲を練習</div>
               </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${topics.length === 0 ? 'bg-white/20 text-white' : 'bg-[#1e2d4a] text-[#8892b8]'}`}>おすすめ</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={topics.length === 0 ? { background: 'rgba(255,255,255,0.20)', color: '#fff' } : { background: acc + '25', color: acc }}>おすすめ</span>
             </button>
 
             {/* 単元チップ */}
@@ -414,9 +420,11 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     type="button"
                     onClick={() => setTopics((prev) => sel ? prev.filter((x) => x !== t) : [...prev, t])}
                     className={`px-3.5 py-2 rounded-full text-[12px] font-semibold border-2 transition-all duration-200 active:scale-[0.95] ${
-                      sel ? 'text-white border-transparent shadow-sm' : 'bg-[#111827] text-[#8892b8] border-[#1e2d4a] hover:border-[#2d4570]'
+                      sel ? 'text-white border-transparent shadow-sm' : 'hover:shadow-sm'
                     }`}
-                    style={sel ? { background: acc, boxShadow: `0 2px 8px ${ring}` } : {}}
+                    style={sel
+                      ? { background: acc, boxShadow: `0 2px 8px ${ring}` }
+                      : { background: `${acc}15`, color: acc, borderColor: acc + '50' }}
                   >
                     {sel && <span className="mr-1 text-[10px]">✓</span>}
                     {t}
@@ -468,11 +476,11 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     type="button"
                     onClick={() => handleDifficultySelect(lv.value)}
                     className={`p-4 rounded-2xl border-2 text-left transition-all duration-250 active:scale-[0.95] ${
-                      sel
-                        ? 'text-white border-transparent shadow-xl scale-[1.04]'
-                        : 'bg-[#111827] border-[#1e2d4a] hover:border-[#2d4570] hover:shadow-md'
+                      sel ? 'text-white border-transparent shadow-xl scale-[1.04]' : 'hover:shadow-md'
                     }`}
-                    style={sel ? { background: `linear-gradient(135deg, ${acc}, ${acc}dd)`, boxShadow: `0 8px 24px ${ring}` } : {}}
+                    style={sel
+                      ? { background: `linear-gradient(135deg, ${acc}, ${acc}dd)`, boxShadow: `0 8px 24px ${ring}` }
+                      : { background: `linear-gradient(135deg, ${acc}18 0%, ${acc}0a 100%)`, borderColor: acc + '44' }}
                   >
                     <div className="text-[22px] mb-2 leading-none">{DIFF_ICONS[i]}</div>
                     <div className={`text-[14px] font-black ${sel ? 'text-white' : 'text-[#e2e8ff]'}`}>{lv.label}</div>
@@ -507,12 +515,12 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                   </span>
                 )}
                 {topics.length === 0 ? (
-                  <span className="text-[12px] font-semibold px-3 py-1.5 rounded-full bg-[#1e2d4a] border border-[#2d4570] text-[#8892b8]">全単元</span>
+                  <span className="text-[12px] font-semibold px-3 py-1.5 rounded-full" style={{ background: acc + '20', color: acc, border: `1px solid ${acc}40` }}>全単元</span>
                 ) : topics.map((t) => (
                   <span key={t} className="text-[12px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: acc + '12', color: acc, borderColor: acc + '30' }}>{t}</span>
                 ))}
                 {difficulty && (
-                  <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-[#1e2d4a] border border-[#2d4570] text-[#e2e8ff]">
+                  <span className="text-[12px] font-bold px-3 py-1.5 rounded-full" style={{ background: acc + '25', color: acc, border: `1px solid ${acc}45` }}>
                     {DIFF_ICONS[EXAM_LEVELS.findIndex(l => l.value === difficulty)]} {EXAM_LEVELS.find(l => l.value === difficulty)?.label}
                   </span>
                 )}
@@ -537,9 +545,11 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     type="button"
                     onClick={() => setNumQ(n)}
                     className={`flex-1 py-3.5 rounded-xl border-2 text-[14px] font-black transition-all duration-200 active:scale-[0.96] ${
-                      numQ === n ? 'text-white border-transparent shadow-md scale-[1.04]' : 'bg-[#111827] text-[#8892b8] border-[#1e2d4a] hover:border-[#2d4570]'
+                      numQ === n ? 'text-white border-transparent shadow-md scale-[1.04]' : 'hover:shadow-sm'
                     }`}
-                    style={numQ === n ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 4px 16px ${ring}` } : {}}
+                    style={numQ === n
+                      ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 4px 16px ${ring}` }
+                      : { background: `${acc}15`, color: acc, borderColor: acc + '45' }}
                   >
                     {n}問
                   </button>
@@ -562,12 +572,14 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                       type="button"
                       onClick={() => setPracticeFormat(f.val)}
                       className={`p-3.5 rounded-xl border-2 text-left transition-all duration-200 active:scale-[0.96] ${
-                        sel ? 'border-transparent shadow-md' : 'bg-[#111827] border-[#1e2d4a] hover:border-[#2d4570]'
+                        sel ? 'border-transparent shadow-md' : 'hover:shadow-sm'
                       }`}
-                      style={sel ? { background: acc + '10', borderColor: acc + '45' } : {}}
+                      style={sel
+                        ? { background: acc + '28', borderColor: acc + '70' }
+                        : { background: acc + '10', borderColor: acc + '35' }}
                     >
                       <div className="text-[20px] mb-1.5">{f.icon}</div>
-                      <div className={`text-[12px] font-black ${sel ? '' : 'text-[#e2e8ff]'}`} style={sel ? { color: acc } : {}}>{f.name}</div>
+                      <div className={`text-[12px] font-black`} style={{ color: sel ? acc : '#e2e8ff' }}>{f.name}</div>
                       <div className="text-[10px] text-[#94a3b8] mt-0.5">{f.desc}</div>
                     </button>
                   );
@@ -591,9 +603,11 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                       onClick={() => !m.locked && setGenMode(m.val)}
                       disabled={m.locked}
                       className={`p-3.5 rounded-xl border-2 text-left transition-all duration-200 ${
-                        m.locked ? 'opacity-45 cursor-not-allowed' : 'active:scale-[0.96]'
-                      } ${sel ? 'border-transparent shadow-md' : 'bg-[#111827] border-[#1e2d4a] hover:border-[#2d4570]'}`}
-                      style={sel ? { background: acc + '10', borderColor: acc + '45' } : {}}
+                        m.locked ? 'opacity-45 cursor-not-allowed' : 'active:scale-[0.96] hover:shadow-sm'
+                      }`}
+                      style={sel
+                        ? { background: acc + '28', borderColor: acc + '70' }
+                        : { background: acc + '10', borderColor: acc + '35' }}
                     >
                       <div className="text-[20px] mb-1.5">{m.icon}</div>
                       <div className={`text-[12px] font-black ${sel ? '' : 'text-[#e2e8ff]'}`} style={sel ? { color: acc } : {}}>{m.name}</div>
