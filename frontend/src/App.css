@@ -757,7 +757,7 @@ body {
 .session-timer-inner {
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 13px; font-weight: 700; color: var(--c-accent);
-  background: var(--c-surface); padding: 6px 16px; border-radius: 20px;
+  background: #fff6e9; padding: 6px 16px; border-radius: 20px;
   box-shadow: var(--shadow-sm); border: 1px solid var(--c-border);
   font-variant-numeric: tabular-nums;
 }
@@ -785,8 +785,8 @@ body {
    PATTERN GRID (Step 1)
    ════════════════════════════════════════════ */
 .physics-hero-banner {
-  background: linear-gradient(135deg, var(--c-bg-subtle), rgba(26, 143, 209, 0.04), var(--c-bg));
-  border-radius: var(--r-card); padding: 20px; color: #fff; margin-bottom: 16px;
+  background: linear-gradient(135deg, #fffaf3 0%, #ffefdc 55%, #ffe2bf 100%);
+  border-radius: var(--r-card); padding: 20px; color: var(--c-text); margin-bottom: 16px;
   position: relative; overflow: hidden;
   border: 1px solid var(--c-border);
 }
@@ -805,7 +805,7 @@ body {
 
 .tip {
   display: flex; align-items: flex-start; gap: 8px;
-  background: rgba(255, 170, 0, 0.06); border: 1px solid rgba(255, 170, 0, 0.2);
+  background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(217, 119, 6, 0.28);
   border-radius: var(--r-sm); padding: 12px 14px; font-size: 13px; color: var(--c-warning);
   margin-bottom: 16px;
 }
@@ -891,7 +891,7 @@ body {
 
 /* Base Mode */
 .base-mode-tabs {
-  display: flex; gap: 4px; background: var(--c-bg); border-radius: 10px;
+  display: flex; gap: 4px; background: #fff6e9; border-radius: 10px;
   padding: 4px; margin-bottom: 12px; border: 1px solid var(--c-border);
 }
 .base-mode-tab {
@@ -940,7 +940,7 @@ body {
 .base-pdf-thumb img { width: 100%; display: block }
 .base-pdf-thumb-label {
   position: absolute; bottom: 2px; right: 4px; font-size: 10px;
-  color: var(--c-text-muted); background: rgba(4, 9, 7, 0.88); padding: 1px 4px; border-radius: 4px;
+  color: #7a4b20; background: rgba(255, 246, 234, 0.95); padding: 1px 4px; border-radius: 4px;
 }
 
 .base-skip-notice {
@@ -974,7 +974,7 @@ body {
 .mobile-ai-link:hover { border-color: var(--c-cyan); color: var(--c-cyan); background: var(--c-cyan-bg) }
 .mobile-alert {
   display: flex; align-items: center; gap: 6px;
-  background: rgba(255, 170, 0, 0.06); border: 1px solid rgba(255, 170, 0, 0.2);
+  background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(217, 119, 6, 0.28);
   border-radius: var(--r-sm); padding: 10px 12px; font-size: 12px; color: var(--c-warning);
   margin-top: 8px;
 }
@@ -985,7 +985,7 @@ body {
   display: flex; align-items: center; gap: 4px; padding: 8px 0; margin-top: 8px;
 }
 .prompt-preview {
-  background: var(--c-bg); border: 1px solid var(--c-border); border-radius: var(--r-sm);
+  background: #fff9f0; border: 1px solid var(--c-border); border-radius: var(--r-sm);
   padding: 14px; font-size: 12px; line-height: 1.6; color: var(--c-text-sub);
   white-space: pre-wrap; max-height: 300px; overflow-y: auto;
   margin-top: 4px; font-family: var(--ff-mono);
@@ -1015,7 +1015,7 @@ body {
 }
 .completion-hero {
   text-align: center; padding: 32px 20px 24px;
-  background: linear-gradient(180deg, rgba(26, 143, 209, 0.07) 0%, var(--c-surface) 100%);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.12) 0%, #fff3e2 100%);
   position: relative;
 }
 .completion-hero::before {
@@ -1079,7 +1079,7 @@ body {
 
 /* PDF Mode Tabs */
 .pdf-mode-tabs {
-  display: flex; gap: 4px; background: var(--c-bg); border-radius: 10px;
+  display: flex; gap: 4px; background: #fff6e9; border-radius: 10px;
   padding: 4px; margin: 16px 16px 0; border: 1px solid var(--c-border);
 }
 .pdf-mode-tab {
@@ -1109,7 +1109,7 @@ body {
   background: var(--c-accent-bg) !important;
   color: var(--c-accent) !important; font-weight: 800;
 }
-.answer-reveal-btn:hover { background: rgba(26, 143, 209, 0.1) !important }
+.answer-reveal-btn:hover { background: rgba(217, 119, 6, 0.16) !important }
 .answer-section { display: flex; flex-direction: column; gap: 8px }
 .answer-gen-loading {
   display: flex; align-items: center; gap: 10px; padding: 14px;
@@ -1134,18 +1134,18 @@ body {
 }
 .scoring-row {
   display: flex; align-items: center; gap: 8px; padding: 8px 6px;
-  border-radius: 10px; background: var(--c-surface); border: 1px solid var(--c-border);
+  border-radius: 10px; background: #fffaf2; border: 1px solid var(--c-border);
 }
 .scoring-row-left { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0 }
 .scoring-label { font-size: 15px; font-weight: 900; color: var(--c-text); min-width: 32px }
 .scoring-pts-badge {
   font-size: 11px; font-weight: 700; color: var(--c-text-muted);
-  background: var(--c-bg); padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+  background: #fff3e3; padding: 2px 8px; border-radius: 10px; white-space: nowrap;
 }
 .scoring-btn-group { display: flex; gap: 4px; flex-shrink: 0 }
 .score-btn {
   width: 38px; height: 38px; border-radius: 10px; border: 2px solid var(--c-border-light);
-  background: var(--c-surface); font-size: 17px; font-weight: 800; cursor: pointer;
+  background: #fffaf2; font-size: 17px; font-weight: 800; cursor: pointer;
   transition: all .15s; display: flex; align-items: center; justify-content: center;
   color: var(--c-text-muted);
 }
@@ -1164,7 +1164,7 @@ body {
 .scoring-total {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   padding: 12px; margin-top: 10px; border-radius: 10px; font-size: 16px; font-weight: 800;
-  background: var(--c-surface); color: var(--c-text); border: 1px solid var(--c-border);
+  background: #fff8ee; color: var(--c-text); border: 1px solid var(--c-border);
 }
 .scoring-total.excellent { background: rgba(0, 255, 136, 0.06); color: var(--c-success); border-color: rgba(0, 255, 136, 0.2) }
 .scoring-total.good { background: rgba(255, 170, 0, 0.06); color: var(--c-warning); border-color: rgba(255, 170, 0, 0.2) }
@@ -1212,11 +1212,11 @@ body {
 @media (max-width: 768px) {
   .mobile-sticky-action {
     position: sticky; bottom: calc(var(--mobile-bottom-nav-h) + 4px);
-    background: rgba(4, 9, 7, 0.94);
+    background: rgba(255, 248, 236, 0.94);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     padding: 12px 16px; z-index: 50;
-    border-top: 1px solid var(--c-border);
+    border-top: 1px solid rgba(217, 119, 6, 0.25);
     margin: 0 -16px;
   }
 }
@@ -1247,7 +1247,7 @@ body {
    LEGAL
    ════════════════════════════════════════════ */
 .legal-tabs {
-  display: flex; gap: 4px; background: var(--c-bg); border-radius: 10px;
+  display: flex; gap: 4px; background: #fff6e9; border-radius: 10px;
   padding: 4px; margin-bottom: 20px; border: 1px solid var(--c-border);
 }
 .legal-tab {
