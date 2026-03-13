@@ -49,7 +49,7 @@ export default function RegisterPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}
-              className="bg-[#111827]/90 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-[#1e2d4a]">
+              className="bg-[#0c1830]/90 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-[#1e3060]">
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
               {error}
