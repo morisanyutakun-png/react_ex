@@ -18,9 +18,9 @@ const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM
 const PRACTICE_SUBJECTS = ['物理', '数学', '化学'];
 
 const SUBJECT_COLOR = {
-  '物理': { accent: '#22c98a', light: 'bg-emerald-950/20', text: 'text-emerald-400', border: 'border-emerald-700/40', gradient: 'from-emerald-500 to-teal-600', ring: '#22c98a20', glow: 'rgba(34,201,138,0.15)' },
-  '数学': { accent: '#3b82f6', light: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   gradient: 'from-blue-500 to-blue-600',   ring: '#3b82f620', glow: 'rgba(59,130,246,0.15)' },
-  '化学': { accent: '#10b981', light: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600', ring: '#10b98120', glow: 'rgba(16,185,129,0.15)' },
+  '物理': { accent: '#f97316', light: 'bg-orange-950/20', text: 'text-orange-400', border: 'border-orange-700/40', gradient: 'from-orange-500 to-amber-500', ring: '#f9731620', glow: 'rgba(249,115,22,0.15)' },
+  '数学': { accent: '#f59e0b', light: 'bg-amber-950/20',  text: 'text-amber-400',  border: 'border-amber-700/40',  gradient: 'from-amber-500 to-yellow-500',  ring: '#f59e0b20', glow: 'rgba(245,158,11,0.15)' },
+  '化学': { accent: '#fb923c', light: 'bg-orange-950/20', text: 'text-orange-300', border: 'border-orange-600/40', gradient: 'from-orange-400 to-red-500',    ring: '#fb923c20', glow: 'rgba(251,146,60,0.15)' },
 };
 
 const EXAM_LEVELS = [
