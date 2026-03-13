@@ -294,16 +294,38 @@ body {
 /* ════════════════════════════════════════════
    CARD
    ════════════════════════════════════════════ */
+.card,
+.physics-tagline,
+.feature-showcase,
+.home-quick-link-btn,
+.streak-card,
+.quick-stat-card,
+.level-card,
+.section-card,
+.completion-card {
+  --c-accent: #d97706;
+  --c-accent-hover: #c86403;
+  --c-accent-bg: rgba(217, 119, 6, 0.12);
+  --c-accent-glow: rgba(217, 119, 6, 0.24);
+  --c-text: #2f2318;
+  --c-text-sub: #6f4b2f;
+  --c-text-muted: #9a6d45;
+  --c-border: #efc9a3;
+  --c-border-light: #e2ab72;
+  --c-bg-subtle: #fff5ea;
+  --c-surface-raised: #ffeddc;
+}
+
 .card {
   background: linear-gradient(
     160deg,
-    rgba(45, 106, 60, 0.92) 0%,
-    rgba(35, 88, 49, 0.92) 58%,
-    rgba(27, 72, 40, 0.94) 100%
+    rgba(255, 252, 247, 0.97) 0%,
+    rgba(255, 242, 226, 0.98) 55%,
+    rgba(255, 228, 196, 0.98) 100%
   );
   border-radius: var(--r-card); padding: 28px;
-  box-shadow: 0 8px 28px rgba(9, 28, 14, 0.45), 0 0 0 1px rgba(135, 224, 152, 0.14) inset;
-  border: 1px solid rgba(108, 198, 126, 0.45);
+  box-shadow: 0 12px 30px rgba(47, 28, 8, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.45) inset;
+  border: 1px solid rgba(237, 164, 92, 0.42);
   position: relative;
 }
 @media (max-width: 768px) { .card { padding: 20px 16px; border-radius: 14px } }
@@ -381,7 +403,7 @@ body {
 
 /* Physics Tagline */
 .physics-tagline {
-  background: var(--c-surface); border-radius: var(--r-card);
+  background: linear-gradient(150deg, #fffdf8 0%, #fff3e4 100%); border-radius: var(--r-card);
   padding: 24px; box-shadow: var(--shadow-sm);
   border: 1px solid var(--c-border); text-align: center;
   position: relative; overflow: hidden;
@@ -407,7 +429,7 @@ body {
 
 /* ═══ Feature Showcase (Home) ═══ */
 .feature-showcase {
-  background: var(--c-surface); border-radius: var(--r-card);
+  background: linear-gradient(150deg, #fffdf8 0%, #fff1df 100%); border-radius: var(--r-card);
   padding: 24px; box-shadow: var(--shadow-sm);
   border: 1px solid var(--c-border);
   position: relative; overflow: hidden;
@@ -516,7 +538,7 @@ body {
 .home-quick-links { display: flex; flex-direction: column; gap: 8px }
 .home-quick-link-btn {
   display: flex; align-items: center; gap: 14px; width: 100%;
-  padding: 18px 20px; background: var(--c-surface);
+  padding: 18px 20px; background: linear-gradient(150deg, #fffdf8 0%, #fff1df 100%);
   border: 1px solid var(--c-border); border-radius: var(--r-card);
   cursor: pointer; transition: all .25s ease; text-align: left;
 }
@@ -544,7 +566,7 @@ body {
 
 /* Streak Card */
 .streak-card {
-  background: linear-gradient(135deg, var(--c-surface), rgba(30, 60, 38, 0.8));
+  background: linear-gradient(140deg, #fffaf2 0%, #ffeed9 60%, #ffe4c3 100%);
   border-radius: var(--r-card); padding: 20px 24px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--c-border);
@@ -570,7 +592,7 @@ body {
 /* Quick Stats */
 .quick-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px }
 .quick-stat-card {
-  background: var(--c-surface); border-radius: var(--r-card);
+  background: linear-gradient(150deg, #fffdf9 0%, #fff1df 100%); border-radius: var(--r-card);
   padding: 18px 12px; text-align: center;
   box-shadow: var(--shadow-sm); border: 1px solid var(--c-border);
   transition: all .2s;
@@ -596,7 +618,7 @@ body {
 
 /* Level Card */
 .level-card {
-  background: linear-gradient(135deg, var(--c-surface), rgba(99, 102, 241, 0.04));
+  background: linear-gradient(135deg, #fffcf7 0%, #fff0de 78%, rgba(255, 186, 120, 0.24) 100%);
   border-radius: var(--r-card); padding: 20px 24px;
   border: 1px solid var(--c-border);
   display: flex; flex-direction: column; gap: 10px;
@@ -627,7 +649,7 @@ body {
 
 /* Section Card */
 .section-card {
-  background: var(--c-surface); border-radius: var(--r-card);
+  background: linear-gradient(150deg, #fffdf8 0%, #fff2e2 100%); border-radius: var(--r-card);
   padding: 20px 24px; box-shadow: var(--shadow-sm); border: 1px solid var(--c-border);
 }
 .section-card-header {
@@ -986,7 +1008,11 @@ body {
 /* ════════════════════════════════════════════
    STEP 4 - Completion
    ════════════════════════════════════════════ */
-.completion-card { border: none; background: var(--c-surface); overflow: hidden }
+.completion-card {
+  border: 1px solid rgba(237, 164, 92, 0.42);
+  background: linear-gradient(160deg, #fffdf8 0%, #fff2e2 58%, #ffe8cc 100%);
+  overflow: hidden;
+}
 .completion-hero {
   text-align: center; padding: 32px 20px 24px;
   background: linear-gradient(180deg, rgba(26, 143, 209, 0.07) 0%, var(--c-surface) 100%);
