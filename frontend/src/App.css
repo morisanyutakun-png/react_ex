@@ -1,23 +1,24 @@
 /* ═══════════════════════════════════════════════
    物理AI – Study SaaS Design System
-   Deep Ocean × Sky Blue × Forest Teal
-   自然界の光スペクトル：深海 × 大空 × 森林
+   Aurora Forest Night
+   オーロラ森林夜：深森の黒緑 × 空の青 × 自然ティール
+   紫ゼロ・自然界の光スペクトルのみ使用
    ═══════════════════════════════════════════════ */
 
 /* ── Design Tokens ── */
 :root {
-  /* Core palette – Deep Ocean/Space */
-  --c-bg: #08101c;
-  --c-bg-subtle: #0d1828;
-  --c-surface: #101f35;
-  --c-surface-raised: #172b48;
-  --c-border: #1c3354;
-  --c-border-light: #254878;
+  /* Core palette – Deep Forest Night */
+  --c-bg: #060c09;
+  --c-bg-subtle: #0b1510;
+  --c-surface: #0f1e13;
+  --c-surface-raised: #162a1b;
+  --c-border: #1e3a26;
+  --c-border-light: #28503a;
 
-  /* Text – cool, natural */
-  --c-text: #d6e8f4;
-  --c-text-sub: #6a90b4;
-  --c-text-muted: #3a5a7a;
+  /* Text – moonlit forest */
+  --c-text: #cee8d8;
+  --c-text-sub: #598a6e;
+  --c-text-muted: #2c4e36;
   --c-primary: #fff;
 
   /* Accent – Sky / Ocean Blue */
@@ -65,15 +66,38 @@ html { font-size: 16px; -webkit-text-size-adjust: 100% }
 body {
   font-family: var(--ff);
   color: var(--c-text);
-  background: var(--c-bg);
+  background-color: var(--c-bg);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
-  /* nano grid background */
+}
+
+/* ── 全体背景：オーロラ森林大気 ── */
+/* app-shell が全画面を覆う固定グラデーション背景を担う */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background:
+    /* 左上：オーロラグリーン */
+    radial-gradient(ellipse at -5% 0%, rgba(13, 158, 138, 0.18) 0%, transparent 52%),
+    /* 右下：森の深み */
+    radial-gradient(ellipse at 110% 100%, rgba(22, 163, 74, 0.1) 0%, transparent 48%),
+    /* 中央：空の青 */
+    radial-gradient(ellipse at 60% 30%, rgba(26, 143, 209, 0.07) 0%, transparent 55%),
+    /* 森の床：深い緑黒 */
+    linear-gradient(175deg, #040a07 0%, #060c09 45%, #080f0b 100%);
+  /* 物理の格子（ごく微かに） */
   background-image:
-    linear-gradient(rgba(26, 143, 209, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(26, 143, 209, 0.015) 1px, transparent 1px);
-  background-size: 24px 24px;
+    radial-gradient(ellipse at -5% 0%, rgba(13, 158, 138, 0.18) 0%, transparent 52%),
+    radial-gradient(ellipse at 110% 100%, rgba(22, 163, 74, 0.1) 0%, transparent 48%),
+    radial-gradient(ellipse at 60% 30%, rgba(26, 143, 209, 0.07) 0%, transparent 55%),
+    linear-gradient(175deg, #040a07 0%, #060c09 45%, #080f0b 100%),
+    linear-gradient(rgba(13, 158, 138, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 158, 138, 0.014) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+  background-attachment: fixed;
 }
 
 /* ── Responsive Utils ── */
@@ -85,7 +109,6 @@ body {
 }
 
 /* ── Shell ── */
-.app-shell { min-height: 100vh; display: flex; flex-direction: column; position: relative }
 .main-content { max-width: 720px; width: 100%; margin: 0 auto; padding: 24px 20px 80px }
 @media (max-width: 768px) { .main-content { padding: 12px 12px calc(var(--mobile-bottom-nav-h) + 20px) } }
 
@@ -96,7 +119,14 @@ body {
 @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: .6 } }
 @keyframes glowPulse {
   0%, 100% { box-shadow: 0 0 8px var(--c-accent-glow) }
-  50% { box-shadow: 0 0 24px var(--c-accent-glow), 0 0 48px rgba(26, 143, 209, 0.1) }
+  50% { box-shadow: 0 0 24px var(--c-accent-glow), 0 0 48px rgba(13, 158, 138, 0.12) }
+}
+
+/* オーロラ揺らぎ — ヒーロー背景にゆっくり生命感を */
+@keyframes auroraFloat {
+  0%, 100% { opacity: 1; transform: scale(1) translateY(0) }
+  33% { opacity: 0.85; transform: scale(1.04) translateY(-4px) }
+  66% { opacity: 0.92; transform: scale(0.97) translateY(3px) }
 }
 @keyframes shimmer {
   0% { background-position: -200% 0 }
@@ -117,7 +147,7 @@ body {
    HEADER (desktop)
    ════════════════════════════════════════════ */
 .header {
-  background: rgba(13, 17, 23, 0.88);
+  background: rgba(4, 9, 7, 0.88);
   backdrop-filter: blur(16px) saturate(1.5);
   -webkit-backdrop-filter: blur(16px) saturate(1.5);
   border-bottom: 1px solid var(--c-border);
@@ -149,7 +179,7 @@ body {
    MOBILE TOP BAR
    ════════════════════════════════════════════ */
 .mobile-top-bar {
-  background: rgba(13, 17, 23, 0.92);
+  background: rgba(4, 9, 7, 0.92);
   backdrop-filter: blur(16px) saturate(1.5);
   -webkit-backdrop-filter: blur(16px) saturate(1.5);
   border-bottom: 1px solid var(--c-border);
@@ -175,7 +205,7 @@ body {
    ════════════════════════════════════════════ */
 .mobile-bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; height: var(--mobile-bottom-nav-h);
-  background: rgba(13, 17, 23, 0.94);
+  background: rgba(4, 9, 7, 0.94);
   backdrop-filter: blur(20px) saturate(1.8);
   -webkit-backdrop-filter: blur(20px) saturate(1.8);
   border-top: 1px solid var(--c-border);
@@ -228,9 +258,12 @@ body {
 .btn-lg { padding: 14px 24px; font-size: 16px; border-radius: 14px }
 .btn-block { width: 100% }
 .btn-hero {
-  background: linear-gradient(135deg, #1565a8 0%, #1a8fd1 50%, #0d9e8a 100%);
+  /* オーロラCTAボタン: 深森→オーロラグリーン→空青 */
+  background: linear-gradient(135deg, #0a7a5e 0%, #0d9e8a 40%, #1a8fd1 100%);
   color: #fff; padding: 18px 36px; font-size: 18px; border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(26, 143, 209, 0.35), 0 0 0 1px rgba(255,255,255,0.08) inset;
+  box-shadow:
+    0 4px 28px rgba(13, 158, 138, 0.4),
+    0 0 0 1px rgba(13, 210, 140, 0.15) inset;
   font-weight: 900;
   letter-spacing: .03em; text-transform: uppercase;
   position: relative; overflow: hidden;
@@ -238,17 +271,20 @@ body {
 }
 .btn-hero::before {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
   background-size: 200% 100%;
   animation: shimmer 2.5s infinite;
 }
 .btn-hero::after {
   content: ''; position: absolute; inset: -2px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent, rgba(255,255,255,0.06));
+  background: linear-gradient(135deg, rgba(13, 210, 140, 0.12), transparent, rgba(26, 143, 209, 0.08));
   border-radius: 20px; pointer-events: none;
 }
 .btn-hero:hover {
-  box-shadow: 0 8px 36px rgba(26, 143, 209, 0.45), 0 0 60px rgba(13, 158, 138, 0.2);
+  box-shadow:
+    0 8px 40px rgba(13, 158, 138, 0.5),
+    0 0 80px rgba(26, 143, 209, 0.2),
+    0 0 0 1px rgba(13, 210, 140, 0.2) inset;
   transform: translateY(-3px) scale(1.02);
 }
 .btn-hero:active { transform: scale(0.98) }
@@ -291,11 +327,13 @@ body {
 }
 .home-hero-bg {
   position: absolute; inset: 0; z-index: 0;
+  /* オーロラ映えグラデーション */
   background:
-    radial-gradient(ellipse at 15% 85%, rgba(26, 143, 209, 0.2) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 15%, rgba(13, 158, 138, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(26, 143, 209, 0.05) 0%, transparent 65%),
-    linear-gradient(160deg, #0a1929 0%, #08101c 40%, #0d1828 100%);
+    radial-gradient(ellipse at 0% 100%, rgba(13, 210, 140, 0.32) 0%, transparent 45%),
+    radial-gradient(ellipse at 100% 0%, rgba(26, 143, 209, 0.26) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 50%, rgba(13, 158, 138, 0.1) 0%, transparent 65%),
+    linear-gradient(155deg, #031008 0%, #060c09 35%, #090f0b 70%, #0b1510 100%);
+  animation: auroraFloat 12s ease-in-out infinite;
 }
 /* Physics equation watermarks */
 .home-hero-bg::before {
@@ -304,7 +342,7 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-family: var(--ff-mono);
   font-size: 15px; letter-spacing: 6px; word-spacing: 20px;
-  color: rgba(26, 143, 209, 0.05);
+  color: rgba(13, 210, 140, 0.06);
   white-space: nowrap; overflow: hidden;
   transform: rotate(-8deg) scale(1.6);
   pointer-events: none;
@@ -314,28 +352,28 @@ body {
   content: '';
   position: absolute; inset: 0;
   background:
-    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(26, 143, 209, 0.025) 39px, rgba(26, 143, 209, 0.025) 40px),
-    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(26, 143, 209, 0.025) 39px, rgba(26, 143, 209, 0.025) 40px);
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(13, 158, 138, 0.03) 39px, rgba(13, 158, 138, 0.03) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(13, 158, 138, 0.03) 39px, rgba(13, 158, 138, 0.03) 40px);
   pointer-events: none;
 }
 .home-hero-content { position: relative; z-index: 1; color: #fff }
 .home-hero-badge {
   display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(26, 143, 209, 0.1);
-  backdrop-filter: blur(8px);
+  background: rgba(13, 158, 138, 0.12);
+  backdrop-filter: blur(10px);
   padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 800;
-  margin-bottom: 10px; border: 1px solid rgba(26, 143, 209, 0.2);
-  color: var(--c-accent); letter-spacing: .06em; text-transform: uppercase;
+  margin-bottom: 10px; border: 1px solid rgba(13, 210, 140, 0.25);
+  color: #2dd4ae; letter-spacing: .06em; text-transform: uppercase;
 }
 .home-hero-greeting { font-size: 14px; color: var(--c-text-sub); margin-bottom: 4px }
 .home-hero-motivation {
   font-size: 22px; font-weight: 900; line-height: 1.4; margin-bottom: 24px;
   letter-spacing: -.01em; max-width: 400px; color: var(--c-text);
-  text-shadow: 0 0 40px rgba(26, 143, 209, 0.12);
+  text-shadow: 0 2px 30px rgba(13, 210, 140, 0.15);
 }
 @media (max-width: 768px) {
-  .home-hero { padding: 28px 20px; min-height: 200px; border-radius: 16px }
-  .home-hero-motivation { font-size: 18px }
+  .home-hero { padding: 32px 22px 28px; min-height: 240px; border-radius: 20px }
+  .home-hero-motivation { font-size: 19px; max-width: 100% }
 }
 
 /* Physics Tagline */
@@ -503,7 +541,7 @@ body {
 
 /* Streak Card */
 .streak-card {
-  background: linear-gradient(135deg, var(--c-surface), var(--c-surface-raised));
+  background: linear-gradient(135deg, var(--c-surface), rgba(30, 60, 38, 0.8));
   border-radius: var(--r-card); padding: 20px 24px;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--c-border);
@@ -677,12 +715,12 @@ body {
   border-radius: var(--r-card);
 }
 .home-cta .btn {
-  background: linear-gradient(135deg, #1565a8, var(--c-accent), var(--c-cyan));
-  box-shadow: 0 4px 20px var(--c-accent-glow);
+  background: linear-gradient(135deg, #0a7a5e, var(--c-cyan), var(--c-accent));
+  box-shadow: 0 4px 20px rgba(13, 158, 138, 0.35);
   font-size: 16px; padding: 16px 28px; border-radius: 16px;
 }
 .home-cta .btn:hover {
-  box-shadow: 0 8px 32px var(--c-accent-glow), 0 0 40px rgba(13, 158, 138, 0.15);
+  box-shadow: 0 8px 32px rgba(13, 158, 138, 0.45), 0 0 40px rgba(26, 143, 209, 0.15);
   transform: translateY(-2px);
 }
 .home-cta-sub { font-size: 12px; color: var(--c-text-muted); margin-top: 10px }
@@ -877,7 +915,7 @@ body {
 .base-pdf-thumb img { width: 100%; display: block }
 .base-pdf-thumb-label {
   position: absolute; bottom: 2px; right: 4px; font-size: 10px;
-  color: var(--c-text-muted); background: rgba(13, 17, 23, 0.85); padding: 1px 4px; border-radius: 4px;
+  color: var(--c-text-muted); background: rgba(4, 9, 7, 0.88); padding: 1px 4px; border-radius: 4px;
 }
 
 .base-skip-notice {
@@ -1145,7 +1183,7 @@ body {
 @media (max-width: 768px) {
   .mobile-sticky-action {
     position: sticky; bottom: calc(var(--mobile-bottom-nav-h) + 4px);
-    background: rgba(13, 17, 23, 0.94);
+    background: rgba(4, 9, 7, 0.94);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     padding: 12px 16px; z-index: 50;
@@ -1232,7 +1270,7 @@ body {
    ════════════════════════════════════════════ */
 .onboarding-overlay {
   position: fixed; inset: 0;
-  background: rgba(13, 17, 23, 0.92); backdrop-filter: blur(12px);
+  background: rgba(4, 9, 7, 0.92); backdrop-filter: blur(12px);
   z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;
 }
 .onboarding-card {
@@ -1278,7 +1316,7 @@ body {
 
 .loading-overlay {
   position: fixed; inset: 0;
-  background: rgba(13, 17, 23, 0.88); backdrop-filter: blur(8px);
+  background: rgba(4, 9, 7, 0.88); backdrop-filter: blur(8px);
   z-index: 800; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
 }
 .spinner {
@@ -1382,13 +1420,20 @@ body {
    物理・自然テーマ仕上げ
    ════════════════════════════════════════════ */
 
-/* ホームヒーロー強化 — 深海から地平線へのオーロラ効果 */
+/* ホームヒーロー強化 — 森からオーロラが見える夜 */
 .physics-home-hero {
-  min-height: 260px;
+  min-height: 280px;
+  border: 1px solid rgba(13, 158, 138, 0.15);
+}
+/* 映えるオーロラ輝線アクセント（上辺） */
+.physics-home-hero::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent 5%, rgba(13, 210, 140, 0.6) 35%, rgba(26, 143, 209, 0.4) 65%, transparent 95%);
+  z-index: 2;
 }
 .physics-home-hero .home-hero-bg::before {
-  /* 物理方程式の透かしを少し明るく */
-  color: rgba(26, 143, 209, 0.06);
+  color: rgba(13, 210, 140, 0.07);
 }
 
 /* カードに自然光のような細いグラデーションボーダーアクセント */
@@ -1433,7 +1478,7 @@ body {
 @media (max-width: 768px) {
   .score-btn { width: 44px; height: 44px; font-size: 19px; border-radius: 12px }
   .home-screen { gap: 12px }
-  .physics-home-hero { min-height: 220px }
+  .physics-home-hero { min-height: 260px }
   /* 練習モードの設定画面をコンパクトに */
   .preset-chips { gap: 6px }
   .preset-chip { padding: 7px 12px }
