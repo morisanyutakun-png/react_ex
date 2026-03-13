@@ -55,13 +55,13 @@ export default function HistoryPage() {
           </svg>
           ホーム
         </Link>
-        <h1 className="text-[18px] font-black text-[#0f172a] tracking-[-0.02em]">学習履歴</h1>
+        <h1 className="text-[18px] font-black text-[#e2e8ff] tracking-[-0.02em]">学習履歴</h1>
         <div className="w-16" />
       </div>
 
       {totalSessions === 0 ? (
         <div className="text-center py-16">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#f1f5f9] flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#1a2035] flex items-center justify-center">
             <svg className="w-7 h-7 text-[#94a3b8]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z" />
             </svg>
@@ -79,16 +79,16 @@ export default function HistoryPage() {
         <>
           {/* サマリーカード */}
           <div className="grid grid-cols-3 gap-2.5 mb-6">
-            <div className="bg-white rounded-2xl border border-[#e2e8f0] p-4 text-center shadow-sm">
-              <div className="text-[28px] font-black text-[#0f172a] leading-none">{totalSessions}</div>
+            <div className="bg-[#111827] rounded-2xl border border-[#1e2d4a] p-4 text-center shadow-sm">
+              <div className="text-[28px] font-black text-[#e2e8ff] leading-none">{totalSessions}</div>
               <div className="text-[10px] font-bold text-[#94a3b8] mt-1.5">演習回数</div>
             </div>
-            <div className="bg-white rounded-2xl border border-[#e2e8f0] p-4 text-center shadow-sm">
+            <div className="bg-[#111827] rounded-2xl border border-[#1e2d4a] p-4 text-center shadow-sm">
               <div className="text-[28px] font-black leading-none" style={{ color: avgPct >= 70 ? '#16a34a' : avgPct >= 40 ? '#d97706' : '#dc2626' }}>{avgPct}%</div>
               <div className="text-[10px] font-bold text-[#94a3b8] mt-1.5">平均得点率</div>
             </div>
-            <div className="bg-white rounded-2xl border border-[#e2e8f0] p-4 text-center shadow-sm">
-              <div className="text-[28px] font-black text-[#0f172a] leading-none">{totalScore}</div>
+            <div className="bg-[#111827] rounded-2xl border border-[#1e2d4a] p-4 text-center shadow-sm">
+              <div className="text-[28px] font-black text-[#e2e8ff] leading-none">{totalScore}</div>
               <div className="text-[10px] font-bold text-[#94a3b8] mt-1.5">累計得点</div>
             </div>
           </div>
@@ -102,13 +102,13 @@ export default function HistoryPage() {
                   const c = SUBJECT_COLOR[subj] || { accent: '#64748b', bg: 'bg-gray-50', text: 'text-gray-700' };
                   const pct = st.max > 0 ? Math.round((st.earned / st.max) * 100) : 0;
                   return (
-                    <div key={subj} className="bg-white rounded-xl border border-[#e2e8f0] px-4 py-3 flex items-center gap-3">
+                    <div key={subj} className="bg-[#111827] rounded-xl border border-[#1e2d4a] px-4 py-3 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-black text-white flex-shrink-0" style={{ background: c.accent }}>
                         {subj[0]}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-bold text-[#1e293b]">{subj}</div>
-                        <div className="w-full h-1.5 bg-[#f1f5f9] rounded-full mt-1 overflow-hidden">
+                        <div className="text-[13px] font-bold text-[#e2e8ff]">{subj}</div>
+                        <div className="w-full h-1.5 bg-[#1a2035] rounded-full mt-1 overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: c.accent }} />
                         </div>
                       </div>
@@ -138,7 +138,7 @@ export default function HistoryPage() {
                 const d = h.date ? new Date(h.date) : null;
                 const dateStr = d ? `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '';
                 return (
-                  <div key={i} className="bg-white rounded-xl border border-[#e2e8f0] px-4 py-3 flex items-center gap-3 shadow-sm">
+                  <div key={i} className="bg-[#111827] rounded-xl border border-[#1e2d4a] px-4 py-3 flex items-center gap-3 shadow-sm">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[20px] font-black flex-shrink-0"
                          style={{ background: pct >= 70 ? '#f0fdf4' : pct >= 40 ? '#fffbeb' : '#fef2f2', color: pct >= 70 ? '#16a34a' : pct >= 40 ? '#d97706' : '#dc2626' }}>
                       {pct}

@@ -115,7 +115,7 @@ function TableOfContents({ activeId }) {
 
 function ScreenFrame({ children, title, color }) {
   return (
-    <div className="rounded-[20px] border border-blue-200/40 bg-white overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+    <div className="rounded-[20px] border border-blue-200/40 bg-[#111827] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center gap-2 px-3 py-2 border-b border-blue-200/40" style={{ background: `linear-gradient(90deg,${color}08,${color}02)` }}>
         <div className="flex gap-1">
           <div className="w-2 h-2 rounded-full bg-[#d1d1d6]" />
@@ -179,7 +179,7 @@ function DiagramTunePage() {
         ].map((s) => (
           <div key={s.label} className="flex items-center gap-2">
             <span className="text-[8px] font-semibold text-[#64748b] w-10">{s.label}</span>
-            <div className="flex-1 h-2 rounded-full bg-white border border-blue-200/40 overflow-hidden">
+            <div className="flex-1 h-2 rounded-full bg-[#111827] border border-[#1e2d4a] overflow-hidden">
               <div className="h-full rounded-full" style={{ width: `${s.value}%`, background: s.color }} />
             </div>
             <span className="text-[8px] font-bold w-6 text-right" style={{ color: s.color }}>{s.value}%</span>
@@ -282,7 +282,7 @@ function FlowDiagram() {
 function FeatureSection({ id, icon, title, subtitle, color, href, diagram, steps, tips }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <div className="relative overflow-hidden rounded-[20px] bg-white border border-blue-200/40 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:shadow-lg" style={{ boxShadow: 'var(--shadow-card)' }}>
+      <div className="relative overflow-hidden rounded-[20px] bg-[#111827] border border-[#1e2d4a] transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] hover:shadow-lg" style={{ boxShadow: 'var(--shadow-card)' }}>
         <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
         <div className="p-5 sm:p-7">
           {/* Header */}
@@ -386,7 +386,7 @@ const FAQ_DATA = [
 
 function FaqCategory({ category, color, icon, items }) {
   return (
-    <div className="relative overflow-hidden rounded-[20px] bg-white border border-blue-200/40" style={{ boxShadow: 'var(--shadow-card)' }}>
+    <div className="relative overflow-hidden rounded-[20px] bg-[#111827] border border-[#1e2d4a]" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, ${color}, ${color}66)` }} />
       <div className="px-5 pt-5 pb-2">
         <div className="flex items-center gap-2.5">
@@ -472,7 +472,7 @@ export default function HelpPage() {
         <p className="text-[14px] sm:text-[17px] text-[#64748b] max-w-[280px] sm:max-w-sm mx-auto leading-relaxed">
           REM の使い方をかんたんにご案内します。
         </p>
-        <Link href="/" className="inline-flex items-center gap-2 mt-5 px-5 py-2 rounded-full bg-white/60 backdrop-blur-lg border border-blue-200/40 shadow-sm text-[13px] font-bold text-[#64748b] hover:text-[#1e293b] hover:border-[#2563eb]/20 transition-all">
+        <Link href="/" className="inline-flex items-center gap-2 mt-5 px-5 py-2 rounded-full bg-[#111827]/60 backdrop-blur-lg border border-blue-200/40 shadow-sm text-[13px] font-bold text-[#64748b] hover:text-[#1e293b] hover:border-[#2563eb]/20 transition-all">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
           ホームに戻る
         </Link>
@@ -491,7 +491,7 @@ export default function HelpPage() {
 
           {/* ═══ 概要 ═══ */}
           <section id="overview" className="scroll-mt-24">
-            <div className="relative overflow-hidden rounded-[20px] bg-white border border-blue-200/40 p-4 sm:p-7" style={{ boxShadow: 'var(--shadow-card)' }}>
+            <div className="relative overflow-hidden rounded-[20px] bg-[#111827] border border-[#1e2d4a] p-4 sm:p-7" style={{ boxShadow: 'var(--shadow-card)' }}>
 
               <h2 className="text-[19px] font-bold text-[#1e293b] tracking-tight mb-2">REM とは？</h2>
               <p className="text-[14px] text-[#64748b] leading-relaxed mb-5">
@@ -637,7 +637,7 @@ export default function HelpPage() {
             </div>
 
             {/* 用語集インライン */}
-            <div className="mt-8 relative overflow-hidden rounded-[20px] bg-white border border-blue-200/40 p-5 sm:p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
+            <div className="mt-8 relative overflow-hidden rounded-[20px] bg-[#111827] border border-[#1e2d4a] p-5 sm:p-6" style={{ boxShadow: 'var(--shadow-card)' }}>
               <div className="flex items-center gap-2 mb-4">
                 <span className="text-[14px] font-black text-[#475569]">Glossary</span>
                 <h4 className="text-[15px] font-bold text-[#1e293b] tracking-tight">用語集</h4>

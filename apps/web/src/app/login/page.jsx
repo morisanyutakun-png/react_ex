@@ -47,7 +47,7 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}
-              className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-slate-200/60">
+              className="bg-[#111827]/90 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-[#1e2d4a]">
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
               {error}
@@ -95,7 +95,7 @@ export default function LoginPage() {
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-            <div className="relative flex justify-center text-xs"><span className="bg-white/80 px-3 text-slate-400">または</span></div>
+            <div className="relative flex justify-center text-xs"><span className="bg-[#111827] px-3 text-slate-400">または</span></div>
           </div>
 
           <button

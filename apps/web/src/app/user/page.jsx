@@ -1253,7 +1253,7 @@ export default function UserModePage() {
       {/* ── 管理者パスワード解除モーダル ── */}
       {showUnlockModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowUnlockModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-[90vw] max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-[#111827] rounded-2xl shadow-2xl p-6 w-[90vw] max-w-sm mx-4" onClick={e => e.stopPropagation()}>
             <h3 className="text-[18px] font-bold text-[#1e293b] mb-2">AI使用制限の解除</h3>
             <p className="text-[13px] text-[#64748b] mb-4">管理者パスワードを入力して、AI生成の回数制限を解除してください。</p>
             <input
@@ -1262,14 +1262,14 @@ export default function UserModePage() {
               onChange={e => setUnlockPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAdminUnlock()}
               placeholder="管理者パスワード"
-              className="w-full px-4 py-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb] mb-3"
+              className="w-full px-4 py-3 rounded-xl border border-[#e2e8f0] bg-[#0d1117] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb] mb-3"
               autoFocus
             />
             {unlockError && <p className="text-[12px] text-red-500 mb-3">{unlockError}</p>}
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowUnlockModal(false); setUnlockPassword(''); setUnlockError(''); }}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#f1f5f9] transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#1a2035] transition-colors"
               >
                 キャンセル
               </button>
@@ -1287,7 +1287,7 @@ export default function UserModePage() {
       {/* ── 本人確認パスワードモーダル ── */}
       {showGenerationAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => { setShowGenerationAuthModal(false); pendingGenerationRef.current = null; }}>
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-[90vw] max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-[#111827] rounded-2xl shadow-2xl p-6 w-[90vw] max-w-sm mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-md">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1307,14 +1307,14 @@ export default function UserModePage() {
               onChange={e => setGenerationAuthCode(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !generationAuthVerifying && handleGenerationAuthVerify()}
               placeholder="アカウントパスワード"
-              className="w-full px-4 py-3 rounded-xl border border-[#e2e8f0] bg-[#f8fafc] text-[14px] focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 mb-3"
+              className="w-full px-4 py-3 rounded-xl border border-[#e2e8f0] bg-[#0d1117] text-[14px] focus:outline-none focus:ring-2 focus:ring-emerald-400/30 focus:border-emerald-400 mb-3"
               autoFocus
             />
             {generationAuthError && <p className="text-[12px] text-red-500 mb-3">{generationAuthError}</p>}
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowGenerationAuthModal(false); setGenerationAuthCode(''); setGenerationAuthError(''); pendingGenerationRef.current = null; }}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#f1f5f9] transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#1a2035] transition-colors"
               >
                 キャンセル
               </button>
@@ -1538,7 +1538,7 @@ export default function UserModePage() {
                       value={newTplCustomSubject}
                       onChange={(e) => setNewTplCustomSubject(e.target.value)}
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-[#161d2e] hover:shadow-md
                         focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                       placeholder="例: 地学"
@@ -1575,7 +1575,7 @@ export default function UserModePage() {
                       onChange={(e) => setNewTplField(e.target.value)}
                       placeholder={newTplFieldOptions.length > 0 ? '候補から選択 or 自由入力' : '分野名を入力（例: 微分法）'}
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-[#161d2e] hover:shadow-md
                         focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                     />
@@ -1595,7 +1595,7 @@ export default function UserModePage() {
                       onChange={(e) => setNewTplTheme(e.target.value)}
                       placeholder="例: 置換積分、三角関数の合成、運動方程式の立式"
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-[#161d2e] hover:shadow-md
                         focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                     />
@@ -1691,7 +1691,7 @@ export default function UserModePage() {
                       className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 active:scale-[0.96] ${
                         active
                           ? `border-[${sc.light}] bg-gradient-to-b from-white to-[${sc.light}]/5 shadow-md`
-                          : 'border-transparent bg-[#f8fafc] hover:bg-white hover:shadow-sm hover:border-blue-100'
+                          : 'border-transparent bg-[#0d1117] hover:bg-[#161d2e] hover:shadow-sm hover:border-blue-100'
                       }`}
                     >
                       <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -1834,7 +1834,7 @@ export default function UserModePage() {
               </div>
 
               {/* ── タブ切り替え: セグメンテッドコントロール ── */}
-              <div className="base-tab-container relative flex rounded-2xl bg-[#f1f5f9]/80 p-1 mb-6 overflow-hidden">
+              <div className="base-tab-container relative flex rounded-2xl bg-[#1a2035]/80 p-1 mb-6 overflow-hidden">
                 {/* スライディングインジケーター */}
                 <div
                   className="base-tab-indicator"
@@ -2089,7 +2089,7 @@ export default function UserModePage() {
                   ) : (
                     /* 空状態: ガイダンスを表示 */
                     <div className="base-content-enter text-center py-10">
-                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#f1f5f9] mb-3">
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#1a2035] mb-3">
                         <svg className="w-7 h-7 text-[#cbd5e1]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                         </svg>
@@ -2421,7 +2421,7 @@ export default function UserModePage() {
 
                         {/* ASCIIイラスト */}
                         <pre className={`text-[8px] leading-[1.4] font-mono p-2 rounded-lg whitespace-pre transition-all duration-300 ${
-                          isActive ? 'bg-white/60 text-[#334155]' : 'bg-[#f8fafc] text-[#94a3b8]'
+                          isActive ? 'bg-white/60 text-[#334155]' : 'bg-[#0d1117] text-[#94a3b8]'
                         }`} style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>
                           {preset.illustration}
                         </pre>
@@ -2434,7 +2434,7 @@ export default function UserModePage() {
                         {/* パッケージ数バッジ */}
                         <div className="flex items-center gap-1.5 mt-2">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold transition-colors ${
-                            isActive ? 'text-white' : 'bg-[#f1f5f9] text-[#94a3b8]'
+                            isActive ? 'text-white' : 'bg-[#1a2035] text-[#94a3b8]'
                           }`} style={isActive ? { background: preset.color } : {}}>
                             {pkgCount} パッケージ
                           </span>
@@ -2483,14 +2483,14 @@ export default function UserModePage() {
                     className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
                       ${diagramRealism
                         ? 'bg-gradient-to-r from-emerald-50/80 to-teal-50/80 border-2 border-emerald-400/30 shadow-sm'
-                        : 'bg-[#f8fafc] border-2 border-transparent hover:border-[#e2e8f0]'
+                        : 'bg-[#0d1117] border-2 border-transparent hover:border-[#e2e8f0]'
                       }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
                         ${diagramRealism
                           ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md'
-                          : 'bg-[#f1f5f9] text-[#94a3b8]'
+                          : 'bg-[#1a2035] text-[#94a3b8]'
                         }`}>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
@@ -2521,12 +2521,12 @@ export default function UserModePage() {
                     className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
                       ${includeDiagramPerQuestion
                         ? 'bg-blue-50/60 border-2 border-[#2563eb]/30 shadow-sm'
-                        : 'bg-[#f8fafc] border-2 border-transparent hover:border-[#e2e8f0]'
+                        : 'bg-[#0d1117] border-2 border-transparent hover:border-[#e2e8f0]'
                       }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-300
-                        ${includeDiagramPerQuestion ? 'bg-[#2563eb] text-white shadow-md' : 'bg-[#f1f5f9] text-[#94a3b8]'}`}>
+                        ${includeDiagramPerQuestion ? 'bg-[#2563eb] text-white shadow-md' : 'bg-[#1a2035] text-[#94a3b8]'}`}>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5V19.5a1.5 1.5 0 001.5 1.5z" />
                         </svg>
@@ -2599,7 +2599,7 @@ export default function UserModePage() {
                                   className={`relative text-left p-3 rounded-xl border transition-all duration-200 active:scale-[0.97] ${
                                     active
                                       ? 'border-[#2563eb]/30 bg-[#2563eb]/[0.04]'
-                                      : 'border-transparent bg-[#f8fafc] hover:bg-blue-50/30'
+                                      : 'border-transparent bg-[#0d1117] hover:bg-blue-50/30'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2">
@@ -2680,7 +2680,7 @@ export default function UserModePage() {
                       key={fmt.value}
                       onClick={() => setQuestionFormat(fmt.value)}
                       className={`px-3 py-2.5 rounded-xl text-left transition-all duration-300 active:scale-[0.97] ${
-                        active ? 'bg-blue-50/60 border-2 border-[#2563eb]/30' : 'bg-[#f8fafc] border-2 border-transparent hover:border-blue-100'
+                        active ? 'bg-blue-50/60 border-2 border-[#2563eb]/30' : 'bg-[#0d1117] border-2 border-transparent hover:border-blue-100'
                       }`}
                     >
                       <div className="text-[12px] font-bold text-[#1e293b]">{fmt.label}</div>
@@ -2713,7 +2713,7 @@ export default function UserModePage() {
                   className={`w-full px-4 py-3 rounded-xl text-left transition-all duration-300 active:scale-[0.98] ${
                     modelTier === 'auto'
                       ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-300/50 shadow-sm'
-                      : 'bg-[#f8fafc] border-2 border-transparent hover:border-indigo-100'
+                      : 'bg-[#0d1117] border-2 border-transparent hover:border-indigo-100'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -2744,7 +2744,7 @@ export default function UserModePage() {
                       className={`w-full px-4 py-3 rounded-xl text-left transition-all duration-300 active:scale-[0.98] ${
                         active
                           ? `bg-${c}-50/60 border-2 border-${c}-300/50 shadow-sm`
-                          : 'bg-[#f8fafc] border-2 border-transparent hover:border-blue-100'
+                          : 'bg-[#0d1117] border-2 border-transparent hover:border-blue-100'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -2860,7 +2860,7 @@ export default function UserModePage() {
                   <p className="text-[10px] text-[#64748b]">以下の内容でAIが問題を生成します</p>
                 </div>
               </div>
-              <div className="space-y-2 bg-[#f8fafc] rounded-2xl p-4 border border-[#e2e8f0] text-[12px]">
+              <div className="space-y-2 bg-[#0d1117] rounded-2xl p-4 border border-[#e2e8f0] text-[12px]">
                 {[
                   ['教科', subject || '未選択'],
                   ['分野', field || 'すべて'],
@@ -3071,7 +3071,7 @@ export default function UserModePage() {
                       value={newTplCustomSubject}
                       onChange={(e) => setNewTplCustomSubject(e.target.value)}
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-[#161d2e] hover:shadow-md
                         focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                       placeholder="例: 地学"
@@ -3108,7 +3108,7 @@ export default function UserModePage() {
                       onChange={(e) => setNewTplField(e.target.value)}
                       placeholder={newTplFieldOptions.length > 0 ? '候補から選択 or 自由入力' : '分野名を入力（例: 微分法）'}
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-[#161d2e] hover:shadow-md
                         focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                     />
@@ -3128,7 +3128,7 @@ export default function UserModePage() {
                       onChange={(e) => setNewTplTheme(e.target.value)}
                       placeholder="例: 置換積分、三角関数の合成、運動方程式の立式"
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/60 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300/60 hover:bg-white hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300/60 hover:bg-[#161d2e] hover:shadow-md
                         focus:border-[#2563eb]/40 focus:ring-2 focus:ring-[#2563eb]/20 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                     />
@@ -3357,7 +3357,7 @@ export default function UserModePage() {
                 </div>
                 {/* インライン絞り込み検索 */}
                 <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50/50 border border-blue-200/40
-                                focus-within:bg-white focus-within:border-blue-300/50 focus-within:shadow-sm transition-all duration-200">
+                                focus-within:bg-[#111827] focus-within:border-blue-300/50 focus-within:shadow-sm transition-all duration-200">
                   <svg className="w-3.5 h-3.5 text-[#94a3b8] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
@@ -3902,7 +3902,7 @@ export default function UserModePage() {
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${
                     diagramRealism
                       ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                      : 'bg-[#f1f5f9] text-[#94a3b8] border border-[#e2e8f0]'
+                      : 'bg-[#1a2035] text-[#94a3b8] border border-[#e2e8f0]'
                   }`}
                 >
                   リアル描画 {diagramRealism ? 'ON' : 'OFF'}
@@ -3914,7 +3914,7 @@ export default function UserModePage() {
                     className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all ${
                       includeDiagramPerQuestion
                         ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                        : 'bg-[#f1f5f9] text-[#94a3b8] border border-[#e2e8f0]'
+                        : 'bg-[#1a2035] text-[#94a3b8] border border-[#e2e8f0]'
                     }`}
                   >
                     🖼️ 大問ごと図挿入 {includeDiagramPerQuestion ? 'ON' : 'OFF'}
@@ -3953,7 +3953,7 @@ export default function UserModePage() {
                   <span className="text-xs font-bold text-[#475569]">進捗</span>
                   <span className="text-xs font-bold text-indigo-600">{Math.round(genProgress)}%</span>
                 </div>
-                <div className="w-full h-2.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+                <div className="w-full h-2.5 bg-[#1a2035] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{ width: `${genProgress}%`, background: 'linear-gradient(90deg, #6366f1, #a855f7, #ec4899)' }}
@@ -3971,7 +3971,7 @@ export default function UserModePage() {
                   const done = genProgress >= s.doneAt;
                   const active = !done && genProgress >= s.activeFrom;
                   return (
-                    <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${done ? 'bg-emerald-50/70' : active ? 'bg-indigo-50/70' : 'bg-[#f8fafc]'}`}>
+                    <div key={i} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${done ? 'bg-emerald-50/70' : active ? 'bg-indigo-50/70' : 'bg-[#0d1117]'}`}>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all duration-300 ${done ? 'bg-emerald-500 text-white' : active ? 'bg-indigo-500 text-white' : 'bg-[#e2e8f0] text-[#94a3b8]'}`}>
                         {done ? '✓' : i + 1}
                       </div>
@@ -4137,7 +4137,7 @@ export default function UserModePage() {
                       href={pdfUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-2 flex items-center justify-center gap-2 p-3 bg-[#f8fafc] text-[#64748b] rounded-xl border border-[#e2e8f0] text-sm font-medium hover:bg-[#f1f5f9] transition-colors"
+                      className="mt-2 flex items-center justify-center gap-2 p-3 bg-[#0d1117] text-[#64748b] rounded-xl border border-[#e2e8f0] text-sm font-medium hover:bg-[#1a2035] transition-colors"
                     >
                       <Icons.Pdf className="w-4 h-4" /> 別タブで開く
                     </a>
@@ -4212,7 +4212,7 @@ export default function UserModePage() {
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           {basePdfImages.map((img, i) => (
-                            <div key={i} className="relative rounded-lg overflow-hidden border border-blue-200/40 shadow-sm bg-white">
+                            <div key={i} className="relative rounded-lg overflow-hidden border border-[#1e2d4a] shadow-sm bg-[#111827]">
                               <img
                                 src={`data:image/png;base64,${img}`}
                                 alt={`ベース問題 ページ ${i + 1}`}
@@ -4275,7 +4275,7 @@ export default function UserModePage() {
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {basePdfImages.map((img, i) => (
-                        <div key={i} className="relative rounded-lg overflow-hidden border border-amber-200/60 shadow-sm bg-white">
+                        <div key={i} className="relative rounded-lg overflow-hidden border border-amber-900/40 shadow-sm bg-[#111827]">
                           <img
                             src={`data:image/png;base64,${img}`}
                             alt={`ベース問題 ページ ${i + 1}`}

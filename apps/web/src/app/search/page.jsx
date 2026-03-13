@@ -61,7 +61,7 @@ function SubjectChip({ subject, selected, onClick }) {
         transition-all duration-300 cursor-pointer select-none border
         ${selected
           ? 'text-white shadow-lg hover:shadow-xl scale-[1.02]'
-          : 'bg-white text-[#64748b] border-blue-200/50 hover:border-blue-300/50 hover:bg-white hover:shadow-sm'
+          : 'bg-[#111827] text-[#8892b8] border-[#1e2d4a] hover:border-[#2d4570] hover:shadow-sm'
         } active:scale-[0.96]`}
       style={selected ? {
         background: `linear-gradient(135deg, ${c}, ${c}cc)`,
@@ -86,7 +86,7 @@ function DifficultySegment({ difficulties, value, onChange }) {
     <div className="flex gap-1 p-1 bg-blue-50/50 rounded-2xl border border-blue-200/40">
       <button onClick={() => onChange('')} type="button"
         className={`px-3.5 py-2 rounded-[13px] text-[12px] font-bold transition-all duration-300
-          ${!value ? 'bg-white text-[#1e293b] shadow-md' : 'text-[#94a3b8] hover:text-[#64748b] hover:bg-white/50'}`}>
+          ${!value ? 'bg-[#1e2d4a] text-[#e2e8ff] shadow-md' : 'text-[#94a3b8] hover:text-[#c4ccdd] hover:bg-[#1e2d4a]/50'}`}>
         全て
       </button>
       {difficulties.map((d, i) => {
@@ -99,7 +99,7 @@ function DifficultySegment({ difficulties, value, onChange }) {
             className={`group relative px-3 py-2 rounded-[13px] text-[12px] font-bold transition-all duration-300
               ${isActive
                 ? 'text-white shadow-md'
-                : 'text-[#94a3b8] hover:text-[#64748b] hover:bg-white/50'
+                : 'text-[#94a3b8] hover:text-[#c4ccdd] hover:bg-[#1e2d4a]/50'
               }`}
             style={isActive ? {
               background: `linear-gradient(135deg, ${activeColor}, ${activeColor}dd)`,
@@ -129,9 +129,9 @@ function FieldSelector({ subject, value, onChange, options }) {
     <div className="animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="relative group">
         <select value={value} onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-blue-200/50 bg-white text-[13px]
+          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-[#1e2d4a] bg-[#111827] text-[13px]
                     text-[#1e293b] transition-all duration-300 cursor-pointer appearance-none font-semibold shadow-sm
-                    hover:border-blue-300/50 hover:bg-white hover:shadow-md
+                    hover:border-blue-300/50 hover:bg-[#161d2e] hover:shadow-md
                     focus:ring-2 focus:shadow-lg outline-none"
           style={{ '--tw-ring-color': `${c}20`, borderColor: value ? `${c}30` : undefined }}>
           <option value="">全分野</option>
@@ -282,7 +282,7 @@ export default function SearchPage() {
       <StatusBar message={status} />
 
       {/* ── 検索パネル ── */}
-      <div className="relative overflow-hidden rounded-[20px] bg-white border border-blue-200/40"
+      <div className="relative overflow-hidden rounded-[20px] bg-[#111827] border border-[#1e2d4a]"
            style={{ boxShadow: 'var(--shadow-card)' }}>
 
         <div className="p-4 sm:p-7 space-y-4 sm:space-y-5">
@@ -430,7 +430,7 @@ export default function SearchPage() {
             return (
               <div key={item.id ?? idx}
                 className={`result-item transition-all duration-300 
-                  ${isOpen ? '!border-[#2563eb]/30 ring-1 ring-[#2563eb]/10 !bg-white shadow-lg' : ''}`}
+                  ${isOpen ? '!border-[#2563eb]/30 ring-1 ring-[#2563eb]/10 !bg-[#111827] shadow-lg' : ''}`}
                 onClick={() => setExpandedId(isOpen ? null : (item.id ?? idx))}>
                 <div className="p-5">
                   <div className="flex items-start gap-3">
@@ -499,8 +499,8 @@ export default function SearchPage() {
                       </button>
                       <button onClick={() => { navigator.clipboard.writeText(item.stem || item.text || ''); setStatus('問題文をコピーしました'); }}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-bold
-                                   text-[#64748b] bg-white border border-blue-200/50
-                                   hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95">
+                                   text-[#8892b8] bg-[#111827] border border-[#1e2d4a]
+                                   hover:bg-[#161d2e] hover:shadow-md hover:-translate-y-0.5 transition-all active:scale-95">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -552,7 +552,7 @@ export default function SearchPage() {
           <div className="flex flex-wrap justify-center gap-2 max-w-xs mx-auto">
             {['二次関数', '微分', '力学', '英文法'].map((hint) => (
               <button key={hint} onClick={() => { setQuery(hint); }}
-                className="px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#64748b] bg-white border border-blue-200/50 
+                className="px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#8892b8] bg-[#111827] border border-[#1e2d4a] 
                            hover:border-[#2563eb]/30 hover:text-[#2563eb] hover:bg-blue-50/50 transition-all shadow-sm">
                 {hint}
               </button>

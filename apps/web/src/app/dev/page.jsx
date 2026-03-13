@@ -73,9 +73,9 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className="w-full pl-4 pr-10 py-3 rounded-2xl border border-blue-200/50 bg-white text-sm
+            className="w-full pl-4 pr-10 py-3 rounded-2xl border border-blue-200/50 bg-[#111827] text-sm
                       text-[#1e293b] transition-all duration-300 cursor-pointer appearance-none
-                      hover:border-blue-300/50 hover:bg-white hover:shadow-md
+                      hover:border-blue-300/50 hover:bg-[#161d2e] hover:shadow-md
                       focus:border-blue-300/70 focus:ring-2 focus:ring-blue-200/40 focus:shadow-md
                       outline-none font-semibold shadow-sm
                       disabled:opacity-40 disabled:cursor-not-allowed"
@@ -173,7 +173,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
               <button key={p.label} onClick={() => { onText(p.text); onDiff(p.diff); onTrick(p.trick); }}
                 className={`group relative rounded-2xl p-3 text-center transition-all duration-300 active:scale-[0.96]
                   ${isActive
-                    ? 'bg-white shadow-md shadow-blue-200/40 ring-2 ring-[#2563eb]/20'
+                    ? 'bg-[#1e2d4a] shadow-md ring-2 ring-[#4f7cfa]/30'
                     : 'bg-white/50 shadow-sm ring-1 ring-blue-200/30 hover:ring-blue-200/50 hover:shadow-md hover:bg-white/80'
                   }`}
               >
@@ -188,7 +188,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
       </div>
 
       {/* ビジュアルバランスメーター */}
-      <div className="p-5 bg-white rounded-2xl border border-blue-200/50 shadow-sm">
+      <div className="p-5 bg-[#111827] rounded-2xl border border-blue-200/50 shadow-sm">
         {/* 円グラフ風バランス表示 */}
         <div className="flex items-center justify-center gap-6 sm:gap-10 mb-6">
           {axes.map((p) => {
@@ -278,7 +278,7 @@ function QualityRating({ score, onChange }) {
           <button key={l.value} onClick={() => onChange(l.value)}
             className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-2xl transition-all duration-300 active:scale-95 relative overflow-hidden
               ${isActive
-                ? 'bg-white shadow-md shadow-blue-200/40 ring-2 scale-105'
+                ? 'bg-[#1e2d4a] shadow-md ring-2 scale-105'
                 : 'bg-white/50 ring-1 ring-blue-200/30 hover:ring-blue-200/50 hover:bg-white/80 hover:shadow-sm'
               }`}
             style={isActive ? { ringColor: `${l.color}40`, '--tw-ring-color': `${l.color}40` } : undefined}>
@@ -771,7 +771,7 @@ export default function TuningPage() {
 
       {/* ── フィードバックダッシュボード（常時表示） ── */}
       {feedbackData && (
-        <div className="relative overflow-hidden rounded-[20px] bg-white border border-blue-200/40 shadow-sm"
+        <div className="relative overflow-hidden rounded-[20px] bg-[#111827] border border-[#1e2d4a] shadow-sm"
              style={{ boxShadow: 'var(--shadow-card)' }}>
           <div className="p-5 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -893,7 +893,7 @@ export default function TuningPage() {
 
       {/* ── 評価履歴パネル ── */}
       {showEvalHistory && evalHistory && (
-        <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+        <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="icon-premium w-10 h-10 text-white">
@@ -1017,7 +1017,7 @@ export default function TuningPage() {
                   const scoreIcon = { 0.2: '×', 0.4: '△', 0.6: '○', 0.8: '◎', 1.0: '◉' };
                   const scoreColor = ev.score >= 0.8 ? '#1e40af' : ev.score >= 0.6 ? '#3b82f6' : ev.score >= 0.4 ? '#3b82f6' : '#1e293b';
                   return (
-                    <div key={ev.id || idx} className="p-3 bg-white rounded-xl border border-blue-200/40 shadow-sm hover:shadow-md transition-all">
+                    <div key={ev.id || idx} className="p-3 bg-[#111827] rounded-xl border border-blue-200/40 shadow-sm hover:shadow-md transition-all">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{scoreIcon[ev.score] || '—'}</span>
@@ -1066,7 +1066,7 @@ export default function TuningPage() {
           <button key={s.id} onClick={() => s.enabled && setActiveSection(s.id)}
             className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 sm:py-3 rounded-xl text-[11px] sm:text-[13px] font-bold transition-all duration-300 relative whitespace-nowrap min-h-[44px]
               ${isActive
-                ? 'bg-white shadow-md'
+                ? 'bg-[#1e2d4a] shadow-md'
                 : s.enabled
                   ? 'text-[#64748b] hover:text-[#1e293b] hover:bg-white/60'
                   : 'text-[#d2d2d7] cursor-not-allowed'
@@ -1133,7 +1133,7 @@ export default function TuningPage() {
         <div className="space-y-6">
 
           {/* ── 条件設定（出題パターン＋問数） ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
             {/* ヘッダー */}
             <div className="relative px-6 pt-6 pb-4">
               <div className="flex items-center gap-3 mb-1">
@@ -1297,7 +1297,7 @@ export default function TuningPage() {
           </div>
 
           {/* ── 参考問題（テンプレート合致で自動取得） ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="icon-premium w-10 h-10 text-white">
@@ -1369,7 +1369,7 @@ export default function TuningPage() {
                 )}
               </div>
               <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50/50 border border-blue-200/40
-                              focus-within:bg-white focus-within:border-blue-300/50/30 focus-within:shadow-sm transition-all duration-200">
+                              focus-within:bg-[#111827] focus-within:border-blue-300/50/30 focus-within:shadow-sm transition-all duration-200">
                 <svg className="w-3.5 h-3.5 text-[#c7c7cc] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -1475,7 +1475,7 @@ export default function TuningPage() {
           </div>
 
           {/* ── RAG ミキサー ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
             <div className="px-6 pt-6 pb-2">
               <div className="flex items-center gap-3 mb-1">
                 <div className="icon-premium w-10 h-10 text-white">
@@ -1499,7 +1499,7 @@ export default function TuningPage() {
           </div>
 
           {/* ── 指示文作成 ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="icon-premium w-10 h-10 text-white">
@@ -1573,7 +1573,7 @@ export default function TuningPage() {
           )}
 
           {basePrompt && (
-            <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+            <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
               <div className="px-6 pt-6 pb-5">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="icon-premium w-10 h-10 text-white">
@@ -1602,7 +1602,7 @@ export default function TuningPage() {
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'execute' && (
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="icon-premium w-10 h-10 text-white">
@@ -1657,7 +1657,7 @@ export default function TuningPage() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="icon-premium w-10 h-10 text-white">
@@ -1719,7 +1719,7 @@ export default function TuningPage() {
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'evaluate' && (
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="icon-premium w-10 h-10 text-white">
@@ -1740,14 +1740,14 @@ export default function TuningPage() {
                   <div>
                     <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-1.5">メモ</label>
                     <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-blue-200/50 bg-white shadow-sm text-sm text-[#1e293b]
+                      className="w-full px-4 py-3 rounded-2xl border border-blue-200/50 bg-[#111827] shadow-sm text-sm text-[#e2e8ff]
                         transition-all hover:border-blue-300/50 hover:shadow-md focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 outline-none font-medium"
                       placeholder="例: 難しさは良い。でも解説がもう少し欲しい。" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-1.5">こうなって欲しかった <span className="text-[#94a3b8] normal-case tracking-normal">（任意）</span></label>
                     <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-blue-200/50 bg-white shadow-sm text-sm text-[#1e293b]
+                      className="w-full px-4 py-3 rounded-2xl border border-blue-200/50 bg-[#111827] shadow-sm text-sm text-[#e2e8ff]
                         transition-all hover:border-blue-300/50 hover:shadow-md focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 outline-none font-medium"
                       placeholder="こんな問題が作られたら良かった、というイメージ" />
                   </div>
@@ -1770,7 +1770,7 @@ export default function TuningPage() {
 
 
 
-          <div className="relative overflow-hidden rounded-3xl bg-white border border-blue-200/50 shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#2563eb] text-white shadow-md">

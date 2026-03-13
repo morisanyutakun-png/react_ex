@@ -82,7 +82,7 @@ function SubjectTab({ subject, selected, onClick }) {
       className={`px-5 py-2.5 rounded-full text-[13px] font-bold transition-all duration-250 border
         ${selected
           ? 'text-white border-transparent shadow-lg scale-[1.04]'
-          : 'bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-sm active:scale-[0.97]'
+          : 'bg-[#111827] text-[#8892b8] border-[#1e2d4a] hover:border-[#2d4570] hover:shadow-sm active:scale-[0.97]'
         }`}
       style={selected ? { background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 6px 20px ${c.ring}` } : {}}
     >
@@ -99,7 +99,7 @@ function TopicChip({ label, selected, onClick, accent }) {
       className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 border
         ${selected
           ? 'text-white border-transparent shadow-sm'
-          : 'bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#cbd5e1] hover:bg-[#f8fafc]'
+          : 'bg-[#111827] text-[#8892b8] border-[#1e2d4a] hover:border-[#2d4570] hover:bg-[#161d2e]'
         }`}
       style={selected ? { backgroundColor: accent, borderColor: 'transparent', boxShadow: `0 2px 8px ${accent}30` } : {}}
     >
@@ -111,7 +111,7 @@ function TopicChip({ label, selected, onClick, accent }) {
 function ProgressBar({ current, total, accent }) {
   const pct = total > 0 ? (current / total) * 100 : 0;
   return (
-    <div className="w-full h-2 bg-[#f1f5f9] rounded-full overflow-hidden">
+    <div className="w-full h-2 bg-[#1a2035] rounded-full overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-700 ease-out relative"
         style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${accent || '#8b5cf6'}, ${accent || '#6366f1'}bb)` }}
@@ -166,8 +166,8 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-md">
-      <div className="text-[13px] font-black text-[#0f172a] mb-1 text-center">自己採点</div>
+    <div className="bg-[#111827] rounded-2xl border border-[#1e2d4a] p-5 shadow-md">
+      <div className="text-[13px] font-black text-[#e2e8ff] mb-1 text-center">自己採点</div>
       <p className="text-[10px] text-[#94a3b8] text-center mb-4">各小問の得点を入力してください</p>
 
       <div className="space-y-3 mb-4">
@@ -183,7 +183,7 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
                 value={inputScores[idx] ?? ''}
                 onChange={(e) => handleChange(idx, e.target.value)}
                 placeholder="0"
-                className="w-16 h-9 rounded-lg border-2 border-[#e2e8f0] text-center text-[14px] font-bold text-[#0f172a] focus:outline-none focus:border-violet-400 transition-colors"
+                className="w-16 h-9 rounded-lg border-2 border-[#e2e8f0] text-center text-[14px] font-bold text-[#e2e8ff] focus:outline-none focus:border-violet-400 transition-colors"
                 style={inputScores[idx] !== undefined && inputScores[idx] !== '' ? { borderColor: accent + '60' } : {}}
               />
               <span className="text-[12px] text-[#94a3b8] font-medium">/ {sp.points || 0}点</span>
@@ -193,7 +193,7 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
       </div>
 
       {/* 合計 */}
-      <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#f8fafc] border border-[#e2e8f0] mb-4">
+      <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#0d1117] border border-[#e2e8f0] mb-4">
         <span className="text-[12px] font-bold text-[#64748b]">合計</span>
         <span className="text-[18px] font-black" style={{ color: accent }}>{totalEarned} / {totalMax}点</span>
       </div>
@@ -237,7 +237,7 @@ const DIFF_ICONS = ['📗', '📘', '📙', '📕', '🔥', '🏆'];
 function WizardHeader({ step, accent }) {
   const labels = ['科目', '単元', '難易度', '確認'];
   return (
-    <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-[#f1f5f9]">
+    <div className="sticky top-0 z-20 bg-[#0d1117]/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-[#1e2d4a]">
       {/* step dots + progress bar */}
       <div className="flex items-center justify-center gap-2 mb-3">
         {labels.map((label, i) => (
@@ -246,7 +246,7 @@ function WizardHeader({ step, accent }) {
               className={`flex items-center justify-center rounded-full font-black text-[10px] transition-all duration-400 ease-out
                 ${i === step ? 'w-8 h-8 text-white shadow-lg scale-110'
                   : i < step ? 'w-6 h-6 text-white opacity-80'
-                  : 'w-6 h-6 bg-[#f1f5f9] text-[#b0bec5]'}`}
+                  : 'w-6 h-6 bg-[#1a2035] text-[#b0bec5]'}`}
               style={i <= step ? { background: i < step ? accent + 'aa' : accent, boxShadow: i === step ? `0 4px 14px ${accent}55` : 'none' } : {}}
             >
               {i < step ? (
@@ -265,7 +265,7 @@ function WizardHeader({ step, accent }) {
         ))}
       </div>
       {/* thin progress bar */}
-      <div className="w-full h-1 bg-[#f1f5f9] rounded-full overflow-hidden">
+      <div className="w-full h-1 bg-[#1a2035] rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-600 ease-out"
           style={{ width: `${((step + 1) / 4) * 100}%`, background: accent }}
@@ -325,7 +325,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
           <div>
             <div className="mb-8">
               <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 1 / 4</p>
-              <h2 className="text-[28px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
+              <h2 className="text-[28px] font-black text-[#e2e8ff] tracking-[-0.03em] leading-[1.2]">
                 今日も1問、<br />差をつけよう。
               </h2>
               <p className="text-[13px] text-[#64748b] mt-2">科目を選んでスタート ↓</p>
@@ -339,10 +339,10 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     key={s.name}
                     type="button"
                     onClick={() => handleSubjectSelect(s.name)}
-                    className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-[#f1f5f9] bg-white shadow-sm transition-all duration-250 active:scale-[0.97] hover:shadow-lg group"
+                    className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-[#1e2d4a] bg-[#111827] shadow-sm transition-all duration-250 active:scale-[0.97] hover:shadow-lg group"
                     style={{ animationDelay: `${i * 60}ms` }}
                     onMouseEnter={(e) => { e.currentTarget.style.borderColor = col.accent + '55'; e.currentTarget.style.boxShadow = `0 8px 28px ${col.ring}`; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#f1f5f9'; e.currentTarget.style.boxShadow = ''; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#1e2d4a'; e.currentTarget.style.boxShadow = ''; }}
                   >
                     <div
                       className="w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0 shadow-sm"
@@ -352,7 +352,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     </div>
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[18px] font-black text-[#0f172a]">{s.name}</span>
+                        <span className="text-[18px] font-black text-[#e2e8ff]">{s.name}</span>
                         <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: col.accent + '16', color: col.accent }}>{s.tag}</span>
                       </div>
                       <div className="text-[12px] text-[#64748b]">{s.desc}</div>
@@ -379,7 +379,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
           <div>
             <div className="mb-6">
               <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 2 / 4</p>
-              <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
+              <h2 className="text-[24px] font-black text-[#e2e8ff] tracking-[-0.03em] leading-[1.2]">
                 <span style={{ color: acc }}>{subject}</span>の<br />どの単元をやる？
               </h2>
               <p className="text-[13px] text-[#94a3b8] mt-2">複数選択可 · 空欄 = 全単元ランダム</p>
@@ -392,7 +392,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
               className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 mb-4 transition-all duration-250 ${
                 topics.length === 0
                   ? 'text-white border-transparent shadow-lg'
-                  : 'bg-white border-[#e2e8f0] text-[#64748b] hover:border-[#cbd5e1]'
+                  : 'bg-[#111827] border-[#1e2d4a] text-[#8892b8] hover:border-[#2d4570]'
               }`}
               style={topics.length === 0 ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 6px 20px ${ring}` } : {}}
             >
@@ -401,7 +401,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                 <div className={`text-[13px] font-bold ${topics.length === 0 ? 'text-white' : ''}`}>全単元からランダム出題</div>
                 <div className={`text-[11px] mt-0.5 ${topics.length === 0 ? 'text-white/75' : 'text-[#94a3b8]'}`}>バランスよく全範囲を練習</div>
               </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${topics.length === 0 ? 'bg-white/20 text-white' : 'bg-[#f1f5f9] text-[#64748b]'}`}>おすすめ</span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${topics.length === 0 ? 'bg-white/20 text-white' : 'bg-[#1e2d4a] text-[#8892b8]'}`}>おすすめ</span>
             </button>
 
             {/* 単元チップ */}
@@ -414,7 +414,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     type="button"
                     onClick={() => setTopics((prev) => sel ? prev.filter((x) => x !== t) : [...prev, t])}
                     className={`px-3.5 py-2 rounded-full text-[12px] font-semibold border-2 transition-all duration-200 active:scale-[0.95] ${
-                      sel ? 'text-white border-transparent shadow-sm' : 'bg-white text-[#64748b] border-[#e8edf2] hover:border-[#cbd5e1]'
+                      sel ? 'text-white border-transparent shadow-sm' : 'bg-[#111827] text-[#8892b8] border-[#1e2d4a] hover:border-[#2d4570]'
                     }`}
                     style={sel ? { background: acc, boxShadow: `0 2px 8px ${ring}` } : {}}
                   >
@@ -426,7 +426,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             </div>
 
             {topics.length > 0 && (
-              <div className="mb-5 px-4 py-3 rounded-xl text-[11px] text-[#64748b] bg-[#f8fafc] border border-[#f1f5f9] flex items-start gap-2">
+              <div className="mb-5 px-4 py-3 rounded-xl text-[11px] text-[#64748b] bg-[#0d1117] border border-[#f1f5f9] flex items-start gap-2">
                 <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -453,7 +453,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
           <div>
             <div className="mb-6">
               <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 3 / 4</p>
-              <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
+              <h2 className="text-[24px] font-black text-[#e2e8ff] tracking-[-0.03em] leading-[1.2]">
                 難しさは<br />どのくらい？
               </h2>
               <p className="text-[13px] text-[#94a3b8] mt-2">タップで次へ自動で進みます</p>
@@ -470,12 +470,12 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     className={`p-4 rounded-2xl border-2 text-left transition-all duration-250 active:scale-[0.95] ${
                       sel
                         ? 'text-white border-transparent shadow-xl scale-[1.04]'
-                        : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1] hover:shadow-md'
+                        : 'bg-[#111827] border-[#1e2d4a] hover:border-[#2d4570] hover:shadow-md'
                     }`}
                     style={sel ? { background: `linear-gradient(135deg, ${acc}, ${acc}dd)`, boxShadow: `0 8px 24px ${ring}` } : {}}
                   >
                     <div className="text-[22px] mb-2 leading-none">{DIFF_ICONS[i]}</div>
-                    <div className={`text-[14px] font-black ${sel ? 'text-white' : 'text-[#0f172a]'}`}>{lv.label}</div>
+                    <div className={`text-[14px] font-black ${sel ? 'text-white' : 'text-[#e2e8ff]'}`}>{lv.label}</div>
                     <div className={`text-[11px] mt-0.5 ${sel ? 'text-white/80' : 'text-[#94a3b8]'}`}>{lv.sub}</div>
                   </button>
                 );
@@ -489,7 +489,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
           <div>
             <div className="mb-6">
               <p className="text-[11px] font-extrabold text-[#94a3b8] tracking-[0.14em] uppercase mb-2.5">Step 4 / 4</p>
-              <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em] leading-[1.2]">
+              <h2 className="text-[24px] font-black text-[#e2e8ff] tracking-[-0.03em] leading-[1.2]">
                 あと少し！<br />最後の設定を
               </h2>
             </div>
@@ -507,12 +507,12 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                   </span>
                 )}
                 {topics.length === 0 ? (
-                  <span className="text-[12px] font-semibold px-3 py-1.5 rounded-full bg-white border border-[#e2e8f0] text-[#64748b]">全単元</span>
+                  <span className="text-[12px] font-semibold px-3 py-1.5 rounded-full bg-[#1e2d4a] border border-[#2d4570] text-[#8892b8]">全単元</span>
                 ) : topics.map((t) => (
                   <span key={t} className="text-[12px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: acc + '12', color: acc, borderColor: acc + '30' }}>{t}</span>
                 ))}
                 {difficulty && (
-                  <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-white border border-[#e2e8f0] text-[#1e293b]">
+                  <span className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-[#1e2d4a] border border-[#2d4570] text-[#e2e8ff]">
                     {DIFF_ICONS[EXAM_LEVELS.findIndex(l => l.value === difficulty)]} {EXAM_LEVELS.find(l => l.value === difficulty)?.label}
                   </span>
                 )}
@@ -537,7 +537,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     type="button"
                     onClick={() => setNumQ(n)}
                     className={`flex-1 py-3.5 rounded-xl border-2 text-[14px] font-black transition-all duration-200 active:scale-[0.96] ${
-                      numQ === n ? 'text-white border-transparent shadow-md scale-[1.04]' : 'bg-white text-[#64748b] border-[#e2e8f0] hover:border-[#cbd5e1]'
+                      numQ === n ? 'text-white border-transparent shadow-md scale-[1.04]' : 'bg-[#111827] text-[#8892b8] border-[#1e2d4a] hover:border-[#2d4570]'
                     }`}
                     style={numQ === n ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 4px 16px ${ring}` } : {}}
                   >
@@ -562,12 +562,12 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                       type="button"
                       onClick={() => setPracticeFormat(f.val)}
                       className={`p-3.5 rounded-xl border-2 text-left transition-all duration-200 active:scale-[0.96] ${
-                        sel ? 'border-transparent shadow-md' : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1]'
+                        sel ? 'border-transparent shadow-md' : 'bg-[#111827] border-[#1e2d4a] hover:border-[#2d4570]'
                       }`}
                       style={sel ? { background: acc + '10', borderColor: acc + '45' } : {}}
                     >
                       <div className="text-[20px] mb-1.5">{f.icon}</div>
-                      <div className={`text-[12px] font-black ${sel ? '' : 'text-[#1e293b]'}`} style={sel ? { color: acc } : {}}>{f.name}</div>
+                      <div className={`text-[12px] font-black ${sel ? '' : 'text-[#e2e8ff]'}`} style={sel ? { color: acc } : {}}>{f.name}</div>
                       <div className="text-[10px] text-[#94a3b8] mt-0.5">{f.desc}</div>
                     </button>
                   );
@@ -592,11 +592,11 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                       disabled={m.locked}
                       className={`p-3.5 rounded-xl border-2 text-left transition-all duration-200 ${
                         m.locked ? 'opacity-45 cursor-not-allowed' : 'active:scale-[0.96]'
-                      } ${sel ? 'border-transparent shadow-md' : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1]'}`}
+                      } ${sel ? 'border-transparent shadow-md' : 'bg-[#111827] border-[#1e2d4a] hover:border-[#2d4570]'}`}
                       style={sel ? { background: acc + '10', borderColor: acc + '45' } : {}}
                     >
                       <div className="text-[20px] mb-1.5">{m.icon}</div>
-                      <div className={`text-[12px] font-black ${sel ? '' : 'text-[#1e293b]'}`} style={sel ? { color: acc } : {}}>{m.name}</div>
+                      <div className={`text-[12px] font-black ${sel ? '' : 'text-[#e2e8ff]'}`} style={sel ? { color: acc } : {}}>{m.name}</div>
                       <div className="text-[10px] text-[#94a3b8] mt-0.5">{m.locked ? '🔒 ログインが必要' : m.desc}</div>
                     </button>
                   );
@@ -645,7 +645,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             <button
               type="button"
               onClick={() => goStep(step - 1)}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white border border-[#e2e8f0] shadow-md text-[12px] font-semibold text-[#64748b] hover:text-[#334155] hover:shadow-lg transition-all duration-200 active:scale-[0.96]"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#111827] border border-[#1e2d4a] shadow-md text-[12px] font-semibold text-[#8892b8] hover:text-[#c4ccdd] hover:shadow-lg transition-all duration-200 active:scale-[0.96]"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -716,7 +716,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
           <div className="absolute inset-0 rounded-3xl animate-ping opacity-20" style={{ background: c.accent }} />
         </div>
         <div className="text-center">
-          <p className="text-[17px] font-bold text-[#1e293b]">プロンプトを生成中…</p>
+          <p className="text-[17px] font-bold text-[#e2e8ff]">プロンプトを生成中…</p>
           <p className="text-[12px] text-[#94a3b8] mt-1.5">最適な出題指示を構築しています</p>
         </div>
       </div>
@@ -741,7 +741,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
                style={{ background: copied ? '#16a34a' : c.accent }}>
             {copied ? '✓' : '1'}
           </div>
-          <span className={`text-[12px] font-bold ${copied ? 'text-[#16a34a]' : 'text-[#1e293b]'}`}>コピー</span>
+          <span className={`text-[12px] font-bold ${copied ? 'text-[#16a34a]' : 'text-[#e2e8ff]'}`}>コピー</span>
         </div>
         <div className="flex-1 h-[2px] rounded-full" style={{ background: copied ? c.accent : '#e2e8f0' }} />
         <div className="flex items-center gap-2">
@@ -749,15 +749,15 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
                style={copied ? { background: c.accent } : {}}>
             2
           </div>
-          <span className={`text-[12px] font-bold ${copied ? 'text-[#1e293b]' : 'text-[#94a3b8]'}`}>貼り付け</span>
+          <span className={`text-[12px] font-bold ${copied ? 'text-[#e2e8ff]' : 'text-[#94a3b8]'}`}>貼り付け</span>
         </div>
       </div>
 
       {/* ステップ1: プロンプトコピー */}
-      <div className={`rounded-2xl border overflow-hidden mb-6 transition-all duration-300 ${copied ? 'border-[#86efac] bg-green-50/30' : 'border-[#e2e8f0] bg-white shadow-sm'}`}>
-        <div className="p-4 border-b border-[#f1f5f9] flex items-center justify-between">
+      <div className={`rounded-2xl border overflow-hidden mb-6 transition-all duration-300 ${copied ? 'border-[#86efac] bg-green-950/30' : 'border-[#1e2d4a] bg-[#111827] shadow-sm'}`}>
+        <div className="p-4 border-b border-[#1a2035] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="text-[13px] font-bold text-[#1e293b]">📋 指示文をコピー</span>
+            <span className="text-[13px] font-bold text-[#e2e8ff]">📋 指示文をコピー</span>
           </div>
           <button
             type="button"
@@ -777,7 +777,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
         <div className="p-4 max-h-[180px] overflow-y-auto bg-[#0f172a] rounded-b-none">
           <pre className="text-[11px] leading-[1.7] text-[#94d5a8] whitespace-pre-wrap font-mono break-all select-all">{prompt}</pre>
         </div>
-        <div className="px-4 py-3 bg-[#f8fafc]">
+        <div className="px-4 py-3 bg-[#0d1117]">
           <p className="text-[11px] text-[#64748b] flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -788,9 +788,9 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
       </div>
 
       {/* ステップ2: AIの出力を貼り付け */}
-      <div className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-[#f1f5f9]">
-          <span className="text-[13px] font-bold text-[#1e293b]">📥 AIの出力を貼り付け</span>
+      <div className="bg-[#111827] rounded-2xl border border-[#1e2d4a] overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-[#1a2035]">
+          <span className="text-[13px] font-bold text-[#e2e8ff]">📥 AIの出力を貼り付け</span>
           <p className="text-[11px] text-[#94a3b8] mt-1">AIから返ってきた出力をそのまま貼り付けてください（マーカー形式・JSON形式 両方対応）</p>
         </div>
         <div className="p-4">
@@ -798,7 +798,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             rows={8}
-            className="w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-4 py-3 text-[12px] font-mono text-[#1e293b] placeholder:text-[#cbd5e1] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-transparent resize-none transition-all duration-200"
+            className="w-full rounded-xl border border-[#e2e8f0] bg-[#0d1117] px-4 py-3 text-[12px] font-mono text-[#e2e8ff] placeholder:text-[#cbd5e1] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-transparent resize-none transition-all duration-200"
             style={{ '--tw-ring-color': c.accent + '60' }}
             placeholder={'%%% PROBLEM 1 %%%\n%%% TOPIC: 力学 %%%\n%%% STEM %%%\n質量 $m$ の物体が...\n%%% SUBPROBLEM (1) %%%\n...\n%%% END PROBLEM 1 %%%'}
           />
@@ -863,7 +863,7 @@ function LoadingScreen({ subject, genMode, loadingStep }) {
       </div>
 
       <div className="text-center">
-        <p className="text-[18px] font-black text-[#0f172a] tracking-[-0.02em]">{steps[activeStep].label}</p>
+        <p className="text-[18px] font-black text-[#e2e8ff] tracking-[-0.02em]">{steps[activeStep].label}</p>
         <p className="text-[12px] text-[#94a3b8] mt-2">{steps[activeStep].sub}</p>
 
         {isAI && (
@@ -1003,7 +1003,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
             </span>
           )}
           {diffLabel && (
-            <span className="text-[11px] text-[#94a3b8] font-medium bg-[#f8fafc] px-2 py-0.5 rounded-full">{diffLabel}</span>
+            <span className="text-[11px] text-[#94a3b8] font-medium bg-[#0d1117] px-2 py-0.5 rounded-full">{diffLabel}</span>
           )}
           {hasFigure && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">図あり</span>
@@ -1013,7 +1013,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
       </div>
 
       {/* 問題本文 */}
-      <div className={`bg-white rounded-2xl border p-6 mb-6 transition-all duration-500 ${showAnswer ? 'border-[#e2e8f0] opacity-70 shadow-none' : 'border-[#e2e8f0] shadow-md'}`}
+      <div className={`bg-[#111827] rounded-2xl border p-6 mb-6 transition-all duration-500 ${showAnswer ? 'border-[#1e2d4a] opacity-70 shadow-none' : 'border-[#1e2d4a] shadow-md'}`}
            style={!showAnswer ? { boxShadow: `0 4px 20px ${c.ring}` } : {}}>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black text-white"
@@ -1025,7 +1025,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
 
         {/* 状況設定 */}
         {stem ? (
-          <LatexBlock className="text-[14px] leading-[2] text-[#1e293b] mb-4">{stem}</LatexBlock>
+          <LatexBlock className="text-[14px] leading-[2] text-[#e2e8ff] mb-4">{stem}</LatexBlock>
         ) : (
           <p className="text-[13px] text-[#94a3b8] mb-4">問題文を読み込めませんでした</p>
         )}
@@ -1046,10 +1046,10 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                       <span className="text-[13px] font-black shrink-0" style={{ color: c.accent }}>{sp.label}</span>
                     )}
                     {sp.question && (
-                      <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b] flex-1">{sp.question}</LatexBlock>
+                      <LatexBlock className="text-[13px] leading-[1.9] text-[#e2e8ff] flex-1">{sp.question}</LatexBlock>
                     )}
                     {sp.points > 0 && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#f8fafc] text-[#94a3b8] border border-[#e2e8f0] self-start shrink-0 ml-auto">{sp.points}点</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#0d1117] text-[#94a3b8] border border-[#e2e8f0] self-start shrink-0 ml-auto">{sp.points}点</span>
                     )}
                   </div>
                 )}
@@ -1083,10 +1083,10 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           {subproblems.length > 0 ? (
             <div className="space-y-4">
               {subproblems.map((sp, idx) => (
-                <div key={idx} className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-md"
+                <div key={idx} className="bg-[#111827] rounded-2xl border border-[#1e2d4a] overflow-hidden shadow-md"
                      style={{ boxShadow: `0 4px 16px ${c.ring}` }}>
                   {/* 解答ヘッダー */}
-                  <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-[#f1f5f9]">
+                  <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-[#1a2035]">
                     <div className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black text-white"
                          style={{ background: c.accent }}>
                       A
@@ -1098,7 +1098,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                   {/* 解答値 */}
                   {sp.answer && (
                     <div className="px-5 pt-3 pb-2">
-                      <LatexBlock className="text-[14px] leading-[2] text-[#1e293b] font-semibold">{sp.answer}</LatexBlock>
+                      <LatexBlock className="text-[14px] leading-[2] text-[#e2e8ff] font-semibold">{sp.answer}</LatexBlock>
                     </div>
                   )}
                   {/* 解説 */}
@@ -1133,7 +1133,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-[#e2e8f0] p-6 shadow-md text-[13px] text-[#94a3b8]">
+            <div className="bg-[#111827] rounded-2xl border border-[#1e2d4a] p-6 shadow-md text-[13px] text-[#94a3b8]">
               解答データなし
             </div>
           )}
@@ -1178,7 +1178,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
               />
             ) : (
               <>
-                <div className="text-[13px] font-black text-[#0f172a] mb-1 text-center">自己採点してね</div>
+                <div className="text-[13px] font-black text-[#e2e8ff] mb-1 text-center">自己採点してね</div>
                 <p className="text-[10px] text-[#94a3b8] text-center mb-4">正直に答えることが成績アップの近道</p>
                 <div className="flex gap-3">
                   <ScoreButton type={SCORE.CORRECT} onClick={() => onScore(SCORE.CORRECT)} />
@@ -1202,7 +1202,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[12px] font-black text-[#1e293b]">
+                <div className="text-[12px] font-black text-[#e2e8ff]">
                   {pdfLoading ? 'PDF生成中…' : '高品質PDFで保存'}
                 </div>
                 <div className="text-[10px] text-[#64748b] mt-0.5">
@@ -1241,7 +1241,7 @@ function FollowScreen({ problem, subject, onContinue, onSkip, isLoading }) {
         </div>
       </div>
 
-      <h2 className="text-[20px] font-black text-[#0f172a] tracking-[-0.02em] mb-2">
+      <h2 className="text-[20px] font-black text-[#e2e8ff] tracking-[-0.02em] mb-2">
         {topic}、もう1問やる？
       </h2>
       <p className="text-[13px] text-[#64748b] mb-2 leading-relaxed">
@@ -1331,12 +1331,12 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
   return (
     <div className="max-w-[480px] mx-auto px-5 pt-6 pb-24">
       {/* 固定ヘッダー: タイマー */}
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md -mx-5 px-5 pb-4 pt-2 border-b border-[#f1f5f9]">
+      <div className="sticky top-0 z-20 bg-[#0d1117]/90 backdrop-blur-md -mx-5 px-5 pb-4 pt-2 border-b border-[#1e2d4a]">
         <div className="flex items-center justify-between mb-2">
           <BackButton onClick={onQuit} label="中断" />
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: finished ? '#16a34a' : timeDanger ? '#dc2626' : timeWarning ? '#d97706' : c.accent }} />
-            <span className={`text-[20px] font-black tabular-nums tracking-[-0.02em] ${timeDanger ? 'text-[#dc2626]' : timeWarning ? 'text-[#d97706]' : 'text-[#0f172a]'}`}>
+            <span className={`text-[20px] font-black tabular-nums tracking-[-0.02em] ${timeDanger ? 'text-[#dc2626]' : timeWarning ? 'text-[#d97706]' : 'text-[#e2e8ff]'}`}>
               {finished ? '終了' : formatTime(timeLeft)}
             </span>
           </div>
@@ -1344,7 +1344,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
         </div>
         {/* タイマーバー */}
         {!finished && (
-          <div className="w-full h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-[#1a2035] rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-1000 ease-linear"
                  style={{ width: `${pct}%`, background: timeDanger ? '#dc2626' : timeWarning ? '#d97706' : c.accent }} />
           </div>
@@ -1373,7 +1373,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
           })();
 
           return (
-            <div key={idx} className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm transition-all duration-300"
+            <div key={idx} className="bg-[#111827] rounded-2xl border border-[#1e2d4a] overflow-hidden shadow-sm transition-all duration-300"
                  style={scored ? { borderColor: scored === SCORE.CORRECT ? '#86efac' : scored === SCORE.WRONG ? '#fca5a5' : '#fcd34d' } : {}}>
               {/* 問題ヘッダー */}
               <div className="flex items-center gap-2 px-5 pt-4 pb-2">
@@ -1396,7 +1396,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
 
               {/* 問題文 + 小問 */}
               <div className="px-5 pb-4 space-y-2">
-                {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{stem}</LatexBlock>}
+                {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#e2e8ff]">{stem}</LatexBlock>}
                 {problem?.figure_tikz && problem.figure_tikz !== 'null' && (
                   <TikzFigure tikzCode={problem.figure_tikz} />
                 )}
@@ -1424,7 +1424,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
                           {sp.label ? `解答 ${sp.label}` : '解答'}
                         </span>
                       </div>
-                      {sp.answer && <LatexBlock className="text-[13px] leading-[1.8] text-[#1e293b] font-semibold">{sp.answer}</LatexBlock>}
+                      {sp.answer && <LatexBlock className="text-[13px] leading-[1.8] text-[#e2e8ff] font-semibold">{sp.answer}</LatexBlock>}
                       {sp.explanation && (
                         <details className="mt-1">
                           <summary className="text-[10px] font-bold text-[#6366f1] cursor-pointer select-none hover:underline">
@@ -1529,7 +1529,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
             type="button"
             onClick={onDownloadPdf}
             disabled={pdfLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[12px] font-bold border-2 border-[#1e293b20] text-[#475569] bg-white hover:bg-[#f8faff] transition-all duration-200 active:scale-[0.97] disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[12px] font-bold border-2 border-[#1e2d4a] text-[#8892b8] bg-[#111827] hover:bg-[#161d2e] transition-all duration-200 active:scale-[0.97] disabled:opacity-50"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -1582,7 +1582,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
   return (
     <div className="practice-pdf-layout">
       {/* ── ヘッダー ── */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[#e2e8f0] bg-white flex-shrink-0">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-[#1e2d4a] bg-[#0d1117] flex-shrink-0">
         <BackButton onClick={onQuit} label="終了" />
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
@@ -1594,10 +1594,10 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       </div>
 
       {/* ── PDF または カードフォールバック ── */}
-      <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-[#f1f5f9] overflow-y-auto practice-pdf-content">
+      <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-[#0d1117] overflow-y-auto practice-pdf-content">
         {pdfLoading ? (
           <div className="h-full flex flex-col items-center justify-center px-6">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-[#e2e8f0] px-6 py-7 flex flex-col gap-5">
+            <div className="w-full max-w-sm bg-[#111827] rounded-2xl shadow-sm border border-[#1e2d4a] px-6 py-7 flex flex-col gap-5">
               {/* アイコン + タイトル */}
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -1606,7 +1606,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                        style={{ borderTopColor: c.accent }} />
                 </div>
                 <div>
-                  <p className="text-[13px] font-bold text-[#1e293b]">LaTeX PDF を生成中</p>
+                  <p className="text-[13px] font-bold text-[#e2e8ff]">LaTeX PDF を生成中</p>
                   <p className="text-[11px] text-[#94a3b8] mt-0.5">
                     {pdfProgress < 15 ? 'LaTeX 文書を構築中...' :
                      pdfProgress < 35 ? '数式・記号をレンダリング中...' :
@@ -1618,7 +1618,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               </div>
               {/* プログレスバー */}
               <div className="space-y-1.5">
-                <div className="w-full h-2 bg-[#f1f5f9] rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-[#1a2035] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700 ease-out"
                     style={{ width: `${Math.max(4, pdfProgress)}%`, background: c.accent }}
@@ -1655,7 +1655,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
           <div className="flex-1 min-h-0 flex flex-col">
             {/* 問題/解答 切り替えタブ（解答公開後のみ表示） */}
             {answersRevealed && answerPdfUrl && answerPdfUrl !== '__failed__' && (
-              <div className="flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white border-b-2 shadow-sm" style={{ borderColor: c.accent + '40' }}>
+              <div className="flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#0d1117] border-b-2 shadow-sm" style={{ borderColor: c.accent + '40' }}>
                 <button
                   type="button"
                   onClick={() => setViewingAnswer(false)}
@@ -1685,7 +1685,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               </div>
             )}
             <iframe
-              src={effectiveUrl}
+              src={`${effectiveUrl}#toolbar=0&view=FitH&zoom=page-width`}
               title="練習問題 PDF"
               className="practice-pdf-iframe flex-1"
             />
@@ -1711,7 +1711,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                 return [];
               })();
               return (
-                <div key={idx} className="bg-white rounded-2xl border border-[#e2e8f0] overflow-hidden shadow-sm">
+                <div key={idx} className="bg-[#111827] rounded-2xl border border-[#1e2d4a] overflow-hidden shadow-sm">
                   <div className="flex items-center gap-2 px-5 pt-4 pb-2">
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black text-white"
                          style={{ background: c.accent }}>{idx + 1}</div>
@@ -1721,7 +1721,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                     )}
                   </div>
                   <div className="px-5 pb-4 space-y-2">
-                    {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#1e293b]">{stem}</LatexBlock>}
+                    {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#e2e8ff]">{stem}</LatexBlock>}
                     {problem?.figure_tikz && problem.figure_tikz !== 'null' && (
                       <TikzFigure tikzCode={problem.figure_tikz} />
                     )}
@@ -1742,7 +1742,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                             <span className="text-[10px] font-bold" style={{ color: c.accent }}>
                               {sp.label ? `解答 ${sp.label}` : '解答'}
                             </span>
-                            <LatexBlock className="text-[13px] leading-[1.8] text-[#1e293b] font-semibold">{sp.answer}</LatexBlock>
+                            <LatexBlock className="text-[13px] leading-[1.8] text-[#e2e8ff] font-semibold">{sp.answer}</LatexBlock>
                           </div>
                         )}
                         {sp.explanation && (
@@ -1788,7 +1788,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       {/* ── 解答・解説を見るボタン / 採点パネル ── */}
       {!answersRevealed && !pdfLoading ? (
         /* まだ解答を見ていない → 解答確認ボタンを表示 */
-        <div className="flex-shrink-0 bg-white border-t border-[#e2e8f0] px-4 py-3">
+        <div className="flex-shrink-0 bg-[#0d1117] border-t border-[#1e2d4a] px-4 py-3">
           <button
             type="button"
             onClick={() => {
@@ -1804,7 +1804,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
         </div>
       ) : (
       /* ── 採点パネル (モバイル: 折りたたみ可) ── */
-      <div className="flex-shrink-0 bg-white border-t border-[#e2e8f0] practice-score-panel">
+      <div className="flex-shrink-0 bg-[#0d1117] border-t border-[#1e2d4a] practice-score-panel">
         <button
           type="button"
           className="w-full flex items-center justify-between sm:hidden px-4 py-2.5"
@@ -2037,7 +2037,7 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
         >
           {rating.emoji}
         </div>
-        <h2 className="text-[24px] font-black text-[#0f172a] tracking-[-0.03em]">{rating.label}</h2>
+        <h2 className="text-[24px] font-black text-[#e2e8ff] tracking-[-0.03em]">{rating.label}</h2>
         <p className="text-[13px] text-[#64748b] mt-1.5 leading-relaxed">{rating.sub}</p>
       </div>
 
@@ -2064,9 +2064,9 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
 
       {/* スコアカード */}
       {hasPointData && totalMax > 0 ? (
-        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 mb-6 text-center">
+        <div className="bg-[#111827] rounded-2xl border border-[#1e2d4a] p-5 mb-6 text-center">
           <div className="text-[11px] font-bold text-[#94a3b8] mb-1 tracking-[0.05em]">得点</div>
-          <div className="text-[36px] font-black text-[#0f172a] leading-none">
+          <div className="text-[36px] font-black text-[#e2e8ff] leading-none">
             {totalEarned}<span className="text-[18px] text-[#94a3b8] font-bold"> / {totalMax}</span>
           </div>
           <div className="text-[12px] text-[#64748b] mt-2">{total}問 ─ ○{correct} △{delta} ×{wrong}</div>
@@ -2096,7 +2096,7 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
           </div>
           <div className="flex flex-wrap gap-2">
             {weakTopics.map((t) => (
-              <span key={t} className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-white text-[#dc2626] border border-[#fca5a5]/50 shadow-sm">
+              <span key={t} className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-[#2a1a1a] text-[#f87171] border border-[#fca5a5]/30 shadow-sm">
                 {t}
               </span>
             ))}

@@ -429,8 +429,8 @@ export default function DbEditorPage() {
               onClick={() => setSelectedTable(t.name)}
               className={`group relative text-left rounded-[16px] p-3.5 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden
                 ${active
-                  ? 'bg-white border-2 scale-[1.02]'
-                  : 'bg-white/60 backdrop-blur-sm border border-blue-200/40 hover:bg-white hover:scale-[1.01]'
+                  ? 'bg-[#1e2d4a] border-2 scale-[1.02]'
+                  : 'bg-[#111827]/60 backdrop-blur-sm border border-blue-200/40 hover:bg-[#161d2e] hover:scale-[1.01]'
                 }`}
               style={active ? { borderColor: `${meta.color}40`, boxShadow: 'var(--shadow-card)' } : {}}
 
@@ -477,7 +477,7 @@ export default function DbEditorPage() {
                   placeholder="検索..."
                   className="w-full pl-9 pr-3 py-2 rounded-xl bg-blue-50/50 text-sm
                              text-[#1e293b] transition-all border border-transparent
-                             focus:bg-white focus:border-blue-200/60 focus:shadow-sm
+                             focus:bg-[#111827] focus:border-blue-200/60 focus:shadow-sm
                              focus:ring-0 outline-none placeholder:text-[#c7c7cc]"
                 />
               </div>
@@ -561,12 +561,12 @@ export default function DbEditorPage() {
           </div>
 
           {/* データ一覧 (デスクトップ) */}
-          <div className="hidden sm:block rounded-[20px] bg-white border border-blue-200/40 overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="hidden sm:block rounded-[20px] bg-[#111827] border border-[#1e2d4a] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-blue-200/40">
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium text-[#94a3b8] tracking-wide sticky left-0 bg-white z-10 w-10">
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium text-[#94a3b8] tracking-wide sticky left-0 bg-[#111827] z-10 w-10">
                       #
                     </th>
                     {displayCols.map((col) => (
@@ -594,7 +594,7 @@ export default function DbEditorPage() {
                         className={`border-b border-blue-200/40 transition-colors
                           ${rowDirty ? 'bg-blue-50/50' : 'hover:bg-blue-50/40'}`}
                       >
-                        <td className={`px-3 py-2.5 font-mono text-[11px] text-[#c7c7cc] sticky left-0 z-10 bg-white
+                        <td className={`px-3 py-2.5 font-mono text-[11px] text-[#c7c7cc] sticky left-0 z-10 bg-[#111827]
                           ${rowDirty ? '!bg-blue-50/50' : ''}`}>
                           {page * PAGE_SIZE + idx + 1}
                         </td>
@@ -772,7 +772,7 @@ export default function DbEditorPage() {
       {/* ── 削除確認 ── */}
       {deleteConfirm !== null && (
         <div className="fixed inset-0 bg-blue-500/15 backdrop-blur-md z-50 flex items-center justify-center">
-          <div className="rounded-[20px] bg-white/90 backdrop-blur-xl p-6 max-w-sm mx-4 border border-blue-200/40" style={{ boxShadow: 'var(--shadow-premium)' }}>
+          <div className="rounded-[20px] bg-[#111827]/90 backdrop-blur-xl p-6 max-w-sm mx-4 border border-blue-200/40" style={{ boxShadow: 'var(--shadow-premium)' }}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-blue-50/60 flex items-center justify-center">
                 <svg className="w-5 h-5 text-[#1e293b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -921,7 +921,7 @@ function RowDetailModal({ row, schema, pk, onClose }) {
   return (
     <div className="fixed inset-0 bg-blue-500/15 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white/95 backdrop-blur-xl rounded-t-[20px] sm:rounded-[20px] max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-blue-200/40" style={{ boxShadow: 'var(--shadow-premium)' }}>
+      <div className="bg-[#111827]/95 backdrop-blur-xl rounded-t-[20px] sm:rounded-[20px] max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-blue-200/40" style={{ boxShadow: 'var(--shadow-premium)' }}>
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-blue-200/40">
           <h2 className="text-base sm:text-lg font-bold text-[#1e293b]">
             データ詳細
@@ -1053,7 +1053,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
     !['created_at', 'updated_at'].includes(c.name)
   );
 
-  const baseInputClass = `w-full px-3 py-2 text-sm border border-blue-200/40 rounded-[12px] bg-white
+  const baseInputClass = `w-full px-3 py-2 text-sm border border-blue-200/40 rounded-[12px] bg-[#111827]
     text-[#1e293b] transition-all hover:border-blue-200/50 focus:border-[#2563eb]/50 focus:ring-2 focus:ring-[#2563eb]/20 outline-none placeholder:text-[#c7c7cc]`;
 
   const handleStemBlur = () => {
