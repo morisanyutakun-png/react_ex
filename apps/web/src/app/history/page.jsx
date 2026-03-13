@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { MobileNavLinks } from '@/components/ui';
 
 const SUBJECT_COLOR = {
-  '物理': { accent: '#8b5cf6', bg: 'bg-violet-50', text: 'text-violet-700' },
+  '物理': { accent: '#22c98a', bg: 'bg-emerald-950/20', text: 'text-emerald-400' },
   '数学': { accent: '#3b82f6', bg: 'bg-blue-50',   text: 'text-blue-700' },
   '化学': { accent: '#10b981', bg: 'bg-emerald-50', text: 'text-emerald-700' },
 };
@@ -68,7 +68,7 @@ export default function HistoryPage() {
           </div>
           <h2 className="text-[16px] font-bold text-[#475569] mb-2">まだ履歴がありません</h2>
           <p className="text-[13px] text-[#94a3b8] mb-6">練習モードで演習すると、結果がここに記録されます。</p>
-          <Link href="/practice" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-[14px] font-bold text-white bg-gradient-to-r from-violet-500 to-violet-600 shadow-lg hover:shadow-xl transition-all active:scale-[0.97]">
+          <Link href="/practice" className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-[14px] font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg hover:shadow-xl transition-all active:scale-[0.97]">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" />
             </svg>
@@ -167,7 +167,7 @@ export default function HistoryPage() {
 
           {/* CTA */}
           <div className="space-y-3">
-            <Link href="/practice" className="block w-full py-4 rounded-2xl text-center text-[15px] font-black text-white bg-gradient-to-r from-violet-500 to-violet-600 shadow-xl hover:shadow-2xl transition-all active:scale-[0.97]">
+            <Link href="/practice" className="block w-full py-4 rounded-2xl text-center text-[15px] font-black text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-xl hover:shadow-2xl transition-all active:scale-[0.97]">
               もっと練習する
             </Link>
           </div>

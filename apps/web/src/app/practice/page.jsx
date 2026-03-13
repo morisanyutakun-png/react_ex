@@ -18,7 +18,7 @@ const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM
 const PRACTICE_SUBJECTS = ['物理', '数学', '化学'];
 
 const SUBJECT_COLOR = {
-  '物理': { accent: '#8b5cf6', light: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', gradient: 'from-violet-500 to-violet-600', ring: '#8b5cf620', glow: 'rgba(139,92,246,0.15)' },
+  '物理': { accent: '#22c98a', light: 'bg-emerald-950/20', text: 'text-emerald-400', border: 'border-emerald-700/40', gradient: 'from-emerald-500 to-teal-600', ring: '#22c98a20', glow: 'rgba(34,201,138,0.15)' },
   '数学': { accent: '#3b82f6', light: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',   gradient: 'from-blue-500 to-blue-600',   ring: '#3b82f620', glow: 'rgba(59,130,246,0.15)' },
   '化学': { accent: '#10b981', light: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', gradient: 'from-emerald-500 to-emerald-600', ring: '#10b98120', glow: 'rgba(16,185,129,0.15)' },
 };
@@ -183,7 +183,7 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
                 value={inputScores[idx] ?? ''}
                 onChange={(e) => handleChange(idx, e.target.value)}
                 placeholder="0"
-                className="w-16 h-9 rounded-lg border-2 border-[#e2e8f0] text-center text-[14px] font-bold text-[#e2e8ff] focus:outline-none focus:border-violet-400 transition-colors"
+                className="w-16 h-9 rounded-lg border-2 border-[#e2e8f0] text-center text-[14px] font-bold text-[#e2e8ff] focus:outline-none focus:border-emerald-400 transition-colors"
                 style={inputScores[idx] !== undefined && inputScores[idx] !== '' ? { borderColor: accent + '60' } : {}}
               />
               <span className="text-[12px] text-[#94a3b8] font-medium">/ {sp.points || 0}点</span>

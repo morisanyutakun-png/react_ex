@@ -352,8 +352,9 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
   const colorMap = {
     slate: 'bg-slate-50 text-[#64748b]',
     neutral: 'bg-slate-50 text-[#64748b]',
-    indigo: 'bg-blue-50 text-[#2563eb]',
-    emerald: 'bg-emerald-50 text-[#059669]',
+    indigo: 'bg-sky-950/30 text-sky-400',
+    teal: 'bg-teal-950/30 text-teal-400',
+    emerald: 'bg-emerald-950/30 text-emerald-400',
     amber: 'bg-amber-50 text-[#d97706]',
     rose: 'bg-rose-50 text-[#e11d48]',
   };
@@ -464,7 +465,7 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-violet-50/60 rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(120,119,198,0.06)' }}>
+    <div className="flex gap-0.5 p-[3px] bg-emerald-950/30 rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(34,201,138,0.06)' }}>
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
@@ -517,7 +518,7 @@ export function ProgressSteps({ steps, current }) {
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-[1.5px] rounded-full transition-all duration-500 ${i + 1 < current ? 'bg-violet-400/60' : 'bg-violet-100/70'}`} />
+            <div className={`w-3 sm:w-6 h-[1.5px] rounded-full transition-all duration-500 ${i + 1 < current ? 'bg-emerald-400/60' : 'bg-emerald-900/50'}`} />
           )}
         </div>
       ))}

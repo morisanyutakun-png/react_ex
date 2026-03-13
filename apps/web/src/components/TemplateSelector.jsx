@@ -173,7 +173,7 @@ export default function TemplateSelector({
             <div className="text-xs text-[#64748b] mt-0.5">{selectedTemplate.description}</div>
           )}
           <div className="flex gap-2 mt-2 flex-wrap">
-            <MetaTag value={selectedTemplate.metadata?.subject} color="indigo" />
+            <MetaTag value={selectedTemplate.metadata?.subject} color="teal" />
             <MetaTag value={selectedTemplate.metadata?.field} color="emerald" />
             <MetaTag value={selectedTemplate.metadata?.difficulty} color="amber" />
           </div>
