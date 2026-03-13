@@ -521,10 +521,48 @@ export default function App() {
               </div>
             </div>
 
-            <div className="physics-tagline">
-              <div className="physics-tagline-title">🎯 物理で差をつけろ。</div>
-              <div className="physics-tagline-desc">力学・電磁気・波動・熱力学 — AIが君だけの類題を無限に生成。<br/>1日5分のスキマ演習で偏差値を上げる。</div>
-              <div className="physics-topic-pills"><span>⚡ 力学</span><span>🧲 電磁気</span><span>🌊 波動</span><span>🔥 熱力学</span><span>🔬 原子</span></div>
+            <div className="feature-showcase">
+              <div className="feature-showcase-title">🎯 AIが作る本格演習PDF</div>
+              <div className="feature-cards">
+                <div className="feature-card" onClick={startPractice}>
+                  <div className="feature-card-preview">
+                    <div className="mini-paper">
+                      <div className="mini-paper-line title" />
+                      <div className="mini-paper-line" />
+                      <div className="mini-paper-line short" />
+                      <div className="mini-paper-diagram" />
+                      <div className="mini-paper-line" />
+                      <div className="mini-paper-line short" />
+                    </div>
+                  </div>
+                  <div className="feature-card-label">📝 試験形式</div>
+                  <div className="feature-card-desc">本番さながらの演習</div>
+                </div>
+                <div className="feature-card" onClick={startPractice}>
+                  <div className="feature-card-preview">
+                    <div className="mini-paper worksheet">
+                      <div className="mini-paper-line title" />
+                      <div className="mini-paper-grid" />
+                    </div>
+                  </div>
+                  <div className="feature-card-label">📋 ワークシート</div>
+                  <div className="feature-card-desc">穴埋め・計算問題</div>
+                </div>
+                <div className="feature-card" onClick={startPractice}>
+                  <div className="feature-card-preview">
+                    <div className="mini-paper flashcard">
+                      <div className="mini-paper-q">Q</div>
+                      <div className="mini-paper-line short" />
+                      <div className="mini-paper-line" />
+                    </div>
+                  </div>
+                  <div className="feature-card-label">🃏 フラッシュカード</div>
+                  <div className="feature-card-desc">サクッと暗記確認</div>
+                </div>
+              </div>
+              <div className="physics-topic-pills" style={{marginTop:16}}>
+                <span>⚡ 力学</span><span>🧲 電磁気</span><span>🌊 波動</span><span>🔥 熱力学</span><span>🔬 原子</span>
+              </div>
             </div>
 
             <div className="streak-card">
@@ -616,7 +654,7 @@ export default function App() {
               </div>
             )}
 
-            <div className="home-cta"><button className="btn btn-primary btn-block btn-lg" onClick={startPractice}><Ico.Zap /> 今すぐ演習する</button><div className="home-cta-sub">1セッション5分〜。スキマ時間で差をつけろ。</div></div>
+            <div className="home-cta"><button className="btn btn-primary btn-block btn-lg" onClick={startPractice}><Ico.Zap /> 演習を始める</button><div className="home-cta-sub">1セッション5分〜。スキマ時間で差をつけろ。</div></div>
           </div>
         )}
 
@@ -784,10 +822,16 @@ export default function App() {
                   </div>
                   {pdfUrl
                     ? <>
-                        <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg"><Ico.ExternalLink /> 問題PDFを開く</a>
+                        <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg" style={{marginBottom:4}}>
+                          <Ico.ExternalLink /> 問題PDFを別タブで開く
+                        </a>
                         <div className="pdf-embed-wrapper">
+                          <div className="pdf-embed-label">
+                            <span className="pdf-embed-label-dot" />
+                            <span>問題PDF プレビュー</span>
+                          </div>
                           <iframe
-                            src={`${pdfUrl}#toolbar=0&view=FitH&zoom=page-width`}
+                            src={`${pdfUrl}#toolbar=0&view=FitH&zoom=page-fit`}
                             className="pdf-embed-frame"
                             title="問題PDF"
                           />
