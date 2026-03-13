@@ -7,18 +7,18 @@
 
 /* ── Design Tokens ── */
 :root {
-  /* Core palette – Deep Forest Night */
-  --c-bg: #060c09;
-  --c-bg-subtle: #0b1510;
-  --c-surface: #0f1e13;
-  --c-surface-raised: #162a1b;
-  --c-border: #1e3a26;
-  --c-border-light: #28503a;
+  /* Core palette – Forest Glow（はっきり見える深森緑） */
+  --c-bg: #0a1f0e;          /* rgb(10,31,14) — 見て分かる深緑 */
+  --c-bg-subtle: #0e2814;   /* より深い森 */
+  --c-surface: #132f18;     /* カードの背景（緑がわかる） */
+  --c-surface-raised: #1a3d20; /* 浮いたカード */
+  --c-border: #234d2a;      /* 枠線 */
+  --c-border-light: #2f6638; /* 明るめ枠線 */
 
-  /* Text – moonlit forest */
-  --c-text: #cee8d8;
-  --c-text-sub: #598a6e;
-  --c-text-muted: #2c4e36;
+  /* Text – 読みやすく自然感 */
+  --c-text: #d2eed9;
+  --c-text-sub: #5fa870;
+  --c-text-muted: #336640;
   --c-primary: #fff;
 
   /* Accent – Sky / Ocean Blue */
@@ -66,37 +66,34 @@ html { font-size: 16px; -webkit-text-size-adjust: 100% }
 body {
   font-family: var(--ff);
   color: var(--c-text);
-  background-color: var(--c-bg);
+  /* ベースカラー：見て分かる深森緑 */
+  background-color: #0a1f0e;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
 }
 
-/* ── 全体背景：オーロラ森林大気 ── */
-/* app-shell が全画面を覆う固定グラデーション背景を担う */
+/* ── 全体背景：森林オーロラ大気 ── */
+/* 固定背景で全画面に映えるオーロラ感を演出 */
 .app-shell {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   position: relative;
-  background:
-    /* 左上：オーロラグリーン */
-    radial-gradient(ellipse at -5% 0%, rgba(13, 158, 138, 0.18) 0%, transparent 52%),
-    /* 右下：森の深み */
-    radial-gradient(ellipse at 110% 100%, rgba(22, 163, 74, 0.1) 0%, transparent 48%),
-    /* 中央：空の青 */
-    radial-gradient(ellipse at 60% 30%, rgba(26, 143, 209, 0.07) 0%, transparent 55%),
-    /* 森の床：深い緑黒 */
-    linear-gradient(175deg, #040a07 0%, #060c09 45%, #080f0b 100%);
-  /* 物理の格子（ごく微かに） */
+  background-color: #0a1f0e;
   background-image:
-    radial-gradient(ellipse at -5% 0%, rgba(13, 158, 138, 0.18) 0%, transparent 52%),
-    radial-gradient(ellipse at 110% 100%, rgba(22, 163, 74, 0.1) 0%, transparent 48%),
-    radial-gradient(ellipse at 60% 30%, rgba(26, 143, 209, 0.07) 0%, transparent 55%),
-    linear-gradient(175deg, #040a07 0%, #060c09 45%, #080f0b 100%),
-    linear-gradient(rgba(13, 158, 138, 0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(13, 158, 138, 0.014) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+    /* 左下：エメラルドオーロラ（強め） */
+    radial-gradient(ellipse at 0% 100%, rgba(20, 230, 150, 0.28) 0%, transparent 50%),
+    /* 右上：空の青（映えアクセント） */
+    radial-gradient(ellipse at 100% 0%, rgba(26, 143, 209, 0.22) 0%, transparent 50%),
+    /* 右下：深森エメラルド */
+    radial-gradient(ellipse at 90% 90%, rgba(22, 163, 74, 0.14) 0%, transparent 45%),
+    /* 中央：ほのかな光 */
+    radial-gradient(ellipse at 40% 40%, rgba(13, 200, 120, 0.06) 0%, transparent 60%),
+    /* 物理格子 */
+    linear-gradient(rgba(20, 200, 120, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 200, 120, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 32px 32px, 32px 32px;
   background-attachment: fixed;
 }
 
@@ -327,12 +324,13 @@ body {
 }
 .home-hero-bg {
   position: absolute; inset: 0; z-index: 0;
-  /* オーロラ映えグラデーション */
-  background:
-    radial-gradient(ellipse at 0% 100%, rgba(13, 210, 140, 0.32) 0%, transparent 45%),
-    radial-gradient(ellipse at 100% 0%, rgba(26, 143, 209, 0.26) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 50%, rgba(13, 158, 138, 0.1) 0%, transparent 65%),
-    linear-gradient(155deg, #031008 0%, #060c09 35%, #090f0b 70%, #0b1510 100%);
+  /* ホームヒーロー：映えるオーロラグラデーション */
+  background-color: #091c0d;
+  background-image:
+    radial-gradient(ellipse at 5% 95%, rgba(20, 240, 150, 0.45) 0%, transparent 42%),
+    radial-gradient(ellipse at 95% 5%, rgba(26, 143, 209, 0.38) 0%, transparent 42%),
+    radial-gradient(ellipse at 50% 60%, rgba(13, 180, 110, 0.12) 0%, transparent 60%),
+    linear-gradient(150deg, #081a0b 0%, #0c2210 50%, #0a1e0e 100%);
   animation: auroraFloat 12s ease-in-out infinite;
 }
 /* Physics equation watermarks */
