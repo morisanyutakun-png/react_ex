@@ -831,7 +831,7 @@ export default function App() {
                             <span>問題PDF プレビュー</span>
                           </div>
                           <iframe
-                            src={`${pdfUrl}#toolbar=0&view=FitH&zoom=page-fit`}
+                            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitV&zoom=page-fit`}
                             className="pdf-embed-frame"
                             title="問題PDF"
                           />

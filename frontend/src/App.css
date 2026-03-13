@@ -10,10 +10,10 @@
   /* Core palette – Forest Glow（はっきり見える深森緑） */
   --c-bg: #0a1f0e;          /* rgb(10,31,14) — 見て分かる深緑 */
   --c-bg-subtle: #0e2814;   /* より深い森 */
-  --c-surface: #132f18;     /* カードの背景（緑がわかる） */
-  --c-surface-raised: #1a3d20; /* 浮いたカード */
-  --c-border: #234d2a;      /* 枠線 */
-  --c-border-light: #2f6638; /* 明るめ枠線 */
+  --c-surface: #1d4f2a;     /* カードの背景（明るめの深緑） */
+  --c-surface-raised: #286538; /* 浮いたカード */
+  --c-border: #347546;      /* 枠線 */
+  --c-border-light: #4f9b62; /* 明るめ枠線 */
 
   /* Text – 読みやすく自然感 */
   --c-text: #d2eed9;
@@ -295,10 +295,15 @@ body {
    CARD
    ════════════════════════════════════════════ */
 .card {
-  background: var(--c-surface);
+  background: linear-gradient(
+    160deg,
+    rgba(45, 106, 60, 0.92) 0%,
+    rgba(35, 88, 49, 0.92) 58%,
+    rgba(27, 72, 40, 0.94) 100%
+  );
   border-radius: var(--r-card); padding: 28px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--c-border);
+  box-shadow: 0 8px 28px rgba(9, 28, 14, 0.45), 0 0 0 1px rgba(135, 224, 152, 0.14) inset;
+  border: 1px solid rgba(108, 198, 126, 0.45);
   position: relative;
 }
 @media (max-width: 768px) { .card { padding: 20px 16px; border-radius: 14px } }
@@ -1355,6 +1360,7 @@ body {
   font-size: 12px; font-weight: 700;
   color: var(--c-text-muted);
   letter-spacing: .04em; text-transform: uppercase;
+  flex-shrink: 0;
 }
 .pdf-embed-label-dot {
   width: 8px; height: 8px; border-radius: 50%;
@@ -1363,37 +1369,27 @@ body {
   animation: pulse 2s ease-in-out infinite;
 }
 
-/* ── モバイルPDF：ズームなし横スクロール禁止 ── */
-/* A4比率(210:297)で表示域を確保、スケールダウンでピタリと収める */
+/* ── モバイルPDF：初期表示で1ページが収まるように最適化 ── */
 @media (max-width: 768px) {
   .pdf-embed-wrapper {
-    /* A4縦比率でコンテナを設定 */
-    aspect-ratio: 210 / 297;
-    max-height: 72vh;
+    height: min(68vh, 620px);
     overflow: hidden;
     border-radius: 14px;
     box-shadow:
       0 8px 32px rgba(0, 0, 0, 0.4),
       0 0 0 1px rgba(255,255,255,0.05);
-    /* 画面幅を超えない */
     width: 100%;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
   }
-  /* iframeをコンテナ内にスケールして埋める */
-  /* width=150% + scale(0.667) → A4全体が画面幅に収まる */
   .pdf-embed-frame {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 150%;
-    height: 150%;
-    transform: scale(0.6667);
-    transform-origin: top left;
-    min-height: unset;
-  }
-  /* ラベルがある場合は高さ分オフセット */
-  .pdf-embed-label + .pdf-embed-frame {
-    top: 33px;
+    position: static;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+    transform: none;
   }
 }
 
