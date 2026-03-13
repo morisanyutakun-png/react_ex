@@ -1,48 +1,49 @@
 /* ═══════════════════════════════════════════════
    物理AI – Study SaaS Design System
-   Deep Navy × Royal Blue × Exam-Ready
+   Deep Ocean × Sky Blue × Forest Teal
+   自然界の光スペクトル：深海 × 大空 × 森林
    ═══════════════════════════════════════════════ */
 
 /* ── Design Tokens ── */
 :root {
-  /* Core palette */
-  --c-bg: #0d1117;
-  --c-bg-subtle: #111827;
-  --c-surface: #161d2e;
-  --c-surface-raised: #1e2640;
-  --c-border: #252f4a;
-  --c-border-light: #2d3a57;
+  /* Core palette – Deep Ocean/Space */
+  --c-bg: #08101c;
+  --c-bg-subtle: #0d1828;
+  --c-surface: #101f35;
+  --c-surface-raised: #172b48;
+  --c-border: #1c3354;
+  --c-border-light: #254878;
 
-  /* Text */
-  --c-text: #e2e8ff;
-  --c-text-sub: #8892b8;
-  --c-text-muted: #4a5480;
+  /* Text – cool, natural */
+  --c-text: #d6e8f4;
+  --c-text-sub: #6a90b4;
+  --c-text-muted: #3a5a7a;
   --c-primary: #fff;
 
-  /* Accent – Royal Blue */
-  --c-accent: #5b7ef7;
-  --c-accent-hover: #4a6df4;
-  --c-accent-bg: rgba(91, 126, 247, 0.1);
-  --c-accent-glow: rgba(91, 126, 247, 0.22);
-  --c-accent-light: #7b97fb;
+  /* Accent – Sky / Ocean Blue */
+  --c-accent: #1a8fd1;
+  --c-accent-hover: #1480be;
+  --c-accent-bg: rgba(26, 143, 209, 0.08);
+  --c-accent-glow: rgba(26, 143, 209, 0.22);
+  --c-accent-light: #4aaee0;
 
-  /* Secondary – Amber (motivating CTA) */
-  --c-cyan: #f59e0b;
-  --c-cyan-bg: rgba(245, 158, 11, 0.1);
+  /* Secondary – Ocean Teal (自然の水・森) */
+  --c-cyan: #0d9e8a;
+  --c-cyan-bg: rgba(13, 158, 138, 0.08);
 
   /* Success, Error, Warning */
   --c-success: #22c55e;
   --c-success-bg: rgba(34, 197, 94, 0.1);
   --c-error: #ef4444;
   --c-danger: #ef4444;
-  --c-warning: #f59e0b;
-  --c-warning-bg: rgba(245, 158, 11, 0.1);
-  --c-gold: #f59e0b;
+  --c-warning: #d97706;
+  --c-warning-bg: rgba(217, 119, 6, 0.08);
+  --c-gold: #d97706;
 
-  /* XP / Gamification */
-  --c-xp: #8b5cf6;
-  --c-xp-bg: rgba(139, 92, 246, 0.12);
-  --c-streak: #f97316;
+  /* XP / Gamification – Cosmic Indigo (宇宙) */
+  --c-xp: #6366f1;
+  --c-xp-bg: rgba(99, 102, 241, 0.1);
+  --c-streak: #ea580c;
 
   /* Misc */
   --ff: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -70,8 +71,8 @@ body {
   overscroll-behavior-y: none;
   /* nano grid background */
   background-image:
-    linear-gradient(rgba(91, 126, 247, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(91, 126, 247, 0.015) 1px, transparent 1px);
+    linear-gradient(rgba(26, 143, 209, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 143, 209, 0.015) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
@@ -95,7 +96,7 @@ body {
 @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: .6 } }
 @keyframes glowPulse {
   0%, 100% { box-shadow: 0 0 8px var(--c-accent-glow) }
-  50% { box-shadow: 0 0 24px var(--c-accent-glow), 0 0 48px rgba(91, 126, 247, 0.1) }
+  50% { box-shadow: 0 0 24px var(--c-accent-glow), 0 0 48px rgba(26, 143, 209, 0.1) }
 }
 @keyframes shimmer {
   0% { background-position: -200% 0 }
@@ -126,7 +127,7 @@ body {
 .logo { display: flex; align-items: center; gap: 10px; cursor: pointer }
 .logo-mark {
   width: 38px; height: 38px;
-  background: linear-gradient(135deg, var(--c-accent), #8b5cf6);
+  background: linear-gradient(135deg, var(--c-accent), var(--c-cyan));
   color: #fff;
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
@@ -138,7 +139,7 @@ body {
 .header-xp-badge {
   display: flex; align-items: center; gap: 6px;
   background: var(--c-xp-bg);
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  border: 1px solid rgba(99, 102, 241, 0.22);
   padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; color: var(--c-xp);
 }
 .header-xp-rank { font-weight: 800 }
@@ -161,12 +162,12 @@ body {
   display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700;
   color: var(--c-xp);
   background: var(--c-xp-bg);
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.18);
   padding: 4px 12px; border-radius: 16px;
 }
 .mobile-top-title { font-size: 16px; font-weight: 700; color: var(--c-accent); text-align: center; letter-spacing: .03em; text-transform: uppercase }
 .mobile-progress-line { height: 3px; background: var(--c-border); border-radius: 2px; overflow: hidden }
-.mobile-progress-fill { height: 100%; background: linear-gradient(90deg, var(--c-accent), var(--c-cyan)); border-radius: 2px; transition: width .3s ease }
+.mobile-progress-fill { height: 100%; background: linear-gradient(90deg, var(--c-accent), #1db8a6); border-radius: 2px; transition: width .3s ease }
 .mobile-timer { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--c-text-sub); justify-content: center }
 
 /* ════════════════════════════════════════════
@@ -227,9 +228,9 @@ body {
 .btn-lg { padding: 14px 24px; font-size: 16px; border-radius: 14px }
 .btn-block { width: 100% }
 .btn-hero {
-  background: linear-gradient(135deg, #f59e0b, #ef4444, #ec4899);
+  background: linear-gradient(135deg, #1565a8 0%, #1a8fd1 50%, #0d9e8a 100%);
   color: #fff; padding: 18px 36px; font-size: 18px; border-radius: 18px;
-  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.35), 0 0 0 1px rgba(255,255,255,0.1) inset;
+  box-shadow: 0 4px 24px rgba(26, 143, 209, 0.35), 0 0 0 1px rgba(255,255,255,0.08) inset;
   font-weight: 900;
   letter-spacing: .03em; text-transform: uppercase;
   position: relative; overflow: hidden;
@@ -237,17 +238,17 @@ body {
 }
 .btn-hero::before {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
   background-size: 200% 100%;
   animation: shimmer 2.5s infinite;
 }
 .btn-hero::after {
   content: ''; position: absolute; inset: -2px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent, rgba(255,255,255,0.1));
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent, rgba(255,255,255,0.06));
   border-radius: 20px; pointer-events: none;
 }
 .btn-hero:hover {
-  box-shadow: 0 8px 36px rgba(245, 158, 11, 0.45), 0 0 60px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 8px 36px rgba(26, 143, 209, 0.45), 0 0 60px rgba(13, 158, 138, 0.2);
   transform: translateY(-3px) scale(1.02);
 }
 .btn-hero:active { transform: scale(0.98) }
@@ -291,10 +292,10 @@ body {
 .home-hero-bg {
   position: absolute; inset: 0; z-index: 0;
   background:
-    radial-gradient(ellipse at 15% 85%, rgba(91, 126, 247, 0.18) 0%, transparent 45%),
-    radial-gradient(ellipse at 85% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 50%, rgba(91, 126, 247, 0.06) 0%, transparent 60%),
-    linear-gradient(160deg, #0f1525 0%, #0d1117 40%, #111827 100%);
+    radial-gradient(ellipse at 15% 85%, rgba(26, 143, 209, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 15%, rgba(13, 158, 138, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(26, 143, 209, 0.05) 0%, transparent 65%),
+    linear-gradient(160deg, #0a1929 0%, #08101c 40%, #0d1828 100%);
 }
 /* Physics equation watermarks */
 .home-hero-bg::before {
@@ -303,7 +304,7 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-family: var(--ff-mono);
   font-size: 15px; letter-spacing: 6px; word-spacing: 20px;
-  color: rgba(91, 126, 247, 0.04);
+  color: rgba(26, 143, 209, 0.05);
   white-space: nowrap; overflow: hidden;
   transform: rotate(-8deg) scale(1.6);
   pointer-events: none;
@@ -313,24 +314,24 @@ body {
   content: '';
   position: absolute; inset: 0;
   background:
-    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(91, 126, 247, 0.02) 39px, rgba(91, 126, 247, 0.02) 40px),
-    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(91, 126, 247, 0.02) 39px, rgba(91, 126, 247, 0.02) 40px);
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(26, 143, 209, 0.025) 39px, rgba(26, 143, 209, 0.025) 40px),
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(26, 143, 209, 0.025) 39px, rgba(26, 143, 209, 0.025) 40px);
   pointer-events: none;
 }
 .home-hero-content { position: relative; z-index: 1; color: #fff }
 .home-hero-badge {
   display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(91, 126, 247, 0.1);
+  background: rgba(26, 143, 209, 0.1);
   backdrop-filter: blur(8px);
   padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 800;
-  margin-bottom: 10px; border: 1px solid rgba(91, 126, 247, 0.18);
+  margin-bottom: 10px; border: 1px solid rgba(26, 143, 209, 0.2);
   color: var(--c-accent); letter-spacing: .06em; text-transform: uppercase;
 }
 .home-hero-greeting { font-size: 14px; color: var(--c-text-sub); margin-bottom: 4px }
 .home-hero-motivation {
   font-size: 22px; font-weight: 900; line-height: 1.4; margin-bottom: 24px;
   letter-spacing: -.01em; max-width: 400px; color: var(--c-text);
-  text-shadow: 0 0 40px rgba(91, 126, 247, 0.1);
+  text-shadow: 0 0 40px rgba(26, 143, 209, 0.12);
 }
 @media (max-width: 768px) {
   .home-hero { padding: 28px 20px; min-height: 200px; border-radius: 16px }
@@ -346,7 +347,7 @@ body {
 }
 .physics-tagline::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--c-accent), var(--c-cyan), transparent);
+  background: linear-gradient(90deg, transparent, var(--c-accent), transparent);
 }
 .physics-tagline-title { font-size: 18px; font-weight: 900; color: var(--c-accent); margin-bottom: 8px; letter-spacing: .02em }
 .physics-tagline-desc { font-size: 13px; color: var(--c-text-sub); line-height: 1.7; margin-bottom: 14px }
@@ -355,11 +356,11 @@ body {
   background: var(--c-accent-bg);
   color: var(--c-accent);
   padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
-  border: 1px solid rgba(91, 126, 247, 0.12);
+  border: 1px solid rgba(26, 143, 209, 0.14);
   transition: all var(--transition);
 }
 .physics-topic-pills span:hover {
-  background: rgba(91, 126, 247, 0.12);
+  background: rgba(26, 143, 209, 0.12);
   box-shadow: 0 0 8px var(--c-accent-glow);
 }
 
@@ -372,7 +373,7 @@ body {
 }
 .feature-showcase::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--c-accent), #8b5cf6, var(--c-cyan), transparent);
+  background: linear-gradient(90deg, transparent, var(--c-accent), var(--c-cyan), transparent);
 }
 .feature-showcase-title {
   font-size: 16px; font-weight: 900; color: var(--c-accent);
@@ -392,7 +393,7 @@ body {
 .feature-card:hover {
   border-color: var(--c-accent);
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(91, 126, 247, 0.15);
+  box-shadow: 0 8px 24px rgba(26, 143, 209, 0.15);
 }
 .feature-card-preview {
   display: flex; justify-content: center;
@@ -488,7 +489,7 @@ body {
   width: 44px; height: 44px;
   display: flex; align-items: center; justify-content: center;
   background: var(--c-accent-bg); border-radius: 12px;
-  border: 1px solid rgba(91, 126, 247, 0.12);
+  border: 1px solid rgba(26, 143, 209, 0.12);
 }
 .home-quick-link-text { flex: 1; font-size: 15px; font-weight: 700; color: var(--c-text) }
 .home-quick-link-arrow {
@@ -554,7 +555,7 @@ body {
 
 /* Level Card */
 .level-card {
-  background: linear-gradient(135deg, var(--c-surface), rgba(168, 85, 247, 0.05));
+  background: linear-gradient(135deg, var(--c-surface), rgba(99, 102, 241, 0.04));
   border-radius: var(--r-card); padding: 20px 24px;
   border: 1px solid var(--c-border);
   display: flex; flex-direction: column; gap: 10px;
@@ -562,7 +563,7 @@ body {
 }
 .level-card::before {
   content: ''; position: absolute; top: 0; right: 0; width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.12), transparent 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.1), transparent 70%);
   pointer-events: none;
 }
 .level-header { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1 }
@@ -570,7 +571,7 @@ body {
 .level-emoji { font-size: 24px }
 .level-rank-badge {
   font-size: 15px; font-weight: 900; color: var(--c-xp);
-  background: var(--c-xp-bg); border: 1px solid rgba(168, 85, 247, 0.25);
+  background: var(--c-xp-bg); border: 1px solid rgba(99, 102, 241, 0.22);
   padding: 2px 10px; border-radius: 8px;
 }
 .level-name { font-size: 14px; font-weight: 700; color: var(--c-text) }
@@ -578,8 +579,8 @@ body {
 .level-progress-bar { height: 8px; background: var(--c-border); border-radius: 4px; overflow: hidden; position: relative }
 .level-progress-fill {
   height: 100%; border-radius: 4px; transition: width .5s ease;
-  background: linear-gradient(90deg, var(--c-xp), #c084fc);
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+  background: linear-gradient(90deg, var(--c-xp), #818cf8);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.35);
 }
 .level-progress-label { font-size: 12px; color: var(--c-text-muted); text-align: right }
 
@@ -607,7 +608,7 @@ body {
 }
 .weekly-bar-fill { width: 100%; border-radius: 6px; background: var(--c-border-light); transition: height .4s ease }
 .weekly-bar-fill.active {
-  background: linear-gradient(180deg, var(--c-accent), rgba(91, 126, 247, 0.3));
+  background: linear-gradient(180deg, var(--c-accent), rgba(26, 143, 209, 0.3));
   box-shadow: 0 0 8px var(--c-accent-glow);
 }
 .weekly-bar-label { font-size: 11px; color: var(--c-text-muted); font-weight: 600 }
@@ -619,7 +620,7 @@ body {
 .subject-bar-track { flex: 1; height: 8px; background: var(--c-border); border-radius: 4px; overflow: hidden }
 .subject-bar-fill {
   height: 100%; border-radius: 4px; transition: width .5s ease;
-  background: linear-gradient(90deg, var(--c-accent), #8b5cf6);
+  background: linear-gradient(90deg, var(--c-accent), var(--c-cyan));
 }
 .subject-bar-count { font-size: 12px; font-weight: 700; color: var(--c-text-sub); width: 40px; flex-shrink: 0 }
 
@@ -632,11 +633,11 @@ body {
 }
 .shareable-bg {
   position: absolute; inset: 0; z-index: 0;
-  background: linear-gradient(135deg, var(--c-bg) 0%, var(--c-surface) 30%, rgba(168, 85, 247, 0.18) 60%, rgba(91, 126, 247, 0.1) 100%);
+  background: linear-gradient(135deg, var(--c-bg) 0%, var(--c-surface) 40%, rgba(13, 158, 138, 0.12) 70%, rgba(26, 143, 209, 0.08) 100%);
 }
 .shareable-bg::after {
   content: ''; position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 70% 20%, rgba(91, 126, 247, 0.12), transparent 50%);
+  background: radial-gradient(ellipse at 70% 20%, rgba(26, 143, 209, 0.1), transparent 50%);
 }
 .shareable-content { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px }
 .shareable-header { display: flex; justify-content: space-between; align-items: center }
@@ -648,7 +649,7 @@ body {
 .shareable-level-name { font-size: 16px; font-weight: 600; opacity: .8 }
 .shareable-stats-row {
   display: flex; align-items: center; justify-content: center; gap: 0;
-  background: rgba(91, 126, 247, 0.06); border: 1px solid rgba(91, 126, 247, 0.1);
+  background: rgba(26, 143, 209, 0.06); border: 1px solid rgba(26, 143, 209, 0.12);
   border-radius: 12px; padding: 14px 0;
 }
 .shareable-stat { flex: 1; text-align: center }
@@ -672,16 +673,16 @@ body {
 /* Home CTA */
 .home-cta {
   text-align: center; padding: 20px 0;
-  background: linear-gradient(180deg, transparent, rgba(91, 126, 247, 0.03));
+  background: linear-gradient(180deg, transparent, rgba(26, 143, 209, 0.04));
   border-radius: var(--r-card);
 }
 .home-cta .btn {
-  background: linear-gradient(135deg, var(--c-accent), #7c3aed);
+  background: linear-gradient(135deg, #1565a8, var(--c-accent), var(--c-cyan));
   box-shadow: 0 4px 20px var(--c-accent-glow);
   font-size: 16px; padding: 16px 28px; border-radius: 16px;
 }
 .home-cta .btn:hover {
-  box-shadow: 0 8px 32px var(--c-accent-glow);
+  box-shadow: 0 8px 32px var(--c-accent-glow), 0 0 40px rgba(13, 158, 138, 0.15);
   transform: translateY(-2px);
 }
 .home-cta-sub { font-size: 12px; color: var(--c-text-muted); margin-top: 10px }
@@ -721,21 +722,21 @@ body {
    PATTERN GRID (Step 1)
    ════════════════════════════════════════════ */
 .physics-hero-banner {
-  background: linear-gradient(135deg, var(--c-bg-subtle), rgba(91, 126, 247, 0.04), var(--c-bg));
+  background: linear-gradient(135deg, var(--c-bg-subtle), rgba(26, 143, 209, 0.04), var(--c-bg));
   border-radius: var(--r-card); padding: 20px; color: #fff; margin-bottom: 16px;
   position: relative; overflow: hidden;
   border: 1px solid var(--c-border);
 }
 .physics-hero-banner::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, var(--c-accent), var(--c-cyan), var(--c-xp));
+  background: linear-gradient(90deg, var(--c-accent), var(--c-cyan));
 }
 .physics-hero-content { position: relative; z-index: 1 }
 .physics-hero-title { font-size: 18px; font-weight: 900; color: var(--c-accent) }
 .physics-hero-subtitle { font-size: 13px; color: var(--c-text-sub); margin-top: 2px }
 .physics-hero-pills { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; position: relative; z-index: 1 }
 .physics-hero-pills span {
-  background: rgba(91, 126, 247, 0.08); border: 1px solid rgba(91, 126, 247, 0.12);
+  background: rgba(26, 143, 209, 0.08); border: 1px solid rgba(26, 143, 209, 0.14);
   padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 700; color: var(--c-accent);
 }
 
@@ -746,7 +747,7 @@ body {
   margin-bottom: 16px;
 }
 .tip-icon { flex-shrink: 0; font-size: 16px }
-.tip-info { background: var(--c-cyan-bg); border-color: rgba(245, 158, 11, 0.2); color: var(--c-cyan) }
+.tip-info { background: var(--c-cyan-bg); border-color: rgba(13, 158, 138, 0.25); color: var(--c-cyan) }
 @media (max-width: 768px) { .mobile-tip-compact { padding: 10px 12px; font-size: 12px } }
 
 .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 80px }
@@ -759,7 +760,7 @@ body {
 .pattern-card:hover { border-color: var(--c-accent); background: var(--c-accent-bg) }
 .pattern-card.selected {
   border-color: var(--c-accent); background: var(--c-accent-bg);
-  box-shadow: 0 0 0 3px rgba(91, 126, 247, 0.08), 0 0 16px var(--c-accent-glow);
+  box-shadow: 0 0 0 3px rgba(26, 143, 209, 0.08), 0 0 16px var(--c-accent-glow);
 }
 .pattern-card.physics { border-left: 3px solid var(--c-accent) }
 .pattern-card-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px }
@@ -774,14 +775,14 @@ body {
   font-size: 11px; padding: 2px 8px; border-radius: 10px;
   background: var(--c-border); color: var(--c-text-sub); font-weight: 600;
 }
-.physics-tag { background: var(--c-accent-bg); color: var(--c-accent); border: 1px solid rgba(91, 126, 247, 0.12) }
+.physics-tag { background: var(--c-accent-bg); color: var(--c-accent); border: 1px solid rgba(26, 143, 209, 0.12) }
 
 /* ════════════════════════════════════════════
    STEP 2 - Config
    ════════════════════════════════════════════ */
 .selected-pattern-badge {
   display: flex; align-items: center; gap: 6px;
-  background: var(--c-accent-bg); border: 1px solid rgba(91, 126, 247, 0.18);
+  background: var(--c-accent-bg); border: 1px solid rgba(26, 143, 209, 0.18);
   border-radius: var(--r-sm); padding: 10px 14px; font-size: 13px;
   margin-bottom: 20px; flex-wrap: wrap; color: var(--c-text-sub);
 }
@@ -929,7 +930,7 @@ body {
 .step4-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px }
 .rag-badge {
   font-size: 11px; padding: 4px 10px;
-  background: var(--c-accent-bg); border: 1px solid rgba(91, 126, 247, 0.12);
+  background: var(--c-accent-bg); border: 1px solid rgba(26, 143, 209, 0.12);
   border-radius: 12px; color: var(--c-accent); font-weight: 700;
 }
 .mobile-divider { height: 1px; background: var(--c-border); margin: 16px 0 }
@@ -947,13 +948,13 @@ body {
 .completion-card { border: none; background: var(--c-surface); overflow: hidden }
 .completion-hero {
   text-align: center; padding: 32px 20px 24px;
-  background: linear-gradient(180deg, rgba(91, 126, 247, 0.06) 0%, var(--c-surface) 100%);
+  background: linear-gradient(180deg, rgba(26, 143, 209, 0.07) 0%, var(--c-surface) 100%);
   position: relative;
 }
 .completion-hero::before {
   content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
   width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(91, 126, 247, 0.1), transparent 70%);
+  background: radial-gradient(circle, rgba(26, 143, 209, 0.1), transparent 70%);
   pointer-events: none;
 }
 .success-icon {
@@ -967,7 +968,7 @@ body {
 }
 .completion-title {
   font-size: 26px; font-weight: 900;
-  background: linear-gradient(135deg, var(--c-accent), #c084fc);
+  background: linear-gradient(135deg, var(--c-accent), var(--c-cyan));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -.02em;
@@ -978,7 +979,7 @@ body {
 .completion-stat { text-align: center; background: var(--c-bg-subtle); border-radius: 12px; padding: 14px 8px; border: 1px solid var(--c-border) }
 .completion-stat-value { font-size: 22px; font-weight: 900; color: var(--c-text); line-height: 1.2 }
 .completion-stat-label { font-size: 11px; color: var(--c-text-muted); font-weight: 700; margin-top: 2px; text-transform: uppercase; letter-spacing: .04em }
-.xp-stat .completion-stat-value { color: var(--c-xp); text-shadow: 0 0 12px rgba(168, 85, 247, 0.3) }
+.xp-stat .completion-stat-value { color: var(--c-xp); text-shadow: 0 0 12px rgba(99, 102, 241, 0.28) }
 
 .completion-level { padding: 0 16px; margin-bottom: 12px }
 .completion-level-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--c-text); margin-bottom: 6px }
@@ -1031,7 +1032,7 @@ body {
 .practice-step-label { display: flex; align-items: center; gap: 10px; margin-bottom: 12px }
 .practice-step-num {
   font-size: 11px; font-weight: 900; letter-spacing: .08em; color: #fff;
-  background: linear-gradient(135deg, var(--c-accent), #7c3aed);
+  background: linear-gradient(135deg, var(--c-accent), var(--c-cyan));
   padding: 4px 12px; border-radius: 20px; white-space: nowrap;
   box-shadow: 0 2px 8px var(--c-accent-glow);
 }
@@ -1041,7 +1042,7 @@ body {
   background: var(--c-accent-bg) !important;
   color: var(--c-accent) !important; font-weight: 800;
 }
-.answer-reveal-btn:hover { background: rgba(91, 126, 247, 0.1) !important }
+.answer-reveal-btn:hover { background: rgba(26, 143, 209, 0.1) !important }
 .answer-section { display: flex; flex-direction: column; gap: 8px }
 .answer-gen-loading {
   display: flex; align-items: center; gap: 10px; padding: 14px;
@@ -1273,7 +1274,7 @@ body {
 }
 .toast.success { background: rgba(34, 197, 94, 0.1); color: var(--c-success); border: 1px solid rgba(34, 197, 94, 0.2) }
 .toast.error { background: rgba(239, 68, 68, 0.1); color: var(--c-error); border: 1px solid rgba(239, 68, 68, 0.2) }
-.toast.info { background: rgba(91, 126, 247, 0.1); color: var(--c-accent); border: 1px solid rgba(91, 126, 247, 0.2) }
+.toast.info { background: rgba(26, 143, 209, 0.1); color: var(--c-accent); border: 1px solid rgba(26, 143, 209, 0.2) }
 
 .loading-overlay {
   position: fixed; inset: 0;
@@ -1300,6 +1301,8 @@ body {
     0 0 0 1px rgba(0, 0, 0, 0.06),
     inset 0 0 0 1px rgba(255,255,255,0.04);
   position: relative;
+  width: 100%;
+  max-width: 100%;
 }
 .pdf-embed-frame {
   width: 100%;
@@ -1323,29 +1326,46 @@ body {
   box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
   animation: pulse 2s ease-in-out infinite;
 }
+
+/* ── モバイルPDF：ズームなし横スクロール禁止 ── */
+/* A4比率(210:297)で表示域を確保、スケールダウンでピタリと収める */
 @media (max-width: 768px) {
   .pdf-embed-wrapper {
-    aspect-ratio: 210 / 270;
-    max-height: 68vh;
+    /* A4縦比率でコンテナを設定 */
+    aspect-ratio: 210 / 297;
+    max-height: 72vh;
     overflow: hidden;
     border-radius: 14px;
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.35),
+      0 8px 32px rgba(0, 0, 0, 0.4),
       0 0 0 1px rgba(255,255,255,0.05);
+    /* 画面幅を超えない */
+    width: 100%;
+    max-width: 100%;
   }
+  /* iframeをコンテナ内にスケールして埋める */
+  /* width=150% + scale(0.667) → A4全体が画面幅に収まる */
   .pdf-embed-frame {
     position: absolute;
     top: 0;
     left: 0;
-    width: 200%;
-    height: 200%;
-    transform: scale(0.5);
+    width: 150%;
+    height: 150%;
+    transform: scale(0.6667);
     transform-origin: top left;
     min-height: unset;
   }
+  /* ラベルがある場合は高さ分オフセット */
   .pdf-embed-label + .pdf-embed-frame {
-    /* Account for label height when absolutely positioned */
     top: 33px;
+  }
+}
+
+/* ページレベルの横スクロール防止 */
+@media (max-width: 768px) {
+  .main-content {
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 }
 
@@ -1356,3 +1376,70 @@ body {
 ::-webkit-scrollbar-track { background: transparent }
 ::-webkit-scrollbar-thumb { background: var(--c-border-light); border-radius: 3px }
 ::-webkit-scrollbar-thumb:hover { background: var(--c-text-muted) }
+
+/* ════════════════════════════════════════════
+   PRO DESIGN ENHANCEMENTS
+   物理・自然テーマ仕上げ
+   ════════════════════════════════════════════ */
+
+/* ホームヒーロー強化 — 深海から地平線へのオーロラ効果 */
+.physics-home-hero {
+  min-height: 260px;
+}
+.physics-home-hero .home-hero-bg::before {
+  /* 物理方程式の透かしを少し明るく */
+  color: rgba(26, 143, 209, 0.06);
+}
+
+/* カードに自然光のような細いグラデーションボーダーアクセント */
+.streak-card,
+.section-card,
+.level-card {
+  border-top: 1px solid var(--c-border-light);
+}
+
+/* 練習モード完了画面をより洗練 */
+.completion-hero {
+  background: linear-gradient(180deg,
+    rgba(26, 143, 209, 0.06) 0%,
+    rgba(13, 158, 138, 0.03) 50%,
+    var(--c-surface) 100%);
+}
+
+/* クイックスタットのアイコン色を海ティールに */
+.quick-stat-icon { color: var(--c-cyan) }
+
+/* プロっぽいカードのホバーエフェクト */
+.quick-stat-card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45),
+              0 0 0 1px rgba(26, 143, 209, 0.12);
+}
+
+/* PDFプレビューラベルの洗練 */
+.pdf-embed-label {
+  background: var(--c-bg-subtle);
+  border-bottom: 1px solid var(--c-border);
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--c-accent);
+}
+
+/* 練習モードのスコアリングフェーズ */
+.scoring-phase {
+  border: 1px solid var(--c-border-light);
+}
+
+/* ヒーローの採点ボタン幅を統一（モバイルでのタッチ操作性向上） */
+@media (max-width: 768px) {
+  .score-btn { width: 44px; height: 44px; font-size: 19px; border-radius: 12px }
+  .home-screen { gap: 12px }
+  .physics-home-hero { min-height: 220px }
+  /* 練習モードの設定画面をコンパクトに */
+  .preset-chips { gap: 6px }
+  .preset-chip { padding: 7px 12px }
+}
+
+/* ホームヒーローのCTAボタン幅最適化 */
+@media (max-width: 480px) {
+  .btn-hero { width: 100%; justify-content: center }
+}
