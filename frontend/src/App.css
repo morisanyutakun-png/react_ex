@@ -1466,9 +1466,9 @@ body {
 /* 練習モード完了画面をより洗練 */
 .completion-hero {
   background: linear-gradient(180deg,
-    rgba(26, 143, 209, 0.06) 0%,
-    rgba(13, 158, 138, 0.03) 50%,
-    var(--c-surface) 100%);
+    rgba(245, 158, 11, 0.18) 0%,
+    rgba(249, 115, 22, 0.12) 45%,
+    #ffedd6 100%);
 }
 
 /* クイックスタットのアイコン色を海ティールに */
@@ -1507,4 +1507,66 @@ body {
 /* ホームヒーローのCTAボタン幅最適化 */
 @media (max-width: 480px) {
   .btn-hero { width: 100%; justify-content: center }
+}
+
+/* 各モードカードをさらに明るいオレンジ調へ */
+.pattern-card,
+.selected-pattern-badge,
+.base-problem-card,
+.base-pdf-preview,
+.base-skip-notice,
+.upload-area,
+.prompt-preview,
+.answer-gen-loading,
+.completion-stat,
+.practice-step,
+.scoring-phase,
+.history-item,
+.legal-tabs,
+.base-mode-tabs,
+.pdf-mode-tabs {
+  background-color: #fff4e4;
+  border-color: rgba(234, 139, 53, 0.34);
+}
+
+.pattern-card,
+.base-problem-card,
+.history-item,
+.completion-stat,
+.scoring-row {
+  background-image: linear-gradient(150deg, #fffaf2 0%, #ffeed9 100%);
+}
+
+.pattern-card.selected,
+.base-problem-card.selected,
+.history-item:hover {
+  background: linear-gradient(150deg, #ffe9cc 0%, #ffdcae 100%);
+  border-color: rgba(217, 119, 6, 0.52);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12), 0 0 18px rgba(217, 119, 6, 0.18);
+}
+
+.tip,
+.mobile-alert,
+.answer-reveal-btn,
+.session-timer-inner {
+  background: linear-gradient(140deg, #ffefdb 0%, #ffe3c1 100%) !important;
+  border-color: rgba(217, 119, 6, 0.35) !important;
+}
+
+.practice-step-num {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  box-shadow: 0 3px 10px rgba(217, 119, 6, 0.28);
+}
+
+.pdf-embed-label {
+  background: linear-gradient(90deg, #fff3e2 0%, #ffe6c8 100%);
+  color: #b45309;
+  border-bottom-color: rgba(217, 119, 6, 0.28);
+}
+
+@media (max-width: 768px) {
+  .mobile-sticky-action {
+    background: rgba(255, 241, 224, 0.96);
+    border-top: 1px solid rgba(217, 119, 6, 0.34);
+  }
 }
