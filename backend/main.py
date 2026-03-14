@@ -5957,6 +5957,11 @@ $v$ について正しく整理した: +5点（式変形の途中まで正しい
 13. \\begin{{X}} と \\end{{X}} の環境名は必ず一致させる。\\begin{{scope}} には \\end{{scope}}
 14. 中括弧 {{ と }} の数が必ず一致すること。出力完了前にカウントして検算
 15. 添字2文字以上は {{}} で囲む: $x_1$ は OK、$x_{{10}}$, $a_{{ij}}$ のように
+16. stem・小問・answer・explanation に使える数式環境は $...$ と \\[...\\] のみ。
+    \\begin{{align*}}, \\begin{{cases}}, \\begin{{gather*}}, \\begin{{equation}} 等の環境は一切書かない。
+    複数行の式を縦に並べたい場合は \\[ x=1 \\\\ y=2 \\] のように \\[...\\] 内で \\\\ を使う。
+17. tikzpicture 内の scope ネストは最大1段（scope 内に scope を書かない）。
+    複雑な配置が必要な場合は座標計算で対応し、scope のネストを避けること。
 
 【出力前の最終チェック】
 ☐ \\begin と \\end の数・環境名が全て一致しているか
@@ -5967,6 +5972,10 @@ $v$ について正しく整理した: +5点（式変形の途中まで正しい
 ☐ 関数名に \\ がついているか（\\sin, \\cos, \\log 等）
 ☐ 単位に \\mathrm{{}} を使っているか
 ☐ tikzpicture が %%% FIGURE %%% 内のみにあるか
+☐ stem・小問・answer・explanation 内に align*, cases, gather*, equation 環境がないか
+☐ tikzpicture 内の \\begin{{scope}} と \\end{{scope}} の数が一致しているか
+☐ scope のネストが1段以内か（scope 内に scope を書いていないか）
+☐ 物理の図: 全ての \\draw/\\fill/\\node 文が ; で終わっているか
 
 【禁止】JSON出力禁止 / コードフェンス禁止 / 余分なテキスト禁止 / %%% を本文中に使用禁止 / tcolorbox禁止 / mdframed禁止
 絶対に \\documentclass, \\begin{{document}}, \\end{{document}}, \\usepackage を出力に含めないこと。"""
@@ -6163,6 +6172,19 @@ def _sanitize_practice_text(text: str) -> str:
     # 未対応のフォント系コマンドを除去
     text = re.sub(r'\\(?:textcolor|colorbox)\{[^}]*\}\{([^}]*)\}', r'\1', text)
     text = re.sub(r'\\(?:fbox|mbox)\{([^}]*)\}', r'\1', text)
+    # align*/gather*/equation 環境 → \[...\] に変換（tcolorbox内でのネスト崩れを防止）
+    text = re.sub(
+        r'\\begin\{(?:align\*?|gather\*?|equation\*?)\}([\s\S]*?)\\end\{(?:align\*?|gather\*?|equation\*?)\}',
+        lambda m: r'\[' + m.group(1).strip() + r'\]',
+        text,
+    )
+    # cases 環境はそのまま \[...\] の中に残す（\[ \begin{cases}...\end{cases} \]）
+    # → cases が \[...\] の外に孤立している場合だけ変換
+    text = re.sub(
+        r'(?<!\\]\s*)\\begin\{cases\}([\s\S]*?)\\end\{cases\}(?!\s*\\])',
+        lambda m: r'\[\begin{cases}' + m.group(1) + r'\end{cases}\]',
+        text,
+    )
 
     # ── 裸ブラケット display math 変換 ──
     # LLM が \[...\] ではなく [...] で display math を出力するケースに対応
@@ -6307,7 +6329,8 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
     )
 
     lines = [
-        r'\documentclass[a4paper,11pt]{ltjsarticle}',
+        # モバイル最適化: 98mm×172mm (スマホ画面幅に最適、FitHで大きく表示される)
+        r'\documentclass[10pt]{ltjsarticle}',
         r'\usepackage{amsmath,amssymb,mathtools}',
         # physics パッケージは siunitx v3 と \qty が競合するため使わない。
         # よく使うコマンドを個別定義する。
@@ -6320,9 +6343,12 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\newcommand{\norm}[1]{\left\|#1\right\|}',
         r'\newcommand{\vb}[1]{\boldsymbol{#1}}',
         r'\usepackage{geometry}',
-        r'\geometry{top=2cm,bottom=2.5cm,left=2cm,right=2cm}',
+        # スマホ画面幅(約95-100mm)に合わせたページサイズ
+        # iframeのFitH表示で文字が大きく見える
+        r'\geometry{paperwidth=98mm,paperheight=172mm,top=5mm,bottom=7mm,left=6mm,right=6mm}',
+        r'\usepackage{adjustbox}',         # \adjustbox{max width=\linewidth} で図を自動縮小
         r'\usepackage{parskip}',
-        r'\setlength{\parskip}{0.3em}',
+        r'\setlength{\parskip}{0.25em}',
         r'\setlength{\parindent}{0pt}',
         r'\usepackage{fancyhdr}',
         r'\usepackage{titlesec}',
@@ -6366,7 +6392,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         rf'\fancyhead[L]{{\small\color{{maincolor}}\textsf{{\textbf{{{subject} {"解答・解説" if mode == "answers" else "練習問題"} \textbar\ {difficulty}}}}}}}',
         r'\fancyhead[R]{\small\color{maincolor}\textsf{\thepage}}',
         r'\fancyfoot[C]{\small\color{rulegray}\textsf{AI 生成練習問題 — 自己採点用}}',
-        r'\setlength{\headheight}{16pt}',
+        r'\setlength{\headheight}{12pt}',
         '',
         r'% ── セクション書式 ──',
         r'\titleformat{\section}{\Large\bfseries\color{maincolor}}{}{0em}{}[{\color{maincolor}\rule{\linewidth}{0.6pt}}]',
@@ -6461,16 +6487,21 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                     # tikzpicture/circuitikz/axis 環境が含まれているか確認
                     has_env = re.search(r'\\begin\{(tikzpicture|circuitikz|axis)\}', fig_code)
                     if has_env:
+                        # adjustbox でモバイル最適化: 幅が \linewidth を超えたとき自動縮小
                         lines.append(r'\begin{center}')
+                        lines.append(r'\adjustbox{max width=\linewidth}{%')
                         lines.append(fig_code)
+                        lines.append(r'}%')
                         lines.append(r'\end{center}')
                         lines.append('')
                     # 環境がない場合は tikzpicture で囲む
                     elif not fig_code.startswith('%'):
                         lines.append(r'\begin{center}')
+                        lines.append(r'\adjustbox{max width=\linewidth}{%')
                         lines.append(r'\begin{tikzpicture}[>=stealth]')
                         lines.append(fig_code)
                         lines.append(r'\end{tikzpicture}')
+                        lines.append(r'}%')
                         lines.append(r'\end{center}')
                         lines.append('')
 

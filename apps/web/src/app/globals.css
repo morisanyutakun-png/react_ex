@@ -24,10 +24,10 @@ html {
   --color-accent-subtle: rgba(34, 201, 138, 0.08);
   --color-accent-glow: rgba(34, 201, 138, 0.22);
 
-  --color-bg: #0d1f14;             /* 深森の夜 */
-  --color-bg-elevated: #122819;
-  --color-bg-card: rgba(16, 38, 22, 0.90);
-  --color-bg-input: #142c1a;
+  --color-bg: #162d1e;             /* 深森の夜（やや明るく） */
+  --color-bg-elevated: #1c3a26;
+  --color-bg-card: rgba(24, 54, 33, 0.88);
+  --color-bg-input: #1e3e27;
   --color-bg-hover: rgba(34, 201, 138, 0.06);
 
   --color-text-primary: #cce8d4;   /* 月光に照らされた葉 */
@@ -109,10 +109,10 @@ body::before {
   pointer-events: none;
   z-index: -3;
   background:
-    radial-gradient(ellipse 75% 55% at 10% 8%,  rgba(34,201,138,0.16) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 60% at 90% 10%, rgba(20,184,166,0.12) 0%, transparent 52%),
-    radial-gradient(ellipse 50% 40% at 50% 95%, rgba(34,201,138,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 35% 30% at 8%  65%, rgba(16,185,129,0.07) 0%, transparent 45%);
+    radial-gradient(ellipse 75% 55% at 10% 8%,  rgba(34,201,138,0.22) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 60% at 90% 10%, rgba(20,184,166,0.17) 0%, transparent 52%),
+    radial-gradient(ellipse 50% 40% at 50% 95%, rgba(34,201,138,0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 35% 30% at 8%  65%, rgba(16,185,129,0.10) 0%, transparent 45%);
 }
 body::after { display: none; }
 
@@ -158,7 +158,7 @@ body::after { display: none; }
    ══════════════════════════════════════════════════ */
 
 .glass-card {
-  background: rgba(14, 38, 22, 0.84);
+  background: rgba(21, 52, 31, 0.80);
   backdrop-filter: saturate(140%) blur(20px);
   -webkit-backdrop-filter: saturate(140%) blur(20px);
   border: 0.5px solid rgba(34,201,138,0.14);
@@ -171,7 +171,7 @@ body::after { display: none; }
 
 .card-premium {
   position: relative;
-  background: rgba(14, 38, 22, 0.92);
+  background: rgba(21, 52, 31, 0.88);
   backdrop-filter: saturate(140%) blur(20px);
   -webkit-backdrop-filter: saturate(140%) blur(20px);
   border: 0.5px solid rgba(34,201,138,0.14);
