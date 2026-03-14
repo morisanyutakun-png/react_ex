@@ -73,8 +73,8 @@ function AnimatedPdfMockup() {
     <div className="landing-pdf-mockup-container">
       <div className="landing-pdf-float" aria-hidden="true">
         <div className="absolute -right-2 -bottom-2 w-full h-full rounded-2xl bg-[#1e293b]/[0.04] blur-sm" />
-        <div className="absolute -right-1 -bottom-1 w-full h-full rounded-xl bg-[#1e2d4a]/40 border border-[#1e2d4a]/60" />
-        <div className="relative bg-[#111827] rounded-xl border border-[#1e2d4a] shadow-xl shadow-emerald-900/[0.30] p-4 sm:p-5 w-[220px] sm:w-[260px]">
+        <div className="absolute -right-1 -bottom-1 w-full h-full rounded-xl bg-emerald-900/40 border border-emerald-800/60" />
+        <div className="relative bg-[#122a1c] rounded-xl border border-emerald-800/30 shadow-xl shadow-emerald-900/[0.30] p-4 sm:p-5 w-[220px] sm:w-[260px]">
           <div className="flex items-center justify-between mb-3">
             <div className="h-2.5 w-20 rounded-full bg-[#1e293b]/25" />
             <div className="px-2 py-0.5 rounded bg-emerald-950/30 border border-emerald-800/50">
@@ -217,22 +217,22 @@ export default function HomePage() {
             <div className="text-center mb-6 stagger-item" style={{ animationDelay: '0ms' }}>
               <div className="inline-flex flex-col items-center gap-1">
                 <span className="text-[40px] sm:text-[48px] font-black tracking-[-0.06em] leading-none gradient-text-hero-animated">REM</span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-[#94a3b8] tracking-[0.25em] uppercase">AI Physics Trainer</span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-[#9dc8b0] tracking-[0.25em] uppercase">AI Physics Trainer</span>
               </div>
             </div>
 
             {/* Headline — 損失回避 + Urgency */}
             <div className="text-center stagger-item" style={{ animationDelay: '80ms' }}>
-              <h1 className="text-[26px] sm:text-[38px] font-black tracking-[-0.04em] leading-[1.1] text-[#e2e8ff] mb-3">
+              <h1 className="text-[26px] sm:text-[38px] font-black tracking-[-0.04em] leading-[1.1] text-[#e8f5ed] mb-3">
                 物理で<span className="text-red-500">落とす</span>のは、<br className="sm:hidden" /><span className="gradient-text-hero-animated">もう終わりにしよう。</span>
               </h1>
             </div>
 
             {/* Sub copy */}
             <div className="text-center stagger-item" style={{ animationDelay: '150ms' }}>
-              <p className="text-[13px] sm:text-[15px] text-[#475569] leading-[1.8] max-w-[380px] mx-auto" style={{ fontFeatureSettings: '"palt"' }}>
+              <p className="text-[13px] sm:text-[15px] text-[#6aaa7c] leading-[1.8] max-w-[380px] mx-auto" style={{ fontFeatureSettings: '"palt"' }}>
                 入試レベルの類題をAIが無限に生成。<br />
-                <strong className="text-[#e2e8ff] font-bold">配点＋部分点基準</strong>付きだから、<br />
+                <strong className="text-[#e8f5ed] font-bold">配点＋部分点基準</strong>付きだから、<br />
                 <span className="text-emerald-400 font-semibold">自己採点で「本番力」が鍛えられる。</span>
               </p>
             </div>
@@ -255,8 +255,8 @@ export default function HomePage() {
                       <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">{m.icon}</svg>
                     </div>
                     <div>
-                      <div className="text-[14px] sm:text-[16px] font-black text-[#e2e8ff] leading-none tracking-tight">{m.value}</div>
-                      <div className="text-[9px] text-[#94a3b8] font-semibold mt-0.5">{m.label}</div>
+                      <div className="text-[14px] sm:text-[16px] font-black text-[#e8f5ed] leading-none tracking-tight">{m.value}</div>
+                      <div className="text-[9px] text-[#9dc8b0] font-semibold mt-0.5">{m.label}</div>
                     </div>
                     {i < 2 && <div className="w-[1px] h-7 bg-[#e2e8f0]/60 ml-2" />}
                   </div>
@@ -316,7 +316,7 @@ export default function HomePage() {
           <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
             <div className="text-center mb-7">
               <span className="section-label">Your pain</span>
-              <h2 className="text-[21px] sm:text-[26px] font-black text-[#e2e8ff] tracking-[-0.03em] mt-3">
+              <h2 className="text-[21px] sm:text-[26px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
                 こんな状況、今すぐ変えられる
               </h2>
             </div>
@@ -328,7 +328,7 @@ export default function HomePage() {
                 { text: '自己採点すると「合ってるか分からない」箇所が多い', solve: '部分点基準で「どこまで正しいか」が分かる', color: 'blue' },
                 { text: '試験まで時間がないのに、何から手をつけるべきか迷う', solve: '弱点を自動分析して優先順位がつく', color: 'teal' },
               ].map(({ text, solve, color }) => (
-                <div key={text} className="bg-[#111827]/85 backdrop-blur-sm rounded-2xl border border-[#1e2d4a] px-4 py-3.5 shadow-sm hover:shadow-md transition-all duration-200 group">
+                <div key={text} className="bg-[#162d1e]/85 backdrop-blur-sm rounded-2xl border border-emerald-800/30 px-4 py-3.5 shadow-sm hover:shadow-md transition-all duration-200 group">
                   <div className="flex items-start gap-3">
                     <div className={`w-6 h-6 rounded-lg bg-${color}-950/30 border border-${color}-800/40 flex items-center justify-center flex-shrink-0 mt-0.5`}>
                       <svg className={`w-3.5 h-3.5 text-${color}-400`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -336,7 +336,7 @@ export default function HomePage() {
                       </svg>
                     </div>
                     <div>
-                      <span className="text-[13px] font-bold text-[#e2e8ff] leading-snug block">{text}</span>
+                      <span className="text-[13px] font-bold text-[#e8f5ed] leading-snug block">{text}</span>
                       <span className="text-[11px] font-semibold text-emerald-400 mt-1 block flex items-center gap-1">
                         <svg className="w-3 h-3 inline" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
                         {solve}
@@ -353,7 +353,7 @@ export default function HomePage() {
           <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
             <div className="text-center mb-8">
               <span className="section-label">Why REM</span>
-              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e2e8ff] tracking-[-0.03em] mt-3">
+              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
                 他と何が違うのか
               </h2>
             </div>
@@ -365,31 +365,31 @@ export default function HomePage() {
                   shadow: 'shadow-sky-500/20',
                   icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
                   title: '配点＋部分点基準で自己採点',
-                  desc: <>各小問に配点（合計25点）。「この式で+5点、計算結果で+3点」のように<strong className="text-[#e2e8ff]">部分点の基準</strong>まで自動生成。</>
+                  desc: <>各小問に配点（合計25点）。「この式で+5点、計算結果で+3点」のように<strong className="text-[#e8f5ed]">部分点の基準</strong>まで自動生成。</>
                 },
                 {
                   gradient: 'from-teal-500 to-cyan-600',
                   shadow: 'shadow-teal-500/20',
                   icon: <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84" />,
                   title: '入試本番と同じ品質の類題',
-                  desc: <>共通テスト・国公立二次の過去問ベースで<strong className="text-[#e2e8ff]">誘導形式の小問構成</strong>。設定条件・数値・単位まで本番そっくり。</>
+                  desc: <>共通テスト・国公立二次の過去問ベースで<strong className="text-[#e8f5ed]">誘導形式の小問構成</strong>。設定条件・数値・単位まで本番そっくり。</>
                 },
                 {
                   gradient: 'from-emerald-500 to-teal-600',
                   shadow: 'shadow-emerald-500/20',
                   icon: <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />,
                   title: 'LaTeX組版＋TikZ物理図',
-                  desc: <>数式・回路図・力の図をLaTeXで美しく組版。<strong className="text-[#e2e8ff]">印刷演習</strong>にも<strong className="text-[#e2e8ff]">タブレット学習</strong>にも最適。</>
+                  desc: <>数式・回路図・力の図をLaTeXで美しく組版。<strong className="text-[#e8f5ed]">印刷演習</strong>にも<strong className="text-[#e8f5ed]">タブレット学習</strong>にも最適。</>
                 },
               ].map(({ gradient, shadow, icon, title, desc }) => (
-                <div key={title} className="bg-[#111827]/90 backdrop-blur-sm rounded-2xl border border-[#1e2d4a] p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div key={title} className="bg-[#122a1c]/90 backdrop-blur-sm rounded-2xl border border-emerald-800/30 p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
                   <div className="flex items-start gap-4">
                     <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 shadow-lg ${shadow}`}>
                       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">{icon}</svg>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-[15px] font-black text-[#e2e8ff] mb-1">{title}</h3>
-                      <p className="text-[12px] text-[#64748b] leading-[1.7]">{desc}</p>
+                      <h3 className="text-[15px] font-black text-[#e8f5ed] mb-1">{title}</h3>
+                      <p className="text-[12px] text-[#7ab896] leading-[1.7]">{desc}</p>
                     </div>
                   </div>
                 </div>
@@ -402,7 +402,7 @@ export default function HomePage() {
           <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
             <div className="text-center mb-8">
               <span className="section-label">How it works</span>
-              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e2e8ff] tracking-[-0.03em] mt-3">
+              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
                 たった3ステップ
               </h2>
             </div>
@@ -437,9 +437,9 @@ export default function HomePage() {
                   <div className="landing-step-content">
                     <div className="flex items-center gap-2 mb-1">
                       <svg className={`w-4 h-4 ${last ? 'text-emerald-500' : 'text-teal-400'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">{icon}</svg>
-                      <h3 className="text-[14px] font-bold text-[#e2e8ff]">{title}</h3>
+                      <h3 className="text-[14px] font-bold text-[#e8f5ed]">{title}</h3>
                     </div>
-                    <p className="text-[12px] text-[#64748b] leading-relaxed">{desc}</p>
+                    <p className="text-[12px] text-[#7ab896] leading-relaxed">{desc}</p>
                   </div>
                 </div>
               ))}
@@ -451,10 +451,10 @@ export default function HomePage() {
           <section className="pb-12 sm:pb-16">
             <div className="text-center mb-8 scroll-reveal" style={{ transitionDelay: '0ms' }}>
               <span className="section-label">Coverage</span>
-              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e2e8ff] tracking-[-0.03em] mt-3">
+              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
                 物理の全分野に対応
               </h2>
-              <p className="text-[12px] text-[#94a3b8] mt-2">共通テスト〜東大二次まで</p>
+              <p className="text-[12px] text-[#9dc8b0] mt-2">共通テスト〜東大二次まで</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -469,8 +469,8 @@ export default function HomePage() {
                   <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center mb-2.5 shadow-sm`}>
                     <span className="text-[11px] font-black text-white">{title[0]}</span>
                   </div>
-                  <h3 className="text-[13px] font-bold text-[#e2e8ff] mb-1">{title}</h3>
-                  <p className="text-[10px] text-[#64748b] leading-[1.6]">{desc}</p>
+                  <h3 className="text-[13px] font-bold text-[#e8f5ed] mb-1">{title}</h3>
+                  <p className="text-[10px] text-[#7ab896] leading-[1.6]">{desc}</p>
                 </div>
               ))}
             </div>
@@ -481,17 +481,17 @@ export default function HomePage() {
           <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
             <div className="text-center mb-7">
               <span className="section-label">Scoring</span>
-              <h2 className="text-[20px] sm:text-[24px] font-black text-[#e2e8ff] tracking-[-0.03em] mt-3">
+              <h2 className="text-[20px] sm:text-[24px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
                 部分点の基準まで分かる
               </h2>
-              <p className="text-[12px] text-[#94a3b8] mt-2">自分の解答のどこまでが正しいか、一目瞭然</p>
+              <p className="text-[12px] text-[#9dc8b0] mt-2">自分の解答のどこまでが正しいか、一目瞭然</p>
             </div>
 
-            <div className="bg-[#111827]/90 backdrop-blur-sm rounded-2xl border border-[#1e2d4a] overflow-hidden shadow-sm">
+            <div className="bg-[#122a1c]/90 backdrop-blur-sm rounded-2xl border border-emerald-800/30 overflow-hidden shadow-sm">
               <div className="px-5 pt-4 pb-3 border-b border-[#1a2035]">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[10px] font-black text-white shadow-sm">1</div>
-                  <span className="text-[12px] font-bold text-[#64748b]">(1) エネルギー保存則</span>
+                  <span className="text-[12px] font-bold text-[#7ab896]">(1) エネルギー保存則</span>
                   <span className="ml-auto text-[10px] font-bold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded-full">10点</span>
                 </div>
               </div>
@@ -501,22 +501,22 @@ export default function HomePage() {
                   { ok: true, text: 'v について正しく解いた', pts: '+3点' },
                   { ok: true, text: '正しい数値を得た', pts: '+2点' },
                 ].map(({ ok, text, pts }) => (
-                  <div key={text} className="flex items-center gap-1 text-[11px] text-[#94a3b8]">
+                  <div key={text} className="flex items-center gap-1 text-[11px] text-[#9dc8b0]">
                     <svg className={`w-3.5 h-3.5 flex-shrink-0 ${ok ? 'text-emerald-500' : 'text-amber-400'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>{text}: <strong className="text-emerald-400">{pts}</strong></span>
                   </div>
                 ))}
-                <div className="flex items-center gap-1 text-[11px] text-[#94a3b8]">
+                <div className="flex items-center gap-1 text-[11px] text-[#9dc8b0]">
                   <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
                   </svg>
                   <span>式は正しいが計算ミスの場合: <strong className="text-amber-600">-1点</strong></span>
                 </div>
               </div>
-              <div className="px-5 py-3 border-t border-[#1e2d4a] bg-[#0d1f14]/40 text-center">
-                <span className="text-[10px] font-semibold text-[#94a3b8]">すべての小問に自動生成</span>
+              <div className="px-5 py-3 border-t border-emerald-800/30 bg-[#0e1f15]/40 text-center">
+                <span className="text-[10px] font-semibold text-[#9dc8b0]">すべての小問に自動生成</span>
               </div>
             </div>
           </section>
@@ -533,14 +533,14 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-                <span className="text-[11px] font-semibold text-[#64748b] ml-1">受験生が使い始めています</span>
+                <span className="text-[11px] font-semibold text-[#7ab896] ml-1">受験生が使い始めています</span>
               </div>
 
               <div className="text-center mb-5">
-                <h3 className="text-[18px] sm:text-[20px] font-black text-[#e2e8ff] tracking-[-0.02em] mb-2">
+                <h3 className="text-[18px] sm:text-[20px] font-black text-[#e8f5ed] tracking-[-0.02em] mb-2">
                   物理で困ってる友だちに<br />教えてあげよう
                 </h3>
-                <p className="text-[12px] text-[#64748b] leading-relaxed">
+                <p className="text-[12px] text-[#7ab896] leading-relaxed">
                   同じ問題で一緒に演習すると定着率が上がる。<br />
                   「これ使ってみ」の一言が、友だちの合格を後押しする。
                 </p>
@@ -573,7 +573,7 @@ export default function HomePage() {
 
               <div className="mt-4 flex flex-wrap justify-center gap-1.5">
                 {['#REM', '#物理', '#受験勉強', '#共通テスト', '#二次試験'].map((tag) => (
-                  <span key={tag} className="text-[10px] font-semibold text-[#94a3b8] bg-[#1a2035] px-2 py-0.5 rounded-full">{tag}</span>
+                  <span key={tag} className="text-[10px] font-semibold text-[#9dc8b0] bg-[#1a2035] px-2 py-0.5 rounded-full">{tag}</span>
                 ))}
               </div>
             </div>
@@ -584,7 +584,7 @@ export default function HomePage() {
           <section className="pb-14 sm:pb-18">
             <div className="text-center mb-6 scroll-reveal" style={{ transitionDelay: '0ms' }}>
               <span className="section-label">More</span>
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#e2e8ff] tracking-[-0.02em] mt-3">
+              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#e8f5ed] tracking-[-0.02em] mt-3">
                 その他の機能
               </h2>
             </div>
@@ -597,17 +597,17 @@ export default function HomePage() {
               ].map(({ href, label, desc, icon }) => (
                 <Link key={href} href={href} className="group block">
                   <div className="tool-card-wrap">
-                    <div className="tool-card-icon text-[#64748b] group-hover:text-[#e2e8ff]"
+                    <div className="tool-card-icon text-[#7ab896] group-hover:text-[#e8f5ed]"
                          style={{ transition: 'color 0.4s var(--ease-spring)' }}>
                       <div className="group-hover:scale-110" style={{ transition: 'transform 0.45s var(--ease-spring)' }}>
                         <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">{icon}</svg>
                       </div>
                     </div>
                     <div className="flex-1 min-w-0 relative z-10">
-                      <div className="text-[14px] font-semibold text-[#e2e8ff] tracking-[-0.01em]">{label}</div>
-                      <div className="text-[11px] text-[#94a3b8] mt-0.5">{desc}</div>
+                      <div className="text-[14px] font-semibold text-[#e8f5ed] tracking-[-0.01em]">{label}</div>
+                      <div className="text-[11px] text-[#9dc8b0] mt-0.5">{desc}</div>
                     </div>
-                    <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7] group-hover:text-[#64748b] group-hover:translate-x-1 relative z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+                    <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7] group-hover:text-[#7ab896] group-hover:translate-x-1 relative z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
                          style={{ transition: 'all 0.4s var(--ease-spring)' }}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
@@ -638,7 +638,7 @@ export default function HomePage() {
               <span className="relative flex h-1.5 w-1.5">
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
               </span>
-              <span className="text-[11px] font-medium text-[#94a3b8] tracking-[0.02em]">REM — AI物理演習で合格を掴む</span>
+              <span className="text-[11px] font-medium text-[#9dc8b0] tracking-[0.02em]">REM — AI物理演習で合格を掴む</span>
             </div>
           </div>
           <MobileNavLinks currentPath="/" />

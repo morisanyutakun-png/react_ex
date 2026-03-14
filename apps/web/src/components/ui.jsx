@@ -117,14 +117,14 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="text-[#64748b] hover:text-[#1e293b] transition-colors duration-200">
+                <a href={bc.href} className="text-[#7ab896] hover:text-[#e8f5ed] transition-colors duration-200">
                   <span>{bc.label}</span>
                 </a>
               ) : (
-                <span className="text-[#1e293b] font-semibold">{bc.label}</span>
+                <span className="text-[#e8f5ed] font-semibold">{bc.label}</span>
               )}
               {i < breadcrumbs.length - 1 && (
-                <svg className="w-3 h-3 text-[#94a3b8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-[#9dc8b0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               )}
@@ -139,11 +139,11 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-[24px] sm:text-[30px] font-black text-[#1e293b] tracking-[-0.03em] leading-tight">
+          <h1 className="text-[24px] sm:text-[30px] font-black text-[#e8f5ed] tracking-[-0.03em] leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#64748b] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
+            <p className="text-[13px] text-[#7ab896] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
               {description}
             </p>
           )}
@@ -163,7 +163,7 @@ export function StatusBar({ message }) {
     ? 'bg-red-50 text-red-700 border-red-200/60'
     : isSuccess
     ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-    : 'bg-blue-50 text-[#64748b] border-blue-200/40';
+    : 'bg-blue-50 text-[#7ab896] border-blue-200/40';
 
   return (
     <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border ${styles}`}
@@ -182,14 +182,14 @@ export function SelectField({ label, value, onChange, options, className = '' })
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">{label}</label>
+        <label className="block text-[11px] font-bold text-[#7ab896] uppercase tracking-wider mb-2">{label}</label>
       )}
       <div className="relative group">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-blue-200/80 bg-[#f0f4ff] text-sm
-                    text-[#1e293b] cursor-pointer appearance-none
+          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-blue-200/80 bg-[rgba(24,58,36,0.90)] text-sm
+                    text-[#e8f5ed] cursor-pointer appearance-none
                     focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
                     outline-none font-semibold"
           style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
@@ -202,7 +202,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
             )
           )}
         </select>
-        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#64748b]">
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#7ab896]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
@@ -232,16 +232,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">{label}</label>
+        <label className="block text-[11px] font-bold text-[#7ab896] uppercase tracking-wider mb-2">{label}</label>
       )}
-      <div className="inline-flex items-stretch rounded-2xl border border-blue-200/80 bg-[#f0f4ff] overflow-hidden"
+      <div className="inline-flex items-stretch rounded-2xl border border-blue-200/80 bg-[rgba(24,58,36,0.90)] overflow-hidden"
            style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}>
         <button
           type="button"
           onClick={handleDecrement}
           disabled={atMin}
-          className="flex items-center justify-center w-11 border-r border-blue-200/60 text-[#64748b]
-                     hover:bg-blue-50/60 hover:text-[#1e293b] active:bg-blue-100/60
+          className="flex items-center justify-center w-11 border-r border-blue-200/60 text-[#7ab896]
+                     hover:bg-blue-50/60 hover:text-[#e8f5ed] active:bg-blue-100/60
                      disabled:opacity-20 disabled:hover:bg-transparent
                      active:scale-90"
           style={{ transition: 'all 0.3s var(--ease-spring)' }}
@@ -264,7 +264,7 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
             min={min}
             max={max}
             step={step}
-            className="w-12 text-center text-[17px] font-bold text-[#1e293b] bg-transparent outline-none tabular-nums
+            className="w-12 text-center text-[17px] font-bold text-[#e8f5ed] bg-transparent outline-none tabular-nums
                        [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden
                        [-moz-appearance:textfield]"
           />
@@ -273,8 +273,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
           type="button"
           onClick={handleIncrement}
           disabled={atMax}
-          className="flex items-center justify-center w-11 border-l border-blue-200/60 text-[#64748b]
-                     hover:bg-blue-50/60 hover:text-[#1e293b] active:bg-blue-100/60
+          className="flex items-center justify-center w-11 border-l border-blue-200/60 text-[#7ab896]
+                     hover:bg-blue-50/60 hover:text-[#e8f5ed] active:bg-blue-100/60
                      disabled:opacity-20 disabled:hover:bg-transparent
                      active:scale-90"
           style={{ transition: 'all 0.3s var(--ease-spring)' }}
@@ -293,16 +293,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
 export function TextArea({ label, value, onChange, rows = 6, placeholder, readOnly, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#7ab896] uppercase tracking-wider mb-2">{label}</label>}
       <textarea
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         rows={rows} placeholder={placeholder} readOnly={readOnly}
-        className="w-full px-4 py-3.5 rounded-2xl border border-blue-200/80 bg-[#f0f4ff] font-mono text-sm
-                   leading-relaxed resize-y text-[#1e293b]
+        className="w-full px-4 py-3.5 rounded-2xl border border-blue-200/80 bg-[rgba(24,58,36,0.90)] font-mono text-sm
+                   leading-relaxed resize-y text-[#e8f5ed]
                    focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
-                   outline-none placeholder:text-[#94a3b8]
-                   read-only:bg-[#fafafa] read-only:text-[#64748b] read-only:border-blue-200/40"
+                   outline-none placeholder:text-[#5a9a70]
+                   read-only:bg-[#fafafa] read-only:text-[#7ab896] read-only:border-blue-200/40"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
@@ -313,12 +313,12 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
 export function TextField({ label, value, onChange, placeholder, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#7ab896] uppercase tracking-wider mb-2">{label}</label>}
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/80 bg-[#f0f4ff] text-sm text-[#1e293b]
+        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/80 bg-[rgba(24,58,36,0.90)] text-sm text-[#e8f5ed]
                    focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
-                   outline-none placeholder:text-[#94a3b8] font-medium"
+                   outline-none placeholder:text-[#5a9a70] font-medium"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
@@ -331,11 +331,11 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
     primary: 'btn-premium',
-    secondary: 'bg-gradient-to-b from-[#f0f4ff] to-[#e8efff] text-[#1e293b] border border-blue-200/60 hover:from-[#e8efff] hover:to-[#dce6ff] hover:border-blue-300/50 hover:shadow-md',
+    secondary: 'bg-gradient-to-b from-[#1a3824] to-[#162e1e] text-[#e8f5ed] border border-blue-200/60 hover:from-[#1e3e28] hover:to-[#1e3e28] hover:border-blue-300/50 hover:shadow-md',
     success: 'bg-[#2563eb] text-white shadow-sm',
     danger: 'bg-[#1e40af] text-white shadow-sm',
     warning: 'bg-[#475569] text-white shadow-sm',
-    ghost: 'bg-transparent text-[#64748b] hover:text-[#1e293b] hover:bg-blue-50/60',
+    ghost: 'bg-transparent text-[#7ab896] hover:text-[#e8f5ed] hover:bg-blue-50/60',
   };
   return (
     <button onClick={onClick} disabled={disabled}
@@ -350,8 +350,8 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
 export function MetaTag({ icon, label, value, color = 'slate' }) {
   if (!value) return null;
   const colorMap = {
-    slate: 'bg-slate-50 text-[#64748b]',
-    neutral: 'bg-slate-50 text-[#64748b]',
+    slate: 'bg-slate-50 text-[#7ab896]',
+    neutral: 'bg-slate-50 text-[#7ab896]',
     indigo: 'bg-sky-950/30 text-sky-400',
     teal: 'bg-teal-950/30 text-teal-400',
     emerald: 'bg-emerald-950/30 text-emerald-400',
@@ -372,7 +372,7 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <label className="flex items-center gap-4 py-2 group cursor-pointer">
-      <span className="min-w-[5rem] text-[12px] font-bold text-[#1e293b] tracking-[-0.01em]">{label}</span>
+      <span className="min-w-[5rem] text-[12px] font-bold text-[#e8f5ed] tracking-[-0.01em]">{label}</span>
       <div className="flex-1 relative h-6 flex items-center">
         <div className="absolute inset-x-0 h-[5px] rounded-full bg-blue-100/70" />
         <div className="absolute left-0 h-[5px] rounded-full transition-all duration-150"
@@ -440,9 +440,9 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
                 {icon}
               </span>
             )}
-            {title && <h2 className="text-[15px] font-bold text-[#1e293b] tracking-[-0.01em]">{title}</h2>}
+            {title && <h2 className="text-[15px] font-bold text-[#e8f5ed] tracking-[-0.01em]">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[11px] text-[#64748b] mt-1.5 ml-[44px]">{subtitle}</p>}
+          {subtitle && <p className="text-[11px] text-[#7ab896] mt-1.5 ml-[44px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -455,9 +455,9 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
 export function EmptyState({ icon, title, description }) {
   return (
     <div className="text-center py-16 card-glossy border-dashed !border-blue-200/80">
-      <div className="flex justify-center mb-4 text-[#94a3b8]">{icon || <Icons.Empty />}</div>
-      {title && <div className="text-[15px] font-bold text-[#64748b] mb-1.5 tracking-[-0.01em]">{title}</div>}
-      {description && <div className="text-[13px] text-[#64748b] leading-relaxed max-w-sm mx-auto">{description}</div>}
+      <div className="flex justify-center mb-4 text-[#9dc8b0]">{icon || <Icons.Empty />}</div>
+      {title && <div className="text-[15px] font-bold text-[#7ab896] mb-1.5 tracking-[-0.01em]">{title}</div>}
+      {description && <div className="text-[13px] text-[#7ab896] leading-relaxed max-w-sm mx-auto">{description}</div>}
     </div>
   );
 }
@@ -470,8 +470,8 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
             ${activeTab === tab.id
-              ? 'bg-white text-[#1e293b]'
-              : 'text-[#64748b] hover:text-[#1e293b] hover:bg-white/40'
+              ? 'bg-white text-[#e8f5ed]'
+              : 'text-[#7ab896] hover:text-[#e8f5ed] hover:bg-white/40'
             }`}
           style={{
             transition: 'all 0.4s var(--ease-spring)',
@@ -498,8 +498,8 @@ export function ProgressSteps({ steps, current }) {
                 ${i + 1 <= current
                   ? 'text-white'
                   : i + 1 === current + 1
-                  ? 'bg-[#f3f0ff] text-[#1e293b]'
-                  : 'bg-[#f3f0ff] text-[#94a3b8]'
+                  ? 'bg-[#f3f0ff] text-[#e8f5ed]'
+                  : 'bg-[#f3f0ff] text-[#9dc8b0]'
                 }
                 ${i + 1 === current ? 'step-active-ping' : ''}
                 `}
@@ -513,7 +513,7 @@ export function ProgressSteps({ steps, current }) {
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-[12px] font-medium transition-colors whitespace-nowrap
-                ${i + 1 === current ? 'text-[#1e293b] font-bold' : i + 1 < current ? 'text-[#1e293b]' : i + 1 === current + 1 ? 'text-[#64748b]' : 'text-[#94a3b8]'}`}>
+                ${i + 1 === current ? 'text-[#e8f5ed] font-bold' : i + 1 < current ? 'text-[#e8f5ed]' : i + 1 === current + 1 ? 'text-[#7ab896]' : 'text-[#9dc8b0]'}`}>
               {s}
             </span>
           </div>
@@ -563,14 +563,14 @@ export function MobileNavLinks({ currentPath = '' }) {
             </div>
             <button
               onClick={logout}
-              className="text-[11px] font-semibold text-[#94a3b8] px-3 py-1.5 rounded-full border border-[#e2e8f0] bg-white active:scale-95 transition-all"
+              className="text-[11px] font-semibold text-[#9dc8b0] px-3 py-1.5 rounded-full border border-[#e2e8f0] bg-white active:scale-95 transition-all"
             >
               ログアウト
             </button>
           </>
         ) : isGuest ? (
           <>
-            <span className="text-[12px] text-[#94a3b8] font-medium">ゲスト利用中</span>
+            <span className="text-[12px] text-[#9dc8b0] font-medium">ゲスト利用中</span>
             <Link
               href="/login"
               className="text-[12px] font-black text-white px-4 py-1.5 rounded-full active:scale-95 transition-all shadow-sm"
@@ -581,7 +581,7 @@ export function MobileNavLinks({ currentPath = '' }) {
           </>
         ) : (
           <>
-            <span className="text-[12px] text-[#94a3b8]">ログインしていません</span>
+            <span className="text-[12px] text-[#9dc8b0]">ログインしていません</span>
             <Link
               href="/login"
               className="text-[12px] font-black text-white px-4 py-1.5 rounded-full active:scale-95 transition-all shadow-sm"
@@ -593,11 +593,11 @@ export function MobileNavLinks({ currentPath = '' }) {
         )}
       </div>
 
-      <p className="text-[11px] font-semibold text-[#94a3b8] uppercase tracking-widest mb-3 px-1">メニュー</p>
+      <p className="text-[11px] font-semibold text-[#9dc8b0] uppercase tracking-widest mb-3 px-1">メニュー</p>
       <div className="grid grid-cols-3 gap-2">
         {items.map(({ href, label, icon }) => (
           <Link key={href} href={href}
-            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white/70 border border-[#e2e8f0]/60 text-[#64748b] active:scale-95 transition-all">
+            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white/70 border border-[#e2e8f0]/60 text-[#7ab896] active:scale-95 transition-all">
             {icon}
             <span className="text-[11px] font-semibold">{label}</span>
           </Link>

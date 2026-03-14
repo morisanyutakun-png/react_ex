@@ -18,25 +18,26 @@ html {
    ==================================================== */
 
 :root {
-  /* === 自然テーマ: 深森 × 大地 × 夜空 === */
-  --color-accent: #22c98a;         /* エメラルドグリーン（自然の光） */
-  --color-accent-hover: #1ab87a;
-  --color-accent-subtle: rgba(34, 201, 138, 0.08);
-  --color-accent-glow: rgba(34, 201, 138, 0.22);
+  /* === Aurora Forest Night — 自然×プロ×視認性最優先 === */
+  --color-accent: #2dd893;         /* 鮮やかエメラルド */
+  --color-accent-hover: #22c98a;
+  --color-accent-subtle: rgba(45, 216, 147, 0.12);
+  --color-accent-glow: rgba(45, 216, 147, 0.30);
 
-  --color-bg: #162d1e;             /* 深森の夜（やや明るく） */
-  --color-bg-elevated: #1c3a26;
-  --color-bg-card: rgba(24, 54, 33, 0.88);
-  --color-bg-input: #1e3e27;
-  --color-bg-hover: rgba(34, 201, 138, 0.06);
+  --color-bg: #162d1e;             /* 深森ベース */
+  --color-bg-elevated: #1e4028;    /* カード・パネル */
+  --color-bg-card: rgba(28, 58, 38, 0.92);
+  --color-bg-input: rgba(24, 50, 32, 0.95);
+  --color-bg-hover: rgba(45, 216, 147, 0.08);
 
-  --color-text-primary: #cce8d4;   /* 月光に照らされた葉 */
-  --color-text-secondary: #6aaa7c;
-  --color-text-tertiary: #4a7a58;
-  --color-text-quaternary: #2e5038;
+  /* テキスト — 視認性最優先: コントラスト比 4.5:1 以上を確保 */
+  --color-text-primary: #e8f5ed;   /* ほぼホワイトグリーン — 高視認性 */
+  --color-text-secondary: #a8d8bb; /* 明るいミントグリーン */
+  --color-text-tertiary: #6eb88a;  /* 中程度グリーン — ラベル等 */
+  --color-text-muted: #4e8a65;     /* 薄いグリーン — プレースホルダー */
 
-  --color-border: rgba(34, 201, 138, 0.18);
-  --color-border-light: rgba(34, 201, 138, 0.09);
+  --color-border: rgba(45, 216, 147, 0.25);
+  --color-border-light: rgba(45, 216, 147, 0.13);
 
   --color-success: #10b981;
   --color-warning: #f59e0b;
@@ -158,23 +159,23 @@ body::after { display: none; }
    ══════════════════════════════════════════════════ */
 
 .glass-card {
-  background: rgba(21, 52, 31, 0.80);
-  backdrop-filter: saturate(140%) blur(20px);
-  -webkit-backdrop-filter: saturate(140%) blur(20px);
-  border: 0.5px solid rgba(34,201,138,0.14);
+  background: rgba(24, 56, 36, 0.82);
+  backdrop-filter: saturate(150%) blur(20px);
+  -webkit-backdrop-filter: saturate(150%) blur(20px);
+  border: 1px solid rgba(45,216,147,0.22);
   box-shadow:
-    0 0 0 0.5px rgba(34,201,138,0.08),
-    0 2px 8px rgba(0,0,0,0.30),
-    0 8px 24px rgba(0,0,0,0.20),
+    0 0 0 0.5px rgba(45,216,147,0.10),
+    0 2px 8px rgba(0,0,0,0.28),
+    0 8px 24px rgba(0,0,0,0.18),
     var(--shadow-glossy-inset);
 }
 
 .card-premium {
   position: relative;
-  background: rgba(21, 52, 31, 0.88);
-  backdrop-filter: saturate(140%) blur(20px);
-  -webkit-backdrop-filter: saturate(140%) blur(20px);
-  border: 0.5px solid rgba(34,201,138,0.14);
+  background: rgba(24, 56, 36, 0.90);
+  backdrop-filter: saturate(150%) blur(20px);
+  -webkit-backdrop-filter: saturate(150%) blur(20px);
+  border: 1px solid rgba(45,216,147,0.22);
   border-radius: var(--radius-xl);
   box-shadow:
     0 0 0 0.5px rgba(34,201,138,0.10),
@@ -225,11 +226,11 @@ body::after { display: none; }
    ══════════════════════════════════════════════════ */
 
 .header-bar {
-  background: rgba(7, 16, 10, 0.94);
-  backdrop-filter: saturate(140%) blur(24px);
-  -webkit-backdrop-filter: saturate(140%) blur(24px);
-  border-bottom: 0.5px solid rgba(34,201,138,0.14);
-  box-shadow: 0 0.5px 0 rgba(34,201,138,0.08), 0 4px 16px rgba(0,0,0,0.20);
+  background: rgba(14, 30, 19, 0.92);
+  backdrop-filter: saturate(150%) blur(24px);
+  -webkit-backdrop-filter: saturate(150%) blur(24px);
+  border-bottom: 1px solid rgba(45,216,147,0.18);
+  box-shadow: 0 1px 0 rgba(45,216,147,0.10), 0 4px 16px rgba(0,0,0,0.25);
   transition: all 0.5s var(--ease-apple);
   animation: header-slide-in 0.6s var(--ease-out-expo) both;
 }
@@ -242,19 +243,19 @@ body::after { display: none; }
 
 .gradient-text {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #4f7cfa 0%, #7b97fb 100%);
+  background-image: linear-gradient(135deg, #2dd893 0%, #14b8a6 100%);
 }
 .gradient-text-dark {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #3d6df5 0%, #5b7ef7 100%);
+  background-image: linear-gradient(135deg, #22c98a 0%, #0d9e8a 100%);
 }
 .gradient-text-hero {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #4f7cfa 0%, #818cf8 50%, #8b5cf6 100%);
+  background-image: linear-gradient(135deg, #2dd893 0%, #38bdf8 50%, #34d399 100%);
 }
 .gradient-text-hero-animated {
   @apply bg-clip-text text-transparent;
-  background-image: linear-gradient(135deg, #4f7cfa 0%, #818cf8 50%, #8b5cf6 100%);
+  background-image: linear-gradient(135deg, #2dd893 0%, #38bdf8 45%, #34d399 80%, #a3e635 100%);
   background-size: 200% 200%;
   animation: gradient-shift 8s ease infinite;
 }
@@ -266,17 +267,17 @@ body::after { display: none; }
 
 /* ── Glossy Text ── */
 .text-glossy {
-  color: #7b97fb;
-  text-shadow: 0 0 20px rgba(34,201,138,0.3);
+  color: #2dd893;
+  text-shadow: 0 0 20px rgba(45,216,147,0.35);
 }
 .text-glossy-hero {
   @apply bg-clip-text text-transparent;
   background-image: linear-gradient(
     135deg,
-    #4f7cfa 0%,
-    #7b97fb 40%,
-    #8b5cf6 80%,
-    #a78bfa 100%
+    #2dd893 0%,
+    #34d399 35%,
+    #38bdf8 70%,
+    #a3e635 100%
   );
   filter: contrast(1.05);
 }
@@ -304,28 +305,28 @@ body::after { display: none; }
   border: 1px solid;
   transition: all 0.3s ease;
 }
-.badge-primary  { background: rgba(34,201,138,0.12); color: #7b97fb; border-color: rgba(34,201,138,0.25); }
-.badge-success  { background: rgba(16,185,129,0.12); color: #34d399; border-color: rgba(16,185,129,0.25); }
-.badge-warning  { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.25); }
-.badge-danger   { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.25); }
-.badge-neutral  { background: rgba(100,116,139,0.12); color: #94a3b8; border-color: rgba(100,116,139,0.25); }
+.badge-primary  { background: rgba(45,216,147,0.15); color: #2dd893; border-color: rgba(45,216,147,0.30); }
+.badge-success  { background: rgba(16,185,129,0.15); color: #34d399; border-color: rgba(16,185,129,0.30); }
+.badge-warning  { background: rgba(245,158,11,0.15); color: #fbbf24; border-color: rgba(245,158,11,0.30); }
+.badge-danger   { background: rgba(239,68,68,0.15); color: #f87171; border-color: rgba(239,68,68,0.30); }
+.badge-neutral  { background: rgba(45,216,147,0.08); color: #a8d8bb; border-color: rgba(45,216,147,0.18); }
 
 /* ── Input Ring ── */
 
 .input-ring { @apply transition-all duration-200; }
 .input-ring:focus {
   @apply ring-2 outline-none;
-  --tw-ring-color: rgba(37, 99, 235, 0.15);
-  border-color: rgba(37, 99, 235, 0.4);
-  box-shadow: var(--shadow-focus);
+  --tw-ring-color: rgba(45, 216, 147, 0.20);
+  border-color: rgba(45, 216, 147, 0.55);
+  box-shadow: 0 0 0 4px rgba(45, 216, 147, 0.15);
 }
 
 /* ── Scrollbar ── */
 
 .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.12); @apply rounded-full; }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(37,99,235,0.22); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(45,216,147,0.18); @apply rounded-full; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(45,216,147,0.32); }
 
 /* ══════════════════════════════════════════════
    Core Animations
@@ -336,7 +337,7 @@ body::after { display: none; }
 
 @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
 .skeleton {
-  background: linear-gradient(90deg, #1e2640 25%, #252f4a 50%, #1e2640 75%);
+  background: linear-gradient(90deg, #1a3822 25%, #224a2e 50%, #1a3822 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   @apply rounded-lg;
@@ -379,12 +380,12 @@ body::after { display: none; }
 .animate-slide-left { animation: slide-in-left 0.5s var(--ease-spring) both; }
 
 /* ── Dividers ── */
-.section-divider { @apply border-t border-blue-200/40; }
+.section-divider { border-top: 1px solid rgba(45,216,147,0.20); }
 
 /* ── Option elements ── */
 option {
-  background: #0c1830;
-  color: #e2e8ff;
+  background: #182e1e;
+  color: #e8f5ed;
 }
 
 /* ══════════════════════════════════════════════════
