@@ -6503,7 +6503,14 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\usepackage{xcolor}',
         r'\usepackage{enumitem}',
         r'\usepackage{tcolorbox}',
-        r'\tcbuselibrary{skins,breakable}',
+        r'\tcbuselibrary{breakable}',
+        # skins ライブラリはクラウドコンパイラで利用不可の場合があるため
+        # enhanced/attach boxed title 等を使わない互換モードで定義する
+        r'\makeatletter',
+        r'\@ifundefined{tcb@skin@enhanced}{}{%',
+        r'  \tcbuselibrary{skins}%',
+        r'}',
+        r'\makeatother',
         r'\usepackage{array,booktabs}',   # 美しい表
         r'\usepackage{colortbl}',          # \rowcolor
     ]
@@ -6546,34 +6553,33 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\titleformat{\section}{\Large\bfseries\color{maincolor}}{}{0em}{}[{\color{maincolor}\rule{\linewidth}{0.6pt}}]',
         r'\titleformat{\subsection}{\large\bfseries\color{accentcolor}}{}{0em}{}',
         '',
-        r'% ── カスタム環境 ──',
-        # 問題番号ボックス（newtcolorbox で定義 → \begin{problembox}/\end{problembox} で使用）
-        r'\newtcolorbox{problembox}[2]{enhanced,colback=maincolor!6,colframe=maincolor,',
+        r'% ── カスタム環境（クラウドコンパイラ互換: skins 不要）──',
+        # 問題番号ボックス — skins の enhanced/attach boxed title を使わず
+        # 基本の title オプションで対応（breakable のみ必須）
+        r'\newtcolorbox{problembox}[2]{colback=maincolor!6,colframe=maincolor,',
         r'  arc=3pt,left=4pt,right=4pt,top=4pt,bottom=4pt,breakable,',
         r'  before=\noindent,',
         r'  title={\bfseries\color{white} 問題\ #1\quad\normalfont\small\color{white!85!maincolor}【#2】},',
-        r'  coltitle=white,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
-        r'  boxed title style={colback=maincolor,arc=2pt}}',
+        r'  coltitle=white,fonttitle=\bfseries}',
         # 解答・解説ボックス
-        r'\newtcolorbox{solutionbox}[2]{enhanced,colback=answerbox,colframe=accentcolor!60,',
+        r'\newtcolorbox{solutionbox}[2]{colback=answerbox,colframe=accentcolor!60,',
         r'  arc=3pt,left=4pt,right=4pt,top=4pt,bottom=4pt,breakable,',
         r'  before=\noindent,',
         r'  title={\bfseries\color{accentcolor} 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】},',
-        r'  coltitle=accentcolor,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
-        r'  boxed title style={colback=answerbox,colframe=accentcolor!60,arc=2pt}}',
+        r'  coltitle=accentcolor,fonttitle=\bfseries}',
         # 小問ラベル — \par で前のパラグラフを確実に終了
         r'\newcommand{\subq}[1]{\par\medskip\noindent\textcolor{accentcolor}{\textbf{#1}}\ }',
         r'\newcommand{\suba}[1]{\par\smallskip\noindent\textcolor{accentcolor!80!black}{\textbf{#1}}\ }',
         # 答えの枠線 — \par で確実に段落を閉じてから罫線
         r'\newcommand{\ansline}{\par\vspace{0.3em}\noindent\textcolor{accentcolor!40}{\rule{\linewidth}{0.4pt}}\vspace{0.2em}}',
-        # 解答セクション用の色付きボックス
-        r'\newtcolorbox{ansblock}{enhanced,colback=accentcolor!4,colframe=accentcolor!35,',
+        # 解答セクション用の色付きボックス — skins 不要版
+        r'\newtcolorbox{ansblock}{colback=accentcolor!4,colframe=accentcolor!35,',
         r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
         r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
-        r'\newtcolorbox{expblock}{enhanced,colback=green!3!white,colframe=green!30!black!20,',
+        r'\newtcolorbox{expblock}{colback=green!3!white,colframe=green!30!black!20,',
         r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
         r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
-        r'\newtcolorbox{scrblock}{enhanced,colback=maincolor!4,colframe=maincolor!30,',
+        r'\newtcolorbox{scrblock}{colback=maincolor!4,colframe=maincolor!30,',
         r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
         r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
         '',
@@ -7651,7 +7657,13 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
             return s
 
-        fixed_body = _balance_envs_and_braces(body_text)
+        # 練習モードの出力は _build_practice_latex で既にバランス済みなので
+        # _balance_envs_and_braces の追加 } がtcolorbox定義を破壊するのを防ぐ
+        _is_practice_doc = bool(re.search(r'\\newtcolorbox\{problembox\}', body_text))
+        if _is_practice_doc:
+            fixed_body = body_text
+        else:
+            fixed_body = _balance_envs_and_braces(body_text)
 
         # ── Comprehensive LaTeX sanitizer (failsafe for LLM output) ──
         def _comprehensive_latex_sanitize(tex: str) -> str:
