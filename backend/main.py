@@ -6180,8 +6180,9 @@ def _sanitize_practice_text(text: str) -> str:
     )
     # cases 環境はそのまま \[...\] の中に残す（\[ \begin{cases}...\end{cases} \]）
     # → cases が \[...\] の外に孤立している場合だけ変換
+    # 注意: Python の re は可変長 lookbehind を非サポートのため lookahead のみで判定
     text = re.sub(
-        r'(?<!\\]\s*)\\begin\{cases\}([\s\S]*?)\\end\{cases\}(?!\s*\\])',
+        r'\\begin\{cases\}([\s\S]*?)\\end\{cases\}(?!\s*\\\])',
         lambda m: r'\[\begin{cases}' + m.group(1) + r'\end{cases}\]',
         text,
     )
