@@ -9217,12 +9217,13 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             )
 
             # 2. Add fontspec + xeCJK after \documentclass line
-            #    IPAexMincho is standard in TeX Live; HaranoAji as fallback
+            #    latex.ytotech.com has Noto CJK fonts (no IPAex/HaranoAji)
             xecjk_preamble = (
                 '\\usepackage{fontspec}\n'
                 '\\usepackage{xeCJK}\n'
-                '\\setCJKmainfont{IPAexMincho}[BoldFont=IPAexGothic]\n'
-                '\\setCJKsansfont{IPAexGothic}\n'
+                '\\setCJKmainfont{Noto Serif CJK JP}[BoldFont=Noto Sans CJK JP]\n'
+                '\\setCJKsansfont{Noto Sans CJK JP}\n'
+                '\\setCJKmonofont{Noto Sans Mono CJK JP}\n'
             )
             # Insert after documentclass line (use lambda to avoid regex escape issues)
             tex = re.sub(
