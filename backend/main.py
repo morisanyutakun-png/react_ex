@@ -5507,6 +5507,70 @@ C5. 斜面面上の基点: 底から距離 s の点 = (s·cosθ, s·sinθ)
     ※ 滑車接線点は P3/P4 を参照（水平糸 → 中心 x±r で同 y, 鉛直糸 → 中心 y−r）
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+■ 斜面の描き方 — 完全ガイド（★★★ 最重要 ★★★）:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+【斜面の構造を正確に理解すること】
+斜面は「直角三角形」として描く。3つの頂点と辺の名前を正確に把握する:
+  - 底辺: 水平な地面（(0,0)--(B,0)）
+  - 高さ: 鉛直な壁（(B,0)--(B,H)）  ← 直角はここ
+  - 斜辺: 物体が滑る面（(0,0)--(B,H)）= 斜面そのもの
+
+ここで B = L·cosθ, H = L·sinθ（L は斜面の長さ、θ は水平との角度）
+
+★ よくある間違いパターン（絶対禁止）:
+× 斜面の三角形が直角三角形になっていない
+× 角度θの位置が間違っている（θは底辺と斜辺の間=左下の角度）
+× 斜面の傾斜と角度が視覚的に不一致（θ=30° なのに45°に見える等）
+× 直角マーク □ の位置が間違っている（直角は右下の角）
+× 物体が斜面の内部に埋まっている、または浮いている
+
+【斜面の計算手順（必ずこの手順に従うこと）】
+Step 1: 斜面角度 θ と斜面長さ L を決定
+Step 2: 底辺 B = L·cosθ, 高さ H = L·sinθ を計算（小数点2位まで）
+Step 3: 三角形を描画:
+  \fill[gray!15] (0,0)--(B,0)--(B,H)--cycle;
+  \draw[thick] (0,0)--(B,0)--(B,H)--cycle;
+Step 4: 直角マーク（右下の角に）:
+  \draw (B-0.25,0)--(B-0.25,0.25)--(B,0.25);
+Step 5: 角度θ（左下の角に）:
+  \draw (0.7,0) arc[start angle=0,end angle=θ,radius=0.7];
+  \node at ({0.95*cos(θ/2)},{0.95*sin(θ/2)}) {$\theta$};
+Step 6: 斜面上の物体配置（scope/rotate方式）:
+  物体の中心位置 = 斜面の底から距離 s の点 = (s·cosθ, s·sinθ)
+  \begin{scope}[shift={(s·cosθ, s·sinθ)},rotate=θ]
+    \draw[fill=...] (-w/2,0) rectangle ++(w,h);
+  \end{scope}
+Step 7: 床のハッチング:
+  \fill[pattern=north east lines] (-0.3,-0.2) rectangle (B+0.3,0);
+  \draw[thick] (-0.3,0)--(B+0.3,0);
+
+【角度別の数値早見表（計算ミス防止）】
+θ=15°: cosθ=0.966, sinθ=0.259, tanθ=0.268
+θ=20°: cosθ=0.940, sinθ=0.342, tanθ=0.364
+θ=30°: cosθ=0.866, sinθ=0.500, tanθ=0.577
+θ=37°: cosθ=0.799, sinθ=0.602, tanθ=0.754  (3:4:5三角形)
+θ=45°: cosθ=0.707, sinθ=0.707, tanθ=1.000
+θ=53°: cosθ=0.602, sinθ=0.799, tanθ=1.327  (3:4:5三角形)
+θ=60°: cosθ=0.500, sinθ=0.866, tanθ=1.732
+
+【斜面+滑車の組み合わせ】
+斜面上端に滑車がある場合:
+  - 滑車中心 = 斜面頂点の近く (B, H+r) または (B+offset, H)
+  - 糸は斜面に沿って物体→斜面上端→滑車接線→鉛直方向に吊り下がる
+  - 糸が斜面を突き抜けない（= 斜辺に沿わせる or 斜辺より上を通す）
+
+【2つの斜面の組み合わせ（V字型/山型）】
+  - 左斜面: (Xc,0)--(0,H)--cycle で左下がり
+  - 右斜面: (Xc,0)--(2*Xc,H)--cycle で右下がり（対称）
+  - 頂上の滑車: (Xc, H+r) に配置
+
+【斜面の面ハッチング（必須）】
+斜面の三角形内部を薄く塗りつぶし、床面にはハッチングを入れる:
+  \fill[gray!15] (0,0)--(B,0)--(B,H)--cycle;      % 斜面内部
+  \fill[pattern=north east lines] (-0.3,-0.2) rectangle (B+0.3,0);  % 床面
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ■ 糸・滑車・接触の物理的正確性ルール（絶対厳守）:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 P1. 物体は必ず面（床・台・斜面）の「上」に描く。物体の最下端 y ≥ 面の y（床が y=0 なら物体底辺 y=0）
@@ -5530,25 +5594,94 @@ P7. 定滑車の支持構造を描く: 天井・壁・台からの支柱 \draw[t
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 【力学: 斜面上の物体と力（θ=30°, scope方式で正確配置）】
-% 斜面: (0,0)-(4,0)-(4,2.31) の直角三角形（角30°）
-% 物体中心の世界座標: shift(2.17,1.25)+rotate30 で (0,0.3) → (2.02, 1.51)
-% N方向: scope内で真上 → 世界座標では (-sin30°,cos30°)=(-0.5,0.866) と一致
+% ── 計算過程（必ずコメントで明記すること）──
+% θ=30°, 斜面長 L=4.0
+% cosθ=0.866, sinθ=0.500, tanθ=0.577
+% 底辺 B = L·cosθ = 4.0×0.866 = 3.46
+% 高さ H = L·sinθ = 4.0×0.500 = 2.00
+% 三角形の3頂点: (0,0), (3.46,0), (3.46,2.00)
+% 直角は右下 (3.46,0) の角
+% 物体配置: 斜面中点 s=2.0 → 基点 (2.0×0.866, 2.0×0.500) = (1.73, 1.00)
+% 物体中心（世界座標）: shift+(0,0.3)回転後 ≈ (1.58, 1.26)
 \begin{tikzpicture}[>=stealth,scale=1.2]
-  \fill[gray!15] (0,0)--(4,0)--(4,2.31)--cycle;
-  \draw[thick] (0,0)--(4,0)--(4,2.31)--cycle;
-  \draw[thin] (0.65,0) arc[start angle=0,end angle=30,radius=0.65];
-  \node at (0.95,0.18) {$\theta$};
+  % 床面ハッチング
+  \fill[pattern=north east lines] (-0.3,-0.2) rectangle (3.76,0);
+  \draw[thick] (-0.3,0)--(3.76,0);
+  % 斜面（直角三角形）
+  \fill[gray!15] (0,0)--(3.46,0)--(3.46,2.00)--cycle;
+  \draw[thick] (0,0)--(3.46,0)--(3.46,2.00)--cycle;
+  % 直角マーク（右下）
+  \draw (3.21,0)--(3.21,0.25)--(3.46,0.25);
+  % 角度θ（左下）
+  \draw (0.7,0) arc[start angle=0,end angle=30,radius=0.7];
+  \node at (0.95,0.2) {$\theta$};
   % 斜面上の物体（scope/rotate で底面を斜面に正確に合わせる）
-  \begin{scope}[shift={(2.17,1.25)},rotate=30]
+  \begin{scope}[shift={(1.73,1.00)},rotate=30]
     \draw[fill=blue!20,thick] (-0.3,0) rectangle ++(0.6,0.6);
     \node at (0,0.3) {$m$};
     % 法線力: scope内で真上（= 世界座標で斜面に垂直）
-    \draw[->,red,very thick] (0,0.3)--++(0,1.0) node[above]{$N$};
-    % 摩擦力: scope内で斜面方向（上向き）
+    \draw[->,red,very thick] (0,0.6)--++(0,1.0) node[above]{$N$};
+    % 摩擦力: scope内で斜面に沿って上向き
     \draw[->,green!60!black,thick] (-0.3,0.3)--++(-1.0,0) node[left]{$f$};
   \end{scope}
-  % 重力: 世界座標で真下（物体中心≈(2.02,1.51)から）
-  \draw[->,blue,very thick] (2.02,1.51)--++(0,-1.0) node[below]{$mg$};
+  % 重力: 世界座標で真下（物体中心の世界座標から）
+  \draw[->,blue,very thick] (1.58,1.26)--++(0,-1.0) node[below]{$mg$};
+\end{tikzpicture}
+
+【力学: 斜面上の物体（θ=45°, 摩擦なし・滑り下り）】
+% θ=45°, 斜面長 L=3.0
+% cosθ=0.707, sinθ=0.707
+% 底辺 B = 3.0×0.707 = 2.12, 高さ H = 3.0×0.707 = 2.12
+% 物体配置: s=1.5 → 基点 (1.06, 1.06)
+\begin{tikzpicture}[>=stealth,scale=1.2]
+  \fill[pattern=north east lines] (-0.3,-0.2) rectangle (2.42,0);
+  \draw[thick] (-0.3,0)--(2.42,0);
+  \fill[gray!15] (0,0)--(2.12,0)--(2.12,2.12)--cycle;
+  \draw[thick] (0,0)--(2.12,0)--(2.12,2.12)--cycle;
+  \draw (1.87,0)--(1.87,0.25)--(2.12,0.25);
+  \draw (0.55,0) arc[start angle=0,end angle=45,radius=0.55];
+  \node at (0.75,0.25) {$\theta$};
+  \begin{scope}[shift={(1.06,1.06)},rotate=45]
+    \draw[fill=orange!20,thick] (-0.25,0) rectangle ++(0.5,0.5);
+    \node at (0,0.25) {$m$};
+    \draw[->,red,very thick] (0,0.5)--++(0,0.9) node[above]{$N$};
+  \end{scope}
+  \draw[->,blue,very thick] (0.88,1.24)--++(0,-0.9) node[below]{$mg$};
+  % 運動方向（斜面下向き）
+  \draw[->,orange,thick,dashed] (1.24,0.88)--++(0.35,-0.35) node[right]{$a$};
+\end{tikzpicture}
+
+【力学: 2物体+斜面+滑車（斜面上の物体Aと吊り下げ物体B）】
+% θ=30°, 斜面長 L=5.0
+% B_base = 5.0×0.866 = 4.33, H = 5.0×0.500 = 2.50
+% 滑車: 斜面上端の角に設置 → 中心 (4.33, 2.50+0.25) = (4.33, 2.75), r=0.25
+% 糸: 物体A → 斜面に沿って上 → 斜面上端 → 滑車 → 鉛直下 → 物体B
+\begin{tikzpicture}[>=stealth,scale=1.0]
+  \fill[pattern=north east lines] (-0.3,-0.2) rectangle (4.63,0);
+  \draw[thick] (-0.3,0)--(4.63,0);
+  \fill[gray!15] (0,0)--(4.33,0)--(4.33,2.50)--cycle;
+  \draw[thick] (0,0)--(4.33,0)--(4.33,2.50)--cycle;
+  \draw (4.08,0)--(4.08,0.25)--(4.33,0.25);
+  \draw (0.6,0) arc[start angle=0,end angle=30,radius=0.6];
+  \node at (0.85,0.18) {$\theta$};
+  % 滑車（斜面上端に固定）: 中心 (4.33, 2.75), 半径 0.25
+  \draw[thick] (4.33,2.50)--(4.33,2.50); % 支柱
+  \fill[gray!30] (4.33,2.75) circle (0.25);
+  \draw[thick] (4.33,2.75) circle (0.25);
+  \fill (4.33,2.75) circle (1.5pt);
+  % 物体A（斜面上, s=2.0 → 基点 (1.73,1.00)）
+  \begin{scope}[shift={(1.73,1.00)},rotate=30]
+    \draw[fill=blue!20,thick] (-0.3,0) rectangle ++(0.6,0.6);
+    \node at (0,0.3) {$m_A$};
+  \end{scope}
+  % 糸: A上面中央 → 斜面に沿って → 滑車接線(左側,4.08,2.75) → 円弧 → 滑車真下(4.33,2.50) → 鉛直 → B上面
+  \draw[thick] (1.58,1.56)--(4.08,2.75);
+  \draw[thick] (4.08,2.75) arc[start angle=180,end angle=270,radius=0.25];
+  \draw[thick] (4.33,2.50)--(4.33,1.0);
+  % 物体B（吊り下げ）
+  \draw[fill=red!20,thick] (4.03,0.3) rectangle ++(0.6,0.7);
+  \node at (4.33,0.65) {$m_B$};
+  \draw[->,blue,thick] (4.33,0.3)--++(0,-0.6) node[below]{$m_B g$};
 \end{tikzpicture}
 
 【力学: 水平面上の物体（押す力）】
@@ -5734,6 +5867,18 @@ P7. 定滑車の支持構造を描く: 天井・壁・台からの支柱 \draw[t
 □ --cycle で閉じるべき図形は --cycle で閉じているか
 □ node 内の数式は $...$ で囲んでいるか
 □ 床面に \fill[pattern=north east lines] のハッチングがあるか
+
+★★★ 斜面専用チェックリスト（斜面図がある場合は全項目を確認）:
+□ 三角関数の値を正確に計算したか（cos/sin/tan の小数値をコメントに明記）
+□ 底辺 B = L·cosθ, 高さ H = L·sinθ を正確に計算したか
+□ 三角形が直角三角形になっているか（3頂点: (0,0),(B,0),(B,H) で直角は右下）
+□ 直角マーク □ が右下の角に描かれているか
+□ 角度 θ の arc が左下の角に描かれているか（start angle=0, end angle=θ）
+□ 斜面上の物体は scope[shift,rotate=θ] で配置されているか
+□ shift の座標は (s·cosθ, s·sinθ) で正しく計算されているか
+□ 物体が斜面の表面上にあり、斜面の内部に埋まっていないか
+□ 摩擦力は scope 内で水平方向（斜面に平行）を向いているか
+□ 斜面の角度が視覚的に正しく見えるか（30°は緩やか、45°は対称、60°は急）
 """
     elif subject == '化学':
         figure_guide = r"""
@@ -6346,7 +6491,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\usepackage{geometry}',
         # スマホ画面幅(約95-100mm)に合わせたページサイズ
         # iframeのFitH表示で文字が大きく見える
-        r'\geometry{paperwidth=98mm,paperheight=172mm,top=5mm,bottom=7mm,left=6mm,right=6mm}',
+        r'\geometry{paperwidth=98mm,paperheight=172mm,top=5mm,bottom=7mm,left=4mm,right=4mm}',
         r'\usepackage{adjustbox}',         # \adjustbox{max width=\linewidth} で図を自動縮小
         r'\usepackage{parskip}',
         r'\setlength{\parskip}{0.25em}',
@@ -6402,14 +6547,14 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'% ── カスタム環境 ──',
         # 問題番号ボックス（newtcolorbox で定義 → \begin{problembox}/\end{problembox} で使用）
         r'\newtcolorbox{problembox}[2]{enhanced,colback=maincolor!6,colframe=maincolor,',
-        r'  arc=3pt,left=6pt,right=6pt,top=4pt,bottom=4pt,breakable,',
+        r'  arc=3pt,left=4pt,right=4pt,top=4pt,bottom=4pt,breakable,',
         r'  before=\noindent,',
         r'  title={\bfseries\color{white} 問題\ #1\quad\normalfont\small\color{white!85!maincolor}【#2】},',
         r'  coltitle=white,attach boxed title to top left={yshift=-2pt,xshift=4pt},',
         r'  boxed title style={colback=maincolor,arc=2pt}}',
         # 解答・解説ボックス
         r'\newtcolorbox{solutionbox}[2]{enhanced,colback=answerbox,colframe=accentcolor!60,',
-        r'  arc=3pt,left=6pt,right=6pt,top=4pt,bottom=4pt,breakable,',
+        r'  arc=3pt,left=4pt,right=4pt,top=4pt,bottom=4pt,breakable,',
         r'  before=\noindent,',
         r'  title={\bfseries\color{accentcolor} 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】},',
         r'  coltitle=accentcolor,attach boxed title to top left={yshift=-2pt,xshift=4pt},',

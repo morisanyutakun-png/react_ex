@@ -1595,20 +1595,20 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
 
   return (
     <div className="practice-pdf-layout">
-      {/* ── ヘッダー ── */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-emerald-200 bg-[#d1fae5] flex-shrink-0">
+      {/* ── ヘッダー（コンパクト） ── */}
+      <div className="flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2.5 border-b border-emerald-200 bg-[#d1fae5] flex-shrink-0">
         <BackButton onClick={onQuit} label="終了" />
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
-          <span className="text-[11px] sm:text-[12px] font-bold text-[#5a8068]">
+        <div className="flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style={{ background: c.accent }} />
+          <span className="text-[10px] sm:text-[12px] font-bold text-[#5a8068]">
             {subject}{pdfFailed ? ' カード表示' : ' PDF'}
           </span>
         </div>
-        <div className="w-14 sm:w-16" />
+        <div className="w-12 sm:w-16" />
       </div>
 
       {/* ── PDF または カードフォールバック ── */}
-      <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-[#d1fae5] overflow-y-auto practice-pdf-content">
+      <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-white overflow-y-auto practice-pdf-content">
         {pdfLoading ? (
           <div className="h-full flex flex-col items-center justify-center px-6">
             <div className="w-full max-w-sm bg-[#fff8f0] rounded-2xl shadow-sm border border-orange-200 px-6 py-7 flex flex-col gap-5">
@@ -1669,33 +1669,33 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
           <div className="flex-1 min-h-0 flex flex-col">
             {/* 問題/解答 切り替えタブ（解答公開後のみ表示） */}
             {answersRevealed && answerPdfUrl && answerPdfUrl !== '__failed__' && (
-              <div className="flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#d1fae5] border-b-2 shadow-sm" style={{ borderColor: c.accent + '40' }}>
+              <div className="flex-shrink-0 flex items-center justify-center gap-1 px-2 py-1.5 sm:py-2 bg-[#d1fae5] border-b shadow-sm" style={{ borderColor: c.accent + '30' }}>
                 <button
                   type="button"
                   onClick={() => setViewingAnswer(false)}
-                  className="px-5 py-2 rounded-xl text-[13px] font-black transition-all duration-200 shadow-sm"
+                  className="px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[12px] sm:text-[13px] font-black transition-all duration-200"
                   style={!viewingAnswer
-                    ? { background: c.accent, color: 'white', boxShadow: `0 2px 8px ${c.accent}44` }
+                    ? { background: c.accent, color: 'white', boxShadow: `0 2px 6px ${c.accent}44` }
                     : { background: '#f1f5f9', color: '#5a8068', border: '1px solid #e2e8f0' }}
                 >
-                  📝 問題
+                  問題
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewingAnswer(true)}
-                  className="px-5 py-2 rounded-xl text-[13px] font-black transition-all duration-200 shadow-sm"
+                  className="px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[12px] sm:text-[13px] font-black transition-all duration-200"
                   style={viewingAnswer
-                    ? { background: c.accent, color: 'white', boxShadow: `0 2px 8px ${c.accent}44` }
+                    ? { background: c.accent, color: 'white', boxShadow: `0 2px 6px ${c.accent}44` }
                     : { background: '#f1f5f9', color: '#5a8068', border: '1px solid #e2e8f0' }}
                 >
-                  📖 解答・解説
+                  解答・解説
                 </button>
               </div>
             )}
             {answerPdfLoading && (
-              <div className="flex-shrink-0 flex items-center justify-center gap-2 px-3 py-2 bg-[#fffbeb] border-b border-[#fcd34d]">
-                <div className="w-4 h-4 border-2 border-emerald-700/50 rounded-full animate-spin" style={{ borderTopColor: c.accent }} />
-                <span className="text-[11px] font-bold text-[#92400e]">解答 PDF を生成中…</span>
+              <div className="flex-shrink-0 flex items-center justify-center gap-1.5 px-2 py-1.5 bg-[#fffbeb] border-b border-[#fcd34d]">
+                <div className="w-3.5 h-3.5 border-2 border-emerald-700/50 rounded-full animate-spin" style={{ borderTopColor: c.accent }} />
+                <span className="text-[10px] sm:text-[11px] font-bold text-[#92400e]">解答 PDF 生成中…</span>
               </div>
             )}
             <iframe
@@ -1802,7 +1802,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       {/* ── 解答・解説を見るボタン / 採点パネル ── */}
       {!answersRevealed && !pdfLoading ? (
         /* まだ解答を見ていない → 解答確認ボタンを表示 */
-        <div className="flex-shrink-0 bg-[#d1fae5] border-t border-emerald-200 px-4 py-3">
+        <div className="flex-shrink-0 bg-[#d1fae5] border-t border-emerald-200 px-3 sm:px-4 py-2 sm:py-3">
           <button
             type="button"
             onClick={() => {
@@ -1810,10 +1810,10 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               setViewingAnswer(true);
               onRevealAnswer();
             }}
-            className="w-full py-3.5 rounded-2xl text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97]"
-            style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 6px 20px ${c.ring}` }}
+            className="w-full py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl text-[13px] sm:text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97]"
+            style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 4px 14px ${c.ring}` }}
           >
-            📖 解答・解説を見て採点する
+            解答・解説を見て採点する
           </button>
         </div>
       ) : (
@@ -1821,15 +1821,15 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       <div className="flex-shrink-0 bg-[#d1fae5] border-t border-emerald-200 practice-score-panel">
         <button
           type="button"
-          className="w-full flex items-center justify-between sm:hidden px-4 py-2.5"
+          className="w-full flex items-center justify-between sm:hidden px-3 py-1.5"
           onClick={() => setScorePanelOpen(!scorePanelOpen)}
         >
-          <span className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase">自己採点</span>
-          <svg className={`w-4 h-4 text-[#5a8068] transition-transform duration-200 ${scorePanelOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <span className="text-[10px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase">自己採点</span>
+          <svg className={`w-3.5 h-3.5 text-[#5a8068] transition-transform duration-200 ${scorePanelOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
           </svg>
         </button>
-        <div className={`px-3 sm:px-4 pb-3 sm:pb-4 ${scorePanelOpen ? '' : 'hidden sm:block'}`}>
+        <div className={`px-2 sm:px-4 pb-2 sm:pb-4 ${scorePanelOpen ? '' : 'hidden sm:block'}`}>
         <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase mb-2 hidden sm:block">自己採点</p>
 
         {anyPoints ? (
@@ -1923,7 +1923,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
             const pointArray = problems.map((_, i) => pScores[i] || null);
             onFinish(scoreArray, pointArray);
           }}
-          className="w-full mt-2 py-3 sm:py-3.5 rounded-2xl text-[13px] sm:text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full mt-1.5 sm:mt-2 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl text-[12px] sm:text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ background: allScored ? `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)` : '#e2e8f0', boxShadow: allScored ? `0 6px 20px ${c.ring}` : 'none' }}
         >
           {allScored ? '採点して結果を見る →' : `まだ採点が完了していません`}

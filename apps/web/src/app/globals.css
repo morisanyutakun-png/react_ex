@@ -1973,9 +1973,12 @@ main {
   max-width: 900px;
   margin: 0 auto;
   width: 100%;
+  overflow: hidden;
 }
 .practice-pdf-content {
   -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-height: 0;
 }
 .practice-pdf-iframe {
   display: block;
@@ -1990,11 +1993,11 @@ main {
 
 @media (max-width: 639px) {
   .practice-pdf-iframe {
-    min-height: 50vh;
-    height: calc(100dvh - 180px);
+    min-height: 0;
+    height: calc(100dvh - 96px);
   }
   .practice-score-panel {
-    max-height: 55dvh;
+    max-height: 50dvh;
     overflow-y: auto;
   }
   button, a, [role="button"] { min-height: 44px; }
