@@ -1269,7 +1269,7 @@ export default function UserModePage() {
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowUnlockModal(false); setUnlockPassword(''); setUnlockError(''); }}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#f1f5f9] transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#d1fae5] transition-colors"
               >
                 キャンセル
               </button>
@@ -1314,7 +1314,7 @@ export default function UserModePage() {
             <div className="flex gap-2">
               <button
                 onClick={() => { setShowGenerationAuthModal(false); setGenerationAuthCode(''); setGenerationAuthError(''); pendingGenerationRef.current = null; }}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#f1f5f9] transition-colors"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-[#e2e8f0] text-[13px] font-semibold text-[#64748b] hover:bg-[#d1fae5] transition-colors"
               >
                 キャンセル
               </button>
@@ -1538,7 +1538,7 @@ export default function UserModePage() {
                       value={newTplCustomSubject}
                       onChange={(e) => setNewTplCustomSubject(e.target.value)}
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300 hover:bg-[#f1f5f9] hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300 hover:bg-[#d1fae5] hover:shadow-md
                         focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                       placeholder="例: 地学"
@@ -1575,7 +1575,7 @@ export default function UserModePage() {
                       onChange={(e) => setNewTplField(e.target.value)}
                       placeholder={newTplFieldOptions.length > 0 ? '候補から選択 or 自由入力' : '分野名を入力（例: 微分法）'}
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300 hover:bg-[#f1f5f9] hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300 hover:bg-[#d1fae5] hover:shadow-md
                         focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                     />
@@ -1595,7 +1595,7 @@ export default function UserModePage() {
                       onChange={(e) => setNewTplTheme(e.target.value)}
                       placeholder="例: 置換積分、三角関数の合成、運動方程式の立式"
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300 hover:bg-[#f1f5f9] hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300 hover:bg-[#d1fae5] hover:shadow-md
                         focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                     />
@@ -1834,7 +1834,7 @@ export default function UserModePage() {
               </div>
 
               {/* ── タブ切り替え: セグメンテッドコントロール ── */}
-              <div className="base-tab-container relative flex rounded-2xl bg-[#f1f5f9]/80 p-1 mb-6 overflow-hidden">
+              <div className="base-tab-container relative flex rounded-2xl bg-[#bbf7d0]/60 p-1 mb-6 overflow-hidden">
                 {/* スライディングインジケーター */}
                 <div
                   className="base-tab-indicator"
@@ -2089,7 +2089,7 @@ export default function UserModePage() {
                   ) : (
                     /* 空状態: ガイダンスを表示 */
                     <div className="base-content-enter text-center py-10">
-                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#f1f5f9] mb-3">
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#d1fae5] mb-3">
                         <svg className="w-7 h-7 text-[#cbd5e1]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                         </svg>
@@ -3071,7 +3071,7 @@ export default function UserModePage() {
                       value={newTplCustomSubject}
                       onChange={(e) => setNewTplCustomSubject(e.target.value)}
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300 hover:bg-[#f1f5f9] hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300 hover:bg-[#d1fae5] hover:shadow-md
                         focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                       placeholder="例: 地学"
@@ -3108,7 +3108,7 @@ export default function UserModePage() {
                       onChange={(e) => setNewTplField(e.target.value)}
                       placeholder={newTplFieldOptions.length > 0 ? '候補から選択 or 自由入力' : '分野名を入力（例: 微分法）'}
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300 hover:bg-[#f1f5f9] hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300 hover:bg-[#d1fae5] hover:shadow-md
                         focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                     />
@@ -3128,7 +3128,7 @@ export default function UserModePage() {
                       onChange={(e) => setNewTplTheme(e.target.value)}
                       placeholder="例: 置換積分、三角関数の合成、運動方程式の立式"
                       className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200 bg-[#f0f4ff] text-sm text-[#1e293b] font-medium
-                        transition-all duration-300 hover:border-blue-300 hover:bg-[#f1f5f9] hover:shadow-md
+                        transition-all duration-300 hover:border-blue-300 hover:bg-[#d1fae5] hover:shadow-md
                         focus:border-[#2563eb] focus:ring-2 focus:ring-blue-100 focus:shadow-md
                         outline-none placeholder:text-[#94a3b8] shadow-sm"
                     />

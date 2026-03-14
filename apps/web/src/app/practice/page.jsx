@@ -111,7 +111,7 @@ function TopicChip({ label, selected, onClick, accent }) {
 function ProgressBar({ current, total, accent }) {
   const pct = total > 0 ? (current / total) * 100 : 0;
   return (
-    <div className="w-full h-2 bg-[#e2e8f0] rounded-full overflow-hidden">
+    <div className="w-full h-2 bg-[#bbf7d0] rounded-full overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-700 ease-out relative"
         style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${accent || '#8b5cf6'}, ${accent || '#6366f1'}bb)` }}
@@ -193,7 +193,7 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
       </div>
 
       {/* 合計 */}
-      <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#f1f5f3] border border-gray-300 mb-4">
+      <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#d1fae5] border border-gray-300 mb-4">
         <span className="text-[12px] font-bold text-[#5a8068]">合計</span>
         <span className="text-[18px] font-black" style={{ color: accent }}>{totalEarned} / {totalMax}点</span>
       </div>
@@ -237,7 +237,7 @@ const DIFF_ICONS = ['📗', '📘', '📙', '📕', '🔥', '🏆'];
 function WizardHeader({ step, accent }) {
   const labels = ['科目', '単元', '難易度', '確認'];
   return (
-    <div className="sticky top-0 z-20 bg-[#ecfdf5]/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-emerald-200">
+    <div className="sticky top-0 z-20 bg-[#d1fae5]/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-emerald-200">
       {/* step dots + progress bar */}
       <div className="flex items-center justify-center gap-2 mb-3">
         {labels.map((label, i) => (
@@ -265,7 +265,7 @@ function WizardHeader({ step, accent }) {
         ))}
       </div>
       {/* thin progress bar */}
-      <div className="w-full h-1 bg-[#e2e8f0] rounded-full overflow-hidden">
+      <div className="w-full h-1 bg-[#bbf7d0] rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-600 ease-out"
           style={{ width: `${((step + 1) / 4) * 100}%`, background: accent }}
@@ -434,7 +434,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             </div>
 
             {topics.length > 0 && (
-              <div className="mb-5 px-4 py-3 rounded-xl text-[11px] text-[#5a8068] bg-[#f1f5f3] border border-[#f1f5f9] flex items-start gap-2">
+              <div className="mb-5 px-4 py-3 rounded-xl text-[11px] text-[#5a8068] bg-[#d1fae5] border border-[#f1f5f9] flex items-start gap-2">
                 <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -791,7 +791,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
         <div className="p-4 max-h-[180px] overflow-y-auto bg-[#f1f5f9] rounded-b-none">
           <pre className="text-[11px] leading-[1.7] text-[#94d5a8] whitespace-pre-wrap font-mono break-all select-all">{prompt}</pre>
         </div>
-        <div className="px-4 py-3 bg-[#f1f5f3]">
+        <div className="px-4 py-3 bg-[#d1fae5]">
           <p className="text-[11px] text-[#5a8068] flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -812,7 +812,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             rows={8}
-            className="w-full rounded-xl border border-gray-300 bg-[#f1f5f3] px-4 py-3 text-[12px] font-mono text-[#1a2e23] placeholder:text-[#cbd5e1] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-transparent resize-none transition-all duration-200"
+            className="w-full rounded-xl border border-gray-300 bg-[#d1fae5] px-4 py-3 text-[12px] font-mono text-[#1a2e23] placeholder:text-[#cbd5e1] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-transparent resize-none transition-all duration-200"
             style={{ '--tw-ring-color': c.accent + '60' }}
             placeholder={'%%% PROBLEM 1 %%%\n%%% TOPIC: 力学 %%%\n%%% STEM %%%\n質量 $m$ の物体が...\n%%% SUBPROBLEM (1) %%%\n...\n%%% END PROBLEM 1 %%%'}
           />
@@ -1017,7 +1017,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
             </span>
           )}
           {diffLabel && (
-            <span className="text-[11px] text-[#5a8068] font-medium bg-[#f1f5f3] px-2 py-0.5 rounded-full">{diffLabel}</span>
+            <span className="text-[11px] text-[#5a8068] font-medium bg-[#d1fae5] px-2 py-0.5 rounded-full">{diffLabel}</span>
           )}
           {hasFigure && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">図あり</span>
@@ -1063,7 +1063,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                       <LatexBlock className="text-[13px] leading-[1.9] text-[#1a2e23] flex-1">{sp.question}</LatexBlock>
                     )}
                     {sp.points > 0 && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#f1f5f3] text-[#5a8068] border border-gray-300 self-start shrink-0 ml-auto">{sp.points}点</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#d1fae5] text-[#5a8068] border border-gray-300 self-start shrink-0 ml-auto">{sp.points}点</span>
                     )}
                   </div>
                 )}
@@ -1345,7 +1345,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
   return (
     <div className="max-w-[480px] mx-auto px-5 pt-6 pb-24">
       {/* 固定ヘッダー: タイマー */}
-      <div className="sticky top-0 z-20 bg-[#ecfdf5]/90 backdrop-blur-md -mx-5 px-5 pb-4 pt-2 border-b border-emerald-200">
+      <div className="sticky top-0 z-20 bg-[#d1fae5]/90 backdrop-blur-md -mx-5 px-5 pb-4 pt-2 border-b border-emerald-200">
         <div className="flex items-center justify-between mb-2">
           <BackButton onClick={onQuit} label="中断" />
           <div className="flex items-center gap-2">
@@ -1358,7 +1358,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
         </div>
         {/* タイマーバー */}
         {!finished && (
-          <div className="w-full h-1.5 bg-[#e2e8f0] rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-[#bbf7d0] rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-1000 ease-linear"
                  style={{ width: `${pct}%`, background: timeDanger ? '#dc2626' : timeWarning ? '#d97706' : c.accent }} />
           </div>
@@ -1596,7 +1596,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
   return (
     <div className="practice-pdf-layout">
       {/* ── ヘッダー ── */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-emerald-200 bg-[#ecfdf5] flex-shrink-0">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-emerald-200 bg-[#d1fae5] flex-shrink-0">
         <BackButton onClick={onQuit} label="終了" />
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
@@ -1608,7 +1608,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       </div>
 
       {/* ── PDF または カードフォールバック ── */}
-      <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-[#f1f5f3] overflow-y-auto practice-pdf-content">
+      <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-[#d1fae5] overflow-y-auto practice-pdf-content">
         {pdfLoading ? (
           <div className="h-full flex flex-col items-center justify-center px-6">
             <div className="w-full max-w-sm bg-[#fff8f0] rounded-2xl shadow-sm border border-orange-200 px-6 py-7 flex flex-col gap-5">
@@ -1632,7 +1632,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               </div>
               {/* プログレスバー */}
               <div className="space-y-1.5">
-                <div className="w-full h-2 bg-[#e2e8f0] rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-[#bbf7d0] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700 ease-out"
                     style={{ width: `${Math.max(4, pdfProgress)}%`, background: c.accent }}
@@ -1669,7 +1669,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
           <div className="flex-1 min-h-0 flex flex-col">
             {/* 問題/解答 切り替えタブ（解答公開後のみ表示） */}
             {answersRevealed && answerPdfUrl && answerPdfUrl !== '__failed__' && (
-              <div className="flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#f1f5f3] border-b-2 shadow-sm" style={{ borderColor: c.accent + '40' }}>
+              <div className="flex-shrink-0 flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#d1fae5] border-b-2 shadow-sm" style={{ borderColor: c.accent + '40' }}>
                 <button
                   type="button"
                   onClick={() => setViewingAnswer(false)}
@@ -1802,7 +1802,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       {/* ── 解答・解説を見るボタン / 採点パネル ── */}
       {!answersRevealed && !pdfLoading ? (
         /* まだ解答を見ていない → 解答確認ボタンを表示 */
-        <div className="flex-shrink-0 bg-[#ecfdf5] border-t border-emerald-200 px-4 py-3">
+        <div className="flex-shrink-0 bg-[#d1fae5] border-t border-emerald-200 px-4 py-3">
           <button
             type="button"
             onClick={() => {
@@ -1818,7 +1818,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
         </div>
       ) : (
       /* ── 採点パネル (モバイル: 折りたたみ可) ── */
-      <div className="flex-shrink-0 bg-[#ecfdf5] border-t border-emerald-200 practice-score-panel">
+      <div className="flex-shrink-0 bg-[#d1fae5] border-t border-emerald-200 practice-score-panel">
         <button
           type="button"
           className="w-full flex items-center justify-between sm:hidden px-4 py-2.5"
