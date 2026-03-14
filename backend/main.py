@@ -9584,6 +9584,20 @@ def render_tikz(payload: dict = Body(...)):
             except Exception as e:
                 logger.warning('sips failed: %s', e)
 
+        # Try PyMuPDF (fitz) as another PNG converter
+        if not png_bytes:
+            try:
+                import fitz
+                doc = fitz.open(pdf_path)
+                zoom = 2.0  # 200 DPI相当
+                mat = fitz.Matrix(zoom, zoom)
+                pix = doc[0].get_pixmap(matrix=mat, alpha=False)
+                png_bytes = pix.tobytes('png')
+                doc.close()
+                logger.info('TikZ PNG via PyMuPDF: %d bytes', len(png_bytes))
+            except Exception as e:
+                logger.warning('PyMuPDF TikZ conversion failed: %s', e)
+
         # Fallback: return PDF if no PNG converter available
         if not png_bytes:
             with open(pdf_path, 'rb') as pf:

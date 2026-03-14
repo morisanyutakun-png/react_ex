@@ -17,6 +17,8 @@ export default function TikzFigure({ tikzCode, className = '' }) {
   const abortRef = useRef(null);
   const prevSrc = useRef(null);
 
+  const isMobile = typeof navigator !== 'undefined' && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 768));
+
   const doFetch = useCallback(async (code, signal) => {
     setLoading(true);
     setError(null);
@@ -127,9 +129,19 @@ export default function TikzFigure({ tikzCode, className = '' }) {
   if (mediaType.includes('pdf')) {
     return (
       <div className={`my-3 ${className}`}>
-        <object data={src} type="application/pdf" className="w-full" style={{ minHeight: 240 }}>
-          <p className="text-xs text-slate-400">PDF を表示できません</p>
-        </object>
+        {isMobile ? (
+          <div className="flex items-center gap-2 py-2 px-3 bg-slate-50 rounded-xl border border-slate-200">
+            <p className="text-xs text-slate-400">図をPDFで表示できません</p>
+            <button type="button" onClick={handleRetry}
+              className="px-2 py-1 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-500">
+              再試行
+            </button>
+          </div>
+        ) : (
+          <object data={src} type="application/pdf" className="w-full" style={{ minHeight: 240 }}>
+            <p className="text-xs text-slate-400">PDF を表示できません</p>
+          </object>
+        )}
       </div>
     );
   }
@@ -140,8 +152,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
         src={src}
         alt="図"
         className="max-w-full rounded-xl border border-slate-200 bg-white shadow-sm"
-        style={{ maxHeight: 320 }}
-        loading="lazy"
+        style={{ maxHeight: isMobile ? 'none' : 320 }}
       />
     </div>
   );
