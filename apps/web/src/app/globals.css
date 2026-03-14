@@ -2031,6 +2031,13 @@ main {
 }
 .card-premium.border-dashed { animation: empty-fade-in 0.7s var(--ease-out-expo) both; }
 
+/* ── KaTeX mobile overflow ── */
+.katex-display-block {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
 /* ── Shine on hover — removed ── */
 .shine-on-hover { position: relative; overflow: hidden; }
 
