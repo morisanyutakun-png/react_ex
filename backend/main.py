@@ -6491,7 +6491,9 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\usepackage{geometry}',
         # スマホ画面幅(約95-100mm)に合わせたページサイズ
         # iframeのFitH表示で文字が大きく見える
-        r'\geometry{paperwidth=98mm,paperheight=172mm,top=5mm,bottom=7mm,left=4mm,right=4mm}',
+        # モバイル最適化: iPhone viewport ≈ 390px → 72dpi で 139mm
+        # 135mm × 235mm でほぼ画面幅いっぱいに表示される
+        r'\geometry{paperwidth=135mm,paperheight=235mm,top=5mm,bottom=7mm,left=5mm,right=5mm}',
         r'\usepackage{adjustbox}',         # \adjustbox{max width=\linewidth} で図を自動縮小
         r'\usepackage{parskip}',
         r'\setlength{\parskip}{0.25em}',
@@ -6588,12 +6590,12 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         title_text = f'{subject} 練習問題'
     lines += [
         rf'\begin{{center}}',
-        rf'  {{\Large\bfseries\color{{maincolor}} {title_text}}} \\[4pt]',
-        rf'  {{\normalsize\color{{rulegray}} 難易度: {difficulty}\quad|\quad AI 生成}}',
+        rf'  {{\large\bfseries\color{{maincolor}} {title_text}}} \\[2pt]',
+        rf'  {{\small\color{{rulegray}} 難易度: {difficulty}\quad|\quad AI 生成}}',
         rf'\end{{center}}',
+        r'\smallskip',
+        r'\noindent{\color{maincolor}\rule{\linewidth}{1.0pt}}',
         r'\medskip',
-        r'\noindent{\color{maincolor}\rule{\linewidth}{1.2pt}}',
-        r'\bigskip',
         '',
     ]
 
@@ -7492,22 +7494,26 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     only = _sanitize_fontspec_fonts(only)
                 except Exception:
                     pass
-                try:
-                    only = _fix_left_right_delimiters(only)
-                except Exception:
-                    pass
-                try:
-                    only = _convert_bracket_math_blocks(only)
-                except Exception:
-                    pass
-                try:
-                    only = _collapse_internal_newlines(only)
-                except Exception:
-                    pass
-                try:
-                    only = _normalize_latex_linebreaks(only)
-                except Exception:
-                    pass
+                # 練習モード（_build_practice_latex）の出力は _sanitize_practice_text で
+                # 既にブラケット変換・サニタイズ済みなので、追加の変換は最小限にする
+                _is_practice_doc = bool(re.search(r'\\newtcolorbox\{problembox\}', only))
+                if not _is_practice_doc:
+                    try:
+                        only = _fix_left_right_delimiters(only)
+                    except Exception:
+                        pass
+                    try:
+                        only = _convert_bracket_math_blocks(only)
+                    except Exception:
+                        pass
+                    try:
+                        only = _collapse_internal_newlines(only)
+                    except Exception:
+                        pass
+                    try:
+                        only = _normalize_latex_linebreaks(only)
+                    except Exception:
+                        pass
                 try:
                     only = _repair_latex_nesting(only)
                 except Exception:
@@ -8649,7 +8655,10 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
             return tex
 
-        fixed_body = _comprehensive_latex_sanitize(fixed_body)
+        # 練習モード（_build_practice_latex）の出力は既にサニタイズ済みなので
+        # _comprehensive_latex_sanitize をスキップして破壊的変換を防ぐ
+        if not re.search(r'\\newtcolorbox\{problembox\}', fixed_body):
+            fixed_body = _comprehensive_latex_sanitize(fixed_body)
 
         # Choose LaTeX engine early so we can adapt full-document user output
         # (which may include fontspec/xeCJK or \setCJKmainfont) to the

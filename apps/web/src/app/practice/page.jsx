@@ -1699,9 +1699,10 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               </div>
             )}
             <iframe
-              src={`${effectiveUrl}#toolbar=0&view=FitH&zoom=page-width`}
+              src={`${effectiveUrl}#toolbar=0&view=FitH`}
               title="練習問題 PDF"
               className="practice-pdf-iframe flex-1"
+              style={{ width: '100%', minWidth: '100%' }}
             />
           </div>
         ) : (
