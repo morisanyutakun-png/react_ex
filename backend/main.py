@@ -6509,14 +6509,15 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
     if has_tikz or True:   # 常に TikZ を読み込む（問題文内でも使われる可能性）
         lines += [
             r'\usepackage{tikz}',
-            r'\usetikzlibrary{arrows.meta,patterns,decorations.pathmorphing,decorations.markings,'
+            r'\usetikzlibrary{arrows,arrows.meta,patterns,decorations.pathmorphing,decorations.markings,'
             r'calc,angles,quotes,shapes.geometric,positioning,3d}',
             r'\usepackage{pgfplots}',
             r'\pgfplotsset{compat=1.18}',
-            # TikZのデフォルト設定
+            # TikZのデフォルト設定: 矢印互換性を確保 + モバイル視認性向上
             r'\tikzset{',
-            r'  every picture/.style={line width=0.7pt},',
+            r'  every picture/.style={line width=0.8pt},',
             r'  every node/.style={font=\small},',
+            r'  >=stealth,',
             r'}',
         ]
     if has_circuit or True:   # circuitikz も常に読み込む
@@ -9435,9 +9436,10 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "\\usepackage{amsmath,amssymb,mathtools}\n"
         "\\usepackage{tikz,pgfplots}\n"
         "\\pgfplotsset{compat=1.18}\n"
-        "\\usetikzlibrary{arrows.meta,calc,positioning,decorations.markings,"
+        "\\usetikzlibrary{arrows,arrows.meta,calc,positioning,decorations.markings,"
         "decorations.pathmorphing,patterns,angles,quotes,intersections,shapes.geometric,"
         "3d,perspective,shapes}\n"
+        "\\tikzset{>=stealth}\n"
         "\\usepackage[siunitx]{circuitikz}\n"
         + cjk_block +
         "\\begin{document}\n"
@@ -9561,7 +9563,7 @@ def render_tikz(payload: dict = Body(...)):
             try:
                 out_prefix = os.path.join(td, 'out')
                 subprocess.run(
-                    [pdftoppm, '-png', '-r', '200', '-singlefile', pdf_path, out_prefix],
+                    [pdftoppm, '-png', '-r', '300', '-singlefile', pdf_path, out_prefix],
                     check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15,
                 )
                 out_png = out_prefix + '.png'
@@ -9589,7 +9591,7 @@ def render_tikz(payload: dict = Body(...)):
             try:
                 import fitz
                 doc = fitz.open(pdf_path)
-                zoom = 2.0  # 200 DPI相当
+                zoom = 3.0  # 300 DPI相当（Retina対応）
                 mat = fitz.Matrix(zoom, zoom)
                 pix = doc[0].get_pixmap(matrix=mat, alpha=False)
                 png_bytes = pix.tobytes('png')
@@ -9892,7 +9894,7 @@ def api_get_pdf_page_image(token: str, page_num: int):
         if page_num < 1 or page_num > doc.page_count:
             doc.close()
             return JSONResponse({'error': 'invalid_page'}, status_code=400)
-        zoom = 2.0  # 200 DPI相当
+        zoom = 3.0  # 300 DPI相当（Retinaディスプレイ対応）
         mat = fitz.Matrix(zoom, zoom)
         pix = doc[page_num - 1].get_pixmap(matrix=mat, alpha=False)
         png_data = pix.tobytes('png')
