@@ -9199,12 +9199,55 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         with open(tex_path, 'w', encoding='utf-8') as f:
             f.write(fixed_body)
 
+        # ── Helper: transform ltjsarticle → article + xeCJK for cloud xelatex ──
+        def _transform_for_cloud_xelatex(tex: str) -> str:
+            """Convert LuaTeX-ja document to xelatex-compatible form for cloud compilation.
+            ltjsarticle + lualatex requires LuaTeX-ja fonts which cloud compilers lack.
+            Instead, use article + xeCJK + xelatex which has broader font support."""
+            if not re.search(r'\\documentclass[^{]*\{ltjsarticle\}', tex):
+                return tex  # not an ltjsarticle doc, no transformation needed
+
+            logger.info('Transforming ltjsarticle → article+xeCJK for cloud xelatex')
+
+            # 1. Replace document class
+            tex = re.sub(
+                r'\\documentclass(\[[^\]]*\])?\{ltjsarticle\}',
+                lambda m: r'\documentclass' + (m.group(1) or '') + '{article}',
+                tex,
+            )
+
+            # 2. Add fontspec + xeCJK after \documentclass line
+            xecjk_preamble = '\n'.join([
+                r'\usepackage{fontspec}',
+                r'\usepackage{xeCJK}',
+                # Try multiple Japanese fonts available on cloud TeX distributions
+                r'\IfFontExistsTF{IPAexMincho}{\setCJKmainfont{IPAexMincho}}{'
+                r'\IfFontExistsTF{Noto Serif CJK JP}{\setCJKmainfont{Noto Serif CJK JP}}{'
+                r'\IfFontExistsTF{IPAMincho}{\setCJKmainfont{IPAMincho}}{'
+                r'\setCJKmainfont{HaranoAjiMincho-Regular}'
+                r'}}}',
+                r'\IfFontExistsTF{IPAexGothic}{\setCJKsansfont{IPAexGothic}}{}',
+            ])
+            # Insert after documentclass line
+            tex = re.sub(
+                r'(\\documentclass[^\n]*\n)',
+                r'\1' + xecjk_preamble + '\n',
+                tex,
+            )
+
+            # 3. Remove LuaTeX-ja specific commands
+            tex = re.sub(r'\\ltjsetparameter\{[^}]*\}[^\n]*\n?', '', tex)
+
+            return tex
+
         # ── Helper: cloud compilation via latex.ytotech.com ──
         def _try_cloud_compilation(body_tex: str) -> 'Response | None':
             """Attempt cloud LaTeX compilation. Returns a Response on success, None on failure."""
             logger.info('Attempting cloud compilation via latex.ytotech.com...')
-            # ltjsarticle requires lualatex; default to xelatex for everything else
-            _cloud_compiler = 'lualatex' if re.search(r'\\documentclass[^{]*\{ltjsarticle\}', body_tex) else 'xelatex'
+            # Transform ltjsarticle to xelatex-compatible form for cloud
+            body_tex = _transform_for_cloud_xelatex(body_tex)
+            # Always use xelatex for cloud (ltjsarticle is already transformed above)
+            _cloud_compiler = 'xelatex'
             try:
                 cloud_resp = requests.post(
                     'https://latex.ytotech.com/builds/sync',
