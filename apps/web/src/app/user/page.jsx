@@ -1691,7 +1691,7 @@ export default function UserModePage() {
                       className={`relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 active:scale-[0.96] ${
                         active
                           ? `border-[${sc.light}] bg-gradient-to-b from-white to-[${sc.light}]/5 shadow-md`
-                          : 'border-transparent bg-white hover:bg-[#f1f5f9] hover:shadow-sm hover:border-blue-100'
+                          : 'border-transparent bg-[#fff8f0] hover:bg-orange-50 hover:shadow-sm hover:border-orange-200'
                       }`}
                     >
                       <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${
@@ -2483,7 +2483,7 @@ export default function UserModePage() {
                     className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
                       ${diagramRealism
                         ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 shadow-sm'
-                        : 'bg-white border-2 border-transparent hover:border-[#e2e8f0]'
+                        : 'bg-[#fff8f0] border-2 border-transparent hover:border-orange-200'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -2521,7 +2521,7 @@ export default function UserModePage() {
                     className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 active:scale-[0.98]
                       ${includeDiagramPerQuestion
                         ? 'bg-blue-50 border-2 border-blue-200 shadow-sm'
-                        : 'bg-white border-2 border-transparent hover:border-[#e2e8f0]'
+                        : 'bg-[#fff8f0] border-2 border-transparent hover:border-orange-200'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -2599,7 +2599,7 @@ export default function UserModePage() {
                                   className={`relative text-left p-3 rounded-xl border transition-all duration-200 active:scale-[0.97] ${
                                     active
                                       ? 'border-blue-200 bg-[#2563eb]/[0.04]'
-                                      : 'border-transparent bg-white hover:bg-blue-50'
+                                      : 'border-transparent bg-[#fff8f0] hover:bg-orange-50'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2">
@@ -2680,7 +2680,7 @@ export default function UserModePage() {
                       key={fmt.value}
                       onClick={() => setQuestionFormat(fmt.value)}
                       className={`px-3 py-2.5 rounded-xl text-left transition-all duration-300 active:scale-[0.97] ${
-                        active ? 'bg-blue-50 border-2 border-blue-200' : 'bg-white border-2 border-transparent hover:border-blue-100'
+                        active ? 'bg-blue-50 border-2 border-blue-200' : 'bg-[#fff8f0] border-2 border-transparent hover:border-orange-200'
                       }`}
                     >
                       <div className="text-[12px] font-bold text-[#1e293b]">{fmt.label}</div>
@@ -2713,7 +2713,7 @@ export default function UserModePage() {
                   className={`w-full px-4 py-3 rounded-xl text-left transition-all duration-300 active:scale-[0.98] ${
                     modelTier === 'auto'
                       ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-300/50 shadow-sm'
-                      : 'bg-white border-2 border-transparent hover:border-indigo-100'
+                      : 'bg-[#fff8f0] border-2 border-transparent hover:border-orange-200'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -2744,7 +2744,7 @@ export default function UserModePage() {
                       className={`w-full px-4 py-3 rounded-xl text-left transition-all duration-300 active:scale-[0.98] ${
                         active
                           ? `bg-${c}-50/60 border-2 border-${c}-300/50 shadow-sm`
-                          : 'bg-white border-2 border-transparent hover:border-blue-100'
+                          : 'bg-[#fff8f0] border-2 border-transparent hover:border-orange-200'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -2860,7 +2860,7 @@ export default function UserModePage() {
                   <p className="text-[10px] text-[#64748b]">以下の内容でAIが問題を生成します</p>
                 </div>
               </div>
-              <div className="space-y-2 bg-white rounded-2xl p-4 border border-[#e2e8f0] text-[12px]">
+              <div className="space-y-2 bg-[#fff8f0] rounded-2xl p-4 border border-orange-200 text-[12px]">
                 {[
                   ['教科', subject || '未選択'],
                   ['分野', field || 'すべて'],
@@ -4137,7 +4137,7 @@ export default function UserModePage() {
                       href={pdfUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-2 flex items-center justify-center gap-2 p-3 bg-white text-[#64748b] rounded-xl border border-[#e2e8f0] text-sm font-medium hover:bg-[#f1f5f9] transition-colors"
+                      className="mt-2 flex items-center justify-center gap-2 p-3 bg-[#fff8f0] text-[#64748b] rounded-xl border border-orange-200 text-sm font-medium hover:bg-orange-50 transition-colors"
                     >
                       <Icons.Pdf className="w-4 h-4" /> 別タブで開く
                     </a>

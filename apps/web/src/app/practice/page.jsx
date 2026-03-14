@@ -82,7 +82,7 @@ function SubjectTab({ subject, selected, onClick }) {
       className={`px-5 py-2.5 rounded-full text-[13px] font-bold transition-all duration-250 border
         ${selected
           ? 'text-white border-transparent shadow-lg scale-[1.04]'
-          : 'bg-white text-[#4a6b57] border-gray-200 hover:border-gray-300 hover:shadow-sm active:scale-[0.97]'
+          : 'bg-[#fff8f0] text-[#4a6b57] border-orange-200 hover:border-orange-300 hover:shadow-sm active:scale-[0.97]'
         }`}
       style={selected ? { background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 6px 20px ${c.ring}` } : {}}
     >
@@ -99,7 +99,7 @@ function TopicChip({ label, selected, onClick, accent }) {
       className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 border
         ${selected
           ? 'text-white border-transparent shadow-sm'
-          : 'bg-white text-[#4a6b57] border-gray-200 hover:border-gray-300 hover:bg-[#f1f5f3]'
+          : 'bg-[#fff8f0] text-[#4a6b57] border-orange-200 hover:border-orange-300 hover:bg-[#fff3e6]'
         }`}
       style={selected ? { backgroundColor: accent, borderColor: 'transparent', boxShadow: `0 2px 8px ${accent}30` } : {}}
     >
@@ -166,7 +166,7 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-md">
+    <div className="bg-[#fff8f0] rounded-2xl border border-orange-200 p-5 shadow-md">
       <div className="text-[13px] font-black text-[#1a2e23] mb-1 text-center">自己採点</div>
       <p className="text-[10px] text-[#5a8068] text-center mb-4">各小問の得点を入力してください</p>
 
@@ -237,7 +237,7 @@ const DIFF_ICONS = ['📗', '📘', '📙', '📕', '🔥', '🏆'];
 function WizardHeader({ step, accent }) {
   const labels = ['科目', '単元', '難易度', '確認'];
   return (
-    <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-gray-200">
+    <div className="sticky top-0 z-20 bg-[#ecfdf5]/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-emerald-200">
       {/* step dots + progress bar */}
       <div className="flex items-center justify-center gap-2 mb-3">
         {labels.map((label, i) => (
@@ -659,7 +659,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             <button
               type="button"
               onClick={() => goStep(step - 1)}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white border border-gray-200 shadow-md text-[12px] font-semibold text-[#4a6b57] hover:text-[#374151] hover:shadow-lg transition-all duration-200 active:scale-[0.96]"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#fff8f0] border border-orange-200 shadow-md text-[12px] font-semibold text-[#4a6b57] hover:text-[#374151] hover:shadow-lg transition-all duration-200 active:scale-[0.96]"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -768,8 +768,8 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
       </div>
 
       {/* ステップ1: プロンプトコピー */}
-      <div className={`rounded-2xl border overflow-hidden mb-6 transition-all duration-300 ${copied ? 'border-[#86efac] bg-green-50' : 'border-gray-200 bg-white shadow-sm'}`}>
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className={`rounded-2xl border overflow-hidden mb-6 transition-all duration-300 ${copied ? 'border-[#86efac] bg-green-50' : 'border-orange-200 bg-[#fff8f0] shadow-sm'}`}>
+        <div className="p-4 border-b border-orange-200 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-[13px] font-bold text-[#1a2e23]">📋 指示文をコピー</span>
           </div>
@@ -802,8 +802,8 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
       </div>
 
       {/* ステップ2: AIの出力を貼り付け */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-gray-200">
+      <div className="bg-[#fff8f0] rounded-2xl border border-orange-200 overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-orange-200">
           <span className="text-[13px] font-bold text-[#1a2e23]">📥 AIの出力を貼り付け</span>
           <p className="text-[11px] text-[#5a8068] mt-1">AIから返ってきた出力をそのまま貼り付けてください（マーカー形式・JSON形式 両方対応）</p>
         </div>
@@ -1027,7 +1027,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
       </div>
 
       {/* 問題本文 */}
-      <div className={`bg-white rounded-2xl border p-6 mb-6 transition-all duration-500 ${showAnswer ? 'border-gray-200 opacity-70 shadow-none' : 'border-gray-200 shadow-md'}`}
+      <div className={`bg-[#fff8f0] rounded-2xl border p-6 mb-6 transition-all duration-500 ${showAnswer ? 'border-orange-200 opacity-70 shadow-none' : 'border-orange-200 shadow-md'}`}
            style={!showAnswer ? { boxShadow: `0 4px 20px ${c.ring}` } : {}}>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black text-white"
@@ -1097,10 +1097,10 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           {subproblems.length > 0 ? (
             <div className="space-y-4">
               {subproblems.map((sp, idx) => (
-                <div key={idx} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-md"
+                <div key={idx} className="bg-[#fff8f0] rounded-2xl border border-orange-200 overflow-hidden shadow-md"
                      style={{ boxShadow: `0 4px 16px ${c.ring}` }}>
                   {/* 解答ヘッダー */}
-                  <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-gray-200">
+                  <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-orange-200">
                     <div className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black text-white"
                          style={{ background: c.accent }}>
                       A
@@ -1147,7 +1147,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-md text-[13px] text-[#5a8068]">
+            <div className="bg-[#fff8f0] rounded-2xl border border-orange-200 p-6 shadow-md text-[13px] text-[#5a8068]">
               解答データなし
             </div>
           )}
@@ -1345,7 +1345,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
   return (
     <div className="max-w-[480px] mx-auto px-5 pt-6 pb-24">
       {/* 固定ヘッダー: タイマー */}
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-md -mx-5 px-5 pb-4 pt-2 border-b border-gray-200">
+      <div className="sticky top-0 z-20 bg-[#ecfdf5]/90 backdrop-blur-md -mx-5 px-5 pb-4 pt-2 border-b border-emerald-200">
         <div className="flex items-center justify-between mb-2">
           <BackButton onClick={onQuit} label="中断" />
           <div className="flex items-center gap-2">
@@ -1387,7 +1387,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
           })();
 
           return (
-            <div key={idx} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm transition-all duration-300"
+            <div key={idx} className="bg-[#fff8f0] rounded-2xl border border-orange-200 overflow-hidden shadow-sm transition-all duration-300"
                  style={scored ? { borderColor: scored === SCORE.CORRECT ? '#86efac' : scored === SCORE.WRONG ? '#fca5a5' : '#fcd34d' } : {}}>
               {/* 問題ヘッダー */}
               <div className="flex items-center gap-2 px-5 pt-4 pb-2">
@@ -1543,7 +1543,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
             type="button"
             onClick={onDownloadPdf}
             disabled={pdfLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[12px] font-bold border-2 border-gray-200 text-[#4a6b57] bg-white hover:bg-[#f1f5f3] transition-all duration-200 active:scale-[0.97] disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[12px] font-bold border-2 border-orange-200 text-[#4a6b57] bg-[#fff8f0] hover:bg-orange-50 transition-all duration-200 active:scale-[0.97] disabled:opacity-50"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -1596,7 +1596,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
   return (
     <div className="practice-pdf-layout">
       {/* ── ヘッダー ── */}
-      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-200 bg-[#f1f5f3] flex-shrink-0">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 border-b border-emerald-200 bg-[#ecfdf5] flex-shrink-0">
         <BackButton onClick={onQuit} label="終了" />
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
@@ -1611,7 +1611,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-[#f1f5f3] overflow-y-auto practice-pdf-content">
         {pdfLoading ? (
           <div className="h-full flex flex-col items-center justify-center px-6">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm border border-gray-200 px-6 py-7 flex flex-col gap-5">
+            <div className="w-full max-w-sm bg-[#fff8f0] rounded-2xl shadow-sm border border-orange-200 px-6 py-7 flex flex-col gap-5">
               {/* アイコン + タイトル */}
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -1725,7 +1725,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                 return [];
               })();
               return (
-                <div key={idx} className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                <div key={idx} className="bg-[#fff8f0] rounded-2xl border border-orange-200 overflow-hidden shadow-sm">
                   <div className="flex items-center gap-2 px-5 pt-4 pb-2">
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black text-white"
                          style={{ background: c.accent }}>{idx + 1}</div>
@@ -1802,7 +1802,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       {/* ── 解答・解説を見るボタン / 採点パネル ── */}
       {!answersRevealed && !pdfLoading ? (
         /* まだ解答を見ていない → 解答確認ボタンを表示 */
-        <div className="flex-shrink-0 bg-[#f1f5f3] border-t border-gray-200 px-4 py-3">
+        <div className="flex-shrink-0 bg-[#ecfdf5] border-t border-emerald-200 px-4 py-3">
           <button
             type="button"
             onClick={() => {
@@ -1818,7 +1818,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
         </div>
       ) : (
       /* ── 採点パネル (モバイル: 折りたたみ可) ── */
-      <div className="flex-shrink-0 bg-[#f1f5f3] border-t border-gray-200 practice-score-panel">
+      <div className="flex-shrink-0 bg-[#ecfdf5] border-t border-emerald-200 practice-score-panel">
         <button
           type="button"
           className="w-full flex items-center justify-between sm:hidden px-4 py-2.5"
@@ -2078,7 +2078,7 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
 
       {/* スコアカード */}
       {hasPointData && totalMax > 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5 mb-6 text-center">
+        <div className="bg-[#fff8f0] rounded-2xl border border-orange-200 p-5 mb-6 text-center">
           <div className="text-[11px] font-bold text-[#5a8068] mb-1 tracking-[0.05em]">得点</div>
           <div className="text-[36px] font-black text-[#1a2e23] leading-none">
             {totalEarned}<span className="text-[18px] text-[#5a8068] font-bold"> / {totalMax}</span>
