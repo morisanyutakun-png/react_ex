@@ -7626,6 +7626,45 @@ def _get_user_learning_context(user_id: str, subject: str) -> str:
         return ''
 
 
+@app.get('/api/practice/session/{session_id}')
+def get_practice_session_detail(session_id: str, user_id: str = ''):
+    """セッションの詳細（問題ごとの結果）を返す。"""
+    if not user_id or user_id == 'guest':
+        return JSONResponse({'problems': []})
+
+    try:
+        conn = connect_db()
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT problem_index, topic, stem_summary, score,
+                      earned_points, max_points, subjective_difficulty, created_at
+               FROM practice_sessions
+               WHERE session_id = %s AND user_id = %s
+               ORDER BY problem_index""",
+            (session_id, user_id),
+        )
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        problems = []
+        for r in rows:
+            problems.append({
+                'problem_index': r[0],
+                'topic': r[1],
+                'stem_summary': r[2],
+                'score': r[3],
+                'earned_points': r[4],
+                'max_points': r[5],
+                'subjective_difficulty': r[6],
+                'created_at': str(r[7]) if r[7] else None,
+            })
+        return JSONResponse({'problems': problems})
+    except Exception as e:
+        logger.exception('Failed to get session detail')
+        return JSONResponse({'problems': [], 'error': str(e)})
+
+
 @app.post('/api/generate_pdf')
 def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
     """Generate a PDF from an array of generated items. Payload: { generated: [ {latex, stem, explanation?} ], title?: str }

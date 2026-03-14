@@ -1416,6 +1416,7 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
   const [finished, setFinished] = useState(false);
   const [examScores, setExamScores] = useState({}); // { index: SCORE.xxx }
   const [examPointScores, setExamPointScores] = useState({}); // { index: { earned, max } }
+  const [examSubjDiff, setExamSubjDiff] = useState({}); // { index: '簡単'|'普通'|'難しい' }
 
   const anyPoints = problems.some((p) => getTotalPoints(p) > 0);
 
@@ -1449,7 +1450,8 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
       return examScores[i] || SCORE.DELTA;
     });
     const pointArray = problems.map((_, i) => examPointScores[i] || null);
-    onFinish(scoreArray, pointArray);
+    const diffArray = problems.map((_, i) => examSubjDiff[i] || '普通');
+    onFinish(scoreArray, pointArray, diffArray);
   };
 
   const allScored = problems.every((p, i) => {
@@ -1639,8 +1641,36 @@ function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownlo
         })}
       </div>
 
+      {/* 体感難易度（採点後） */}
+      {finished && (
+        <div className="mt-6 bg-[#fff8f0] rounded-2xl border border-orange-200 p-4">
+          <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.08em] uppercase mb-2">体感難易度（問題全体）</p>
+          <div className="flex gap-2">
+            {['簡単', '普通', '難しい'].map((d) => {
+              const allSet = problems.every((_, i) => examSubjDiff[i] === d);
+              const dStyle = { '簡単': { bg: '#dcfce7', border: '#86efac', text: '#16a34a', active: '#16a34a' }, '普通': { bg: '#fef9c3', border: '#fcd34d', text: '#ca8a04', active: '#ca8a04' }, '難しい': { bg: '#fee2e2', border: '#fca5a5', text: '#dc2626', active: '#dc2626' } }[d];
+              return (
+                <button key={d} type="button"
+                  onClick={() => {
+                    const next = {};
+                    problems.forEach((_, i) => { next[i] = d; });
+                    setExamSubjDiff(next);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl text-[13px] font-bold border-2 transition-all duration-150 active:scale-[0.95]"
+                  style={allSet
+                    ? { background: dStyle.active, borderColor: dStyle.active, color: 'white' }
+                    : { background: dStyle.bg, borderColor: dStyle.border, color: dStyle.text }}
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* 下部ボタン */}
-      <div className="mt-8 space-y-3">
+      <div className="mt-4 space-y-3">
         {!finished ? (
           <button type="button" onClick={handleFinishExam}
             className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97]"
@@ -2031,31 +2061,54 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
         </div>
         )}
 
-        {/* 主観的難易度の評価 */}
+        {/* 主観的難易度の評価 — 問題ごと + 一括設定 */}
         <div className="mt-2 sm:mt-3">
           <p className="text-[10px] font-extrabold text-[#5a8068] tracking-[0.08em] uppercase mb-1.5">体感難易度</p>
-          <div className="flex gap-1.5">
+          {/* 一括設定ボタン */}
+          <div className="flex gap-1 mb-1.5">
             {['簡単', '普通', '難しい'].map((d) => {
-              // 全問同じ難易度を一括設定
-              const allSet = problems.every((_, i) => subjDiff[i] === d);
-              const dStyle = { '簡単': { bg: '#dcfce7', border: '#86efac', text: '#16a34a', active: '#16a34a' }, '普通': { bg: '#fef9c3', border: '#fcd34d', text: '#ca8a04', active: '#ca8a04' }, '難しい': { bg: '#fee2e2', border: '#fca5a5', text: '#dc2626', active: '#dc2626' } }[d];
+              const allSet = problems.length > 0 && problems.every((_, i) => subjDiff[i] === d);
+              const dColor = { '簡単': '#16a34a', '普通': '#ca8a04', '難しい': '#dc2626' }[d];
               return (
                 <button key={d} type="button"
-                  onClick={() => {
-                    const next = {};
-                    problems.forEach((_, i) => { next[i] = d; });
-                    setSubjDiff(next);
-                  }}
-                  className="flex-1 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-bold border-2 transition-all duration-150 active:scale-[0.95]"
+                  onClick={() => { const next = {}; problems.forEach((_, i) => { next[i] = d; }); setSubjDiff(next); }}
+                  className="flex-1 py-1 rounded-md text-[10px] font-bold border transition-all duration-150 active:scale-[0.95]"
                   style={allSet
-                    ? { background: dStyle.active, borderColor: dStyle.active, color: 'white' }
-                    : { background: dStyle.bg, borderColor: dStyle.border, color: dStyle.text }}
+                    ? { background: dColor, borderColor: dColor, color: 'white' }
+                    : { background: 'white', borderColor: '#e2e8f0', color: dColor }}
                 >
-                  {d}
+                  全て{d}
                 </button>
               );
             })}
           </div>
+          {/* 問題ごとの設定 */}
+          {problems.length > 1 && (
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {problems.map((_, idx) => (
+                <div key={idx} className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-[#5a8068] w-8 shrink-0">問{idx + 1}</span>
+                  <div className="flex gap-1 flex-1">
+                    {['簡単', '普通', '難しい'].map((d) => {
+                      const sel = subjDiff[idx] === d;
+                      const dColor = { '簡単': '#16a34a', '普通': '#ca8a04', '難しい': '#dc2626' }[d];
+                      return (
+                        <button key={d} type="button"
+                          onClick={() => setSubjDiff((prev) => ({ ...prev, [idx]: d }))}
+                          className="flex-1 py-0.5 rounded text-[9px] font-bold border transition-all duration-100"
+                          style={sel
+                            ? { background: dColor, borderColor: dColor, color: 'white' }
+                            : { background: 'white', borderColor: '#e2e8f0', color: '#94a3b8' }}
+                        >
+                          {d}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <button
@@ -2103,6 +2156,7 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
     : total > 0 ? Math.round((correct / total) * 100) : 0;
   const [shared, setShared] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [historySaved, setHistorySaved] = useState(false);
 
   // パーフェクト時にアニメーション
   useEffect(() => {
@@ -2157,7 +2211,11 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
         subject,
         difficulty: difficulty || problems[0]?.metadata?.difficulty || '',
         results,
-      }).catch(() => {}); // fire-and-forget
+      }).then(() => {
+        setHistorySaved(true);
+      }).catch((err) => {
+        console.error('学習履歴の保存に失敗:', err);
+      });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2602,6 +2660,8 @@ export default function PracticePage() {
   const advanceToNext = useCallback(() => {
     const next = current + 1;
     if (next >= problems.length && extraQueue.current.length === 0) {
+      // ドリルモード終了時: subjDifficulties がまだ設定されていなければデフォルト
+      setSubjDifficulties((prev) => prev.length > 0 ? prev : problems.map(() => '普通'));
       setScreen(SCREEN.SUMMARY);
     } else {
       if (next < problems.length) {
@@ -2669,21 +2729,24 @@ export default function PracticePage() {
   /* ── 途中終了 ── */
   const handleQuit = useCallback(() => {
     if (scores.length > 0) {
+      setSubjDifficulties((prev) => prev.length > 0 ? prev : problems.map(() => '普通'));
       setScreen(SCREEN.SUMMARY);
     } else {
       setScreen(SCREEN.SELECT);
       setProblems([]);
       setScores([]);
       setPointScores([]);
+      setSubjDifficulties([]);
       setCurrent(0);
       setShowAnswer(false);
     }
-  }, [scores]);
+  }, [scores, problems]);
 
   /* ── 模試形式: 全問採点完了 ── */
-  const handleExamFinish = useCallback((scoreArray, pointArray) => {
+  const handleExamFinish = useCallback((scoreArray, pointArray, diffArray) => {
     setScores(scoreArray);
     setPointScores(pointArray || scoreArray.map(() => null));
+    setSubjDifficulties(diffArray || scoreArray.map(() => '普通'));
     setScreen(SCREEN.SUMMARY);
   }, []);
 
@@ -2740,6 +2803,7 @@ export default function PracticePage() {
     setProblems([]);
     setScores([]);
     setPointScores([]);
+    setSubjDifficulties([]);
     setCurrent(0);
     setShowAnswer(false);
     setLatexForPdf(null);

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MobileNavLinks } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
-import { getPracticeHistory, getPracticeStats } from '@/lib/api';
+import { getPracticeHistory, getPracticeStats, getPracticeSessionDetail } from '@/lib/api';
 
 const SUBJECT_COLOR = {
   '物理': { accent: '#f97316', bg: 'bg-orange-950/20', text: 'text-orange-400' },
@@ -17,6 +17,9 @@ export default function HistoryPage() {
   const [history, setHistory] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [expandedSession, setExpandedSession] = useState(null); // session_id
+  const [sessionDetail, setSessionDetail] = useState(null); // { problems: [...] }
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -262,28 +265,93 @@ export default function HistoryPage() {
                 const pct = h.score_pct || 0;
                 const d = h.date ? new Date(h.date) : null;
                 const dateStr = d ? `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : '';
+                const isExpanded = expandedSession === (h.session_id || `local-${i}`);
+                const sid = h.session_id || `local-${i}`;
                 return (
-                  <div key={h.session_id || i} className="bg-[#122a1c] rounded-xl border border-emerald-800/40 px-4 py-3 flex items-center gap-3 shadow-sm">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[20px] font-black flex-shrink-0"
-                         style={{ background: pct >= 70 ? '#f0fdf4' : pct >= 40 ? '#fffbeb' : '#fef2f2', color: pct >= 70 ? '#16a34a' : pct >= 40 ? '#d97706' : '#dc2626' }}>
-                      {pct}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[12px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.accent + '14', color: c.accent }}>{h.subject}</span>
-                        {h.difficulty && <span className="text-[10px] text-[#9dc8b0]">{h.difficulty}</span>}
+                  <div key={sid} className="bg-[#122a1c] rounded-xl border border-emerald-800/40 shadow-sm overflow-hidden">
+                    <button
+                      type="button"
+                      className="w-full px-4 py-3 flex items-center gap-3 text-left"
+                      onClick={async () => {
+                        if (isExpanded) {
+                          setExpandedSession(null);
+                          setSessionDetail(null);
+                          return;
+                        }
+                        setExpandedSession(sid);
+                        if (!h._local && user?.id && user.id !== 'guest') {
+                          setDetailLoading(true);
+                          try {
+                            const detail = await getPracticeSessionDetail(h.session_id, user.id);
+                            setSessionDetail(detail);
+                          } catch { setSessionDetail(null); }
+                          setDetailLoading(false);
+                        } else {
+                          setSessionDetail(null);
+                        }
+                      }}
+                    >
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center text-[20px] font-black flex-shrink-0"
+                           style={{ background: pct >= 70 ? '#f0fdf4' : pct >= 40 ? '#fffbeb' : '#fef2f2', color: pct >= 70 ? '#16a34a' : pct >= 40 ? '#d97706' : '#dc2626' }}>
+                        {pct}
                       </div>
-                      <div className="text-[11px] text-[#9dc8b0] mt-0.5">
-                        {h.earned_points != null && h.max_points ? `${h.earned_points}/${h.max_points}点 · ` : ''}{h.num_problems || '?'}問 {dateStr && `· ${dateStr}`}
-                      </div>
-                      {h._weakTopics && h._weakTopics.length > 0 && (
-                        <div className="flex gap-1 mt-1 flex-wrap">
-                          {h._weakTopics.map((t) => (
-                            <span key={t} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-red-950/30 text-red-400 border border-red-800/30">{t}</span>
-                          ))}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-bold px-2 py-0.5 rounded-full" style={{ background: c.accent + '14', color: c.accent }}>{h.subject}</span>
+                          {h.difficulty && <span className="text-[10px] text-[#9dc8b0]">{h.difficulty}</span>}
                         </div>
-                      )}
-                    </div>
+                        <div className="text-[11px] text-[#9dc8b0] mt-0.5">
+                          {h.earned_points != null && h.max_points ? `${h.earned_points}/${h.max_points}点 · ` : ''}{h.num_problems || '?'}問 {dateStr && `· ${dateStr}`}
+                        </div>
+                      </div>
+                      <svg className={`w-4 h-4 text-[#9dc8b0] transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </button>
+                    {/* 展開: 問題ごとの詳細 */}
+                    {isExpanded && (
+                      <div className="px-4 pb-3 border-t border-emerald-800/30">
+                        {detailLoading ? (
+                          <div className="py-3 text-center">
+                            <div className="w-5 h-5 border-2 border-emerald-700 rounded-full animate-spin mx-auto" style={{ borderTopColor: c.accent }} />
+                          </div>
+                        ) : sessionDetail?.problems?.length > 0 ? (
+                          <div className="space-y-1.5 mt-2">
+                            {sessionDetail.problems.map((p) => {
+                              const scoreIcon = { correct: '○', delta: '△', wrong: '×' }[p.score] || '?';
+                              const scoreClr = { correct: '#16a34a', delta: '#d97706', wrong: '#dc2626' }[p.score] || '#64748b';
+                              const diffClr = { '簡単': '#16a34a', '普通': '#ca8a04', '難しい': '#dc2626' }[p.subjective_difficulty] || '#94a3b8';
+                              return (
+                                <div key={p.problem_index} className="flex items-start gap-2 bg-[#0d1f15] rounded-lg px-3 py-2">
+                                  <div className="w-6 h-6 rounded-md flex items-center justify-center text-[14px] font-black flex-shrink-0 mt-0.5" style={{ color: scoreClr }}>
+                                    {scoreIcon}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-[11px] font-bold text-[#e8f5ed]">問{p.problem_index + 1}</span>
+                                      {p.topic && <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-900/50 text-[#9dc8b0]">{p.topic}</span>}
+                                      {p.subjective_difficulty && (
+                                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: diffClr + '20', color: diffClr }}>
+                                          {p.subjective_difficulty}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {p.stem_summary && (
+                                      <div className="text-[10px] text-[#7ab896] mt-0.5 line-clamp-2">{p.stem_summary}</div>
+                                    )}
+                                    {p.earned_points != null && p.max_points != null && (
+                                      <div className="text-[10px] text-[#9dc8b0] mt-0.5">{p.earned_points}/{p.max_points}点</div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="py-2 text-[10px] text-[#9dc8b0] text-center">詳細データなし（ローカル履歴）</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

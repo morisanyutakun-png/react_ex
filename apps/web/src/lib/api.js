@@ -315,6 +315,10 @@ export async function getPracticeStats(userId) {
   return apiFetch(`/api/practice/stats?user_id=${encodeURIComponent(userId)}`);
 }
 
+export async function getPracticeSessionDetail(sessionId, userId) {
+  return apiFetch(`/api/practice/session/${encodeURIComponent(sessionId)}?user_id=${encodeURIComponent(userId)}`);
+}
+
 // ── DB Editor ─────────────────────────────────────
 
 export async function fetchDbTables() {
