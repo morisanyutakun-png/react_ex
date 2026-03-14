@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { searchProblems, practiceGenerate, practiceRenderPrompt, practiceParseJson, generatePdf } from '@/lib/api';
+import { searchProblems, practiceGenerate, practiceRenderPrompt, practiceParseJson, generatePdf, savePracticeHistory } from '@/lib/api';
 import { SUBJECT_TOPICS, PHYSICS_CURRICULUM } from '@/lib/constants';
 import { LatexBlock } from '@/components/LatexRenderer';
 import TikzFigure from '@/components/TikzFigure';
@@ -1682,6 +1682,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const [scores, setScores] = useState({});
   const [pScores, setPScores] = useState({}); // { idx: { earned, max } }
+  const [subjDiff, setSubjDiff] = useState({}); // { idx: '簡単'|'普通'|'難しい' }
   const [answersRevealed, setAnswersRevealed] = useState(false);
   const [finished, setFinished] = useState(false);
   const [scorePanelOpen, setScorePanelOpen] = useState(false);
@@ -2030,6 +2031,33 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
         </div>
         )}
 
+        {/* 主観的難易度の評価 */}
+        <div className="mt-2 sm:mt-3">
+          <p className="text-[10px] font-extrabold text-[#5a8068] tracking-[0.08em] uppercase mb-1.5">体感難易度</p>
+          <div className="flex gap-1.5">
+            {['簡単', '普通', '難しい'].map((d) => {
+              // 全問同じ難易度を一括設定
+              const allSet = problems.every((_, i) => subjDiff[i] === d);
+              const dStyle = { '簡単': { bg: '#dcfce7', border: '#86efac', text: '#16a34a', active: '#16a34a' }, '普通': { bg: '#fef9c3', border: '#fcd34d', text: '#ca8a04', active: '#ca8a04' }, '難しい': { bg: '#fee2e2', border: '#fca5a5', text: '#dc2626', active: '#dc2626' } }[d];
+              return (
+                <button key={d} type="button"
+                  onClick={() => {
+                    const next = {};
+                    problems.forEach((_, i) => { next[i] = d; });
+                    setSubjDiff(next);
+                  }}
+                  className="flex-1 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-bold border-2 transition-all duration-150 active:scale-[0.95]"
+                  style={allSet
+                    ? { background: dStyle.active, borderColor: dStyle.active, color: 'white' }
+                    : { background: dStyle.bg, borderColor: dStyle.border, color: dStyle.text }}
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <button
           type="button"
           disabled={!allScored}
@@ -2040,7 +2068,8 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               return scores[i] || SCORE.DELTA;
             });
             const pointArray = problems.map((_, i) => pScores[i] || null);
-            onFinish(scoreArray, pointArray);
+            const diffArray = problems.map((_, i) => subjDiff[i] || '普通');
+            onFinish(scoreArray, pointArray, diffArray);
           }}
           className="w-full mt-1.5 sm:mt-2 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl text-[12px] sm:text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
           style={{ background: allScored ? `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)` : '#e2e8f0', boxShadow: allScored ? `0 6px 20px ${c.ring}` : 'none' }}
@@ -2058,7 +2087,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
    サマリー画面 E
 ───────────────────────────────────────────────────────────── */
 
-function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexForPdf, onDownloadPdf, pdfLoading, pointScores }) {
+function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexForPdf, onDownloadPdf, pdfLoading, pointScores, subjDifficulties, userId, difficulty }) {
   const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
   const correct = scores.filter((s) => s === SCORE.CORRECT).length;
   const delta   = scores.filter((s) => s === SCORE.DELTA).length;
@@ -2091,13 +2120,15 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
     .filter(Boolean)
     .filter((v, i, a) => a.indexOf(v) === i);
 
-  // 学習履歴を localStorage に保存
+  // 学習履歴を localStorage + API に保存
   useEffect(() => {
+    const sessionId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    // localStorage (ゲスト・ローカル用)
     try {
       const prev = JSON.parse(localStorage.getItem('rem_practice_history') || '[]');
       const entry = {
         subject,
-        difficulty: problems[0]?.metadata?.difficulty || '',
+        difficulty: difficulty || problems[0]?.metadata?.difficulty || '',
         earnedPoints: hasPointData ? totalEarned : correct,
         maxPoints: hasPointData ? totalMax : total,
         numProblems: total,
@@ -2105,10 +2136,29 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
         weakTopics,
       };
       prev.push(entry);
-      // 直近200件のみ保持
       if (prev.length > 200) prev.splice(0, prev.length - 200);
       localStorage.setItem('rem_practice_history', JSON.stringify(prev));
     } catch {}
+
+    // API (認証ユーザー用) — 問題ごとの詳細を保存
+    if (userId && userId !== 'guest') {
+      const results = problems.map((p, i) => ({
+        problem_index: i,
+        topic: p?.topic || p?.metadata?.field || '',
+        stem_summary: (p?.stem || p?.text || p?.question || '').slice(0, 200),
+        score: scores[i] || 'delta',
+        earned_points: pointScores?.[i]?.earned ?? null,
+        max_points: pointScores?.[i]?.max ?? null,
+        subjective_difficulty: subjDifficulties?.[i] || '普通',
+      }));
+      savePracticeHistory({
+        user_id: userId,
+        session_id: sessionId,
+        subject,
+        difficulty: difficulty || problems[0]?.metadata?.difficulty || '',
+        results,
+      }).catch(() => {}); // fire-and-forget
+    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 合格ライン/メッセージ
@@ -2356,6 +2406,7 @@ export default function PracticePage() {
   const [explanationPdfLoading, setExplanationPdfLoading] = useState(false);
   // 得点入力による採点結果 { earnedPoints, maxPoints } per problem
   const [pointScores, setPointScores] = useState([]);
+  const [subjDifficulties, setSubjDifficulties] = useState([]);
   // × 後のフォローアップ用に追加問題をキューに積む
   const extraQueue = useRef([]);
 
@@ -2733,7 +2784,7 @@ export default function PracticePage() {
         onRevealAnswer={handleRevealAnswer}
         subject={subject}
         problems={problems}
-        onFinish={(scoreArray, pointArray) => { setScores(scoreArray); setPointScores(pointArray || scoreArray.map(() => null)); setScreen(SCREEN.SUMMARY); }}
+        onFinish={(scoreArray, pointArray, diffArray) => { setScores(scoreArray); setPointScores(pointArray || scoreArray.map(() => null)); setSubjDifficulties(diffArray || scoreArray.map(() => '普通')); setScreen(SCREEN.SUMMARY); }}
         onQuit={handleQuit}
       />
     );
@@ -2812,6 +2863,9 @@ export default function PracticePage() {
         onDownloadPdf={handleDownloadPdf}
         pdfLoading={pdfLoading}
         pointScores={pointScores}
+        subjDifficulties={subjDifficulties}
+        userId={user?.id}
+        difficulty={config?.difficulty}
       />
     );
   }

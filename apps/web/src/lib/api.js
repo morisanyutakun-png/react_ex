@@ -298,6 +298,23 @@ export async function practiceGenerate(params) {
   throw new Error('AI 生成がタイムアウトしました。再度お試しください。');
 }
 
+// ── Practice History ──────────────────────────────
+
+export async function savePracticeHistory(data) {
+  return apiFetch('/api/practice/history', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getPracticeHistory(userId, limit = 50, offset = 0) {
+  return apiFetch(`/api/practice/history?user_id=${encodeURIComponent(userId)}&limit=${limit}&offset=${offset}`);
+}
+
+export async function getPracticeStats(userId) {
+  return apiFetch(`/api/practice/stats?user_id=${encodeURIComponent(userId)}`);
+}
+
 // ── DB Editor ─────────────────────────────────────
 
 export async function fetchDbTables() {

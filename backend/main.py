@@ -6502,15 +6502,6 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\usepackage{titlesec}',
         r'\usepackage{xcolor}',
         r'\usepackage{enumitem}',
-        r'\usepackage{tcolorbox}',
-        r'\tcbuselibrary{breakable}',
-        # skins ライブラリはクラウドコンパイラで利用不可の場合があるため
-        # enhanced/attach boxed title 等を使わない互換モードで定義する
-        r'\makeatletter',
-        r'\@ifundefined{tcb@skin@enhanced}{}{%',
-        r'  \tcbuselibrary{skins}%',
-        r'}',
-        r'\makeatother',
         r'\usepackage{array,booktabs}',   # 美しい表
         r'\usepackage{colortbl}',          # \rowcolor
     ]
@@ -6553,35 +6544,58 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         r'\titleformat{\section}{\Large\bfseries\color{maincolor}}{}{0em}{}[{\color{maincolor}\rule{\linewidth}{0.6pt}}]',
         r'\titleformat{\subsection}{\large\bfseries\color{accentcolor}}{}{0em}{}',
         '',
-        r'% ── カスタム環境（クラウドコンパイラ互換: skins 不要）──',
-        # 問題番号ボックス — skins の enhanced/attach boxed title を使わず
-        # 基本の title オプションで対応（breakable のみ必須）
-        r'\newtcolorbox{problembox}[2]{colback=maincolor!6,colframe=maincolor,',
-        r'  arc=3pt,left=4pt,right=4pt,top=4pt,bottom=4pt,breakable,',
-        r'  before=\noindent,',
-        r'  title={\bfseries\color{white} 問題\ #1\quad\normalfont\small\color{white!85!maincolor}【#2】},',
-        r'  coltitle=white,fonttitle=\bfseries}',
-        # 解答・解説ボックス
-        r'\newtcolorbox{solutionbox}[2]{colback=answerbox,colframe=accentcolor!60,',
-        r'  arc=3pt,left=4pt,right=4pt,top=4pt,bottom=4pt,breakable,',
-        r'  before=\noindent,',
-        r'  title={\bfseries\color{accentcolor} 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】},',
-        r'  coltitle=accentcolor,fonttitle=\bfseries}',
-        # 小問ラベル — \par で前のパラグラフを確実に終了
+        r'% ── カスタム環境（tcolorbox不使用: クラウドコンパイラ完全互換）──',
+        r'% tcolorbox はクラウドコンパイラ(latex.ytotech.com)でbreakable/skins等が',
+        r'% 動作しないため、基本LaTeXのみで同等の見た目を実現する。',
+        r'',
+        r'% 問題ボックス: colorbox タイトル + 薄い背景 + 下罫線',
+        r'\newenvironment{problembox}[2]{%',
+        r'  \par\bigskip\noindent',
+        r'  {\colorbox{maincolor!85}{\strut\bfseries\color{white}\quad 問題\ #1\quad\normalfont\small\color{white!80!maincolor}【#2】\quad}}%',
+        r'  \par\nobreak\smallskip\noindent',
+        r'}{%',
+        r'  \par\smallskip\noindent\textcolor{maincolor!40}{\rule{\linewidth}{0.3pt}}%',
+        r'  \medskip',
+        r'}',
+        r'',
+        r'% 解答ボックス: accentcolor タイトル + 下罫線',
+        r'\newenvironment{solutionbox}[2]{%',
+        r'  \par\bigskip\noindent',
+        r'  {\colorbox{accentcolor!15}{\strut\bfseries\color{accentcolor}\quad 解答\ #1\quad\normalfont\small\color{accentcolor!70}【#2】\quad}}%',
+        r'  \par\nobreak\smallskip\noindent',
+        r'}{%',
+        r'  \par\smallskip\noindent\textcolor{accentcolor!30}{\rule{\linewidth}{0.3pt}}%',
+        r'  \medskip',
+        r'}',
+        r'',
+        # 小問ラベル
         r'\newcommand{\subq}[1]{\par\medskip\noindent\textcolor{accentcolor}{\textbf{#1}}\ }',
         r'\newcommand{\suba}[1]{\par\smallskip\noindent\textcolor{accentcolor!80!black}{\textbf{#1}}\ }',
-        # 答えの枠線 — \par で確実に段落を閉じてから罫線
+        # 答えの枠線
         r'\newcommand{\ansline}{\par\vspace{0.3em}\noindent\textcolor{accentcolor!40}{\rule{\linewidth}{0.4pt}}\vspace{0.2em}}',
-        # 解答セクション用の色付きボックス — skins 不要版
-        r'\newtcolorbox{ansblock}{colback=accentcolor!4,colframe=accentcolor!35,',
-        r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
-        r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
-        r'\newtcolorbox{expblock}{colback=green!3!white,colframe=green!30!black!20,',
-        r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
-        r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
-        r'\newtcolorbox{scrblock}{colback=maincolor!4,colframe=maincolor!30,',
-        r'  arc=2pt,left=5pt,right=5pt,top=3pt,bottom=3pt,breakable,',
-        r'  leftrule=2.5pt,rightrule=0.4pt,toprule=0.4pt,bottomrule=0.4pt}',
+        r'',
+        r'% 解答/解説/配点セクション用: 左縦線 + インデント (tcolorbox代替)',
+        r'\newenvironment{ansblock}{%',
+        r'  \par\smallskip\noindent',
+        r'  \hspace{3pt}\textcolor{accentcolor!35}{\vrule width 2pt}\hspace{5pt}%',
+        r'  \begin{minipage}[t]{\dimexpr\linewidth-12pt}%',
+        r'}{%',
+        r'  \end{minipage}\par\smallskip',
+        r'}',
+        r'\newenvironment{expblock}{%',
+        r'  \par\smallskip\noindent',
+        r'  \hspace{3pt}\textcolor{green!30!black!20}{\vrule width 2pt}\hspace{5pt}%',
+        r'  \begin{minipage}[t]{\dimexpr\linewidth-12pt}%',
+        r'}{%',
+        r'  \end{minipage}\par\smallskip',
+        r'}',
+        r'\newenvironment{scrblock}{%',
+        r'  \par\smallskip\noindent',
+        r'  \hspace{3pt}\textcolor{maincolor!30}{\vrule width 2pt}\hspace{5pt}%',
+        r'  \begin{minipage}[t]{\dimexpr\linewidth-12pt}%',
+        r'}{%',
+        r'  \end{minipage}\par\smallskip',
+        r'}',
         '',
         r'\begin{document}',
         # LuaTeX-Ja: 本文内で和欧文間スペースを設定（プリアンブルより安全）
@@ -7157,6 +7171,11 @@ async def practice_generate(req: PracticeGenerateRequest = Body(...)):
     except Exception as e:
         logger.warning('Practice RAG failed (non-fatal): %s', e)
 
+    # 学習履歴からパーソナライズコンテキストを注入
+    learning_ctx = _get_user_learning_context(user_id, req.subject)
+    if learning_ctx:
+        user_prompt_parts.append(learning_ctx)
+
     topic_str = '、'.join(req.topics) if req.topics else '全分野'
     user_prompt_parts.append(
         f'{req.subject}（{topic_str}）の{req.difficulty}レベルの問題を{req.num_questions}問、'
@@ -7204,6 +7223,407 @@ async def practice_generate_status(job_id: str):
         return JSONResponse({'status': 'error', 'error': job['error']}, status_code=200)
     else:
         return JSONResponse({'status': 'processing'})
+
+
+# ── 練習履歴 (Practice History) ─────────────────────────────────────
+
+def _ensure_practice_sessions_table():
+    """practice_sessions テーブルを作成する（未作成の場合）。"""
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+        if is_sqlite:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS practice_sessions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    session_id TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    topic TEXT,
+                    difficulty TEXT NOT NULL,
+                    problem_index INTEGER NOT NULL,
+                    stem_summary TEXT,
+                    score TEXT NOT NULL,
+                    earned_points INTEGER,
+                    max_points INTEGER,
+                    subjective_difficulty TEXT,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_ps_user ON practice_sessions(user_id)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_ps_user_subject ON practice_sessions(user_id, subject)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_ps_session ON practice_sessions(session_id)")
+        else:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS practice_sessions (
+                    id SERIAL PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    session_id TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    topic TEXT,
+                    difficulty TEXT NOT NULL,
+                    problem_index INTEGER NOT NULL,
+                    stem_summary TEXT,
+                    score TEXT NOT NULL,
+                    earned_points INTEGER,
+                    max_points INTEGER,
+                    subjective_difficulty TEXT,
+                    created_at TIMESTAMPTZ DEFAULT now()
+                )
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_ps_user ON practice_sessions(user_id)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_ps_user_subject ON practice_sessions(user_id, subject)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_ps_session ON practice_sessions(session_id)")
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception:
+        logger.exception('Failed to create practice_sessions table')
+
+_ensure_practice_sessions_table()
+
+
+class PracticeHistorySaveRequest(BaseModel):
+    user_id: str
+    session_id: str
+    subject: str
+    difficulty: str
+    results: list  # [{ problem_index, topic, stem_summary, score, earned_points, max_points, subjective_difficulty }]
+
+
+@app.post('/api/practice/history')
+def save_practice_history(req: PracticeHistorySaveRequest = Body(...)):
+    """練習結果を保存する。認証ユーザーのみ。"""
+    user_id = req.user_id
+
+    if not user_id or user_id == 'guest':
+        return JSONResponse({'error': '履歴の保存にはログインが必要です。'}, status_code=403)
+
+    if not req.results:
+        return JSONResponse({'error': '結果データが空です。'}, status_code=400)
+
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+        for r in req.results:
+            cur.execute(
+                """INSERT INTO practice_sessions
+                   (user_id, session_id, subject, topic, difficulty, problem_index,
+                    stem_summary, score, earned_points, max_points, subjective_difficulty)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (
+                    user_id, req.session_id, req.subject,
+                    r.get('topic', ''), req.difficulty,
+                    r.get('problem_index', 0),
+                    (r.get('stem_summary', '') or '')[:300],
+                    r.get('score', 'delta'),
+                    r.get('earned_points'),
+                    r.get('max_points'),
+                    r.get('subjective_difficulty'),
+                ),
+            )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return JSONResponse({'status': 'ok', 'saved': len(req.results)})
+    except Exception as e:
+        logger.exception('Failed to save practice history')
+        return JSONResponse({'error': str(e)}, status_code=500)
+
+
+@app.get('/api/practice/history')
+def get_practice_history(user_id: str = '', limit: int = 50, offset: int = 0):
+    """ユーザーの練習履歴を取得する（セッション単位で集約）。"""
+    if not user_id or user_id == 'guest':
+        return JSONResponse({'sessions': [], 'total': 0})
+
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+
+        # セッション一覧（最新順）
+        cur.execute(
+            """SELECT session_id, subject, difficulty,
+                      MIN(created_at) as started_at,
+                      COUNT(*) as num_problems,
+                      SUM(CASE WHEN score = 'correct' THEN 1 ELSE 0 END) as correct_count,
+                      SUM(CASE WHEN score = 'wrong' THEN 1 ELSE 0 END) as wrong_count,
+                      SUM(COALESCE(earned_points, 0)) as total_earned,
+                      SUM(COALESCE(max_points, 0)) as total_max
+               FROM practice_sessions
+               WHERE user_id = %s
+               GROUP BY session_id, subject, difficulty
+               ORDER BY MIN(created_at) DESC
+               LIMIT %s OFFSET %s""",
+            (user_id, limit, offset),
+        )
+        rows = cur.fetchall()
+
+        # 総セッション数
+        cur.execute(
+            "SELECT COUNT(DISTINCT session_id) FROM practice_sessions WHERE user_id = %s",
+            (user_id,),
+        )
+        total = cur.fetchone()[0]
+
+        sessions = []
+        for r in rows:
+            pct = round(r[7] / r[8] * 100) if r[8] and r[8] > 0 else (
+                round(r[5] / r[4] * 100) if r[4] > 0 else 0
+            )
+            sessions.append({
+                'session_id': r[0],
+                'subject': r[1],
+                'difficulty': r[2],
+                'date': str(r[3]),
+                'num_problems': r[4],
+                'correct': r[5],
+                'wrong': r[6],
+                'earned_points': r[7],
+                'max_points': r[8],
+                'score_pct': pct,
+            })
+
+        cur.close()
+        conn.close()
+        return JSONResponse({'sessions': sessions, 'total': total})
+    except Exception as e:
+        logger.exception('Failed to get practice history')
+        return JSONResponse({'sessions': [], 'total': 0, 'error': str(e)})
+
+
+@app.get('/api/practice/stats')
+def get_practice_stats(user_id: str = ''):
+    """ユーザーの学習統計を返す。"""
+    if not user_id or user_id == 'guest':
+        return JSONResponse({'stats': {}})
+
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+
+        # 全体統計
+        cur.execute(
+            """SELECT COUNT(*) as total_problems,
+                      COUNT(DISTINCT session_id) as total_sessions,
+                      SUM(CASE WHEN score = 'correct' THEN 1 ELSE 0 END) as correct,
+                      SUM(CASE WHEN score = 'wrong' THEN 1 ELSE 0 END) as wrong,
+                      SUM(COALESCE(earned_points, 0)) as earned,
+                      SUM(COALESCE(max_points, 0)) as max_pts
+               FROM practice_sessions WHERE user_id = %s""",
+            (user_id,),
+        )
+        row = cur.fetchone()
+        overall = {
+            'total_problems': row[0] or 0,
+            'total_sessions': row[1] or 0,
+            'correct': row[2] or 0,
+            'wrong': row[3] or 0,
+            'total_earned': row[4] or 0,
+            'total_max': row[5] or 0,
+            'accuracy_pct': round((row[2] or 0) / row[0] * 100) if row[0] else 0,
+        }
+
+        # 科目別
+        cur.execute(
+            """SELECT subject,
+                      COUNT(*) as cnt,
+                      SUM(CASE WHEN score = 'correct' THEN 1 ELSE 0 END) as correct,
+                      SUM(COALESCE(earned_points, 0)) as earned,
+                      SUM(COALESCE(max_points, 0)) as max_pts
+               FROM practice_sessions WHERE user_id = %s
+               GROUP BY subject""",
+            (user_id,),
+        )
+        by_subject = {}
+        for r in cur.fetchall():
+            by_subject[r[0]] = {
+                'count': r[1],
+                'correct': r[2],
+                'accuracy_pct': round(r[2] / r[1] * 100) if r[1] else 0,
+                'earned': r[3],
+                'max': r[4],
+            }
+
+        # トピック別（正答率の低い順 = 苦手分野）
+        cur.execute(
+            """SELECT subject, topic,
+                      COUNT(*) as cnt,
+                      SUM(CASE WHEN score = 'correct' THEN 1 ELSE 0 END) as correct,
+                      SUM(CASE WHEN score = 'wrong' THEN 1 ELSE 0 END) as wrong
+               FROM practice_sessions
+               WHERE user_id = %s AND topic IS NOT NULL AND topic != ''
+               GROUP BY subject, topic
+               HAVING COUNT(*) >= 2
+               ORDER BY (CAST(SUM(CASE WHEN score = 'correct' THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*)) ASC
+               LIMIT 20""",
+            (user_id,),
+        )
+        weak_topics = []
+        for r in cur.fetchall():
+            acc = round(r[3] / r[2] * 100) if r[2] else 0
+            weak_topics.append({
+                'subject': r[0], 'topic': r[1],
+                'count': r[2], 'correct': r[3], 'wrong': r[4],
+                'accuracy_pct': acc,
+            })
+
+        # 主観的難易度の分布
+        cur.execute(
+            """SELECT subjective_difficulty, COUNT(*)
+               FROM practice_sessions
+               WHERE user_id = %s AND subjective_difficulty IS NOT NULL
+               GROUP BY subjective_difficulty""",
+            (user_id,),
+        )
+        difficulty_dist = {r[0]: r[1] for r in cur.fetchall()}
+
+        # 直近7日 vs その前の7日のトレンド
+        if is_sqlite:
+            cur.execute(
+                """SELECT
+                    SUM(CASE WHEN created_at >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as recent,
+                    SUM(CASE WHEN created_at >= datetime('now', '-14 days') AND created_at < datetime('now', '-7 days') THEN 1 ELSE 0 END) as prev,
+                    SUM(CASE WHEN created_at >= datetime('now', '-7 days') AND score = 'correct' THEN 1 ELSE 0 END) as recent_correct,
+                    SUM(CASE WHEN created_at >= datetime('now', '-14 days') AND created_at < datetime('now', '-7 days') AND score = 'correct' THEN 1 ELSE 0 END) as prev_correct
+                FROM practice_sessions WHERE user_id = %s""",
+                (user_id,),
+            )
+        else:
+            cur.execute(
+                """SELECT
+                    SUM(CASE WHEN created_at >= now() - interval '7 days' THEN 1 ELSE 0 END) as recent,
+                    SUM(CASE WHEN created_at >= now() - interval '14 days' AND created_at < now() - interval '7 days' THEN 1 ELSE 0 END) as prev,
+                    SUM(CASE WHEN created_at >= now() - interval '7 days' AND score = 'correct' THEN 1 ELSE 0 END) as recent_correct,
+                    SUM(CASE WHEN created_at >= now() - interval '14 days' AND created_at < now() - interval '7 days' AND score = 'correct' THEN 1 ELSE 0 END) as prev_correct
+                FROM practice_sessions WHERE user_id = %s""",
+                (user_id,),
+            )
+        trend_row = cur.fetchone()
+        recent_count = trend_row[0] or 0
+        prev_count = trend_row[1] or 0
+        recent_acc = round((trend_row[2] or 0) / recent_count * 100) if recent_count else 0
+        prev_acc = round((trend_row[3] or 0) / prev_count * 100) if prev_count else 0
+        trend = {
+            'recent_7d': {'count': recent_count, 'accuracy_pct': recent_acc},
+            'prev_7d': {'count': prev_count, 'accuracy_pct': prev_acc},
+            'improving': recent_acc > prev_acc if recent_count > 0 and prev_count > 0 else None,
+        }
+
+        cur.close()
+        conn.close()
+
+        return JSONResponse({
+            'stats': {
+                'overall': overall,
+                'by_subject': by_subject,
+                'weak_topics': weak_topics,
+                'difficulty_distribution': difficulty_dist,
+                'trend': trend,
+            }
+        })
+    except Exception as e:
+        logger.exception('Failed to get practice stats')
+        return JSONResponse({'stats': {}, 'error': str(e)})
+
+
+def _get_user_learning_context(user_id: str, subject: str) -> str:
+    """ユーザーの学習履歴からAIプロンプト用のコンテキストを生成する。"""
+    if not user_id or user_id == 'guest':
+        return ''
+
+    try:
+        conn = connect_db()
+        is_sqlite = getattr(conn, '_is_sqlite', False)
+        cur = conn.cursor()
+
+        # 直近30日の科目別トピック正答率
+        if is_sqlite:
+            date_filter = "AND created_at >= datetime('now', '-30 days')"
+        else:
+            date_filter = "AND created_at >= now() - interval '30 days'"
+
+        cur.execute(
+            f"""SELECT topic,
+                       COUNT(*) as cnt,
+                       SUM(CASE WHEN score = 'correct' THEN 1 ELSE 0 END) as correct,
+                       SUM(CASE WHEN score = 'wrong' THEN 1 ELSE 0 END) as wrong
+                FROM practice_sessions
+                WHERE user_id = %s AND subject = %s AND topic IS NOT NULL AND topic != ''
+                {date_filter}
+                GROUP BY topic
+                HAVING COUNT(*) >= 2
+                ORDER BY (CAST(SUM(CASE WHEN score = 'correct' THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*)) ASC""",
+            (user_id, subject),
+        )
+        topic_stats = cur.fetchall()
+
+        # 主観的に「難しい」と感じたトピック
+        cur.execute(
+            f"""SELECT topic, COUNT(*) as cnt
+                FROM practice_sessions
+                WHERE user_id = %s AND subject = %s
+                  AND subjective_difficulty = '難しい'
+                  AND topic IS NOT NULL AND topic != ''
+                {date_filter}
+                GROUP BY topic
+                ORDER BY cnt DESC
+                LIMIT 5""",
+            (user_id, subject),
+        )
+        hard_topics = [r[0] for r in cur.fetchall()]
+
+        # 直近の全体正答率
+        cur.execute(
+            f"""SELECT COUNT(*) as total,
+                       SUM(CASE WHEN score = 'correct' THEN 1 ELSE 0 END) as correct
+                FROM practice_sessions
+                WHERE user_id = %s AND subject = %s {date_filter}""",
+            (user_id, subject),
+        )
+        overall = cur.fetchone()
+        total = overall[0] or 0
+        correct = overall[1] or 0
+        overall_acc = round(correct / total * 100) if total else 0
+
+        cur.close()
+        conn.close()
+
+        if total < 3:
+            return ''  # データが少なすぎる場合はコンテキストを生成しない
+
+        lines = ['【学習者プロファイル（パーソナライズ用）】']
+        lines.append(f'- 直近30日の{subject}演習: {total}問解答、正答率{overall_acc}%')
+
+        # 苦手分野
+        weak = [f'{r[0]}（正答率{round(r[2]/r[1]*100)}%）' for r in topic_stats if r[1] > 0 and r[2]/r[1] < 0.6]
+        if weak:
+            lines.append(f'- 苦手分野: {", ".join(weak[:5])}')
+
+        # 得意分野
+        strong = [f'{r[0]}（正答率{round(r[2]/r[1]*100)}%）' for r in topic_stats if r[1] > 0 and r[2]/r[1] >= 0.8]
+        if strong:
+            lines.append(f'- 得意分野: {", ".join(strong[:5])}')
+
+        # 難しいと感じたトピック
+        if hard_topics:
+            lines.append(f'- ユーザーが「難しい」と感じた分野: {", ".join(hard_topics)}')
+
+        # 推奨
+        if weak:
+            lines.append(f'- 推奨: 苦手分野を重点的に、基礎〜標準レベルから段階的に出題してください。')
+        elif overall_acc >= 80:
+            lines.append(f'- 推奨: 正答率が高いため、やや難易度を上げた応用問題を出題してください。')
+
+        lines.append('')
+        return '\n'.join(lines)
+    except Exception as e:
+        logger.warning('Failed to get user learning context: %s', e)
+        return ''
 
 
 @app.post('/api/generate_pdf')
@@ -7502,7 +7922,7 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     pass
                 # 練習モード（_build_practice_latex）の出力は _sanitize_practice_text で
                 # 既にブラケット変換・サニタイズ済みなので、追加の変換は最小限にする
-                _is_practice_doc = bool(re.search(r'\\newtcolorbox\{problembox\}', only))
+                _is_practice_doc = bool(re.search(r'\\newenvironment\{problembox\}', only))
                 if not _is_practice_doc:
                     try:
                         only = _fix_left_right_delimiters(only)
@@ -7659,7 +8079,7 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
         # 練習モードの出力は _build_practice_latex で既にバランス済みなので
         # _balance_envs_and_braces の追加 } がtcolorbox定義を破壊するのを防ぐ
-        _is_practice_doc = bool(re.search(r'\\newtcolorbox\{problembox\}', body_text))
+        _is_practice_doc = bool(re.search(r'\\newenvironment\{problembox\}', body_text))
         if _is_practice_doc:
             fixed_body = body_text
         else:
@@ -8669,7 +9089,7 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
         # 練習モード（_build_practice_latex）の出力は既にサニタイズ済みなので
         # _comprehensive_latex_sanitize をスキップして破壊的変換を防ぐ
-        if not re.search(r'\\newtcolorbox\{problembox\}', fixed_body):
+        if not re.search(r'\\newenvironment\{problembox\}', fixed_body):
             fixed_body = _comprehensive_latex_sanitize(fixed_body)
 
         # Choose LaTeX engine early so we can adapt full-document user output
