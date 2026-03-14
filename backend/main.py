@@ -9838,6 +9838,64 @@ def api_get_generated_pdf(token: str):
     return FileResponse(path, media_type='application/pdf', headers=headers)
 
 
+@app.get('/api/generated_pdf/{token}/images')
+def api_get_pdf_images(token: str):
+    """Return list of page image URLs for a generated PDF."""
+    entry = GENERATED_PDFS.get(token)
+    if not entry:
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    path = entry.get('path')
+    if not path or not os.path.exists(path):
+        GENERATED_PDFS.pop(token, None)
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    try:
+        import fitz
+        doc = fitz.open(path)
+        page_count = doc.page_count
+        doc.close()
+    except Exception:
+        page_count = 1
+    pages = [
+        {'page': i + 1, 'url': f'/api/generated_pdf/{token}/page/{i + 1}.png'}
+        for i in range(page_count)
+    ]
+    return JSONResponse({'pages': pages, 'total': page_count})
+
+
+@app.get('/api/generated_pdf/{token}/page/{page_num}.png')
+def api_get_pdf_page_image(token: str, page_num: int):
+    """Render a single PDF page as a PNG image."""
+    entry = GENERATED_PDFS.get(token)
+    if not entry:
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    path = entry.get('path')
+    if not path or not os.path.exists(path):
+        GENERATED_PDFS.pop(token, None)
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    try:
+        import fitz
+        doc = fitz.open(path)
+        if page_num < 1 or page_num > doc.page_count:
+            doc.close()
+            return JSONResponse({'error': 'invalid_page'}, status_code=400)
+        zoom = 2.0  # 200 DPI相当
+        mat = fitz.Matrix(zoom, zoom)
+        pix = doc[page_num - 1].get_pixmap(matrix=mat, alpha=False)
+        png_data = pix.tobytes('png')
+        doc.close()
+        return Response(
+            content=png_data,
+            media_type='image/png',
+            headers={
+                'Cache-Control': f'private, max-age={PDF_TTL_SECONDS}',
+                'Content-Disposition': f'inline; filename="page-{page_num}.png"',
+            }
+        )
+    except Exception as e:
+        logger.error('PDF page image rendering failed: %s', e)
+        return JSONResponse({'error': 'render_failed'}, status_code=500)
+
+
 # Template loader
 def _load_templates():
     """Load templates from DB (PostgreSQL) first, then fallback to templates.json.

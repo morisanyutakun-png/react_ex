@@ -1718,11 +1718,27 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
   const [scorePanelOpen, setScorePanelOpen] = useState(false);
   const iframeContainerRef = useRef(null);
 
+  // モバイル判定 & PDF→PNG画像表示
+  const isMobile = typeof navigator !== 'undefined' && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 768));
+  const [pageImages, setPageImages] = useState([]);
+  const [imagesLoading, setImagesLoading] = useState(false);
+  const lastFetchedUrl = useRef(null);
+
   // 解答 PDF が生成されたら自動で表示状態に
   const [viewingAnswer, setViewingAnswer] = useState(false);
   const effectiveUrl = viewingAnswer && answerPdfUrl && answerPdfUrl !== '__failed__'
     ? answerPdfUrl
     : pdfUrl;
+
+  useEffect(() => {
+    if (!isMobile || !effectiveUrl) return;
+    if (effectiveUrl === lastFetchedUrl.current) return;
+    lastFetchedUrl.current = effectiveUrl;
+    setImagesLoading(true);
+    fetch(`${effectiveUrl}/images`).then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.pages) setPageImages(d.pages);
+    }).catch(() => {}).finally(() => setImagesLoading(false));
+  }, [isMobile, effectiveUrl]);
 
   // 配点のある問題があるかチェック
   const anyPoints = problems.some((p) => getTotalPoints(p) > 0);
@@ -1847,12 +1863,26 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                 <span className="text-[10px] sm:text-[11px] font-bold text-[#92400e]">解答 PDF 生成中…</span>
               </div>
             )}
-            <iframe
-              src={`${effectiveUrl}#toolbar=0&view=FitH`}
-              title="練習問題 PDF"
-              className="practice-pdf-iframe flex-1"
-              style={{ width: '100%', minWidth: '100%' }}
-            />
+            {isMobile ? (
+              <div className="flex-1 min-h-0 overflow-y-auto bg-gray-100 p-2 space-y-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+                {imagesLoading && (
+                  <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-xs">
+                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full animate-spin" style={{ borderTopColor: c.accent }} />
+                    <span>ページ画像を読み込み中…</span>
+                  </div>
+                )}
+                {pageImages.map((p) => (
+                  <img key={p.page} src={p.url} alt={`ページ ${p.page}`} className="w-full rounded-lg shadow-sm" loading="lazy" />
+                ))}
+              </div>
+            ) : (
+              <iframe
+                src={`${effectiveUrl}#toolbar=0&view=FitH`}
+                title="練習問題 PDF"
+                className="practice-pdf-iframe flex-1"
+                style={{ width: '100%', minWidth: '100%' }}
+              />
+            )}
           </div>
         ) : (
           /* PDF 失敗フォールバック: 問題カードを直接表示 */

@@ -582,6 +582,8 @@ export default function UserModePage() {
   const [renderContext, setRenderContext] = useState(null);
   const [generatedLatex, setGeneratedLatex] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
+  const [pdfPageImages, setPdfPageImages] = useState([]);
+  const [pdfImagesLoading, setPdfImagesLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [pdfWorking, setPdfWorking] = useState(false);
   const [genProgress, setGenProgress] = useState(0);
@@ -589,6 +591,17 @@ export default function UserModePage() {
   /* ── 手動モード用 ── */
   const [llmOutput, setLlmOutput] = useState('');
   const [mode, setMode] = useState(isGuest ? 'manual' : 'auto'); // 'auto' | 'manual'
+
+  // モバイル判定 & PDF→PNG画像表示
+  const isMobile = typeof navigator !== 'undefined' && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 768));
+
+  useEffect(() => {
+    if (!isMobile || !pdfUrl) return;
+    setPdfImagesLoading(true);
+    fetch(`${pdfUrl}/images`).then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.pages) setPdfPageImages(d.pages);
+    }).catch(() => {}).finally(() => setPdfImagesLoading(false));
+  }, [isMobile, pdfUrl]);
 
   // ゲストがautoモードを使えないように強制
   useEffect(() => {
@@ -4127,12 +4140,26 @@ export default function UserModePage() {
               <div className="space-y-4">
                 {pdfUrl && (
                   <div>
-                    <iframe
-                      src={pdfUrl}
-                      className="w-full rounded-xl border border-[#2563eb]/20"
-                      style={{ height: '70vh', minHeight: 400 }}
-                      title="生成されたPDF"
-                    />
+                    {isMobile ? (
+                      <div className="w-full rounded-xl border border-[#2563eb]/20 bg-gray-100 overflow-y-auto p-2 space-y-2" style={{ maxHeight: '70vh', WebkitOverflowScrolling: 'touch' }}>
+                        {pdfImagesLoading && (
+                          <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-xs">
+                            <div className="w-5 h-5 border-2 border-gray-300 rounded-full animate-spin" style={{ borderTopColor: '#2563eb' }} />
+                            <span>ページ画像を読み込み中…</span>
+                          </div>
+                        )}
+                        {pdfPageImages.map((p) => (
+                          <img key={p.page} src={p.url} alt={`ページ ${p.page}`} className="w-full rounded-lg shadow-sm" loading="lazy" />
+                        ))}
+                      </div>
+                    ) : (
+                      <iframe
+                        src={pdfUrl}
+                        className="w-full rounded-xl border border-[#2563eb]/20"
+                        style={{ height: '70vh', minHeight: 400 }}
+                        title="生成されたPDF"
+                      />
+                    )}
                     <a
                       href={pdfUrl}
                       target="_blank"

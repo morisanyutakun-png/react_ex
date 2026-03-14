@@ -305,7 +305,11 @@ export default function App() {
   const [ragCtx, setRagCtx] = useState(null)
   const [llmOutput, setLlmOutput] = useState('')
   const [pdfUrl, setPdfUrl] = useState('')
+  const [pdfPageImages, setPdfPageImages] = useState([])
+  const [pdfImagesLoading, setPdfImagesLoading] = useState(false)
   const [answerPdfUrl, setAnswerPdfUrl] = useState('')
+  const [answerPageImages, setAnswerPageImages] = useState([])
+  const [answerImagesLoading, setAnswerImagesLoading] = useState(false)
   const [answerLatex, setAnswerLatex] = useState('')
   const [answerLoading, setAnswerLoading] = useState(false)
   const [fullLatex, setFullLatex] = useState('')
@@ -380,6 +384,18 @@ export default function App() {
 
   const copyPrompt = async () => { try { await navigator.clipboard.writeText(prompt); notify('コピーしました', 'success') } catch { notify('コピー失敗', 'error') } }
 
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 768)
+
+  const fetchPdfImages = async (url, setImages, setImgLoading) => {
+    if (!isMobile) return
+    setImgLoading(true)
+    try {
+      const r = await fetch(`${url}/images`)
+      if (r.ok) { const d = await r.json(); setImages(d.pages || []) }
+    } catch (e) { console.warn('Failed to fetch PDF images:', e) }
+    setImgLoading(false)
+  }
+
   const generatePdf = async () => {
     if (!llmOutput.trim()) return notify('LaTeXコードを貼り付けてください', 'error')
     setLoading(true); setLoadingMsg('問題PDFを生成中...')
@@ -398,8 +414,9 @@ export default function App() {
           if (r.ok) {
             const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
             setPdfUrl(url)
+            fetchPdfImages(url, setPdfPageImages, setPdfImagesLoading)
             setAnswerLatex(parsed.latex_answers)
-            setAnswerPdfUrl('')
+            setAnswerPdfUrl(''); setAnswerPageImages([])
             setFullLatex(parsed.latex || '')
             setFullPdfUrl('')
             setParsedProblems(parsed.problems || [])
@@ -418,7 +435,7 @@ export default function App() {
       const r = await fetch('/api/generate_pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ latex: llmOutput, title: 'Generated Problem', return_url: true, latex_preset: form.latexPreset || 'exam' }) })
       if (r.ok) {
         const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
-        setPdfUrl(url); setAnswerLatex(''); setAnswerPdfUrl(''); setFullLatex(''); setFullPdfUrl(''); setStep(4)
+        setPdfUrl(url); fetchPdfImages(url, setPdfPageImages, setPdfImagesLoading); setAnswerLatex(''); setAnswerPdfUrl(''); setAnswerPageImages([]); setFullLatex(''); setFullPdfUrl(''); setStep(4)
         saveToHistory({ templateName: selectedTemplate?.name || form.templateId, numQuestions: form.numQuestions, latexPreset: form.latexPreset, pdfUrl: url })
         setHistory(loadHistory())
         const session = { templateName: selectedTemplate?.name || form.templateId, subject: templateMeta?.subject || '', numQuestions: form.numQuestions, duration: sessionTime }
@@ -437,6 +454,7 @@ export default function App() {
       if (r.ok) {
         const d = await r.json().catch(() => null); const url = d?.pdf_url || URL.createObjectURL(await r.blob())
         setAnswerPdfUrl(url)
+        fetchPdfImages(url, setAnswerPageImages, setAnswerImagesLoading)
       } else { const d = await r.json().catch(() => null); notify('解答PDF生成失敗: ' + (d?.detail || ''), 'error') }
     } catch { notify('解答PDF生成エラー', 'error') }
     setAnswerLoading(false)
@@ -455,7 +473,7 @@ export default function App() {
     setFullPdfLoading(false)
   }
 
-  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setAnswerPdfUrl(''); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setParsedProblems([]); setSubScores({}); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false); setShowScoring(false) }
+  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setPdfPageImages([]); setAnswerPdfUrl(''); setAnswerPageImages([]); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setParsedProblems([]); setSubScores({}); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false); setShowScoring(false) }
   const startPractice = () => { resetWizard(); setScreen('practice') }
 
   const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
@@ -830,11 +848,18 @@ export default function App() {
                             <span className="pdf-embed-label-dot" />
                             <span>問題PDF プレビュー</span>
                           </div>
-                          <iframe
-                            src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitV&zoom=page-fit`}
-                            className="pdf-embed-frame"
-                            title="問題PDF"
-                          />
+                          {isMobile ? (
+                            <div className="pdf-images-container">
+                              {pdfImagesLoading && <div className="pdf-images-loading"><div className="spinner" style={{width:24,height:24,borderWidth:2}} /><span>ページ画像を読み込み中...</span></div>}
+                              {pdfPageImages.map((p) => <img key={p.page} src={p.url} alt={`ページ ${p.page}`} className="pdf-page-image" loading="lazy" />)}
+                            </div>
+                          ) : (
+                            <iframe
+                              src={`${pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitV&zoom=page-fit`}
+                              className="pdf-embed-frame"
+                              title="問題PDF"
+                            />
+                          )}
                         </div>
                       </>
                     : <div className="pdf-mode-hint">問題PDFがありません</div>
@@ -853,7 +878,18 @@ export default function App() {
                       </button>
                     : <div className="answer-section">
                         {answerLoading && <div className="answer-gen-loading"><div className="spinner" style={{width:18,height:18,borderWidth:2}} /><span>解答PDF生成中...</span></div>}
-                        {!answerLoading && answerPdfUrl && <a href={answerPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 解答・解説PDFを開く</a>}
+                        {!answerLoading && answerPdfUrl && <>
+                          <a href={answerPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 解答・解説PDFを開く</a>
+                          {isMobile && answerPageImages.length > 0 && (
+                            <div className="pdf-embed-wrapper" style={{marginTop:8}}>
+                              <div className="pdf-embed-label"><span className="pdf-embed-label-dot" /><span>解答PDF プレビュー</span></div>
+                              <div className="pdf-images-container">
+                                {answerImagesLoading && <div className="pdf-images-loading"><div className="spinner" style={{width:24,height:24,borderWidth:2}} /><span>読み込み中...</span></div>}
+                                {answerPageImages.map((p) => <img key={p.page} src={p.url} alt={`ページ ${p.page}`} className="pdf-page-image" loading="lazy" />)}
+                              </div>
+                            </div>
+                          )}
+                        </>}
                         {!answerLoading && !answerPdfUrl && answerLatex && <button className="btn btn-outline btn-block" onClick={generateAnswerPdf} disabled={answerLoading}>📖 解答PDFを再生成</button>}
                         {!answerLatex && fullLatex && !fullPdfUrl && <button className="btn btn-outline btn-block" onClick={generateFullPdf} disabled={fullPdfLoading}>{fullPdfLoading ? 'PDF生成中...' : '📋 問題＋解答PDFを生成'}</button>}
                         {!answerLatex && fullPdfUrl && <a href={fullPdfUrl} target="_blank" rel="noreferrer" className="btn btn-success btn-block btn-lg"><Ico.ExternalLink /> 問題＋解答PDFを開く</a>}
