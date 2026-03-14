@@ -9217,27 +9217,24 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             )
 
             # 2. Add fontspec + xeCJK after \documentclass line
-            xecjk_preamble = '\n'.join([
-                r'\usepackage{fontspec}',
-                r'\usepackage{xeCJK}',
-                # Try multiple Japanese fonts available on cloud TeX distributions
-                r'\IfFontExistsTF{IPAexMincho}{\setCJKmainfont{IPAexMincho}}{'
-                r'\IfFontExistsTF{Noto Serif CJK JP}{\setCJKmainfont{Noto Serif CJK JP}}{'
-                r'\IfFontExistsTF{IPAMincho}{\setCJKmainfont{IPAMincho}}{'
-                r'\setCJKmainfont{HaranoAjiMincho-Regular}'
-                r'}}}',
-                r'\IfFontExistsTF{IPAexGothic}{\setCJKsansfont{IPAexGothic}}{}',
-            ])
-            # Insert after documentclass line
+            #    IPAexMincho is standard in TeX Live; HaranoAji as fallback
+            xecjk_preamble = (
+                '\\usepackage{fontspec}\n'
+                '\\usepackage{xeCJK}\n'
+                '\\setCJKmainfont{IPAexMincho}[BoldFont=IPAexGothic]\n'
+                '\\setCJKsansfont{IPAexGothic}\n'
+            )
+            # Insert after documentclass line (use lambda to avoid regex escape issues)
             tex = re.sub(
                 r'(\\documentclass[^\n]*\n)',
-                r'\1' + xecjk_preamble + '\n',
+                lambda m: m.group(1) + xecjk_preamble,
                 tex,
             )
 
             # 3. Remove LuaTeX-ja specific commands
             tex = re.sub(r'\\ltjsetparameter\{[^}]*\}[^\n]*\n?', '', tex)
 
+            logger.info('Cloud xelatex preamble (first 300 chars): %s', tex[:300])
             return tex
 
         # ── Helper: cloud compilation via latex.ytotech.com ──
