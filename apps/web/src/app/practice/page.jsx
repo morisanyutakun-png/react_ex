@@ -13,14 +13,14 @@ import { useAuth } from '@/contexts/AuthContext';
    定数
 ───────────────────────────────────────────────────────────── */
 
-const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', EXAM: 'exam', SUMMARY: 'summary', PDF: 'pdf' };
+const SCREEN = { SELECT: 'select', LOADING: 'loading', PROMPT: 'prompt', PROBLEM: 'problem', ANSWER: 'answer', FOLLOW: 'follow', SUMMARY: 'summary', PDF: 'pdf' };
 
 const PRACTICE_SUBJECTS = ['物理', '数学', '化学'];
 
 const SUBJECT_COLOR = {
-  '物理': { accent: '#f97316', light: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200', gradient: 'from-orange-500 to-amber-500', ring: '#f9731630', glow: 'rgba(249,115,22,0.08)' },
-  '数学': { accent: '#f59e0b', light: 'bg-amber-50',  text: 'text-amber-600',  border: 'border-amber-200',  gradient: 'from-amber-500 to-yellow-500',  ring: '#f59e0b30', glow: 'rgba(245,158,11,0.08)' },
-  '化学': { accent: '#fb923c', light: 'bg-orange-50', text: 'text-orange-500', border: 'border-orange-200', gradient: 'from-orange-400 to-red-500',    ring: '#fb923c30', glow: 'rgba(251,146,60,0.08)' },
+  '物理': { accent: '#2dd893', light: 'bg-emerald-950/40', text: 'text-emerald-400', border: 'border-emerald-700/40', gradient: 'from-emerald-500 to-teal-500', ring: '#2dd89330', glow: 'rgba(45,216,147,0.12)' },
+  '数学': { accent: '#38bdf8', light: 'bg-sky-950/40',     text: 'text-sky-400',     border: 'border-sky-700/40',     gradient: 'from-sky-400 to-blue-500',     ring: '#38bdf830', glow: 'rgba(56,189,248,0.12)' },
+  '化学': { accent: '#f59e0b', light: 'bg-amber-950/40',   text: 'text-amber-400',   border: 'border-amber-700/40',   gradient: 'from-amber-500 to-orange-500', ring: '#f59e0b30', glow: 'rgba(245,158,11,0.12)' },
 };
 
 const EXAM_LEVELS = [
@@ -36,7 +36,7 @@ const SCORE = { CORRECT: 'correct', DELTA: 'delta', WRONG: 'wrong' };
 
 const GEN_MODE = { AUTO: 'auto', MANUAL: 'manual' };
 
-const PRACTICE_FORMAT = { DRILL: 'drill', EXAM: 'exam' };
+const PRACTICE_FORMAT = { DRILL: 'drill' };
 
 /* ── 配点からスコア判定を導出するヘルパー ── */
 function deriveScoreFromPoints(earned, max) {
@@ -63,7 +63,7 @@ function getTotalPoints(problem) {
 function SectionLabel({ children, extra }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <div className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase select-none">{children}</div>
+      <div className="text-[11px] font-extrabold text-white/30 tracking-[0.1em] uppercase select-none">{children}</div>
       {extra}
     </div>
   );
@@ -82,7 +82,7 @@ function SubjectTab({ subject, selected, onClick }) {
       className={`px-5 py-2.5 rounded-full text-[13px] font-bold transition-all duration-250 border
         ${selected
           ? 'text-white border-transparent shadow-lg scale-[1.04]'
-          : 'bg-[#fff8f0] text-[#4a6b57] border-orange-200 hover:border-orange-300 hover:shadow-sm active:scale-[0.97]'
+          : 'bg-white/[0.04] text-[#a8d8bb] border-white/[0.08] hover:border-white/20 active:scale-[0.97]'
         }`}
       style={selected ? { background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 6px 20px ${c.ring}` } : {}}
     >
@@ -99,7 +99,7 @@ function TopicChip({ label, selected, onClick, accent }) {
       className={`px-3.5 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 border
         ${selected
           ? 'text-white border-transparent shadow-sm'
-          : 'bg-[#fff8f0] text-[#4a6b57] border-orange-200 hover:border-orange-300 hover:bg-[#fff3e6]'
+          : 'bg-white/[0.04] text-[#a8d8bb] border-white/[0.08] hover:border-white/20'
         }`}
       style={selected ? { backgroundColor: accent, borderColor: 'transparent', boxShadow: `0 2px 8px ${accent}30` } : {}}
     >
@@ -111,10 +111,10 @@ function TopicChip({ label, selected, onClick, accent }) {
 function ProgressBar({ current, total, accent }) {
   const pct = total > 0 ? (current / total) * 100 : 0;
   return (
-    <div className="w-full h-2 bg-[#bbf7d0] rounded-full overflow-hidden">
+    <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-700 ease-out relative"
-        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${accent || '#8b5cf6'}, ${accent || '#6366f1'}bb)` }}
+        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${accent || '#2dd893'}, ${accent || '#2dd893'}bb)` }}
       />
     </div>
   );
@@ -122,22 +122,22 @@ function ProgressBar({ current, total, accent }) {
 
 function ScoreButton({ type, onClick }) {
   const map = {
-    [SCORE.CORRECT]: { label: '解けた', icon: '○', bg: '#f0fdf4', bgHover: '#dcfce7', border: '#86efac', text: '#16a34a' },
-    [SCORE.DELTA]:   { label: '惜しい', icon: '△', bg: '#fffbeb', bgHover: '#fef3c7', border: '#fcd34d', text: '#d97706' },
-    [SCORE.WRONG]:   { label: 'わからない', icon: '×', bg: '#fef2f2', bgHover: '#fee2e2', border: '#fca5a5', text: '#dc2626' },
+    [SCORE.CORRECT]: { label: '解けた', icon: '○', bg: 'rgba(16,185,129,0.12)', bgHover: 'rgba(16,185,129,0.20)', border: 'rgba(16,185,129,0.35)', text: '#10b981' },
+    [SCORE.DELTA]:   { label: '惜しい', icon: '△', bg: 'rgba(245,158,11,0.12)', bgHover: 'rgba(245,158,11,0.20)', border: 'rgba(245,158,11,0.35)', text: '#f59e0b' },
+    [SCORE.WRONG]:   { label: 'わからない', icon: '×', bg: 'rgba(239,68,68,0.12)', bgHover: 'rgba(239,68,68,0.20)', border: 'rgba(239,68,68,0.35)', text: '#ef4444' },
   };
   const s = map[type];
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl border-2 font-bold transition-all duration-200 active:scale-[0.93] hover:shadow-md"
+      className="flex-1 flex flex-col items-center gap-2 py-6 rounded-2xl border font-bold transition-all duration-200 active:scale-[0.93]"
       style={{ background: s.bg, borderColor: s.border, color: s.text }}
       onMouseEnter={(e) => (e.currentTarget.style.background = s.bgHover)}
       onMouseLeave={(e) => (e.currentTarget.style.background = s.bg)}
     >
-      <span className="text-[28px] leading-none">{s.icon}</span>
-      <span className="text-[11px] font-bold">{s.label}</span>
+      <span className="text-[30px] leading-none">{s.icon}</span>
+      <span className="text-[12px] font-bold">{s.label}</span>
     </button>
   );
 }
@@ -166,9 +166,9 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
   }
 
   return (
-    <div className="bg-[#fff8f0] rounded-2xl border border-orange-200 p-5 shadow-md">
-      <div className="text-[13px] font-black text-[#1a2e23] mb-1 text-center">自己採点</div>
-      <p className="text-[10px] text-[#5a8068] text-center mb-4">各小問の得点を入力してください</p>
+    <div className="rounded-2xl border p-5" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
+      <div className="text-[13px] font-black text-[#e8f5ed] mb-1 text-center">自己採点</div>
+      <p className="text-[10px] text-white/40 text-center mb-4">各小問の得点を入力してください</p>
 
       <div className="space-y-3 mb-4">
         {subproblems.map((sp, idx) => (
@@ -183,18 +183,18 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
                 value={inputScores[idx] ?? ''}
                 onChange={(e) => handleChange(idx, e.target.value)}
                 placeholder="0"
-                className="w-16 h-9 rounded-lg border-2 border-emerald-700/50 text-center text-[14px] font-bold text-[#1a2e23] focus:outline-none focus:border-emerald-400 transition-colors"
-                style={inputScores[idx] !== undefined && inputScores[idx] !== '' ? { borderColor: accent + '60' } : {}}
+                className="w-16 h-10 rounded-lg border bg-white/[0.06] text-center text-[14px] font-bold text-[#e8f5ed] focus:outline-none transition-colors"
+                style={{ borderColor: inputScores[idx] !== undefined && inputScores[idx] !== '' ? accent + '50' : 'rgba(255,255,255,0.12)' }}
               />
-              <span className="text-[12px] text-[#5a8068] font-medium">/ {sp.points || 0}点</span>
+              <span className="text-[12px] text-white/40 font-medium">/ {sp.points || 0}点</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* 合計 */}
-      <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-[#d1fae5] border border-gray-300 mb-4">
-        <span className="text-[12px] font-bold text-[#5a8068]">合計</span>
+      <div className="flex items-center justify-between px-3 py-2.5 rounded-xl mb-4" style={{ background: accent + '14', border: `1px solid ${accent}25` }}>
+        <span className="text-[12px] font-bold text-white/50">合計</span>
         <span className="text-[18px] font-black" style={{ color: accent }}>{totalEarned} / {totalMax}点</span>
       </div>
 
@@ -203,7 +203,7 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
         disabled={!allFilled}
         onClick={handleSubmit}
         className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
-        style={{ background: allFilled ? `linear-gradient(135deg, ${accent}, ${accent}bb)` : '#e2e8f0', boxShadow: allFilled ? `0 8px 28px ${accent}30` : 'none' }}
+        style={{ background: allFilled ? `linear-gradient(135deg, ${accent}, ${accent}bb)` : 'rgba(255,255,255,0.08)', boxShadow: allFilled ? `0 8px 28px ${accent}30` : 'none' }}
       >
         {allFilled ? '採点する →' : '全小問を入力してください'}
       </button>
@@ -213,7 +213,7 @@ function ScoreInput({ subproblems, onSubmit, accent }) {
 
 function BackButton({ onClick, label = '終了' }) {
   return (
-    <button type="button" onClick={onClick} className="flex items-center gap-1.5 text-[13px] font-medium text-[#5a8068] hover:text-[#6aaa7c] transition-colors duration-200 group">
+    <button type="button" onClick={onClick} className="flex items-center gap-1.5 text-[13px] font-medium text-white/40 hover:text-white/70 transition-colors duration-200 group">
       <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
       </svg>
@@ -237,7 +237,7 @@ const DIFF_ICONS = ['📗', '📘', '📙', '📕', '🔥', '🏆'];
 function WizardHeader({ step, accent }) {
   const labels = ['科目', '単元', '難易度', '確認'];
   return (
-    <div className="sticky top-0 z-20 bg-[#d1fae5]/95 backdrop-blur-md px-5 pt-4 pb-3 border-b border-emerald-200">
+    <div className="sticky top-0 z-20 bg-[#0d1a12]/95 backdrop-blur-xl px-5 pt-4 pb-3 border-b border-white/[0.06]">
       {/* step dots + progress bar */}
       <div className="flex items-center justify-center gap-2 mb-3">
         {labels.map((label, i) => (
@@ -246,7 +246,7 @@ function WizardHeader({ step, accent }) {
               className={`flex items-center justify-center rounded-full font-black text-[10px] transition-all duration-400 ease-out
                 ${i === step ? 'w-8 h-8 text-white shadow-lg scale-110'
                   : i < step ? 'w-6 h-6 text-white opacity-80'
-                  : 'w-6 h-6 bg-[#e2e8f0] text-[#94a3b8]'}`}
+                  : 'w-6 h-6 bg-white/[0.08] text-white/30'}`}
               style={i <= step ? { background: i < step ? accent + 'aa' : accent, boxShadow: i === step ? `0 4px 14px ${accent}55` : 'none' } : {}}
             >
               {i < step ? (
@@ -258,14 +258,14 @@ function WizardHeader({ step, accent }) {
             {i < labels.length - 1 && (
               <div
                 className="h-0.5 rounded-full transition-all duration-500"
-                style={{ width: 18, background: i < step ? accent : '#e2e8f0' }}
+                style={{ width: 18, background: i < step ? accent : 'rgba(255,255,255,0.08)' }}
               />
             )}
           </div>
         ))}
       </div>
       {/* thin progress bar */}
-      <div className="w-full h-1 bg-[#bbf7d0] rounded-full overflow-hidden">
+      <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-600 ease-out"
           style={{ width: `${((step + 1) / 4) * 100}%`, background: accent }}
@@ -306,20 +306,20 @@ function PhysicsCurriculumSelector({ topics, setTopics, acc, ring }) {
         const total = cat.sections.reduce((n, s) => n + s.topics.length, 0);
 
         return (
-          <div key={cat.id} className="rounded-2xl border-2 overflow-hidden transition-all duration-200"
-            style={{ borderColor: isOpen ? acc + '66' : '#e8ede9', background: isOpen ? acc + '08' : '#fff' }}>
+          <div key={cat.id} className="rounded-2xl border overflow-hidden transition-all duration-200"
+            style={{ borderColor: isOpen ? acc + '50' : 'rgba(255,255,255,0.08)', background: isOpen ? acc + '0c' : 'rgba(255,255,255,0.04)' }}>
             {/* カテゴリヘッダー */}
             <button type="button"
               onClick={() => setOpenCat(isOpen ? null : cat.id)}
-              className="w-full flex items-center gap-2.5 px-4 py-3 text-left transition-colors"
+              className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left transition-colors"
             >
               <span className="text-[18px]">{cat.icon}</span>
-              <span className="flex-1 text-[14px] font-bold text-[#1a2e23]">{cat.label}</span>
+              <span className="flex-1 text-[14px] font-bold text-[#e8f5ed]">{cat.label}</span>
               {selected > 0 && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
                   style={{ background: acc }}>{selected}/{total}</span>
               )}
-              <svg className={`w-4 h-4 text-[#5a8068] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              <svg className={`w-4 h-4 text-white/40 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
@@ -343,12 +343,12 @@ function PhysicsCurriculumSelector({ topics, setTopics, acc, ring }) {
                             ? { background: acc, borderColor: acc, color: '#fff' }
                             : someSel
                               ? { borderColor: acc, background: acc + '30' }
-                              : { borderColor: '#c5d1c8' }
+                              : { borderColor: 'rgba(255,255,255,0.2)' }
                           }>
                           {allSel && '✓'}
                         </span>
-                        <span className="text-[12px] font-bold text-[#3a5a45]">{sec.label}</span>
-                        <span className="text-[10px] text-[#7a9a85]">
+                        <span className="text-[12px] font-bold text-[#a8d8bb]">{sec.label}</span>
+                        <span className="text-[10px] text-white/40">
                           ({sec.topics.filter((t) => topics.includes(t)).length}/{sec.topics.length})
                         </span>
                       </button>
@@ -359,12 +359,12 @@ function PhysicsCurriculumSelector({ topics, setTopics, acc, ring }) {
                           return (
                             <button key={t} type="button"
                               onClick={() => toggle(t)}
-                              className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all duration-150 active:scale-[0.95] ${
-                                sel ? 'text-white border-transparent' : 'border-[#d5ddd7]'
+                              className={`px-3 py-1.5 rounded-full text-[11px] font-medium border transition-all duration-150 active:scale-[0.95] ${
+                                sel ? 'text-white border-transparent' : ''
                               }`}
                               style={sel
                                 ? { background: acc, boxShadow: `0 1px 4px ${ring}` }
-                                : { background: '#f5f8f6', color: '#3a5a45' }}
+                                : { background: 'rgba(255,255,255,0.06)', color: '#a8d8bb', borderColor: 'rgba(255,255,255,0.1)' }}
                             >
                               {sel && <span className="mr-0.5">✓</span>}
                               {t}
@@ -392,7 +392,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
   const [difficulty, setDifficulty] = useState(null);
   const [numQ, setNumQ] = useState(3);
   const [genMode, setGenMode] = useState(isGuest ? GEN_MODE.MANUAL : GEN_MODE.AUTO);
-  const [practiceFormat, setPracticeFormat] = useState(PRACTICE_FORMAT.DRILL);
+  const practiceFormat = PRACTICE_FORMAT.DRILL;
 
   const subDef = subject ? WIZARD_SUBJECT_DEFS.find(d => d.name === subject) : null;
   const acc = subject ? SUBJECT_COLOR[subject].accent : '#7c3aed';
@@ -423,7 +423,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
   };
 
   return (
-    <div className="max-w-[480px] mx-auto min-h-screen">
+    <div className="max-w-[480px] mx-auto min-h-screen bg-[#0d1a12]">
       <WizardHeader step={step} accent={acc} />
 
       {/* ── Step content with slide-up animation ── */}
@@ -433,11 +433,12 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
         {step === 0 && (
           <div>
             <div className="mb-8">
-              <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.14em] uppercase mb-2.5">Step 1 / 4</p>
-              <h2 className="text-[28px] font-black text-[#1a2e23] tracking-[-0.03em] leading-[1.2]">
-                今日も1問、<br />差をつけよう。
+              <p className="text-[11px] font-extrabold text-white/30 tracking-[0.14em] uppercase mb-2.5">Step 1 / 4</p>
+              <h2 className="text-[28px] font-black text-[#e8f5ed] tracking-[-0.03em] leading-[1.2]">
+                さあ、始めよう。<br />
+                <span className="text-[#2dd893]">何を鍛える？</span>
               </h2>
-              <p className="text-[13px] text-[#5a8068] mt-2">科目を選んでスタート ↓</p>
+              <p className="text-[13px] text-[#a8d8bb]/70 mt-2.5">タップひとつで次のステップへ進みます</p>
             </div>
 
             <div className="space-y-3">
@@ -448,43 +449,36 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     key={s.name}
                     type="button"
                     onClick={() => handleSubjectSelect(s.name)}
-                    className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 shadow-md transition-all duration-250 active:scale-[0.97] hover:shadow-xl group"
+                    className="w-full flex items-center gap-4 p-5 rounded-2xl border transition-all duration-250 active:scale-[0.97] group"
                     style={{
                       animationDelay: `${i * 60}ms`,
-                      background: `linear-gradient(135deg, ${col.accent}22 0%, ${col.accent}0d 100%)`,
-                      borderColor: col.accent + '60',
-                      boxShadow: `0 4px 16px ${col.accent}18`,
+                      background: `linear-gradient(135deg, ${col.accent}14 0%, ${col.accent}08 100%)`,
+                      borderColor: col.accent + '30',
+                      boxShadow: `0 2px 12px ${col.accent}10`,
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = col.accent + 'aa'; e.currentTarget.style.boxShadow = `0 8px 28px ${col.accent}35`; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = col.accent + '60'; e.currentTarget.style.boxShadow = `0 4px 16px ${col.accent}18`; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = col.accent + '66'; e.currentTarget.style.boxShadow = `0 8px 28px ${col.accent}25`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = col.accent + '30'; e.currentTarget.style.boxShadow = `0 2px 12px ${col.accent}10`; }}
                   >
                     <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0 shadow-md"
-                      style={{ background: `linear-gradient(135deg, ${col.accent}55, ${col.accent}33)`, border: `1.5px solid ${col.accent}66` }}
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0"
+                      style={{ background: `linear-gradient(135deg, ${col.accent}30, ${col.accent}15)`, border: `1px solid ${col.accent}40` }}
                     >
                       {s.emoji}
                     </div>
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[18px] font-black text-[#1a2e23]">{s.name}</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: col.accent + '33', color: col.accent }}>{s.tag}</span>
+                        <span className="text-[18px] font-black text-[#e8f5ed]">{s.name}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: col.accent + '22', color: col.accent }}>{s.tag}</span>
                       </div>
-                      <div className="text-[12px] text-[#5a8068]">{s.desc}</div>
+                      <div className="text-[12px] text-white/40">{s.desc}</div>
                     </div>
-                    <svg className="w-5 h-5 flex-shrink-0 group-hover:translate-x-1 transition-all duration-200" style={{ color: col.accent }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 flex-shrink-0 group-hover:translate-x-1 transition-all duration-200" style={{ color: col.accent + '80' }} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
                   </button>
                 );
               })}
             </div>
-
-            <p className="text-center text-[11px] text-[#94a3b8] mt-8 flex items-center justify-center gap-1.5">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zm-7.518-.267A8.25 8.25 0 1120.25 10.5M8.288 14.212A5.25 5.25 0 1117.25 10.5" />
-              </svg>
-              タップで次のステップへ自動で進みます
-            </p>
           </div>
         )}
 
@@ -492,31 +486,31 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
         {step === 1 && (
           <div>
             <div className="mb-5">
-              <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.14em] uppercase mb-2">Step 2 / 4</p>
-              <h2 className="text-[22px] sm:text-[24px] font-black text-[#1a2e23] tracking-[-0.03em] leading-[1.2]">
-                <span style={{ color: acc }}>{subject}</span>の<br />どの単元をやる？
+              <p className="text-[11px] font-extrabold text-white/30 tracking-[0.14em] uppercase mb-2">Step 2 / 4</p>
+              <h2 className="text-[22px] sm:text-[24px] font-black text-[#e8f5ed] tracking-[-0.03em] leading-[1.2]">
+                <span style={{ color: acc }}>{subject}</span>の<br />どこを攻める？
               </h2>
-              <p className="text-[12px] text-[#5a8068] mt-1.5">複数選択可 · 空欄 = 全単元ランダム</p>
+              <p className="text-[12px] text-white/40 mt-1.5">苦手な単元を選ぶと効果的。複数選択OK</p>
             </div>
 
             {/* 全単元ボタン */}
             <button
               type="button"
               onClick={() => setTopics([])}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 mb-4 transition-all duration-250 ${
-                topics.length === 0 ? 'text-white border-transparent shadow-lg' : 'hover:shadow-md'
+              className={`w-full flex items-center gap-3 px-4 py-4 rounded-2xl border mb-4 transition-all duration-250 ${
+                topics.length === 0 ? 'text-white border-transparent shadow-lg' : ''
               }`}
               style={topics.length === 0
                 ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 6px 20px ${ring}` }
-                : { background: `${acc}15`, borderColor: acc + '44', color: acc }}
+                : { background: `${acc}0c`, borderColor: acc + '30', color: acc }}
             >
               <span className="text-[16px]">{topics.length === 0 ? '✓' : '○'}</span>
               <div className="flex-1 text-left">
                 <div className={`text-[13px] font-bold ${topics.length === 0 ? 'text-white' : ''}`}>全単元からランダム出題</div>
-                <div className={`text-[11px] mt-0.5 ${topics.length === 0 ? 'text-white/75' : 'text-[#5a8068]'}`}>バランスよく全範囲を練習</div>
+                <div className={`text-[11px] mt-0.5 ${topics.length === 0 ? 'text-white/75' : 'text-white/30'}`}>バランスよく全範囲を練習</div>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style={topics.length === 0 ? { background: '#f1f5f3', color: '#4a6b57' } : { background: acc + '15', color: acc }}>おすすめ</span>
+                style={topics.length === 0 ? { background: 'rgba(255,255,255,0.2)', color: '#fff' } : { background: acc + '15', color: acc }}>おすすめ</span>
             </button>
 
             {/* ── 物理: 階層カリキュラム / その他: フラットチップ ── */}
@@ -536,12 +530,12 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                       key={t}
                       type="button"
                       onClick={() => setTopics((prev) => sel ? prev.filter((x) => x !== t) : [...prev, t])}
-                      className={`px-3.5 py-2 rounded-full text-[12px] font-semibold border-2 transition-all duration-200 active:scale-[0.95] ${
-                        sel ? 'text-white border-transparent shadow-sm' : 'hover:shadow-sm'
+                      className={`px-3.5 py-2.5 rounded-full text-[12px] font-semibold border transition-all duration-200 active:scale-[0.95] ${
+                        sel ? 'text-white border-transparent shadow-sm' : ''
                       }`}
                       style={sel
                         ? { background: acc, boxShadow: `0 2px 8px ${ring}` }
-                        : { background: `${acc}15`, color: acc, borderColor: acc + '50' }}
+                        : { background: 'rgba(255,255,255,0.06)', color: '#a8d8bb', borderColor: 'rgba(255,255,255,0.1)' }}
                     >
                       {sel && <span className="mr-1 text-[10px]">✓</span>}
                       {t}
@@ -552,13 +546,14 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             )}
 
             {topics.length > 0 && (
-              <div className="mb-4 px-3 py-2.5 rounded-xl text-[11px] text-[#5a8068] bg-[#d1fae5] border border-[#f1f5f9] flex items-start gap-2">
+              <div className="mb-4 px-3 py-2.5 rounded-xl text-[11px] flex items-start gap-2"
+                style={{ background: acc + '14', border: `1px solid ${acc}25`, color: acc }}>
                 <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span className="leading-[1.5]">
-                  <span className="font-bold" style={{ color: acc }}>{topics.length}</span>
-                  <span className="ml-0.5">トピック選択中</span>
+                  <span className="font-bold">{topics.length}</span>
+                  <span className="ml-0.5 text-white/50">トピック選択中</span>
                 </span>
               </div>
             )}
@@ -566,10 +561,11 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             <button
               type="button"
               onClick={() => goStep(2)}
-              className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] hover:shadow-2xl"
+              className="w-full py-[18px] rounded-2xl text-[16px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97]"
               style={{ background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 8px 28px ${ring}` }}
             >
-              {topics.length === 0 ? '全単元で次へ →' : `${topics.length}トピックを選択 · 次へ →`}
+              {topics.length === 0 ? '全単元で次へ' : `${topics.length}トピックで次へ`}
+              <svg className="w-4 h-4 inline-block ml-2" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
             </button>
           </div>
         )}
@@ -578,11 +574,12 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
         {step === 2 && (
           <div>
             <div className="mb-6">
-              <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.14em] uppercase mb-2.5">Step 3 / 4</p>
-              <h2 className="text-[24px] font-black text-[#1a2e23] tracking-[-0.03em] leading-[1.2]">
-                難しさは<br />どのくらい？
+              <p className="text-[11px] font-extrabold text-white/30 tracking-[0.14em] uppercase mb-2.5">Step 3 / 4</p>
+              <h2 className="text-[24px] font-black text-[#e8f5ed] tracking-[-0.03em] leading-[1.2]">
+                どのレベルに<br />
+                <span style={{ color: acc }}>挑戦する？</span>
               </h2>
-              <p className="text-[13px] text-[#5a8068] mt-2">タップで次へ自動で進みます</p>
+              <p className="text-[13px] text-white/40 mt-2">タップで自動的に次へ進みます</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -593,16 +590,16 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                     key={lv.value}
                     type="button"
                     onClick={() => handleDifficultySelect(lv.value)}
-                    className={`p-4 rounded-2xl border-2 text-left transition-all duration-250 active:scale-[0.95] ${
-                      sel ? 'text-white border-transparent shadow-xl scale-[1.04]' : 'hover:shadow-md'
+                    className={`p-4 rounded-2xl border text-left transition-all duration-250 active:scale-[0.95] ${
+                      sel ? 'text-white border-transparent shadow-xl scale-[1.04]' : ''
                     }`}
                     style={sel
                       ? { background: `linear-gradient(135deg, ${acc}, ${acc}dd)`, boxShadow: `0 8px 24px ${ring}` }
-                      : { background: `linear-gradient(135deg, ${acc}18 0%, ${acc}0a 100%)`, borderColor: acc + '44' }}
+                      : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}
                   >
                     <div className="text-[22px] mb-2 leading-none">{DIFF_ICONS[i]}</div>
-                    <div className={`text-[14px] font-black ${sel ? 'text-white' : 'text-[#1a2e23]'}`}>{lv.label}</div>
-                    <div className={`text-[11px] mt-0.5 ${sel ? 'text-white/80' : 'text-[#5a8068]'}`}>{lv.sub}</div>
+                    <div className={`text-[14px] font-black ${sel ? 'text-white' : 'text-[#e8f5ed]'}`}>{lv.label}</div>
+                    <div className={`text-[11px] mt-0.5 ${sel ? 'text-white/80' : 'text-white/35'}`}>{lv.sub}</div>
                   </button>
                 );
               })}
@@ -614,16 +611,17 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
         {step === 3 && (
           <div>
             <div className="mb-6">
-              <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.14em] uppercase mb-2.5">Step 4 / 4</p>
-              <h2 className="text-[24px] font-black text-[#1a2e23] tracking-[-0.03em] leading-[1.2]">
-                あと少し！<br />最後の設定を
+              <p className="text-[11px] font-extrabold text-white/30 tracking-[0.14em] uppercase mb-2.5">Step 4 / 4</p>
+              <h2 className="text-[24px] font-black text-[#e8f5ed] tracking-[-0.03em] leading-[1.2]">
+                準備OK。<br />
+                <span style={{ color: acc }}>あとはスタートだけ</span>
               </h2>
             </div>
 
             {/* 選択内容サマリー */}
             <div
-              className="rounded-2xl border-2 p-4 mb-6"
-              style={{ borderColor: acc + '35', background: acc + '07' }}
+              className="rounded-2xl border p-4 mb-6"
+              style={{ borderColor: acc + '25', background: acc + '0a' }}
             >
               <p className="text-[10px] font-extrabold tracking-[0.1em] uppercase mb-3" style={{ color: acc }}>選択内容</p>
               <div className="flex flex-wrap gap-2">
@@ -633,12 +631,12 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                   </span>
                 )}
                 {topics.length === 0 ? (
-                  <span className="text-[12px] font-semibold px-3 py-1.5 rounded-full" style={{ background: acc + '20', color: acc, border: `1px solid ${acc}40` }}>全単元</span>
+                  <span className="text-[12px] font-semibold px-3 py-1.5 rounded-full" style={{ background: acc + '18', color: acc, border: `1px solid ${acc}30` }}>全単元</span>
                 ) : topics.map((t) => (
-                  <span key={t} className="text-[12px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: acc + '12', color: acc, borderColor: acc + '30' }}>{t}</span>
+                  <span key={t} className="text-[12px] font-semibold px-2.5 py-1 rounded-full border" style={{ background: acc + '12', color: acc, borderColor: acc + '25' }}>{t}</span>
                 ))}
                 {difficulty && (
-                  <span className="text-[12px] font-bold px-3 py-1.5 rounded-full" style={{ background: acc + '25', color: acc, border: `1px solid ${acc}45` }}>
+                  <span className="text-[12px] font-bold px-3 py-1.5 rounded-full" style={{ background: acc + '18', color: acc, border: `1px solid ${acc}30` }}>
                     {DIFF_ICONS[EXAM_LEVELS.findIndex(l => l.value === difficulty)]} {EXAM_LEVELS.find(l => l.value === difficulty)?.label}
                   </span>
                 )}
@@ -646,28 +644,28 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
               <button
                 type="button"
                 onClick={() => goStep(0)}
-                className="mt-3 text-[11px] font-semibold underline underline-offset-2 opacity-60 hover:opacity-100 transition-opacity"
+                className="mt-3 text-[11px] font-semibold underline underline-offset-2 opacity-50 hover:opacity-100 transition-opacity"
                 style={{ color: acc }}
               >
-                選択をやり直す
+                選び直す
               </button>
             </div>
 
             {/* 問題数 */}
             <div className="mb-5">
-              <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase mb-3">問題数</p>
+              <p className="text-[11px] font-extrabold text-white/30 tracking-[0.1em] uppercase mb-3">問題数</p>
               <div className="flex gap-2.5">
                 {[1, 2, 3].map((n) => (
                   <button
                     key={n}
                     type="button"
                     onClick={() => setNumQ(n)}
-                    className={`flex-1 py-3.5 rounded-xl border-2 text-[14px] font-black transition-all duration-200 active:scale-[0.96] ${
-                      numQ === n ? 'text-white border-transparent shadow-md scale-[1.04]' : 'hover:shadow-sm'
+                    className={`flex-1 py-4 rounded-xl border text-[15px] font-black transition-all duration-200 active:scale-[0.96] ${
+                      numQ === n ? 'text-white border-transparent shadow-md scale-[1.04]' : ''
                     }`}
                     style={numQ === n
                       ? { background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 4px 16px ${ring}` }
-                      : { background: `${acc}15`, color: acc, borderColor: acc + '45' }}
+                      : { background: 'rgba(255,255,255,0.04)', color: acc, borderColor: 'rgba(255,255,255,0.08)' }}
                   >
                     {n}問
                   </button>
@@ -675,39 +673,9 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
               </div>
             </div>
 
-            {/* 形式 */}
-            <div className="mb-5">
-              <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase mb-3">練習形式</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { val: PRACTICE_FORMAT.DRILL, icon: '📝', name: '一問一答', desc: '1問ずつ即採点' },
-                  { val: PRACTICE_FORMAT.EXAM,  icon: '📋', name: '模試形式', desc: '全問 · タイマー付き' },
-                ].map((f) => {
-                  const sel = practiceFormat === f.val;
-                  return (
-                    <button
-                      key={f.val}
-                      type="button"
-                      onClick={() => setPracticeFormat(f.val)}
-                      className={`p-3.5 rounded-xl border-2 text-left transition-all duration-200 active:scale-[0.96] ${
-                        sel ? 'border-transparent shadow-md' : 'hover:shadow-sm'
-                      }`}
-                      style={sel
-                        ? { background: acc + '28', borderColor: acc + '70' }
-                        : { background: acc + '10', borderColor: acc + '35' }}
-                    >
-                      <div className="text-[20px] mb-1.5">{f.icon}</div>
-                      <div className={`text-[12px] font-black`} style={{ color: sel ? acc : '#e8f5ed' }}>{f.name}</div>
-                      <div className="text-[10px] text-[#5a8068] mt-0.5">{f.desc}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* 生成モード */}
             <div className="mb-7">
-              <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase mb-3">生成モード</p>
+              <p className="text-[11px] font-extrabold text-white/30 tracking-[0.1em] uppercase mb-3">生成モード</p>
               <div className="grid grid-cols-2 gap-2.5">
                 {[
                   { val: GEN_MODE.AUTO,   icon: '✨', name: 'AI 自動生成', desc: 'ワンクリックで作成', locked: isGuest },
@@ -720,16 +688,16 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
                       type="button"
                       onClick={() => !m.locked && setGenMode(m.val)}
                       disabled={m.locked}
-                      className={`p-3.5 rounded-xl border-2 text-left transition-all duration-200 ${
-                        m.locked ? 'opacity-45 cursor-not-allowed' : 'active:scale-[0.96] hover:shadow-sm'
+                      className={`p-4 rounded-xl border text-left transition-all duration-200 ${
+                        m.locked ? 'opacity-35 cursor-not-allowed' : 'active:scale-[0.96]'
                       }`}
                       style={sel
-                        ? { background: acc + '28', borderColor: acc + '70' }
-                        : { background: acc + '10', borderColor: acc + '35' }}
+                        ? { background: acc + '1a', borderColor: acc + '50' }
+                        : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}
                     >
                       <div className="text-[20px] mb-1.5">{m.icon}</div>
-                      <div className={`text-[12px] font-black ${sel ? '' : 'text-[#1a2e23]'}`} style={sel ? { color: acc } : {}}>{m.name}</div>
-                      <div className="text-[10px] text-[#5a8068] mt-0.5">{m.locked ? '🔒 ログインが必要' : m.desc}</div>
+                      <div className="text-[12px] font-black" style={{ color: sel ? acc : '#e8f5ed' }}>{m.name}</div>
+                      <div className="text-[10px] mt-0.5" style={{ color: m.locked ? '#ef4444' : 'rgba(255,255,255,0.3)' }}>{m.locked ? 'ログインが必要' : m.desc}</div>
                     </button>
                   );
                 })}
@@ -740,23 +708,23 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             <button
               type="button"
               onClick={handleStart}
-              className="w-full py-5 rounded-2xl text-[17px] font-black text-white shadow-2xl transition-all duration-250 active:scale-[0.97] hover:scale-[1.01] hover:shadow-2xl flex items-center justify-center gap-2"
-              style={{ background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 12px 32px ${ring}` }}
+              className="w-full py-[20px] rounded-2xl text-[18px] font-black text-white shadow-2xl transition-all duration-250 active:scale-[0.97] hover:scale-[1.01] flex items-center justify-center gap-2.5"
+              style={{ background: `linear-gradient(135deg, ${acc}, ${acc}cc)`, boxShadow: `0 12px 40px ${ring}` }}
             >
-              {practiceFormat === PRACTICE_FORMAT.EXAM ? '模試スタート' : '練習スタート'}
+              練習スタート
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
               </svg>
             </button>
 
-            <p className="text-center text-[11px] text-[#5a8068] mt-3 leading-relaxed">
+            <p className="text-center text-[11px] text-white/30 mt-3 leading-relaxed">
               {genMode === GEN_MODE.AUTO
-                ? '✨ AIが入試品質の問題をリアルタイムで生成'
-                : '📋 プロンプトをコピー → ChatGPT等に貼り付け → 問題をインポート'}
+                ? 'AIが入試品質の問題をリアルタイムで生成します'
+                : 'プロンプトをコピー → ChatGPT等に貼り付け → インポート'}
             </p>
 
-            <div className="mt-7 pt-5 border-t border-[#f1f5f9]">
-              <Link href="/user" className="group flex items-center justify-center gap-2 text-[11px] text-[#94a3b8] hover:text-[#5a8068] transition-colors duration-200">
+            <div className="mt-7 pt-5 border-t border-white/[0.06]">
+              <Link href="/user" className="group flex items-center justify-center gap-2 text-[11px] text-white/25 hover:text-white/50 transition-colors duration-200">
                 <svg className="w-3.5 h-3.5 transition-transform duration-200 group-hover:rotate-12" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5" />
                 </svg>
@@ -777,7 +745,7 @@ function SelectScreen({ onStart, isAuthenticated, isGuest }) {
             <button
               type="button"
               onClick={() => goStep(step - 1)}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#fff8f0] border border-orange-200 shadow-md text-[12px] font-semibold text-[#4a6b57] hover:text-[#374151] hover:shadow-lg transition-all duration-200 active:scale-[0.96]"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-white/[0.04] border border-white/[0.08] shadow-md text-[12px] font-semibold text-[#a8d8bb] hover:text-white hover:shadow-lg transition-all duration-200 active:scale-[0.96]"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -848,8 +816,8 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
           <div className="absolute inset-0 rounded-3xl animate-ping opacity-20" style={{ background: c.accent }} />
         </div>
         <div className="text-center">
-          <p className="text-[17px] font-bold text-[#1a2e23]">プロンプトを生成中…</p>
-          <p className="text-[12px] text-[#5a8068] mt-1.5">最適な出題指示を構築しています</p>
+          <p className="text-[17px] font-bold text-[#e8f5ed]">プロンプトを生成中…</p>
+          <p className="text-[12px] text-white/40 mt-1.5">最適な出題指示を構築しています</p>
         </div>
       </div>
     );
@@ -862,7 +830,7 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
         <BackButton onClick={onBack} label="戻る" />
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
-          <span className="text-[12px] font-bold text-[#5a8068]">手動モード</span>
+          <span className="text-[12px] font-bold text-white/40">手動モード</span>
         </div>
       </div>
 
@@ -873,30 +841,30 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
                style={{ background: copied ? '#16a34a' : c.accent }}>
             {copied ? '✓' : '1'}
           </div>
-          <span className={`text-[12px] font-bold ${copied ? 'text-[#16a34a]' : 'text-[#1a2e23]'}`}>コピー</span>
+          <span className={`text-[12px] font-bold ${copied ? 'text-[#16a34a]' : 'text-[#e8f5ed]'}`}>コピー</span>
         </div>
-        <div className="flex-1 h-[2px] rounded-full" style={{ background: copied ? c.accent : '#e2e8f0' }} />
+        <div className="flex-1 h-[2px] rounded-full" style={{ background: copied ? c.accent : 'rgba(255,255,255,0.08)' }} />
         <div className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-black ${copied ? 'text-white shadow-md' : 'text-[#5a8068] border-2 border-emerald-700/50'}`}
+          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-black ${copied ? 'text-white shadow-md' : 'text-white/40 border-2 border-emerald-700/50'}`}
                style={copied ? { background: c.accent } : {}}>
             2
           </div>
-          <span className={`text-[12px] font-bold ${copied ? 'text-[#1a2e23]' : 'text-[#5a8068]'}`}>貼り付け</span>
+          <span className={`text-[12px] font-bold ${copied ? 'text-[#e8f5ed]' : 'text-white/40'}`}>貼り付け</span>
         </div>
       </div>
 
       {/* ステップ1: プロンプトコピー */}
-      <div className={`rounded-2xl border overflow-hidden mb-6 transition-all duration-300 ${copied ? 'border-[#86efac] bg-green-50' : 'border-orange-200 bg-[#fff8f0] shadow-sm'}`}>
-        <div className="p-4 border-b border-orange-200 flex items-center justify-between">
+      <div className={`rounded-2xl border overflow-hidden mb-6 transition-all duration-300 ${copied ? 'border-[#86efac] bg-emerald-950/30' : 'border-white/[0.08] bg-white/[0.04] shadow-sm'}`}>
+        <div className="p-4 border-b border-white/[0.08] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="text-[13px] font-bold text-[#1a2e23]">📋 指示文をコピー</span>
+            <span className="text-[13px] font-bold text-[#e8f5ed]">📋 指示文をコピー</span>
           </div>
           <button
             type="button"
             onClick={handleCopy}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[11px] font-bold transition-all duration-250 border active:scale-[0.95]"
             style={copied
-              ? { background: '#dcfce7', borderColor: '#86efac', color: '#16a34a' }
+              ? { background: 'rgba(16,185,129,0.15)', borderColor: 'rgba(16,185,129,0.4)', color: '#10b981' }
               : { background: c.accent + '10', borderColor: c.accent + '30', color: c.accent }}
           >
             {copied ? (
@@ -909,8 +877,8 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
         <div className="p-4 max-h-[180px] overflow-y-auto bg-[#f1f5f9] rounded-b-none">
           <pre className="text-[11px] leading-[1.7] text-[#94d5a8] whitespace-pre-wrap font-mono break-all select-all">{prompt}</pre>
         </div>
-        <div className="px-4 py-3 bg-[#d1fae5]">
-          <p className="text-[11px] text-[#5a8068] flex items-center gap-1.5">
+        <div className="px-4 py-3 bg-white/[0.06]">
+          <p className="text-[11px] text-white/40 flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
             </svg>
@@ -920,23 +888,23 @@ function PromptScreen({ prompt, subject, difficulty, onParsed, onBack, promptLoa
       </div>
 
       {/* ステップ2: AIの出力を貼り付け */}
-      <div className="bg-[#fff8f0] rounded-2xl border border-orange-200 overflow-hidden shadow-sm">
-        <div className="p-4 border-b border-orange-200">
-          <span className="text-[13px] font-bold text-[#1a2e23]">📥 AIの出力を貼り付け</span>
-          <p className="text-[11px] text-[#5a8068] mt-1">AIから返ってきた出力をそのまま貼り付けてください（マーカー形式・JSON形式 両方対応）</p>
+      <div className="bg-white/[0.04] rounded-2xl border border-white/[0.08] overflow-hidden shadow-sm">
+        <div className="p-4 border-b border-white/[0.08]">
+          <span className="text-[13px] font-bold text-[#e8f5ed]">📥 AIの出力を貼り付け</span>
+          <p className="text-[11px] text-white/40 mt-1">AIから返ってきた出力をそのまま貼り付けてください（マーカー形式・JSON形式 両方対応）</p>
         </div>
         <div className="p-4">
           <textarea
             value={pasteText}
             onChange={(e) => setPasteText(e.target.value)}
             rows={8}
-            className="w-full rounded-xl border border-gray-300 bg-[#d1fae5] px-4 py-3 text-[12px] font-mono text-[#1a2e23] placeholder:text-[#cbd5e1] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-transparent resize-none transition-all duration-200"
+            className="w-full rounded-xl border border-white/[0.12] bg-white/[0.06] px-4 py-3 text-[12px] font-mono text-[#e8f5ed] placeholder:text-[#cbd5e1] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:border-transparent resize-none transition-all duration-200"
             style={{ '--tw-ring-color': c.accent + '60' }}
             placeholder={'%%% PROBLEM 1 %%%\n%%% TOPIC: 力学 %%%\n%%% STEM %%%\n質量 $m$ の物体が...\n%%% SUBPROBLEM (1) %%%\n...\n%%% END PROBLEM 1 %%%'}
           />
 
           {parseError && (
-            <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-[11px] text-red-700 font-medium flex items-start gap-2">
+            <div className="mt-3 bg-red-950/30 border border-red-800/40 rounded-xl px-4 py-3 text-[11px] text-red-400 font-medium flex items-start gap-2">
               <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
@@ -995,8 +963,8 @@ function LoadingScreen({ subject, genMode, loadingStep }) {
       </div>
 
       <div className="text-center">
-        <p className="text-[18px] font-black text-[#1a2e23] tracking-[-0.02em]">{steps[activeStep].label}</p>
-        <p className="text-[12px] text-[#5a8068] mt-2">{steps[activeStep].sub}</p>
+        <p className="text-[18px] font-black text-[#e8f5ed] tracking-[-0.02em]">{steps[activeStep].label}</p>
+        <p className="text-[12px] text-white/40 mt-2">{steps[activeStep].sub}</p>
 
         {isAI && (
           <div className="flex items-center justify-center gap-2.5 mt-8">
@@ -1005,7 +973,7 @@ function LoadingScreen({ subject, genMode, loadingStep }) {
                 <div className="flex flex-col items-center gap-1.5">
                   <div
                     className={`w-3 h-3 rounded-full transition-all duration-700 ${i <= activeStep ? 'scale-100' : 'scale-75 opacity-30'}`}
-                    style={{ backgroundColor: i <= activeStep ? c.accent : '#cbd5e1', boxShadow: i <= activeStep ? `0 0 8px ${c.accent}40` : 'none' }}
+                    style={{ backgroundColor: i <= activeStep ? c.accent : 'rgba(255,255,255,0.25)', boxShadow: i <= activeStep ? `0 0 8px ${c.accent}40` : 'none' }}
                   />
                   <span className={`text-[9px] font-bold transition-all duration-500 ${i <= activeStep ? 'opacity-100' : 'opacity-30'}`}
                         style={{ color: i <= activeStep ? c.accent : '#9dc8b0' }}>
@@ -1014,7 +982,7 @@ function LoadingScreen({ subject, genMode, loadingStep }) {
                 </div>
                 {i < steps.length - 1 && (
                   <div className={`w-10 h-[2px] rounded-full transition-all duration-700 mb-5 ${i < activeStep ? '' : 'opacity-25'}`}
-                       style={{ backgroundColor: i < activeStep ? c.accent : '#cbd5e1' }} />
+                       style={{ backgroundColor: i < activeStep ? c.accent : 'rgba(255,255,255,0.25)' }} />
                 )}
               </div>
             ))}
@@ -1107,7 +1075,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
               disabled={pdfLoading}
               title="高品質PDFをダウンロード"
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all duration-200 active:scale-[0.94] disabled:opacity-50"
-              style={{ background: '#f8faff', borderColor: c.accent + '40', color: c.accent }}
+              style={{ background: 'rgba(255,255,255,0.06)', borderColor: c.accent + '30', color: c.accent }}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -1118,8 +1086,8 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           <span className="text-[13px] font-black tracking-[-0.01em]" style={{ color: c.accent }}>
             {index + 1}
           </span>
-          <span className="text-[12px] text-[#cbd5e1] font-bold">/</span>
-          <span className="text-[13px] font-bold text-[#5a8068]">
+          <span className="text-[12px] text-white/20 font-bold">/</span>
+          <span className="text-[13px] font-bold text-white/40">
             {total}
           </span>
         </div>
@@ -1135,7 +1103,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
             </span>
           )}
           {diffLabel && (
-            <span className="text-[11px] text-[#5a8068] font-medium bg-[#d1fae5] px-2 py-0.5 rounded-full">{diffLabel}</span>
+            <span className="text-[11px] text-white/40 font-medium bg-white/[0.06] px-2 py-0.5 rounded-full">{diffLabel}</span>
           )}
           {hasFigure && (
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">図あり</span>
@@ -1145,21 +1113,21 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
       </div>
 
       {/* 問題本文 */}
-      <div className={`bg-[#fff8f0] rounded-2xl border p-6 mb-6 transition-all duration-500 ${showAnswer ? 'border-orange-200 opacity-70 shadow-none' : 'border-orange-200 shadow-md'}`}
+      <div className={`bg-white/[0.04] rounded-2xl border p-6 mb-6 transition-all duration-500 ${showAnswer ? 'border-white/[0.08] opacity-70 shadow-none' : 'border-white/[0.08] shadow-md'}`}
            style={!showAnswer ? { boxShadow: `0 4px 20px ${c.ring}` } : {}}>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-black text-white"
                style={{ background: c.accent }}>
             Q
           </div>
-          <span className="text-[11px] font-bold text-[#5a8068] tracking-[0.06em] uppercase">問題</span>
+          <span className="text-[11px] font-bold text-white/40 tracking-[0.06em] uppercase">問題</span>
         </div>
 
         {/* 状況設定 */}
         {stem ? (
-          <LatexBlock className="text-[14px] leading-[2] text-[#1a2e23] mb-4">{stem}</LatexBlock>
+          <LatexBlock className="text-[14px] leading-[2] text-[#e8f5ed] mb-4">{stem}</LatexBlock>
         ) : (
-          <p className="text-[13px] text-[#5a8068] mb-4">問題文を読み込めませんでした</p>
+          <p className="text-[13px] text-white/40 mb-4">問題文を読み込めませんでした</p>
         )}
 
         {/* 図（TikZ） */}
@@ -1178,10 +1146,10 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                       <span className="text-[13px] font-black shrink-0" style={{ color: c.accent }}>{sp.label}</span>
                     )}
                     {sp.question && (
-                      <LatexBlock className="text-[13px] leading-[1.9] text-[#1a2e23] flex-1">{sp.question}</LatexBlock>
+                      <LatexBlock className="text-[13px] leading-[1.9] text-[#e8f5ed] flex-1">{sp.question}</LatexBlock>
                     )}
                     {sp.points > 0 && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#d1fae5] text-[#5a8068] border border-gray-300 self-start shrink-0 ml-auto">{sp.points}点</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-white/[0.06] text-white/40 border border-white/[0.12] self-start shrink-0 ml-auto">{sp.points}点</span>
                     )}
                   </div>
                 )}
@@ -1202,7 +1170,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           >
             答えを見る
           </button>
-          <p className="text-center text-[11px] text-[#5a8068] flex items-center justify-center gap-1.5">
+          <p className="text-center text-[11px] text-white/40 flex items-center justify-center gap-1.5">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -1215,10 +1183,10 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
           {subproblems.length > 0 ? (
             <div className="space-y-4">
               {subproblems.map((sp, idx) => (
-                <div key={idx} className="bg-[#fff8f0] rounded-2xl border border-orange-200 overflow-hidden shadow-md"
+                <div key={idx} className="bg-white/[0.04] rounded-2xl border border-white/[0.08] overflow-hidden shadow-md"
                      style={{ boxShadow: `0 4px 16px ${c.ring}` }}>
                   {/* 解答ヘッダー */}
-                  <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-orange-200">
+                  <div className="flex items-center gap-2 px-5 pt-4 pb-3 border-b border-white/[0.08]">
                     <div className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black text-white"
                          style={{ background: c.accent }}>
                       A
@@ -1230,16 +1198,16 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                   {/* 解答値 */}
                   {sp.answer && (
                     <div className="px-5 pt-3 pb-2">
-                      <LatexBlock className="text-[14px] leading-[2] text-[#1a2e23] font-semibold">{sp.answer}</LatexBlock>
+                      <LatexBlock className="text-[14px] leading-[2] text-[#e8f5ed] font-semibold">{sp.answer}</LatexBlock>
                     </div>
                   )}
                   {/* 解説 */}
                   {sp.explanation && (
-                    <div className="px-5 pb-4 pt-1 border-t border-[#f1f5f9] bg-[#fafbff]">
+                    <div className="px-5 pb-4 pt-1 border-t border-white/[0.06] bg-white/[0.03]">
                       <div className="flex items-center gap-1.5 mb-2 pt-2">
                         <span className="text-[10px] font-bold text-[#6366f1] tracking-[0.05em] uppercase">解説</span>
                       </div>
-                      <LatexTikzBlock className="text-[12px] leading-[1.85] text-[#6aaa7c]">{sp.explanation}</LatexTikzBlock>
+                      <LatexTikzBlock className="text-[12px] leading-[1.85] text-[#a8d8bb]">{sp.explanation}</LatexTikzBlock>
                     </div>
                   )}
                   {/* 配点基準 */}
@@ -1265,7 +1233,7 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
               ))}
             </div>
           ) : (
-            <div className="bg-[#fff8f0] rounded-2xl border border-orange-200 p-6 shadow-md text-[13px] text-[#5a8068]">
+            <div className="bg-white/[0.04] rounded-2xl border border-white/[0.08] p-6 shadow-md text-[13px] text-white/40">
               解答データなし
             </div>
           )}
@@ -1310,8 +1278,8 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
               />
             ) : (
               <>
-                <div className="text-[13px] font-black text-[#1a2e23] mb-1 text-center">自己採点してね</div>
-                <p className="text-[10px] text-[#5a8068] text-center mb-4">正直に答えることが成績アップの近道</p>
+                <div className="text-[13px] font-black text-[#e8f5ed] mb-1 text-center">自己採点してね</div>
+                <p className="text-[10px] text-white/40 text-center mb-4">正直に答えることが成績アップの近道</p>
                 <div className="flex gap-3">
                   <ScoreButton type={SCORE.CORRECT} onClick={() => onScore(SCORE.CORRECT)} />
                   <ScoreButton type={SCORE.DELTA}   onClick={() => onScore(SCORE.DELTA)} />
@@ -1334,21 +1302,21 @@ function ProblemScreen({ problem, index, total, subject, showAnswer, onShowAnswe
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[12px] font-black text-[#1a2e23]">
+                <div className="text-[12px] font-black text-[#e8f5ed]">
                   {pdfLoading ? 'PDF生成中…' : '高品質PDFで保存'}
                 </div>
-                <div className="text-[10px] text-[#5a8068] mt-0.5">
+                <div className="text-[10px] text-white/40 mt-0.5">
                   LaTeX組版 · 美しい数式 · 印刷対応
                 </div>
               </div>
-              <svg className="w-4 h-4 text-[#5a8068] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-white/40 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
               </svg>
             </div>
           )}
 
           {/* スキップ */}
-          <button type="button" onClick={() => onSkip && onSkip()} className="w-full py-2.5 text-[11px] text-[#94a3b8] hover:text-[#5a8068] transition-colors duration-200">
+          <button type="button" onClick={() => onSkip && onSkip()} className="w-full py-2.5 text-[11px] text-white/25 hover:text-white/40 transition-colors duration-200">
             スキップ（△扱い）
           </button>
         </div>
@@ -1368,18 +1336,18 @@ function FollowScreen({ problem, subject, onContinue, onSkip, isLoading }) {
     <div className="max-w-[480px] mx-auto px-5 pt-20 pb-16 text-center">
       {/* アイコン */}
       <div className="relative w-16 h-16 mx-auto mb-6">
-        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-800/40 flex items-center justify-center">
           <span className="text-[28px]">💪</span>
         </div>
       </div>
 
-      <h2 className="text-[20px] font-black text-[#1a2e23] tracking-[-0.02em] mb-2">
+      <h2 className="text-[20px] font-black text-[#e8f5ed] tracking-[-0.02em] mb-2">
         {topic}、もう1問やる？
       </h2>
-      <p className="text-[13px] text-[#5a8068] mb-2 leading-relaxed">
+      <p className="text-[13px] text-white/40 mb-2 leading-relaxed">
         すぐ復習すると記憶に定着しやすい
       </p>
-      <p className="text-[11px] text-[#5a8068] mb-10">
+      <p className="text-[11px] text-white/40 mb-10">
         間違えた問題の周辺をもう少し練習しよう
       </p>
 
@@ -1397,312 +1365,14 @@ function FollowScreen({ problem, subject, onContinue, onSkip, isLoading }) {
           </span>
         ) : '同じ単元をもう1問 →'}
       </button>
-      <button type="button" onClick={onSkip} className="w-full py-3 text-[13px] text-[#5a8068] hover:text-[#6aaa7c] transition-colors duration-200">
+      <button type="button" onClick={onSkip} className="w-full py-3 text-[13px] text-white/40 hover:text-[#a8d8bb] transition-colors duration-200">
         次の問題へ進む
       </button>
     </div>
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   模試形式画面: 全問一覧 + タイマー
-───────────────────────────────────────────────────────────── */
-
-function ExamScreen({ problems, subject, onFinish, onQuit, latexForPdf, onDownloadPdf, pdfLoading }) {
-  const c = SUBJECT_COLOR[subject] || SUBJECT_COLOR['物理'];
-  const numQ = problems.length;
-  const initialTime = numQ <= 3 ? 15 * 60 : numQ <= 5 ? 30 * 60 : 60 * 60;
-  const [timeLeft, setTimeLeft] = useState(initialTime);
-  const [finished, setFinished] = useState(false);
-  const [examScores, setExamScores] = useState({}); // { index: SCORE.xxx }
-  const [examPointScores, setExamPointScores] = useState({}); // { index: { earned, max } }
-  const [examSubjDiff, setExamSubjDiff] = useState({}); // { index: '簡単'|'普通'|'難しい' }
-
-  const anyPoints = problems.some((p) => getTotalPoints(p) > 0);
-
-  // タイマー
-  useEffect(() => {
-    if (finished) return;
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) { setFinished(true); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [finished]);
-
-  const formatTime = (s) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m}:${String(sec).padStart(2, '0')}`;
-  };
-
-  const handleFinishExam = () => setFinished(true);
-
-  const handleScoreChange = (idx, score) => {
-    setExamScores((prev) => ({ ...prev, [idx]: score }));
-  };
-
-  const handleSubmitScores = () => {
-    const scoreArray = problems.map((p, i) => {
-      if (examPointScores[i]) return deriveScoreFromPoints(examPointScores[i].earned, examPointScores[i].max);
-      return examScores[i] || SCORE.DELTA;
-    });
-    const pointArray = problems.map((_, i) => examPointScores[i] || null);
-    const diffArray = problems.map((_, i) => examSubjDiff[i] || '普通');
-    onFinish(scoreArray, pointArray, diffArray);
-  };
-
-  const allScored = problems.every((p, i) => {
-    if (anyPoints && getTotalPoints(p) > 0) return examPointScores[i] != null;
-    return examScores[i] != null;
-  });
-  const timeWarning = timeLeft > 0 && timeLeft <= 60;
-  const timeDanger = timeLeft > 0 && timeLeft <= 30;
-  const pct = Math.max(0, (timeLeft / initialTime) * 100);
-
-  return (
-    <div className="max-w-[480px] mx-auto px-5 pt-6 pb-24">
-      {/* 固定ヘッダー: タイマー */}
-      <div className="sticky top-0 z-20 bg-[#d1fae5]/90 backdrop-blur-md -mx-5 px-5 pb-4 pt-2 border-b border-emerald-200">
-        <div className="flex items-center justify-between mb-2">
-          <BackButton onClick={onQuit} label="中断" />
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: finished ? '#16a34a' : timeDanger ? '#dc2626' : timeWarning ? '#d97706' : c.accent }} />
-            <span className={`text-[20px] font-black tabular-nums tracking-[-0.02em] ${timeDanger ? 'text-[#dc2626]' : timeWarning ? 'text-[#d97706]' : 'text-[#1a2e23]'}`}>
-              {finished ? '終了' : formatTime(timeLeft)}
-            </span>
-          </div>
-          <span className="text-[12px] font-bold text-[#5a8068]">{numQ}問</span>
-        </div>
-        {/* タイマーバー */}
-        {!finished && (
-          <div className="w-full h-1.5 bg-[#bbf7d0] rounded-full overflow-hidden">
-            <div className="h-full rounded-full transition-all duration-1000 ease-linear"
-                 style={{ width: `${pct}%`, background: timeDanger ? '#dc2626' : timeWarning ? '#d97706' : c.accent }} />
-          </div>
-        )}
-        {finished && (
-          <div className="text-center">
-            <p className="text-[12px] font-bold text-[#16a34a]">試験終了 — 各問題を自己採点してください</p>
-          </div>
-        )}
-      </div>
-
-      {/* 問題一覧 */}
-      <div className="space-y-5 mt-6">
-        {problems.map((problem, idx) => {
-          const stem = problem?.stem || problem?.text || problem?.question || '';
-          const topic = problem?.topic || problem?.metadata?.field || '';
-          const scored = examScores[idx];
-          // subproblems 対応
-          const subproblems = (() => {
-            const subs = problem?.subproblems;
-            if (Array.isArray(subs) && subs.length > 0) return subs;
-            const a = problem?.answer || problem?.solution || '';
-            const e = problem?.explanation || problem?.解説 || '';
-            if (a || e) return [{ label: '', question: '', answer: a, explanation: e }];
-            return [];
-          })();
-
-          return (
-            <div key={idx} className="bg-[#fff8f0] rounded-2xl border border-orange-200 overflow-hidden shadow-sm transition-all duration-300"
-                 style={scored ? { borderColor: scored === SCORE.CORRECT ? '#86efac' : scored === SCORE.WRONG ? '#fca5a5' : '#fcd34d' } : {}}>
-              {/* 問題ヘッダー */}
-              <div className="flex items-center gap-2 px-5 pt-4 pb-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black text-white"
-                     style={{ background: c.accent }}>
-                  {idx + 1}
-                </div>
-                {topic && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ background: c.accent + '14', color: c.accent }}>
-                    {topic}
-                  </span>
-                )}
-                {scored && (
-                  <span className="ml-auto text-[18px]">
-                    {scored === SCORE.CORRECT ? '○' : scored === SCORE.WRONG ? '×' : '△'}
-                  </span>
-                )}
-              </div>
-
-              {/* 問題文 + 小問 */}
-              <div className="px-5 pb-4 space-y-2">
-                {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#1a2e23]">{stem}</LatexBlock>}
-                {problem?.figure_tikz && problem.figure_tikz !== 'null' && (
-                  <TikzFigure tikzCode={problem.figure_tikz} />
-                )}
-                {subproblems.length > 1 && (
-                  <div className="space-y-1 border-t pt-2" style={{ borderColor: c.accent + '22' }}>
-                    {subproblems.map((sp, si) => sp.question ? (
-                      <div key={si} className="flex gap-1.5">
-                        {sp.label && <span className="text-[12px] font-black shrink-0" style={{ color: c.accent }}>{sp.label}</span>}
-                        <LatexBlock className="text-[12px] leading-[1.8] text-[#334155]">{sp.question}</LatexBlock>
-                      </div>
-                    ) : null)}
-                  </div>
-                )}
-              </div>
-
-              {/* 解答（試験終了後） */}
-              {finished && (
-                <div className="border-t border-[#f1f5f9] px-5 py-4 bg-[#fafbff] space-y-3">
-                  {subproblems.map((sp, si) => (
-                    <div key={si}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black text-white"
-                             style={{ background: c.accent }}>A</div>
-                        <span className="text-[10px] font-bold" style={{ color: c.accent }}>
-                          {sp.label ? `解答 ${sp.label}` : '解答'}
-                        </span>
-                      </div>
-                      {sp.answer && <LatexBlock className="text-[13px] leading-[1.8] text-[#1a2e23] font-semibold">{sp.answer}</LatexBlock>}
-                      {sp.explanation && (
-                        <details className="mt-1">
-                          <summary className="text-[10px] font-bold text-[#6366f1] cursor-pointer select-none hover:underline">
-                            解説を見る
-                          </summary>
-                          <div className="mt-1.5 pl-2 border-l-2 border-[#e8eeff]">
-                            <LatexTikzBlock className="text-[11px] leading-[1.75] text-[#6aaa7c]">{sp.explanation}</LatexTikzBlock>
-                          </div>
-                        </details>
-                      )}
-                      {sp.scoring_criteria && (
-                        <details className="mt-1">
-                          <summary className="text-[10px] font-bold text-blue-500 cursor-pointer select-none hover:underline">
-                            配点基準{sp.points > 0 ? ` [${sp.points}点]` : ''}
-                          </summary>
-                          <div className="mt-1.5 pl-2 border-l-2 border-blue-200 space-y-0.5">
-                            {sp.scoring_criteria.split('\n').filter(Boolean).map((line, li) => (
-                              <div key={li} className="text-[10px] text-blue-700/80 leading-[1.5] flex gap-1">
-                                <span className="text-blue-400">•</span>
-                                <LatexBlock className="flex-1">{line.trim()}</LatexBlock>
-                              </div>
-                            ))}
-                          </div>
-                        </details>
-                      )}
-                    </div>
-                  ))}
-                  {/* 自己採点 */}
-                  {(() => {
-                    const maxPts = getTotalPoints(problem);
-                    if (anyPoints && maxPts > 0) {
-                      // 得点入力モード
-                      return (
-                        <div className="flex items-center gap-3 mt-3">
-                          <span className="text-[11px] font-bold text-[#5a8068]">得点：</span>
-                          <input
-                            type="number" min={0} max={maxPts}
-                            value={examPointScores[idx]?.earned ?? ''}
-                            onChange={(e) => {
-                              const v = Math.max(0, Math.min(maxPts, parseInt(e.target.value) || 0));
-                              setExamPointScores((prev) => ({ ...prev, [idx]: { earned: v, max: maxPts } }));
-                            }}
-                            placeholder="0"
-                            className="w-16 text-center text-[14px] font-bold border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#8b5cf6]"
-                          />
-                          <span className="text-[12px] text-[#5a8068]">/ {maxPts}点</span>
-                        </div>
-                      );
-                    }
-                    // ○△× モード
-                    return (
-                      <div className="flex gap-2 mt-3">
-                        {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((sc) => {
-                          const map = {
-                            [SCORE.CORRECT]: { label: '○', bg: '#f0fdf4', border: '#86efac', text: '#16a34a', activeBg: '#16a34a' },
-                            [SCORE.DELTA]:   { label: '△', bg: '#fffbeb', border: '#fcd34d', text: '#d97706', activeBg: '#d97706' },
-                            [SCORE.WRONG]:   { label: '×', bg: '#fef2f2', border: '#fca5a5', text: '#dc2626', activeBg: '#dc2626' },
-                          };
-                          const m = map[sc];
-                          const active = scored === sc;
-                          return (
-                            <button key={sc} type="button" onClick={() => handleScoreChange(idx, sc)}
-                              className="flex-1 py-2.5 rounded-xl border-2 font-black text-[16px] transition-all duration-200 active:scale-[0.93]"
-                              style={{
-                                background: active ? m.activeBg : m.bg,
-                                borderColor: active ? m.activeBg : m.border,
-                                color: active ? 'white' : m.text
-                              }}>
-                              {m.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 体感難易度（採点後） */}
-      {finished && (
-        <div className="mt-6 bg-[#fff8f0] rounded-2xl border border-orange-200 p-4">
-          <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.08em] uppercase mb-2">体感難易度（問題全体）</p>
-          <div className="flex gap-2">
-            {['簡単', '普通', '難しい'].map((d) => {
-              const allSet = problems.every((_, i) => examSubjDiff[i] === d);
-              const dStyle = { '簡単': { bg: '#dcfce7', border: '#86efac', text: '#16a34a', active: '#16a34a' }, '普通': { bg: '#fef9c3', border: '#fcd34d', text: '#ca8a04', active: '#ca8a04' }, '難しい': { bg: '#fee2e2', border: '#fca5a5', text: '#dc2626', active: '#dc2626' } }[d];
-              return (
-                <button key={d} type="button"
-                  onClick={() => {
-                    const next = {};
-                    problems.forEach((_, i) => { next[i] = d; });
-                    setExamSubjDiff(next);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl text-[13px] font-bold border-2 transition-all duration-150 active:scale-[0.95]"
-                  style={allSet
-                    ? { background: dStyle.active, borderColor: dStyle.active, color: 'white' }
-                    : { background: dStyle.bg, borderColor: dStyle.border, color: dStyle.text }}
-                >
-                  {d}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 下部ボタン */}
-      <div className="mt-4 space-y-3">
-        {!finished ? (
-          <button type="button" onClick={handleFinishExam}
-            className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97]"
-            style={{ background: 'linear-gradient(135deg, #1e293b, #334155)' }}>
-            解き終わった → 解答を見る
-          </button>
-        ) : (
-          <button type="button" onClick={handleSubmitScores} disabled={!allScored}
-            className="w-full py-4 rounded-2xl text-[15px] font-black text-white shadow-xl transition-all duration-250 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)`, boxShadow: `0 8px 24px ${c.ring}` }}>
-            {allScored ? '結果を見る →' : '全問採点してください'}
-          </button>
-        )}
-
-        {/* PDFダウンロード（模試画面でも使用可能） */}
-        {latexForPdf && (
-          <button
-            type="button"
-            onClick={onDownloadPdf}
-            disabled={pdfLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-[12px] font-bold border-2 border-orange-200 text-[#4a6b57] bg-[#fff8f0] hover:bg-orange-50 transition-all duration-200 active:scale-[0.97] disabled:opacity-50"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            {pdfLoading ? 'PDF生成中…' : '高品質PDFで保存'}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
+/* ExamScreen removed — 模試モードは削除済み */
 
 /* ─────────────────────────────────────────────────────────────
    PDF 埋め込み練習画面 — LaTeX 組版 PDF をページ内に表示
@@ -1753,19 +1423,19 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
 
   const scoreLabel = { [SCORE.CORRECT]: '○', [SCORE.DELTA]: '△', [SCORE.WRONG]: '×' };
   const scoreColor = {
-    [SCORE.CORRECT]: { bg: '#f0fdf4', border: '#86efac', text: '#16a34a', active: '#16a34a' },
-    [SCORE.DELTA]:   { bg: '#fffbeb', border: '#fcd34d', text: '#d97706', active: '#d97706' },
-    [SCORE.WRONG]:   { bg: '#fef2f2', border: '#fca5a5', text: '#dc2626', active: '#dc2626' },
+    [SCORE.CORRECT]: { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.4)', text: '#10b981', active: '#10b981' },
+    [SCORE.DELTA]:   { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.4)', text: '#f59e0b', active: '#f59e0b' },
+    [SCORE.WRONG]:   { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.4)', text: '#ef4444', active: '#ef4444' },
   };
 
   return (
     <div className="practice-pdf-layout">
       {/* ── ヘッダー（コンパクト） ── */}
-      <div className="flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2.5 border-b border-emerald-200 bg-[#d1fae5] flex-shrink-0">
+      <div className="flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-2.5 border-b border-white/[0.06] bg-white/[0.06] flex-shrink-0">
         <BackButton onClick={onQuit} label="終了" />
         <div className="flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full" style={{ background: c.accent }} />
-          <span className="text-[10px] sm:text-[12px] font-bold text-[#5a8068]">
+          <span className="text-[10px] sm:text-[12px] font-bold text-white/40">
             {subject}{pdfFailed ? ' カード表示' : ' PDF'}
           </span>
         </div>
@@ -1776,17 +1446,17 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       <div ref={iframeContainerRef} className="flex-1 min-h-0 bg-white overflow-y-auto practice-pdf-content">
         {pdfLoading ? (
           <div className="h-full flex flex-col items-center justify-center px-6">
-            <div className="w-full max-w-sm bg-[#fff8f0] rounded-2xl shadow-sm border border-orange-200 px-6 py-7 flex flex-col gap-5">
+            <div className="w-full max-w-sm bg-white/[0.04] rounded-2xl shadow-sm border border-white/[0.08] px-6 py-7 flex flex-col gap-5">
               {/* アイコン + タイトル */}
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                      style={{ background: c.accent + '14' }}>
-                  <div className="w-5 h-5 border-[3px] border-gray-300 rounded-full animate-spin"
+                  <div className="w-5 h-5 border-[3px] border-white/[0.12] rounded-full animate-spin"
                        style={{ borderTopColor: c.accent }} />
                 </div>
                 <div>
-                  <p className="text-[13px] font-bold text-[#1a2e23]">LaTeX PDF を生成中</p>
-                  <p className="text-[11px] text-[#5a8068] mt-0.5">
+                  <p className="text-[13px] font-bold text-[#e8f5ed]">LaTeX PDF を生成中</p>
+                  <p className="text-[11px] text-white/40 mt-0.5">
                     {pdfProgress < 15 ? 'LaTeX 文書を構築中...' :
                      pdfProgress < 35 ? '数式・記号をレンダリング中...' :
                      pdfProgress < 60 ? 'TikZ 図・グラフを処理中...' :
@@ -1797,13 +1467,13 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               </div>
               {/* プログレスバー */}
               <div className="space-y-1.5">
-                <div className="w-full h-2 bg-[#bbf7d0] rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700 ease-out"
                     style={{ width: `${Math.max(4, pdfProgress)}%`, background: c.accent }}
                   />
                 </div>
-                <p className="text-[10px] text-[#5a8068] text-right">{pdfProgress}%</p>
+                <p className="text-[10px] text-white/40 text-right">{pdfProgress}%</p>
               </div>
               {/* ステップ一覧 */}
               <div className="flex flex-col gap-1.5">
@@ -1816,7 +1486,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                 ].map(({ label: stepLabel, done }) => (
                   <div key={stepLabel} className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
-                         style={{ background: done ? c.accent : '#e2e8f0' }}>
+                         style={{ background: done ? c.accent : 'rgba(255,255,255,0.08)' }}>
                       {done && (
                         <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -1834,14 +1504,14 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
           <div className="flex-1 min-h-0 flex flex-col">
             {/* 問題/解答 切り替えタブ（解答公開後のみ表示） */}
             {answersRevealed && answerPdfUrl && answerPdfUrl !== '__failed__' && (
-              <div className="flex-shrink-0 flex items-center justify-center gap-1 px-2 py-1.5 sm:py-2 bg-[#d1fae5] border-b shadow-sm" style={{ borderColor: c.accent + '30' }}>
+              <div className="flex-shrink-0 flex items-center justify-center gap-1 px-2 py-1.5 sm:py-2 bg-white/[0.06] border-b shadow-sm" style={{ borderColor: c.accent + '30' }}>
                 <button
                   type="button"
                   onClick={() => setViewingAnswer(false)}
                   className="px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[12px] sm:text-[13px] font-black transition-all duration-200"
                   style={!viewingAnswer
                     ? { background: c.accent, color: 'white', boxShadow: `0 2px 6px ${c.accent}44` }
-                    : { background: '#f1f5f9', color: '#5a8068', border: '1px solid #e2e8f0' }}
+                    : { background: 'rgba(255,255,255,0.04)', color: '#a8d8bb', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   問題
                 </button>
@@ -1851,7 +1521,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                   className="px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[12px] sm:text-[13px] font-black transition-all duration-200"
                   style={viewingAnswer
                     ? { background: c.accent, color: 'white', boxShadow: `0 2px 6px ${c.accent}44` }
-                    : { background: '#f1f5f9', color: '#5a8068', border: '1px solid #e2e8f0' }}
+                    : { background: 'rgba(255,255,255,0.04)', color: '#a8d8bb', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   解答・解説
                 </button>
@@ -1867,7 +1537,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               <div className="flex-1 min-h-0 overflow-y-auto bg-gray-100 p-2 space-y-2" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {imagesLoading && (
                   <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-xs">
-                    <div className="w-5 h-5 border-2 border-gray-300 rounded-full animate-spin" style={{ borderTopColor: c.accent }} />
+                    <div className="w-5 h-5 border-2 border-white/[0.12] rounded-full animate-spin" style={{ borderTopColor: c.accent }} />
                     <span>ページ画像を読み込み中…</span>
                   </div>
                 )}
@@ -1905,7 +1575,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                 return [];
               })();
               return (
-                <div key={idx} className="bg-[#fff8f0] rounded-2xl border border-orange-200 overflow-hidden shadow-sm">
+                <div key={idx} className="bg-white/[0.04] rounded-2xl border border-white/[0.08] overflow-hidden shadow-sm">
                   <div className="flex items-center gap-2 px-5 pt-4 pb-2">
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-black text-white"
                          style={{ background: c.accent }}>{idx + 1}</div>
@@ -1915,7 +1585,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                     )}
                   </div>
                   <div className="px-5 pb-4 space-y-2">
-                    {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#1a2e23]">{stem}</LatexBlock>}
+                    {stem && <LatexBlock className="text-[13px] leading-[1.9] text-[#e8f5ed]">{stem}</LatexBlock>}
                     {problem?.figure_tikz && problem.figure_tikz !== 'null' && (
                       <TikzFigure tikzCode={problem.figure_tikz} />
                     )}
@@ -1924,7 +1594,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                         {subproblems.map((sp, si) => sp.question ? (
                           <div key={si} className="flex gap-1.5">
                             {sp.label && <span className="text-[12px] font-black shrink-0" style={{ color: c.accent }}>{sp.label}</span>}
-                            <LatexBlock className="text-[12px] leading-[1.8] text-[#334155]">{sp.question}</LatexBlock>
+                            <LatexBlock className="text-[12px] leading-[1.8] text-[#a8d8bb]">{sp.question}</LatexBlock>
                           </div>
                         ) : null)}
                       </div>
@@ -1936,14 +1606,14 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                             <span className="text-[10px] font-bold" style={{ color: c.accent }}>
                               {sp.label ? `解答 ${sp.label}` : '解答'}
                             </span>
-                            <LatexBlock className="text-[13px] leading-[1.8] text-[#1a2e23] font-semibold">{sp.answer}</LatexBlock>
+                            <LatexBlock className="text-[13px] leading-[1.8] text-[#e8f5ed] font-semibold">{sp.answer}</LatexBlock>
                           </div>
                         )}
                         {sp.explanation && (
                           <details className="mt-1">
                             <summary className="text-[10px] font-bold text-[#6366f1] cursor-pointer select-none hover:underline">解説を見る</summary>
                             <div className="mt-1.5 pl-2 border-l-2 border-[#e8eeff]">
-                              <LatexTikzBlock className="text-[11px] leading-[1.75] text-[#6aaa7c]">{sp.explanation}</LatexTikzBlock>
+                              <LatexTikzBlock className="text-[11px] leading-[1.75] text-[#a8d8bb]">{sp.explanation}</LatexTikzBlock>
                             </div>
                           </details>
                         )}
@@ -1982,7 +1652,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
       {/* ── 解答・解説を見るボタン / 採点パネル ── */}
       {!answersRevealed && !pdfLoading ? (
         /* まだ解答を見ていない → 解答確認ボタンを表示 */
-        <div className="flex-shrink-0 bg-[#d1fae5] border-t border-emerald-200 px-3 sm:px-4 py-2 sm:py-3">
+        <div className="flex-shrink-0 bg-white/[0.06] border-t border-white/[0.06] px-3 sm:px-4 py-2 sm:py-3">
           <button
             type="button"
             onClick={() => {
@@ -1998,19 +1668,19 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
         </div>
       ) : (
       /* ── 採点パネル (モバイル: 折りたたみ可) ── */
-      <div className="flex-shrink-0 bg-[#d1fae5] border-t border-emerald-200 practice-score-panel">
+      <div className="flex-shrink-0 bg-white/[0.06] border-t border-white/[0.06] practice-score-panel">
         <button
           type="button"
           className="w-full flex items-center justify-between sm:hidden px-3 py-1.5"
           onClick={() => setScorePanelOpen(!scorePanelOpen)}
         >
-          <span className="text-[10px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase">自己採点</span>
-          <svg className={`w-3.5 h-3.5 text-[#5a8068] transition-transform duration-200 ${scorePanelOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <span className="text-[10px] font-extrabold text-white/40 tracking-[0.1em] uppercase">自己採点</span>
+          <svg className={`w-3.5 h-3.5 text-white/40 transition-transform duration-200 ${scorePanelOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
           </svg>
         </button>
         <div className={`px-2 sm:px-4 pb-2 sm:pb-4 ${scorePanelOpen ? '' : 'hidden sm:block'}`}>
-        <p className="text-[11px] font-extrabold text-[#5a8068] tracking-[0.1em] uppercase mb-2 hidden sm:block">自己採点</p>
+        <p className="text-[11px] font-extrabold text-white/40 tracking-[0.1em] uppercase mb-2 hidden sm:block">自己採点</p>
 
         {anyPoints ? (
           /* 配点ベースの得点入力 */
@@ -2020,7 +1690,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
               if (maxPts > 0) {
                 return (
                   <div key={idx} className="flex items-center gap-3">
-                    <span className="text-[11px] font-bold text-[#5a8068] w-10 shrink-0">問{idx + 1}</span>
+                    <span className="text-[11px] font-bold text-white/40 w-10 shrink-0">問{idx + 1}</span>
                     <input
                       type="number"
                       min={0}
@@ -2031,16 +1701,16 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                         setPScores((prev) => ({ ...prev, [idx]: { earned: v, max: maxPts } }));
                       }}
                       placeholder="得点"
-                      className="w-16 text-center text-[13px] font-bold border border-gray-300 rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#8b5cf6]"
+                      className="w-16 text-center text-[13px] font-bold border border-white/[0.12] rounded-lg px-2 py-1.5 focus:outline-none focus:border-[#8b5cf6]"
                     />
-                    <span className="text-[11px] text-[#5a8068]">/ {maxPts}点</span>
+                    <span className="text-[11px] text-white/40">/ {maxPts}点</span>
                   </div>
                 );
               }
               // 配点なし→○△×
               return (
                 <div key={idx} className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-[#5a8068] w-10 shrink-0">問{idx + 1}</span>
+                  <span className="text-[11px] font-bold text-white/40 w-10 shrink-0">問{idx + 1}</span>
                   <div className="flex gap-1">
                     {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((s) => {
                       const sc = scoreColor[s];
@@ -2051,7 +1721,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                           className="w-8 h-8 rounded-full text-[13px] font-black border-2 transition-all duration-150 active:scale-90"
                           style={selected
                             ? { background: sc.active, borderColor: sc.active, color: 'white' }
-                            : { background: 'white', borderColor: '#e2e8f0', color: '#cbd5e1' }}>
+                            : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }}>
                           {scoreLabel[s]}
                         </button>
                       );
@@ -2066,7 +1736,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
           <div className="flex gap-2 overflow-x-auto pb-2">
           {problems.map((p, idx) => (
             <div key={idx} className="flex flex-col items-center gap-1 flex-shrink-0">
-              <span className="text-[10px] font-bold text-[#5a8068]">問{idx + 1}</span>
+              <span className="text-[10px] font-bold text-white/40">問{idx + 1}</span>
               <div className="flex gap-1">
                 {[SCORE.CORRECT, SCORE.DELTA, SCORE.WRONG].map((s) => {
                   const sc = scoreColor[s];
@@ -2079,7 +1749,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                       className="w-9 h-9 rounded-full text-[14px] font-black border-2 transition-all duration-150 active:scale-90"
                       style={selected
                         ? { background: sc.active, borderColor: sc.active, color: 'white', transform: 'scale(1.1)' }
-                        : { background: 'white', borderColor: '#e2e8f0', color: '#cbd5e1' }}
+                        : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }}
                     >
                       {scoreLabel[s]}
                     </button>
@@ -2093,7 +1763,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
 
         {/* 主観的難易度の評価 — 問題ごと + 一括設定 */}
         <div className="mt-2 sm:mt-3">
-          <p className="text-[10px] font-extrabold text-[#5a8068] tracking-[0.08em] uppercase mb-1.5">体感難易度</p>
+          <p className="text-[10px] font-extrabold text-white/40 tracking-[0.08em] uppercase mb-1.5">体感難易度</p>
           {/* 一括設定ボタン */}
           <div className="flex gap-1 mb-1.5">
             {['簡単', '普通', '難しい'].map((d) => {
@@ -2105,7 +1775,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                   className="flex-1 py-1 rounded-md text-[10px] font-bold border transition-all duration-150 active:scale-[0.95]"
                   style={allSet
                     ? { background: dColor, borderColor: dColor, color: 'white' }
-                    : { background: 'white', borderColor: '#e2e8f0', color: dColor }}
+                    : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: dColor }}
                 >
                   全て{d}
                 </button>
@@ -2117,7 +1787,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
             <div className="space-y-1 max-h-32 overflow-y-auto">
               {problems.map((_, idx) => (
                 <div key={idx} className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-[#5a8068] w-8 shrink-0">問{idx + 1}</span>
+                  <span className="text-[10px] font-bold text-white/40 w-8 shrink-0">問{idx + 1}</span>
                   <div className="flex gap-1 flex-1">
                     {['簡単', '普通', '難しい'].map((d) => {
                       const sel = subjDiff[idx] === d;
@@ -2128,7 +1798,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                           className="flex-1 py-0.5 rounded text-[9px] font-bold border transition-all duration-100"
                           style={sel
                             ? { background: dColor, borderColor: dColor, color: 'white' }
-                            : { background: 'white', borderColor: '#e2e8f0', color: '#94a3b8' }}
+                            : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.3)' }}
                         >
                           {d}
                         </button>
@@ -2155,7 +1825,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
             onFinish(scoreArray, pointArray, diffArray);
           }}
           className="w-full mt-1.5 sm:mt-2 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl text-[12px] sm:text-[14px] font-black text-white shadow-lg transition-all duration-250 active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
-          style={{ background: allScored ? `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)` : '#e2e8f0', boxShadow: allScored ? `0 6px 20px ${c.ring}` : 'none' }}
+          style={{ background: allScored ? `linear-gradient(135deg, ${c.accent}, ${c.accent}bb)` : 'rgba(255,255,255,0.08)', boxShadow: allScored ? `0 6px 20px ${c.ring}` : 'none' }}
         >
           {allScored ? '採点して結果を見る →' : `まだ採点が完了していません`}
         </button>
@@ -2308,8 +1978,8 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
         >
           {rating.emoji}
         </div>
-        <h2 className="text-[24px] font-black text-[#1a2e23] tracking-[-0.03em]">{rating.label}</h2>
-        <p className="text-[13px] text-[#5a8068] mt-1.5 leading-relaxed">{rating.sub}</p>
+        <h2 className="text-[24px] font-black text-[#e8f5ed] tracking-[-0.03em]">{rating.label}</h2>
+        <p className="text-[13px] text-white/40 mt-1.5 leading-relaxed">{rating.sub}</p>
       </div>
 
       {/* 正答率 円グラフ */}
@@ -2328,19 +1998,19 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-[30px] font-black tracking-[-0.03em]" style={{ color: rating.color }}>{pct}</span>
-            <span className="text-[10px] font-bold text-[#5a8068] -mt-0.5">%</span>
+            <span className="text-[10px] font-bold text-white/40 -mt-0.5">%</span>
           </div>
         </div>
       </div>
 
       {/* スコアカード */}
       {hasPointData && totalMax > 0 ? (
-        <div className="bg-[#fff8f0] rounded-2xl border border-orange-200 p-5 mb-6 text-center">
-          <div className="text-[11px] font-bold text-[#5a8068] mb-1 tracking-[0.05em]">得点</div>
-          <div className="text-[36px] font-black text-[#1a2e23] leading-none">
-            {totalEarned}<span className="text-[18px] text-[#5a8068] font-bold"> / {totalMax}</span>
+        <div className="bg-white/[0.04] rounded-2xl border border-white/[0.08] p-5 mb-6 text-center">
+          <div className="text-[11px] font-bold text-white/40 mb-1 tracking-[0.05em]">得点</div>
+          <div className="text-[36px] font-black text-[#e8f5ed] leading-none">
+            {totalEarned}<span className="text-[18px] text-white/40 font-bold"> / {totalMax}</span>
           </div>
-          <div className="text-[12px] text-[#5a8068] mt-2">{total}問 ─ ○{correct} △{delta} ×{wrong}</div>
+          <div className="text-[12px] text-white/40 mt-2">{total}問 ─ ○{correct} △{delta} ×{wrong}</div>
         </div>
       ) : (
       <div className="grid grid-cols-3 gap-2.5 mb-6">
@@ -2367,7 +2037,7 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
           </div>
           <div className="flex flex-wrap gap-2">
             {weakTopics.map((t) => (
-              <span key={t} className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-red-50 text-[#f87171] border border-[#fca5a5] shadow-sm">
+              <span key={t} className="text-[12px] font-bold px-3 py-1.5 rounded-full bg-red-950/30 text-[#f87171] border border-[#fca5a5] shadow-sm">
                 {t}
               </span>
             ))}
@@ -2410,9 +2080,9 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
           onClick={handleShare}
           className="w-full py-3.5 rounded-2xl text-[14px] font-black border-2 transition-all duration-250 active:scale-[0.97] flex items-center justify-center gap-2"
           style={{
-            background: shared ? '#f0fdf4' : 'white',
-            borderColor: shared ? '#86efac' : '#e2e8f0',
-            color: shared ? '#16a34a' : '#6aaa7c',
+            background: shared ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
+            borderColor: shared ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.08)',
+            color: shared ? '#10b981' : '#a8d8bb',
           }}
         >
           {shared ? (
@@ -2456,7 +2126,7 @@ function SummaryScreen({ scores, problems, subject, onRetry, onRestart, latexFor
           </button>
         )}
 
-        <button type="button" onClick={onRestart} className="w-full py-3 text-[12px] text-[#5a8068] hover:text-[#6aaa7c] transition-colors duration-200">
+        <button type="button" onClick={onRestart} className="w-full py-3 text-[12px] text-white/40 hover:text-[#a8d8bb] transition-colors duration-200">
           別の科目・単元で練習する
         </button>
       </div>
@@ -2772,13 +2442,7 @@ export default function PracticePage() {
     }
   }, [scores, problems]);
 
-  /* ── 模試形式: 全問採点完了 ── */
-  const handleExamFinish = useCallback((scoreArray, pointArray, diffArray) => {
-    setScores(scoreArray);
-    setPointScores(pointArray || scoreArray.map(() => null));
-    setSubjDifficulties(diffArray || scoreArray.map(() => '普通'));
-    setScreen(SCREEN.SUMMARY);
-  }, []);
+  /* handleExamFinish removed — 模試モード削除済み */
 
   /* ── フォロー: 同じ単元をもう1問 ── */
   const handleFollowContinue = useCallback(async () => {
@@ -2852,7 +2516,7 @@ export default function PracticePage() {
       <>
         {error && (
           <div className="max-w-[480px] mx-auto px-5 pt-4">
-            <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3.5 text-[12px] text-red-700 font-medium flex items-start gap-2.5 shadow-sm">
+            <div className="bg-red-950/30 border border-red-800/40 rounded-2xl px-4 py-3.5 text-[12px] text-red-400 font-medium flex items-start gap-2.5 shadow-sm">
               <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
@@ -2931,19 +2595,7 @@ export default function PracticePage() {
     );
   }
 
-  if (screen === SCREEN.EXAM) {
-    return (
-      <ExamScreen
-        problems={problems}
-        subject={subject}
-        onFinish={handleExamFinish}
-        onQuit={handleQuit}
-        latexForPdf={latexForPdf}
-        onDownloadPdf={handleDownloadPdf}
-        pdfLoading={pdfLoading}
-      />
-    );
-  }
+  /* SCREEN.EXAM removed — 模試モード削除済み */
 
   if (screen === SCREEN.SUMMARY) {
     return (
