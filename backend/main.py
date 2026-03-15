@@ -6544,7 +6544,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             r'\pgfplotsset{compat=1.18}',
             # TikZのデフォルト設定: 矢印互換性を確保 + モバイル視認性向上
             r'\tikzset{',
-            r'  every picture/.style={line width=0.8pt},',
+            r'  every picture/.style={line width=1.2pt},',
             r'  every node/.style={font=\small},',
             r'  >=Stealth[length=4mm,width=3mm],',
             r'}',
