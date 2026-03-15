@@ -10002,7 +10002,7 @@ def api_get_pdf_page_image(token: str, page_num: int):
         if page_num < 1 or page_num > doc.page_count:
             doc.close()
             return JSONResponse({'error': 'invalid_page'}, status_code=400)
-        zoom = 300 / 72  # 300 DPI（Retinaディスプレイ対応）
+        zoom = 600 / 72  # 600 DPI — モバイル縮小後もstroke線が2px以上になる
         mat = fitz.Matrix(zoom, zoom)
         pix = doc[page_num - 1].get_pixmap(matrix=mat, alpha=False)
         png_data = pix.tobytes('png')
