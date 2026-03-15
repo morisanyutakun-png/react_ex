@@ -9447,11 +9447,11 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
     #    \draw[opts] (sx,sy)--++(dx,dy);
     #    \node[side] at (mx,my) {label};
     _ARROW_NODE_RE = _re.compile(
-        r'(\\draw\[(?:[^\[\]]*|\[[^\]]*\])*\])\s*'      # group(1): \draw[options] (ネストブラケット対応)
+        r'(\\draw\[.*?\])\s*'                            # group(1): \draw[options] (lazy match — backtrack安全)
         r'\(([^)]+)\)'                                   # group(2): start coord
         r'\s*(--\+\+\([^)]+\))'                          # group(3): --++(dx,dy)
         r'\s*node\[([^\]]*)\]'                            # group(4): node options
-        r'\{([^}]*)\}\s*;'                                # group(5): node content (label)
+        r'\{((?:[^{}]|\{[^{}]*\})*)\}\s*;'               # group(5): node content (1段ネスト中括弧対応)
     )
 
     def _separate_node(m):
