@@ -147,15 +147,16 @@ export default function TikzFigure({ tikzCode, className = '' }) {
   }
 
   return (
-    <div className={`my-3 ${isMobile ? 'overflow-x-auto -mx-2 px-2' : 'flex justify-center'} ${className}`}>
+    <div className={`my-3 flex justify-center ${className}`}>
       <img
         src={src}
         alt="図"
         className="rounded-xl border border-slate-200 bg-white shadow-sm"
         style={{
           maxHeight: isMobile ? 'none' : 320,
-          maxWidth: isMobile ? 'none' : '100%',
-          minWidth: isMobile ? 280 : undefined,
+          width: isMobile ? '100%' : undefined,
+          maxWidth: '100%',
+          height: 'auto',
         }}
       />
     </div>
