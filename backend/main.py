@@ -9409,9 +9409,13 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
         code
     )
 
-    # 6. >=stealth を削除（プリアンブルの \tikzset で大きな Stealth 矢印がグローバル適用される）
-    #    tikzpicture内に残すとネスト角括弧 [>=Stealth[...],scale=1.2] でコンパイルエラーになる
+    # 6. 矢印をインライン Stealth 指定に変換（モバイル縮小でも矢印が潰れない）
+    #    >=stealth を削除し、->/<->/<- を明示的な {Stealth[...]} 形式に置換
     code = _re.sub(r'>=\s*stealth\b(?:\[[^\]]*\])?\s*,?\s*', '', code)
+    _ARROW_TIP = '{Stealth[length=4mm,width=3mm]}'
+    code = code.replace('<->', _ARROW_TIP + '-' + _ARROW_TIP)
+    code = code.replace('->', '-' + _ARROW_TIP)
+    code = code.replace('<-', _ARROW_TIP + '-')
 
     return code.strip()
 
@@ -9443,9 +9447,9 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "\\usetikzlibrary{arrows,arrows.meta,calc,positioning,decorations.markings,"
         "decorations.pathmorphing,patterns,angles,quotes,intersections,shapes.geometric,"
         "3d,perspective,shapes}\n"
-        "\\tikzset{>=Stealth[length=10pt,width=7pt]}\n"
-        "\\pgfsetlinewidth{0.8pt}\n"
         "\\usepackage[siunitx]{circuitikz}\n"
+        "\\tikzset{>=Stealth[length=4mm,width=3mm]}\n"
+        "\\pgfsetlinewidth{0.8pt}\n"
         + cjk_block +
         "\\begin{document}\n"
         f"{tikz_code}\n"
