@@ -6681,6 +6681,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             # 図（figure_tikz）— TikZ コードをサニタイズして安全にラップ
             if figure_tikz and str(figure_tikz).strip() not in ('', 'null', 'None'):
                 fig_code = _sanitize_figure_tikz(str(figure_tikz).strip())
+                fig_code = _preprocess_tikz_code(fig_code)  # node分離 + 矢印変換 + モバイル最適化
                 if fig_code:
                     # tikzpicture/circuitikz/axis 環境が含まれているか確認
                     has_env = re.search(r'\\begin\{(tikzpicture|circuitikz|axis)\}', fig_code)
