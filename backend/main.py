@@ -9409,6 +9409,14 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
         code
     )
 
+    # 6. 矢印スタイル強化: >=stealth → >=Stealth[length=10pt,width=7pt]
+    #    tikzpicture内で >=stealth を指定するとグローバル設定を上書きするため個別置換
+    code = _re.sub(
+        r'>=\s*stealth\b(?!\[)',
+        '>=Stealth[length=10pt,width=7pt]',
+        code
+    )
+
     return code.strip()
 
 
@@ -9439,7 +9447,11 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "\\usetikzlibrary{arrows,arrows.meta,calc,positioning,decorations.markings,"
         "decorations.pathmorphing,patterns,angles,quotes,intersections,shapes.geometric,"
         "3d,perspective,shapes}\n"
-        "\\tikzset{>=stealth}\n"
+        "\\tikzset{\n"
+        "  >=Stealth[length=10pt,width=7pt],\n"
+        "  every path/.append style={line width=0.8pt},\n"
+        "  every node/.append style={font=\\normalsize},\n"
+        "}\n"
         "\\usepackage[siunitx]{circuitikz}\n"
         + cjk_block +
         "\\begin{document}\n"
