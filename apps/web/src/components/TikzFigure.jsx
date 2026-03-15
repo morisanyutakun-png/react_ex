@@ -157,6 +157,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
           width: isMobile ? '100%' : undefined,
           maxWidth: '100%',
           height: 'auto',
+          imageRendering: 'auto',
         }}
       />
     </div>

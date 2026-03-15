@@ -9438,27 +9438,14 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
         code
     )
 
-    # 6. 矢印をインライン Stealth 指定に変換（モバイル縮小でも矢印が潰れない）
-    #    >=stealth を削除し、->/<->/<- を明示的な {Stealth[...]} 形式に置換
-    code = _re.sub(r'>=\s*stealth\b(?:\[[^\]]*\])?\s*,?\s*', '', code)
-    _ARROW_TIP = '{Stealth[length=4mm,width=3mm]}'
-    code = code.replace('<->', _ARROW_TIP + '-' + _ARROW_TIP)
-    code = code.replace('->', '-' + _ARROW_TIP)
-    code = code.replace('<-', _ARROW_TIP + '-')
-
-    # 7. 小さすぎる円を最小半径0.15に拡大（モバイル縮小で潰れ防止）
-    code = _re.sub(
-        r'circle\s*\((\d*\.?\d+)\)',
-        lambda m: f'circle ({max(float(m.group(1)), 0.15)})',
-        code
-    )
-
-    # 8. 力ベクトル: node をパスから分離（大きな矢印ヘッド + midway node の干渉で軸が消える問題を回避）
+    # 6. 力ベクトル: node をパスから分離（大きな矢印ヘッド + midway node の干渉で軸が消える問題を回避）
+    #    ★★★ 矢印変換（Step 7）より前に実行する必要がある ★★★
+    #    矢印変換後は \draw[-{Stealth[...]}] のようにネスト括弧が入り、正規表現がマッチしなくなるため。
     #    \draw[opts] (sx,sy)--++(dx,dy) node[pos]{label}; →
     #    \draw[opts] (sx,sy)--++(dx,dy);
     #    \node[side] at (mx,my) {label};
     _ARROW_NODE_RE = _re.compile(
-        r'(\\draw\[[^\]]*\])\s*'                        # group(1): \draw[options]
+        r'(\\draw\[(?:[^\[\]]*|\[[^\]]*\])*\])\s*'      # group(1): \draw[options] (ネストブラケット対応)
         r'\(([^)]+)\)'                                   # group(2): start coord
         r'\s*(--\+\+\([^)]+\))'                          # group(3): --++(dx,dy)
         r'\s*node\[([^\]]*)\]'                            # group(4): node options
@@ -9505,6 +9492,21 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
         )
 
     code = _ARROW_NODE_RE.sub(_separate_node, code)
+
+    # 7. 矢印をインライン Stealth 指定に変換（モバイル縮小でも矢印が潰れない）
+    #    >=stealth を削除し、->/<->/<- を明示的な {Stealth[...]} 形式に置換
+    code = _re.sub(r'>=\s*stealth\b(?:\[[^\]]*\])?\s*,?\s*', '', code)
+    _ARROW_TIP = '{Stealth[length=4mm,width=3mm]}'
+    code = code.replace('<->', _ARROW_TIP + '-' + _ARROW_TIP)
+    code = code.replace('->', '-' + _ARROW_TIP)
+    code = code.replace('<-', _ARROW_TIP + '-')
+
+    # 8. 小さすぎる円を最小半径0.15に拡大（モバイル縮小で潰れ防止）
+    code = _re.sub(
+        r'circle\s*\((\d*\.?\d+)\)',
+        lambda m: f'circle ({max(float(m.group(1)), 0.15)})',
+        code
+    )
 
     return code.strip()
 
