@@ -2580,7 +2580,7 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
                                 '\n【物理図の精度ルール】\n'
                                 '- ★★ 物体が面に置かれている場合、底辺y座標=面y座標（隙間厳禁）\n'
                                 '- 三角関数値: cos30°=0.866, sin30°=0.5, cos60°=0.5, sin60°=0.866\n'
-                                '- 力ベクトル: -{Stealth[length=3mm]} で統一\n'
+                                '- 力ベクトル: -{Stealth[length=5mm,width=4mm]} で統一\n'
                                 '- 床面: pattern=north east lines でハッチング\n'
                                 '- 線の太さ: 主要=thick, 補助=thin, 寸法=very thin\n'
                             )
@@ -2904,7 +2904,7 @@ _LATEX_PHYSICS_DIAGRAM_RULES = (
     "\n=== 物理科目の図（TikZ）作成ルール（厳守） ===\n"
     "PD1. ラベルは物理量記号（$F$, $v$, $m$, $\\theta$ 等）を使う。日本語ラベル禁止。\n"
     "PD2. ★★ 力ベクトル・矢印の厳密ルール:\n"
-    "     矢印スタイル: \\draw[-{Stealth[length=3mm,width=2mm]},thick] で作用点から描く。\n"
+    "     矢印スタイル: \\draw[-{Stealth[length=5mm,width=4mm]},thick] で作用点から描く。\n"
     "     ×誤: \\draw[->] ←矢先が小さすぎて視認不能。\n"
     "     ×誤: \\draw[-stealth] ←大文字 Stealth が正しい。\n"
     "     力の方向: 物理法則に厳密に従う（重力=下, 垂直抗力=面に垂直, 摩擦=面に平行）。\n"
@@ -3325,7 +3325,7 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
             '  \\fill[pattern=north east lines] (-2,-0.3) rectangle (4,0);\n'
             '  \\draw[thick] (0,0) rectangle (2,1.5); % 物体(底辺y=0=床と同じ)\n'
             '- ★★ 力ベクトル・矢印の厳密ルール:\n'
-            '  1. 矢印スタイル: \\draw[-{Stealth[length=3mm,width=2mm]},thick,<色>]\n'
+            '  1. 矢印スタイル: \\draw[-{Stealth[length=5mm,width=4mm]},thick,<色>]\n'
             '     ×誤: \\draw[->]  ←矢先が小さすぎて見えない\n'
             '     ×誤: \\draw[-stealth] ←大文字Stealthが正しい\n'
             '  2. 作用点: 力が作用する正確な点から描く（重心or接触点）\n'
@@ -3333,7 +3333,7 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
             '  4. 長さ: 力の大きさに比例させる。全ベクトルの縮尺を統一\n'
             '  5. ラベル位置: 矢印の先端または中点の横にnode[right/above]で配置\n'
             '  6. 力の分解: 元ベクトル=実線, 分解成分=dashed, 直角マーク=小正方形(0.2単位)\n'
-            '     \\draw[dashed,-{Stealth[length=2.5mm]}] (P) -- (Px) node[below]{$F_x$};\n'
+            '     \\draw[dashed,-{Stealth[length=5mm,width=4mm]}] (P) -- (Px) node[below]{$F_x$};\n'
             '     \\draw ($(Px)+(0,0.2)$) -- ++(0.2,0) -- ++(0,-0.2); % 直角マーク\n'
             '- ラベルは物理記号: $F$, $v$, $m$, $\\theta$（日本語ラベル禁止）\n'
             '- 床面: \\fill[pattern=north east lines] でハッチング\n'
@@ -3452,7 +3452,7 @@ def _build_stem_system_prompt(subject: str, prompt_text: str,
             '☐ 物体が面に置かれている図: 底辺y座標=面y座標（隙間なし）か\n'
             '☐ TikZ図: 座標計算をコメントで書いて検算したか\n'
             '☐ 閉じた図形は -- cycle で閉じているか\n'
-            '☐ 力ベクトルの矢印: -{Stealth[length=3mm]}を使っているか（->は禁止）\n'
+            '☐ 力ベクトルの矢印: -{Stealth[length=5mm,width=4mm]}を使っているか（->は禁止）\n'
             '☐ 力の方向が物理法則と一致しているか（重力=下, 抗力=面に垂直）\n'
         )
     elif is_chemistry or is_biology:
@@ -3588,7 +3588,7 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '\n'
             '=== リアルな図の品質ルール ===\n'
             '7. 線の太さ: 主要な図形は thick、補助線は thin、寸法線は very thin を使い分ける。\n'
-            '8. 矢印: -{Stealth[length=3mm]} で統一。力・速度などのベクトル量は太い矢印 [very thick] を使う。\n'
+            '8. 矢印: -{Stealth[length=5mm,width=4mm]} で統一。力・速度などのベクトル量は太い矢印 [very thick] を使う。\n'
             '9. 塗りつぶし: 強調部分は fill=gray!20 や pattern=north east lines 等で視覚的に区別する。\n'
             '10. ラベル配置: node[above], node[below right] 等で重なりを避ける。ラベルは数式モード $...$ で。\n'
             '11. 点線・破線の使い分け: 補助線 [dashed]、延長線 [dotted]、力の分解成分 [dashed,->]。\n'
@@ -5455,9 +5455,11 @@ F13. 力ベクトルのラベルは必ず node[midway,right] または node[midw
      node[below] や node[above] を矢印端点に置くとモバイル縮小で崩れるため禁止。
      例: \\draw[->,blue,very thick] (2.2,3.35)--++(0,-1.0) node[midway,right]{$mg$};
 F14. モバイル表示対応（必須）:
-     ・circle の半径は 0.15 以上（小さい点は circle (0.15) を使う）
-     ・線は thick 以上を推奨（thin/default は縮小で見えなくなる）
+     ・矢印は -{Stealth[length=5mm,width=4mm]} を使用（-> や >=stealth は禁止）
+     ・線は thick 以上（thin は縮小で消える）
+     ・circle の半径は 0.15 以上
      ・scale は 1.0〜1.2 の範囲で使用可
+     例: \\draw[-{Stealth[length=5mm,width=4mm]},blue,very thick] (2.2,3.35)--++(0,-1.0) node[midway,right]{$mg$};
 
 ■ バネの描き方（★★★ 最重要 — 違反=物理的に不正確な図 ★★★）:
 バネは必ず「螺旋コイル（coil decoration）」で描く。ジグザグ（zigzag）は絶対禁止。
@@ -9419,7 +9421,7 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
     # 6. 矢印をインライン Stealth 指定に変換（モバイル縮小でも矢印が潰れない）
     #    >=stealth を削除し、->/<->/<- を明示的な {Stealth[...]} 形式に置換
     code = _re.sub(r'>=\s*stealth\b(?:\[[^\]]*\])?\s*,?\s*', '', code)
-    _ARROW_TIP = '{Stealth[length=4mm,width=3mm]}'
+    _ARROW_TIP = '{Stealth[length=5mm,width=4mm]}'
     code = code.replace('<->', _ARROW_TIP + '-' + _ARROW_TIP)
     code = code.replace('->', '-' + _ARROW_TIP)
     code = code.replace('<-', _ARROW_TIP + '-')
@@ -9476,8 +9478,8 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "decorations.pathmorphing,patterns,angles,quotes,intersections,shapes.geometric,"
         "3d,perspective,shapes}\n"
         "\\usepackage[siunitx]{circuitikz}\n"
-        "\\tikzset{>=Stealth[length=4mm,width=3mm]}\n"
-        "\\pgfsetlinewidth{0.8pt}\n"
+        "\\tikzset{>=Stealth[length=5mm,width=4mm]}\n"
+        "\\pgfsetlinewidth{1pt}\n"
         + cjk_block +
         "\\begin{document}\n"
         f"{tikz_code}\n"
