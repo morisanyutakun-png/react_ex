@@ -6544,9 +6544,15 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             r'\pgfplotsset{compat=1.18}',
             # TikZのデフォルト設定: 矢印互換性を確保 + モバイル視認性向上
             r'\tikzset{',
-            r'  every picture/.style={line width=1.2pt},',
+            r'  every picture/.style={line width=1.6pt},',
             r'  every node/.style={font=\small},',
             r'  >=Stealth[length=4mm,width=3mm],',
+            # 名前付き太さスタイルを再定義（adjustbox縮小後もモバイルで視認可能にする）
+            r'  thin/.style={line width=1.0pt},',
+            r'  semithick/.style={line width=1.2pt},',
+            r'  thick/.style={line width=1.6pt},',
+            r'  very thick/.style={line width=2.0pt},',
+            r'  ultra thick/.style={line width=2.4pt},',
             r'}',
         ]
     if has_circuit or True:   # circuitikz も常に読み込む
