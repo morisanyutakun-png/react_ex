@@ -4821,7 +4821,7 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
         try:
             import fitz
             doc = fitz.open(stream=content, filetype='pdf')
-            zoom = 2.0  # 200 DPI相当
+            zoom = 300 / 72  # 300 DPI
             mat = fitz.Matrix(zoom, zoom)
             all_blank = True
             for i in range(min(page_count, MAX_PAGES)):
@@ -4850,7 +4850,7 @@ async def api_validate_base_pdf(file: UploadFile = File(...)):
                     f.write(content)
                 try:
                     subprocess.run(
-                        [pdftoppm_bin, '-png', '-r', '200', '-cropbox',
+                        [pdftoppm_bin, '-png', '-r', '300', '-cropbox',
                          '-l', str(min(page_count, MAX_PAGES)),
                          pdf_path, os.path.join(tmpdir, 'page')],
                         capture_output=True, timeout=30, check=True
@@ -6526,7 +6526,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             r'\tikzset{',
             r'  every picture/.style={line width=0.8pt},',
             r'  every node/.style={font=\small},',
-            r'  >=stealth,',
+            r'  >=Stealth[length=4mm,width=3mm],',
             r'}',
         ]
     if has_circuit or True:   # circuitikz も常に読み込む
@@ -9630,7 +9630,7 @@ def render_tikz(payload: dict = Body(...)):
             try:
                 import fitz
                 doc = fitz.open(pdf_path)
-                zoom = 3.0  # 300 DPI相当（Retina対応）
+                zoom = 300 / 72  # 300 DPI（Retina対応）
                 mat = fitz.Matrix(zoom, zoom)
                 pix = doc[0].get_pixmap(matrix=mat, alpha=False)
                 png_bytes = pix.tobytes('png')
@@ -9933,7 +9933,7 @@ def api_get_pdf_page_image(token: str, page_num: int):
         if page_num < 1 or page_num > doc.page_count:
             doc.close()
             return JSONResponse({'error': 'invalid_page'}, status_code=400)
-        zoom = 3.0  # 300 DPI相当（Retinaディスプレイ対応）
+        zoom = 300 / 72  # 300 DPI（Retinaディスプレイ対応）
         mat = fitz.Matrix(zoom, zoom)
         pix = doc[page_num - 1].get_pixmap(matrix=mat, alpha=False)
         png_data = pix.tobytes('png')
