@@ -9547,8 +9547,16 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "decorations.pathmorphing,patterns,angles,quotes,intersections,shapes.geometric,"
         "3d,perspective,shapes}\n"
         "\\usepackage[siunitx]{circuitikz}\n"
-        "\\tikzset{>=Stealth[length=4mm,width=3mm]}\n"
-        "\\pgfsetlinewidth{1pt}\n"
+        "\\tikzset{\n"
+        "  >=Stealth[length=4mm,width=3mm],\n"
+        "  every picture/.style={line width=1.6pt},\n"
+        "  thin/.style={line width=1.0pt},\n"
+        "  semithick/.style={line width=1.2pt},\n"
+        "  thick/.style={line width=1.6pt},\n"
+        "  very thick/.style={line width=2.0pt},\n"
+        "  ultra thick/.style={line width=2.4pt},\n"
+        "}\n"
+        "\\pgfsetlinewidth{1.6pt}\n"
         + cjk_block +
         "\\begin{document}\n"
         f"{tikz_code}\n"
@@ -9586,7 +9594,6 @@ def render_tikz(payload: dict = Body(...)):
     td = tempfile.mkdtemp(prefix='tikz_')
     tex_path = os.path.join(td, 'figure.tex')
     pdf_path = os.path.join(td, 'figure.pdf')
-    png_path = os.path.join(td, 'figure.png')
 
     try:
         with open(tex_path, 'w', encoding='utf-8') as f:
