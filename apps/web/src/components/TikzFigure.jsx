@@ -10,7 +10,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
  */
 export default function TikzFigure({ tikzCode, className = '' }) {
   const [src, setSrc] = useState(null);
-  const [mediaType, setMediaType] = useState('image/png');
+  const [mediaType, setMediaType] = useState('image/svg+xml');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -43,7 +43,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.hint || body.error || `HTTP ${res.status}`);
       }
-      const ct = res.headers.get('Content-Type') || 'image/png';
+      const ct = res.headers.get('Content-Type') || 'image/svg+xml';
       setMediaType(ct);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

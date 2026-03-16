@@ -9395,9 +9395,9 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
         return JSONResponse({'error': 'pdf_generation_failed', 'detail': str(e)}, status_code=500)
 
 
-# ── TikZ → PNG rendering endpoint ──────────────────────────
-# In-memory cache: hash(tikz) → PNG bytes  (bounded LRU)
-_tikz_png_cache: Dict[str, bytes] = {}
+# ── TikZ → SVG rendering endpoint ──────────────────────────
+# In-memory cache: hash(tikz) → SVG string  (bounded LRU)
+_tikz_svg_cache: Dict[str, str] = {}
 _TIKZ_CACHE_MAX = 200
 
 
@@ -9558,10 +9558,10 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
 
 @app.post('/api/render_tikz')
 def render_tikz(payload: dict = Body(...)):
-    """Compile a TikZ snippet to a cropped PNG image.
+    """Compile a TikZ snippet to an SVG image (vector — lines never disappear on mobile).
 
     Payload: { "tikz": "\\begin{tikzpicture}...\\end{tikzpicture}" }
-    Returns: image/png
+    Returns: image/svg+xml
     """
     tikz_code = (payload.get('tikz') or '').strip()
     if not tikz_code:
@@ -9577,8 +9577,8 @@ def render_tikz(payload: dict = Body(...)):
     # Check cache
     import hashlib
     cache_key = hashlib.sha256(tikz_code.encode('utf-8')).hexdigest()
-    if cache_key in _tikz_png_cache:
-        return Response(content=_tikz_png_cache[cache_key], media_type='image/png')
+    if cache_key in _tikz_svg_cache:
+        return Response(content=_tikz_svg_cache[cache_key], media_type='image/svg+xml')
 
     # Build standalone LaTeX document
     standalone_doc = _build_tikz_standalone(tikz_code, with_cjk=True)
@@ -9662,67 +9662,28 @@ def render_tikz(payload: dict = Body(...)):
         if not compiled or not os.path.exists(pdf_path):
             return JSONResponse({'error': 'tikz_compilation_failed', 'hint': 'LaTeXコンパイルに失敗しました'}, status_code=500)
 
-        # Convert PDF → PNG
-        png_bytes = None
+        # Convert PDF → SVG（ベクター — モバイル縮小でも線が消えない）
+        svg_data = None
+        try:
+            import fitz
+            doc = fitz.open(pdf_path)
+            svg_data = doc[0].get_svg_image()
+            doc.close()
+            logger.info('TikZ SVG via PyMuPDF: %d chars', len(svg_data))
+        except Exception as e:
+            logger.warning('PyMuPDF TikZ SVG conversion failed: %s', e)
 
-        # Try pdftoppm (poppler)
-        pdftoppm = shutil.which('pdftoppm')
-        if pdftoppm:
-            try:
-                out_prefix = os.path.join(td, 'out')
-                subprocess.run(
-                    [pdftoppm, '-png', '-r', '300', '-singlefile', pdf_path, out_prefix],
-                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15,
-                )
-                out_png = out_prefix + '.png'
-                if os.path.exists(out_png):
-                    with open(out_png, 'rb') as pf:
-                        png_bytes = pf.read()
-            except Exception as e:
-                logger.warning('pdftoppm failed: %s', e)
-
-        # Try sips (macOS built-in)
-        if not png_bytes and shutil.which('sips'):
-            try:
-                subprocess.run(
-                    ['sips', '-s', 'format', 'png', pdf_path, '--out', png_path],
-                    check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15,
-                )
-                if os.path.exists(png_path):
-                    with open(png_path, 'rb') as pf:
-                        png_bytes = pf.read()
-            except Exception as e:
-                logger.warning('sips failed: %s', e)
-
-        # Try PyMuPDF (fitz) as another PNG converter
-        if not png_bytes:
-            try:
-                import fitz
-                doc = fitz.open(pdf_path)
-                zoom = 300 / 72  # 300 DPI（Retina対応）
-                mat = fitz.Matrix(zoom, zoom)
-                pix = doc[0].get_pixmap(matrix=mat, alpha=False)
-                png_bytes = pix.tobytes('png')
-                doc.close()
-                logger.info('TikZ PNG via PyMuPDF: %d bytes', len(png_bytes))
-            except Exception as e:
-                logger.warning('PyMuPDF TikZ conversion failed: %s', e)
-
-        # Fallback: return PDF if no PNG converter available
-        if not png_bytes:
+        # Fallback: return PDF if SVG conversion fails
+        if not svg_data:
             with open(pdf_path, 'rb') as pf:
                 pdf_bytes = pf.read()
-            # Cache and return PDF
-            if len(_tikz_png_cache) >= _TIKZ_CACHE_MAX:
-                _tikz_png_cache.pop(next(iter(_tikz_png_cache)), None)
-            _tikz_png_cache[cache_key] = pdf_bytes
             return Response(content=pdf_bytes, media_type='application/pdf')
 
-        # Cache PNG
-        if len(_tikz_png_cache) >= _TIKZ_CACHE_MAX:
-            _tikz_png_cache.pop(next(iter(_tikz_png_cache)), None)
-        _tikz_png_cache[cache_key] = png_bytes
-        return Response(content=png_bytes, media_type='image/png')
+        # Cache SVG
+        if len(_tikz_svg_cache) >= _TIKZ_CACHE_MAX:
+            _tikz_svg_cache.pop(next(iter(_tikz_svg_cache)), None)
+        _tikz_svg_cache[cache_key] = svg_data
+        return Response(content=svg_data, media_type='image/svg+xml')
 
     except Exception as e:
         logger.exception('render_tikz failed')
