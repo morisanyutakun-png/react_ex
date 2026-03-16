@@ -9519,7 +9519,7 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
     return code.strip()
 
 
-def _enforce_svg_min_stroke(svg: str, min_width: float = 2.0) -> str:
+def _enforce_svg_min_stroke(svg: str, min_width: float = 3.0) -> str:
     """SVG内のstroke線を確実にモバイルで視認可能にする包括的後処理。
 
     3段階で線の可視性を保証する:
@@ -9547,17 +9547,17 @@ def _enforce_svg_min_stroke(svg: str, min_width: float = 2.0) -> str:
             return m.group(0)
     svg = _re.sub(r'stroke-width\s*:\s*([0-9.]+)', _fix_style, svg)
 
-    # 2. vector-effect: non-scaling-stroke を注入
-    #    ブラウザがSVGをviewport縮小しても、stroke幅はCSS px単位を維持する。
-    #    → 線が縮小で消えることを完全に防止
-    non_scaling_css = (
-        '<style>'
-        'path,line,polyline,polygon,circle,ellipse,rect'
-        '{vector-effect:non-scaling-stroke}'
-        '</style>'
-    )
-    # </svg> の直前に挿入
-    svg = svg.replace('</svg>', non_scaling_css + '</svg>')
+    # 2. viewBox を 5% パディングして矢印先端のクリッピングを防止
+    import re as _re2
+    vb_match = _re2.search(r'viewBox="([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)"', svg)
+    if vb_match:
+        vx, vy, vw, vh = [float(v) for v in vb_match.groups()]
+        pad_x, pad_y = vw * 0.05, vh * 0.05
+        new_vb = f'viewBox="{vx - pad_x:.2f} {vy - pad_y:.2f} {vw + 2 * pad_x:.2f} {vh + 2 * pad_y:.2f}"'
+        svg = svg.replace(vb_match.group(0), new_vb)
+
+    # 3. overflow="visible" を SVG ルート要素に追加（矢印先端のクリップ防止）
+    svg = _re2.sub(r'<svg\b', '<svg overflow="visible"', svg, count=1)
 
     return svg
 
@@ -9582,7 +9582,7 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "\\fi\n"
     ) if with_cjk else ''
     return (
-        "\\documentclass[border=8pt]{standalone}\n"
+        "\\documentclass[border=14pt]{standalone}\n"
         "\\usepackage{amsmath,amssymb,mathtools}\n"
         "\\usepackage{tikz,pgfplots}\n"
         "\\pgfplotsset{compat=1.18}\n"

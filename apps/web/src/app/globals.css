@@ -1992,6 +1992,7 @@ main {
   width: 100%;
   height: auto;
   display: block;
+  overflow: visible;
 }
 .practice-score-panel {
   padding-bottom: env(safe-area-inset-bottom, 0px);
