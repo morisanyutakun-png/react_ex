@@ -1987,6 +1987,12 @@ main {
   min-height: 60vh;
   border: 0;
 }
+/* モバイル: インラインSVGページのレスポンシブ表示 */
+.practice-svg-page svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
 .practice-score-panel {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }

@@ -1388,9 +1388,9 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
   const [scorePanelOpen, setScorePanelOpen] = useState(false);
   const iframeContainerRef = useRef(null);
 
-  // モバイル判定 & PDF→SVG画像表示（ベクター — 線が消えない）
+  // モバイル判定 & PDF→SVGインライン表示（ベクター — 線が絶対消えない）
   const isMobile = typeof navigator !== 'undefined' && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 768));
-  const [pageImages, setPageImages] = useState([]);
+  const [pageSvgs, setPageSvgs] = useState([]);
   const [imagesLoading, setImagesLoading] = useState(false);
   const lastFetchedUrl = useRef(null);
 
@@ -1405,9 +1405,22 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
     if (effectiveUrl === lastFetchedUrl.current) return;
     lastFetchedUrl.current = effectiveUrl;
     setImagesLoading(true);
-    fetch(`${effectiveUrl}/images`).then(r => r.ok ? r.json() : null).then(d => {
-      if (d?.pages) setPageImages(d.pages);
-    }).catch(() => {}).finally(() => setImagesLoading(false));
+    fetch(`${effectiveUrl}/images`)
+      .then(r => r.ok ? r.json() : null)
+      .then(async d => {
+        if (!d?.pages) return;
+        // SVGコンテンツを直接取得してインライン注入用に保持
+        const svgs = await Promise.all(d.pages.map(async p => {
+          try {
+            const res = await fetch(p.url);
+            const text = await res.text();
+            return { page: p.page, svg: text };
+          } catch { return { page: p.page, svg: null }; }
+        }));
+        setPageSvgs(svgs);
+      })
+      .catch(() => {})
+      .finally(() => setImagesLoading(false));
   }, [isMobile, effectiveUrl]);
 
   // 配点のある問題があるかチェック
@@ -1538,12 +1551,14 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                 {imagesLoading && (
                   <div className="flex items-center justify-center gap-2 py-8 text-gray-400 text-xs">
                     <div className="w-5 h-5 border-2 border-white/[0.12] rounded-full animate-spin" style={{ borderTopColor: c.accent }} />
-                    <span>ページ画像を読み込み中…</span>
+                    <span>ページを読み込み中…</span>
                   </div>
                 )}
-                {pageImages.map((p) => (
-                  <img key={p.page} src={p.url} alt={`ページ ${p.page}`} className="w-full rounded-lg shadow-sm" loading="lazy" />
-                ))}
+                {pageSvgs.map((p) => p.svg ? (
+                  <div key={p.page}
+                       className="w-full rounded-lg shadow-sm bg-white overflow-hidden practice-svg-page"
+                       dangerouslySetInnerHTML={{ __html: p.svg }} />
+                ) : null)}
               </div>
             ) : (
               <iframe
