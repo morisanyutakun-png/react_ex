@@ -9519,25 +9519,46 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
     return code.strip()
 
 
-def _enforce_svg_min_stroke(svg: str, min_width: float = 1.5) -> str:
-    """SVG内のstroke-width値が最小幅以上になるよう強制する。
+def _enforce_svg_min_stroke(svg: str, min_width: float = 2.0) -> str:
+    """SVG内のstroke線を確実にモバイルで視認可能にする包括的後処理。
 
-    PyMuPDFのget_svg_image()はPDFのstroke幅をそのままSVGに変換するが、
-    adjustbox縮小後のPDFでは線幅が非常に小さくなる。
-    SVGはベクターだが、モバイルブラウザではstroke-width < 1.0 の線が
-    アンチエイリアスで見えにくくなるため、最小値を強制する。
+    3段階で線の可視性を保証する:
+    1. stroke-width 属性値の最小値強制（SVG属性 & CSS両形式対応）
+    2. stroke="none" / stroke-width="0" のストローク無し要素は除外
+    3. vector-effect: non-scaling-stroke CSS注入（ブラウザ側の縮小を防止）
     """
     import re as _re
-    # stroke-width="0.5" 形式（SVG属性）
+
+    # 1a. stroke-width="0.5" 形式（SVG属性）— スペースあり/なし両対応
     def _fix_attr(m):
-        val = float(m.group(1))
-        return f'stroke-width="{max(val, min_width)}"'
-    svg = _re.sub(r'stroke-width="([0-9.]+)"', _fix_attr, svg)
-    # stroke-width:0.5 形式（インラインCSS style属性内）
+        try:
+            val = float(m.group(1))
+            return f'stroke-width="{max(val, min_width)}"'
+        except ValueError:
+            return m.group(0)
+    svg = _re.sub(r'stroke-width\s*=\s*"([0-9.]+)"', _fix_attr, svg)
+
+    # 1b. stroke-width:0.5 形式（CSS style属性 / <style>ブロック内）— スペースあり/なし両対応
     def _fix_style(m):
-        val = float(m.group(1))
-        return f'stroke-width:{max(val, min_width)}'
-    svg = _re.sub(r'stroke-width:([0-9.]+)', _fix_style, svg)
+        try:
+            val = float(m.group(1))
+            return f'stroke-width:{max(val, min_width)}'
+        except ValueError:
+            return m.group(0)
+    svg = _re.sub(r'stroke-width\s*:\s*([0-9.]+)', _fix_style, svg)
+
+    # 2. vector-effect: non-scaling-stroke を注入
+    #    ブラウザがSVGをviewport縮小しても、stroke幅はCSS px単位を維持する。
+    #    → 線が縮小で消えることを完全に防止
+    non_scaling_css = (
+        '<style>'
+        'path,line,polyline,polygon,circle,ellipse,rect'
+        '{vector-effect:non-scaling-stroke}'
+        '</style>'
+    )
+    # </svg> の直前に挿入
+    svg = svg.replace('</svg>', non_scaling_css + '</svg>')
+
     return svg
 
 
