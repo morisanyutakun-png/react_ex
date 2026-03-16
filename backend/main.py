@@ -9519,6 +9519,28 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
     return code.strip()
 
 
+def _enforce_svg_min_stroke(svg: str, min_width: float = 1.5) -> str:
+    """SVG内のstroke-width値が最小幅以上になるよう強制する。
+
+    PyMuPDFのget_svg_image()はPDFのstroke幅をそのままSVGに変換するが、
+    adjustbox縮小後のPDFでは線幅が非常に小さくなる。
+    SVGはベクターだが、モバイルブラウザではstroke-width < 1.0 の線が
+    アンチエイリアスで見えにくくなるため、最小値を強制する。
+    """
+    import re as _re
+    # stroke-width="0.5" 形式（SVG属性）
+    def _fix_attr(m):
+        val = float(m.group(1))
+        return f'stroke-width="{max(val, min_width)}"'
+    svg = _re.sub(r'stroke-width="([0-9.]+)"', _fix_attr, svg)
+    # stroke-width:0.5 形式（インラインCSS style属性内）
+    def _fix_style(m):
+        val = float(m.group(1))
+        return f'stroke-width:{max(val, min_width)}'
+    svg = _re.sub(r'stroke-width:([0-9.]+)', _fix_style, svg)
+    return svg
+
+
 def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
     """TikZコードからstandaloneドキュメントを構築。"""
     cjk_block = (
@@ -9676,6 +9698,7 @@ def render_tikz(payload: dict = Body(...)):
             doc = fitz.open(pdf_path)
             svg_data = doc[0].get_svg_image()
             doc.close()
+            svg_data = _enforce_svg_min_stroke(svg_data)
             logger.info('TikZ SVG via PyMuPDF: %d chars', len(svg_data))
         except Exception as e:
             logger.warning('PyMuPDF TikZ SVG conversion failed: %s', e)
@@ -9972,6 +9995,7 @@ def api_get_pdf_page_svg(token: str, page_num: int):
             return JSONResponse({'error': 'invalid_page'}, status_code=400)
         svg_data = doc[page_num - 1].get_svg_image()
         doc.close()
+        svg_data = _enforce_svg_min_stroke(svg_data)
         return Response(
             content=svg_data,
             media_type='image/svg+xml',
