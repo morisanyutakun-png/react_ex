@@ -1388,7 +1388,7 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
   const [scorePanelOpen, setScorePanelOpen] = useState(false);
   const iframeContainerRef = useRef(null);
 
-  // モバイル判定 & PDF→PNG画像表示
+  // モバイル判定 & PDF→SVG画像表示（ベクター — 線が消えない）
   const isMobile = typeof navigator !== 'undefined' && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 768));
   const [pageImages, setPageImages] = useState([]);
   const [imagesLoading, setImagesLoading] = useState(false);

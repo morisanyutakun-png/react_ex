@@ -9980,15 +9980,15 @@ def api_get_pdf_images(token: str):
     except Exception:
         page_count = 1
     pages = [
-        {'page': i + 1, 'url': f'/api/generated_pdf/{token}/page/{i + 1}.png'}
+        {'page': i + 1, 'url': f'/api/generated_pdf/{token}/page/{i + 1}.svg'}
         for i in range(page_count)
     ]
     return JSONResponse({'pages': pages, 'total': page_count})
 
 
-@app.get('/api/generated_pdf/{token}/page/{page_num}.png')
-def api_get_pdf_page_image(token: str, page_num: int):
-    """Render a single PDF page as a PNG image."""
+@app.get('/api/generated_pdf/{token}/page/{page_num}.svg')
+def api_get_pdf_page_svg(token: str, page_num: int):
+    """Render a single PDF page as an SVG image (vector — lines never disappear on mobile)."""
     entry = GENERATED_PDFS.get(token)
     if not entry:
         return JSONResponse({'error': 'not_found'}, status_code=404)
@@ -10002,17 +10002,14 @@ def api_get_pdf_page_image(token: str, page_num: int):
         if page_num < 1 or page_num > doc.page_count:
             doc.close()
             return JSONResponse({'error': 'invalid_page'}, status_code=400)
-        zoom = 600 / 72  # 600 DPI — モバイル縮小後もstroke線が2px以上になる
-        mat = fitz.Matrix(zoom, zoom)
-        pix = doc[page_num - 1].get_pixmap(matrix=mat, alpha=False)
-        png_data = pix.tobytes('png')
+        svg_data = doc[page_num - 1].get_svg_image()
         doc.close()
         return Response(
-            content=png_data,
-            media_type='image/png',
+            content=svg_data,
+            media_type='image/svg+xml',
             headers={
                 'Cache-Control': f'private, max-age={PDF_TTL_SECONDS}',
-                'Content-Disposition': f'inline; filename="page-{page_num}.png"',
+                'Content-Disposition': f'inline; filename="page-{page_num}.svg"',
             }
         )
     except Exception as e:
