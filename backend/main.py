@@ -9519,37 +9519,45 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
     return code.strip()
 
 
-def _enforce_svg_min_stroke(svg: str, min_width: float = 3.0) -> str:
+def _enforce_svg_min_stroke(svg: str, min_width: float = 1.5, source: str = 'pymupdf') -> str:
     """SVG内のstroke線を確実にモバイルで視認可能にする包括的後処理。
 
-    3段階で線の可視性を保証する:
-    1. stroke-width 属性値の最小値強制（SVG属性 & CSS両形式対応）
-    2. stroke="none" / stroke-width="0" のストローク無し要素は除外
-    3. vector-effect: non-scaling-stroke CSS注入（ブラウザ側の縮小を防止）
+    source が 'dvisvgm' or 'pdf2svg' の場合はストローク幅の強制をスキップ
+    （高品質コンバータの出力は既に正しい線幅を持つため）。
+    viewBoxパディングと overflow="visible" は全ソースで適用。
+
+    PyMuPDF出力に対するストローク補正ロジック:
+    - ヘアライン (< 0.1): min_width まで引き上げ（消失防止）
+    - 中間幅 (0.1 〜 min_width): そのまま保持（分数線・罫線等の太り防止）
+    - min_width 以上: そのまま保持
     """
     import re as _re
 
-    # 1a. stroke-width="0.5" 形式（SVG属性）— スペースあり/なし両対応
-    def _fix_attr(m):
-        try:
-            val = float(m.group(1))
-            return f'stroke-width="{max(val, min_width)}"'
-        except ValueError:
-            return m.group(0)
-    svg = _re.sub(r'stroke-width\s*=\s*"([0-9.]+)"', _fix_attr, svg)
+    if source == 'pymupdf':
+        # 1a. stroke-width="0.5" 形式（SVG属性）— ヘアラインのみ引き上げ
+        def _fix_attr(m):
+            try:
+                val = float(m.group(1))
+                if val < 0.1:
+                    return f'stroke-width="{min_width}"'
+                return m.group(0)
+            except ValueError:
+                return m.group(0)
+        svg = _re.sub(r'stroke-width\s*=\s*"([0-9.]+)"', _fix_attr, svg)
 
-    # 1b. stroke-width:0.5 形式（CSS style属性 / <style>ブロック内）— スペースあり/なし両対応
-    def _fix_style(m):
-        try:
-            val = float(m.group(1))
-            return f'stroke-width:{max(val, min_width)}'
-        except ValueError:
-            return m.group(0)
-    svg = _re.sub(r'stroke-width\s*:\s*([0-9.]+)', _fix_style, svg)
+        # 1b. stroke-width:0.5 形式（CSS style属性 / <style>ブロック内）
+        def _fix_style(m):
+            try:
+                val = float(m.group(1))
+                if val < 0.1:
+                    return f'stroke-width:{min_width}'
+                return m.group(0)
+            except ValueError:
+                return m.group(0)
+        svg = _re.sub(r'stroke-width\s*:\s*([0-9.]+)', _fix_style, svg)
 
     # 2. viewBox を 5% パディングして矢印先端のクリッピングを防止
-    import re as _re2
-    vb_match = _re2.search(r'viewBox="([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)"', svg)
+    vb_match = _re.search(r'viewBox="([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)"', svg)
     if vb_match:
         vx, vy, vw, vh = [float(v) for v in vb_match.groups()]
         pad_x, pad_y = vw * 0.05, vh * 0.05
@@ -9557,9 +9565,83 @@ def _enforce_svg_min_stroke(svg: str, min_width: float = 3.0) -> str:
         svg = svg.replace(vb_match.group(0), new_vb)
 
     # 3. overflow="visible" を SVG ルート要素に追加（矢印先端のクリップ防止）
-    svg = _re2.sub(r'<svg\b', '<svg overflow="visible"', svg, count=1)
+    svg = _re.sub(r'<svg\b', '<svg overflow="visible"', svg, count=1)
 
     return svg
+
+
+# ── PDF → SVG 変換ヘルパー（dvisvgm → pdf2svg → PyMuPDF フォールバック）──
+_dvisvgm_path: Optional[str] = None
+_pdf2svg_path: Optional[str] = None
+_svg_tool_checked = False
+
+
+def _convert_pdf_to_svg(pdf_path: str, page_num: int = 1) -> tuple:
+    """PDF の指定ページを SVG に変換する。
+
+    Returns: (svg_data: str, source: str)
+        source は 'dvisvgm' | 'pdf2svg' | 'pymupdf' のいずれか。
+    """
+    global _dvisvgm_path, _pdf2svg_path, _svg_tool_checked
+    if not _svg_tool_checked:
+        _dvisvgm_path = shutil.which('dvisvgm')
+        _pdf2svg_path = shutil.which('pdf2svg')
+        _svg_tool_checked = True
+        logger.info('SVG converters: dvisvgm=%s, pdf2svg=%s', _dvisvgm_path, _pdf2svg_path)
+
+    # 1. dvisvgm --pdf（最高品質）
+    if _dvisvgm_path:
+        try:
+            result = subprocess.run(
+                [_dvisvgm_path, '--pdf', '--no-fonts', '--exact-bbox',
+                 f'--page={page_num}', '--stdout', pdf_path],
+                capture_output=True, timeout=30,
+            )
+            if result.returncode == 0 and result.stdout:
+                svg_data = result.stdout.decode('utf-8', errors='replace')
+                if '<svg' in svg_data:
+                    logger.info('PDF→SVG via dvisvgm: page %d, %d chars', page_num, len(svg_data))
+                    return svg_data, 'dvisvgm'
+        except Exception as e:
+            logger.warning('dvisvgm failed: %s', e)
+
+    # 2. pdf2svg（軽量・高品質）
+    if _pdf2svg_path:
+        try:
+            import tempfile as _tf
+            with _tf.NamedTemporaryFile(suffix='.svg', delete=False) as tmp:
+                tmp_svg = tmp.name
+            subprocess.run(
+                [_pdf2svg_path, pdf_path, tmp_svg, str(page_num)],
+                capture_output=True, timeout=30, check=True,
+            )
+            with open(tmp_svg, 'r', encoding='utf-8') as f:
+                svg_data = f.read()
+            os.unlink(tmp_svg)
+            if '<svg' in svg_data:
+                logger.info('PDF→SVG via pdf2svg: page %d, %d chars', page_num, len(svg_data))
+                return svg_data, 'pdf2svg'
+        except Exception as e:
+            logger.warning('pdf2svg failed: %s', e)
+            try:
+                os.unlink(tmp_svg)
+            except Exception:
+                pass
+
+    # 3. PyMuPDF フォールバック
+    try:
+        import fitz
+        doc = fitz.open(pdf_path)
+        if page_num < 1 or page_num > doc.page_count:
+            doc.close()
+            return '', 'pymupdf'
+        svg_data = doc[page_num - 1].get_svg_image()
+        doc.close()
+        logger.info('PDF→SVG via PyMuPDF: page %d, %d chars', page_num, len(svg_data))
+        return svg_data, 'pymupdf'
+    except Exception as e:
+        logger.warning('PyMuPDF SVG conversion failed: %s', e)
+        return '', 'pymupdf'
 
 
 def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
@@ -9712,17 +9794,10 @@ def render_tikz(payload: dict = Body(...)):
         if not compiled or not os.path.exists(pdf_path):
             return JSONResponse({'error': 'tikz_compilation_failed', 'hint': 'LaTeXコンパイルに失敗しました'}, status_code=500)
 
-        # Convert PDF → SVG（ベクター — モバイル縮小でも線が消えない）
-        svg_data = None
-        try:
-            import fitz
-            doc = fitz.open(pdf_path)
-            svg_data = doc[0].get_svg_image()
-            doc.close()
-            svg_data = _enforce_svg_min_stroke(svg_data)
-            logger.info('TikZ SVG via PyMuPDF: %d chars', len(svg_data))
-        except Exception as e:
-            logger.warning('PyMuPDF TikZ SVG conversion failed: %s', e)
+        # Convert PDF → SVG（dvisvgm → pdf2svg → PyMuPDF フォールバック）
+        svg_data, svg_source = _convert_pdf_to_svg(pdf_path, page_num=1)
+        if svg_data:
+            svg_data = _enforce_svg_min_stroke(svg_data, source=svg_source)
 
         # Fallback: return PDF if SVG conversion fails
         if not svg_data:
@@ -10009,14 +10084,22 @@ def api_get_pdf_page_svg(token: str, page_num: int):
         GENERATED_PDFS.pop(token, None)
         return JSONResponse({'error': 'not_found'}, status_code=404)
     try:
-        import fitz
-        doc = fitz.open(path)
-        if page_num < 1 or page_num > doc.page_count:
+        # ページ数バリデーション
+        try:
+            import fitz
+            doc = fitz.open(path)
+            total = doc.page_count
             doc.close()
+        except Exception:
+            total = 999  # バリデーションスキップ（変換側でエラーになる）
+        if page_num < 1 or page_num > total:
             return JSONResponse({'error': 'invalid_page'}, status_code=400)
-        svg_data = doc[page_num - 1].get_svg_image()
-        doc.close()
-        svg_data = _enforce_svg_min_stroke(svg_data)
+
+        # dvisvgm → pdf2svg → PyMuPDF フォールバック変換
+        svg_data, svg_source = _convert_pdf_to_svg(path, page_num)
+        if not svg_data:
+            return JSONResponse({'error': 'render_failed'}, status_code=500)
+        svg_data = _enforce_svg_min_stroke(svg_data, source=svg_source)
         return Response(
             content=svg_data,
             media_type='image/svg+xml',

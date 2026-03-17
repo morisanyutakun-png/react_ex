@@ -1994,6 +1994,14 @@ main {
   display: block;
   overflow: visible;
 }
+/* モバイル縮小時にストロークが1px未満にならないよう保護 */
+.practice-svg-page svg path,
+.practice-svg-page svg line,
+.practice-svg-page svg polyline,
+.practice-svg-page svg rect,
+.practice-svg-page svg circle {
+  vector-effect: non-scaling-stroke;
+}
 .practice-score-panel {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
