@@ -5,13 +5,15 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 /**
  * TikzFigure — TikZ コードをバックエンドでコンパイルし、画像として表示するコンポーネント
  *
+ * モバイル: 高DPI PNG（300DPI）で確実に表示（SVGのブラウザ間差異を排除）
+ * PC: SVG（ベクター品質）
+ *
  * @param {string} tikzCode - TikZ コード（\begin{tikzpicture}...\end{tikzpicture} 等）
  * @param {string} className - 追加の CSS クラス
  */
 export default function TikzFigure({ tikzCode, className = '' }) {
-  const [src, setSrc] = useState(null);        // blob URL (PDF用)
-  const [svgHtml, setSvgHtml] = useState(null); // SVGテキスト (インライン注入用)
-  const [mediaType, setMediaType] = useState('image/svg+xml');
+  const [src, setSrc] = useState(null);
+  const [mediaType, setMediaType] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -20,13 +22,11 @@ export default function TikzFigure({ tikzCode, className = '' }) {
 
   const isMobile = typeof navigator !== 'undefined' && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 768));
 
-  const doFetch = useCallback(async (code, signal) => {
+  const doFetch = useCallback(async (code, signal, mobile) => {
     setLoading(true);
     setError(null);
     setSrc(null);
-    setSvgHtml(null);
 
-    // タイムアウト: 45秒（クラウドコンパイルを待つ）
     const timeoutId = setTimeout(() => {
       if (abortRef.current) abortRef.current.abort();
     }, 45000);
@@ -35,7 +35,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
       const res = await fetch('/api/render_tikz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tikz: code }),
+        body: JSON.stringify({ tikz: code, format: mobile ? 'png' : 'svg' }),
         signal,
       });
 
@@ -45,23 +45,16 @@ export default function TikzFigure({ tikzCode, className = '' }) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.hint || body.error || `HTTP ${res.status}`);
       }
-      const ct = res.headers.get('Content-Type') || 'image/svg+xml';
+      const ct = res.headers.get('Content-Type') || 'image/png';
       setMediaType(ct);
 
-      if (ct.includes('svg')) {
-        // SVG: テキストとして取得しインライン注入（CSSが内部に到達する）
-        const text = await res.text();
-        setSvgHtml(text);
-      } else {
-        // PDF等: blob URLで表示
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        if (prevSrc.current) {
-          URL.revokeObjectURL(prevSrc.current);
-        }
-        prevSrc.current = url;
-        setSrc(url);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      if (prevSrc.current) {
+        URL.revokeObjectURL(prevSrc.current);
       }
+      prevSrc.current = url;
+      setSrc(url);
       setLoading(false);
     } catch (err) {
       clearTimeout(timeoutId);
@@ -83,12 +76,12 @@ export default function TikzFigure({ tikzCode, className = '' }) {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    doFetch(tikzCode, controller.signal);
+    doFetch(tikzCode, controller.signal, isMobile);
 
     return () => {
       controller.abort();
     };
-  }, [tikzCode, retryCount, doFetch]);
+  }, [tikzCode, retryCount, doFetch, isMobile]);
 
   // クリーンアップ
   useEffect(() => {
@@ -132,9 +125,9 @@ export default function TikzFigure({ tikzCode, className = '' }) {
     );
   }
 
-  if (!src && !svgHtml) return null;
+  if (!src) return null;
 
-  if (mediaType.includes('pdf')) {
+  if (mediaType?.includes('pdf')) {
     return (
       <div className={`my-3 ${className}`}>
         {isMobile ? (
@@ -154,25 +147,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
     );
   }
 
-  // SVG: インライン注入（CSSのvector-effect: non-scaling-strokeが内部に到達する）
-  if (svgHtml) {
-    return (
-      <div className={`my-3 flex justify-center ${className}`}>
-        <div
-          className="practice-svg-page rounded-xl border border-slate-200 bg-white shadow-sm"
-          style={{
-            maxHeight: isMobile ? 'none' : 320,
-            width: isMobile ? '100%' : undefined,
-            maxWidth: '100%',
-            overflow: 'visible',
-          }}
-          dangerouslySetInnerHTML={{ __html: svgHtml }}
-        />
-      </div>
-    );
-  }
-
-  // フォールバック: blob URL（PDF以外の非SVG画像）
+  // PNG/SVG共通: <img>タグで表示（シンプル・確実）
   return (
     <div className={`my-3 flex justify-center ${className}`}>
       <img
@@ -184,7 +159,6 @@ export default function TikzFigure({ tikzCode, className = '' }) {
           width: isMobile ? '100%' : undefined,
           maxWidth: '100%',
           height: 'auto',
-          imageRendering: 'auto',
         }}
       />
     </div>

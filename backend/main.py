@@ -9729,12 +9729,13 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
 
 @app.post('/api/render_tikz')
 def render_tikz(payload: dict = Body(...)):
-    """Compile a TikZ snippet to an SVG image (vector — lines never disappear on mobile).
+    """Compile a TikZ snippet to SVG or high-DPI PNG.
 
-    Payload: { "tikz": "\\begin{tikzpicture}...\\end{tikzpicture}" }
-    Returns: image/svg+xml
+    Payload: { "tikz": "...", "format": "svg"|"png" }
+    Returns: image/svg+xml or image/png
     """
     tikz_code = (payload.get('tikz') or '').strip()
+    output_format = (payload.get('format') or 'svg').strip().lower()
     if not tikz_code:
         return JSONResponse({'error': 'empty_tikz'}, status_code=400)
 
@@ -9747,9 +9748,10 @@ def render_tikz(payload: dict = Body(...)):
 
     # Check cache
     import hashlib
-    cache_key = hashlib.sha256(tikz_code.encode('utf-8')).hexdigest()
+    cache_key = hashlib.sha256(f'{tikz_code}:{output_format}'.encode('utf-8')).hexdigest()
     if cache_key in _tikz_svg_cache:
-        return Response(content=_tikz_svg_cache[cache_key], media_type='image/svg+xml')
+        mt = 'image/png' if output_format == 'png' else 'image/svg+xml'
+        return Response(content=_tikz_svg_cache[cache_key], media_type=mt)
 
     # Build standalone LaTeX document
     standalone_doc = _build_tikz_standalone(tikz_code, with_cjk=True)
@@ -9832,7 +9834,15 @@ def render_tikz(payload: dict = Body(...)):
         if not compiled or not os.path.exists(pdf_path):
             return JSONResponse({'error': 'tikz_compilation_failed', 'hint': 'LaTeXコンパイルに失敗しました'}, status_code=500)
 
-        # Convert PDF → SVG（dvisvgm → pdf2svg → PyMuPDF フォールバック）
+        # PNG format: 高DPI ラスタライズ（モバイルで確実に表示される）
+        if output_format == 'png':
+            png_bytes = _convert_pdf_to_png(pdf_path, page_num=1, dpi=300)
+            if len(_tikz_svg_cache) >= _TIKZ_CACHE_MAX:
+                _tikz_svg_cache.pop(next(iter(_tikz_svg_cache)), None)
+            _tikz_svg_cache[cache_key] = png_bytes
+            return Response(content=png_bytes, media_type='image/png')
+
+        # SVG format: dvisvgm → pdf2svg → PyMuPDF フォールバック
         svg_data, svg_source = _convert_pdf_to_svg(pdf_path, page_num=1)
         if svg_data:
             svg_data = _enforce_svg_min_stroke(svg_data, source=svg_source)
@@ -10105,10 +10115,55 @@ def api_get_pdf_images(token: str):
     except Exception:
         page_count = 1
     pages = [
-        {'page': i + 1, 'url': f'/api/generated_pdf/{token}/page/{i + 1}.svg'}
+        {
+            'page': i + 1,
+            'url': f'/api/generated_pdf/{token}/page/{i + 1}.svg',
+            'png_url': f'/api/generated_pdf/{token}/page/{i + 1}.png',
+        }
         for i in range(page_count)
     ]
     return JSONResponse({'pages': pages, 'total': page_count})
+
+
+def _convert_pdf_to_png(pdf_path: str, page_num: int = 1, dpi: int = 300) -> bytes:
+    """PDFページを高DPI PNGにラスタライズ。モバイルで確実に表示される。"""
+    import fitz
+    doc = fitz.open(pdf_path)
+    if page_num < 1 or page_num > doc.page_count:
+        doc.close()
+        raise ValueError(f'Invalid page number: {page_num}')
+    page = doc[page_num - 1]
+    pix = page.get_pixmap(dpi=dpi, alpha=False)
+    png_bytes = pix.tobytes("png")
+    doc.close()
+    return png_bytes
+
+
+@app.get('/api/generated_pdf/{token}/page/{page_num}.png')
+def api_get_pdf_page_png(token: str, page_num: int):
+    """Render a single PDF page as a high-DPI PNG (300DPI — mobile-proof)."""
+    entry = GENERATED_PDFS.get(token)
+    if not entry:
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    path = entry.get('path')
+    if not path or not os.path.exists(path):
+        GENERATED_PDFS.pop(token, None)
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    try:
+        png_bytes = _convert_pdf_to_png(path, page_num, dpi=300)
+        return Response(
+            content=png_bytes,
+            media_type='image/png',
+            headers={
+                'Cache-Control': f'private, max-age={PDF_TTL_SECONDS}',
+                'Content-Disposition': f'inline; filename="page-{page_num}.png"',
+            }
+        )
+    except ValueError as e:
+        return JSONResponse({'error': str(e)}, status_code=400)
+    except Exception as e:
+        logger.error('PDF page PNG rendering failed: %s', e)
+        return JSONResponse({'error': 'render_failed'}, status_code=500)
 
 
 @app.get('/api/generated_pdf/{token}/page/{page_num}.svg')
