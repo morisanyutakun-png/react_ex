@@ -6544,16 +6544,17 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             r'\pgfplotsset{compat=1.18}',
             # TikZのデフォルト設定: 矢印互換性を確保 + モバイル視認性向上
             r'\tikzset{',
-            r'  every picture/.style={line width=1.6pt},',
+            r'  every picture/.style={line width=3pt},',
             r'  every node/.style={font=\small},',
-            r'  >=Stealth[length=4mm,width=3mm],',
-            # 名前付き太さスタイルを再定義（adjustbox縮小後もモバイルで視認可能にする）
-            r'  thin/.style={line width=1.0pt},',
-            r'  semithick/.style={line width=1.2pt},',
-            r'  thick/.style={line width=1.6pt},',
-            r'  very thick/.style={line width=2.0pt},',
-            r'  ultra thick/.style={line width=2.4pt},',
+            r'  >=Stealth[length=5mm,width=3.5mm],',
+            # 名前付き太さスタイルを再定義（PyMuPDF filled-path変換でも視認可能な太さ）
+            r'  thin/.style={line width=2pt},',
+            r'  semithick/.style={line width=2.5pt},',
+            r'  thick/.style={line width=3pt},',
+            r'  very thick/.style={line width=3.5pt},',
+            r'  ultra thick/.style={line width=4pt},',
             r'}',
+            r'\pgfsetlinewidth{3pt}',
         ]
     if has_circuit or True:   # circuitikz も常に読み込む
         lines += [
@@ -9520,43 +9521,65 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
 
 
 def _enforce_svg_min_stroke(svg: str, min_width: float = 1.5, source: str = 'pymupdf') -> str:
-    """SVG内のstroke線を確実にモバイルで視認可能にする包括的後処理。
+    """SVG内の線を確実にモバイルで視認可能にする包括的後処理。
 
-    source が 'dvisvgm' or 'pdf2svg' の場合はストローク幅の強制をスキップ
-    （高品質コンバータの出力は既に正しい線幅を持つため）。
+    source が 'dvisvgm' or 'pdf2svg' の場合はストローク補正をスキップ
+    （高品質コンバータの出力は stroked path で線幅が正確なため）。
     viewBoxパディングと overflow="visible" は全ソースで適用。
 
-    PyMuPDF出力に対するストローク補正ロジック:
-    - ヘアライン (< 0.1): min_width まで引き上げ（消失防止）
-    - 中間幅 (0.1 〜 min_width): そのまま保持（分数線・罫線等の太り防止）
-    - min_width 以上: そのまま保持
+    PyMuPDF出力に対する補正:
+    1. stroke-width < 1.0 → min_width に引き上げ（矢印軸・細線の消失防止）
+    2. filled path に stroke を追加（PyMuPDFは線を thin filled rect で出力するため）
     """
     import re as _re
 
     if source == 'pymupdf':
-        # 1a. stroke-width="0.5" 形式（SVG属性）— ヘアラインのみ引き上げ
+        # 1a. stroke-width="x" 形式 — 1.0 未満を引き上げ
         def _fix_attr(m):
             try:
                 val = float(m.group(1))
-                if val < 0.1:
+                if val < 1.0:
                     return f'stroke-width="{min_width}"'
                 return m.group(0)
             except ValueError:
                 return m.group(0)
         svg = _re.sub(r'stroke-width\s*=\s*"([0-9.]+)"', _fix_attr, svg)
 
-        # 1b. stroke-width:0.5 形式（CSS style属性 / <style>ブロック内）
+        # 1b. stroke-width:x 形式（CSS style）
         def _fix_style(m):
             try:
                 val = float(m.group(1))
-                if val < 0.1:
+                if val < 1.0:
                     return f'stroke-width:{min_width}'
                 return m.group(0)
             except ValueError:
                 return m.group(0)
         svg = _re.sub(r'stroke-width\s*:\s*([0-9.]+)', _fix_style, svg)
 
-    # 2. viewBox を 5% パディングして矢印先端のクリッピングを防止
+        # 2. filled path にストロークを追加（PyMuPDFが線を thin filled path として出力する問題の対策）
+        #    fill があって stroke がない <path> に、fill と同色の stroke + min_width を付与
+        #    ※ テキストグリフ（fill のみの大きな path）には影響しない — stroke が追加されても
+        #      width が小さいため視覚的変化は最小限
+        def _add_stroke_to_filled(m):
+            tag = m.group(0)
+            # 既に stroke 属性がある場合はスキップ
+            if _re.search(r'\bstroke\s*=', tag) or 'stroke:' in tag:
+                return tag
+            # fill 色を取得
+            fill_match = _re.search(r'fill="([^"]+)"', tag)
+            if not fill_match or fill_match.group(1) in ('none', 'transparent', 'white', '#ffffff', '#fff'):
+                return tag
+            fill_color = fill_match.group(1)
+            inject = f' stroke="{fill_color}" stroke-width="{min_width}"'
+            # 閉じ部分の前に属性を挿入
+            if tag.endswith('/>'):
+                return tag[:-2] + inject + '/>'
+            if tag.endswith('>'):
+                return tag[:-1] + inject + '>'
+            return tag
+        svg = _re.sub(r'<path\b[^>]*(?:/>|>)', _add_stroke_to_filled, svg)
+
+    # 3. viewBox を 5% パディングして矢印先端のクリッピングを防止
     vb_match = _re.search(r'viewBox="([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)"', svg)
     if vb_match:
         vx, vy, vw, vh = [float(v) for v in vb_match.groups()]
@@ -9564,7 +9587,7 @@ def _enforce_svg_min_stroke(svg: str, min_width: float = 1.5, source: str = 'pym
         new_vb = f'viewBox="{vx - pad_x:.2f} {vy - pad_y:.2f} {vw + 2 * pad_x:.2f} {vh + 2 * pad_y:.2f}"'
         svg = svg.replace(vb_match.group(0), new_vb)
 
-    # 3. overflow="visible" を SVG ルート要素に追加（矢印先端のクリップ防止）
+    # 4. overflow="visible" を SVG ルート要素に追加（矢印先端のクリップ防止）
     svg = _re.sub(r'<svg\b', '<svg overflow="visible"', svg, count=1)
 
     return svg
@@ -9673,15 +9696,15 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "3d,perspective,shapes}\n"
         "\\usepackage[siunitx]{circuitikz}\n"
         "\\tikzset{\n"
-        "  >=Stealth[length=4mm,width=3mm],\n"
-        "  every picture/.style={line width=1.6pt},\n"
-        "  thin/.style={line width=1.0pt},\n"
-        "  semithick/.style={line width=1.2pt},\n"
-        "  thick/.style={line width=1.6pt},\n"
-        "  very thick/.style={line width=2.0pt},\n"
-        "  ultra thick/.style={line width=2.4pt},\n"
+        "  >=Stealth[length=5mm,width=3.5mm],\n"
+        "  every picture/.style={line width=3pt},\n"
+        "  thin/.style={line width=2pt},\n"
+        "  semithick/.style={line width=2.5pt},\n"
+        "  thick/.style={line width=3pt},\n"
+        "  very thick/.style={line width=3.5pt},\n"
+        "  ultra thick/.style={line width=4pt},\n"
         "}\n"
-        "\\pgfsetlinewidth{1.6pt}\n"
+        "\\pgfsetlinewidth{3pt}\n"
         + cjk_block +
         "\\begin{document}\n"
         f"{tikz_code}\n"
