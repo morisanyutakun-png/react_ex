@@ -1388,9 +1388,9 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
   const [scorePanelOpen, setScorePanelOpen] = useState(false);
   const iframeContainerRef = useRef(null);
 
-  // モバイル判定 & PDF→SVGインライン表示（ベクター — 線が絶対消えない）
+  // モバイル判定 & PDF→高DPI PNG表示（300DPI — 全モバイルブラウザで確実に表示）
   const isMobile = typeof navigator !== 'undefined' && (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 0 && window.innerWidth <= 768));
-  const [pageSvgs, setPageSvgs] = useState([]);
+  const [pageImages, setPageImages] = useState([]);
   const [imagesLoading, setImagesLoading] = useState(false);
   const lastFetchedUrl = useRef(null);
 
@@ -1407,17 +1407,10 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
     setImagesLoading(true);
     fetch(`${effectiveUrl}/images`)
       .then(r => r.ok ? r.json() : null)
-      .then(async d => {
+      .then(d => {
         if (!d?.pages) return;
-        // SVGコンテンツを直接取得してインライン注入用に保持
-        const svgs = await Promise.all(d.pages.map(async p => {
-          try {
-            const res = await fetch(p.url);
-            const text = await res.text();
-            return { page: p.page, svg: text };
-          } catch { return { page: p.page, svg: null }; }
-        }));
-        setPageSvgs(svgs);
+        // 高DPI PNG URLを使用（SVGのブラウザ間差異を完全に排除）
+        setPageImages(d.pages.map(p => ({ page: p.page, png_url: p.png_url })));
       })
       .catch(() => {})
       .finally(() => setImagesLoading(false));
@@ -1554,10 +1547,13 @@ function PdfViewScreen({ pdfUrl, pdfLoading, pdfProgress, answerPdfUrl, answerPd
                     <span>ページを読み込み中…</span>
                   </div>
                 )}
-                {pageSvgs.map((p) => p.svg ? (
-                  <div key={p.page}
-                       className="w-full rounded-lg shadow-sm bg-white overflow-hidden practice-svg-page"
-                       dangerouslySetInnerHTML={{ __html: p.svg }} />
+                {pageImages.map((p) => p.png_url ? (
+                  <img key={p.page}
+                       src={p.png_url}
+                       alt={`ページ ${p.page}`}
+                       className="w-full rounded-lg shadow-sm bg-white"
+                       style={{ width: '100%', height: 'auto' }}
+                       loading="lazy" />
                 ) : null)}
               </div>
             ) : (

@@ -6479,10 +6479,12 @@ def _sanitize_figure_tikz(code: str) -> str:
     return code.strip()
 
 
-def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: str = 'full') -> str:
+def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: str = 'full', prerender_dir: Optional[str] = None) -> str:
     """構造化された問題データから、入試問題品質のPDF用LaTeXドキュメントを構築する。
     subproblems 配列・figure_tikz フィールドに対応。旧形式（answer/explanation トップレベル）とも互換。
     mode: 'full'=問題+解答, 'problems'=問題のみ, 'answers'=解答のみ
+    prerender_dir: 指定時、TikZ図をスタンドアロンPNGにプリレンダリングして\\includegraphicsで挿入
+                   （\\adjustboxの縮小による線幅劣化を防止）
     """
 
     # ─── 科目別アクセントカラー ───
@@ -6523,7 +6525,8 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
         # モバイル最適化: iPhone viewport ≈ 390px → 72dpi で 139mm
         # 135mm × 235mm でほぼ画面幅いっぱいに表示される
         r'\geometry{paperwidth=135mm,paperheight=235mm,top=5mm,bottom=7mm,left=5mm,right=5mm}',
-        r'\usepackage{adjustbox}',         # \adjustbox{max width=\linewidth} で図を自動縮小
+        r'\usepackage{adjustbox}',         # \adjustbox{max width=\linewidth} で図を自動縮小（フォールバック用）
+        r'\usepackage{graphicx}',          # \includegraphics（プリレンダリングPNG挿入用）
         r'\usepackage{parskip}',
         r'\setlength{\parskip}{0.25em}',
         r'\setlength{\parindent}{0pt}',
@@ -6685,29 +6688,36 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
                 lines.append(stem)
                 lines.append('')
 
-            # 図（figure_tikz）— TikZ コードをサニタイズして安全にラップ
+            # 図（figure_tikz）— プリレンダリングPNG or フォールバックadjustbox
             if figure_tikz and str(figure_tikz).strip() not in ('', 'null', 'None'):
                 fig_code = _sanitize_figure_tikz(str(figure_tikz).strip())
                 if fig_code:
                     fig_code = _preprocess_tikz_code(fig_code)  # node分離 + 矢印変換 + モバイル最適化
                 if fig_code:
-                    # tikzpicture/circuitikz/axis 環境が含まれているか確認
                     has_env = re.search(r'\\begin\{(tikzpicture|circuitikz|axis)\}', fig_code)
-                    if has_env:
-                        # adjustbox でモバイル最適化: 幅が \linewidth を超えたとき自動縮小
+                    full_tikz = fig_code if has_env else (
+                        r'\begin{tikzpicture}[>=stealth]' + '\n' + fig_code + '\n' + r'\end{tikzpicture}'
+                    )
+
+                    # プリレンダリング: TikZ→スタンドアロンPNG（線幅が保持される）
+                    png_inserted = False
+                    if prerender_dir:
+                        _fig_counter = getattr(_build_practice_latex, '_fig_counter', 0) + 1
+                        _build_practice_latex._fig_counter = _fig_counter
+                        fig_filename = f'fig_{mode}_{idx}_{_fig_counter}.png'
+                        png_path = _prerender_tikz_to_png(full_tikz, prerender_dir, fig_filename, dpi=400)
+                        if png_path:
+                            lines.append(r'\begin{center}')
+                            lines.append(rf'\includegraphics[width=\linewidth]{{{png_path}}}')
+                            lines.append(r'\end{center}')
+                            lines.append('')
+                            png_inserted = True
+
+                    # フォールバック: プリレンダリング失敗 or prerender_dir未指定
+                    if not png_inserted:
                         lines.append(r'\begin{center}')
                         lines.append(r'\adjustbox{max width=\linewidth}{%')
-                        lines.append(fig_code)
-                        lines.append(r'}%')
-                        lines.append(r'\end{center}')
-                        lines.append('')
-                    # 環境がない場合は tikzpicture で囲む
-                    elif not fig_code.startswith('%'):
-                        lines.append(r'\begin{center}')
-                        lines.append(r'\adjustbox{max width=\linewidth}{%')
-                        lines.append(r'\begin{tikzpicture}[>=stealth]')
-                        lines.append(fig_code)
-                        lines.append(r'\end{tikzpicture}')
+                        lines.append(full_tikz)
                         lines.append(r'}%')
                         lines.append(r'\end{center}')
                         lines.append('')
@@ -6925,9 +6935,15 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
             return
 
         # LaTeX ドキュメント構築（PDF用）
-        latex_doc = _build_practice_latex(problems, subject, difficulty, mode='full')
-        latex_problems_doc = _build_practice_latex(problems, subject, difficulty, mode='problems')
-        latex_answers_doc = _build_practice_latex(problems, subject, difficulty, mode='answers')
+        # TikZ図をスタンドアロンPNGにプリレンダリングして\\includegraphicsで挿入
+        # → \\adjustboxの縮小による線幅劣化を防止（モバイル矢印崩れの根本修正）
+        _prerender_td = tempfile.mkdtemp(prefix='tikz_prerender_')
+        _build_practice_latex._fig_counter = 0  # カウンタリセット
+        latex_doc = _build_practice_latex(problems, subject, difficulty, mode='full', prerender_dir=_prerender_td)
+        _build_practice_latex._fig_counter = 0
+        latex_problems_doc = _build_practice_latex(problems, subject, difficulty, mode='problems', prerender_dir=_prerender_td)
+        _build_practice_latex._fig_counter = 0
+        latex_answers_doc = _build_practice_latex(problems, subject, difficulty, mode='answers', prerender_dir=_prerender_td)
 
         # 使用回数インクリメント
         if user_id:
@@ -7116,16 +7132,21 @@ async def practice_parse_json(payload: dict = Body(...)):
 
     diff = difficulty or '応用'
     # LaTeX 構築: 問題のみ・解答のみ・フルの3種
+    # TikZ図をプリレンダリングPNGで挿入（モバイル矢印崩れ防止）
+    _prerender_td2 = tempfile.mkdtemp(prefix='tikz_prerender_')
     try:
-        latex_problems = _build_practice_latex(problems, subject, diff, mode='problems')
+        _build_practice_latex._fig_counter = 0
+        latex_problems = _build_practice_latex(problems, subject, diff, mode='problems', prerender_dir=_prerender_td2)
     except Exception:
         latex_problems = None
     try:
-        latex_answers = _build_practice_latex(problems, subject, diff, mode='answers')
+        _build_practice_latex._fig_counter = 0
+        latex_answers = _build_practice_latex(problems, subject, diff, mode='answers', prerender_dir=_prerender_td2)
     except Exception:
         latex_answers = None
     try:
-        latex = _build_practice_latex(problems, subject, diff, mode='full')
+        _build_practice_latex._fig_counter = 0
+        latex = _build_practice_latex(problems, subject, diff, mode='full', prerender_dir=_prerender_td2)
     except Exception:
         latex = None
 
@@ -9727,14 +9748,112 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
     )
 
 
+def _prerender_tikz_to_png(tikz_code: str, output_dir: str, filename: str = 'figure.png', dpi: int = 400) -> Optional[str]:
+    """TikZコードをスタンドアロンPNGにプリレンダリング。
+
+    standalone documentclass（border=14pt）で図にぴったりフィットするPDFを生成し、
+    高DPI PNGに変換。\\adjustbox による縮小が発生しないため線幅が保持される。
+
+    Args:
+        tikz_code: TikZコード（\\begin{tikzpicture}...を含む）
+        output_dir: PNG出力先ディレクトリ
+        filename: 出力PNGファイル名
+        dpi: ラスタライズDPI（デフォルト400 — Retina対応）
+
+    Returns: PNGファイルの絶対パス or None（コンパイル失敗時）
+    """
+    td = tempfile.mkdtemp(prefix='tikz_pre_')
+    tex_path = os.path.join(td, 'figure.tex')
+    pdf_path = os.path.join(td, 'figure.pdf')
+    png_out = os.path.join(output_dir, filename)
+
+    try:
+        # 1. standaloneドキュメント生成（with_cjk=True → CJK文字対応）
+        standalone_doc = _build_tikz_standalone(tikz_code, with_cjk=True)
+        with open(tex_path, 'w', encoding='utf-8') as f:
+            f.write(standalone_doc)
+
+        # 2. LaTeXコンパイル（ローカル → クラウドフォールバック）
+        _cloud_only = (
+            os.environ.get('CLOUD_LATEX_ONLY', '').strip() in ('1', 'true', 'yes')
+            or os.environ.get('RENDER', '').strip().lower() in ('true', '1', 'yes')
+        )
+        compiled = False
+
+        if not _cloud_only:
+            for cand in ('xelatex', 'lualatex', 'pdflatex'):
+                eng = shutil.which(cand)
+                if not eng:
+                    continue
+                try:
+                    result = subprocess.run(
+                        [cand, '-interaction=nonstopmode', '-halt-on-error',
+                         '-output-directory', td, tex_path],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=45,
+                    )
+                    compiled = result.returncode == 0 and os.path.exists(pdf_path)
+                    if compiled:
+                        break
+                    # CJKなしで再試行
+                    simple_doc = _build_tikz_standalone(tikz_code, with_cjk=False)
+                    with open(tex_path, 'w', encoding='utf-8') as f:
+                        f.write(simple_doc)
+                    result2 = subprocess.run(
+                        [cand, '-interaction=nonstopmode', '-halt-on-error',
+                         '-output-directory', td, tex_path],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=45,
+                    )
+                    compiled = result2.returncode == 0 and os.path.exists(pdf_path)
+                    if compiled:
+                        break
+                except (subprocess.TimeoutExpired, OSError):
+                    continue
+
+        if not compiled:
+            # クラウドフォールバック
+            for attempt in range(2):
+                try:
+                    doc_to_send = _build_tikz_standalone(tikz_code, with_cjk=(attempt == 0))
+                    cloud_resp = requests.post(
+                        'https://latex.ytotech.com/builds/sync',
+                        json={'compiler': 'xelatex', 'resources': [{'main': True, 'content': doc_to_send}]},
+                        timeout=90,
+                    )
+                    if cloud_resp.status_code in (200, 201) and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
+                        with open(pdf_path, 'wb') as pf:
+                            pf.write(cloud_resp.content)
+                        compiled = True
+                        break
+                except Exception:
+                    continue
+
+        if not compiled or not os.path.exists(pdf_path):
+            logger.warning('TikZ prerender failed for: %s...', tikz_code[:100])
+            return None
+
+        # 3. PDF → 高DPI PNG
+        png_bytes = _convert_pdf_to_png(pdf_path, page_num=1, dpi=dpi)
+        with open(png_out, 'wb') as f:
+            f.write(png_bytes)
+        logger.info('TikZ prerender OK: %s (%d bytes, %d DPI)', filename, len(png_bytes), dpi)
+        return png_out
+
+    except Exception as e:
+        logger.warning('TikZ prerender error: %s', e)
+        return None
+    finally:
+        shutil.rmtree(td, ignore_errors=True)
+
+
 @app.post('/api/render_tikz')
 def render_tikz(payload: dict = Body(...)):
-    """Compile a TikZ snippet to an SVG image (vector — lines never disappear on mobile).
+    """Compile a TikZ snippet to SVG or high-DPI PNG.
 
-    Payload: { "tikz": "\\begin{tikzpicture}...\\end{tikzpicture}" }
-    Returns: image/svg+xml
+    Payload: { "tikz": "...", "format": "svg"|"png" }
+    Returns: image/svg+xml or image/png
     """
     tikz_code = (payload.get('tikz') or '').strip()
+    output_format = (payload.get('format') or 'svg').strip().lower()
     if not tikz_code:
         return JSONResponse({'error': 'empty_tikz'}, status_code=400)
 
@@ -9747,9 +9866,10 @@ def render_tikz(payload: dict = Body(...)):
 
     # Check cache
     import hashlib
-    cache_key = hashlib.sha256(tikz_code.encode('utf-8')).hexdigest()
+    cache_key = hashlib.sha256(f'{tikz_code}:{output_format}'.encode('utf-8')).hexdigest()
     if cache_key in _tikz_svg_cache:
-        return Response(content=_tikz_svg_cache[cache_key], media_type='image/svg+xml')
+        mt = 'image/png' if output_format == 'png' else 'image/svg+xml'
+        return Response(content=_tikz_svg_cache[cache_key], media_type=mt)
 
     # Build standalone LaTeX document
     standalone_doc = _build_tikz_standalone(tikz_code, with_cjk=True)
@@ -9832,7 +9952,15 @@ def render_tikz(payload: dict = Body(...)):
         if not compiled or not os.path.exists(pdf_path):
             return JSONResponse({'error': 'tikz_compilation_failed', 'hint': 'LaTeXコンパイルに失敗しました'}, status_code=500)
 
-        # Convert PDF → SVG（dvisvgm → pdf2svg → PyMuPDF フォールバック）
+        # PNG format: 高DPI ラスタライズ（モバイルで確実に表示される）
+        if output_format == 'png':
+            png_bytes = _convert_pdf_to_png(pdf_path, page_num=1, dpi=300)
+            if len(_tikz_svg_cache) >= _TIKZ_CACHE_MAX:
+                _tikz_svg_cache.pop(next(iter(_tikz_svg_cache)), None)
+            _tikz_svg_cache[cache_key] = png_bytes
+            return Response(content=png_bytes, media_type='image/png')
+
+        # SVG format: dvisvgm → pdf2svg → PyMuPDF フォールバック
         svg_data, svg_source = _convert_pdf_to_svg(pdf_path, page_num=1)
         if svg_data:
             svg_data = _enforce_svg_min_stroke(svg_data, source=svg_source)
@@ -10105,10 +10233,55 @@ def api_get_pdf_images(token: str):
     except Exception:
         page_count = 1
     pages = [
-        {'page': i + 1, 'url': f'/api/generated_pdf/{token}/page/{i + 1}.svg'}
+        {
+            'page': i + 1,
+            'url': f'/api/generated_pdf/{token}/page/{i + 1}.svg',
+            'png_url': f'/api/generated_pdf/{token}/page/{i + 1}.png',
+        }
         for i in range(page_count)
     ]
     return JSONResponse({'pages': pages, 'total': page_count})
+
+
+def _convert_pdf_to_png(pdf_path: str, page_num: int = 1, dpi: int = 300) -> bytes:
+    """PDFページを高DPI PNGにラスタライズ。モバイルで確実に表示される。"""
+    import fitz
+    doc = fitz.open(pdf_path)
+    if page_num < 1 or page_num > doc.page_count:
+        doc.close()
+        raise ValueError(f'Invalid page number: {page_num}')
+    page = doc[page_num - 1]
+    pix = page.get_pixmap(dpi=dpi, alpha=False)
+    png_bytes = pix.tobytes("png")
+    doc.close()
+    return png_bytes
+
+
+@app.get('/api/generated_pdf/{token}/page/{page_num}.png')
+def api_get_pdf_page_png(token: str, page_num: int):
+    """Render a single PDF page as a high-DPI PNG (300DPI — mobile-proof)."""
+    entry = GENERATED_PDFS.get(token)
+    if not entry:
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    path = entry.get('path')
+    if not path or not os.path.exists(path):
+        GENERATED_PDFS.pop(token, None)
+        return JSONResponse({'error': 'not_found'}, status_code=404)
+    try:
+        png_bytes = _convert_pdf_to_png(path, page_num, dpi=300)
+        return Response(
+            content=png_bytes,
+            media_type='image/png',
+            headers={
+                'Cache-Control': f'private, max-age={PDF_TTL_SECONDS}',
+                'Content-Disposition': f'inline; filename="page-{page_num}.png"',
+            }
+        )
+    except ValueError as e:
+        return JSONResponse({'error': str(e)}, status_code=400)
+    except Exception as e:
+        logger.error('PDF page PNG rendering failed: %s', e)
+        return JSONResponse({'error': 'render_failed'}, status_code=500)
 
 
 @app.get('/api/generated_pdf/{token}/page/{page_num}.svg')
