@@ -9,7 +9,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
  * @param {string} className - 追加の CSS クラス
  */
 export default function TikzFigure({ tikzCode, className = '' }) {
-  const [src, setSrc] = useState(null);
+  const [src, setSrc] = useState(null);        // blob URL (PDF用)
+  const [svgHtml, setSvgHtml] = useState(null); // SVGテキスト (インライン注入用)
   const [mediaType, setMediaType] = useState('image/svg+xml');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,6 +24,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
     setLoading(true);
     setError(null);
     setSrc(null);
+    setSvgHtml(null);
 
     // タイムアウト: 45秒（クラウドコンパイルを待つ）
     const timeoutId = setTimeout(() => {
@@ -45,15 +47,21 @@ export default function TikzFigure({ tikzCode, className = '' }) {
       }
       const ct = res.headers.get('Content-Type') || 'image/svg+xml';
       setMediaType(ct);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
 
-      // 前のURLを解放
-      if (prevSrc.current) {
-        URL.revokeObjectURL(prevSrc.current);
+      if (ct.includes('svg')) {
+        // SVG: テキストとして取得しインライン注入（CSSが内部に到達する）
+        const text = await res.text();
+        setSvgHtml(text);
+      } else {
+        // PDF等: blob URLで表示
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        if (prevSrc.current) {
+          URL.revokeObjectURL(prevSrc.current);
+        }
+        prevSrc.current = url;
+        setSrc(url);
       }
-      prevSrc.current = url;
-      setSrc(url);
       setLoading(false);
     } catch (err) {
       clearTimeout(timeoutId);
@@ -124,7 +132,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
     );
   }
 
-  if (!src) return null;
+  if (!src && !svgHtml) return null;
 
   if (mediaType.includes('pdf')) {
     return (
@@ -146,6 +154,25 @@ export default function TikzFigure({ tikzCode, className = '' }) {
     );
   }
 
+  // SVG: インライン注入（CSSのvector-effect: non-scaling-strokeが内部に到達する）
+  if (svgHtml) {
+    return (
+      <div className={`my-3 flex justify-center ${className}`}>
+        <div
+          className="practice-svg-page rounded-xl border border-slate-200 bg-white shadow-sm"
+          style={{
+            maxHeight: isMobile ? 'none' : 320,
+            width: isMobile ? '100%' : undefined,
+            maxWidth: '100%',
+            overflow: 'visible',
+          }}
+          dangerouslySetInnerHTML={{ __html: svgHtml }}
+        />
+      </div>
+    );
+  }
+
+  // フォールバック: blob URL（PDF以外の非SVG画像）
   return (
     <div className={`my-3 flex justify-center ${className}`}>
       <img

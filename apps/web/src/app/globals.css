@@ -1998,8 +1998,11 @@ main {
 .practice-svg-page svg path,
 .practice-svg-page svg line,
 .practice-svg-page svg polyline,
+.practice-svg-page svg polygon,
 .practice-svg-page svg rect,
-.practice-svg-page svg circle {
+.practice-svg-page svg circle,
+.practice-svg-page svg ellipse,
+.practice-svg-page svg use {
   vector-effect: non-scaling-stroke;
 }
 .practice-score-panel {
