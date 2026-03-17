@@ -9523,55 +9523,67 @@ def _preprocess_tikz_code(tikz_code: str) -> str:
 def _enforce_svg_min_stroke(svg: str, min_width: float = 1.5, source: str = 'pymupdf') -> str:
     """SVG内の線を確実にモバイルで視認可能にする包括的後処理。
 
-    source が 'dvisvgm' or 'pdf2svg' の場合はストローク補正をスキップ
-    （高品質コンバータの出力は stroked path で線幅が正確なため）。
-    viewBoxパディングと overflow="visible" は全ソースで適用。
+    全ソース共通:
+    1. SVGルートの width/height 属性を除去（viewBoxのみに統一）
+    2. stroke-width 最低保証（閾値はソースで分岐）
+    3. vector-effect="non-scaling-stroke" を描画要素に直接注入
+    4. viewBox 5%パディング + overflow="visible"
 
-    PyMuPDF出力に対する補正:
-    1. stroke-width < 1.0 → min_width に引き上げ（矢印軸・細線の消失防止）
-    2. filled path に stroke を追加（PyMuPDFは線を thin filled rect で出力するため）
+    PyMuPDF固有:
+    5. filled path に stroke を追加（thin filled rect 問題の対策）
     """
     import re as _re
 
+    # ── 1. SVGルートの width/height 属性を除去（viewBoxのみでサイズ定義）──
+    # これによりCSS width:100% が viewBox ベースで正しくスケールされ、
+    # vector-effect: non-scaling-stroke が確実に機能する
+    svg = _re.sub(r'(<svg\b[^>]*?)\s+width="[^"]*"', r'\1', svg)
+    svg = _re.sub(r'(<svg\b[^>]*?)\s+height="[^"]*"', r'\1', svg)
+
+    # ── 2. stroke-width 最低保証（全ソース）──
+    # PyMuPDF: < 1.0 を引き上げ / dvisvgm,pdf2svg: < 0.8 を引き上げ
+    threshold = 1.0 if source == 'pymupdf' else 0.8
+
+    def _fix_attr(m):
+        try:
+            val = float(m.group(1))
+            if val < threshold:
+                return f'stroke-width="{min_width}"'
+            return m.group(0)
+        except ValueError:
+            return m.group(0)
+    svg = _re.sub(r'stroke-width\s*=\s*"([0-9.]+)"', _fix_attr, svg)
+
+    def _fix_style(m):
+        try:
+            val = float(m.group(1))
+            if val < threshold:
+                return f'stroke-width:{min_width}'
+            return m.group(0)
+        except ValueError:
+            return m.group(0)
+    svg = _re.sub(r'stroke-width\s*:\s*([0-9.]+)', _fix_style, svg)
+
+    # ── 3. vector-effect="non-scaling-stroke" を描画要素に直接注入 ──
+    # CSS詳細度に依存せず、インラインstyleがあっても確実に適用される
+    for tag in ('path', 'line', 'polyline', 'polygon', 'rect', 'circle', 'ellipse'):
+        svg = _re.sub(
+            rf'<{tag}\b(?![^>]*vector-effect)',
+            f'<{tag} vector-effect="non-scaling-stroke"',
+            svg
+        )
+
+    # ── 4. PyMuPDF固有: filled path にストロークを追加 ──
     if source == 'pymupdf':
-        # 1a. stroke-width="x" 形式 — 1.0 未満を引き上げ
-        def _fix_attr(m):
-            try:
-                val = float(m.group(1))
-                if val < 1.0:
-                    return f'stroke-width="{min_width}"'
-                return m.group(0)
-            except ValueError:
-                return m.group(0)
-        svg = _re.sub(r'stroke-width\s*=\s*"([0-9.]+)"', _fix_attr, svg)
-
-        # 1b. stroke-width:x 形式（CSS style）
-        def _fix_style(m):
-            try:
-                val = float(m.group(1))
-                if val < 1.0:
-                    return f'stroke-width:{min_width}'
-                return m.group(0)
-            except ValueError:
-                return m.group(0)
-        svg = _re.sub(r'stroke-width\s*:\s*([0-9.]+)', _fix_style, svg)
-
-        # 2. filled path にストロークを追加（PyMuPDFが線を thin filled path として出力する問題の対策）
-        #    fill があって stroke がない <path> に、fill と同色の stroke + min_width を付与
-        #    ※ テキストグリフ（fill のみの大きな path）には影響しない — stroke が追加されても
-        #      width が小さいため視覚的変化は最小限
         def _add_stroke_to_filled(m):
             tag = m.group(0)
-            # 既に stroke 属性がある場合はスキップ
             if _re.search(r'\bstroke\s*=', tag) or 'stroke:' in tag:
                 return tag
-            # fill 色を取得
             fill_match = _re.search(r'fill="([^"]+)"', tag)
             if not fill_match or fill_match.group(1) in ('none', 'transparent', 'white', '#ffffff', '#fff'):
                 return tag
             fill_color = fill_match.group(1)
             inject = f' stroke="{fill_color}" stroke-width="{min_width}"'
-            # 閉じ部分の前に属性を挿入
             if tag.endswith('/>'):
                 return tag[:-2] + inject + '/>'
             if tag.endswith('>'):
@@ -9579,7 +9591,7 @@ def _enforce_svg_min_stroke(svg: str, min_width: float = 1.5, source: str = 'pym
             return tag
         svg = _re.sub(r'<path\b[^>]*(?:/>|>)', _add_stroke_to_filled, svg)
 
-    # 3. viewBox を 5% パディングして矢印先端のクリッピングを防止
+    # ── 5. viewBox を 5% パディングして矢印先端のクリッピングを防止 ──
     vb_match = _re.search(r'viewBox="([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)\s+([0-9eE.\-]+)"', svg)
     if vb_match:
         vx, vy, vw, vh = [float(v) for v in vb_match.groups()]
@@ -9587,8 +9599,11 @@ def _enforce_svg_min_stroke(svg: str, min_width: float = 1.5, source: str = 'pym
         new_vb = f'viewBox="{vx - pad_x:.2f} {vy - pad_y:.2f} {vw + 2 * pad_x:.2f} {vh + 2 * pad_y:.2f}"'
         svg = svg.replace(vb_match.group(0), new_vb)
 
-    # 4. overflow="visible" を SVG ルート要素に追加（矢印先端のクリップ防止）
-    svg = _re.sub(r'<svg\b', '<svg overflow="visible"', svg, count=1)
+    # ── 6. overflow="visible" をSVGルートに設定（重複防止） ──
+    if _re.search(r'<svg\b[^>]*\boverflow\s*=', svg):
+        svg = _re.sub(r'\boverflow="[^"]*"', 'overflow="visible"', svg, count=1)
+    else:
+        svg = _re.sub(r'<svg\b', '<svg overflow="visible"', svg, count=1)
 
     return svg
 
