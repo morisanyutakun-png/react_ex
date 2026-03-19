@@ -27,13 +27,18 @@ def upgrade():
         return  # pgvector not available on SQLite
 
     conn = op.get_bind()
-    # Drop the old index (without explicit opclass) and recreate with vector_l2_ops.
-    # CONCURRENTLY is not supported inside a transaction, so we use plain DROP/CREATE.
-    conn.execute(text("DROP INDEX IF EXISTS idx_embeddings_vector_ivf"))
-    conn.execute(text(
-        "CREATE INDEX idx_embeddings_vector_ivf "
-        "ON embeddings USING ivfflat (vector vector_l2_ops) WITH (lists = 100)"
-    ))
+    # Use SAVEPOINT so that missing embeddings table or pgvector extension
+    # does not abort the entire Alembic transaction on PostgreSQL.
+    conn.execute(text("SAVEPOINT sp_ivfflat"))
+    try:
+        conn.execute(text("DROP INDEX IF EXISTS idx_embeddings_vector_ivf"))
+        conn.execute(text(
+            "CREATE INDEX idx_embeddings_vector_ivf "
+            "ON embeddings USING ivfflat (vector vector_l2_ops) WITH (lists = 100)"
+        ))
+        conn.execute(text("RELEASE SAVEPOINT sp_ivfflat"))
+    except Exception:
+        conn.execute(text("ROLLBACK TO SAVEPOINT sp_ivfflat"))
 
 
 def downgrade():
@@ -42,8 +47,13 @@ def downgrade():
         return
 
     conn = op.get_bind()
-    conn.execute(text("DROP INDEX IF EXISTS idx_embeddings_vector_ivf"))
-    conn.execute(text(
-        "CREATE INDEX idx_embeddings_vector_ivf "
-        "ON embeddings USING ivfflat (vector) WITH (lists = 100)"
-    ))
+    conn.execute(text("SAVEPOINT sp_ivfflat_down"))
+    try:
+        conn.execute(text("DROP INDEX IF EXISTS idx_embeddings_vector_ivf"))
+        conn.execute(text(
+            "CREATE INDEX idx_embeddings_vector_ivf "
+            "ON embeddings USING ivfflat (vector) WITH (lists = 100)"
+        ))
+        conn.execute(text("RELEASE SAVEPOINT sp_ivfflat_down"))
+    except Exception:
+        conn.execute(text("ROLLBACK TO SAVEPOINT sp_ivfflat_down"))

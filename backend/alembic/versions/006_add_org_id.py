@@ -20,27 +20,39 @@ def upgrade():
     bind = op.get_bind()
     dialect = bind.dialect.name
 
-    for table in TABLES:
-        try:
-            if dialect == 'sqlite':
+    if dialect == 'sqlite':
+        for table in TABLES:
+            try:
                 op.execute(f"ALTER TABLE {table} ADD COLUMN org_id TEXT DEFAULT ''")
-            else:
-                op.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS org_id TEXT DEFAULT ''")
-                # Index for fast per-org lookups
-                op.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_org_id ON {table} (org_id)")
-        except Exception:
-            # Column may already exist
-            pass
+            except Exception:
+                pass  # Column may already exist
+    else:
+        from sqlalchemy import text
+        conn = op.get_bind()
+        for table in TABLES:
+            # Use SAVEPOINT so a failure (e.g. table does not exist) does not
+            # abort the outer transaction on PostgreSQL.
+            conn.execute(text("SAVEPOINT sp_org_id"))
+            try:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS org_id TEXT DEFAULT ''"))
+                conn.execute(text(f"CREATE INDEX IF NOT EXISTS idx_{table}_org_id ON {table} (org_id)"))
+                conn.execute(text("RELEASE SAVEPOINT sp_org_id"))
+            except Exception:
+                conn.execute(text("ROLLBACK TO SAVEPOINT sp_org_id"))
 
 
 def downgrade():
     bind = op.get_bind()
     dialect = bind.dialect.name
 
-    for table in TABLES:
-        try:
-            if dialect != 'sqlite':
-                op.execute(f"DROP INDEX IF EXISTS idx_{table}_org_id")
-                op.execute(f"ALTER TABLE {table} DROP COLUMN IF EXISTS org_id")
-        except Exception:
-            pass
+    if dialect != 'sqlite':
+        from sqlalchemy import text
+        conn = op.get_bind()
+        for table in TABLES:
+            conn.execute(text("SAVEPOINT sp_org_id_down"))
+            try:
+                conn.execute(text(f"DROP INDEX IF EXISTS idx_{table}_org_id"))
+                conn.execute(text(f"ALTER TABLE {table} DROP COLUMN IF EXISTS org_id"))
+                conn.execute(text("RELEASE SAVEPOINT sp_org_id_down"))
+            except Exception:
+                conn.execute(text("ROLLBACK TO SAVEPOINT sp_org_id_down"))
