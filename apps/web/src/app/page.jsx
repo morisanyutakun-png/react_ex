@@ -1,644 +1,565 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { MobileNavLinks } from '@/components/ui';
 
 /* ═══════════════════════════════════════════════════════════════
-   REM — Landing Page  (物理 × 受験心理 × Premium)
+   REM — 教師のためのAI物理問題ジェネレーター
+   Editorial × Apple Music × Aurora Forest Night
    ═══════════════════════════════════════════════════════════════ */
 
-/* ─── Gradient Mesh BG ─── */
-function GradientMeshBackground() {
-  return (
-    <div className="gradient-mesh" aria-hidden="true">
-      <div className="gradient-mesh-blob gradient-mesh-blob-1" />
-      <div className="gradient-mesh-blob gradient-mesh-blob-2" />
-      <div className="gradient-mesh-blob gradient-mesh-blob-3" />
-      <div className="gradient-mesh-blob gradient-mesh-blob-4" />
-      <div className="gradient-mesh-blob gradient-mesh-blob-5" />
-      <div className="gradient-mesh-noise" />
-    </div>
-  );
-}
-
-/* ─── Scroll Reveal Hook ─── */
+/* ─── Scroll Reveal ─── */
 function useScrollReveal() {
   const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('revealed');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -30px 0px' }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('revealed');
+          io.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
     );
-    const targets = el.querySelectorAll('.scroll-reveal');
-    targets.forEach((t) => observer.observe(t));
-    return () => observer.disconnect();
+    el.querySelectorAll('.scroll-reveal').forEach((t) => io.observe(t));
+    return () => io.disconnect();
   }, []);
   return ref;
 }
 
-/* ─── Physics Equation Decoration ─── */
-function PhysicsEquations() {
-  const equations = ['F=ma', 'E=\\frac{1}{2}mv^2', 'V=IR', 'PV=nRT', 'T=2\\pi\\sqrt{\\frac{l}{g}}', 'f=\\frac{v}{\\lambda}'];
+/* ─── Tilt parallax for hero artwork ─── */
+function useTilt() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const handle = (e) => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      el.style.transform = `perspective(1100px) rotateX(${-y * 6}deg) rotateY(${x * 8}deg) translateZ(0)`;
+    };
+    const reset = () => { el.style.transform = 'perspective(1100px) rotateX(0) rotateY(0)'; };
+    el.addEventListener('pointermove', handle);
+    el.addEventListener('pointerleave', reset);
+    return () => {
+      el.removeEventListener('pointermove', handle);
+      el.removeEventListener('pointerleave', reset);
+    };
+  }, []);
+  return ref;
+}
+
+/* ─── Aurora background field ─── */
+function AuroraField() {
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden select-none" aria-hidden="true">
-      {equations.map((eq, i) => (
-        <span key={i} className="absolute text-[11px] font-mono tracking-wider"
-              style={{
-                color: `rgba(34,201,138,${0.07 + (i % 3) * 0.02})`,
-                top: `${12 + i * 14}%`,
-                left: i % 2 === 0 ? `${3 + i * 4}%` : 'auto',
-                right: i % 2 !== 0 ? `${2 + i * 3}%` : 'auto',
-                transform: `rotate(${-8 + i * 5}deg)`,
-              }}>
-          {eq}
-        </span>
-      ))}
+    <div className="aurora-field" aria-hidden="true">
+      <div className="aurora-veil aurora-veil-1" />
+      <div className="aurora-veil aurora-veil-2" />
+      <div className="aurora-veil aurora-veil-3" />
+      <div className="aurora-grain" />
     </div>
   );
 }
 
-/* ─── Animated Mini-PDF ─── */
-function AnimatedPdfMockup() {
+/* ─── Kinetic letters for the wordmark ─── */
+function Wordmark({ text = 'REM' }) {
   return (
-    <div className="landing-pdf-mockup-container">
-      <div className="landing-pdf-float" aria-hidden="true">
-        <div className="absolute -right-2 -bottom-2 w-full h-full rounded-2xl bg-[#1e293b]/[0.04] blur-sm" />
-        <div className="absolute -right-1 -bottom-1 w-full h-full rounded-xl bg-emerald-900/40 border border-emerald-800/60" />
-        <div className="relative bg-[#122a1c] rounded-xl border border-emerald-800/30 shadow-xl shadow-emerald-900/[0.30] p-4 sm:p-5 w-[220px] sm:w-[260px]">
-          <div className="flex items-center justify-between mb-3">
-            <div className="h-2.5 w-20 rounded-full bg-[#1e293b]/25" />
-            <div className="px-2 py-0.5 rounded bg-emerald-950/30 border border-emerald-800/50">
-              <span className="text-[7px] font-bold text-emerald-400">25点</span>
-            </div>
+    <span className="kinetic-mark" aria-label={text}>
+      {text.split('').map((ch, i) => (
+        <span key={i} style={{ animationDelay: `${i * 90}ms` }}>{ch}</span>
+      ))}
+    </span>
+  );
+}
+
+/* ─── Editorial PDF artwork (hero centerpiece) ─── */
+function EditorialArtwork() {
+  const tiltRef = useTilt();
+  return (
+    <div className="editorial-art-stage">
+      <div className="editorial-art-glow" aria-hidden="true" />
+      <div ref={tiltRef} className="editorial-art-card" style={{ transition: 'transform 0.55s var(--ease-spring)' }}>
+        {/* Top meta bar */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-emerald-500/15">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400/80 shadow-[0_0_12px_rgba(45,216,147,0.8)]" />
+            <span className="text-[9px] font-bold tracking-[0.32em] text-emerald-300/80 uppercase">REM · Physics</span>
           </div>
-          <div className="h-[0.5px] w-full bg-[#e2e8f0] mb-3" />
-          <div className="mb-3">
-            <div className="flex items-start gap-2">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0 shadow-sm">1</div>
-              <div className="flex-1 space-y-1.5 pt-0.5">
-                <div className="h-[5px] w-full rounded-full bg-[#94a3b8]/20 landing-line-shimmer" style={{ animationDelay: '0ms' }} />
-                <div className="h-[5px] w-[85%] rounded-full bg-[#94a3b8]/15 landing-line-shimmer" style={{ animationDelay: '150ms' }} />
-                <div className="h-[5px] w-[60%] rounded-full bg-[#94a3b8]/10 landing-line-shimmer" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
+          <span className="text-[9px] font-mono text-emerald-300/50 tracking-wider">A4 · 25pt</span>
+        </div>
+
+        {/* Title */}
+        <div className="px-5 pt-5 pb-4">
+          <div className="text-[7px] font-bold tracking-[0.28em] text-emerald-400/70 uppercase mb-2">Mechanics — Conservation</div>
+          <div className="space-y-1.5">
+            <div className="h-[6px] w-[88%] rounded-full bg-emerald-200/35" />
+            <div className="h-[6px] w-[64%] rounded-full bg-emerald-200/20" />
           </div>
-          <div className="mb-3 mx-2 p-2 rounded-lg border border-dashed border-emerald-700/40 bg-emerald-950/20">
-            <div className="flex items-center justify-center gap-1.5">
-              <svg className="w-3 h-3 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91" />
-              </svg>
-              <span className="text-[7px] font-medium text-emerald-400">TikZ図</span>
-            </div>
-          </div>
-          <div className="mb-2">
-            <div className="flex items-start gap-2">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0 shadow-sm">2</div>
-              <div className="flex-1 space-y-1.5 pt-0.5">
-                <div className="h-[5px] w-full rounded-full bg-[#94a3b8]/20 landing-line-shimmer" style={{ animationDelay: '450ms' }} />
-                <div className="h-[5px] w-[75%] rounded-full bg-[#94a3b8]/15 landing-line-shimmer" style={{ animationDelay: '600ms' }} />
-              </div>
-            </div>
-          </div>
-          {/* scoring block preview */}
-          <div className="mt-2 p-2 rounded-md bg-emerald-950/30 border border-emerald-900/40">
-            <div className="flex items-center gap-1 mb-1">
-              <div className="w-1 h-3 rounded-full bg-emerald-400"></div>
-              <span className="text-[6px] font-bold text-emerald-600">配点基準</span>
-            </div>
-            <div className="space-y-0.5">
-              <div className="h-[3px] w-[90%] rounded-full bg-emerald-200/60" />
-              <div className="h-[3px] w-[70%] rounded-full bg-emerald-200/40" />
-            </div>
-          </div>
-          <div className="absolute -top-2.5 -right-2.5 landing-badge-pulse">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
+        </div>
+
+        {/* Problem 1 */}
+        <div className="px-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-[9px] font-black text-[#0b1510] shadow-lg shadow-emerald-500/25 flex-shrink-0">1</div>
+            <div className="flex-1 space-y-1.5 pt-1">
+              <div className="h-[4px] w-full rounded-full bg-emerald-100/15 art-line" style={{ animationDelay: '0ms' }} />
+              <div className="h-[4px] w-[92%] rounded-full bg-emerald-100/12 art-line" style={{ animationDelay: '120ms' }} />
+              <div className="h-[4px] w-[55%] rounded-full bg-emerald-100/08 art-line" style={{ animationDelay: '240ms' }} />
             </div>
           </div>
         </div>
+
+        {/* TikZ figure block */}
+        <div className="mx-5 mb-4 p-3 rounded-xl border border-dashed border-emerald-400/25 bg-emerald-500/[0.04]">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <svg className="w-3 h-3 text-emerald-300/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+              <path d="M3 17l4-4 4 4 6-6 4 4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span className="text-[8px] font-bold tracking-[0.22em] text-emerald-300/70 uppercase">TikZ Diagram</span>
+          </div>
+          <svg viewBox="0 0 100 28" className="w-full h-7">
+            <path d="M5 22 L25 22 L40 12 L55 12 L75 22 L95 22" stroke="rgba(168,255,200,0.55)" strokeWidth="0.6" fill="none" strokeLinecap="round" />
+            <circle cx="40" cy="12" r="1.5" fill="rgba(45,216,147,0.9)" />
+            <circle cx="55" cy="12" r="1.5" fill="rgba(45,216,147,0.9)" />
+            <text x="46" y="9" fontSize="3" fill="rgba(168,255,200,0.6)" fontFamily="serif" fontStyle="italic">m</text>
+          </svg>
+        </div>
+
+        {/* Problem 2 */}
+        <div className="px-5 pb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-[9px] font-black text-[#0b1510] shadow-lg shadow-emerald-500/25 flex-shrink-0">2</div>
+            <div className="flex-1 space-y-1.5 pt-1">
+              <div className="h-[4px] w-full rounded-full bg-emerald-100/15 art-line" style={{ animationDelay: '360ms' }} />
+              <div className="h-[4px] w-[78%] rounded-full bg-emerald-100/12 art-line" style={{ animationDelay: '480ms' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Scoring rubric */}
+        <div className="mx-5 mb-5 p-3 rounded-xl bg-[#0a1d13]/70 border border-emerald-500/15">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1 h-3 rounded-full bg-emerald-400" />
+              <span className="text-[7px] font-bold tracking-[0.24em] text-emerald-300/80 uppercase">配点基準</span>
+            </div>
+            <span className="text-[8px] font-black text-emerald-300">+10</span>
+          </div>
+          <div className="space-y-1">
+            <div className="h-[3px] w-[92%] rounded-full bg-emerald-300/40" />
+            <div className="h-[3px] w-[70%] rounded-full bg-emerald-300/25" />
+            <div className="h-[3px] w-[48%] rounded-full bg-emerald-300/15" />
+          </div>
+        </div>
+
+        {/* Floating badge */}
+        <div className="absolute -top-3 -right-3 art-badge-pulse">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-500 flex items-center justify-center shadow-[0_8px_24px_rgba(45,216,147,0.45)]">
+            <svg className="w-4 h-4 text-[#0b1510]" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </div>
+        </div>
       </div>
+
+      {/* floating typography accents */}
+      <span className="art-float-symbol art-float-symbol-1" aria-hidden="true">∮</span>
+      <span className="art-float-symbol art-float-symbol-2" aria-hidden="true">∇</span>
+      <span className="art-float-symbol art-float-symbol-3" aria-hidden="true">F=ma</span>
     </div>
   );
 }
-
-/* ─── Exam Countdown (urgency / Zeigarnik) ─── */
-function ExamCountdown() {
-  const daysLeft = useMemo(() => {
-    const now = new Date();
-    // 共通テスト: 翌年1月第3土曜 (近似)
-    let targetYear = now.getMonth() >= 1 ? now.getFullYear() + 1 : now.getFullYear();
-    const jan1 = new Date(targetYear, 0, 1);
-    const dayOfWeek = jan1.getDay();
-    const thirdSat = new Date(targetYear, 0, 1 + ((6 - dayOfWeek + 7) % 7) + 14);
-    const diff = Math.ceil((thirdSat - now) / (1000 * 60 * 60 * 24));
-    return diff > 0 ? diff : 365 + diff;
-  }, []);
-
-  return (
-    <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-900/[0.20] to-teal-900/[0.15] border border-emerald-700/30">
-      <div className="flex items-center gap-1.5">
-        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-        <span className="text-[10px] font-bold text-emerald-600/80 tracking-wide uppercase">共通テストまで</span>
-      </div>
-      <span className="text-[18px] font-black text-emerald-400 tracking-tight tabular-nums">{daysLeft}</span>
-      <span className="text-[10px] font-bold text-emerald-600/70">日</span>
-    </div>
-  );
-}
-
 
 /* ═══════════════════════════════════════════════════════════════
-   PAGE — 物理受験生特化ランディング (心理学ベース)
+   PAGE
    ═══════════════════════════════════════════════════════════════ */
 export default function HomePage() {
   const containerRef = useScrollReveal();
-  const [historyCount, setHistoryCount] = useState(0);
-  const [avgScore, setAvgScore] = useState(0);
-  const [shared, setShared] = useState(false);
+  const [scrolled, setScrolled] = useState(0);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('rem_practice_history');
-      if (raw) {
-        const data = JSON.parse(raw);
-        if (Array.isArray(data)) {
-          setHistoryCount(data.length);
-          if (data.length > 0) {
-            const total = data.reduce((s, d) => s + (d.maxPoints > 0 ? (d.earnedPoints / d.maxPoints) * 100 : 0), 0);
-            setAvgScore(Math.round(total / data.length));
-          }
-        }
-      }
-    } catch {}
+    const onScroll = () => setScrolled(window.scrollY);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  const handleShare = async () => {
-    const text = '物理の入試過去問レベルの類題をAIが無限に出してくれるやつ、ガチでヤバい。配点・部分点基準付きで自己採点までできる。\n\n#REM #物理 #受験勉強 #共通テスト';
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'REM - AI物理演習', text, url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(text + '\n' + window.location.href);
-      }
-      setShared(true);
-      setTimeout(() => setShared(false), 2500);
-    } catch {}
-  };
 
   return (
     <div ref={containerRef} className="relative min-h-screen overflow-hidden">
+      <AuroraField />
 
-      {/* ── BG layers ── */}
-      <div className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
-        <GradientMeshBackground />
-      </div>
-      <PhysicsEquations />
+      <div className="relative z-10">
 
-      {/* ── Content ── */}
-      <div className="relative z-20 flex flex-col items-center px-5 sm:px-6 min-h-screen">
-        <div className="max-w-[560px] w-full mx-auto">
-
-          {/* ══════ HERO ══════ */}
-          <section className="pt-10 sm:pt-16 pb-8 sm:pb-10">
-
-            {/* Brand */}
-            <div className="text-center mb-6 stagger-item" style={{ animationDelay: '0ms' }}>
-              <div className="inline-flex flex-col items-center gap-1">
-                <span className="text-[40px] sm:text-[48px] font-black tracking-[-0.06em] leading-none gradient-text-hero-animated">REM</span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-[#9dc8b0] tracking-[0.25em] uppercase">AI Physics Trainer</span>
-              </div>
+        {/* ════════════════════════════════════════════════
+            CHAPTER 00 — HERO (Editorial cinematic)
+            ════════════════════════════════════════════════ */}
+        <section className="hero-stage">
+          <div className="hero-shell">
+            {/* eyebrow */}
+            <div className="hero-eyebrow" style={{ animationDelay: '0ms' }}>
+              <span className="hero-eyebrow-dot" />
+              <span>For Educators · 2026</span>
             </div>
 
-            {/* Headline — 損失回避 + Urgency */}
-            <div className="text-center stagger-item" style={{ animationDelay: '80ms' }}>
-              <h1 className="text-[26px] sm:text-[38px] font-black tracking-[-0.04em] leading-[1.1] text-[#e8f5ed] mb-3">
-                物理で<span className="text-red-500">落とす</span>のは、<br className="sm:hidden" /><span className="gradient-text-hero-animated">もう終わりにしよう。</span>
-              </h1>
+            {/* wordmark */}
+            <div className="hero-wordmark-wrap" style={{ animationDelay: '120ms' }}>
+              <Wordmark text="REM" />
             </div>
 
-            {/* Sub copy */}
-            <div className="text-center stagger-item" style={{ animationDelay: '150ms' }}>
-              <p className="text-[13px] sm:text-[15px] text-[#6aaa7c] leading-[1.8] max-w-[380px] mx-auto" style={{ fontFeatureSettings: '"palt"' }}>
-                入試レベルの類題をAIが無限に生成。<br />
-                <strong className="text-[#e8f5ed] font-bold">配点＋部分点基準</strong>付きだから、<br />
-                <span className="text-emerald-400 font-semibold">自己採点で「本番力」が鍛えられる。</span>
-              </p>
-            </div>
+            {/* headline */}
+            <h1 className="hero-headline" style={{ animationDelay: '260ms' }}>
+              <span className="hero-line">教材作成の、</span>
+              <span className="hero-line hero-line-accent">終わり方を、変える。</span>
+            </h1>
 
-            {/* Countdown — 緊迫感 */}
-            <div className="flex justify-center mt-6 stagger-item" style={{ animationDelay: '200ms' }}>
-              <ExamCountdown />
-            </div>
+            {/* subhead */}
+            <p className="hero-sub" style={{ animationDelay: '420ms' }}>
+              AI × LaTeX × TikZ。<br className="sm:hidden" />
+              入試品質の物理問題を、<strong className="text-emerald-200">60秒で印刷可能なPDF</strong>に。
+            </p>
 
-            {/* Trust metrics */}
-            <div className="stagger-item" style={{ animationDelay: '250ms' }}>
-              <div className="flex items-center justify-center gap-4 sm:gap-6 mt-6 mb-7">
-                {[
-                  { value: '25点×N問', label: '配点付き', icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-                  { value: '約60秒', label: '即生成', icon: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-                  { value: '部分点', label: '基準付き', icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L10.5 21.75 12 13.5H3.75z" /> },
-                ].map((m, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-950/30 border border-emerald-900/40 flex items-center justify-center">
-                      <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">{m.icon}</svg>
-                    </div>
-                    <div>
-                      <div className="text-[14px] sm:text-[16px] font-black text-[#e8f5ed] leading-none tracking-tight">{m.value}</div>
-                      <div className="text-[9px] text-[#9dc8b0] font-semibold mt-0.5">{m.label}</div>
-                    </div>
-                    {i < 2 && <div className="w-[1px] h-7 bg-[#e2e8f0]/60 ml-2" />}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Primary CTA */}
-            <div className="stagger-item" style={{ animationDelay: '320ms' }}>
-              <div className="max-w-[400px] mx-auto space-y-3">
-                <Link href="/practice" className="landing-cta-primary group block">
-                  <span className="relative z-10 flex flex-col items-center gap-1">
-                    <span className="text-[15px] sm:text-[16px] font-bold">演習を始める</span>
-                    <span className="text-[10px] font-medium opacity-70">無料 · ログイン不要 · 60秒で出題</span>
-                  </span>
-                </Link>
-
-                {/* 学習履歴バー */}
-                {historyCount > 0 && (
-                  <Link href="/history" className="block px-4 py-3 rounded-2xl border border-emerald-700/40 bg-gradient-to-r from-emerald-900/20 to-teal-900/15 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-900/30 flex items-center justify-center flex-shrink-0">
-                        <svg className="w-4.5 h-4.5 text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-black text-emerald-300">学習履歴 — {historyCount}回演習済み</div>
-                        <div className="text-[10px] text-emerald-500 font-medium mt-0.5">
-                          {avgScore > 0 ? `平均正答率 ${avgScore}% · ` : ''}タップして詳細を確認
-                        </div>
-                      </div>
-                      <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                      </svg>
-                    </div>
-                  </Link>
-                )}
-
-                <Link href="/user" className="landing-cta-tune group block">
-                  <span className="relative z-10 flex flex-col items-center gap-1">
-                    <span className="text-[14px] sm:text-[15px] font-bold">PDF問題を作成する</span>
-                    <span className="text-[10px] font-medium opacity-70">教員・詳細設定モード</span>
-                  </span>
-                </Link>
-              </div>
-            </div>
-
-            {/* PDF Mockup */}
-            <div className="mt-8 sm:mt-10 stagger-item" style={{ animationDelay: '400ms' }}>
-              <AnimatedPdfMockup />
-            </div>
-          </section>
-
-
-          {/* ══════ PAIN POINTS — 共感 (ミラーニューロン) ══════ */}
-          <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-            <div className="text-center mb-7">
-              <span className="section-label">Your pain</span>
-              <h2 className="text-[21px] sm:text-[26px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
-                こんな状況、今すぐ変えられる
-              </h2>
-            </div>
-            <div className="space-y-2.5">
-              {[
-                { text: '過去問10年分を解き切ったけど、もう新しい問題がない', solve: 'AIが入試レベルの新題を無限に生成', color: 'red' },
-                { text: '模試で物理だけ毎回足を引っ張っている', solve: '苦手単元をピンポイントで集中演習', color: 'amber' },
-                { text: '力学はできるのに、電磁気や波動で毎回つまずく', solve: '分野別に出題レベルを細かく調整', color: 'orange' },
-                { text: '自己採点すると「合ってるか分からない」箇所が多い', solve: '部分点基準で「どこまで正しいか」が分かる', color: 'blue' },
-                { text: '試験まで時間がないのに、何から手をつけるべきか迷う', solve: '弱点を自動分析して優先順位がつく', color: 'teal' },
-              ].map(({ text, solve, color }) => (
-                <div key={text} className="bg-[#162d1e]/85 backdrop-blur-sm rounded-2xl border border-emerald-800/30 px-4 py-3.5 shadow-sm hover:shadow-md transition-all duration-200 group">
-                  <div className="flex items-start gap-3">
-                    <div className={`w-6 h-6 rounded-lg bg-${color}-950/30 border border-${color}-800/40 flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                      <svg className={`w-3.5 h-3.5 text-${color}-400`} fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <span className="text-[13px] font-bold text-[#e8f5ed] leading-snug block">{text}</span>
-                      <span className="text-[11px] font-semibold text-emerald-400 mt-1 block flex items-center gap-1">
-                        <svg className="w-3 h-3 inline" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                        {solve}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-
-          {/* ══════ WHY REM — 差別化 (Authority + Reciprocity) ══════ */}
-          <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-            <div className="text-center mb-8">
-              <span className="section-label">Why REM</span>
-              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
-                他と何が違うのか
-              </h2>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                {
-                  gradient: 'from-sky-500 to-cyan-600',
-                  shadow: 'shadow-sky-500/20',
-                  icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
-                  title: '配点＋部分点基準で自己採点',
-                  desc: <>各小問に配点（合計25点）。「この式で+5点、計算結果で+3点」のように<strong className="text-[#e8f5ed]">部分点の基準</strong>まで自動生成。</>
-                },
-                {
-                  gradient: 'from-teal-500 to-cyan-600',
-                  shadow: 'shadow-teal-500/20',
-                  icon: <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84" />,
-                  title: '入試本番と同じ品質の類題',
-                  desc: <>共通テスト・国公立二次の過去問ベースで<strong className="text-[#e8f5ed]">誘導形式の小問構成</strong>。設定条件・数値・単位まで本番そっくり。</>
-                },
-                {
-                  gradient: 'from-emerald-500 to-teal-600',
-                  shadow: 'shadow-emerald-500/20',
-                  icon: <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />,
-                  title: 'LaTeX組版＋TikZ物理図',
-                  desc: <>数式・回路図・力の図をLaTeXで美しく組版。<strong className="text-[#e8f5ed]">印刷演習</strong>にも<strong className="text-[#e8f5ed]">タブレット学習</strong>にも最適。</>
-                },
-              ].map(({ gradient, shadow, icon, title, desc }) => (
-                <div key={title} className="bg-[#122a1c]/90 backdrop-blur-sm rounded-2xl border border-emerald-800/30 p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 shadow-lg ${shadow}`}>
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">{icon}</svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[15px] font-black text-[#e8f5ed] mb-1">{title}</h3>
-                      <p className="text-[12px] text-[#7ab896] leading-[1.7]">{desc}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-
-          {/* ══════ HOW IT WORKS — 3 Steps ══════ */}
-          <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-            <div className="text-center mb-8">
-              <span className="section-label">How it works</span>
-              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
-                たった3ステップ
-              </h2>
-            </div>
-
-            <div className="landing-steps-track">
-              {[
-                {
-                  num: '1',
-                  icon: <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />,
-                  title: '単元・難易度を選ぶ',
-                  desc: '力学・電磁気・波動・熱力学から選択。基礎〜東大レベルまで6段階。',
-                  last: false,
-                },
-                {
-                  num: '2',
-                  icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />,
-                  title: 'AIが入試問題を生成',
-                  desc: '約60秒で配点付き類題を自動作成。TikZ図・部分点基準まで完備。',
-                  last: false,
-                },
-                {
-                  num: '3',
-                  icon: <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />,
-                  title: '解いて、自己採点する',
-                  desc: '解答・解説・配点基準を確認し得点入力。弱点単元を自動分析。',
-                  last: true,
-                },
-              ].map(({ num, icon, title, desc, last }) => (
-                <div key={num} className="landing-step-item">
-                  <div className={`landing-step-number${last ? ' landing-step-number-last' : ''}`}>{num}</div>
-                  {!last && <div className="landing-step-connector" />}
-                  <div className="landing-step-content">
-                    <div className="flex items-center gap-2 mb-1">
-                      <svg className={`w-4 h-4 ${last ? 'text-emerald-500' : 'text-teal-400'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">{icon}</svg>
-                      <h3 className="text-[14px] font-bold text-[#e8f5ed]">{title}</h3>
-                    </div>
-                    <p className="text-[12px] text-[#7ab896] leading-relaxed">{desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-
-          {/* ══════ COVERAGE — 4分野 ══════ */}
-          <section className="pb-12 sm:pb-16">
-            <div className="text-center mb-8 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-              <span className="section-label">Coverage</span>
-              <h2 className="text-[22px] sm:text-[26px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
-                物理の全分野に対応
-              </h2>
-              <p className="text-[12px] text-[#9dc8b0] mt-2">共通テスト〜東大二次まで</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { title: '力学', desc: '運動方程式・保存則・衝突・円運動・万有引力', gradient: 'from-sky-500 to-blue-600', bg: 'bg-sky-950/30', border: 'border-sky-900/40' },
-                { title: '電磁気', desc: 'クーロン力・回路・電磁誘導・交流・コンデンサー', gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-950/30', border: 'border-amber-900/40' },
-                { title: '波動', desc: 'ドップラー効果・干渉・回折・レンズ・光波', gradient: 'from-teal-500 to-cyan-600', bg: 'bg-teal-950/30', border: 'border-teal-900/40' },
-                { title: '熱力学', desc: '気体の法則・熱サイクル・状態変化・エントロピー', gradient: 'from-rose-500 to-red-500', bg: 'bg-rose-950/30', border: 'border-rose-900/40' },
-              ].map(({ title, desc, gradient, bg, border }, i) => (
-                <div key={title} className={`scroll-reveal p-4 rounded-2xl ${bg} border ${border} transition-all duration-300 hover:shadow-md hover:-translate-y-0.5`}
-                     style={{ transitionDelay: `${i * 60}ms` }}>
-                  <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center mb-2.5 shadow-sm`}>
-                    <span className="text-[11px] font-black text-white">{title[0]}</span>
-                  </div>
-                  <h3 className="text-[13px] font-bold text-[#e8f5ed] mb-1">{title}</h3>
-                  <p className="text-[10px] text-[#7ab896] leading-[1.6]">{desc}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-
-          {/* ══════ SCORING PREVIEW — USP (Endowed Progress) ══════ */}
-          <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-            <div className="text-center mb-7">
-              <span className="section-label">Scoring</span>
-              <h2 className="text-[20px] sm:text-[24px] font-black text-[#e8f5ed] tracking-[-0.03em] mt-3">
-                部分点の基準まで分かる
-              </h2>
-              <p className="text-[12px] text-[#9dc8b0] mt-2">自分の解答のどこまでが正しいか、一目瞭然</p>
-            </div>
-
-            <div className="bg-[#122a1c]/90 backdrop-blur-sm rounded-2xl border border-emerald-800/30 overflow-hidden shadow-sm">
-              <div className="px-5 pt-4 pb-3 border-b border-[#1a2035]">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-[10px] font-black text-white shadow-sm">1</div>
-                  <span className="text-[12px] font-bold text-[#7ab896]">(1) エネルギー保存則</span>
-                  <span className="ml-auto text-[10px] font-bold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded-full">10点</span>
-                </div>
-              </div>
-              <div className="px-5 py-4 bg-emerald-950/20 space-y-2">
-                {[
-                  { ok: true, text: 'エネルギー保存則の式を正しく立てた', pts: '+5点' },
-                  { ok: true, text: 'v について正しく解いた', pts: '+3点' },
-                  { ok: true, text: '正しい数値を得た', pts: '+2点' },
-                ].map(({ ok, text, pts }) => (
-                  <div key={text} className="flex items-center gap-1 text-[11px] text-[#9dc8b0]">
-                    <svg className={`w-3.5 h-3.5 flex-shrink-0 ${ok ? 'text-emerald-500' : 'text-amber-400'}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{text}: <strong className="text-emerald-400">{pts}</strong></span>
-                  </div>
-                ))}
-                <div className="flex items-center gap-1 text-[11px] text-[#9dc8b0]">
-                  <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" />
+            {/* CTA */}
+            <div className="hero-cta-row" style={{ animationDelay: '560ms' }}>
+              <Link href="/user" className="btn-editorial-primary group">
+                <span className="btn-editorial-label">問題を作成する</span>
+                <span className="btn-editorial-arrow" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-7l7 7-7 7" />
                   </svg>
-                  <span>式は正しいが計算ミスの場合: <strong className="text-amber-600">-1点</strong></span>
-                </div>
-              </div>
-              <div className="px-5 py-3 border-t border-emerald-800/30 bg-[#0e1f15]/40 text-center">
-                <span className="text-[10px] font-semibold text-[#9dc8b0]">すべての小問に自動生成</span>
-              </div>
-            </div>
-          </section>
-
-
-          {/* ══════ SOCIAL SHARE — バイラル (Reciprocity) ══════ */}
-          <section className="pb-12 sm:pb-16 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-            <div className="landing-mid-cta">
-              <div className="flex items-center justify-center gap-2 mb-5">
-                <div className="flex -space-x-2">
-                  {['bg-sky-400', 'bg-teal-400', 'bg-emerald-400', 'bg-amber-400'].map((bg, i) => (
-                    <div key={i} className={`w-7 h-7 rounded-full ${bg} border-2 border-white flex items-center justify-center text-[9px] font-bold text-white`}>
-                      {['K', 'M', 'S', 'T'][i]}
-                    </div>
-                  ))}
-                </div>
-                <span className="text-[11px] font-semibold text-[#7ab896] ml-1">受験生が使い始めています</span>
-              </div>
-
-              <div className="text-center mb-5">
-                <h3 className="text-[18px] sm:text-[20px] font-black text-[#e8f5ed] tracking-[-0.02em] mb-2">
-                  物理で困ってる友だちに<br />教えてあげよう
-                </h3>
-                <p className="text-[12px] text-[#7ab896] leading-relaxed">
-                  同じ問題で一緒に演習すると定着率が上がる。<br />
-                  「これ使ってみ」の一言が、友だちの合格を後押しする。
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <button type="button" onClick={handleShare} className="landing-cta-secondary group">
-                  <span className="flex items-center justify-center gap-2">
-                    {shared ? (
-                      <>
-                        <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
-                        <span className="text-[13px] font-bold text-emerald-400">コピー完了！</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>
-                        <span className="text-[13px] font-bold">シェアする</span>
-                      </>
-                    )}
-                  </span>
-                </button>
-                <Link href="/practice" className="landing-cta-secondary-alt group">
-                  <span className="flex items-center justify-center gap-2">
-                    <svg className="w-4 h-4 opacity-70" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z" /></svg>
-                    <span className="text-[13px] font-bold">演習する</span>
-                    <svg className="w-3.5 h-3.5 opacity-50 group-hover:translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-                  </span>
-                </Link>
-              </div>
-
-              <div className="mt-4 flex flex-wrap justify-center gap-1.5">
-                {['#REM', '#物理', '#受験勉強', '#共通テスト', '#二次試験'].map((tag) => (
-                  <span key={tag} className="text-[10px] font-semibold text-[#9dc8b0] bg-[#1a2035] px-2 py-0.5 rounded-full">{tag}</span>
-                ))}
-              </div>
-            </div>
-          </section>
-
-
-          {/* ══════ TOOLS ══════ */}
-          <section className="pb-14 sm:pb-18">
-            <div className="text-center mb-6 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-              <span className="section-label">More</span>
-              <h2 className="text-[18px] sm:text-[20px] font-bold text-[#e8f5ed] tracking-[-0.02em] mt-3">
-                その他の機能
-              </h2>
-            </div>
-
-            <div className="space-y-2.5 scroll-reveal" style={{ transitionDelay: '60ms' }}>
-              {[
-                { href: '/history', label: '学習履歴', desc: '演習結果の推移と弱点分析', icon: <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /> },
-                { href: '/search', label: '問題をさがす', desc: '登録済み過去問をキーワード検索', icon: <><circle cx="10.5" cy="10.5" r="6.5" /><line x1="15.5" y1="15.5" x2="21" y2="21" strokeLinecap="round" /></> },
-                { href: '/help', label: 'はじめてガイド', desc: '使い方・ワークフロー・用語集', icon: <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /> },
-              ].map(({ href, label, desc, icon }) => (
-                <Link key={href} href={href} className="group block">
-                  <div className="tool-card-wrap">
-                    <div className="tool-card-icon text-[#7ab896] group-hover:text-[#e8f5ed]"
-                         style={{ transition: 'color 0.4s var(--ease-spring)' }}>
-                      <div className="group-hover:scale-110" style={{ transition: 'transform 0.45s var(--ease-spring)' }}>
-                        <svg className="w-[20px] h-[20px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">{icon}</svg>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0 relative z-10">
-                      <div className="text-[14px] font-semibold text-[#e8f5ed] tracking-[-0.01em]">{label}</div>
-                      <div className="text-[11px] text-[#9dc8b0] mt-0.5">{desc}</div>
-                    </div>
-                    <svg className="flex-shrink-0 w-4 h-4 text-[#d2d2d7] group-hover:text-[#7ab896] group-hover:translate-x-1 relative z-10" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
-                         style={{ transition: 'all 0.4s var(--ease-spring)' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          {/* ── Final CTA ── */}
-          <section className="pb-10 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-            <div className="max-w-[400px] mx-auto text-center">
-              <p className="text-[14px] font-bold text-[#334155] mb-4">
-                物理の得点を上げる準備はできた？
-              </p>
-              <Link href="/practice" className="landing-cta-primary group block mb-3">
-                <span className="relative z-10 flex flex-col items-center gap-1">
-                  <span className="text-[15px] sm:text-[16px] font-bold">今すぐ演習を始める</span>
-                  <span className="text-[10px] font-medium opacity-70">無料 · 60秒で最初の問題が届く</span>
                 </span>
               </Link>
+              <Link href="/dev" className="btn-editorial-ghost">
+                テンプレートを磨く
+              </Link>
             </div>
-          </section>
 
-          {/* ── Footer ── */}
-          <div className="text-center pb-10 scroll-reveal" style={{ transitionDelay: '0ms' }}>
-            <div className="status-pill press-scale">
+            {/* spec strip */}
+            <div className="hero-spec-strip" style={{ animationDelay: '720ms' }}>
+              {[
+                { k: '60s', v: '即時生成' },
+                { k: '25pt', v: '配点付き' },
+                { k: 'TeX', v: '組版品質' },
+                { k: 'A4', v: '即印刷' },
+              ].map(({ k, v }, i) => (
+                <div key={k} className="hero-spec-item">
+                  <div className="hero-spec-key">{k}</div>
+                  <div className="hero-spec-val">{v}</div>
+                  {i < 3 && <span className="hero-spec-sep" />}
+                </div>
+              ))}
+            </div>
+
+            {/* artwork */}
+            <div className="hero-art-mount" style={{ animationDelay: '880ms' }}>
+              <EditorialArtwork />
+            </div>
+          </div>
+
+          {/* scroll cue */}
+          <div className="hero-scroll-cue" style={{ opacity: Math.max(0, 1 - scrolled / 240) }}>
+            <span className="hero-scroll-line" />
+            <span className="hero-scroll-label">scroll</span>
+          </div>
+        </section>
+
+
+        {/* ════════════════════════════════════════════════
+            CHAPTER 01 — MANIFESTO (Editorial pull-quote)
+            ════════════════════════════════════════════════ */}
+        <section className="editorial-chapter scroll-reveal">
+          <div className="editorial-shell">
+            <div className="chapter-tag">
+              <span className="chapter-num">I</span>
+              <span className="chapter-name">Manifesto</span>
+            </div>
+            <blockquote className="manifesto-quote">
+              <span className="manifesto-line">教師の時間は、</span>
+              <span className="manifesto-line manifesto-accent">生徒の未来。</span>
+            </blockquote>
+            <p className="manifesto-body">
+              テスト作成に費やす<strong className="text-emerald-200">夜中の3時間</strong>を、<br className="hidden sm:block" />
+              生徒一人ひとりに向き合う時間へ。<br className="hidden sm:block" />
+              REMは、教材づくりを<strong className="text-emerald-200">芸術</strong>に変える。
+            </p>
+          </div>
+        </section>
+
+
+        {/* ════════════════════════════════════════════════
+            CHAPTER 02 — FEATURES (Apple Music browse cards)
+            ════════════════════════════════════════════════ */}
+        <section className="editorial-chapter scroll-reveal">
+          <div className="editorial-shell">
+            <div className="chapter-tag">
+              <span className="chapter-num">II</span>
+              <span className="chapter-name">Features</span>
+            </div>
+            <h2 className="editorial-heading">
+              プロ品質を、<br />標準装備で。
+            </h2>
+          </div>
+
+          <div className="browse-grid editorial-shell-wide">
+            {[
+              {
+                kicker: 'Typography',
+                title: 'LaTeX組版',
+                body: '美しい数式・記号配置をプロ印刷品質で。教科書と並べても見劣りしない。',
+                gradient: 'linear-gradient(135deg, #0d3a26 0%, #1a6b48 100%)',
+                accent: '#86efac',
+                icon: (
+                  <path d="M4 6h16M4 12h10M4 18h16" strokeLinecap="round" strokeWidth={2} />
+                ),
+              },
+              {
+                kicker: 'Diagrams',
+                title: 'TikZ物理図',
+                body: '回路・力の図・斜面・ばね — 全てベクター描画。再生成も瞬時。',
+                gradient: 'linear-gradient(135deg, #0e2e3a 0%, #145a6b 100%)',
+                accent: '#7dd3fc',
+                icon: (
+                  <>
+                    <circle cx="6" cy="18" r="2" strokeWidth={1.8} />
+                    <circle cx="18" cy="6" r="2" strokeWidth={1.8} />
+                    <path d="M7.5 16.5L16.5 7.5" strokeWidth={1.8} strokeLinecap="round" />
+                  </>
+                ),
+              },
+              {
+                kicker: 'Scoring',
+                title: '配点・部分点基準',
+                body: '小問ごとの配点と「式で+5点／計算で+3点」の部分点ルーブリックを自動生成。',
+                gradient: 'linear-gradient(135deg, #0a3328 0%, #14543f 100%)',
+                accent: '#6ee7b7',
+                icon: (
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+                ),
+              },
+              {
+                kicker: 'Coverage',
+                title: '4分野完備',
+                body: '力学・電磁気・波動・熱力学。共通テストから東大二次まで6段階。',
+                gradient: 'linear-gradient(135deg, #2c1d3a 0%, #4a2d6b 100%)',
+                accent: '#c4b5fd',
+                icon: (
+                  <path d="M3 7h18M3 12h18M3 17h18" strokeLinecap="round" strokeWidth={2} />
+                ),
+              },
+              {
+                kicker: 'Workflow',
+                title: 'テンプレート',
+                body: '学校のロゴ・問題スタイル・採点欄を保存。次回からワンクリック呼び出し。',
+                gradient: 'linear-gradient(135deg, #3a1d1d 0%, #6b2d2d 100%)',
+                accent: '#fca5a5',
+                icon: (
+                  <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l7-3 7 3z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+                ),
+              },
+              {
+                kicker: 'Output',
+                title: 'PDF即出力',
+                body: '生成完了と同時にA4 PDF。生徒の人数分、即印刷・即配布。',
+                gradient: 'linear-gradient(135deg, #0d3a26 0%, #1a6b48 100%)',
+                accent: '#86efac',
+                icon: (
+                  <path d="M12 4v12m0 0l-4-4m4 4l4-4m-9 8h10" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
+                ),
+              },
+            ].map(({ kicker, title, body, gradient, accent, icon }, i) => (
+              <article key={title} className="browse-card scroll-reveal" style={{ transitionDelay: `${i * 60}ms` }}>
+                <div className="browse-card-art" style={{ background: gradient }}>
+                  <div className="browse-card-noise" aria-hidden="true" />
+                  <div className="browse-card-icon" style={{ color: accent }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">{icon}</svg>
+                  </div>
+                  <div className="browse-card-glow" style={{ background: `radial-gradient(circle at 30% 20%, ${accent}33, transparent 60%)` }} />
+                </div>
+                <div className="browse-card-meta">
+                  <div className="browse-card-kicker" style={{ color: accent }}>{kicker}</div>
+                  <h3 className="browse-card-title">{title}</h3>
+                  <p className="browse-card-body">{body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+
+        {/* ════════════════════════════════════════════════
+            CHAPTER 03 — WORKFLOW (Eddivom editorial numerals)
+            ════════════════════════════════════════════════ */}
+        <section className="editorial-chapter scroll-reveal">
+          <div className="editorial-shell">
+            <div className="chapter-tag">
+              <span className="chapter-num">III</span>
+              <span className="chapter-name">Workflow</span>
+            </div>
+            <h2 className="editorial-heading">
+              三つの動作で、<br />一つの教材。
+            </h2>
+          </div>
+
+          <div className="workflow-track editorial-shell-wide">
+            {[
+              { n: '01', t: '設定する', d: '単元・難易度・問題数を選ぶ。学校のテンプレートも呼び出せる。' },
+              { n: '02', t: 'AIが組み上げる', d: '入試品質の小問を、配点・部分点・TikZ図まで一気に生成。' },
+              { n: '03', t: '配布する', d: 'PDFを印刷、もしくはタブレット配信。即、授業に投入できる。' },
+            ].map(({ n, t, d }, i) => (
+              <div key={n} className="workflow-step scroll-reveal" style={{ transitionDelay: `${i * 100}ms` }}>
+                <div className="workflow-num">{n}</div>
+                <div className="workflow-content">
+                  <div className="workflow-rule" />
+                  <h3 className="workflow-title">{t}</h3>
+                  <p className="workflow-desc">{d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+        {/* ════════════════════════════════════════════════
+            CHAPTER 04 — COVERAGE
+            ════════════════════════════════════════════════ */}
+        <section className="editorial-chapter scroll-reveal">
+          <div className="editorial-shell">
+            <div className="chapter-tag">
+              <span className="chapter-num">IV</span>
+              <span className="chapter-name">Coverage</span>
+            </div>
+            <h2 className="editorial-heading">
+              物理の、すべての分野。
+            </h2>
+            <p className="editorial-sub">共通テスト〜東大二次まで、6段階の難易度で。</p>
+          </div>
+
+          <div className="coverage-grid editorial-shell-wide">
+            {[
+              { jp: '力学', en: 'Mechanics', desc: '運動方程式・保存則・衝突・円運動・万有引力', tone: '#86efac' },
+              { jp: '電磁気', en: 'Electromagnetism', desc: 'クーロン力・回路・電磁誘導・交流・コンデンサー', tone: '#7dd3fc' },
+              { jp: '波動', en: 'Waves', desc: 'ドップラー・干渉・回折・レンズ・光波', tone: '#a5b4fc' },
+              { jp: '熱力学', en: 'Thermodynamics', desc: '気体の法則・熱サイクル・状態変化', tone: '#fca5a5' },
+            ].map(({ jp, en, desc, tone }, i) => (
+              <div key={jp} className="coverage-card scroll-reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+                <div className="coverage-tone-bar" style={{ background: tone }} />
+                <div className="coverage-en" style={{ color: tone }}>{en}</div>
+                <h3 className="coverage-jp">{jp}</h3>
+                <p className="coverage-desc">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+        {/* ════════════════════════════════════════════════
+            CHAPTER 05 — SHOWCASE (Apple Music spotlight card)
+            ════════════════════════════════════════════════ */}
+        <section className="editorial-chapter scroll-reveal">
+          <div className="editorial-shell-wide">
+            <div className="spotlight-card">
+              <div className="spotlight-text">
+                <div className="chapter-tag chapter-tag-light">
+                  <span className="chapter-num">V</span>
+                  <span className="chapter-name">Showcase</span>
+                </div>
+                <h2 className="spotlight-heading">
+                  教師の手元に、<br />
+                  <span className="spotlight-heading-accent">アート作品のような教材</span>を。
+                </h2>
+                <p className="spotlight-body">
+                  数式は活字で美しく、図はベクターで精密に。<br />
+                  生徒に「これをやりたい」と思わせる、視覚的な質量がある。
+                </p>
+                <Link href="/user" className="btn-editorial-primary mt-2 inline-flex">
+                  <span className="btn-editorial-label">いま作ってみる</span>
+                  <span className="btn-editorial-arrow" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-7l7 7-7 7" />
+                    </svg>
+                  </span>
+                </Link>
+              </div>
+              <div className="spotlight-art">
+                <EditorialArtwork />
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        {/* ════════════════════════════════════════════════
+            CHAPTER 06 — TOOLS (Quiet links)
+            ════════════════════════════════════════════════ */}
+        <section className="editorial-chapter scroll-reveal pb-2">
+          <div className="editorial-shell">
+            <div className="chapter-tag">
+              <span className="chapter-num">VI</span>
+              <span className="chapter-name">More</span>
+            </div>
+            <h2 className="editorial-heading editorial-heading-sm">補助ツール</h2>
+
+            <div className="tool-row mt-7">
+              {[
+                { href: '/dev', label: 'テンプレートを磨く', desc: '学校・授業ごとの様式を保存', },
+                { href: '/search', label: '問題をさがす', desc: '登録済み過去問をキーワード検索', },
+                { href: '/help', label: 'はじめてガイド', desc: '使い方・ワークフロー・用語集', },
+              ].map(({ href, label, desc }) => (
+                <Link key={href} href={href} className="tool-row-item group">
+                  <div className="tool-row-meta">
+                    <div className="tool-row-label">{label}</div>
+                    <div className="tool-row-desc">{desc}</div>
+                  </div>
+                  <span className="tool-row-arrow" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-7l7 7-7 7" />
+                    </svg>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+
+        {/* ════════════════════════════════════════════════
+            FINAL CTA
+            ════════════════════════════════════════════════ */}
+        <section className="final-cta scroll-reveal">
+          <div className="editorial-shell text-center">
+            <div className="final-cta-eyebrow">
+              <span className="final-cta-dot" />
+              <span>Ready when you are</span>
+            </div>
+            <h2 className="final-cta-headline">
+              次の授業は、<br />
+              <span className="final-cta-accent">REMで作ろう。</span>
+            </h2>
+            <Link href="/user" className="btn-editorial-primary btn-editorial-xl group">
+              <span className="btn-editorial-label">問題を作成する</span>
+              <span className="btn-editorial-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-7l7 7-7 7" />
+                </svg>
+              </span>
+            </Link>
+            <div className="final-cta-foot">
+              <span>無料 · ログイン不要 · 60秒で初稿</span>
+            </div>
+          </div>
+        </section>
+
+
+        {/* footer */}
+        <div className="editorial-shell pb-10">
+          <div className="text-center">
+            <div className="status-pill press-scale inline-flex">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
               </span>
-              <span className="text-[11px] font-medium text-[#9dc8b0] tracking-[0.02em]">REM — AI物理演習で合格を掴む</span>
+              <span className="text-[11px] font-medium text-[#9dc8b0] tracking-[0.02em]">REM — Built for educators</span>
             </div>
           </div>
           <MobileNavLinks currentPath="/" />
