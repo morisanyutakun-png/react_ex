@@ -245,7 +245,7 @@ export default function SettingsPage() {
             {logoUrl && (
               <button
                 onClick={handleLogoRemove}
-                className="ml-2 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500 border border-slate-200 hover:bg-slate-50 transition-colors"
+                className="ml-2 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500 border border-slate-200 hover:bg-[#fafafa] transition-colors"
               >
                 削除
               </button>
@@ -299,7 +299,7 @@ export default function SettingsPage() {
         <button
           onClick={handleReset}
           className="px-4 py-2 rounded-xl text-sm font-medium text-slate-500 border border-slate-200
-                     hover:bg-slate-50 transition-colors"
+                     hover:bg-[#fafafa] transition-colors"
         >
           デフォルトに戻す
         </button>

@@ -49,7 +49,7 @@ export default function Header() {
                     className={`relative px-3 py-1.5 rounded-full text-[13px] font-semibold flex items-center gap-1.5
                       ${active
                         ? ''
-                        : 'text-[#9dc8b0] hover:bg-emerald-900/30'
+                        : 'text-[#86868b] hover:bg-[#fff5f7]'
                       }`}
                     style={{
                       transition: 'all 0.4s var(--ease-spring)',
@@ -61,7 +61,7 @@ export default function Header() {
                       ...(!active ? { '--tw-text-opacity': 1 } : {}),
                     }}
                     onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = primaryColor; }}
-                    onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = '#9dc8b0'; }}
+                    onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = '#86868b'; }}
                   >
                     {icon}
                     {label}
@@ -78,7 +78,7 @@ export default function Header() {
                 className={`relative px-2 py-1.5 rounded-full text-[13px] font-medium flex items-center
                   ${pathname === '/settings'
                     ? ''
-                    : 'text-[#9dc8b0] hover:text-[#a8d8bb]'
+                    : 'text-[#86868b] hover:text-[#515154]'
                   }`}
                 style={{
                   transition: 'all 0.4s var(--ease-spring)',
@@ -89,21 +89,21 @@ export default function Header() {
                   } : {}),
                 }}
                 onMouseEnter={(e) => { if (pathname !== '/settings') e.currentTarget.style.color = primaryColor; }}
-                onMouseLeave={(e) => { if (pathname !== '/settings') e.currentTarget.style.color = '#9dc8b0'; }}
+                onMouseLeave={(e) => { if (pathname !== '/settings') e.currentTarget.style.color = '#86868b'; }}
                 title="ブランド設定"
               >
                 <Icons.Settings className="w-[15px] h-[15px]" />
               </Link>
               {/* 認証 */}
-              <div className="ml-1 pl-1 border-l border-emerald-800/40 flex items-center gap-1">
+              <div className="ml-1 pl-1 border-l border-black/10 flex items-center gap-1">
                 {isAuthenticated ? (
                   <>
-                    <span className="text-[12px] font-medium text-[#9dc8b0] px-1">
+                    <span className="text-[12px] font-medium text-[#86868b] px-1">
                       {user?.display_name || user?.email?.split('@')[0] || 'User'}
                     </span>
                     <button
                       onClick={logout}
-                      className="px-2 py-1 rounded-full text-[11px] font-medium text-[#7ab896] hover:bg-emerald-900/30 transition-colors"
+                      className="px-2 py-1 rounded-full text-[11px] font-medium text-[#515154] hover:bg-[#fff5f7] transition-colors"
                     >
                       ログアウト
                     </button>
@@ -111,7 +111,7 @@ export default function Header() {
                 ) : isGuest ? (
                   <Link
                     href="/login"
-                    className="px-3 py-1.5 rounded-full text-[12px] font-medium text-[#9dc8b0] border border-emerald-800/40 hover:bg-emerald-900/30 transition-colors"
+                    className="px-3 py-1.5 rounded-full text-[12px] font-medium text-[#86868b] border border-black/10 hover:bg-[#fff5f7] transition-colors"
                   >
                     ゲスト利用中
                   </Link>

@@ -409,8 +409,8 @@ export default function DbEditorPage() {
             <path d="M4 12.5c0 1.66 3.58 3 8 3s8-1.34 8-3" opacity="0.5" />
           </svg>
         </div>
-        <h1 className="text-[22px] sm:text-[26px] font-bold text-[#1e293b] tracking-[-0.02em] mb-1.5">データ管理</h1>
-        <p className="text-[13px] text-[#94a3b8] leading-relaxed max-w-md mx-auto">
+        <h1 className="text-[22px] sm:text-[26px] font-bold text-[#1d1d1f] tracking-[-0.02em] mb-1.5">データ管理</h1>
+        <p className="text-[13px] text-[#aeaeb2] leading-relaxed max-w-md mx-auto">
           過去問データベースの閲覧・編集・新規登録。<br className="hidden sm:block" />
           テーブルを選んでデータを確認・管理できます。
         </p>
@@ -430,7 +430,7 @@ export default function DbEditorPage() {
               className={`group relative text-left rounded-[16px] p-3.5 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] overflow-hidden
                 ${active
                   ? 'bg-[#1e2d4a] border-2 scale-[1.02]'
-                  : 'bg-[#111827]/60 backdrop-blur-sm border border-blue-200/40 hover:bg-[#161d2e] hover:scale-[1.01]'
+                  : 'bg-white/80 backdrop-blur-sm border border-black/8 hover:bg-[#fafafa] hover:scale-[1.01]'
                 }`}
               style={active ? { borderColor: `${meta.color}40`, boxShadow: 'var(--shadow-card)' } : {}}
 
@@ -444,11 +444,11 @@ export default function DbEditorPage() {
               <div className="text-xl mb-1.5 transition-transform duration-300 group-hover:scale-110">{meta.icon}</div>
               {/* ラベル */}
               <div className={`text-[12px] font-bold leading-tight transition-colors duration-300
-                ${active ? 'text-[#1e293b]' : 'text-[#64748b] group-hover:text-[#1e293b]'}`}>
+                ${active ? 'text-[#1d1d1f]' : 'text-[#515154] group-hover:text-[#1d1d1f]'}`}>
                 {meta.label}
               </div>
               {/* 説明 */}
-              <div className="text-[10px] text-[#94a3b8] leading-snug mt-0.5 line-clamp-2">{meta.desc}</div>
+              <div className="text-[10px] text-[#aeaeb2] leading-snug mt-0.5 line-clamp-2">{meta.desc}</div>
               {/* アクティブドット */}
               {active && (
                 <div className="absolute top-2 right-2 w-2 h-2 rounded-full"
@@ -466,7 +466,7 @@ export default function DbEditorPage() {
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="flex gap-1.5 items-center flex-1 min-w-[180px] max-w-xs">
               <div className="relative flex-1">
-                <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#aeaeb2] pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
@@ -475,10 +475,10 @@ export default function DbEditorPage() {
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="検索..."
-                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-blue-50/50 text-sm
-                             text-[#1e293b] transition-all border border-transparent
-                             focus:bg-[#111827] focus:border-blue-200/60 focus:shadow-sm
-                             focus:ring-0 outline-none placeholder:text-[#c7c7cc]"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#fff5f7]/50 text-sm
+                             text-[#1d1d1f] transition-all border border-transparent
+                             focus:bg-white focus:border-black/10 focus:shadow-sm
+                             focus:ring-0 outline-none placeholder:text-[#86868b]"
                 />
               </div>
             </div>
@@ -486,8 +486,8 @@ export default function DbEditorPage() {
             {/* カラム選択ボタン */}
             <button
               onClick={() => setShowColPicker(!showColPicker)}
-              className="px-3 py-2 text-xs font-medium text-[#64748b] bg-blue-50/50
-                         rounded-xl hover:bg-blue-100/50 transition-all flex items-center gap-1.5"
+              className="px-3 py-2 text-xs font-medium text-[#515154] bg-[#fff5f7]/50
+                         rounded-xl hover:bg-[#ffe4ea]/50 transition-all flex items-center gap-1.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -547,7 +547,7 @@ export default function DbEditorPage() {
           )}
 
           {/* ページネーション */}
-          <div className="flex items-center gap-4 text-sm text-[#64748b]">
+          <div className="flex items-center gap-4 text-sm text-[#515154]">
             <span>{total}件中 {Math.min(page * PAGE_SIZE + 1, total)}〜{Math.min((page + 1) * PAGE_SIZE, total)}件</span>
             <div className="flex gap-1">
               <Button variant="ghost" size="sm" onClick={() => handlePageChange(page - 1)} disabled={page === 0}>
@@ -561,26 +561,26 @@ export default function DbEditorPage() {
           </div>
 
           {/* データ一覧 (デスクトップ) */}
-          <div className="hidden sm:block rounded-[20px] bg-[#111827] border border-[#1e2d4a] overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
+          <div className="hidden sm:block rounded-[20px] bg-white border border-black/10 overflow-hidden" style={{ boxShadow: 'var(--shadow-card)' }}>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-blue-200/40">
-                    <th className="px-3 py-2.5 text-left text-[11px] font-medium text-[#94a3b8] tracking-wide sticky left-0 bg-[#111827] z-10 w-10">
+                  <tr className="border-b border-black/8">
+                    <th className="px-3 py-2.5 text-left text-[11px] font-medium text-[#aeaeb2] tracking-wide sticky left-0 bg-white z-10 w-10">
                       #
                     </th>
                     {displayCols.map((col) => (
                       <th key={col.name}
-                        className="px-3 py-2.5 text-left text-[11px] font-medium text-[#94a3b8] tracking-wide whitespace-nowrap"
+                        className="px-3 py-2.5 text-left text-[11px] font-medium text-[#aeaeb2] tracking-wide whitespace-nowrap"
                         title={colLabel(col.name)}
                       >
                         <div className="flex items-center gap-1.5">
                           {colLabel(col.name)}
-                          {col.pk && <span className="text-[9px] font-medium bg-blue-100/50 text-[#334155] px-1.5 py-0.5 rounded-full">主キー</span>}
+                          {col.pk && <span className="text-[9px] font-medium bg-[#ffe4ea]/50 text-[#1d1d1f] px-1.5 py-0.5 rounded-full">主キー</span>}
                         </div>
                       </th>
                     ))}
-                    <th className="px-3 py-2.5 text-center text-[11px] font-medium text-[#94a3b8] tracking-wide w-20">
+                    <th className="px-3 py-2.5 text-center text-[11px] font-medium text-[#aeaeb2] tracking-wide w-20">
                       操作
                     </th>
                   </tr>
@@ -591,11 +591,11 @@ export default function DbEditorPage() {
                     const rowDirty = !!edits[rowPk];
                     return (
                       <tr key={rowPk ?? idx}
-                        className={`border-b border-blue-200/40 transition-colors
-                          ${rowDirty ? 'bg-blue-50/50' : 'hover:bg-blue-50/40'}`}
+                        className={`border-b border-black/8 transition-colors
+                          ${rowDirty ? 'bg-[#fff5f7]/50' : 'hover:bg-[#fff5f7]/40'}`}
                       >
-                        <td className={`px-3 py-2.5 font-mono text-[11px] text-[#c7c7cc] sticky left-0 z-10 bg-[#111827]
-                          ${rowDirty ? '!bg-blue-50/50' : ''}`}>
+                        <td className={`px-3 py-2.5 font-mono text-[11px] text-[#86868b] sticky left-0 z-10 bg-white
+                          ${rowDirty ? '!bg-[#fff5f7]/50' : ''}`}>
                           {page * PAGE_SIZE + idx + 1}
                         </td>
                         {displayCols.map((col) => {
@@ -606,7 +606,7 @@ export default function DbEditorPage() {
 
                           if (isPkCol) {
                             return (
-                              <td key={col.name} className="px-3 py-2.5 font-mono text-[#334155] font-semibold text-[11px]">
+                              <td key={col.name} className="px-3 py-2.5 font-mono text-[#1d1d1f] font-semibold text-[11px]">
                                 {formatCellValue(cellVal)}
                               </td>
                             );
@@ -615,7 +615,7 @@ export default function DbEditorPage() {
                           return (
                             <td key={col.name}
                               className={`px-1 py-1 cursor-pointer
-                                ${dirty ? 'bg-blue-50/50' : ''}
+                                ${dirty ? 'bg-[#fff5f7]/50' : ''}
                                 ${isEditing ? 'p-0' : ''}`}
                               onClick={() => !isEditing && startEdit(rowPk, col.name)}
                               title={formatCellValue(cellVal)}
@@ -629,8 +629,8 @@ export default function DbEditorPage() {
                                   onFinish={finishEdit}
                                 />
                               ) : (
-                                <span className={`block px-2 py-1 text-[#1e293b] max-w-[300px] truncate ${
-                                  typeof cellVal === 'object' && cellVal !== null ? 'font-mono text-[10px] text-[#475569]' : ''
+                                <span className={`block px-2 py-1 text-[#1d1d1f] max-w-[300px] truncate ${
+                                  typeof cellVal === 'object' && cellVal !== null ? 'font-mono text-[10px] text-[#515154]' : ''
                                 }`}>
                                   {cellVal === null || cellVal === undefined
                                     ? <span className="text-[#d2d2d7] italic">—</span>
@@ -644,7 +644,7 @@ export default function DbEditorPage() {
                           <div className="flex gap-1 justify-center">
                             <button
                               onClick={() => setDetailRow(row)}
-                              className="text-[#d2d2d7] hover:text-[#1e293b] transition-colors p-1"
+                              className="text-[#d2d2d7] hover:text-[#1d1d1f] transition-colors p-1"
                               title="詳細"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -656,7 +656,7 @@ export default function DbEditorPage() {
                             </button>
                             <button
                               onClick={() => setDeleteConfirm(rowPk)}
-                              className="text-[#d2d2d7] hover:text-[#1e293b] transition-colors p-1"
+                              className="text-[#d2d2d7] hover:text-[#1d1d1f] transition-colors p-1"
                               title="削除"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -671,7 +671,7 @@ export default function DbEditorPage() {
                   })}
                   {rows.length === 0 && !loading && (
                     <tr>
-                      <td colSpan={displayCols.length + 2} className="text-center py-12 text-[#c7c7cc]">
+                      <td colSpan={displayCols.length + 2} className="text-center py-12 text-[#86868b]">
                         データがありません
                       </td>
                     </tr>
@@ -680,7 +680,7 @@ export default function DbEditorPage() {
               </table>
             </div>
             {loading && (
-              <div className="flex items-center justify-center py-8 text-[#c7c7cc]">
+              <div className="flex items-center justify-center py-8 text-[#86868b]">
                 <Icons.Info className="w-5 h-5 animate-pulse mr-2" /> 読み込み中...
               </div>
             )}
@@ -689,7 +689,7 @@ export default function DbEditorPage() {
           {/* モバイルカードビュー */}
           <div className="sm:hidden space-y-3">
             {loading && (
-              <div className="flex items-center justify-center py-8 text-[#c7c7cc]">
+              <div className="flex items-center justify-center py-8 text-[#86868b]">
                 <Icons.Info className="w-5 h-5 animate-pulse mr-2" /> 読み込み中...
               </div>
             )}
@@ -700,19 +700,19 @@ export default function DbEditorPage() {
                 <div key={rowPk ?? idx}
                   className={`rounded-[20px] border p-4 transition-all duration-300 ease-[cubic-bezier(0.25,0.46,0.45,0.94)] ${
                     rowDirty
-                      ? 'bg-blue-50/50 border-blue-200/40'
-                      : 'bg-white/70 border-blue-200/40'
+                      ? 'bg-[#fff5f7]/50 border-black/8'
+                      : 'bg-white/70 border-black/8'
                   }`}
                 >
                   {/* Card header with PK and actions */}
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-[#94a3b8]">#{page * PAGE_SIZE + idx + 1}</span>
+                      <span className="text-[10px] font-bold text-[#aeaeb2]">#{page * PAGE_SIZE + idx + 1}</span>
                       <span className="text-sm font-bold text-[#e8457a] font-mono">{rowPk}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={() => setDetailRow(row)}
-                        className="p-2 rounded-xl text-[#94a3b8] hover:text-[#e8457a] hover:bg-[#e8457a]/5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        className="p-2 rounded-xl text-[#aeaeb2] hover:text-[#e8457a] hover:bg-[#e8457a]/5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                         title="詳細">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -720,7 +720,7 @@ export default function DbEditorPage() {
                         </svg>
                       </button>
                       <button onClick={() => setDeleteConfirm(rowPk)}
-                        className="p-2 rounded-xl text-[#94a3b8] hover:text-[#1e293b] hover:bg-[#2563eb]/[0.06] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        className="p-2 rounded-xl text-[#aeaeb2] hover:text-[#1d1d1f] hover:bg-[#2563eb]/[0.06] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                         title="削除">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -735,11 +735,11 @@ export default function DbEditorPage() {
                       const dirty = isCellDirty(row, col.name);
                       return (
                         <div key={col.name}
-                          className={`flex items-start gap-2 py-1.5 px-2 rounded-lg ${dirty ? 'bg-blue-100/50' : ''}`}
+                          className={`flex items-start gap-2 py-1.5 px-2 rounded-lg ${dirty ? 'bg-[#ffe4ea]/50' : ''}`}
                           onClick={() => startEdit(rowPk, col.name)}
                         >
-                          <span className="text-[10px] font-bold text-[#94a3b8] uppercase min-w-[4.5rem] flex-shrink-0 pt-0.5">{colLabel(col.name)}</span>
-                          <span className="text-[13px] text-[#1e293b] break-all line-clamp-2 min-w-0">
+                          <span className="text-[10px] font-bold text-[#aeaeb2] uppercase min-w-[4.5rem] flex-shrink-0 pt-0.5">{colLabel(col.name)}</span>
+                          <span className="text-[13px] text-[#1d1d1f] break-all line-clamp-2 min-w-0">
                             {cellVal === null || cellVal === undefined
                               ? <span className="text-[#d2d2d7] italic text-xs">—</span>
                               : truncateDisplay(cellVal)}
@@ -758,7 +758,7 @@ export default function DbEditorPage() {
               );
             })}
             {rows.length === 0 && !loading && (
-              <div className="text-center py-12 text-[#c7c7cc] text-sm">データがありません</div>
+              <div className="text-center py-12 text-[#86868b] text-sm">データがありません</div>
             )}
           </div>
         </>
@@ -772,17 +772,17 @@ export default function DbEditorPage() {
       {/* ── 削除確認 ── */}
       {deleteConfirm !== null && (
         <div className="fixed inset-0 bg-blue-500/15 backdrop-blur-md z-50 flex items-center justify-center">
-          <div className="rounded-[20px] bg-[#111827]/90 backdrop-blur-xl p-6 max-w-sm mx-4 border border-blue-200/40" style={{ boxShadow: 'var(--shadow-premium)' }}>
+          <div className="rounded-[20px] bg-white/95 backdrop-blur-xl p-6 max-w-sm mx-4 border border-black/8" style={{ boxShadow: 'var(--shadow-premium)' }}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-blue-50/60 flex items-center justify-center">
-                <svg className="w-5 h-5 text-[#1e293b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 rounded-full bg-[#fff5f7] flex items-center justify-center">
+                <svg className="w-5 h-5 text-[#1d1d1f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </div>
-              <div className="text-[17px] font-bold text-[#1e293b]">削除しますか？</div>
+              <div className="text-[17px] font-bold text-[#1d1d1f]">削除しますか？</div>
             </div>
-            <p className="text-[13px] text-[#64748b] mb-5 pl-[52px]">
-              ID: <strong className="text-[#1e293b]">{deleteConfirm}</strong> のデータを削除します。この操作は取り消せません。
+            <p className="text-[13px] text-[#515154] mb-5 pl-[52px]">
+              ID: <strong className="text-[#1d1d1f]">{deleteConfirm}</strong> のデータを削除します。この操作は取り消せません。
             </p>
             <div className="flex gap-2.5 justify-end">
               <Button variant="ghost" onClick={() => setDeleteConfirm(null)}>キャンセル</Button>
@@ -814,7 +814,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         onBlur={onFinish}
         onKeyDown={(e) => { if (e.key === 'Escape') onFinish(); }}
         className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-[#2563eb]
-                   rounded-[12px] bg-blue-50/50 font-mono resize-y outline-none"
+                   rounded-[12px] bg-[#fff5f7]/50 font-mono resize-y outline-none"
         rows={4}
       />
     );
@@ -826,7 +826,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         value={String(value ?? '')}
         onChange={(e) => { onChange(e.target.value); onFinish(); }}
         onBlur={onFinish}
-        className="px-2 py-1.5 text-xs border border-[#2563eb] rounded-[12px] bg-blue-50/50"
+        className="px-2 py-1.5 text-xs border border-[#2563eb] rounded-[12px] bg-[#fff5f7]/50"
       >
         <option value="">—</option>
         <option value="true">はい</option>
@@ -847,7 +847,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
       }}
       step={isNumericColumn(col.type) ? 'any' : undefined}
       className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-[#2563eb]
-                 rounded-[12px] bg-blue-50/50 outline-none"
+                 rounded-[12px] bg-[#fff5f7]/50 outline-none"
     />
   );
 });
@@ -877,16 +877,16 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
   };
 
   return (
-    <div className="bg-blue-50/40 rounded-[16px] border border-blue-200/40 p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
+    <div className="bg-[#fff5f7]/40 rounded-[16px] border border-black/8 p-5" style={{ boxShadow: 'var(--shadow-card)' }}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-[#1e293b]">表示カラムを選択</h3>
+        <h3 className="text-sm font-bold text-[#1d1d1f]">表示カラムを選択</h3>
         <div className="flex gap-2">
           <button onClick={() => setVisibleCols(DEFAULT_VISIBLE_COLS)}
-            className="text-xs text-[#1e293b] hover:text-[#1e293b] font-semibold">デフォルト</button>
+            className="text-xs text-[#1d1d1f] hover:text-[#1d1d1f] font-semibold">デフォルト</button>
           <button onClick={() => setVisibleCols(colNames)}
-            className="text-xs text-[#d2d2d7] hover:text-[#64748b] font-semibold">全選択</button>
+            className="text-xs text-[#d2d2d7] hover:text-[#515154] font-semibold">全選択</button>
           <button onClick={onClose}
-            className="text-xs text-[#d2d2d7] hover:text-[#64748b] font-semibold ml-2">閉じる</button>
+            className="text-xs text-[#d2d2d7] hover:text-[#515154] font-semibold ml-2">閉じる</button>
         </div>
       </div>
 
@@ -894,8 +894,8 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="flex gap-2 mb-3">
         {Object.entries(COLUMN_GROUPS).map(([key, group]) => (
           <button key={key} onClick={() => selectGroup(key)}
-            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-50/60 text-[#64748b]
-                       hover:bg-blue-100/60 hover:text-[#1e293b] transition-colors border border-blue-200/40">
+            className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-[#fff5f7] text-[#515154]
+                       hover:bg-[#ffe4ea]/60 hover:text-[#1d1d1f] transition-colors border border-black/8">
             {group.label}
           </button>
         ))}
@@ -904,7 +904,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-1.5">
         {allCols.map((col) => (
           <label key={col.name} className={`flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer text-[11px]
-            transition-colors ${visibleCols.includes(col.name) ? 'bg-blue-100/60 text-[#1e293b]' : 'text-[#c7c7cc] hover:bg-blue-50/50'}`}>
+            transition-colors ${visibleCols.includes(col.name) ? 'bg-[#ffe4ea]/60 text-[#1d1d1f]' : 'text-[#86868b] hover:bg-[#fff5f7]/50'}`}>
             <input type="checkbox" checked={visibleCols.includes(col.name)}
               onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-[#2563eb]" />
             <span className="truncate">{colLabel(col.name)}</span>
@@ -921,12 +921,12 @@ function RowDetailModal({ row, schema, pk, onClose }) {
   return (
     <div className="fixed inset-0 bg-blue-500/15 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="bg-[#111827]/95 backdrop-blur-xl rounded-t-[20px] sm:rounded-[20px] max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-blue-200/40" style={{ boxShadow: 'var(--shadow-premium)' }}>
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-blue-200/40">
-          <h2 className="text-base sm:text-lg font-bold text-[#1e293b]">
+      <div className="bg-white/95 backdrop-blur-xl rounded-t-[20px] sm:rounded-[20px] max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-black/8" style={{ boxShadow: 'var(--shadow-premium)' }}>
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/8">
+          <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f]">
             データ詳細
           </h2>
-          <button onClick={onClose} className="text-[#c7c7cc] hover:text-[#424245] text-xl font-bold p-1">
+          <button onClick={onClose} className="text-[#86868b] hover:text-[#424245] text-xl font-bold p-1">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -937,7 +937,7 @@ function RowDetailModal({ row, schema, pk, onClose }) {
             const val = row[col.name];
             const isEmpty = val === null || val === undefined || val === '';
             return (
-              <div key={col.name} className="flex flex-col sm:flex-row sm:gap-3 py-2 border-b border-blue-200/40">
+              <div key={col.name} className="flex flex-col sm:flex-row sm:gap-3 py-2 border-b border-black/8">
                 <div className="sm:w-44 flex-shrink-0 mb-0.5 sm:mb-0">
                   <span className="text-xs font-bold text-[#424245]">{colLabel(col.name)}</span>
                 </div>
@@ -945,11 +945,11 @@ function RowDetailModal({ row, schema, pk, onClose }) {
                   {isEmpty ? (
                     <span className="text-xs text-[#d2d2d7] italic">—</span>
                   ) : typeof val === 'object' ? (
-                    <pre className="text-xs text-[#475569] font-mono bg-blue-50/60 rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
+                    <pre className="text-xs text-[#515154] font-mono bg-[#fff5f7] rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
                       {JSON.stringify(val, null, 2)}
                     </pre>
                   ) : (
-                    <span className="text-xs text-[#1e293b] whitespace-pre-wrap break-all">{String(val)}</span>
+                    <span className="text-xs text-[#1d1d1f] whitespace-pre-wrap break-all">{String(val)}</span>
                   )}
                 </div>
               </div>
@@ -966,62 +966,62 @@ function RowDetailModal({ row, schema, pk, onClose }) {
 function DifficultyEstimatePanel({ result, estimating, onApply }) {
   if (estimating) {
     return (
-      <div className="bg-blue-100/50 border border-blue-200/40 rounded-[16px] p-4 flex items-center gap-3">
-        <svg className="w-5 h-5 animate-spin text-[#1e293b]" fill="none" viewBox="0 0 24 24">
+      <div className="bg-[#ffe4ea]/50 border border-black/8 rounded-[16px] p-4 flex items-center gap-3">
+        <svg className="w-5 h-5 animate-spin text-[#1d1d1f]" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <span className="text-sm font-semibold text-[#1e293b]">難易度を推定中...</span>
+        <span className="text-sm font-semibold text-[#1d1d1f]">難易度を推定中...</span>
       </div>
     );
   }
   if (!result) return null;
 
   const levelColors = {
-    1: 'bg-blue-100/60 text-[#1e293b]',
-    2: 'bg-blue-100/50 text-[#334155]',
-    3: 'bg-blue-100/50 text-[#475569]',
-    4: 'bg-blue-100/50 text-[#334155]',
-    5: 'bg-[#2563eb]/[0.06] text-[#1e293b]',
+    1: 'bg-[#ffe4ea]/60 text-[#1d1d1f]',
+    2: 'bg-[#ffe4ea]/50 text-[#1d1d1f]',
+    3: 'bg-[#ffe4ea]/50 text-[#515154]',
+    4: 'bg-[#ffe4ea]/50 text-[#1d1d1f]',
+    5: 'bg-[#2563eb]/[0.06] text-[#1d1d1f]',
   };
   const levelLabels = { 1: '基礎', 2: '標準', 3: '応用', 4: '発展', 5: '難問' };
 
   return (
-    <div className="bg-gradient-to-r from-black/[0.02] to-black/[0.02] border border-blue-200/40 rounded-[16px] p-4">
+    <div className="bg-gradient-to-r from-black/[0.02] to-black/[0.02] border border-black/8 rounded-[16px] p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-[#475569]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#515154]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
-          <span className="text-sm font-bold text-[#475569]">難易度自動推定</span>
+          <span className="text-sm font-bold text-[#515154]">難易度自動推定</span>
         </div>
         <button
           onClick={onApply}
-          className="px-3 py-1.5 text-xs font-bold bg-[#2563eb] text-[#1e293b] rounded-lg hover:bg-[#2563eb] transition-colors"
+          className="px-3 py-1.5 text-xs font-bold bg-[#2563eb] text-[#1d1d1f] rounded-lg hover:bg-[#2563eb] transition-colors"
         >
           推定値を適用
         </button>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-blue-50/40 rounded-[12px] p-3 text-center border border-blue-200/40">
-          <div className="text-[10px] font-semibold text-[#94a3b8] mb-1">難易度スコア</div>
-          <div className="text-xl font-bold text-[#475569]">{result.difficulty.toFixed(3)}</div>
-          <div className="h-1.5 bg-blue-50/60 rounded-full mt-1.5 overflow-hidden">
+        <div className="bg-[#fff5f7]/40 rounded-[12px] p-3 text-center border border-black/8">
+          <div className="text-[10px] font-semibold text-[#aeaeb2] mb-1">難易度スコア</div>
+          <div className="text-xl font-bold text-[#515154]">{result.difficulty.toFixed(3)}</div>
+          <div className="h-1.5 bg-[#fff5f7] rounded-full mt-1.5 overflow-hidden">
             <div className="h-full bg-[#475569] rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
           </div>
         </div>
-        <div className="bg-blue-50/40 rounded-[12px] p-3 text-center border border-blue-200/40">
-          <div className="text-[10px] font-semibold text-[#94a3b8] mb-1">レベル</div>
-          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-bold ${levelColors[result.difficulty_level] || 'bg-blue-50/60 text-[#64748b]'}`}>
+        <div className="bg-[#fff5f7]/40 rounded-[12px] p-3 text-center border border-black/8">
+          <div className="text-[10px] font-semibold text-[#aeaeb2] mb-1">レベル</div>
+          <div className={`inline-flex px-3 py-1 rounded-lg text-lg font-bold ${levelColors[result.difficulty_level] || 'bg-[#fff5f7] text-[#515154]'}`}>
             Lv.{result.difficulty_level}
           </div>
-          <div className="text-[10px] text-[#c7c7cc] mt-1">{levelLabels[result.difficulty_level] || ''}</div>
+          <div className="text-[10px] text-[#86868b] mt-1">{levelLabels[result.difficulty_level] || ''}</div>
         </div>
-        <div className="bg-blue-50/40 rounded-[12px] p-3 text-center border border-blue-200/40">
-          <div className="text-[10px] font-semibold text-[#94a3b8] mb-1">ひっかけ度</div>
-          <div className="text-xl font-bold text-[#475569]">{result.trickiness.toFixed(3)}</div>
-          <div className="h-1.5 bg-blue-50/60 rounded-full mt-1.5 overflow-hidden">
+        <div className="bg-[#fff5f7]/40 rounded-[12px] p-3 text-center border border-black/8">
+          <div className="text-[10px] font-semibold text-[#aeaeb2] mb-1">ひっかけ度</div>
+          <div className="text-xl font-bold text-[#515154]">{result.trickiness.toFixed(3)}</div>
+          <div className="h-1.5 bg-[#fff5f7] rounded-full mt-1.5 overflow-hidden">
             <div className="h-full bg-[#475569] rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
           </div>
         </div>
@@ -1053,8 +1053,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
     !['created_at', 'updated_at'].includes(c.name)
   );
 
-  const baseInputClass = `w-full px-3 py-2 text-sm border border-blue-200/40 rounded-[12px] bg-[#111827]
-    text-[#1e293b] transition-all hover:border-blue-200/50 focus:border-[#2563eb]/50 focus:ring-2 focus:ring-[#2563eb]/20 outline-none placeholder:text-[#c7c7cc]`;
+  const baseInputClass = `w-full px-3 py-2 text-sm border border-black/8 rounded-[12px] bg-white
+    text-[#1d1d1f] transition-all hover:border-black/10 focus:border-[#2563eb]/50 focus:ring-2 focus:ring-[#2563eb]/20 outline-none placeholder:text-[#86868b]`;
 
   const handleStemBlur = () => {
     if (data.stem?.trim()) {
@@ -1073,18 +1073,18 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
   const hasPriority = data.subject && data.stem;
 
   return (
-    <div className="bg-gradient-to-r from-black/[0.02] to-black/[0.02] border border-blue-200/40 rounded-[20px] p-5 space-y-4">
+    <div className="bg-gradient-to-r from-black/[0.02] to-black/[0.02] border border-black/8 rounded-[20px] p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-[#1e293b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-[#1d1d1f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          <span className="text-sm font-bold text-[#1e293b]">新しい行を追加</span>
-          <span className="text-[10px] bg-blue-100/60 text-[#1e293b] px-2 py-0.5 rounded-lg font-bold">
+          <span className="text-sm font-bold text-[#1d1d1f]">新しい行を追加</span>
+          <span className="text-[10px] bg-[#ffe4ea]/60 text-[#1d1d1f] px-2 py-0.5 rounded-lg font-bold">
             {tableLabel(table)}
           </span>
         </div>
-        <button onClick={onCancel} className="text-[#c7c7cc] hover:text-[#424245] transition-colors p-1">
+        <button onClick={onCancel} className="text-[#86868b] hover:text-[#424245] transition-colors p-1">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -1095,8 +1095,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* 教科 */}
         <div>
-          <label className="block text-[11px] font-bold text-[#1e293b] mb-1">
-            教科 <span className="text-[#1e293b]">*</span>
+          <label className="block text-[11px] font-bold text-[#1d1d1f] mb-1">
+            教科 <span className="text-[#1d1d1f]">*</span>
           </label>
           <select
             value={data.subject || ''}
@@ -1110,8 +1110,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* トピック */}
         <div>
-          <label className="block text-[11px] font-bold text-[#1e293b] mb-1">
-            トピック <span className="text-[#1e293b]">*</span>
+          <label className="block text-[11px] font-bold text-[#1d1d1f] mb-1">
+            トピック <span className="text-[#1d1d1f]">*</span>
           </label>
           {topicOptions.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-1">
@@ -1119,8 +1119,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
                 <button key={t} type="button" onClick={() => onChange('topic', t)}
                   className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
                     data.topic === t
-                      ? 'bg-[#2563eb] text-[#1e293b] border-[#2563eb]'
-                      : 'bg-blue-50/50 text-[#64748b] border-blue-200/40 hover:border-[#2563eb]'
+                      ? 'bg-[#2563eb] text-[#1d1d1f] border-[#2563eb]'
+                      : 'bg-[#fff5f7]/50 text-[#515154] border-black/8 hover:border-[#2563eb]'
                   }`}>
                   {t}
                 </button>
@@ -1138,8 +1138,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* 問題文 */}
         <div className="md:col-span-2">
-          <label className="block text-[11px] font-bold text-[#1e293b] mb-1">
-            問題文 <span className="text-[#1e293b]">*</span>
+          <label className="block text-[11px] font-bold text-[#1d1d1f] mb-1">
+            問題文 <span className="text-[#1d1d1f]">*</span>
             <span className="text-[10px] font-normal text-[#d2d2d7] ml-2">数式は $...$ で囲んで入力</span>
           </label>
           <textarea
@@ -1154,7 +1154,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
 
         {/* 答え */}
         <div className="md:col-span-2">
-          <label className="block text-[11px] font-bold text-[#1e293b] mb-1">
+          <label className="block text-[11px] font-bold text-[#1d1d1f] mb-1">
             答え
           </label>
           <input
@@ -1188,7 +1188,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
         <button
           type="button"
           onClick={() => setShowMore(!showMore)}
-          className="text-xs text-[#d2d2d7] hover:text-[#64748b] font-semibold flex items-center gap-1"
+          className="text-xs text-[#d2d2d7] hover:text-[#515154] font-semibold flex items-center gap-1"
         >
           <svg className={`w-3.5 h-3.5 transition-transform ${showMore ? 'rotate-180' : ''}`}
             fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1240,7 +1240,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
       {/* 追加ボタン */}
       <div className="flex gap-3 justify-end pt-1">
         <button onClick={onCancel}
-          className="px-4 py-2 text-sm text-[#d2d2d7] hover:text-[#64748b] transition-colors font-semibold">
+          className="px-4 py-2 text-sm text-[#d2d2d7] hover:text-[#515154] transition-colors font-semibold">
           キャンセル
         </button>
         <button
@@ -1248,8 +1248,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
           disabled={!hasPriority || saving}
           className={`px-6 py-2.5 text-sm font-bold rounded-lg  transition-all flex items-center gap-1.5
             ${hasPriority && !saving
-              ? 'bg-[#2563eb] text-[#1e293b] hover:bg-[#2563eb] shadow-blue-200/50'
-              : 'bg-blue-50/60 text-[#d2d2d7] cursor-not-allowed'
+              ? 'bg-[#2563eb] text-[#1d1d1f] hover:bg-[#2563eb] shadow-blue-200/50'
+              : 'bg-[#fff5f7] text-[#d2d2d7] cursor-not-allowed'
             }`}
         >
           {saving ? (

@@ -63,7 +63,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-2">
+        <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-2">
           {label}
         </label>
       )}
@@ -73,10 +73,10 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            className="w-full pl-4 pr-10 py-3 rounded-2xl border border-blue-200/50 bg-[#111827] text-sm
-                      text-[#1e293b] transition-all duration-300 cursor-pointer appearance-none
-                      hover:border-blue-300/50 hover:bg-[#161d2e] hover:shadow-md
-                      focus:border-blue-300/70 focus:ring-2 focus:ring-blue-200/40 focus:shadow-md
+            className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/10 bg-white text-sm
+                      text-[#1d1d1f] transition-all duration-300 cursor-pointer appearance-none
+                      hover:border-[#ff375f]/40 hover:bg-[#fafafa] hover:shadow-md
+                      focus:border-[#ff375f]/55 focus:ring-2 focus:ring-[#ff375f]/30/40 focus:shadow-md
                       outline-none font-semibold shadow-sm
                       disabled:opacity-40 disabled:cursor-not-allowed"
           >
@@ -87,7 +87,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
                 : <option key={opt.value} value={opt.value}>{opt.label}</option>
             )}
           </select>
-          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none transition-all duration-300 group-hover:text-[#64748b] text-[#c7c7cc]">
+          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none transition-all duration-300 group-hover:text-[#515154] text-[#86868b]">
             <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
@@ -101,8 +101,8 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             type="button"
             onClick={onAdd}
             title={addLabel || '追加'}
-            className="flex items-center justify-center w-11 rounded-2xl border border-dashed border-blue-200/50
-                       text-[#c7c7cc] hover:border-blue-300/60 hover:text-[#1e293b] hover:bg-blue-50/50
+            className="flex items-center justify-center w-11 rounded-2xl border border-dashed border-black/10
+                       text-[#86868b] hover:border-[#ff375f]/60 hover:text-[#1d1d1f] hover:bg-[#fff5f7]/50
                        transition-all duration-300 flex-shrink-0 active:scale-90 hover:shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -123,18 +123,18 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
 function SelectedTag({ label, value, color = 'red', onClear }) {
   if (!value) return null;
   const colors = {
-    red: 'bg-blue-100/50 text-[#1e293b] border-[#2563eb]/15',
-    emerald: 'bg-blue-100/50 text-[#1e293b] border-[#2563eb]/15',
-    amber: 'bg-blue-50/50 text-[#475569] border-blue-300/50/15',
-    violet: 'bg-blue-50/50 text-[#475569] border-blue-300/50/15',
-    sky: 'bg-[#2563eb]/[0.06] text-[#334155] border-[#2563eb]/15',
+    red: 'bg-[#ffe4ea]/50 text-[#1d1d1f] border-[#2563eb]/15',
+    emerald: 'bg-[#ffe4ea]/50 text-[#1d1d1f] border-[#2563eb]/15',
+    amber: 'bg-[#fff5f7]/50 text-[#515154] border-[#ff375f]/40/15',
+    violet: 'bg-[#fff5f7]/50 text-[#515154] border-[#ff375f]/40/15',
+    sky: 'bg-[#2563eb]/[0.06] text-[#1d1d1f] border-[#2563eb]/15',
   };
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${colors[color] || colors.red} transition-all hover:shadow-sm`}>
       <span className="opacity-50 font-medium">{label}:</span>
       <span>{value}</span>
       {onClear && (
-        <button onClick={onClear} className="ml-0.5 w-4 h-4 rounded-full bg-blue-100/50 hover:bg-blue-100/70 flex items-center justify-center transition-all">
+        <button onClick={onClear} className="ml-0.5 w-4 h-4 rounded-full bg-[#ffe4ea]/50 hover:bg-[#ffe4ea]/70 flex items-center justify-center transition-all">
           <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -165,7 +165,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
     <div className="space-y-6">
       {/* プリセット */}
       <div>
-        <div className="text-[10px] font-bold text-[#c7c7cc] uppercase tracking-wider mb-2.5">プリセット — ワンクリックで設定</div>
+        <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider mb-2.5">プリセット — ワンクリックで設定</div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {presets.map((p) => {
             const isActive = Math.abs(textWeight - p.text) < 0.05 && Math.abs(diffWeight - p.diff) < 0.05 && Math.abs(trickWeight - p.trick) < 0.05;
@@ -179,8 +179,8 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
               >
                 {isActive && <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-[#2563eb]" />}
                 <span className="text-xl block mb-1">{p.icon}</span>
-                <span className={`text-[11px] font-bold block ${isActive ? 'text-[#1e293b]' : 'text-[#1e293b]'}`}>{p.label}</span>
-                <span className="text-[9px] text-[#94a3b8] block mt-0.5 leading-tight">{p.desc}</span>
+                <span className={`text-[11px] font-bold block ${isActive ? 'text-[#1d1d1f]' : 'text-[#1d1d1f]'}`}>{p.label}</span>
+                <span className="text-[9px] text-[#aeaeb2] block mt-0.5 leading-tight">{p.desc}</span>
               </button>
             );
           })}
@@ -188,7 +188,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
       </div>
 
       {/* ビジュアルバランスメーター */}
-      <div className="p-5 bg-[#111827] rounded-2xl border border-blue-200/50 shadow-sm">
+      <div className="p-5 bg-white rounded-2xl border border-black/10 shadow-sm">
         {/* 円グラフ風バランス表示 */}
         <div className="flex items-center justify-center gap-6 sm:gap-10 mb-6">
           {axes.map((p) => {
@@ -233,7 +233,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
                   </span>
                 </div>
                 <div className="relative h-7 flex items-center">
-                  <div className="absolute inset-x-0 h-[5px] rounded-full bg-blue-50/60" />
+                  <div className="absolute inset-x-0 h-[5px] rounded-full bg-[#fff5f7]" />
                   <div className="absolute left-0 h-[5px] rounded-full transition-all duration-200"
                        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${p.color}, ${p.color}bb)` }} />
                   <input
@@ -248,7 +248,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
                       [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:active:scale-110"
                   />
                 </div>
-                <p className="text-[10px] text-[#94a3b8] mt-0.5 ml-4">{p.desc}</p>
+                <p className="text-[10px] text-[#aeaeb2] mt-0.5 ml-4">{p.desc}</p>
               </div>
             );
           })}
@@ -284,7 +284,7 @@ function QualityRating({ score, onChange }) {
             style={isActive ? { ringColor: `${l.color}40`, '--tw-ring-color': `${l.color}40` } : undefined}>
             {isActive && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: l.color }} />}
             <span className={`text-2xl transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>{l.icon}</span>
-            <span className={`text-[10px] font-bold transition-colors ${isActive ? '' : 'text-[#94a3b8]'}`}
+            <span className={`text-[10px] font-bold transition-colors ${isActive ? '' : 'text-[#aeaeb2]'}`}
                   style={isActive ? { color: l.color } : undefined}>
               {l.label}
             </span>
@@ -364,18 +364,18 @@ export default function TuningPage() {
 
   // 科目カラー定義
   const SUBJECT_COLOR_MAP = useMemo(() => ({
-    '数学': { bg: 'from-[#3b82f6] to-[#2563eb]', light: '#3b82f6', bgLight: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+    '数学': { bg: 'from-[#3b82f6] to-[#2563eb]', light: '#3b82f6', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff375f]', border: 'border-black/10' },
     '物理': { bg: 'from-[#8b5cf6] to-[#7c3aed]', light: '#8b5cf6', bgLight: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
-    '化学': { bg: 'from-[#10b981] to-[#059669]', light: '#10b981', bgLight: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    '化学': { bg: 'from-[#ff375f] to-[#059669]', light: '#ff375f', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
     '英語': { bg: 'from-[#f59e0b] to-[#d97706]', light: '#f59e0b', bgLight: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
     '生物': { bg: 'from-[#22c55e] to-[#16a34a]', light: '#22c55e', bgLight: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
     '情報': { bg: 'from-[#06b6d4] to-[#0891b2]', light: '#06b6d4', bgLight: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
     '国語': { bg: 'from-[#ec4899] to-[#db2777]', light: '#ec4899', bgLight: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
     '社会': { bg: 'from-[#f97316] to-[#ea580c]', light: '#f97316', bgLight: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
-    '地学': { bg: 'from-[#14b8a6] to-[#0d9488]', light: '#14b8a6', bgLight: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' },
+    '地学': { bg: 'from-[#ff9966] to-[#0d9488]', light: '#ff9966', bgLight: 'bg-[#ff9966]', text: 'text-[#ff9966]', border: 'border-[#ff9966]' },
     '理科': { bg: 'from-[#6366f1] to-[#4f46e5]', light: '#6366f1', bgLight: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
   }), []);
-  const getSubjectColor = useCallback((subj) => SUBJECT_COLOR_MAP[subj] || { bg: 'from-[#64748b] to-[#475569]', light: '#64748b', bgLight: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' }, [SUBJECT_COLOR_MAP]);
+  const getSubjectColor = useCallback((subj) => SUBJECT_COLOR_MAP[subj] || { bg: 'from-[#64748b] to-[#475569]', light: '#64748b', bgLight: 'bg-[#fafafa]', text: 'text-slate-600', border: 'border-slate-200' }, [SUBJECT_COLOR_MAP]);
 
   // テンプレートを教科ごとにグループ化
   const groupedTemplates = useMemo(() => {
@@ -759,10 +759,10 @@ export default function TuningPage() {
         <div className="inline-flex items-center justify-center w-[56px] h-[56px] rounded-[18px] bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white shadow-lg shadow-blue-500/25 mb-4">
           <Icons.Dev className="w-7 h-7" />
         </div>
-        <h1 className="text-[22px] sm:text-[26px] font-black tracking-tight text-[#1e293b] mb-1 leading-none">
+        <h1 className="text-[22px] sm:text-[26px] font-black tracking-tight text-[#1d1d1f] mb-1 leading-none">
           品質をみがく
         </h1>
-        <p className="text-[13px] sm:text-[14px] text-[#64748b] max-w-[340px] mx-auto leading-relaxed">
+        <p className="text-[13px] sm:text-[14px] text-[#515154] max-w-[340px] mx-auto leading-relaxed">
           出題パターンを選んで → AIに指示を出し → 出来栄えを確認する
         </p>
       </div>
@@ -771,7 +771,7 @@ export default function TuningPage() {
 
       {/* ── フィードバックダッシュボード（常時表示） ── */}
       {feedbackData && (
-        <div className="relative overflow-hidden rounded-[20px] bg-[#111827] border border-[#1e2d4a] shadow-sm"
+        <div className="relative overflow-hidden rounded-[20px] bg-white border border-black/10 shadow-sm"
              style={{ boxShadow: 'var(--shadow-card)' }}>
           <div className="p-5 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
@@ -779,75 +779,75 @@ export default function TuningPage() {
                 <Icons.Chart className="w-4 h-4" />
               </div>
               <div className="flex-1">
-                <h3 className="text-[14px] font-bold text-[#1e293b] tracking-tight">あなたの評価データ</h3>
-                <p className="text-[11px] text-[#94a3b8]">過去の記録をもとに、AIへの指示に自動反映します</p>
+                <h3 className="text-[14px] font-bold text-[#1d1d1f] tracking-tight">あなたの評価データ</h3>
+                <p className="text-[11px] text-[#aeaeb2]">過去の記録をもとに、AIへの指示に自動反映します</p>
               </div>
               {feedbackLoading && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50/50 rounded-full">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fff5f7]/50 rounded-full">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb] animate-pulse" />
-                  <span className="text-[10px] text-[#64748b] font-semibold">更新中</span>
+                  <span className="text-[10px] text-[#515154] font-semibold">更新中</span>
                 </div>
               )}
             </div>
 
             {/* 統計カード */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-              <div className="relative overflow-hidden rounded-2xl bg-blue-50/40 border border-blue-200/50 p-4 text-center">
-                <div className="text-2xl font-bold text-[#1e293b] tabular-nums">{feedbackData.stats?.total_evaluations ?? 0}</div>
-                <div className="text-[10px] text-[#64748b] font-semibold mt-0.5 uppercase tracking-wider">累計記録</div>
+              <div className="relative overflow-hidden rounded-2xl bg-[#fff5f7]/40 border border-black/10 p-4 text-center">
+                <div className="text-2xl font-bold text-[#1d1d1f] tabular-nums">{feedbackData.stats?.total_evaluations ?? 0}</div>
+                <div className="text-[10px] text-[#515154] font-semibold mt-0.5 uppercase tracking-wider">累計記録</div>
               </div>
-              <div className="relative overflow-hidden rounded-2xl bg-blue-50/40 border border-blue-200/50 p-4 text-center">
-                <div className="text-2xl font-bold text-[#1e293b] tabular-nums">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
-                <div className="text-[10px] text-[#64748b] font-semibold mt-0.5 uppercase tracking-wider">平均スコア</div>
+              <div className="relative overflow-hidden rounded-2xl bg-[#fff5f7]/40 border border-black/10 p-4 text-center">
+                <div className="text-2xl font-bold text-[#1d1d1f] tabular-nums">{feedbackData.stats?.avg_score != null ? feedbackData.stats.avg_score : '—'}</div>
+                <div className="text-[10px] text-[#515154] font-semibold mt-0.5 uppercase tracking-wider">平均スコア</div>
                 {/* スコアバー */}
                 {feedbackData.stats?.avg_score != null && (
-                  <div className="mt-2 h-1.5 bg-blue-50/60 rounded-full overflow-hidden">
+                  <div className="mt-2 h-1.5 bg-[#fff5f7] rounded-full overflow-hidden">
                     <div className="h-full rounded-full bg-[#2563eb] transition-all duration-500"
                          style={{ width: `${(feedbackData.stats.avg_score / 5) * 100}%` }} />
                   </div>
                 )}
               </div>
-              <div className="relative overflow-hidden rounded-2xl bg-blue-50/40 border border-blue-200/50 p-4 text-center">
-                <div className="text-2xl font-bold text-[#1e293b] tabular-nums">{feedbackData.stats?.high_score_count ?? 0}</div>
-                <div className="text-[10px] text-[#64748b] font-semibold mt-0.5 uppercase tracking-wider">高評価 (4+)</div>
+              <div className="relative overflow-hidden rounded-2xl bg-[#fff5f7]/40 border border-black/10 p-4 text-center">
+                <div className="text-2xl font-bold text-[#1d1d1f] tabular-nums">{feedbackData.stats?.high_score_count ?? 0}</div>
+                <div className="text-[10px] text-[#515154] font-semibold mt-0.5 uppercase tracking-wider">高評価 (4+)</div>
               </div>
             </div>
 
             {/* 高評価例 */}
             {feedbackData.feedback?.length > 0 ? (
-              <details className="group rounded-2xl bg-blue-50/40 border border-blue-200/40 overflow-hidden">
-                <summary className="cursor-pointer px-4 py-3 text-xs font-bold text-[#1e293b] hover:bg-blue-50/40 select-none flex items-center gap-2 transition-all">
+              <details className="group rounded-2xl bg-[#fff5f7]/40 border border-black/8 overflow-hidden">
+                <summary className="cursor-pointer px-4 py-3 text-xs font-bold text-[#1d1d1f] hover:bg-[#fff5f7]/40 select-none flex items-center gap-2 transition-all">
                   <svg className="w-3.5 h-3.5 transition-transform duration-200 group-open:rotate-90" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                   <span>うまくいった例を見る</span>
-                  <span className="ml-auto px-2 py-0.5 bg-blue-50/60 text-[#64748b] rounded-full text-[10px] font-bold">{feedbackData.feedback.length}件</span>
+                  <span className="ml-auto px-2 py-0.5 bg-[#fff5f7] text-[#515154] rounded-full text-[10px] font-bold">{feedbackData.feedback.length}件</span>
                 </summary>
                 <div className="px-4 pb-4 space-y-2 max-h-52 overflow-y-auto custom-scrollbar">
                   {feedbackData.feedback.map((fb, idx) => (
-                    <div key={fb.id || idx} className="p-3 bg-white/80 rounded-xl border border-blue-200/40 shadow-sm">
+                    <div key={fb.id || idx} className="p-3 bg-white/80 rounded-xl border border-black/8 shadow-sm">
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50/60 text-[#1e293b] rounded-lg text-[10px] font-bold">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#fff5f7] text-[#1d1d1f] rounded-lg text-[10px] font-bold">
                             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                             {fb.score}
                           </span>
                           {fb.metadata?.subject && (
-                            <span className="px-2 py-0.5 bg-blue-50/60 text-[#64748b] rounded-lg text-[9px] font-bold">{fb.metadata.subject}</span>
+                            <span className="px-2 py-0.5 bg-[#fff5f7] text-[#515154] rounded-lg text-[9px] font-bold">{fb.metadata.subject}</span>
                           )}
                           {fb.metadata?.field && (
-                            <span className="px-2 py-0.5 bg-blue-50/60 text-[#64748b] rounded-lg text-[9px] font-bold">{fb.metadata.field}</span>
+                            <span className="px-2 py-0.5 bg-[#fff5f7] text-[#515154] rounded-lg text-[9px] font-bold">{fb.metadata.field}</span>
                           )}
                         </div>
-                        <span className="text-[9px] text-[#c7c7cc] font-medium">{fb.timestamp?.slice(0, 10)}</span>
+                        <span className="text-[9px] text-[#86868b] font-medium">{fb.timestamp?.slice(0, 10)}</span>
                       </div>
                       {fb.notes && (
-                        <div className="text-[11px] text-[#64748b] flex items-start gap-1.5 mb-1">
-                          <svg className="w-3.5 h-3.5 text-[#475569] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
+                        <div className="text-[11px] text-[#515154] flex items-start gap-1.5 mb-1">
+                          <svg className="w-3.5 h-3.5 text-[#515154] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.076-4.076a1.526 1.526 0 011.037-.443 48.282 48.282 0 005.68-.494c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" /></svg>
                           <span>{fb.notes}</span>
                         </div>
                       )}
-                      <div className="text-[11px] text-[#424245] line-clamp-2 leading-relaxed bg-blue-50/40 rounded-lg p-2 mt-1 font-mono">
+                      <div className="text-[11px] text-[#424245] line-clamp-2 leading-relaxed bg-[#fff5f7]/40 rounded-lg p-2 mt-1 font-mono">
                         {fb.model_output_excerpt?.slice(0, 200)}
                       </div>
                     </div>
@@ -855,22 +855,22 @@ export default function TuningPage() {
                 </div>
               </details>
             ) : (
-              <div className="text-center py-4 bg-blue-50/40 rounded-2xl border border-blue-200/40">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50/60 mb-2">
-                  <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <div className="text-center py-4 bg-[#fff5f7]/40 rounded-2xl border border-black/8">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff5f7] mb-2">
+                  <svg className="w-5 h-5 text-[#86868b]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                   </svg>
                 </div>
-                <p className="text-xs text-[#64748b] font-medium">出来栄えを記録すると、次回の指示文に自動反映されます</p>
-                <p className="text-[10px] text-[#94a3b8] mt-0.5">データは自動的に保存されます</p>
+                <p className="text-xs text-[#515154] font-medium">出来栄えを記録すると、次回の指示文に自動反映されます</p>
+                <p className="text-[10px] text-[#aeaeb2] mt-0.5">データは自動的に保存されます</p>
               </div>
             )}
 
             {/* 評価履歴ボタン */}
-            <div className="mt-4 pt-4 border-t border-blue-200/40 flex items-center justify-between">
+            <div className="mt-4 pt-4 border-t border-black/8 flex items-center justify-between">
               <button
                 onClick={() => { setShowEvalHistory(!showEvalHistory); if (!evalHistory) loadEvalHistory(subject); }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1e293b] hover:bg-blue-50/60 transition-all border border-blue-200/40 hover:border-blue-200/60"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-[#515154] hover:text-[#1d1d1f] hover:bg-[#fff5f7] transition-all border border-black/8 hover:border-black/10"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -879,7 +879,7 @@ export default function TuningPage() {
               </button>
               <button
                 onClick={() => { loadFeedback(subject, templateId); loadEvalHistory(subject); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-[#94a3b8] hover:text-[#1e293b] transition-all"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-bold text-[#aeaeb2] hover:text-[#1d1d1f] transition-all"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -893,7 +893,7 @@ export default function TuningPage() {
 
       {/* ── 評価履歴パネル ── */}
       {showEvalHistory && evalHistory && (
-        <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+        <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-5">
               <div className="icon-premium w-10 h-10 text-white">
@@ -902,13 +902,13 @@ export default function TuningPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">これまでの記録</h3>
-                <p className="text-[11px] text-[#64748b]">全{evalHistory.analytics?.total || 0}件の評価データ</p>
+                <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">これまでの記録</h3>
+                <p className="text-[11px] text-[#515154]">全{evalHistory.analytics?.total || 0}件の評価データ</p>
               </div>
               {evalHistoryLoading && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50/60 rounded-full">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fff5f7] rounded-full">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb] animate-pulse" />
-                  <span className="text-[10px] text-[#64748b] font-bold">読込中</span>
+                  <span className="text-[10px] text-[#515154] font-bold">読込中</span>
                 </div>
               )}
             </div>
@@ -917,28 +917,28 @@ export default function TuningPage() {
             {evalHistory.analytics && (
               <div className="mb-5">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-                  <div className="p-3 rounded-xl bg-blue-50/40 border border-blue-200/50 text-center">
-                    <div className="text-lg font-bold text-[#1e293b] tabular-nums">{evalHistory.analytics.total}</div>
-                    <div className="text-[9px] text-[#64748b] font-bold uppercase tracking-wider">累計記録</div>
+                  <div className="p-3 rounded-xl bg-[#fff5f7]/40 border border-black/10 text-center">
+                    <div className="text-lg font-bold text-[#1d1d1f] tabular-nums">{evalHistory.analytics.total}</div>
+                    <div className="text-[9px] text-[#515154] font-bold uppercase tracking-wider">累計記録</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-blue-50/40 border border-blue-200/50 text-center">
-                    <div className="text-lg font-bold text-[#1e293b] tabular-nums">{evalHistory.analytics.avg_score ?? '—'}</div>
-                    <div className="text-[9px] text-[#64748b] font-bold uppercase tracking-wider">平均スコア</div>
+                  <div className="p-3 rounded-xl bg-[#fff5f7]/40 border border-black/10 text-center">
+                    <div className="text-lg font-bold text-[#1d1d1f] tabular-nums">{evalHistory.analytics.avg_score ?? '—'}</div>
+                    <div className="text-[9px] text-[#515154] font-bold uppercase tracking-wider">平均スコア</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-blue-50/40 border border-blue-200/50 text-center">
-                    <div className="text-lg font-bold text-[#1e293b] tabular-nums">{evalHistory.analytics.high_count}</div>
-                    <div className="text-[9px] text-[#64748b] font-bold uppercase tracking-wider">高評価</div>
+                  <div className="p-3 rounded-xl bg-[#fff5f7]/40 border border-black/10 text-center">
+                    <div className="text-lg font-bold text-[#1d1d1f] tabular-nums">{evalHistory.analytics.high_count}</div>
+                    <div className="text-[9px] text-[#515154] font-bold uppercase tracking-wider">高評価</div>
                   </div>
-                  <div className="p-3 rounded-xl bg-blue-50/40 border border-blue-200/50 text-center">
-                    <div className="text-lg font-bold text-[#1e293b] tabular-nums">{evalHistory.analytics.low_count}</div>
-                    <div className="text-[9px] text-[#64748b] font-bold uppercase tracking-wider">もう少し</div>
+                  <div className="p-3 rounded-xl bg-[#fff5f7]/40 border border-black/10 text-center">
+                    <div className="text-lg font-bold text-[#1d1d1f] tabular-nums">{evalHistory.analytics.low_count}</div>
+                    <div className="text-[9px] text-[#515154] font-bold uppercase tracking-wider">もう少し</div>
                   </div>
                 </div>
 
                 {/* スコア分布バー */}
                 {Object.keys(evalHistory.analytics.score_distribution || {}).length > 0 && (
-                  <div className="p-4 bg-blue-50/40 rounded-xl border border-blue-200/40 mb-4">
-                    <div className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider mb-3">評価の分布</div>
+                  <div className="p-4 bg-[#fff5f7]/40 rounded-xl border border-black/8 mb-4">
+                    <div className="text-[10px] font-bold text-[#515154] uppercase tracking-wider mb-3">評価の分布</div>
                     <div className="flex items-end gap-1 h-16">
                       {[0.2, 0.4, 0.6, 0.8, 1.0].map((score) => {
                         const count = evalHistory.analytics.score_distribution[score] || 0;
@@ -951,7 +951,7 @@ export default function TuningPage() {
                             <span className="text-[10px] font-bold tabular-nums" style={{ color: colors[score] }}>{count}</span>
                             <div className="w-full rounded-t-lg transition-all duration-500"
                                  style={{ height: `${Math.max(height, 4)}%`, background: `linear-gradient(to top, ${colors[score]}40, ${colors[score]})` }} />
-                            <span className="text-[10px] text-[#94a3b8] font-bold">{labels[score]}</span>
+                            <span className="text-[10px] text-[#aeaeb2] font-bold">{labels[score]}</span>
                           </div>
                         );
                       })}
@@ -961,22 +961,22 @@ export default function TuningPage() {
 
                 {/* 科目別スコア */}
                 {Object.keys(evalHistory.analytics.per_subject || {}).length > 0 && (
-                  <div className="p-4 bg-blue-50/40 rounded-xl border border-blue-200/40 mb-4">
-                    <div className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider mb-3">科目ごとの評価</div>
+                  <div className="p-4 bg-[#fff5f7]/40 rounded-xl border border-black/8 mb-4">
+                    <div className="text-[10px] font-bold text-[#515154] uppercase tracking-wider mb-3">科目ごとの評価</div>
                     <div className="space-y-2">
                       {Object.entries(evalHistory.analytics.per_subject).map(([subj, data]) => {
                         const scoreColor = data.avg >= 0.8 ? '#1e40af' : data.avg >= 0.6 ? '#3b82f6' : data.avg >= 0.4 ? '#3b82f6' : '#1e293b';
                         return (
                           <div key={subj} className="flex items-center gap-3">
-                            <span className="text-[12px] font-bold text-[#1e293b] min-w-[3rem]">{subj}</span>
-                            <div className="flex-1 h-2 bg-blue-50/60 rounded-full overflow-hidden">
+                            <span className="text-[12px] font-bold text-[#1d1d1f] min-w-[3rem]">{subj}</span>
+                            <div className="flex-1 h-2 bg-[#fff5f7] rounded-full overflow-hidden">
                               <div className="h-full rounded-full transition-all duration-500"
                                    style={{ width: `${(data.avg || 0) * 100}%`, background: scoreColor }} />
                             </div>
                             <span className="text-[11px] font-bold tabular-nums min-w-[2.5rem] text-right" style={{ color: scoreColor }}>
                               {data.avg ?? '—'}
                             </span>
-                            <span className="text-[9px] text-[#94a3b8] font-medium">{data.count}件</span>
+                            <span className="text-[9px] text-[#aeaeb2] font-medium">{data.count}件</span>
                           </div>
                         );
                       })}
@@ -986,8 +986,8 @@ export default function TuningPage() {
 
                 {/* トレンドラインスパークライン */}
                 {evalHistory.analytics.recent_trend?.length > 1 && (
-                  <div className="p-4 bg-blue-50/40 rounded-xl border border-blue-200/40 mb-4">
-                    <div className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider mb-3">最近の傾向</div>
+                  <div className="p-4 bg-[#fff5f7]/40 rounded-xl border border-black/8 mb-4">
+                    <div className="text-[10px] font-bold text-[#515154] uppercase tracking-wider mb-3">最近の傾向</div>
                     <div className="flex items-end gap-1 h-12">
                       {evalHistory.analytics.recent_trend.map((pt, idx) => {
                         const height = ((pt.score || 0) / 1.0) * 100;
@@ -1001,8 +1001,8 @@ export default function TuningPage() {
                       })}
                     </div>
                     <div className="flex justify-between mt-1">
-                      <span className="text-[10px] text-[#c7c7cc]">{evalHistory.analytics.recent_trend[0]?.timestamp?.slice(5, 10)}</span>
-                      <span className="text-[10px] text-[#c7c7cc]">{evalHistory.analytics.recent_trend[evalHistory.analytics.recent_trend.length - 1]?.timestamp?.slice(5, 10)}</span>
+                      <span className="text-[10px] text-[#86868b]">{evalHistory.analytics.recent_trend[0]?.timestamp?.slice(5, 10)}</span>
+                      <span className="text-[10px] text-[#86868b]">{evalHistory.analytics.recent_trend[evalHistory.analytics.recent_trend.length - 1]?.timestamp?.slice(5, 10)}</span>
                     </div>
                   </div>
                 )}
@@ -1012,12 +1012,12 @@ export default function TuningPage() {
             {/* 評価履歴リスト */}
             {evalHistory.evaluations?.length > 0 ? (
               <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                <div className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider mb-1">最近の評価</div>
+                <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider mb-1">最近の評価</div>
                 {evalHistory.evaluations.map((ev, idx) => {
                   const scoreIcon = { 0.2: '×', 0.4: '△', 0.6: '○', 0.8: '◎', 1.0: '◉' };
                   const scoreColor = ev.score >= 0.8 ? '#1e40af' : ev.score >= 0.6 ? '#3b82f6' : ev.score >= 0.4 ? '#3b82f6' : '#1e293b';
                   return (
-                    <div key={ev.id || idx} className="p-3 bg-[#111827] rounded-xl border border-blue-200/40 shadow-sm hover:shadow-md transition-all">
+                    <div key={ev.id || idx} className="p-3 bg-white rounded-xl border border-black/8 shadow-sm hover:shadow-md transition-all">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{scoreIcon[ev.score] || '—'}</span>
@@ -1025,17 +1025,17 @@ export default function TuningPage() {
                             {ev.score}
                           </span>
                           {ev.metadata?.subject && (
-                            <span className="px-2 py-0.5 bg-blue-50/60 text-[#64748b] rounded-lg text-[9px] font-bold">{ev.metadata.subject}</span>
+                            <span className="px-2 py-0.5 bg-[#fff5f7] text-[#515154] rounded-lg text-[9px] font-bold">{ev.metadata.subject}</span>
                           )}
                           {ev.metadata?.field && (
-                            <span className="px-2 py-0.5 bg-blue-50/60 text-[#64748b] rounded-lg text-[9px] font-bold">{ev.metadata.field}</span>
+                            <span className="px-2 py-0.5 bg-[#fff5f7] text-[#515154] rounded-lg text-[9px] font-bold">{ev.metadata.field}</span>
                           )}
                         </div>
-                        <span className="text-[9px] text-[#c7c7cc] font-medium">{ev.timestamp?.slice(0, 10)}</span>
+                        <span className="text-[9px] text-[#86868b] font-medium">{ev.timestamp?.slice(0, 10)}</span>
                       </div>
-                      {ev.notes && <div className="text-[11px] text-[#64748b] ml-8 mb-1">{ev.notes}</div>}
+                      {ev.notes && <div className="text-[11px] text-[#515154] ml-8 mb-1">{ev.notes}</div>}
                       {ev.model_output_excerpt && (
-                        <div className="text-[10px] text-[#94a3b8] ml-8 line-clamp-1 font-mono">{ev.model_output_excerpt.slice(0, 150)}</div>
+                        <div className="text-[10px] text-[#aeaeb2] ml-8 line-clamp-1 font-mono">{ev.model_output_excerpt.slice(0, 150)}</div>
                       )}
                     </div>
                   );
@@ -1043,7 +1043,7 @@ export default function TuningPage() {
               </div>
             ) : (
               <div className="text-center py-6">
-                <p className="text-xs text-[#94a3b8]">まだ記録がありません</p>
+                <p className="text-xs text-[#aeaeb2]">まだ記録がありません</p>
               </div>
             )}
           </div>
@@ -1051,7 +1051,7 @@ export default function TuningPage() {
       )}
 
       {/* ── セクションナビ (Apple風セグメントコントロール) ── */}
-      <div className="relative rounded-2xl bg-blue-50/50 border border-blue-200/40 p-1 sm:p-1.5">
+      <div className="relative rounded-2xl bg-[#fff5f7]/50 border border-black/8 p-1 sm:p-1.5">
         <div className="flex items-center gap-1">
         {sections.map((s, idx) => {
           const isActive = activeSection === s.id;
@@ -1068,7 +1068,7 @@ export default function TuningPage() {
               ${isActive
                 ? 'bg-[#1e2d4a] shadow-md'
                 : s.enabled
-                  ? 'text-[#64748b] hover:text-[#1e293b] hover:bg-white/60'
+                  ? 'text-[#515154] hover:text-[#1d1d1f] hover:bg-white/60'
                   : 'text-[#d2d2d7] cursor-not-allowed'
               }`}
             style={isActive ? { color: sc, boxShadow: `0 2px 8px ${sc}20` } : undefined}
@@ -1079,7 +1079,7 @@ export default function TuningPage() {
               <span className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full" style={{ background: sc }} />
             )}
             {!s.enabled && s.id !== 'configure' && (
-              <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-[#c7c7cc] px-2 py-0.5 rounded-full whitespace-nowrap">
+              <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[8px] text-[#86868b] px-2 py-0.5 rounded-full whitespace-nowrap">
                 {s.id === 'execute' ? '指示文の作成後' : 'AI結果の入力後'}
               </span>
             )}
@@ -1087,7 +1087,7 @@ export default function TuningPage() {
           );
         })}
         <button onClick={resetAll} title="リセット"
-          className="px-3 py-3 rounded-xl text-[#c7c7cc] hover:text-[#1e293b] hover:bg-[#2563eb]/[0.06] transition-all flex-shrink-0 active:scale-90">
+          className="px-3 py-3 rounded-xl text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#2563eb]/[0.06] transition-all flex-shrink-0 active:scale-90">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
           </svg>
@@ -1102,7 +1102,7 @@ export default function TuningPage() {
             {activeSection === 'configure' ? '1' : activeSection === 'execute' ? '2' : '3'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-bold text-[#1e293b] leading-snug">
+            <p className="text-[13px] font-bold text-[#1d1d1f] leading-snug">
               {activeSection === 'configure' && !templateId && '出題パターンを選んで、指示文を作成しましょう'}
               {activeSection === 'configure' && templateId && !hasPrompt && '設定ができました。「指示文を作成」ボタンを押してください'}
               {activeSection === 'configure' && hasPrompt && '指示文ができました！次のステップへ進めます'}
@@ -1133,7 +1133,7 @@ export default function TuningPage() {
         <div className="space-y-6">
 
           {/* ── 条件設定（出題パターン＋問数） ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             {/* ヘッダー */}
             <div className="relative px-6 pt-6 pb-4">
               <div className="flex items-center gap-3 mb-1">
@@ -1141,14 +1141,14 @@ export default function TuningPage() {
                   <Icons.File className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">出題パターンを選ぶ</h3>
-                  <p className="text-[11px] text-[#64748b]">教科・分野・難易度がセットされたパターンから選べます</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">出題パターンを選ぶ</h3>
+                  <p className="text-[11px] text-[#515154]">教科・分野・難易度がセットされたパターンから選べます</p>
                 </div>
               </div>
 
               {/* 選択中サマリータグ */}
               {templateId && (
-                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-blue-200/40">
+                <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-black/8">
                   {(() => {
                     const sel = templates.find((t) => t.id === templateId);
                     return <SelectedTag label="出題パターン" value={sel?.name || templateId} color="violet" onClear={() => { setTemplateId(''); setSubject(''); setField(''); }} />;
@@ -1162,13 +1162,13 @@ export default function TuningPage() {
             <div className="px-5 pb-3">
               {templates.length === 0 ? (
                 <div className="text-center py-10">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50/60 mb-3">
-                    <svg className="w-7 h-7 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#fff5f7] mb-3">
+                    <svg className="w-7 h-7 text-[#86868b]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                   </div>
-                  <p className="text-sm font-bold text-[#1e293b]">出題パターンがありません</p>
-                  <p className="text-xs text-[#64748b] mt-1">「問題をつくる」モードで作成してください</p>
+                  <p className="text-sm font-bold text-[#1d1d1f]">出題パターンがありません</p>
+                  <p className="text-xs text-[#515154] mt-1">「問題をつくる」モードで作成してください</p>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
@@ -1178,28 +1178,28 @@ export default function TuningPage() {
                     const hasActive = subjectTemplates.some((t) => templateId === t.id);
 
                     return (
-                      <div key={subjName} className={`rounded-2xl border overflow-hidden transition-all duration-300 ${hasActive ? `${sc.border} shadow-sm` : 'border-blue-100/60'}`}>
+                      <div key={subjName} className={`rounded-2xl border overflow-hidden transition-all duration-300 ${hasActive ? `${sc.border} shadow-sm` : 'border-[#ffe4ea]/60'}`}>
                         <button
                           onClick={() => toggleSubjectGroup(subjName)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 transition-colors duration-200 ${isExpanded ? sc.bgLight : 'hover:bg-blue-50/40'}`}
+                          className={`w-full flex items-center gap-3 px-4 py-3 transition-colors duration-200 ${isExpanded ? sc.bgLight : 'hover:bg-[#fff5f7]/40'}`}
                         >
                           <div className={`flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br ${sc.bg} text-white text-sm font-bold flex-shrink-0`}>
                             <SubjectIcon type={subjName} className="w-4 h-4" />
                           </div>
                           <div className="flex-1 text-left min-w-0">
                             <span className={`text-[14px] font-bold ${sc.text}`}>{subjName}</span>
-                            <span className="text-[11px] text-[#94a3b8] ml-2">{subjectTemplates.length}パターン</span>
+                            <span className="text-[11px] text-[#aeaeb2] ml-2">{subjectTemplates.length}パターン</span>
                           </div>
                           {hasActive && (
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white">選択中</span>
                           )}
-                          <svg className={`w-4 h-4 text-[#94a3b8] transition-transform duration-300 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <svg className={`w-4 h-4 text-[#aeaeb2] transition-transform duration-300 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                           </svg>
                         </button>
 
                         {isExpanded && (
-                          <div className="border-t border-blue-100/40 divide-y divide-blue-50">
+                          <div className="border-t border-[#ffe4ea]/40 divide-y divide-blue-50">
                             {subjectTemplates.map((t) => {
                               const isActive = templateId === t.id;
                               const meta = t.metadata || {};
@@ -1217,13 +1217,13 @@ export default function TuningPage() {
                                   key={t.id}
                                   onClick={() => onSelectTemplate(t.id)}
                                   className={`group w-full text-left px-4 py-3 transition-all duration-200
-                                    ${isActive ? `${sc.bgLight} border-l-2` : 'hover:bg-blue-50/30 border-l-2 border-transparent'}`}
+                                    ${isActive ? `${sc.bgLight} border-l-2` : 'hover:bg-[#fff5f7]/30 border-l-2 border-transparent'}`}
                                   style={isActive ? { borderLeftColor: sc.light } : {}}
                                 >
                                   <div className="flex items-center gap-3">
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2">
-                                        <span className="text-[13px] font-semibold text-[#1e293b] truncate">
+                                        <span className="text-[13px] font-semibold text-[#1d1d1f] truncate">
                                           {breadcrumb || t.name || t.id}
                                         </span>
                                         {isActive && (
@@ -1246,7 +1246,7 @@ export default function TuningPage() {
                                       )}
                                     </div>
                                     {!isActive && (
-                                      <svg className="w-3.5 h-3.5 text-[#c7c7cc] flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                      <svg className="w-3.5 h-3.5 text-[#86868b] flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                                       </svg>
                                     )}
@@ -1265,13 +1265,13 @@ export default function TuningPage() {
 
             {/* 選択中のパターン表示 */}
             {templateId && (
-              <div className="mx-5 mb-3 p-3 rounded-xl bg-blue-50/50 border border-blue-100/60">
-                <div className="text-[10px] text-[#64748b]">選択中のパターン:</div>
+              <div className="mx-5 mb-3 p-3 rounded-xl bg-[#fff5f7]/50 border border-[#ffe4ea]/60">
+                <div className="text-[10px] text-[#515154]">選択中のパターン:</div>
                 <div className="text-[13px] font-bold text-[#2563eb]">{templates.find((t) => t.id === templateId)?.name || templateId}</div>
                 {(() => {
                   const sel = templates.find((t) => t.id === templateId);
                   return sel?.metadata ? (
-                    <div className="text-[10px] text-[#64748b] mt-1">
+                    <div className="text-[10px] text-[#515154] mt-1">
                       {[sel.metadata.subject, sel.metadata.field, sel.metadata.difficulty].filter(Boolean).join(' / ')}
                     </div>
                   ) : null;
@@ -1280,40 +1280,40 @@ export default function TuningPage() {
             )}
 
             {/* 問数 + リフレッシュ */}
-            <div className="px-5 pb-5 flex items-end gap-4 border-t border-blue-200/40 pt-4 mx-5">
+            <div className="px-5 pb-5 flex items-end gap-4 border-t border-black/8 pt-4 mx-5">
               <div className="flex-1">
                 <NumberField label="問数" value={numQuestions} onChange={setNumQuestions} min={1} />
               </div>
               <button onClick={async () => { await refresh(); setStatus('一覧を再読み込みしました'); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#64748b] hover:text-[#1e293b] hover:bg-blue-100/60 transition-all border border-blue-200/40 hover:border-[#2563eb]/20"
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#515154] hover:text-[#1d1d1f] hover:bg-[#ffe4ea]/60 transition-all border border-black/8 hover:border-[#2563eb]/20"
                 title="一覧を再読込">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
                 </svg>
                 <span className="hidden sm:inline">再読み込み</span>
-                <span className="text-[10px] text-[#c7c7cc] font-normal ml-1">{templates.length}件</span>
+                <span className="text-[10px] text-[#86868b] font-normal ml-1">{templates.length}件</span>
               </button>
             </div>
           </div>
 
           {/* ── 参考問題（テンプレート合致で自動取得） ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Search className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">参考問題を選択</h3>
-                  <p className="text-[11px] text-[#64748b]">選択した出題パターンに合致する過去問が表示されます</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">参考問題を選択</h3>
+                  <p className="text-[11px] text-[#515154]">選択した出題パターンに合致する過去問が表示されます</p>
                 </div>
               </div>
 
             {/* 選択済み問題の表示 */}
             {selectedRefProblem && (
-              <div className="mb-3 relative overflow-hidden rounded-2xl border border-blue-200/50 bg-blue-50/40
+              <div className="mb-3 relative overflow-hidden rounded-2xl border border-black/10 bg-[#fff5f7]/40
                               shadow-sm transition-all duration-300 hover:shadow-md">
-                <div className="absolute top-0 left-0 right-0 h-[1px] bg-blue-100/50" />
+                <div className="absolute top-0 left-0 right-0 h-[1px] bg-[#ffe4ea]/50" />
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -1323,30 +1323,30 @@ export default function TuningPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
-                        <span className="text-[11px] font-bold text-[#475569] uppercase tracking-wider">選択中</span>
+                        <span className="text-[11px] font-bold text-[#515154] uppercase tracking-wider">選択中</span>
                         {selectedRefProblem.id && (
-                          <span className="text-[10px] text-[#475569]/60 font-mono">#{selectedRefProblem.id}</span>
+                          <span className="text-[10px] text-[#515154]/60 font-mono">#{selectedRefProblem.id}</span>
                         )}
                       </div>
-                      <div className="text-[13px] text-[#1e293b] leading-relaxed line-clamp-3 ml-[30px]">
+                      <div className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-3 ml-[30px]">
                         <LatexText>{(selectedRefProblem.stem || selectedRefProblem.text || '').slice(0, 200)}</LatexText>
                       </div>
                       <div className="flex gap-1.5 mt-2 ml-[30px] flex-wrap">
                         {selectedRefProblem.subject && (
-                          <span className="px-2 py-0.5 bg-blue-100/60 text-[#1e293b] rounded-full text-[9px] font-bold">{selectedRefProblem.subject}</span>
+                          <span className="px-2 py-0.5 bg-[#ffe4ea]/60 text-[#1d1d1f] rounded-full text-[9px] font-bold">{selectedRefProblem.subject}</span>
                         )}
                         {(selectedRefProblem.topic || selectedRefProblem.metadata?.field) && (
-                          <span className="px-2 py-0.5 bg-blue-100/60 text-[#1e293b] rounded-full text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
+                          <span className="px-2 py-0.5 bg-[#ffe4ea]/60 text-[#1d1d1f] rounded-full text-[9px] font-bold">{selectedRefProblem.topic || selectedRefProblem.metadata?.field}</span>
                         )}
                         {selectedRefProblem.difficulty != null && (
-                          <span className="px-2 py-0.5 bg-blue-100/50 text-[#475569] rounded-full text-[9px] font-bold">{difficultyLabel(selectedRefProblem.difficulty)}</span>
+                          <span className="px-2 py-0.5 bg-[#ffe4ea]/50 text-[#515154] rounded-full text-[9px] font-bold">{difficultyLabel(selectedRefProblem.difficulty)}</span>
                         )}
                       </div>
                     </div>
                     <button
                       onClick={clearRefProblem}
-                      className="flex items-center justify-center w-8 h-8 rounded-xl bg-blue-50/60 hover:bg-[#2563eb]/10
-                                 text-[#94a3b8] hover:text-[#1e293b] transition-all duration-200 flex-shrink-0 active:scale-90"
+                      className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#fff5f7] hover:bg-[#2563eb]/10
+                                 text-[#aeaeb2] hover:text-[#1d1d1f] transition-all duration-200 flex-shrink-0 active:scale-90"
                       title="選択を解除"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -1362,15 +1362,15 @@ export default function TuningPage() {
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-1.5 flex-shrink-0">
                 {subject && (
-                  <span className="px-2.5 py-1 bg-blue-100/60 text-[#1e293b] rounded-full text-[10px] font-bold">{subject}</span>
+                  <span className="px-2.5 py-1 bg-[#ffe4ea]/60 text-[#1d1d1f] rounded-full text-[10px] font-bold">{subject}</span>
                 )}
                 {field && (
-                  <span className="px-2.5 py-1 bg-blue-100/60 text-[#1e293b] rounded-full text-[10px] font-bold">{field}</span>
+                  <span className="px-2.5 py-1 bg-[#ffe4ea]/60 text-[#1d1d1f] rounded-full text-[10px] font-bold">{field}</span>
                 )}
               </div>
-              <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50/50 border border-blue-200/40
-                              focus-within:bg-[#111827] focus-within:border-blue-300/50/30 focus-within:shadow-sm transition-all duration-200">
-                <svg className="w-3.5 h-3.5 text-[#c7c7cc] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#fff5f7]/50 border border-black/8
+                              focus-within:bg-white focus-within:border-[#ff375f]/30 focus-within:shadow-sm transition-all duration-200">
+                <svg className="w-3.5 h-3.5 text-[#86868b] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
@@ -1379,10 +1379,10 @@ export default function TuningPage() {
                   value={refFilterQuery}
                   onChange={(e) => setRefFilterQuery(e.target.value)}
                   placeholder="絞り込み..."
-                  className="flex-1 bg-transparent text-xs text-[#1e293b] outline-none placeholder:text-[#c7c7cc]"
+                  className="flex-1 bg-transparent text-xs text-[#1d1d1f] outline-none placeholder:text-[#86868b]"
                 />
                 {refFilterQuery && (
-                  <button onClick={() => setRefFilterQuery('')} className="text-[#94a3b8] hover:text-[#1e293b] transition-colors">
+                  <button onClick={() => setRefFilterQuery('')} className="text-[#aeaeb2] hover:text-[#1d1d1f] transition-colors">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -1394,15 +1394,15 @@ export default function TuningPage() {
             {/* 問題一覧 */}
             {matchedRefLoading ? (
               <div className="flex flex-col items-center justify-center py-8 gap-2">
-                <svg className="animate-spin h-5 w-5 text-[#475569]" viewBox="0 0 24 24">
+                <svg className="animate-spin h-5 w-5 text-[#515154]" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                <p className="text-[11px] text-[#94a3b8]">過去問を取得中...</p>
+                <p className="text-[11px] text-[#aeaeb2]">過去問を取得中...</p>
               </div>
             ) : filteredRefProblems.length > 0 ? (
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
-                <div className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider px-1 mb-1">
+                <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider px-1 mb-1">
                   {filteredRefProblems.length} 件{refFilterQuery.trim() ? ` / ${matchedRefProblems.length} 件中` : ''}
                 </div>
                 {filteredRefProblems.map((item, idx) => {
@@ -1423,20 +1423,20 @@ export default function TuningPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-[10px] text-[#94a3b8] font-mono">#{item.id ?? idx + 1}</span>
+                            <span className="text-[10px] text-[#aeaeb2] font-mono">#{item.id ?? idx + 1}</span>
                           </div>
-                          <div className="text-[13px] text-[#1e293b] leading-relaxed line-clamp-2">
+                          <div className="text-[13px] text-[#1d1d1f] leading-relaxed line-clamp-2">
                             <LatexText>{(item.stem || item.text || '').slice(0, 150)}</LatexText>
                           </div>
                           <div className="flex gap-1.5 mt-1.5 flex-wrap">
                             {item.subject && (
-                              <span className="px-2 py-0.5 bg-blue-100/60 text-[#1e293b] rounded-full text-[9px] font-bold">{item.subject}</span>
+                              <span className="px-2 py-0.5 bg-[#ffe4ea]/60 text-[#1d1d1f] rounded-full text-[9px] font-bold">{item.subject}</span>
                             )}
                             {(item.topic || item.metadata?.field) && (
-                              <span className="px-2 py-0.5 bg-blue-100/60 text-[#1e293b] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
+                              <span className="px-2 py-0.5 bg-[#ffe4ea]/60 text-[#1d1d1f] rounded-full text-[9px] font-bold">{item.topic || item.metadata?.field}</span>
                             )}
                             {item.difficulty != null && (
-                              <span className="px-2 py-0.5 bg-blue-100/50 text-[#475569] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
+                              <span className="px-2 py-0.5 bg-[#ffe4ea]/50 text-[#515154] rounded-full text-[9px] font-bold">{difficultyLabel(item.difficulty)}</span>
                             )}
                           </div>
                         </div>
@@ -1447,43 +1447,43 @@ export default function TuningPage() {
               </div>
             ) : matchedRefProblems.length > 0 && refFilterQuery.trim() ? (
               <div className="text-center py-6">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50/60 mb-2">
-                  <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff5f7] mb-2">
+                  <svg className="w-5 h-5 text-[#86868b]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </div>
-                <p className="text-xs text-[#94a3b8]">「{refFilterQuery}」に一致する問題はありません</p>
+                <p className="text-xs text-[#aeaeb2]">「{refFilterQuery}」に一致する問題はありません</p>
               </div>
             ) : (
               <div className="text-center py-8">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50/60 mb-2">
-                  <svg className="w-5 h-5 text-[#c7c7cc]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#fff5f7] mb-2">
+                  <svg className="w-5 h-5 text-[#86868b]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 13.875l2.25-2.25M12 13.875l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                   </svg>
                 </div>
-                <p className="text-xs text-[#94a3b8]">この科目・分野の過去問はまだ登録されていません</p>
+                <p className="text-xs text-[#aeaeb2]">この科目・分野の過去問はまだ登録されていません</p>
               </div>
             )}
 
             {referenceStem && !selectedRefProblem && (
               <div className="mt-2 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#2563eb] flex-shrink-0" />
-                <span className="text-[10px] text-[#1e293b] font-bold">参考問題が設定されています</span>
+                <span className="text-[10px] text-[#1d1d1f] font-bold">参考問題が設定されています</span>
               </div>
             )}
             </div>
           </div>
 
           {/* ── RAG ミキサー ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="px-6 pt-6 pb-2">
               <div className="flex items-center gap-3 mb-1">
                 <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Search className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">過去問の参考バランス</h3>
-                  <p className="text-[11px] text-[#64748b]">過去問をどう参考にするか、バランスを調整できます</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">過去問の参考バランス</h3>
+                  <p className="text-[11px] text-[#515154]">過去問をどう参考にするか、バランスを調整できます</p>
                 </div>
               </div>
             </div>
@@ -1492,22 +1492,22 @@ export default function TuningPage() {
                 textWeight={textWeight} diffWeight={difficultyMatchWeight} trickWeight={trickinessWeight}
                 onText={setTextWeight} onDiff={setDifficultyMatchWeight} onTrick={setTrickinessWeight}
               />
-              <div className="mt-5 pt-4 border-t border-blue-200/40">
+              <div className="mt-5 pt-4 border-t border-black/8">
                 <NumberField label="参考にする問題の数" value={topK} onChange={setTopK} min={1} max={20} />
               </div>
             </div>
           </div>
 
           {/* ── 指示文作成 ── */}
-          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Prompt className="w-5 h-5" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">AIへの指示文を作成</h3>
-                  <p className="text-[11px] text-[#64748b]">
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIへの指示文を作成</h3>
+                  <p className="text-[11px] text-[#515154]">
                     {!templateId
                       ? '↑ まず上の出題パターンを選んでください'
                       : !basePrompt
@@ -1533,20 +1533,20 @@ export default function TuningPage() {
           </div>
 
           {ragSkipped && (
-            <div className="p-3 bg-blue-100/50 rounded-lg border border-blue-200/40/40 text-xs text-[#475569] flex items-center gap-2">
+            <div className="p-3 bg-[#ffe4ea]/50 rounded-lg border border-black/8/40 text-xs text-[#515154] flex items-center gap-2">
               <Icons.Info className="w-3.5 h-3.5 flex-shrink-0" /> 過去問なしで進めています
             </div>
           )}
 
           {retrievedChunks.length > 0 && (
-            <div className="p-4 bg-blue-50/60 rounded-lg border border-blue-200/50 max-h-56 overflow-y-auto custom-scrollbar">
-              <div className="text-xs font-semibold text-[#94a3b8] mb-2 uppercase tracking-wide flex items-center gap-2">
+            <div className="p-4 bg-[#fff5f7] rounded-lg border border-black/10 max-h-56 overflow-y-auto custom-scrollbar">
+              <div className="text-xs font-semibold text-[#aeaeb2] mb-2 uppercase tracking-wide flex items-center gap-2">
                 参照データ ({retrievedChunks.length}件)
                 {retrievedChunks[0]?.search_tier && (
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                    retrievedChunks[0].search_tier === 'subject+field' ? 'bg-blue-100/50 text-[#1e293b]' :
-                    retrievedChunks[0].search_tier === 'subject-only' ? 'bg-blue-50/60 text-[#475569]' :
-                    'bg-gray-200 text-[#94a3b8]'
+                    retrievedChunks[0].search_tier === 'subject+field' ? 'bg-[#ffe4ea]/50 text-[#1d1d1f]' :
+                    retrievedChunks[0].search_tier === 'subject-only' ? 'bg-[#fff5f7] text-[#515154]' :
+                    'bg-gray-200 text-[#aeaeb2]'
                   }`}>
                     {retrievedChunks[0].search_tier === 'subject+field' ? '科目+分野' :
                      retrievedChunks[0].search_tier === 'subject-only' ? '科目のみ' : 'グローバル'}
@@ -1554,17 +1554,17 @@ export default function TuningPage() {
                 )}
               </div>
               {retrievedChunks.map((c, i) => (
-                <div key={i} className="py-2 border-b border-blue-200/50 last:border-0 text-xs flex items-start gap-2">
+                <div key={i} className="py-2 border-b border-black/10 last:border-0 text-xs flex items-start gap-2">
                   <span className="text-gray-300 font-mono flex-shrink-0">#{i + 1}</span>
                   <div className="flex-1 min-w-0">
                     {c.subject && (
-                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-blue-100/60 text-[#1e293b] mr-1">{c.subject}</span>
+                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-[#ffe4ea]/60 text-[#1d1d1f] mr-1">{c.subject}</span>
                     )}
-                    <span className="text-[#94a3b8] leading-relaxed">
+                    <span className="text-[#aeaeb2] leading-relaxed">
                       {(c.text || '').slice(0, 150).replace(/\n/g, ' ')}{(c.text || '').length > 150 ? '...' : ''}
                     </span>
                   </div>
-                  <span className="text-[#c7c7cc] flex-shrink-0 tabular-nums">
+                  <span className="text-[#86868b] flex-shrink-0 tabular-nums">
                     {c.final_score !== undefined ? Number(c.final_score).toFixed(2) : c.score !== undefined ? Number(c.score).toFixed(2) : '—'}
                   </span>
                 </div>
@@ -1573,15 +1573,15 @@ export default function TuningPage() {
           )}
 
           {basePrompt && (
-            <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+            <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
               <div className="px-6 pt-6 pb-5">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="icon-premium w-10 h-10 text-white">
                     <Icons.Prompt className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">作成された指示文</h3>
-                    <p className="text-[11px] text-[#64748b]">{finalPrompt.length.toLocaleString()} 文字{ragSkipped ? '（参照なし）' : ragPrompt ? '（参照済み）' : ''}</p>
+                    <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">作成された指示文</h3>
+                    <p className="text-[11px] text-[#515154]">{finalPrompt.length.toLocaleString()} 文字{ragSkipped ? '（参照なし）' : ragPrompt ? '（参照済み）' : ''}</p>
                   </div>
                 </div>
                 <TextArea value={finalPrompt} onChange={ragPrompt ? setRagPrompt : setBasePrompt} rows={6} />
@@ -1602,34 +1602,34 @@ export default function TuningPage() {
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'execute' && (
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Prompt className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">AIに指示文を送る</h3>
-                  <p className="text-[11px] text-[#64748b]">① コピー → ② AIを開く → ③ 貼り付けて実行</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIに指示文を送る</h3>
+                  <p className="text-[11px] text-[#515154]">① コピー → ② AIを開く → ③ 貼り付けて実行</p>
                 </div>
               </div>
-            <div className="p-4 bg-blue-100/60 rounded-2xl border border-[#2563eb]/20">
+            <div className="p-4 bg-[#ffe4ea]/60 rounded-2xl border border-[#2563eb]/20">
               <div className="flex items-center gap-3 mb-3">
                 <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#2563eb] text-white text-xs font-black">1</div>
                 <div className="flex-1">
-                  <div className="text-sm font-bold text-[#1e293b]">まず指示文をコピー</div>
-                  <div className="text-[11px] text-[#64748b]">{finalPrompt.length.toLocaleString()} 文字</div>
+                  <div className="text-sm font-bold text-[#1d1d1f]">まず指示文をコピー</div>
+                  <div className="text-[11px] text-[#515154]">{finalPrompt.length.toLocaleString()} 文字</div>
                 </div>
                 <CopyButton text={finalPrompt} onCopied={setStatus} label="コピー" />
               </div>
-              <pre className="text-xs text-[#64748b] bg-blue-50/60 rounded-xl p-3 max-h-32 overflow-auto custom-scrollbar font-mono leading-relaxed">
+              <pre className="text-xs text-[#515154] bg-[#fff5f7] rounded-xl p-3 max-h-32 overflow-auto custom-scrollbar font-mono leading-relaxed">
                 {finalPrompt.slice(0, 500)}{finalPrompt.length > 500 ? '\n...' : ''}
               </pre>
             </div>
             {/* RAG 注入ボタン（未注入の場合に表示） */}
             {!ragPrompt && !ragSkipped && (
-              <div className="flex flex-wrap items-center gap-2 mt-3 p-3 bg-blue-100/50 rounded-lg border border-blue-200/50/40">
-                <span className="text-xs text-[#475569] font-bold">過去問未参考:</span>
+              <div className="flex flex-wrap items-center gap-2 mt-3 p-3 bg-[#ffe4ea]/50 rounded-lg border border-black/10/40">
+                <span className="text-xs text-[#515154] font-bold">過去問未参考:</span>
                 <Button onClick={injectRag} variant="secondary" size="sm">
                   <Icons.Search className="w-3.5 h-3.5" /> 過去問を参考にする
                 </Button>
@@ -1639,7 +1639,7 @@ export default function TuningPage() {
             <div className="mt-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#475569] text-white text-xs font-black">2</div>
-                <span className="text-sm font-bold text-[#1e293b]">AIを開いて貼り付け</span>
+                <span className="text-sm font-bold text-[#1d1d1f]">AIを開いて貼り付け</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
@@ -1657,15 +1657,15 @@ export default function TuningPage() {
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="icon-premium w-10 h-10 text-white">
                   <Icons.File className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">AIの回答を貼り付け</h3>
-                  <p className="text-[11px] text-[#64748b]">AIが返した文章をそのままここに貼り付けてください</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">AIの回答を貼り付け</h3>
+                  <p className="text-[11px] text-[#515154]">AIが返した文章をそのままここに貼り付けてください</p>
                 </div>
               </div>
             <TextArea value={llmOutput}
@@ -1677,13 +1677,13 @@ export default function TuningPage() {
               </Button>
             </div>
             {parseError && (
-              <div className="mt-3 p-3 bg-blue-50/60 rounded-lg border border-blue-200/60/40 text-xs text-[#1e293b]">
+              <div className="mt-3 p-3 bg-[#fff5f7] rounded-lg border border-black/10/40 text-xs text-[#1d1d1f]">
                 <Icons.Info className="w-3.5 h-3.5 inline mr-1" /> {parseError}
               </div>
             )}
             {parsedProblem && (
-              <div className="mt-4 p-4 bg-blue-100/60 rounded-lg border border-[#2563eb]/20/40 space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#1e293b]">
+              <div className="mt-4 p-4 bg-[#ffe4ea]/60 rounded-lg border border-[#2563eb]/20/40 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#1d1d1f]">
                   <Icons.Success className="w-4 h-4" /> 読み取り結果
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -1700,8 +1700,8 @@ export default function TuningPage() {
                     ['解答要約', parsedProblem.answer_brief],
                   ].filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => (
                     <div key={k} className="flex gap-2 items-start">
-                      <span className="font-medium text-[#1e293b] flex-shrink-0 min-w-[80px]">{k}:</span>
-                      <span className="text-[#94a3b8] break-all">
+                      <span className="font-medium text-[#1d1d1f] flex-shrink-0 min-w-[80px]">{k}:</span>
+                      <span className="text-[#aeaeb2] break-all">
                         {typeof v === 'object' ? JSON.stringify(v) : String(v).slice(0, 200)}{String(v).length > 200 ? '...' : ''}
                       </span>
                     </div>
@@ -1719,46 +1719,46 @@ export default function TuningPage() {
          ════════════════════════════════════════════════════════ */}
       {activeSection === 'evaluate' && (
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="icon-premium w-10 h-10 text-white">
                   <Icons.Chart className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">出来栄えを確認</h3>
-                  <p className="text-[11px] text-[#64748b]">生成された問題の出来を確認して、次回のために記録します</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">出来栄えを確認</h3>
+                  <p className="text-[11px] text-[#515154]">生成された問題の出来を確認して、次回のために記録します</p>
                 </div>
               </div>
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-3">出来栄え</label>
+                  <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-3">出来栄え</label>
                   <QualityRating score={tuningScore ? Number(tuningScore) : ''} onChange={(v) => setTuningScore(String(v))} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-1.5">メモ</label>
+                    <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-1.5">メモ</label>
                     <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-blue-200/50 bg-[#111827] shadow-sm text-sm text-[#e2e8ff]
-                        transition-all hover:border-blue-300/50 hover:shadow-md focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 outline-none font-medium"
+                      className="w-full px-4 py-3 rounded-2xl border border-black/10 bg-white shadow-sm text-sm text-[#1d1d1f]
+                        transition-all hover:border-[#ff375f]/40 hover:shadow-md focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 outline-none font-medium"
                       placeholder="例: 難しさは良い。でも解説がもう少し欲しい。" />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-bold text-[#64748b] uppercase tracking-wider mb-1.5">こうなって欲しかった <span className="text-[#94a3b8] normal-case tracking-normal">（任意）</span></label>
+                    <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-1.5">こうなって欲しかった <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
                     <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-blue-200/50 bg-[#111827] shadow-sm text-sm text-[#e2e8ff]
-                        transition-all hover:border-blue-300/50 hover:shadow-md focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 outline-none font-medium"
+                      className="w-full px-4 py-3 rounded-2xl border border-black/10 bg-white shadow-sm text-sm text-[#1d1d1f]
+                        transition-all hover:border-[#ff375f]/40 hover:shadow-md focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 outline-none font-medium"
                       placeholder="こんな問題が作られたら良かった、というイメージ" />
                   </div>
                 </div>
 
                 {/* 保存先情報 */}
-                <div className="flex items-center gap-2 p-3 bg-blue-50/60 rounded-xl border border-[#2563eb]/10">
-                  <svg className="w-4 h-4 text-[#1e293b] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <div className="flex items-center gap-2 p-3 bg-[#fff5f7] rounded-xl border border-[#2563eb]/10">
+                  <svg className="w-4 h-4 text-[#1d1d1f] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75" />
                   </svg>
-                  <span className="text-[11px] text-[#1e293b] font-medium">記録は自動保存されます。ブラウザを閉じても失われません。</span>
+                  <span className="text-[11px] text-[#1d1d1f] font-medium">記録は自動保存されます。ブラウザを閉じても失われません。</span>
                 </div>
 
                 <Button onClick={saveLog} disabled={!llmOutput}>
@@ -1770,30 +1770,30 @@ export default function TuningPage() {
 
 
 
-          <div className="relative overflow-hidden rounded-3xl bg-[#111827] border border-[#1e2d4a] shadow-sm">
+          <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-5">
                 <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#2563eb] text-white shadow-md">
                   <Icons.Data className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-bold text-[#1e293b] tracking-tight">問題を保存</h3>
-                  <p className="text-[11px] text-[#64748b]">AIの回答を保存します（答え合わせも自動で行います）</p>
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">問題を保存</h3>
+                  <p className="text-[11px] text-[#515154]">AIの回答を保存します（答え合わせも自動で行います）</p>
                 </div>
               </div>
             {parsedProblem ? (
               <div className="space-y-4">
-                <div className="p-4 bg-blue-50/60 rounded-lg border border-blue-200/50 text-xs space-y-1.5">
+                <div className="p-4 bg-[#fff5f7] rounded-lg border border-black/10 text-xs space-y-1.5">
                   {parsedProblem.stem && (
-                    <div><span className="font-bold text-[#94a3b8]">問題:</span> <span className="text-[#64748b]">{parsedProblem.stem.slice(0, 200)}{parsedProblem.stem.length > 200 ? '...' : ''}</span></div>
+                    <div><span className="font-bold text-[#aeaeb2]">問題:</span> <span className="text-[#515154]">{parsedProblem.stem.slice(0, 200)}{parsedProblem.stem.length > 200 ? '...' : ''}</span></div>
                   )}
                   {parsedProblem.final_answer && (
-                    <div><span className="font-bold text-[#64748b]">解答:</span> <span className="text-[#1e293b] font-bold">{parsedProblem.final_answer}</span></div>
+                    <div><span className="font-bold text-[#515154]">解答:</span> <span className="text-[#1d1d1f] font-bold">{parsedProblem.final_answer}</span></div>
                   )}
                   {parsedProblem.checks && (
                     <div className="flex gap-3 mt-1">
                       {parsedProblem.checks.map((c, i) => (
-                        <span key={i} className={`text-xs ${c.ok ? 'text-[#1e293b]' : 'text-[#1e293b]'}`}>
+                        <span key={i} className={`text-xs ${c.ok ? 'text-[#1d1d1f]' : 'text-[#1d1d1f]'}`}>
                           {c.ok ? '✓' : '✗'} {c.desc}
                         </span>
                       ))}
@@ -1813,8 +1813,8 @@ export default function TuningPage() {
                 {verificationResult && !verificationResult.skipped && (
                   <div className={`p-3 rounded-lg border text-sm font-semibold flex items-center gap-2 ${
                     verificationResult.verified
-                      ? 'bg-blue-100/60 border-[#2563eb]/20 text-[#1e293b]'
-                      : 'bg-blue-50/60 border-blue-200/60 text-[#1e293b]'
+                      ? 'bg-[#ffe4ea]/60 border-[#2563eb]/20 text-[#1d1d1f]'
+                      : 'bg-[#fff5f7] border-black/10 text-[#1d1d1f]'
                   }`}>
                     {verificationResult.verified
                       ? <><Icons.Success className="w-4 h-4" /> 答え合わせ OK: {verificationResult.expected} = {verificationResult.computed}</>
@@ -1822,13 +1822,13 @@ export default function TuningPage() {
                   </div>
                 )}
                 {savedProblemId && (
-                  <div className="p-3 bg-blue-100/60 rounded-lg border border-[#2563eb]/20 text-sm text-[#1e293b] font-semibold flex items-center gap-2">
+                  <div className="p-3 bg-[#ffe4ea]/60 rounded-lg border border-[#2563eb]/20 text-sm text-[#1d1d1f] font-semibold flex items-center gap-2">
                     <Icons.Success className="w-4 h-4" /> 保存済み — ID: {savedProblemId}
                   </div>
                 )}
                 {pdfUrl && (
                   <a href={pdfUrl} target="_blank" rel="noreferrer"
-                    className="flex items-center justify-center gap-2 p-3 bg-blue-100/60 text-[#1e293b] rounded-lg border border-blue-200/50 font-bold text-sm hover:bg-blue-100/50 transition-colors">
+                    className="flex items-center justify-center gap-2 p-3 bg-[#ffe4ea]/60 text-[#1d1d1f] rounded-lg border border-black/10 font-bold text-sm hover:bg-[#ffe4ea]/50 transition-colors">
                     <Icons.Pdf className="w-4 h-4" /> PDF プレビューを開く
                   </a>
                 )}

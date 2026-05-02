@@ -47,7 +47,7 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}
-              className="bg-[#111827]/90 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-[#1e2d4a]">
+              className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-black/10">
           {error && (
             <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
               {error}
@@ -95,14 +95,14 @@ export default function LoginPage() {
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-            <div className="relative flex justify-center text-xs"><span className="bg-[#111827] px-3 text-slate-400">または</span></div>
+            <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-slate-400">または</span></div>
           </div>
 
           <button
             type="button"
             onClick={() => { loginAsGuest(); router.push('/'); }}
             className="w-full py-2.5 rounded-xl text-sm font-medium border border-slate-200
-                       text-slate-600 hover:bg-slate-50 transition-colors"
+                       text-slate-600 hover:bg-[#fafafa] transition-colors"
           >
             ゲストとして続ける
           </button>

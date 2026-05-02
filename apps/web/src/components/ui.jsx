@@ -117,14 +117,14 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           {breadcrumbs.map((bc, i) => (
             <div key={i} className="flex items-center gap-1.5">
               {bc.href ? (
-                <a href={bc.href} className="text-[#7ab896] hover:text-[#e8f5ed] transition-colors duration-200">
+                <a href={bc.href} className="text-[#515154] hover:text-[#1d1d1f] transition-colors duration-200">
                   <span>{bc.label}</span>
                 </a>
               ) : (
-                <span className="text-[#e8f5ed] font-semibold">{bc.label}</span>
+                <span className="text-[#1d1d1f] font-semibold">{bc.label}</span>
               )}
               {i < breadcrumbs.length - 1 && (
-                <svg className="w-3 h-3 text-[#9dc8b0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 text-[#86868b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
               )}
@@ -139,11 +139,11 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-[24px] sm:text-[30px] font-black text-[#e8f5ed] tracking-[-0.03em] leading-tight">
+          <h1 className="text-[24px] sm:text-[30px] font-black text-[#1d1d1f] tracking-[-0.03em] leading-tight">
             {title}
           </h1>
           {description && (
-            <p className="text-[13px] text-[#7ab896] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
+            <p className="text-[13px] text-[#515154] mt-1.5 max-w-2xl leading-relaxed tracking-[-0.01em]">
               {description}
             </p>
           )}
@@ -162,8 +162,8 @@ export function StatusBar({ message }) {
   const styles = isError
     ? 'bg-red-50 text-red-700 border-red-200/60'
     : isSuccess
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
-    : 'bg-blue-50 text-[#7ab896] border-blue-200/40';
+    ? 'bg-[#fff5f7] text-[#ff2d55] border-[#ffd1d9]/60'
+    : 'bg-[#fff5f7] text-[#515154] border-black/8';
 
   return (
     <div className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl text-[13px] font-medium mb-4 border ${styles}`}
@@ -182,15 +182,15 @@ export function SelectField({ label, value, onChange, options, className = '' })
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#7ab896] uppercase tracking-wider mb-2">{label}</label>
+        <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-2">{label}</label>
       )}
       <div className="relative group">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-blue-200/80 bg-[rgba(24,58,36,0.90)] text-sm
-                    text-[#e8f5ed] cursor-pointer appearance-none
-                    focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
+          className="w-full pl-4 pr-10 py-3 rounded-2xl border border-black/10 bg-white text-sm
+                    text-[#1d1d1f] cursor-pointer appearance-none
+                    focus:ring-2 focus:ring-[#ff375f]/30 focus:border-[#ff375f]/55 focus:bg-white
                     outline-none font-semibold"
           style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
         >
@@ -202,7 +202,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
             )
           )}
         </select>
-        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#7ab896]">
+        <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#515154]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
           </svg>
@@ -232,16 +232,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
   return (
     <div className={className}>
       {label && (
-        <label className="block text-[11px] font-bold text-[#7ab896] uppercase tracking-wider mb-2">{label}</label>
+        <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-2">{label}</label>
       )}
-      <div className="inline-flex items-stretch rounded-2xl border border-blue-200/80 bg-[rgba(24,58,36,0.90)] overflow-hidden"
+      <div className="inline-flex items-stretch rounded-2xl border border-black/10 bg-white overflow-hidden"
            style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}>
         <button
           type="button"
           onClick={handleDecrement}
           disabled={atMin}
-          className="flex items-center justify-center w-11 border-r border-blue-200/60 text-[#7ab896]
-                     hover:bg-blue-50/60 hover:text-[#e8f5ed] active:bg-blue-100/60
+          className="flex items-center justify-center w-11 border-r border-black/10 text-[#515154]
+                     hover:bg-[#fff5f7] hover:text-[#1d1d1f] active:bg-[#ffe4ea]/60
                      disabled:opacity-20 disabled:hover:bg-transparent
                      active:scale-90"
           style={{ transition: 'all 0.3s var(--ease-spring)' }}
@@ -264,7 +264,7 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
             min={min}
             max={max}
             step={step}
-            className="w-12 text-center text-[17px] font-bold text-[#e8f5ed] bg-transparent outline-none tabular-nums
+            className="w-12 text-center text-[17px] font-bold text-[#1d1d1f] bg-transparent outline-none tabular-nums
                        [&::-webkit-inner-spin-button]:hidden [&::-webkit-outer-spin-button]:hidden
                        [-moz-appearance:textfield]"
           />
@@ -273,8 +273,8 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
           type="button"
           onClick={handleIncrement}
           disabled={atMax}
-          className="flex items-center justify-center w-11 border-l border-blue-200/60 text-[#7ab896]
-                     hover:bg-blue-50/60 hover:text-[#e8f5ed] active:bg-blue-100/60
+          className="flex items-center justify-center w-11 border-l border-black/10 text-[#515154]
+                     hover:bg-[#fff5f7] hover:text-[#1d1d1f] active:bg-[#ffe4ea]/60
                      disabled:opacity-20 disabled:hover:bg-transparent
                      active:scale-90"
           style={{ transition: 'all 0.3s var(--ease-spring)' }}
@@ -293,16 +293,16 @@ export function NumberField({ label, value, onChange, min = 1, max, step = 1, cl
 export function TextArea({ label, value, onChange, rows = 6, placeholder, readOnly, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[11px] font-bold text-[#7ab896] uppercase tracking-wider mb-2">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-2">{label}</label>}
       <textarea
         value={value}
         onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         rows={rows} placeholder={placeholder} readOnly={readOnly}
-        className="w-full px-4 py-3.5 rounded-2xl border border-blue-200/80 bg-[rgba(24,58,36,0.90)] font-mono text-sm
-                   leading-relaxed resize-y text-[#e8f5ed]
-                   focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
-                   outline-none placeholder:text-[#5a9a70]
-                   read-only:bg-[#fafafa] read-only:text-[#7ab896] read-only:border-blue-200/40"
+        className="w-full px-4 py-3.5 rounded-2xl border border-black/10 bg-white font-mono text-sm
+                   leading-relaxed resize-y text-[#1d1d1f]
+                   focus:ring-2 focus:ring-[#ff375f]/30 focus:border-[#ff375f]/55 focus:bg-white
+                   outline-none placeholder:text-[#aeaeb2]
+                   read-only:bg-[#fafafa] read-only:text-[#515154] read-only:border-black/8"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
@@ -313,12 +313,12 @@ export function TextArea({ label, value, onChange, rows = 6, placeholder, readOn
 export function TextField({ label, value, onChange, placeholder, className = '' }) {
   return (
     <div className={className}>
-      {label && <label className="block text-[11px] font-bold text-[#7ab896] uppercase tracking-wider mb-2">{label}</label>}
+      {label && <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-2">{label}</label>}
       <input
         type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-blue-200/80 bg-[rgba(24,58,36,0.90)] text-sm text-[#e8f5ed]
-                   focus:ring-2 focus:ring-blue-200/60 focus:border-blue-300/70 focus:bg-white
-                   outline-none placeholder:text-[#5a9a70] font-medium"
+        className="w-full pl-4 pr-4 py-3 rounded-2xl border border-black/10 bg-white text-sm text-[#1d1d1f]
+                   focus:ring-2 focus:ring-[#ff375f]/30 focus:border-[#ff375f]/55 focus:bg-white
+                   outline-none placeholder:text-[#aeaeb2] font-medium"
         style={{ transition: 'all 0.4s var(--ease-spring)', boxShadow: 'var(--shadow-card)' }}
       />
     </div>
@@ -331,11 +331,11 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
   const sizes = { sm: 'px-3.5 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-6 py-3 text-sm' };
   const variants = {
     primary: 'btn-premium',
-    secondary: 'bg-gradient-to-b from-[#1a3824] to-[#162e1e] text-[#e8f5ed] border border-blue-200/60 hover:from-[#1e3e28] hover:to-[#1e3e28] hover:border-blue-300/50 hover:shadow-md',
+    secondary: 'bg-gradient-to-b from-white to-[#fafafa] text-[#1d1d1f] border border-black/10 hover:from-[#fafafa] hover:to-[#fafafa] hover:border-[#ff375f]/40 hover:shadow-md',
     success: 'bg-[#2563eb] text-white shadow-sm',
     danger: 'bg-[#1e40af] text-white shadow-sm',
     warning: 'bg-[#475569] text-white shadow-sm',
-    ghost: 'bg-transparent text-[#7ab896] hover:text-[#e8f5ed] hover:bg-blue-50/60',
+    ghost: 'bg-transparent text-[#515154] hover:text-[#1d1d1f] hover:bg-[#fff5f7]',
   };
   return (
     <button onClick={onClick} disabled={disabled}
@@ -350,13 +350,13 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
 export function MetaTag({ icon, label, value, color = 'slate' }) {
   if (!value) return null;
   const colorMap = {
-    slate: 'bg-slate-50 text-[#7ab896]',
-    neutral: 'bg-slate-50 text-[#7ab896]',
+    slate: 'bg-[#fafafa] text-[#515154]',
+    neutral: 'bg-[#fafafa] text-[#515154]',
     indigo: 'bg-sky-950/30 text-sky-400',
-    teal: 'bg-teal-950/30 text-teal-400',
-    emerald: 'bg-emerald-950/30 text-emerald-400',
-    amber: 'bg-amber-50 text-[#d97706]',
-    rose: 'bg-rose-50 text-[#e11d48]',
+    teal: 'bg-[#ff9966]/30 text-[#ff9966]',
+    emerald: 'bg-[#fff5f7] text-[#ff375f]',
+    amber: 'bg-amber-50 text-[#c25e00]',
+    rose: 'bg-rose-50 text-[#d70015]',
   };
   return (
     <span className={`badge ${colorMap[color] || colorMap.slate}`}>
@@ -372,9 +372,9 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <label className="flex items-center gap-4 py-2 group cursor-pointer">
-      <span className="min-w-[5rem] text-[12px] font-bold text-[#e8f5ed] tracking-[-0.01em]">{label}</span>
+      <span className="min-w-[5rem] text-[12px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{label}</span>
       <div className="flex-1 relative h-6 flex items-center">
-        <div className="absolute inset-x-0 h-[5px] rounded-full bg-blue-100/70" />
+        <div className="absolute inset-x-0 h-[5px] rounded-full bg-[#ffe4ea]/70" />
         <div className="absolute left-0 h-[5px] rounded-full transition-all duration-150"
              style={{ width: `${pct}%`, background: color }} />
         <input type="range" min={min} max={max} step={step} value={value}
@@ -440,9 +440,9 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
                 {icon}
               </span>
             )}
-            {title && <h2 className="text-[15px] font-bold text-[#e8f5ed] tracking-[-0.01em]">{title}</h2>}
+            {title && <h2 className="text-[15px] font-bold text-[#1d1d1f] tracking-[-0.01em]">{title}</h2>}
           </div>
-          {subtitle && <p className="text-[11px] text-[#7ab896] mt-1.5 ml-[44px]">{subtitle}</p>}
+          {subtitle && <p className="text-[11px] text-[#515154] mt-1.5 ml-[44px]">{subtitle}</p>}
         </div>
       )}
       {children}
@@ -454,10 +454,10 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
 /* ── EmptyState ── */
 export function EmptyState({ icon, title, description }) {
   return (
-    <div className="text-center py-16 card-glossy border-dashed !border-blue-200/80">
-      <div className="flex justify-center mb-4 text-[#9dc8b0]">{icon || <Icons.Empty />}</div>
-      {title && <div className="text-[15px] font-bold text-[#7ab896] mb-1.5 tracking-[-0.01em]">{title}</div>}
-      {description && <div className="text-[13px] text-[#7ab896] leading-relaxed max-w-sm mx-auto">{description}</div>}
+    <div className="text-center py-16 card-glossy border-dashed !border-black/10">
+      <div className="flex justify-center mb-4 text-[#86868b]">{icon || <Icons.Empty />}</div>
+      {title && <div className="text-[15px] font-bold text-[#515154] mb-1.5 tracking-[-0.01em]">{title}</div>}
+      {description && <div className="text-[13px] text-[#515154] leading-relaxed max-w-sm mx-auto">{description}</div>}
     </div>
   );
 }
@@ -465,13 +465,13 @@ export function EmptyState({ icon, title, description }) {
 /* ── Tabs ── */
 export function Tabs({ tabs, activeTab, onTabChange }) {
   return (
-    <div className="flex gap-0.5 p-[3px] bg-emerald-950/30 rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(34,201,138,0.06)' }}>
+    <div className="flex gap-0.5 p-[3px] bg-[#fff5f7] rounded-[14px]" style={{ boxShadow: 'inset 0 1px 2px rgba(255,55,95,0.06)' }}>
       {tabs.map((tab) => (
         <button key={tab.id} onClick={() => onTabChange(tab.id)}
           className={`flex-1 px-3 py-[7px] rounded-[11px] text-[13px] font-semibold
             ${activeTab === tab.id
-              ? 'bg-white text-[#e8f5ed]'
-              : 'text-[#7ab896] hover:text-[#e8f5ed] hover:bg-white/40'
+              ? 'bg-white text-[#1d1d1f]'
+              : 'text-[#515154] hover:text-[#1d1d1f] hover:bg-white/40'
             }`}
           style={{
             transition: 'all 0.4s var(--ease-spring)',
@@ -498,8 +498,8 @@ export function ProgressSteps({ steps, current }) {
                 ${i + 1 <= current
                   ? 'text-white'
                   : i + 1 === current + 1
-                  ? 'bg-[#f3f0ff] text-[#e8f5ed]'
-                  : 'bg-[#f3f0ff] text-[#9dc8b0]'
+                  ? 'bg-[#f3f0ff] text-[#1d1d1f]'
+                  : 'bg-[#f3f0ff] text-[#86868b]'
                 }
                 ${i + 1 === current ? 'step-active-ping' : ''}
                 `}
@@ -513,12 +513,12 @@ export function ProgressSteps({ steps, current }) {
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}
             </div>
             <span className={`text-[11px] sm:text-[12px] font-medium transition-colors whitespace-nowrap
-                ${i + 1 === current ? 'text-[#e8f5ed] font-bold' : i + 1 < current ? 'text-[#e8f5ed]' : i + 1 === current + 1 ? 'text-[#7ab896]' : 'text-[#9dc8b0]'}`}>
+                ${i + 1 === current ? 'text-[#1d1d1f] font-bold' : i + 1 < current ? 'text-[#1d1d1f]' : i + 1 === current + 1 ? 'text-[#515154]' : 'text-[#86868b]'}`}>
               {s}
             </span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`w-3 sm:w-6 h-[1.5px] rounded-full transition-all duration-500 ${i + 1 < current ? 'bg-emerald-400/60' : 'bg-emerald-900/50'}`} />
+            <div className={`w-3 sm:w-6 h-[1.5px] rounded-full transition-all duration-500 ${i + 1 < current ? 'bg-[#ff5c7c]/60' : 'bg-[#fff5f7]'}`} />
           )}
         </div>
       ))}
@@ -556,20 +556,20 @@ export function MobileNavLinks({ currentPath = '' }) {
                    style={{ background: primaryColor }}>
                 {(user?.display_name || user?.email || 'U')[0].toUpperCase()}
               </div>
-              <span className="text-[13px] font-semibold text-[#334155] truncate max-w-[140px]">
+              <span className="text-[13px] font-semibold text-[#1d1d1f] truncate max-w-[140px]">
                 {user?.display_name || user?.email?.split('@')[0] || 'ユーザー'}
               </span>
             </div>
             <button
               onClick={logout}
-              className="text-[11px] font-semibold text-[#9dc8b0] px-3 py-1.5 rounded-full border border-[#e2e8f0] bg-white active:scale-95 transition-all"
+              className="text-[11px] font-semibold text-[#86868b] px-3 py-1.5 rounded-full border border-black/10 bg-white active:scale-95 transition-all"
             >
               ログアウト
             </button>
           </>
         ) : isGuest ? (
           <>
-            <span className="text-[12px] text-[#9dc8b0] font-medium">ゲスト利用中</span>
+            <span className="text-[12px] text-[#86868b] font-medium">ゲスト利用中</span>
             <Link
               href="/login"
               className="text-[12px] font-black text-white px-4 py-1.5 rounded-full active:scale-95 transition-all shadow-sm"
@@ -580,7 +580,7 @@ export function MobileNavLinks({ currentPath = '' }) {
           </>
         ) : (
           <>
-            <span className="text-[12px] text-[#9dc8b0]">ログインしていません</span>
+            <span className="text-[12px] text-[#86868b]">ログインしていません</span>
             <Link
               href="/login"
               className="text-[12px] font-black text-white px-4 py-1.5 rounded-full active:scale-95 transition-all shadow-sm"
@@ -592,11 +592,11 @@ export function MobileNavLinks({ currentPath = '' }) {
         )}
       </div>
 
-      <p className="text-[11px] font-semibold text-[#9dc8b0] uppercase tracking-widest mb-3 px-1">メニュー</p>
+      <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3 px-1">メニュー</p>
       <div className="grid grid-cols-3 gap-2">
         {items.map(({ href, label, icon }) => (
           <Link key={href} href={href}
-            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white/70 border border-[#e2e8f0]/60 text-[#7ab896] active:scale-95 transition-all">
+            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white/70 border border-black/10/60 text-[#515154] active:scale-95 transition-all">
             {icon}
             <span className="text-[11px] font-semibold">{label}</span>
           </Link>

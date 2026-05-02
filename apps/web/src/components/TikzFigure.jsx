@@ -98,7 +98,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
 
   if (error) {
     return (
-      <div className={`flex items-center gap-3 py-2.5 px-3 bg-slate-50 rounded-xl border border-slate-200 ${className}`}>
+      <div className={`flex items-center gap-3 py-2.5 px-3 bg-[#fafafa] rounded-xl border border-slate-200 ${className}`}>
         <div className="flex-1 min-w-0">
           <p className="text-[11px] text-slate-400 italic">図の読み込みに失敗しました</p>
         </div>
@@ -131,7 +131,7 @@ export default function TikzFigure({ tikzCode, className = '' }) {
     return (
       <div className={`my-3 ${className}`}>
         {isMobile ? (
-          <div className="flex items-center gap-2 py-2 px-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="flex items-center gap-2 py-2 px-3 bg-[#fafafa] rounded-xl border border-slate-200">
             <p className="text-xs text-slate-400">図をPDFで表示できません</p>
             <button type="button" onClick={handleRetry}
               className="px-2 py-1 rounded text-[10px] font-bold bg-white border border-slate-200 text-slate-500">

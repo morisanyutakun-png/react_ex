@@ -200,7 +200,7 @@ function renderLatexToHtml(text) {
       }
     } catch {
       // KaTeX が失敗した場合はグレーの code タグで表示（生LaTeX は見せない）
-      parts.push(`<code class="text-[#94a3b8] text-xs bg-slate-50 px-1 rounded">${escapeHtml(m.latex)}</code>`);
+      parts.push(`<code class="text-[#aeaeb2] text-xs bg-[#fafafa] px-1 rounded">${escapeHtml(m.latex)}</code>`);
     }
     pos = m.end;
   }
@@ -254,7 +254,7 @@ export function LatexBlock({ children, className = '' }) {
   const html = useMemo(() => renderLatexToHtml(children || ''), [children]);
   return (
     <div
-      className={`text-sm text-[#1e293b] leading-relaxed ${className}`}
+      className={`text-sm text-[#1d1d1f] leading-relaxed ${className}`}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
