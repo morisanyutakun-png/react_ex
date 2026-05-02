@@ -84,81 +84,81 @@ function EditorialArtwork() {
       <div className="editorial-art-glow" aria-hidden="true" />
       <div ref={tiltRef} className="editorial-art-card" style={{ transition: 'transform 0.55s var(--ease-spring)' }}>
         {/* Top meta bar */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-[#fa233b]/20">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-black/[0.06]">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#fa233b] shadow-[0_0_12px_rgba(250,35,59,0.85)]" />
-            <span className="text-[9px] font-bold tracking-[0.32em] text-[#ff8094] uppercase">REM · Physics</span>
+            <span className="w-2 h-2 rounded-full bg-[#ff375f] shadow-[0_0_10px_rgba(255,55,95,0.55)]" />
+            <span className="text-[9px] font-bold tracking-[0.32em] text-[#ff375f] uppercase">REM · Physics</span>
           </div>
-          <span className="text-[9px] font-mono text-[#a1a1a6]/70 tracking-wider">A4 · 25pt</span>
+          <span className="text-[9px] font-mono text-[#86868b] tracking-wider">A4 · 25pt</span>
         </div>
 
         {/* Title */}
         <div className="px-5 pt-5 pb-4">
-          <div className="text-[7px] font-bold tracking-[0.28em] text-[#ff8094]/80 uppercase mb-2">Mechanics — Conservation</div>
+          <div className="text-[7px] font-bold tracking-[0.28em] text-[#ff375f]/80 uppercase mb-2">Mechanics — Conservation</div>
           <div className="space-y-1.5">
-            <div className="h-[6px] w-[88%] rounded-full bg-white/35" />
-            <div className="h-[6px] w-[64%] rounded-full bg-white/20" />
+            <div className="h-[6px] w-[88%] rounded-full bg-[#1d1d1f]/40" />
+            <div className="h-[6px] w-[64%] rounded-full bg-[#1d1d1f]/22" />
           </div>
         </div>
 
         {/* Problem 1 */}
         <div className="px-5 pb-4">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#fa233b] to-[#ff6482] flex items-center justify-center text-[9px] font-black text-white shadow-lg shadow-[#fa233b]/40 flex-shrink-0">1</div>
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#ff375f] to-[#ff9966] flex items-center justify-center text-[9px] font-black text-white shadow-md shadow-[#ff375f]/30 flex-shrink-0">1</div>
             <div className="flex-1 space-y-1.5 pt-1">
-              <div className="h-[4px] w-full rounded-full bg-white/15 art-line" style={{ animationDelay: '0ms' }} />
-              <div className="h-[4px] w-[92%] rounded-full bg-white/12 art-line" style={{ animationDelay: '120ms' }} />
-              <div className="h-[4px] w-[55%] rounded-full bg-white/8 art-line" style={{ animationDelay: '240ms' }} />
+              <div className="h-[4px] w-full rounded-full bg-[#1d1d1f]/20 art-line" style={{ animationDelay: '0ms' }} />
+              <div className="h-[4px] w-[92%] rounded-full bg-[#1d1d1f]/14 art-line" style={{ animationDelay: '120ms' }} />
+              <div className="h-[4px] w-[55%] rounded-full bg-[#1d1d1f]/10 art-line" style={{ animationDelay: '240ms' }} />
             </div>
           </div>
         </div>
 
         {/* TikZ figure block */}
-        <div className="mx-5 mb-4 p-3 rounded-xl border border-dashed border-[#fa233b]/30 bg-[#fa233b]/[0.05]">
+        <div className="mx-5 mb-4 p-3 rounded-xl border border-dashed border-[#ff375f]/30 bg-[#fff5f7]">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <svg className="w-3 h-3 text-[#ff8094]/85" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+            <svg className="w-3 h-3 text-[#ff375f]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
               <path d="M3 17l4-4 4 4 6-6 4 4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="text-[8px] font-bold tracking-[0.22em] text-[#ff8094]/80 uppercase">TikZ Diagram</span>
+            <span className="text-[8px] font-bold tracking-[0.22em] text-[#ff375f] uppercase">TikZ Diagram</span>
           </div>
           <svg viewBox="0 0 100 28" className="w-full h-7">
-            <path d="M5 22 L25 22 L40 12 L55 12 L75 22 L95 22" stroke="rgba(255,200,210,0.6)" strokeWidth="0.6" fill="none" strokeLinecap="round" />
-            <circle cx="40" cy="12" r="1.5" fill="rgba(250,35,59,0.95)" />
-            <circle cx="55" cy="12" r="1.5" fill="rgba(250,35,59,0.95)" />
-            <text x="46" y="9" fontSize="3" fill="rgba(255,200,210,0.7)" fontFamily="serif" fontStyle="italic">m</text>
+            <path d="M5 22 L25 22 L40 12 L55 12 L75 22 L95 22" stroke="rgba(29,29,31,0.55)" strokeWidth="0.6" fill="none" strokeLinecap="round" />
+            <circle cx="40" cy="12" r="1.5" fill="#ff375f" />
+            <circle cx="55" cy="12" r="1.5" fill="#ff375f" />
+            <text x="46" y="9" fontSize="3" fill="rgba(29,29,31,0.6)" fontFamily="serif" fontStyle="italic">m</text>
           </svg>
         </div>
 
         {/* Problem 2 */}
         <div className="px-5 pb-4">
           <div className="flex items-start gap-3">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#fa233b] to-[#ff6482] flex items-center justify-center text-[9px] font-black text-white shadow-lg shadow-[#fa233b]/40 flex-shrink-0">2</div>
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#ff375f] to-[#ff9966] flex items-center justify-center text-[9px] font-black text-white shadow-md shadow-[#ff375f]/30 flex-shrink-0">2</div>
             <div className="flex-1 space-y-1.5 pt-1">
-              <div className="h-[4px] w-full rounded-full bg-white/15 art-line" style={{ animationDelay: '360ms' }} />
-              <div className="h-[4px] w-[78%] rounded-full bg-white/12 art-line" style={{ animationDelay: '480ms' }} />
+              <div className="h-[4px] w-full rounded-full bg-[#1d1d1f]/20 art-line" style={{ animationDelay: '360ms' }} />
+              <div className="h-[4px] w-[78%] rounded-full bg-[#1d1d1f]/14 art-line" style={{ animationDelay: '480ms' }} />
             </div>
           </div>
         </div>
 
         {/* Scoring rubric */}
-        <div className="mx-5 mb-5 p-3 rounded-xl bg-[#0a0a0c]/70 border border-[#fa233b]/18">
+        <div className="mx-5 mb-5 p-3 rounded-xl bg-[#fff5f7] border border-[#ff375f]/18">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-1.5">
-              <div className="w-1 h-3 rounded-full bg-[#fa233b]" />
-              <span className="text-[7px] font-bold tracking-[0.24em] text-[#ff8094] uppercase">配点基準</span>
+              <div className="w-1 h-3 rounded-full bg-[#ff375f]" />
+              <span className="text-[7px] font-bold tracking-[0.24em] text-[#ff375f] uppercase">配点基準</span>
             </div>
-            <span className="text-[8px] font-black text-[#ff8094]">+10</span>
+            <span className="text-[8px] font-black text-[#ff375f]">+10</span>
           </div>
           <div className="space-y-1">
-            <div className="h-[3px] w-[92%] rounded-full bg-[#ff8094]/45" />
-            <div className="h-[3px] w-[70%] rounded-full bg-[#ff8094]/28" />
-            <div className="h-[3px] w-[48%] rounded-full bg-[#ff8094]/16" />
+            <div className="h-[3px] w-[92%] rounded-full bg-[#ff375f]/55" />
+            <div className="h-[3px] w-[70%] rounded-full bg-[#ff375f]/35" />
+            <div className="h-[3px] w-[48%] rounded-full bg-[#ff375f]/20" />
           </div>
         </div>
 
         {/* Floating badge */}
         <div className="absolute -top-3 -right-3 art-badge-pulse">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#ff6482] to-[#fa233b] flex items-center justify-center shadow-[0_8px_24px_rgba(250,35,59,0.55)]">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#ff5c7c] to-[#ff375f] flex items-center justify-center shadow-[0_8px_24px_rgba(255,55,95,0.42)]">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
@@ -218,7 +218,7 @@ export default function HomePage() {
             {/* subhead */}
             <p className="hero-sub" style={{ animationDelay: '420ms' }}>
               AI × LaTeX × TikZ。<br className="sm:hidden" />
-              入試品質の物理問題を、<strong className="text-[#ff8094]">60秒で印刷可能なPDF</strong>に。
+              入試品質の物理問題を、<strong className="text-[#ff375f]">60秒で印刷可能なPDF</strong>に。
             </p>
 
             {/* CTA */}
@@ -231,8 +231,8 @@ export default function HomePage() {
                   </svg>
                 </span>
               </Link>
-              <Link href="/dev" className="btn-editorial-ghost">
-                テンプレートを磨く
+              <Link href="/search" className="btn-editorial-ghost">
+                サンプルを見る
               </Link>
             </div>
 
@@ -280,9 +280,9 @@ export default function HomePage() {
               <span className="manifesto-line manifesto-accent">生徒の未来。</span>
             </blockquote>
             <p className="manifesto-body">
-              テスト作成に費やす<strong className="text-[#ff8094]">夜中の3時間</strong>を、<br className="hidden sm:block" />
+              テスト作成に費やす<strong className="text-[#ff375f]">夜中の3時間</strong>を、<br className="hidden sm:block" />
               生徒一人ひとりに向き合う時間へ。<br className="hidden sm:block" />
-              REMは、教材づくりを<strong className="text-[#ff8094]">芸術</strong>に変える。
+              REMは、教材づくりを<strong className="text-[#ff375f]">芸術</strong>に変える。
             </p>
           </div>
         </section>
@@ -308,8 +308,8 @@ export default function HomePage() {
                 kicker: 'Typography',
                 title: 'LaTeX組版',
                 body: '美しい数式・記号配置をプロ印刷品質で。教科書と並べても見劣りしない。',
-                gradient: 'linear-gradient(135deg, #fa233b 0%, #c41030 100%)',
-                accent: '#ffd1d9',
+                gradient: 'linear-gradient(135deg, #ff375f 0%, #ff5c7c 100%)',
+                accent: '#ffffff',
                 icon: (
                   <path d="M4 6h16M4 12h10M4 18h16" strokeLinecap="round" strokeWidth={2} />
                 ),
@@ -318,8 +318,8 @@ export default function HomePage() {
                 kicker: 'Diagrams',
                 title: 'TikZ物理図',
                 body: '回路・力の図・斜面・ばね — 全てベクター描画。再生成も瞬時。',
-                gradient: 'linear-gradient(135deg, #ff6482 0%, #d63252 100%)',
-                accent: '#ffe4ea',
+                gradient: 'linear-gradient(135deg, #ff5c7c 0%, #ff8094 100%)',
+                accent: '#ffffff',
                 icon: (
                   <>
                     <circle cx="6" cy="18" r="2" strokeWidth={1.8} />
@@ -332,8 +332,8 @@ export default function HomePage() {
                 kicker: 'Scoring',
                 title: '配点・部分点基準',
                 body: '小問ごとの配点と「式で+5点／計算で+3点」の部分点ルーブリックを自動生成。',
-                gradient: 'linear-gradient(135deg, #ff8094 0%, #fa233b 100%)',
-                accent: '#ffe4ea',
+                gradient: 'linear-gradient(135deg, #ff8094 0%, #ff375f 100%)',
+                accent: '#ffffff',
                 icon: (
                   <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
                 ),
@@ -342,8 +342,8 @@ export default function HomePage() {
                 kicker: 'Coverage',
                 title: '4分野完備',
                 body: '力学・電磁気・波動・熱力学。共通テストから東大二次まで6段階。',
-                gradient: 'linear-gradient(135deg, #ff9966 0%, #fa233b 100%)',
-                accent: '#ffe0d1',
+                gradient: 'linear-gradient(135deg, #ff9966 0%, #ff5c7c 100%)',
+                accent: '#ffffff',
                 icon: (
                   <path d="M3 7h18M3 12h18M3 17h18" strokeLinecap="round" strokeWidth={2} />
                 ),
@@ -352,8 +352,8 @@ export default function HomePage() {
                 kicker: 'Workflow',
                 title: 'テンプレート',
                 body: '学校のロゴ・問題スタイル・採点欄を保存。次回からワンクリック呼び出し。',
-                gradient: 'linear-gradient(135deg, #c41030 0%, #7a0a1f 100%)',
-                accent: '#ffd1d9',
+                gradient: 'linear-gradient(135deg, #ff375f 0%, #ff9966 100%)',
+                accent: '#ffffff',
                 icon: (
                   <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l7-3 7 3z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
                 ),
@@ -362,8 +362,8 @@ export default function HomePage() {
                 kicker: 'Output',
                 title: 'PDF即出力',
                 body: '生成完了と同時にA4 PDF。生徒の人数分、即印刷・即配布。',
-                gradient: 'linear-gradient(135deg, #fc3158 0%, #ff6482 100%)',
-                accent: '#ffe4ea',
+                gradient: 'linear-gradient(135deg, #ff5c7c 0%, #ff9966 100%)',
+                accent: '#ffffff',
                 icon: (
                   <path d="M12 4v12m0 0l-4-4m4 4l4-4m-9 8h10" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} />
                 ),
@@ -438,8 +438,8 @@ export default function HomePage() {
 
           <div className="coverage-grid editorial-shell-wide">
             {[
-              { jp: '力学', en: 'Mechanics', desc: '運動方程式・保存則・衝突・円運動・万有引力', tone: '#fa233b' },
-              { jp: '電磁気', en: 'Electromagnetism', desc: 'クーロン力・回路・電磁誘導・交流・コンデンサー', tone: '#ff6482' },
+              { jp: '力学', en: 'Mechanics', desc: '運動方程式・保存則・衝突・円運動・万有引力', tone: '#ff375f' },
+              { jp: '電磁気', en: 'Electromagnetism', desc: 'クーロン力・回路・電磁誘導・交流・コンデンサー', tone: '#ff5c7c' },
               { jp: '波動', en: 'Waves', desc: 'ドップラー・干渉・回折・レンズ・光波', tone: '#ff8094' },
               { jp: '熱力学', en: 'Thermodynamics', desc: '気体の法則・熱サイクル・状態変化', tone: '#ff9966' },
             ].map(({ jp, en, desc, tone }, i) => (
@@ -503,9 +503,9 @@ export default function HomePage() {
 
             <div className="tool-row mt-7">
               {[
-                { href: '/dev', label: 'テンプレートを磨く', desc: '学校・授業ごとの様式を保存', },
                 { href: '/search', label: '問題をさがす', desc: '登録済み過去問をキーワード検索', },
                 { href: '/help', label: 'はじめてガイド', desc: '使い方・ワークフロー・用語集', },
+                { href: '/settings', label: '設定', desc: 'ブランドカラー・表示名の調整', },
               ].map(({ href, label, desc }) => (
                 <Link key={href} href={href} className="tool-row-item group">
                   <div className="tool-row-meta">
@@ -557,9 +557,9 @@ export default function HomePage() {
           <div className="text-center">
             <div className="status-pill press-scale inline-flex">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#fa233b]"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#ff375f]"></span>
               </span>
-              <span className="text-[11px] font-medium text-[#a1a1a6] tracking-[0.02em]">REM — Built for educators</span>
+              <span className="text-[11px] font-medium text-[#86868b] tracking-[0.02em]">REM — Built for educators</span>
             </div>
           </div>
           <MobileNavLinks currentPath="/" />

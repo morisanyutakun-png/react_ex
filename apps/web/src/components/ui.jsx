@@ -532,7 +532,6 @@ export function ProgressSteps({ steps, current }) {
 const MOBILE_NAV = [
   { href: '/',          label: 'ホーム',   icon: <Icons.Home className="w-5 h-5" /> },
   { href: '/user',      label: 'つくる',   icon: <Icons.User className="w-5 h-5" /> },
-  { href: '/dev',       label: '磨く',     icon: <Icons.Dev className="w-5 h-5" /> },
   { href: '/search',    label: 'さがす',   icon: <Icons.Search className="w-5 h-5" /> },
   { href: '/db-editor', label: 'データ',   icon: <Icons.Table className="w-5 h-5" /> },
   { href: '/help',      label: 'ヘルプ',   icon: <Icons.Book className="w-5 h-5" /> },
