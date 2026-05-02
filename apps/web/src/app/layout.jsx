@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
           document.addEventListener('gestureend', function(e) { e.preventDefault(); });
         `}} />
       </head>
-      <body className="min-h-screen bg-[#0d1f14] text-[#cce8d4] selection:bg-emerald-500/[0.20] selection:text-[#cce8d4]">
+      <body className="min-h-screen bg-[#0a0a0c] text-[#f5f5f7] selection:bg-[#fa233b]/[0.30] selection:text-[#f5f5f7]">
         <AuthProvider>
           <BrandingProvider>
             <Header />
