@@ -340,7 +340,7 @@ export default function UserModePage() {
     '物理': { bg: 'from-[#8b5cf6] to-[#7c3aed]', light: '#8b5cf6', icon: '物理', bgLight: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
     '化学': { bg: 'from-[#ff375f] to-[#059669]', light: '#ff375f', icon: '化学', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
     '英語': { bg: 'from-[#f59e0b] to-[#d97706]', light: '#f59e0b', icon: '英語', bgLight: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-    '生物': { bg: 'from-[#22c55e] to-[#16a34a]', light: '#22c55e', icon: '生物', bgLight: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
+    '生物': { bg: 'from-[#ff9966] to-[#ff8094]', light: '#ff9966', icon: '生物', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
     '情報': { bg: 'from-[#06b6d4] to-[#0891b2]', light: '#06b6d4', icon: '情報', bgLight: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
     '国語': { bg: 'from-[#ec4899] to-[#db2777]', light: '#ec4899', icon: '国語', bgLight: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
     '社会': { bg: 'from-[#f97316] to-[#ea580c]', light: '#f97316', icon: '社会', bgLight: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },

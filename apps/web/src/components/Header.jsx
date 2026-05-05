@@ -15,122 +15,67 @@ export const NAV_ITEMS = [
 
 export default function Header() {
   const pathname = usePathname();
-  const { serviceName, primaryColor } = useBranding();
+  const { serviceName } = useBranding();
   const { user, isAuthenticated, isGuest, logout } = useAuth();
 
   return (
-    <>
-      {/* ── アクセントバー（デスクトップのみ） ── */}
-      <div className="hidden sm:block fixed top-0 left-0 right-0 h-[3px] z-[60]"
-           style={{ background: primaryColor }} />
+    <header className="header-bar sticky top-0 z-50 hidden sm:block">
+      <div className="max-w-[1180px] mx-auto px-6">
+        <div className="flex items-center justify-between h-[56px]">
 
-      {/* ── デスクトップヘッダー（モバイルでは非表示） ── */}
-      <header className="header-bar sticky top-0 z-50 hidden sm:block" style={{ marginTop: '3px' }}>
-        <div className="max-w-6xl mx-auto px-5 sm:px-6">
-          <div className="flex items-center justify-between h-[48px]">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="flex items-center justify-center w-[28px] h-[28px] rounded-[8px] text-white group-hover:scale-105"
-                   style={{ background: primaryColor, transition: 'transform 0.5s var(--ease-spring)' }}>
-                <Icons.Book className="w-3 h-3 relative z-10" style={{ transition: 'transform 0.5s var(--ease-spring)' }} />
-              </div>
-              <span className="text-[14px] font-bold tracking-[-0.02em]" style={{ color: primaryColor, transition: 'opacity 0.3s ease' }}>
-                {serviceName}
-              </span>
+          {/* ── Brand lockup ── */}
+          <Link href="/" className="group flex items-center gap-2.5">
+            <span className="brand-mark">
+              <span className="brand-mark-dot" />
+            </span>
+            <span className="brand-wordmark">{serviceName || 'REM'}</span>
+          </Link>
+
+          {/* ── Center nav (segmented control style) ── */}
+          <nav className="header-segment">
+            {NAV_ITEMS.map(({ href, label }) => {
+              const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
+              return (
+                <Link key={href} href={href}
+                  className={`header-segment-item${active ? ' is-active' : ''}`}>
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* ── Right cluster ── */}
+          <div className="flex items-center gap-1">
+            <Link href="/settings"
+              className={`header-icon-btn${pathname === '/settings' ? ' is-active' : ''}`}
+              title="設定"
+              aria-label="設定">
+              <Icons.Settings className="w-[15px] h-[15px]" />
             </Link>
 
-            {/* デスクトップナビ */}
-            <nav className="hidden sm:flex items-center gap-0.5">
-              {NAV_ITEMS.map(({ href, label, icon }) => {
-                const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={`relative px-3 py-1.5 rounded-full text-[13px] font-semibold flex items-center gap-1.5
-                      ${active
-                        ? ''
-                        : 'text-[#86868b] hover:bg-[#fff5f7]'
-                      }`}
-                    style={{
-                      transition: 'all 0.4s var(--ease-spring)',
-                      ...(active ? {
-                        background: `${primaryColor}12`,
-                        color: primaryColor,
-                        boxShadow: `inset 0 0 0 1.5px ${primaryColor}30`,
-                      } : {}),
-                      ...(!active ? { '--tw-text-opacity': 1 } : {}),
-                    }}
-                    onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = primaryColor; }}
-                    onMouseLeave={(e) => { if (!active) e.currentTarget.style.color = '#86868b'; }}
-                  >
-                    {icon}
-                    {label}
-                    {active && (
-                      <span className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-4 h-[2.5px] rounded-full"
-                            style={{ background: primaryColor }} />
-                    )}
-                  </Link>
-                );
-              })}
-              {/* 設定アイコン */}
-              <Link
-                href="/settings"
-                className={`relative px-2 py-1.5 rounded-full text-[13px] font-medium flex items-center
-                  ${pathname === '/settings'
-                    ? ''
-                    : 'text-[#86868b] hover:text-[#515154]'
-                  }`}
-                style={{
-                  transition: 'all 0.4s var(--ease-spring)',
-                  ...(pathname === '/settings' ? {
-                    background: `${primaryColor}12`,
-                    color: primaryColor,
-                    boxShadow: `inset 0 0 0 1.5px ${primaryColor}30`,
-                  } : {}),
-                }}
-                onMouseEnter={(e) => { if (pathname !== '/settings') e.currentTarget.style.color = primaryColor; }}
-                onMouseLeave={(e) => { if (pathname !== '/settings') e.currentTarget.style.color = '#86868b'; }}
-                title="ブランド設定"
-              >
-                <Icons.Settings className="w-[15px] h-[15px]" />
+            <span className="header-divider" aria-hidden="true" />
+
+            {isAuthenticated ? (
+              <>
+                <span className="header-user-name">
+                  {user?.display_name || user?.email?.split('@')[0] || 'User'}
+                </span>
+                <button onClick={logout} className="header-ghost-btn">
+                  ログアウト
+                </button>
+              </>
+            ) : isGuest ? (
+              <Link href="/login" className="header-pill-btn">
+                ゲスト利用中
               </Link>
-              {/* 認証 */}
-              <div className="ml-1 pl-1 border-l border-black/10 flex items-center gap-1">
-                {isAuthenticated ? (
-                  <>
-                    <span className="text-[12px] font-medium text-[#86868b] px-1">
-                      {user?.display_name || user?.email?.split('@')[0] || 'User'}
-                    </span>
-                    <button
-                      onClick={logout}
-                      className="px-2 py-1 rounded-full text-[11px] font-medium text-[#515154] hover:bg-[#fff5f7] transition-colors"
-                    >
-                      ログアウト
-                    </button>
-                  </>
-                ) : isGuest ? (
-                  <Link
-                    href="/login"
-                    className="px-3 py-1.5 rounded-full text-[12px] font-medium text-[#86868b] border border-black/10 hover:bg-[#fff5f7] transition-colors"
-                  >
-                    ゲスト利用中
-                  </Link>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="px-3 py-1.5 rounded-full text-[12px] font-medium text-white transition-all hover:opacity-90"
-                    style={{ background: primaryColor }}
-                  >
-                    ログイン
-                  </Link>
-                )}
-              </div>
-            </nav>
+            ) : (
+              <Link href="/login" className="header-primary-btn">
+                ログイン
+              </Link>
+            )}
           </div>
         </div>
-      </header>
-
-      {/* モバイルボトムナビは廃止 — 各ページ内の MobileNavLinks で代替 */}
-    </>
+      </div>
+    </header>
   );
 }

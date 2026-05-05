@@ -9,7 +9,7 @@ import { useBranding } from '@/contexts/BrandingContext';
 export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
-  const { serviceName, primaryColor } = useBranding();
+  const { serviceName } = useBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [orgName, setOrgName] = useState('');
@@ -32,97 +32,81 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-         style={{ background: 'linear-gradient(135deg, #f8faff 0%, #eef2ff 50%, #f1f5f9 100%)' }}>
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-white text-xl font-bold mb-3"
-               style={{ background: primaryColor }}>
-            {(serviceName || 'R')[0]}
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: primaryColor }}>
-            {serviceName}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">新規アカウント作成</p>
+    <div className="auth-stage">
+      <div className="auth-bg-veil auth-bg-veil-1" aria-hidden="true" />
+      <div className="auth-bg-veil auth-bg-veil-2" aria-hidden="true" />
+
+      <div className="auth-shell">
+        <div className="auth-brand">
+          <span className="brand-mark brand-mark-lg">
+            <span className="brand-mark-dot" />
+          </span>
+          <h1 className="auth-brand-name">{serviceName || 'REM'}</h1>
+          <p className="auth-brand-sub">アカウントを作成して、教材作成を始める</p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}
-              className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-black/10">
+        <form onSubmit={handleSubmit} className="auth-card" noValidate>
+          <div className="auth-card-header">
+            <h2 className="auth-card-title">新規登録</h2>
+            <span className="auth-card-meta">60秒で完了</span>
+          </div>
+
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
-              {error}
+            <div role="alert" className="auth-error">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.74 4a2 2 0 00-3.48 0L3.33 16a2 2 0 001.74 3z" />
+              </svg>
+              <span>{error}</span>
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">メールアドレス</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoFocus
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm
-                           focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                placeholder="you@example.com"
-              />
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="email">メールアドレス</label>
+            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              required autoFocus autoComplete="email" className="auth-input" placeholder="you@school.jp" />
+          </div>
+
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="password">パスワード</label>
+            <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+              required minLength={6} autoComplete="new-password" className="auth-input" placeholder="6文字以上" />
+            <p className="auth-help">6文字以上、英数字を組み合わせると安全です</p>
+          </div>
+
+          <div className="auth-field-row">
+            <div className="auth-field flex-1">
+              <label className="auth-label" htmlFor="org">
+                組織名 <span className="auth-label-optional">任意</span>
+              </label>
+              <input id="org" type="text" value={orgName} onChange={(e) => setOrgName(e.target.value)}
+                className="auth-input" placeholder="○○高校" />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">パスワード</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm
-                           focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                placeholder="6文字以上"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">組織名（任意）</label>
-              <input
-                type="text"
-                value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm
-                           focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                placeholder="学校名・企業名など"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">表示名（任意）</label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm
-                           focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                placeholder="あなたの名前"
-              />
+            <div className="auth-field flex-1">
+              <label className="auth-label" htmlFor="name">
+                表示名 <span className="auth-label-optional">任意</span>
+              </label>
+              <input id="name" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+                className="auth-input" placeholder="あなたの名前" />
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-6 w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all
-                       disabled:opacity-50 hover:opacity-90"
-            style={{ background: primaryColor }}
-          >
-            {loading ? '登録中...' : 'アカウント作成'}
+          <button type="submit" disabled={loading} className="auth-primary-btn">
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="auth-spinner" />
+                作成中
+              </span>
+            ) : 'アカウントを作成'}
           </button>
+
+          <p className="auth-tos">
+            登録すると <a href="#" className="auth-text-link">利用規約</a> と <a href="#" className="auth-text-link">プライバシーポリシー</a> に同意したことになります。
+          </p>
         </form>
 
-        <p className="text-center text-sm text-slate-500 mt-4">
+        <p className="auth-foot">
           既にアカウントをお持ちの方は{' '}
-          <Link href="/login" className="font-medium hover:underline" style={{ color: primaryColor }}>
-            ログイン
-          </Link>
+          <Link href="/login" className="auth-text-link">ログイン</Link>
         </p>
       </div>
     </div>

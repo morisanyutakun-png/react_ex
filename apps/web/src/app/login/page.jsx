@@ -9,7 +9,7 @@ import { useBranding } from '@/contexts/BrandingContext';
 export default function LoginPage() {
   const router = useRouter();
   const { login, loginAsGuest } = useAuth();
-  const { serviceName, primaryColor } = useBranding();
+  const { serviceName } = useBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,92 +30,99 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-         style={{ background: 'linear-gradient(135deg, #f8faff 0%, #eef2ff 50%, #f1f5f9 100%)' }}>
-      <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl text-white text-xl font-bold mb-3"
-               style={{ background: primaryColor }}>
-            {(serviceName || 'R')[0]}
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: primaryColor }}>
-            {serviceName}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">アカウントにログイン</p>
+    <div className="auth-stage">
+      <div className="auth-bg-veil auth-bg-veil-1" aria-hidden="true" />
+      <div className="auth-bg-veil auth-bg-veil-2" aria-hidden="true" />
+
+      <div className="auth-shell">
+        {/* Brand lockup */}
+        <div className="auth-brand">
+          <span className="brand-mark brand-mark-lg">
+            <span className="brand-mark-dot" />
+          </span>
+          <h1 className="auth-brand-name">{serviceName || 'REM'}</h1>
+          <p className="auth-brand-sub">教師のための、AI物理問題ジェネレーター</p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}
-              className="bg-white/95 backdrop-blur-xl rounded-2xl p-6 shadow-sm border border-black/10">
+        {/* Form card */}
+        <form onSubmit={handleSubmit} className="auth-card" noValidate>
+          <div className="auth-card-header">
+            <h2 className="auth-card-title">ログイン</h2>
+            <span className="auth-card-meta">アカウントを使用</span>
+          </div>
+
           {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 text-sm">
-              {error}
+            <div role="alert" className="auth-error">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 4h.01M5.07 19h13.86a2 2 0 001.74-3L13.74 4a2 2 0 00-3.48 0L3.33 16a2 2 0 001.74 3z" />
+              </svg>
+              <span>{error}</span>
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">メールアドレス</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoFocus
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm
-                           focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1.5">パスワード</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm
-                           focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
-                placeholder="6文字以上"
-              />
-            </div>
+          <div className="auth-field">
+            <label className="auth-label" htmlFor="email">メールアドレス</label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+              autoComplete="email"
+              className="auth-input"
+              placeholder="you@school.jp"
+            />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-6 w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all
-                       disabled:opacity-50 hover:opacity-90"
-            style={{ background: primaryColor }}
-          >
-            {loading ? 'ログイン中...' : 'ログイン'}
+          <div className="auth-field">
+            <div className="flex items-center justify-between mb-[6px]">
+              <label className="auth-label !mb-0" htmlFor="password">パスワード</label>
+              <button type="button" className="auth-text-link text-[11px]" tabIndex={-1}>
+                忘れた場合
+              </button>
+            </div>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              autoComplete="current-password"
+              className="auth-input"
+              placeholder="6文字以上"
+            />
+          </div>
+
+          <button type="submit" disabled={loading} className="auth-primary-btn">
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="auth-spinner" />
+                ログイン中
+              </span>
+            ) : 'ログイン'}
           </button>
 
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-            <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-slate-400">または</span></div>
+          <div className="auth-divider">
+            <span>または</span>
           </div>
 
           <button
             type="button"
             onClick={() => { loginAsGuest(); router.push('/'); }}
-            className="w-full py-2.5 rounded-xl text-sm font-medium border border-slate-200
-                       text-slate-600 hover:bg-[#fafafa] transition-colors"
+            className="auth-secondary-btn"
           >
             ゲストとして続ける
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-500 mt-4">
-          アカウントをお持ちでない方は{' '}
-          <Link href="/register" className="font-medium hover:underline" style={{ color: primaryColor }}>
-            新規登録
-          </Link>
+        <p className="auth-foot">
+          アカウント未登録の方は{' '}
+          <Link href="/register" className="auth-text-link">新規登録</Link>
         </p>
-        <p className="text-center text-xs text-slate-400 mt-2">
-          ゲストモードでは全データが閲覧可能です（テナント分離なし）
+        <p className="auth-foot-fine">
+          ゲスト利用では全データが閲覧可能です（テナント分離なし）
         </p>
       </div>
     </div>
