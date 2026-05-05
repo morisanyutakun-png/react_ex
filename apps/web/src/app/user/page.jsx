@@ -2863,7 +2863,7 @@ export default function UserModePage() {
           <div className="card-glossy">
             <div className="p-5 relative z-10">
               <div className="flex items-center gap-3 mb-4">
-                <div className="icon-glossy w-8 h-8 text-white" style={{ background: 'linear-gradient(145deg, #38d260 0%, #248a3d 100%)' }}>
+                <div className="icon-glossy w-8 h-8 text-white" style={{ background: 'linear-gradient(145deg, #ff375f 0%, #ff2d55 100%)' }}>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -4129,7 +4129,7 @@ export default function UserModePage() {
                 {/* ヘッダー */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="icon-glossy w-10 h-10"
-                    style={{ background: 'linear-gradient(145deg, #38d260 0%, #30b855 50%, #248a3d 100%)' }}>
+                    style={{ background: 'linear-gradient(145deg, #ff375f 0%, #30b855 50%, #ff2d55 100%)' }}>
                     <Icons.Success className="w-5 h-5 text-white relative z-10" />
                   </div>
                   <div>
