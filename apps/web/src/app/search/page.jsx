@@ -8,16 +8,16 @@ import { LatexText, LatexBlock } from '@/components/LatexRenderer';
 
 /* ── 科目カラーマップ ── */
 const SUBJECT_COLORS = {
-  '数学': '#3b82f6',
-  '物理': '#8b5cf6',
-  '英語': '#f59e0b',
+  '数学': '#ff5c7c',
+  '物理': '#ff5c7c',
+  '英語': '#ff9966',
   '化学': '#ff375f',
   '生物': '#ff9966',
-  '情報': '#06b6d4',
-  '国語': '#ec4899',
-  '社会': '#f97316',
+  '情報': '#ff9966',
+  '国語': '#ff375f',
+  '社会': '#ff9500',
   '地学': '#ff9966',
-  '理科': '#6366f1',
+  '理科': '#ff375f',
 };
 
 const SUBJECT_ICONS = {
@@ -36,13 +36,13 @@ const SUBJECT_ICONS = {
 /* ── Badge ── */
 function Badge({ children, color = 'slate' }) {
   const map = {
-    indigo: 'bg-indigo-100/60 text-indigo-700 border-indigo-300/50',
+    indigo: 'bg-[#ff375f]/60 text-[#d70015] border-[#ffd1d9]/50',
     emerald: 'bg-[#ffe4ea]/60 text-[#ff2d55] border-[#ff8094]/50',
-    amber: 'bg-amber-100/50 text-amber-700 border-amber-300/50',
-    rose: 'bg-rose-100/50 text-rose-700 border-rose-300/50',
-    violet: 'bg-violet-100/50 text-violet-700 border-violet-200/40',
+    amber: 'bg-[#ff9966]/50 text-[#c25e00] border-[#ffd1b5]/50',
+    rose: 'bg-[#ff375f]/50 text-[#ff2d55] border-[#ffd1d9]/50',
+    violet: 'bg-[#ff5c7c]/50 text-[#ff2d55] border-[#ffd1d9]/40',
     slate: 'bg-[#fff5f7] text-[#515154] border-black/10',
-    sky: 'bg-sky-100/50 text-sky-700 border-sky-200/40',
+    sky: 'bg-[#ff8094]/50 text-[#ff375f] border-[#ffd1d9]/40',
   };
   return (
     <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${map[color] || map.slate}`}>
@@ -53,7 +53,7 @@ function Badge({ children, color = 'slate' }) {
 
 /* ── 科目チップ ── */
 function SubjectChip({ subject, selected, onClick }) {
-  const c = SUBJECT_COLORS[subject] || '#60a5fa';
+  const c = SUBJECT_COLORS[subject] || '#ff8094';
   const icon = SUBJECT_ICONS[subject] || '•';
   return (
     <button onClick={onClick} type="button"
@@ -124,7 +124,7 @@ function DifficultySegment({ difficulties, value, onChange }) {
 /* ── 分野ドロップダウン(拡張) ── */
 function FieldSelector({ subject, value, onChange, options }) {
   if (!subject) return null;
-  const c = SUBJECT_COLORS[subject] || '#60a5fa';
+  const c = SUBJECT_COLORS[subject] || '#ff8094';
   return (
     <div className="animate-in fade-in slide-in-from-top-2 duration-300">
       <div className="relative group">
@@ -263,10 +263,10 @@ export default function SearchPage() {
       {/* ── ヒーローヘッダー ── */}
       <div className="text-center mb-2 relative">
         <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
-          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-400/10 blur-3xl" />
-          <div className="absolute -top-5 -right-10 w-32 h-32 rounded-full bg-gradient-to-bl from-purple-400/15 to-blue-400/10 blur-3xl" />
+          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-[#ff375f]/20 to-[#d70015]/10 blur-3xl" />
+          <div className="absolute -top-5 -right-10 w-32 h-32 rounded-full bg-gradient-to-bl from-[#ff5c7c]/15 to-[#d70015]/10 blur-3xl" />
         </div>
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white mb-4 shadow-lg shadow-blue-500/25">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff5c7c] to-[#ff375f] text-white mb-4 shadow-lg shadow-[#ff375f]/25">
           <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
             <circle cx="10.5" cy="10.5" r="6.5" />
             <line x1="15.5" y1="15.5" x2="21" y2="21" strokeLinecap="round" />
@@ -336,7 +336,7 @@ export default function SearchPage() {
           {subjectFilter && fieldOptions.length > 0 && (
             <div>
               <div className="text-[10px] font-bold uppercase tracking-[0.15em] mb-2.5 px-0.5"
-                   style={{ color: SUBJECT_COLORS[subjectFilter] || '#93c5fd' }}>
+                   style={{ color: SUBJECT_COLORS[subjectFilter] || '#ffb3c0' }}>
                 {subjectFilter} の分野
               </div>
               <FieldSelector subject={subjectFilter} value={fieldFilter}
@@ -358,7 +358,7 @@ export default function SearchPage() {
                 {query && (
                   <button onClick={() => setQuery('')}
                     className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full
-                               bg-[#ffe4ea]/50 text-[#1d1d1f] border border-black/8 hover:bg-[#2563eb]/[0.14] transition-colors">
+                               bg-[#ffe4ea]/50 text-[#1d1d1f] border border-black/8 hover:bg-[#ff375f]/[0.14] transition-colors">
                     "{query}"
                     <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -374,7 +374,7 @@ export default function SearchPage() {
                 {fieldFilter && (
                   <button onClick={() => setFieldFilter('')}
                     className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full
-                               bg-[#ffe4ea]/60 text-[#1d1d1f] border border-[#ff375f]/40 hover:bg-[#2563eb]/[0.14] transition-colors">
+                               bg-[#ffe4ea]/60 text-[#1d1d1f] border border-[#ff375f]/40 hover:bg-[#ff375f]/[0.14] transition-colors">
                     {fieldFilter}
                     <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -382,7 +382,7 @@ export default function SearchPage() {
                 {difficultyFilter && (
                   <button onClick={() => setDifficultyFilter('')}
                     className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full
-                               bg-[#ffe4ea]/50 text-[#6aaa7c] border border-[#ff375f]/40/[0.12] hover:bg-[#475569]/[0.14] transition-colors">
+                               bg-[#ffe4ea]/50 text-[#6aaa7c] border border-[#ff375f]/40/[0.12] hover:bg-[#515154]/[0.14] transition-colors">
                     {difficultyFilter}
                     <svg className="w-3 h-3 opacity-50" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -430,7 +430,7 @@ export default function SearchPage() {
             return (
               <div key={item.id ?? idx}
                 className={`result-item transition-all duration-300 
-                  ${isOpen ? '!border-[#2563eb]/30 ring-1 ring-[#2563eb]/10 !bg-[#ffffff] shadow-lg' : ''}`}
+                  ${isOpen ? '!border-[#ff375f]/30 ring-1 ring-[#ff375f]/10 !bg-[#ffffff] shadow-lg' : ''}`}
                 onClick={() => setExpandedId(isOpen ? null : (item.id ?? idx))}>
                 <div className="p-5">
                   <div className="flex items-start gap-3">
@@ -476,7 +476,7 @@ export default function SearchPage() {
                       <button onClick={() => handleGenerateSimilar(item)}
                         disabled={generatingId === (item.id ?? idx)}
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold
-                                   bg-[#2563eb] text-white
+                                   bg-[#ff375f] text-white
                                    shadow-md hover:shadow-lg
                                    hover:-translate-y-0.5 transition-all
                                    disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none active:scale-95">
@@ -542,7 +542,7 @@ export default function SearchPage() {
       {!searching && !hasSearched && (
         <div className="text-center py-12 sm:py-16">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#fff5f7] mb-5 shadow-sm">
-            <Icons.Search className="w-7 h-7 text-[#2563eb]" />
+            <Icons.Search className="w-7 h-7 text-[#ff375f]" />
           </div>
           <h3 className="text-[17px] font-bold text-[#1d1d1f] mb-2">キーワードや科目で検索</h3>
           <p className="text-[13px] text-[#86868b] max-w-sm mx-auto leading-relaxed mb-6">
@@ -553,7 +553,7 @@ export default function SearchPage() {
             {['二次関数', '微分', '力学', '英文法'].map((hint) => (
               <button key={hint} onClick={() => { setQuery(hint); }}
                 className="px-3 py-1.5 rounded-full text-[12px] font-semibold text-[#515154] bg-[#ffffff] border border-black/10 
-                           hover:border-[#2563eb]/30 hover:text-[#2563eb] hover:bg-[#fff5f7]/50 transition-all shadow-sm">
+                           hover:border-[#ff375f]/30 hover:text-[#ff375f] hover:bg-[#fff5f7]/50 transition-all shadow-sm">
                 {hint}
               </button>
             ))}

@@ -124,20 +124,20 @@ function colLabel(name) {
 
 // テーブル名日本語マッピング（メタ情報付き）
 const TABLE_META = {
-  problems:        { label: '問題データ',  desc: '過去問・オリジナル問題の一覧',           icon: 'P', color: '#1e40af' },
-  templates:       { label: '出題パターン', desc: '教科・分野・難易度の組み合わせ',   icon: 'T', color: '#3b82f6' },
-  generations:     { label: '生成履歴',      desc: 'AIが作った問題の履歴',               icon: 'G',  color: '#60a5fa' },
-  generation_runs: { label: '生成バッチ',    desc: 'まとめて生成した記録',               icon: 'R', color: '#2563eb' },
-  annotations:     { label: '評価データ',    desc: '生成結果の品質評価記録',           icon: 'A',  color: '#2563eb' },
-  generation_evals:{ label: '生成評価',      desc: '生成の自動評価スコア',             icon: 'E', color: '#2563eb' },
-  users:           { label: 'ユーザー',      desc: 'ユーザーアカウント情報',             icon: 'U', color: '#93c5fd' },
+  problems:        { label: '問題データ',  desc: '過去問・オリジナル問題の一覧',           icon: 'P', color: '#b00010' },
+  templates:       { label: '出題パターン', desc: '教科・分野・難易度の組み合わせ',   icon: 'T', color: '#ff5c7c' },
+  generations:     { label: '生成履歴',      desc: 'AIが作った問題の履歴',               icon: 'G',  color: '#ff8094' },
+  generation_runs: { label: '生成バッチ',    desc: 'まとめて生成した記録',               icon: 'R', color: '#ff375f' },
+  annotations:     { label: '評価データ',    desc: '生成結果の品質評価記録',           icon: 'A',  color: '#ff375f' },
+  generation_evals:{ label: '生成評価',      desc: '生成の自動評価スコア',             icon: 'E', color: '#ff375f' },
+  users:           { label: 'ユーザー',      desc: 'ユーザーアカウント情報',             icon: 'U', color: '#ffb3c0' },
 };
 
 function tableLabel(name) {
   return TABLE_META[name]?.label || name;
 }
 function tableMeta(name) {
-  return TABLE_META[name] || { label: name, desc: '', icon: '—', color: '#60a5fa' };
+  return TABLE_META[name] || { label: name, desc: '', icon: '—', color: '#ff8094' };
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -402,7 +402,7 @@ export default function DbEditorPage() {
     <div className="max-w-[100rem] mx-auto space-y-4 sm:space-y-5 px-4 sm:px-5 py-6 sm:py-10 pb-8 sm:pb-12">
       {/* ── ヒーローヘッダー ── */}
       <div className="text-center mb-2">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#2563eb] to-[#1e40af] text-white mb-4 shadow-lg shadow-blue-200/50">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[#ff375f] to-[#b00010] text-white mb-4 shadow-lg shadow-[#ff375f]/50">
           <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
             <ellipse cx="12" cy="6.5" rx="8" ry="3" />
             <path d="M4 6.5v11c0 1.66 3.58 3 8 3s8-1.34 8-3v-11" />
@@ -720,7 +720,7 @@ export default function DbEditorPage() {
                         </svg>
                       </button>
                       <button onClick={() => setDeleteConfirm(rowPk)}
-                        className="p-2 rounded-xl text-[#aeaeb2] hover:text-[#1d1d1f] hover:bg-[#2563eb]/[0.06] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                        className="p-2 rounded-xl text-[#aeaeb2] hover:text-[#1d1d1f] hover:bg-[#ff375f]/[0.06] transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                         title="削除">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -771,7 +771,7 @@ export default function DbEditorPage() {
 
       {/* ── 削除確認 ── */}
       {deleteConfirm !== null && (
-        <div className="fixed inset-0 bg-blue-500/15 backdrop-blur-md z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-[#ff375f]/15 backdrop-blur-md z-50 flex items-center justify-center">
           <div className="rounded-[20px] bg-white/95 backdrop-blur-xl p-6 max-w-sm mx-4 border border-black/8" style={{ boxShadow: 'var(--shadow-premium)' }}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-[#fff5f7] flex items-center justify-center">
@@ -813,7 +813,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         onChange={(e) => onChange(e.target.value)}
         onBlur={onFinish}
         onKeyDown={(e) => { if (e.key === 'Escape') onFinish(); }}
-        className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-[#2563eb]
+        className="w-full min-w-[200px] px-2 py-1.5 text-xs border border-[#ff375f]
                    rounded-[12px] bg-[#fff5f7]/50 font-mono resize-y outline-none"
         rows={4}
       />
@@ -826,7 +826,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         value={String(value ?? '')}
         onChange={(e) => { onChange(e.target.value); onFinish(); }}
         onBlur={onFinish}
-        className="px-2 py-1.5 text-xs border border-[#2563eb] rounded-[12px] bg-[#fff5f7]/50"
+        className="px-2 py-1.5 text-xs border border-[#ff375f] rounded-[12px] bg-[#fff5f7]/50"
       >
         <option value="">—</option>
         <option value="true">はい</option>
@@ -846,7 +846,7 @@ const CellEditor = forwardRef(function CellEditor({ col, value, onChange, onFini
         if (e.key === 'Escape') onFinish();
       }}
       step={isNumericColumn(col.type) ? 'any' : undefined}
-      className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-[#2563eb]
+      className="w-full min-w-[80px] px-2 py-1.5 text-xs border border-[#ff375f]
                  rounded-[12px] bg-[#fff5f7]/50 outline-none"
     />
   );
@@ -906,7 +906,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
           <label key={col.name} className={`flex items-center gap-1.5 p-1.5 rounded-lg cursor-pointer text-[11px]
             transition-colors ${visibleCols.includes(col.name) ? 'bg-[#ffe4ea]/60 text-[#1d1d1f]' : 'text-[#86868b] hover:bg-[#fff5f7]/50'}`}>
             <input type="checkbox" checked={visibleCols.includes(col.name)}
-              onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-[#2563eb]" />
+              onChange={() => toggleCol(col.name)} className="w-3 h-3 rounded accent-[#ff375f]" />
             <span className="truncate">{colLabel(col.name)}</span>
           </label>
         ))}
@@ -919,7 +919,7 @@ function ColumnPicker({ allCols, visibleCols, setVisibleCols, onClose }) {
 // ── 行詳細モーダル ──
 function RowDetailModal({ row, schema, pk, onClose }) {
   return (
-    <div className="fixed inset-0 bg-blue-500/15 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+    <div className="fixed inset-0 bg-[#ff375f]/15 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white/95 backdrop-blur-xl rounded-t-[20px] sm:rounded-[20px] max-w-3xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-black/8" style={{ boxShadow: 'var(--shadow-premium)' }}>
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-black/8">
@@ -982,7 +982,7 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
     2: 'bg-[#ffe4ea]/50 text-[#1d1d1f]',
     3: 'bg-[#ffe4ea]/50 text-[#515154]',
     4: 'bg-[#ffe4ea]/50 text-[#1d1d1f]',
-    5: 'bg-[#2563eb]/[0.06] text-[#1d1d1f]',
+    5: 'bg-[#ff375f]/[0.06] text-[#1d1d1f]',
   };
   const levelLabels = { 1: '基礎', 2: '標準', 3: '応用', 4: '発展', 5: '難問' };
 
@@ -998,7 +998,7 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
         </div>
         <button
           onClick={onApply}
-          className="px-3 py-1.5 text-xs font-bold bg-[#2563eb] text-[#1d1d1f] rounded-lg hover:bg-[#2563eb] transition-colors"
+          className="px-3 py-1.5 text-xs font-bold bg-[#ff375f] text-[#1d1d1f] rounded-lg hover:bg-[#ff375f] transition-colors"
         >
           推定値を適用
         </button>
@@ -1008,7 +1008,7 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
           <div className="text-[10px] font-semibold text-[#aeaeb2] mb-1">難易度スコア</div>
           <div className="text-xl font-bold text-[#515154]">{result.difficulty.toFixed(3)}</div>
           <div className="h-1.5 bg-[#fff5f7] rounded-full mt-1.5 overflow-hidden">
-            <div className="h-full bg-[#475569] rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
+            <div className="h-full bg-[#515154] rounded-full" style={{ width: `${result.difficulty * 100}%` }} />
           </div>
         </div>
         <div className="bg-[#fff5f7]/40 rounded-[12px] p-3 text-center border border-black/8">
@@ -1022,7 +1022,7 @@ function DifficultyEstimatePanel({ result, estimating, onApply }) {
           <div className="text-[10px] font-semibold text-[#aeaeb2] mb-1">ひっかけ度</div>
           <div className="text-xl font-bold text-[#515154]">{result.trickiness.toFixed(3)}</div>
           <div className="h-1.5 bg-[#fff5f7] rounded-full mt-1.5 overflow-hidden">
-            <div className="h-full bg-[#475569] rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
+            <div className="h-full bg-[#515154] rounded-full" style={{ width: `${result.trickiness * 100}%` }} />
           </div>
         </div>
       </div>
@@ -1054,7 +1054,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
   );
 
   const baseInputClass = `w-full px-3 py-2 text-sm border border-black/8 rounded-[12px] bg-white
-    text-[#1d1d1f] transition-all hover:border-black/10 focus:border-[#2563eb]/50 focus:ring-2 focus:ring-[#2563eb]/20 outline-none placeholder:text-[#86868b]`;
+    text-[#1d1d1f] transition-all hover:border-black/10 focus:border-[#ff375f]/50 focus:ring-2 focus:ring-[#ff375f]/20 outline-none placeholder:text-[#86868b]`;
 
   const handleStemBlur = () => {
     if (data.stem?.trim()) {
@@ -1119,8 +1119,8 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
                 <button key={t} type="button" onClick={() => onChange('topic', t)}
                   className={`px-2 py-0.5 text-[10px] rounded-lg border transition-all ${
                     data.topic === t
-                      ? 'bg-[#2563eb] text-[#1d1d1f] border-[#2563eb]'
-                      : 'bg-[#fff5f7]/50 text-[#515154] border-black/8 hover:border-[#2563eb]'
+                      ? 'bg-[#ff375f] text-[#1d1d1f] border-[#ff375f]'
+                      : 'bg-[#fff5f7]/50 text-[#515154] border-black/8 hover:border-[#ff375f]'
                   }`}>
                   {t}
                 </button>
@@ -1248,7 +1248,7 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
           disabled={!hasPriority || saving}
           className={`px-6 py-2.5 text-sm font-bold rounded-lg  transition-all flex items-center gap-1.5
             ${hasPriority && !saving
-              ? 'bg-[#2563eb] text-[#1d1d1f] hover:bg-[#2563eb] shadow-blue-200/50'
+              ? 'bg-[#ff375f] text-[#1d1d1f] hover:bg-[#ff375f] shadow-[#ff375f]/50'
               : 'bg-[#fff5f7] text-[#d2d2d7] cursor-not-allowed'
             }`}
         >

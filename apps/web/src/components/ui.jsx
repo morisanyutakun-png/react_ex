@@ -134,7 +134,7 @@ export function PageHeader({ title, description, icon, breadcrumbs }) {
       )}
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         {icon && (
-          <div className="flex-shrink-0 w-11 h-11 rounded-[13px] bg-[#2563eb] text-white flex items-center justify-center">
+          <div className="flex-shrink-0 w-11 h-11 rounded-[13px] bg-[#ff375f] text-white flex items-center justify-center">
             {icon}
           </div>
         )}
@@ -160,7 +160,7 @@ export function StatusBar({ message }) {
   const isSuccess = message.includes('完了') || message.includes('成功') || message.includes('取得') || message.includes('作成') || message.includes('開きました') || message.includes('コピー') || /\d+件/.test(message);
 
   const styles = isError
-    ? 'bg-red-50 text-red-700 border-red-200/60'
+    ? 'bg-[#fff0f0] text-[#d70015] border-[#ffd1d9]/60'
     : isSuccess
     ? 'bg-[#fff5f7] text-[#ff2d55] border-[#ffd1d9]/60'
     : 'bg-[#fff5f7] text-[#515154] border-black/8';
@@ -208,7 +208,7 @@ export function SelectField({ label, value, onChange, options, className = '' })
           </svg>
         </div>
         {hasValue && (
-          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#2563eb] opacity-60" />
+          <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#ff375f] opacity-60" />
         )}
       </div>
     </div>
@@ -332,9 +332,9 @@ export function Button({ children, onClick, variant = 'primary', disabled, class
   const variants = {
     primary: 'btn-premium',
     secondary: 'bg-gradient-to-b from-white to-[#fafafa] text-[#1d1d1f] border border-black/10 hover:from-[#fafafa] hover:to-[#fafafa] hover:border-[#ff375f]/40 hover:shadow-md',
-    success: 'bg-[#2563eb] text-white shadow-sm',
-    danger: 'bg-[#1e40af] text-white shadow-sm',
-    warning: 'bg-[#475569] text-white shadow-sm',
+    success: 'bg-[#ff375f] text-white shadow-sm',
+    danger: 'bg-[#b00010] text-white shadow-sm',
+    warning: 'bg-[#515154] text-white shadow-sm',
     ghost: 'bg-transparent text-[#515154] hover:text-[#1d1d1f] hover:bg-[#fff5f7]',
   };
   return (
@@ -352,11 +352,11 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
   const colorMap = {
     slate: 'bg-[#fafafa] text-[#515154]',
     neutral: 'bg-[#fafafa] text-[#515154]',
-    indigo: 'bg-sky-950/30 text-sky-400',
+    indigo: 'bg-[#ff8094]/30 text-[#ff375f]',
     teal: 'bg-[#ff9966]/30 text-[#ff9966]',
     emerald: 'bg-[#fff5f7] text-[#ff375f]',
-    amber: 'bg-amber-50 text-[#c25e00]',
-    rose: 'bg-rose-50 text-[#d70015]',
+    amber: 'bg-[#ff9966] text-[#c25e00]',
+    rose: 'bg-[#ff375f] text-[#d70015]',
   };
   return (
     <span className={`badge ${colorMap[color] || colorMap.slate}`}>
@@ -368,7 +368,7 @@ export function MetaTag({ icon, label, value, color = 'slate' }) {
 }
 
 /* ── Slider ── */
-export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#2563eb' }) {
+export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, color = '#ff375f' }) {
   const pct = ((value - min) / (max - min)) * 100;
   return (
     <label className="flex items-center gap-4 py-2 group cursor-pointer">
@@ -383,7 +383,7 @@ export function Slider({ label, value, onChange, min = 0, max = 2, step = 0.1, c
                      [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
                      [&::-webkit-slider-thumb]:appearance-none
-                     [&::-webkit-slider-thumb]:shadow-[0_1px_3px_rgba(37,99,235,0.12),0_0_0_0.5px_rgba(37,99,235,0.04)]
+                     [&::-webkit-slider-thumb]:shadow-[0_1px_3px_rgba(255,55,95,0.12),0_0_0_0.5px_rgba(255,55,95,0.04)]
                      [&::-webkit-slider-thumb]:transition-all
                      [&::-webkit-slider-thumb]:hover:scale-110"
         />
@@ -436,7 +436,7 @@ export function SectionCard({ title, subtitle, icon, children, className = '' })
           <div className="flex items-center gap-3">
             {icon && (
               <span className="w-8 h-8 rounded-[10px] text-white flex items-center justify-center flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)', boxShadow: '0 2px 6px rgba(120,119,198,0.20)' }}>
+                style={{ background: 'linear-gradient(135deg, #ff375f 0%, #ff5c7c 50%, #ff8094 100%)', boxShadow: '0 2px 6px rgba(255,55,95,0.20)' }}>
                 {icon}
               </span>
             )}
@@ -476,7 +476,7 @@ export function Tabs({ tabs, activeTab, onTabChange }) {
           style={{
             transition: 'all 0.4s var(--ease-spring)',
             ...(activeTab === tab.id ? {
-              boxShadow: '0 0 0 0.5px rgba(120,119,198,0.04), 0 1px 4px rgba(120,119,198,0.06), 0 2px 8px rgba(120,119,198,0.03), inset 0 1px 0 rgba(255,255,255,0.8)',
+              boxShadow: '0 0 0 0.5px rgba(255,55,95,0.04), 0 1px 4px rgba(255,55,95,0.06), 0 2px 8px rgba(255,55,95,0.03), inset 0 1px 0 rgba(255,255,255,0.8)',
             } : {}),
           }}>
           {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
@@ -498,16 +498,16 @@ export function ProgressSteps({ steps, current }) {
                 ${i + 1 <= current
                   ? 'text-white'
                   : i + 1 === current + 1
-                  ? 'bg-[#f3f0ff] text-[#1d1d1f]'
-                  : 'bg-[#f3f0ff] text-[#86868b]'
+                  ? 'bg-[#fff5f7] text-[#1d1d1f]'
+                  : 'bg-[#fff5f7] text-[#86868b]'
                 }
                 ${i + 1 === current ? 'step-active-ping' : ''}
                 `}
               style={{
                 transition: 'all 0.5s var(--ease-spring)',
                 ...(i + 1 <= current ? {
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
-                  boxShadow: '0 2px 6px rgba(120,119,198,0.20)',
+                  background: 'linear-gradient(135deg, #ff375f 0%, #ff5c7c 50%, #ff8094 100%)',
+                  boxShadow: '0 2px 6px rgba(255,55,95,0.20)',
                 } : {}),
               }}>
               {i + 1 < current ? <Icons.Success className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> : i + 1}

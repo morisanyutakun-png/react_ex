@@ -93,7 +93,7 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
             </svg>
           </div>
           {hasValue && (
-            <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#2563eb] opacity-40" />
+            <div className="absolute top-2 right-8 w-1.5 h-1.5 rounded-full bg-[#ff375f] opacity-40" />
           )}
         </div>
         {onAdd && (
@@ -123,11 +123,11 @@ function Dropdown({ label, value, onChange, options, placeholder, className = ''
 function SelectedTag({ label, value, color = 'red', onClear }) {
   if (!value) return null;
   const colors = {
-    red: 'bg-[#ffe4ea]/50 text-[#1d1d1f] border-[#2563eb]/15',
-    emerald: 'bg-[#ffe4ea]/50 text-[#1d1d1f] border-[#2563eb]/15',
+    red: 'bg-[#ffe4ea]/50 text-[#1d1d1f] border-[#ff375f]/15',
+    emerald: 'bg-[#ffe4ea]/50 text-[#1d1d1f] border-[#ff375f]/15',
     amber: 'bg-[#fff5f7]/50 text-[#515154] border-[#ff375f]/40/15',
     violet: 'bg-[#fff5f7]/50 text-[#515154] border-[#ff375f]/40/15',
-    sky: 'bg-[#2563eb]/[0.06] text-[#1d1d1f] border-[#2563eb]/15',
+    sky: 'bg-[#ff375f]/[0.06] text-[#1d1d1f] border-[#ff375f]/15',
   };
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${colors[color] || colors.red} transition-all hover:shadow-sm`}>
@@ -157,9 +157,9 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
     { label: 'ひっかけ強化', icon: '⁇', text: 0.3, diff: 0.3, trick: 1.5, desc: '巧妙な問題を参照' },
   ];
   const axes = [
-    { label: '類似度', value: textWeight, color: '#1e293b', onChange: onText, desc: '作りたい問題に似た過去問を重視します' },
-    { label: '難易度', value: diffWeight, color: '#334155', onChange: onDiff, desc: '指定した難しさに近い過去問を重視します' },
-    { label: 'ひっかけ', value: trickWeight, color: '#475569', onChange: onTrick, desc: 'ひっかけ要素のある過去問を重視します' },
+    { label: '類似度', value: textWeight, color: '#1d1d1f', onChange: onText, desc: '作りたい問題に似た過去問を重視します' },
+    { label: '難易度', value: diffWeight, color: '#3a3a3c', onChange: onDiff, desc: '指定した難しさに近い過去問を重視します' },
+    { label: 'ひっかけ', value: trickWeight, color: '#515154', onChange: onTrick, desc: 'ひっかけ要素のある過去問を重視します' },
   ];
   return (
     <div className="space-y-6">
@@ -177,7 +177,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
                     : 'bg-white/50 shadow-sm ring-1 ring-blue-200/30 hover:ring-blue-200/50 hover:shadow-md hover:bg-white/80'
                   }`}
               >
-                {isActive && <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-[#2563eb]" />}
+                {isActive && <div className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl bg-[#ff375f]" />}
                 <span className="text-xl block mb-1">{p.icon}</span>
                 <span className={`text-[11px] font-bold block ${isActive ? 'text-[#1d1d1f]' : 'text-[#1d1d1f]'}`}>{p.label}</span>
                 <span className="text-[9px] text-[#aeaeb2] block mt-0.5 leading-tight">{p.desc}</span>
@@ -243,7 +243,7 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
                       [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
                       [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white
                       [&::-webkit-slider-thumb]:appearance-none
-                      [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(37,99,235,0.12),0_0_0_1px_rgba(37,99,235,0.04)]
+                      [&::-webkit-slider-thumb]:shadow-[0_1px_4px_rgba(255,55,95,0.12),0_0_0_1px_rgba(255,55,95,0.04)]
                       [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200
                       [&::-webkit-slider-thumb]:hover:scale-125 [&::-webkit-slider-thumb]:active:scale-110"
                   />
@@ -264,11 +264,11 @@ function RagMixer({ textWeight, diffWeight, trickWeight, onText, onDiff, onTrick
 
 function QualityRating({ score, onChange }) {
   const levels = [
-    { value: 0.2, icon: '×', label: '低い', color: '#1e293b' },
-    { value: 0.4, icon: '△', label: 'いまいち', color: '#475569' },
-    { value: 0.6, icon: '○', label: 'まあまあ', color: '#475569' },
-    { value: 0.8, icon: '◎', label: '良い', color: '#1e293b' },
-    { value: 1.0, icon: '◉', label: '最高', color: '#334155' },
+    { value: 0.2, icon: '×', label: '低い', color: '#1d1d1f' },
+    { value: 0.4, icon: '△', label: 'いまいち', color: '#515154' },
+    { value: 0.6, icon: '○', label: 'まあまあ', color: '#515154' },
+    { value: 0.8, icon: '◎', label: '良い', color: '#1d1d1f' },
+    { value: 1.0, icon: '◉', label: '最高', color: '#3a3a3c' },
   ];
   return (
     <div className="flex items-stretch gap-2">
@@ -364,18 +364,18 @@ export default function TuningPage() {
 
   // 科目カラー定義
   const SUBJECT_COLOR_MAP = useMemo(() => ({
-    '数学': { bg: 'from-[#3b82f6] to-[#2563eb]', light: '#3b82f6', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff375f]', border: 'border-black/10' },
-    '物理': { bg: 'from-[#8b5cf6] to-[#7c3aed]', light: '#8b5cf6', bgLight: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
+    '数学': { bg: 'from-[#ff5c7c] to-[#ff375f]', light: '#ff5c7c', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff375f]', border: 'border-black/10' },
+    '物理': { bg: 'from-[#ff5c7c] to-[#ff2d55]', light: '#ff5c7c', bgLight: 'bg-[#ff5c7c]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
     '化学': { bg: 'from-[#ff375f] to-[#059669]', light: '#ff375f', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
-    '英語': { bg: 'from-[#f59e0b] to-[#d97706]', light: '#f59e0b', bgLight: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+    '英語': { bg: 'from-[#ff9966] to-[#c25e00]', light: '#ff9966', bgLight: 'bg-[#ff9966]', text: 'text-[#c25e00]', border: 'border-[#ffd1b5]' },
     '生物': { bg: 'from-[#ff9966] to-[#ff8094]', light: '#ff9966', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
-    '情報': { bg: 'from-[#06b6d4] to-[#0891b2]', light: '#06b6d4', bgLight: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
-    '国語': { bg: 'from-[#ec4899] to-[#db2777]', light: '#ec4899', bgLight: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
-    '社会': { bg: 'from-[#f97316] to-[#ea580c]', light: '#f97316', bgLight: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+    '情報': { bg: 'from-[#ff9966] to-[#ff8050]', light: '#ff9966', bgLight: 'bg-[#ff9966]', text: 'text-[#ff8050]', border: 'border-[#ffd1b5]' },
+    '国語': { bg: 'from-[#ff375f] to-[#ff2d55]', light: '#ff375f', bgLight: 'bg-[#ff375f]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
+    '社会': { bg: 'from-[#ff9500] to-[#c25e00]', light: '#ff9500', bgLight: 'bg-[#ff9500]', text: 'text-[#c25e00]', border: 'border-[#ffd1b5]' },
     '地学': { bg: 'from-[#ff9966] to-[#0d9488]', light: '#ff9966', bgLight: 'bg-[#ff9966]', text: 'text-[#ff9966]', border: 'border-[#ff9966]' },
-    '理科': { bg: 'from-[#6366f1] to-[#4f46e5]', light: '#6366f1', bgLight: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
+    '理科': { bg: 'from-[#ff375f] to-[#d70015]', light: '#ff375f', bgLight: 'bg-[#ff375f]', text: 'text-[#d70015]', border: 'border-[#ffd1d9]' },
   }), []);
-  const getSubjectColor = useCallback((subj) => SUBJECT_COLOR_MAP[subj] || { bg: 'from-[#64748b] to-[#475569]', light: '#64748b', bgLight: 'bg-[#fafafa]', text: 'text-slate-600', border: 'border-slate-200' }, [SUBJECT_COLOR_MAP]);
+  const getSubjectColor = useCallback((subj) => SUBJECT_COLOR_MAP[subj] || { bg: 'from-[#86868b] to-[#515154]', light: '#86868b', bgLight: 'bg-[#fafafa]', text: 'text-slate-600', border: 'border-slate-200' }, [SUBJECT_COLOR_MAP]);
 
   // テンプレートを教科ごとにグループ化
   const groupedTemplates = useMemo(() => {
@@ -753,10 +753,10 @@ export default function TuningPage() {
       <div className="text-center pt-2 pb-2 relative">
         {/* Aurora gradient background blobs */}
         <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
-          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-400/10 blur-3xl" />
-          <div className="absolute -top-5 -right-10 w-32 h-32 rounded-full bg-gradient-to-bl from-purple-400/15 to-blue-400/10 blur-3xl" />
+          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-gradient-to-br from-[#ff375f]/20 to-[#d70015]/10 blur-3xl" />
+          <div className="absolute -top-5 -right-10 w-32 h-32 rounded-full bg-gradient-to-bl from-[#ff5c7c]/15 to-[#d70015]/10 blur-3xl" />
         </div>
-        <div className="inline-flex items-center justify-center w-[56px] h-[56px] rounded-[18px] bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white shadow-lg shadow-blue-500/25 mb-4">
+        <div className="inline-flex items-center justify-center w-[56px] h-[56px] rounded-[18px] bg-gradient-to-br from-[#ff5c7c] to-[#ff375f] text-white shadow-lg shadow-[#ff375f]/25 mb-4">
           <Icons.Dev className="w-7 h-7" />
         </div>
         <h1 className="text-[22px] sm:text-[26px] font-black tracking-tight text-[#1d1d1f] mb-1 leading-none">
@@ -784,7 +784,7 @@ export default function TuningPage() {
               </div>
               {feedbackLoading && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fff5f7]/50 rounded-full">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb] animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#ff375f] animate-pulse" />
                   <span className="text-[10px] text-[#515154] font-semibold">更新中</span>
                 </div>
               )}
@@ -802,7 +802,7 @@ export default function TuningPage() {
                 {/* スコアバー */}
                 {feedbackData.stats?.avg_score != null && (
                   <div className="mt-2 h-1.5 bg-[#fff5f7] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full bg-[#2563eb] transition-all duration-500"
+                    <div className="h-full rounded-full bg-[#ff375f] transition-all duration-500"
                          style={{ width: `${(feedbackData.stats.avg_score / 5) * 100}%` }} />
                   </div>
                 )}
@@ -907,7 +907,7 @@ export default function TuningPage() {
               </div>
               {evalHistoryLoading && (
                 <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#fff5f7] rounded-full">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#2563eb] animate-pulse" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#ff375f] animate-pulse" />
                   <span className="text-[10px] text-[#515154] font-bold">読込中</span>
                 </div>
               )}
@@ -944,7 +944,7 @@ export default function TuningPage() {
                         const count = evalHistory.analytics.score_distribution[score] || 0;
                         const maxCount = Math.max(...Object.values(evalHistory.analytics.score_distribution), 1);
                         const height = (count / maxCount) * 100;
-                        const colors = { 0.2: '#1e293b', 0.4: '#3b82f6', 0.6: '#3b82f6', 0.8: '#1e40af', 1.0: '#2563eb' };
+                        const colors = { 0.2: '#1d1d1f', 0.4: '#ff5c7c', 0.6: '#ff5c7c', 0.8: '#b00010', 1.0: '#ff375f' };
                         const labels = { 0.2: '低い', 0.4: 'いまいち', 0.6: 'まあまあ', 0.8: '良い', 1.0: '最高' };
                         return (
                           <div key={score} className="flex-1 flex flex-col items-center gap-1">
@@ -965,7 +965,7 @@ export default function TuningPage() {
                     <div className="text-[10px] font-bold text-[#515154] uppercase tracking-wider mb-3">科目ごとの評価</div>
                     <div className="space-y-2">
                       {Object.entries(evalHistory.analytics.per_subject).map(([subj, data]) => {
-                        const scoreColor = data.avg >= 0.8 ? '#1e40af' : data.avg >= 0.6 ? '#3b82f6' : data.avg >= 0.4 ? '#3b82f6' : '#1e293b';
+                        const scoreColor = data.avg >= 0.8 ? '#b00010' : data.avg >= 0.6 ? '#ff5c7c' : data.avg >= 0.4 ? '#ff5c7c' : '#1d1d1f';
                         return (
                           <div key={subj} className="flex items-center gap-3">
                             <span className="text-[12px] font-bold text-[#1d1d1f] min-w-[3rem]">{subj}</span>
@@ -991,7 +991,7 @@ export default function TuningPage() {
                     <div className="flex items-end gap-1 h-12">
                       {evalHistory.analytics.recent_trend.map((pt, idx) => {
                         const height = ((pt.score || 0) / 1.0) * 100;
-                        const scoreColor = pt.score >= 0.8 ? '#1e40af' : pt.score >= 0.6 ? '#3b82f6' : pt.score >= 0.4 ? '#3b82f6' : '#1e293b';
+                        const scoreColor = pt.score >= 0.8 ? '#b00010' : pt.score >= 0.6 ? '#ff5c7c' : pt.score >= 0.4 ? '#ff5c7c' : '#1d1d1f';
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-0.5" title={`${pt.timestamp?.slice(0, 10)} — ${pt.score}`}>
                             <div className="w-full rounded-sm transition-all duration-300"
@@ -1015,7 +1015,7 @@ export default function TuningPage() {
                 <div className="text-[10px] font-bold text-[#aeaeb2] uppercase tracking-wider mb-1">最近の評価</div>
                 {evalHistory.evaluations.map((ev, idx) => {
                   const scoreIcon = { 0.2: '×', 0.4: '△', 0.6: '○', 0.8: '◎', 1.0: '◉' };
-                  const scoreColor = ev.score >= 0.8 ? '#1e40af' : ev.score >= 0.6 ? '#3b82f6' : ev.score >= 0.4 ? '#3b82f6' : '#1e293b';
+                  const scoreColor = ev.score >= 0.8 ? '#b00010' : ev.score >= 0.6 ? '#ff5c7c' : ev.score >= 0.4 ? '#ff5c7c' : '#1d1d1f';
                   return (
                     <div key={ev.id || idx} className="p-3 bg-white rounded-xl border border-black/8 shadow-sm hover:shadow-md transition-all">
                       <div className="flex items-center justify-between mb-1">
@@ -1057,9 +1057,9 @@ export default function TuningPage() {
           const isActive = activeSection === s.id;
           const stepNum = idx + 1;
           const sectionColors = {
-            configure: '#2563eb',
-            execute:   '#3b82f6',
-            evaluate:  '#1e40af',
+            configure: '#ff375f',
+            execute:   '#ff5c7c',
+            evaluate:  '#b00010',
           };
           const sc = sectionColors[s.id] || sectionColors.configure;
           return (
@@ -1073,7 +1073,7 @@ export default function TuningPage() {
               }`}
             style={isActive ? { color: sc, boxShadow: `0 2px 8px ${sc}20` } : undefined}
             disabled={!s.enabled}>
-            <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black text-white" style={{ background: isActive ? sc : s.enabled ? '#94a3b8' : '#d2d2d7' }}>{stepNum}</span>
+            <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-black text-white" style={{ background: isActive ? sc : s.enabled ? '#aeaeb2' : '#d2d2d7' }}>{stepNum}</span>
             <span>{s.label}</span>
             {isActive && (
               <span className="absolute -bottom-[3px] left-1/2 -translate-x-1/2 w-5 h-[2.5px] rounded-full" style={{ background: sc }} />
@@ -1087,7 +1087,7 @@ export default function TuningPage() {
           );
         })}
         <button onClick={resetAll} title="リセット"
-          className="px-3 py-3 rounded-xl text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#2563eb]/[0.06] transition-all flex-shrink-0 active:scale-90">
+          className="px-3 py-3 rounded-xl text-[#86868b] hover:text-[#1d1d1f] hover:bg-[#ff375f]/[0.06] transition-all flex-shrink-0 active:scale-90">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
           </svg>
@@ -1096,9 +1096,9 @@ export default function TuningPage() {
       </div>
 
       {/* ── ウィザードアシスト ── */}
-      <div className="relative overflow-hidden rounded-2xl border" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.06), rgba(37,99,235,0.10))', borderColor: 'rgba(37,99,235,0.15)' }}>
+      <div className="relative overflow-hidden rounded-2xl border" style={{ background: 'linear-gradient(135deg, rgba(255,92,124,0.06), rgba(255,55,95,0.10))', borderColor: 'rgba(255,55,95,0.15)' }}>
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#2563eb] text-white text-xs font-black flex-shrink-0 shadow-sm">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#ff375f] text-white text-xs font-black flex-shrink-0 shadow-sm">
             {activeSection === 'configure' ? '1' : activeSection === 'execute' ? '2' : '3'}
           </div>
           <div className="flex-1 min-w-0">
@@ -1113,13 +1113,13 @@ export default function TuningPage() {
           </div>
           {activeSection === 'configure' && hasPrompt && (
             <button onClick={() => setActiveSection('execute')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2563eb] text-white text-[11px] font-bold shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] flex-shrink-0">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ff375f] text-white text-[11px] font-bold shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] flex-shrink-0">
               次へ <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </button>
           )}
           {activeSection === 'execute' && hasOutput && (
             <button onClick={() => setActiveSection('evaluate')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#2563eb] text-white text-[11px] font-bold shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] flex-shrink-0">
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ff375f] text-white text-[11px] font-bold shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] flex-shrink-0">
               次へ <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </button>
           )}
@@ -1191,7 +1191,7 @@ export default function TuningPage() {
                             <span className="text-[11px] text-[#aeaeb2] ml-2">{subjectTemplates.length}パターン</span>
                           </div>
                           {hasActive && (
-                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#2563eb] text-white">選択中</span>
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#ff375f] text-white">選択中</span>
                           )}
                           <svg className={`w-4 h-4 text-[#aeaeb2] transition-transform duration-300 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -1208,8 +1208,8 @@ export default function TuningPage() {
                               const diff = meta.difficulty || '';
                               const diffLevels = { '基礎': 1, '標準': 2, '応用': 3, '発展': 4, '難関': 5, '最難関': 6 };
                               const diffLevel = diffLevels[diff] || 0;
-                              const diffColors = { 1: '#93c5fd', 2: '#60a5fa', 3: '#3b82f6', 4: '#2563eb', 5: '#1d4ed8', 6: '#1e40af' };
-                              const dotColor = diffColors[diffLevel] || '#cbd5e1';
+                              const diffColors = { 1: '#ffb3c0', 2: '#ff8094', 3: '#ff5c7c', 4: '#ff375f', 5: '#d70015', 6: '#b00010' };
+                              const dotColor = diffColors[diffLevel] || '#d1d1d6';
                               const breadcrumb = [fld, thm].filter(Boolean).join(' › ');
 
                               return (
@@ -1227,7 +1227,7 @@ export default function TuningPage() {
                                           {breadcrumb || t.name || t.id}
                                         </span>
                                         {isActive && (
-                                          <div className="flex items-center justify-center w-[16px] h-[16px] rounded-full bg-[#2563eb] flex-shrink-0">
+                                          <div className="flex items-center justify-center w-[16px] h-[16px] rounded-full bg-[#ff375f] flex-shrink-0">
                                             <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
                                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                             </svg>
@@ -1238,7 +1238,7 @@ export default function TuningPage() {
                                         <div className="flex items-center gap-1.5 mt-1">
                                           <div className="flex gap-[3px]">
                                             {[1, 2, 3, 4, 5, 6].map((i) => (
-                                              <div key={i} className="w-[4px] h-[4px] rounded-full" style={{ backgroundColor: i <= diffLevel ? dotColor : '#bfdbfe' }} />
+                                              <div key={i} className="w-[4px] h-[4px] rounded-full" style={{ backgroundColor: i <= diffLevel ? dotColor : '#ffd1d9' }} />
                                             ))}
                                           </div>
                                           <span className="text-[9px] font-medium" style={{ color: dotColor }}>{difficultyLabel(diff)}</span>
@@ -1267,7 +1267,7 @@ export default function TuningPage() {
             {templateId && (
               <div className="mx-5 mb-3 p-3 rounded-xl bg-[#fff5f7]/50 border border-[#ffe4ea]/60">
                 <div className="text-[10px] text-[#515154]">選択中のパターン:</div>
-                <div className="text-[13px] font-bold text-[#2563eb]">{templates.find((t) => t.id === templateId)?.name || templateId}</div>
+                <div className="text-[13px] font-bold text-[#ff375f]">{templates.find((t) => t.id === templateId)?.name || templateId}</div>
                 {(() => {
                   const sel = templates.find((t) => t.id === templateId);
                   return sel?.metadata ? (
@@ -1285,7 +1285,7 @@ export default function TuningPage() {
                 <NumberField label="問数" value={numQuestions} onChange={setNumQuestions} min={1} />
               </div>
               <button onClick={async () => { await refresh(); setStatus('一覧を再読み込みしました'); }}
-                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#515154] hover:text-[#1d1d1f] hover:bg-[#ffe4ea]/60 transition-all border border-black/8 hover:border-[#2563eb]/20"
+                className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold text-[#515154] hover:text-[#1d1d1f] hover:bg-[#ffe4ea]/60 transition-all border border-black/8 hover:border-[#ff375f]/20"
                 title="一覧を再読込">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182" />
@@ -1345,7 +1345,7 @@ export default function TuningPage() {
                     </div>
                     <button
                       onClick={clearRefProblem}
-                      className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#fff5f7] hover:bg-[#2563eb]/10
+                      className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#fff5f7] hover:bg-[#ff375f]/10
                                  text-[#aeaeb2] hover:text-[#1d1d1f] transition-all duration-200 flex-shrink-0 active:scale-90"
                       title="選択を解除"
                     >
@@ -1467,7 +1467,7 @@ export default function TuningPage() {
 
             {referenceStem && !selectedRefProblem && (
               <div className="mt-2 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#2563eb] flex-shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-[#ff375f] flex-shrink-0" />
                 <span className="text-[10px] text-[#1d1d1f] font-bold">参考問題が設定されています</span>
               </div>
             )}
@@ -1613,9 +1613,9 @@ export default function TuningPage() {
                   <p className="text-[11px] text-[#515154]">① コピー → ② AIを開く → ③ 貼り付けて実行</p>
                 </div>
               </div>
-            <div className="p-4 bg-[#ffe4ea]/60 rounded-2xl border border-[#2563eb]/20">
+            <div className="p-4 bg-[#ffe4ea]/60 rounded-2xl border border-[#ff375f]/20">
               <div className="flex items-center gap-3 mb-3">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#2563eb] text-white text-xs font-black">1</div>
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#ff375f] text-white text-xs font-black">1</div>
                 <div className="flex-1">
                   <div className="text-sm font-bold text-[#1d1d1f]">まず指示文をコピー</div>
                   <div className="text-[11px] text-[#515154]">{finalPrompt.length.toLocaleString()} 文字</div>
@@ -1638,17 +1638,17 @@ export default function TuningPage() {
             )}
             <div className="mt-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#475569] text-white text-xs font-black">2</div>
+                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#515154] text-white text-xs font-black">2</div>
                 <span className="text-sm font-bold text-[#1d1d1f]">AIを開いて貼り付け</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { name: 'ChatGPT', url: 'https://chat.openai.com', color: 'from-[#2563eb] to-[#2563eb]' },
-                { name: 'Claude', url: 'https://claude.ai', color: 'from-[#3b82f6] to-[#2563eb]' },
-                { name: 'Gemini', url: 'https://gemini.google.com', color: 'from-[#3b82f6] to-[#3b82f6]' },
+                { name: 'ChatGPT', url: 'https://chat.openai.com', color: 'from-[#ff375f] to-[#ff375f]' },
+                { name: 'Claude', url: 'https://claude.ai', color: 'from-[#ff5c7c] to-[#ff375f]' },
+                { name: 'Gemini', url: 'https://gemini.google.com', color: 'from-[#ff5c7c] to-[#ff5c7c]' },
               ].map(({ name, url, color }) => (
                 <a key={name} href={url} target="_blank" rel="noreferrer"
-                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#2563eb] text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]`}>
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#ff375f] text-white text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]`}>
                   {name}
                 </a>
               ))}
@@ -1682,7 +1682,7 @@ export default function TuningPage() {
               </div>
             )}
             {parsedProblem && (
-              <div className="mt-4 p-4 bg-[#ffe4ea]/60 rounded-lg border border-[#2563eb]/20/40 space-y-2">
+              <div className="mt-4 p-4 bg-[#ffe4ea]/60 rounded-lg border border-[#ff375f]/20/40 space-y-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-[#1d1d1f]">
                   <Icons.Success className="w-4 h-4" /> 読み取り結果
                 </div>
@@ -1741,20 +1741,20 @@ export default function TuningPage() {
                     <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-1.5">メモ</label>
                     <input value={tuningNotes} onChange={(e) => setTuningNotes(e.target.value)}
                       className="w-full px-4 py-3 rounded-2xl border border-black/10 bg-white shadow-sm text-sm text-[#1d1d1f]
-                        transition-all hover:border-[#ff375f]/40 hover:shadow-md focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 outline-none font-medium"
+                        transition-all hover:border-[#ff375f]/40 hover:shadow-md focus:border-[#ff375f] focus:ring-2 focus:ring-[#ff375f]/30 outline-none font-medium"
                       placeholder="例: 難しさは良い。でも解説がもう少し欲しい。" />
                   </div>
                   <div>
                     <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-1.5">こうなって欲しかった <span className="text-[#aeaeb2] normal-case tracking-normal">（任意）</span></label>
                     <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)}
                       className="w-full px-4 py-3 rounded-2xl border border-black/10 bg-white shadow-sm text-sm text-[#1d1d1f]
-                        transition-all hover:border-[#ff375f]/40 hover:shadow-md focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/30 outline-none font-medium"
+                        transition-all hover:border-[#ff375f]/40 hover:shadow-md focus:border-[#ff375f] focus:ring-2 focus:ring-[#ff375f]/30 outline-none font-medium"
                       placeholder="こんな問題が作られたら良かった、というイメージ" />
                   </div>
                 </div>
 
                 {/* 保存先情報 */}
-                <div className="flex items-center gap-2 p-3 bg-[#fff5f7] rounded-xl border border-[#2563eb]/10">
+                <div className="flex items-center gap-2 p-3 bg-[#fff5f7] rounded-xl border border-[#ff375f]/10">
                   <svg className="w-4 h-4 text-[#1d1d1f] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75" />
                   </svg>
@@ -1773,7 +1773,7 @@ export default function TuningPage() {
           <div className="relative overflow-hidden rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="p-6">
               <div className="flex items-center gap-3 mb-5">
-                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#2563eb] text-white shadow-md">
+                <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#ff375f] text-white shadow-md">
                   <Icons.Data className="w-5 h-5" />
                 </div>
                 <div>
@@ -1813,7 +1813,7 @@ export default function TuningPage() {
                 {verificationResult && !verificationResult.skipped && (
                   <div className={`p-3 rounded-lg border text-sm font-semibold flex items-center gap-2 ${
                     verificationResult.verified
-                      ? 'bg-[#ffe4ea]/60 border-[#2563eb]/20 text-[#1d1d1f]'
+                      ? 'bg-[#ffe4ea]/60 border-[#ff375f]/20 text-[#1d1d1f]'
                       : 'bg-[#fff5f7] border-black/10 text-[#1d1d1f]'
                   }`}>
                     {verificationResult.verified
@@ -1822,7 +1822,7 @@ export default function TuningPage() {
                   </div>
                 )}
                 {savedProblemId && (
-                  <div className="p-3 bg-[#ffe4ea]/60 rounded-lg border border-[#2563eb]/20 text-sm text-[#1d1d1f] font-semibold flex items-center gap-2">
+                  <div className="p-3 bg-[#ffe4ea]/60 rounded-lg border border-[#ff375f]/20 text-sm text-[#1d1d1f] font-semibold flex items-center gap-2">
                     <Icons.Success className="w-4 h-4" /> 保存済み — ID: {savedProblemId}
                   </div>
                 )}

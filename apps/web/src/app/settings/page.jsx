@@ -96,7 +96,7 @@ export default function SettingsPage() {
 
       {/* Live Preview */}
       <div className="rounded-2xl border border-slate-200 p-6 mb-8"
-           style={{ background: 'linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%)' }}>
+           style={{ background: 'linear-gradient(135deg, #f8faff 0%, #f7f7f8 100%)' }}>
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-3">プレビュー</p>
         <div className="flex items-center gap-3">
           {logoUrl ? (
@@ -154,7 +154,7 @@ export default function SettingsPage() {
                 onClick={() => handleColorSelect(value)}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all hover:scale-105"
                 style={{
-                  borderColor: isActive ? value : '#e2e8f0',
+                  borderColor: isActive ? value : '#e5e5ea',
                   background: isActive ? `${value}08` : 'white',
                   boxShadow: isActive ? `0 0 0 1px ${value}40` : 'none',
                 }}
@@ -163,7 +163,7 @@ export default function SettingsPage() {
                   className="w-10 h-10 rounded-full shadow-sm transition-transform"
                   style={{ background: value }}
                 />
-                <span className="text-xs font-medium" style={{ color: isActive ? value : '#64748b' }}>
+                <span className="text-xs font-medium" style={{ color: isActive ? value : '#86868b' }}>
                   {label}
                 </span>
               </button>
@@ -185,7 +185,7 @@ export default function SettingsPage() {
             value={hexInput}
             onChange={(e) => setHexInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleHexApply()}
-            placeholder="#2563eb"
+            placeholder="#ff375f"
             maxLength={7}
             className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-mono
                        focus:outline-none focus:ring-2 focus:border-transparent transition-shadow"
@@ -200,7 +200,7 @@ export default function SettingsPage() {
             適用
           </button>
         </div>
-        <p className="text-xs text-slate-400 mt-1.5">#から始まる6桁のHexカラーコード（例: #4f46e5）</p>
+        <p className="text-xs text-slate-400 mt-1.5">#から始まる6桁のHexカラーコード（例: #d70015）</p>
       </section>
 
       {/* Logo Upload */}
@@ -213,8 +213,8 @@ export default function SettingsPage() {
               <img src={logoUrl} alt="ロゴ" className="w-20 h-20 rounded-xl object-contain border border-slate-200 bg-white p-1" />
               <button
                 onClick={handleLogoRemove}
-                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center
-                           opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-[#fff0f0] text-white text-xs flex items-center justify-center
+                           opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-[#fff0f0]"
                 title="ロゴを削除"
               >
                 ×
@@ -268,7 +268,7 @@ export default function SettingsPage() {
                 onClick={() => handlePaperThemeSelect(theme.id)}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all hover:scale-105"
                 style={{
-                  borderColor: isActive ? displayColor : '#e2e8f0',
+                  borderColor: isActive ? displayColor : '#e5e5ea',
                   background: isActive ? `${displayColor}08` : 'white',
                   boxShadow: isActive ? `0 0 0 1px ${displayColor}40` : 'none',
                 }}
@@ -284,7 +284,7 @@ export default function SettingsPage() {
                     <div className="h-[2px] rounded-full bg-slate-200" style={{ width: '80%' }} />
                   </div>
                 </div>
-                <span className="text-xs font-bold" style={{ color: isActive ? displayColor : '#64748b' }}>
+                <span className="text-xs font-bold" style={{ color: isActive ? displayColor : '#86868b' }}>
                   {theme.label}
                 </span>
                 <span className="text-[9px] text-slate-400 leading-tight text-center">{theme.description}</span>
