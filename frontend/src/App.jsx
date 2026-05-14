@@ -196,7 +196,7 @@ function deleteFromHistory(id) { localStorage.setItem(HISTORY_KEY, JSON.stringif
 function clearHistory() { localStorage.removeItem(HISTORY_KEY) }
 
 const SETTINGS_KEY = 'examgen_settings'
-const DEFAULT_SETTINGS = { defaultNumQuestions: 3, defaultLatexPreset: 'exam', defaultBaseMode: 'skip' }
+const DEFAULT_SETTINGS = { defaultNumQuestions: 3, defaultLatexPreset: 'exam' }
 function loadSettings() { try { return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') } } catch { return { ...DEFAULT_SETTINGS } } }
 function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)) }
 
@@ -302,7 +302,6 @@ export default function App() {
   const initS = loadSettings()
   const [form, setForm] = useState({ templateId: '', numQuestions: initS.defaultNumQuestions, latexPreset: initS.defaultLatexPreset })
   const [prompt, setPrompt] = useState('')
-  const [ragCtx, setRagCtx] = useState(null)
   const [llmOutput, setLlmOutput] = useState('')
   const [pdfUrl, setPdfUrl] = useState('')
   const [pdfPageImages, setPdfPageImages] = useState([])
@@ -321,12 +320,6 @@ export default function App() {
   const [loadingMsg, setLoadingMsg] = useState('')
   const [showHelp, setShowHelp] = useState(false)
   const [showPromptSection, setShowPromptSection] = useState(true)
-  const [baseMode, setBaseMode] = useState(initS.defaultBaseMode || 'skip')
-  const [baseProblems, setBaseProblems] = useState([])
-  const [selectedBaseProblem, setSelectedBaseProblem] = useState(null)
-  const [basePdfData, setBasePdfData] = useState(null)
-  const [basePdfDragOver, setBasePdfDragOver] = useState(false)
-  const basePdfRef = useRef(null)
   const [selfRating, setSelfRating] = useState(0)
   const [showShareCard, setShowShareCard] = useState(false)
   const [sessionXpGain, setSessionXpGain] = useState(0)
@@ -349,34 +342,16 @@ export default function App() {
   }, [])
   useEffect(() => { fetchTemplates(); fetchPresets() }, [])
 
-  const fetchBaseProblems = useCallback(async (tid) => {
-    if (!tid) return
-    try { const r = await fetch(`/api/problems_by_pattern?template_id=${encodeURIComponent(tid)}&limit=20`); const d = await r.json(); if (r.ok) setBaseProblems(d.problems || []) } catch (e) { console.error(e) }
-  }, [])
-
-  const uploadBasePdf = async (file) => {
-    if (!file) return; if (!file.name.toLowerCase().endsWith('.pdf')) return notify('PDFファイルのみ可能です', 'error')
-    setLoading(true); setLoadingMsg('PDFを検証中...')
-    const fd = new FormData(); fd.append('file', file)
-    try { const r = await fetch('/api/validate_base_pdf', { method: 'POST', body: fd }); const d = await r.json(); if (r.ok) { setBasePdfData(d); notify(`${d.filename}を読み込みました`, 'success') } else notify(d.detail || '検証失敗', 'error') } catch { notify('アップロードエラー', 'error') }
-    setLoading(false); if (basePdfRef.current) basePdfRef.current.value = ''
-  }
-  const onBasePdfDrop = (e) => { e.preventDefault(); setBasePdfDragOver(false); uploadBasePdf(e.dataTransfer.files?.[0]) }
-
   const generatePrompt = async () => {
     if (!form.templateId) return notify('テンプレートを選んでください', 'error')
     setLoading(true); setLoadingMsg('AIへの指示文を作成中...')
     try {
-      let sourceText = ''
-      if (baseMode === 'db' && selectedBaseProblem) sourceText = `【ベース問題】\n${selectedBaseProblem.stem || ''}\n${selectedBaseProblem.solution_outline || ''}`
-      else if (baseMode === 'pdf' && basePdfData?.extracted_text) sourceText = basePdfData.extracted_text
-      const body = { template_id: form.templateId, num_questions: form.numQuestions, rag_inject: true, source_text: sourceText || undefined, user_mode: true, latex_preset: form.latexPreset || 'exam' }
+      const body = { template_id: form.templateId, num_questions: form.numQuestions, rag_inject: false, user_mode: true, latex_preset: form.latexPreset || 'exam' }
       const r = await fetch('/api/template_render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const d = await r.json()
       if (r.ok) {
-        let rp = d.rendered_prompt || d.rendered
-        if (baseMode === 'pdf' && basePdfData) rp += '\n\n【重要：添付PDFについて】\n添付PDFがベースライン問題です。同じスタイルで新しい類似問題を作成してください。'
-        setPrompt(rp); setRagCtx(d.context); setStep(3); setShowPromptSection(true); notify('指示文を生成しました', 'success')
+        const rp = d.rendered_prompt || d.rendered
+        setPrompt(rp); setStep(3); setShowPromptSection(true); notify('指示文を生成しました', 'success')
       } else notify('エラー: ' + (d.detail || r.statusText), 'error')
     } catch { notify('通信エラー', 'error') }
     setLoading(false)
@@ -473,7 +448,7 @@ export default function App() {
     setFullPdfLoading(false)
   }
 
-  const resetWizard = () => { setStep(1); setPrompt(''); setRagCtx(null); setLlmOutput(''); setPdfUrl(''); setPdfPageImages([]); setAnswerPdfUrl(''); setAnswerPageImages([]); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setParsedProblems([]); setSubScores({}); setBaseMode('skip'); setBaseProblems([]); setSelectedBaseProblem(null); setBasePdfData(null); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false); setShowScoring(false) }
+  const resetWizard = () => { setStep(1); setPrompt(''); setLlmOutput(''); setPdfUrl(''); setPdfPageImages([]); setAnswerPdfUrl(''); setAnswerPageImages([]); setAnswerLatex(''); setFullLatex(''); setFullPdfUrl(''); setParsedProblems([]); setSubScores({}); setShowPromptSection(true); setSelfRating(0); setSessionXpGain(0); setShowShareCard(false); setShowScoring(false) }
   const startPractice = () => { resetWizard(); setScreen('practice') }
 
   const currentPreset = latexPresets.find(p => p.id === form.latexPreset)
@@ -706,7 +681,6 @@ export default function App() {
             <div className="card-header"><span className="card-emoji">⚙️</span><div className="card-title">設定</div><div className="card-desc">アプリの動作をカスタマイズ</div></div>
             <div className="field" style={{marginBottom:20}}><label className="field-label">デフォルト問題数</label><div className="num-questions-selector">{[1,2,3,5,10].map(n => <button key={n} className={`num-btn ${settings.defaultNumQuestions===n?'active':''}`} onClick={() => { const s = { ...settings, defaultNumQuestions: n }; setSettings(s); saveSettings(s) }}>{n}問</button>)}</div></div>
             <div className="field" style={{marginBottom:20}}><label className="field-label">デフォルト出力形式</label><div className="preset-chips">{latexPresets.map(p => <button key={p.id} className={`preset-chip ${settings.defaultLatexPreset===p.id?'active':''}`} onClick={() => { const s = { ...settings, defaultLatexPreset: p.id }; setSettings(s); saveSettings(s) }}><span className="preset-chip-emoji">{presetEmoji(p.id)}</span><span className="preset-chip-label">{p.name}</span></button>)}</div></div>
-            <div className="field" style={{marginBottom:20}}><label className="field-label">デフォルトベース問題モード</label><div className="base-mode-tabs">{[{key:'db',icon:<Ico.Database />,label:'DB'},{key:'pdf',icon:<Ico.Pdf />,label:'PDF'},{key:'skip',icon:<Ico.Skip />,label:'スキップ'}].map(m => <button key={m.key} className={`base-mode-tab ${settings.defaultBaseMode===m.key?'active':''}`} onClick={() => { const s = { ...settings, defaultBaseMode: m.key }; setSettings(s); saveSettings(s) }}>{m.icon}<span>{m.label}</span></button>)}</div></div>
             <div className="settings-divider" />
             <div className="field" style={{marginBottom:20}}><label className="field-label">データ管理</label><button className="btn btn-outline btn-block" style={{marginBottom:8}} onClick={() => { if(window.confirm('学習データをリセットしますか？')) { setStats(DEFAULT_STATS); saveStats(DEFAULT_STATS); notify('リセットしました','info') } }}>学習データをリセット</button></div>
             <div className="settings-divider" />
@@ -753,14 +727,14 @@ export default function App() {
                     return <div key={t.id} className={`pattern-card ${sel?'selected':''} ${phys?'physics':''}`} onClick={() => upd('templateId',t.id)}><div className="pattern-card-header"><div className="pattern-card-name">{t.name||t.id}</div>{sel && <div className="pattern-check"><Ico.Check s={14}/></div>}</div>{t.description && <div className="pattern-card-desc">{t.description}</div>}<div className="pattern-card-tags">{m.subject && <span className={`pattern-tag ${phys?'physics-tag':''}`}>{m.subject}</span>}{m.field && <span className="pattern-tag">{m.field}</span>}</div></div>
                   })}
                 </div>
-                <div className="mobile-sticky-action"><button className="btn btn-primary btn-block btn-lg" onClick={() => { if(form.templateId){fetchBaseProblems(form.templateId);setStep(2)} }} disabled={!form.templateId}>次へ進む <Ico.ArrowRight /></button></div>
+                <div className="mobile-sticky-action"><button className="btn btn-primary btn-block btn-lg" onClick={() => { if(form.templateId) setStep(2) }} disabled={!form.templateId}>次へ進む <Ico.ArrowRight /></button></div>
               </div>
             )}
 
             {/* STEP 2 */}
             {step === 2 && (
               <div className="card anim-fade-up">
-                <div className="card-header"><span className="card-emoji">⚙️</span><div className="card-title">問題数・ベース問題を設定</div><div className="card-desc">量は質に転化する。多めがコツ。</div></div>
+                <div className="card-header"><span className="card-emoji">⚙️</span><div className="card-title">問題数・出力形式を設定</div><div className="card-desc">量は質に転化する。多めがコツ。</div></div>
                 {selectedTemplate && <div className="selected-pattern-badge"><span>選択中：</span><strong>{selectedTemplate.name||selectedTemplate.id}</strong>{templateMeta.subject && <span className="pattern-tag">{templateMeta.subject}</span>}</div>}
                 <div className="field" style={{marginBottom:20}}>
                   <label className="field-label">問題数</label>
@@ -772,19 +746,7 @@ export default function App() {
                   <div className="preset-chips">{latexPresets.map(p => <button key={p.id} className={`preset-chip ${form.latexPreset===p.id?'active':''}`} onClick={() => upd('latexPreset',p.id)} title={p.description}><span className="preset-chip-emoji">{presetEmoji(p.id)}</span><span className="preset-chip-label">{p.name}</span></button>)}</div>
                   {currentPreset && <div className="field-hint">{currentPreset.description}</div>}
                 </div>
-                <div className="field" style={{marginBottom:20}}>
-                  <label className="field-label">ベース問題</label>
-                  <div className="card-desc" style={{marginBottom:12,fontSize:13}}>参考にする問題を選ぶか、スキップも可能です。</div>
-                  <div className="base-mode-tabs">
-                    <button className={`base-mode-tab ${baseMode==='db'?'active':''}`} onClick={() => setBaseMode('db')}><Ico.Database /><span>DB</span></button>
-                    <button className={`base-mode-tab ${baseMode==='pdf'?'active':''}`} onClick={() => setBaseMode('pdf')}><Ico.Pdf /><span>PDF</span></button>
-                    <button className={`base-mode-tab ${baseMode==='skip'?'active':''}`} onClick={() => {setBaseMode('skip');setSelectedBaseProblem(null);setBasePdfData(null)}}><Ico.Skip /><span>スキップ</span></button>
-                  </div>
-                  {baseMode==='db' && <div className="base-content anim-fade-up">{baseProblems.length > 0 ? <><div className="base-db-hint">同じパターンから1つ選択</div><div className="base-problem-list">{baseProblems.map(p => <div key={p.id} className={`base-problem-card ${selectedBaseProblem?.id===p.id?'selected':''}`} onClick={() => setSelectedBaseProblem(selectedBaseProblem?.id===p.id?null:p)}><div className="base-problem-stem">{p.stem}</div><div className="base-problem-meta">{p.subject && <span className="pattern-tag">{p.subject}</span>}{p.topic && <span className="pattern-tag">{p.topic}</span>}{p.difficulty!=null && <span className="pattern-tag">難易度:{(p.difficulty*100).toFixed(0)}%</span>}</div>{selectedBaseProblem?.id===p.id && <div className="base-problem-check"><Ico.Check s={16}/></div>}</div>)}</div></> : <div className="base-empty"><div className="base-empty-icon"><Ico.Database /></div><div>この分野の問題がありません</div><div className="field-hint">PDFかスキップを選択してください</div></div>}</div>}
-                  {baseMode==='pdf' && <div className="base-content anim-fade-up"><div className="tip tip-info" style={{marginBottom:16}}><span className="tip-icon">📋</span><div>PDF<strong>3ページ以下</strong>のみ</div></div>{!basePdfData ? <div className={`upload-area ${basePdfDragOver?'drag-over':''}`} onClick={() => basePdfRef.current?.click()} onDrop={onBasePdfDrop} onDragOver={e=>{e.preventDefault();setBasePdfDragOver(true)}} onDragLeave={() => setBasePdfDragOver(false)}><input ref={basePdfRef} type="file" accept=".pdf" onChange={e=>uploadBasePdf(e.target.files?.[0])}/><div className="upload-icon"><Ico.Upload /></div><div className="upload-label"><strong>タップ</strong>or<strong>ドラッグ</strong></div><div className="upload-formats">PDF（3ページ以下）</div></div> : <div className="base-pdf-preview"><div className="base-pdf-info"><div className="base-pdf-filename"><Ico.FileText /> {basePdfData.filename}</div><div className="base-pdf-pages">{basePdfData.page_count}ページ</div><button className="btn btn-ghost" style={{padding:'4px 10px',fontSize:12}} onClick={() => setBasePdfData(null)}>削除</button></div>{basePdfData.images?.length > 0 && <div className="base-pdf-thumbnails">{basePdfData.images.map((img,i) => <div key={i} className="base-pdf-thumb"><img src={`data:image/png;base64,${img}`} alt={`P${i+1}`}/><div className="base-pdf-thumb-label">P{i+1}</div></div>)}</div>}</div>}</div>}
-                  {baseMode==='skip' && <div className="base-content anim-fade-up"><div className="base-skip-notice"><Ico.Skip /><div><strong>ベース問題なしで生成</strong><div className="field-hint">RAGのみで指示文を作成</div></div></div></div>}
-                </div>
-                <div className="mobile-sticky-action"><div className="btn-row btn-row-2"><button className="btn btn-outline btn-lg" onClick={() => setStep(1)}><Ico.ArrowLeft /> 戻る</button><button className="btn btn-primary btn-lg" onClick={generatePrompt} disabled={loading||(baseMode==='db'&&!selectedBaseProblem)||(baseMode==='pdf'&&!basePdfData)}>指示文を作成 <Ico.ArrowRight /></button></div></div>
+                <div className="mobile-sticky-action"><div className="btn-row btn-row-2"><button className="btn btn-outline btn-lg" onClick={() => setStep(1)}><Ico.ArrowLeft /> 戻る</button><button className="btn btn-primary btn-lg" onClick={generatePrompt} disabled={loading}>指示文を作成 <Ico.ArrowRight /></button></div></div>
               </div>
             )}
 
@@ -798,10 +760,9 @@ export default function App() {
                     <button className="btn btn-primary btn-block btn-lg" onClick={copyPrompt}><Ico.Copy /> 指示文をコピー</button>
                     <div className="mobile-ai-links"><a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="mobile-ai-link"><Ico.ExternalLink /> ChatGPT</a><a href="https://claude.ai/" target="_blank" rel="noreferrer" className="mobile-ai-link"><Ico.ExternalLink /> Claude</a></div>
                   </div>
-                  {baseMode==='pdf'&&basePdfData && <div className="mobile-alert"><span className="mobile-alert-icon">📎</span>PDF「{basePdfData.filename}」もAIに添付</div>}
                   <button className="mobile-toggle-preview" onClick={() => setShowPromptSection(p=>!p)}>{showPromptSection?'指示文を隠す':'指示文を見る'} {showPromptSection?<Ico.ChevronUp />:<Ico.ChevronDown />}</button>
                   {showPromptSection && <div className="prompt-preview anim-fade-up">{prompt}</div>}
-                  <div className="step4-badges">{ragCtx?.chunk_count>0 && <span className="rag-badge">📚 {ragCtx.chunk_count}件参照</span>}{currentPreset && <span className="rag-badge">📄 {currentPreset.name}</span>}{baseMode==='db'&&selectedBaseProblem && <span className="rag-badge">🎯 ベース問題済</span>}</div>
+                  <div className="step4-badges">{currentPreset && <span className="rag-badge">📄 {currentPreset.name}</span>}</div>
                 </div>
                 <div className="mobile-divider" />
                 <div className="mobile-section">

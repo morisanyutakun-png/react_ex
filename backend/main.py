@@ -1707,18 +1707,17 @@ class RenderTemplateRequest(BaseModel):
 
 @app.post('/api/render_template')
 def api_render_template(req: RenderTemplateRequest = Body(...)):
-    """Render a server-side template and optionally inject RAG snippets and difficulty metrics.
+    """Render a server-side template. RAG/参照機能は撤去済み — 難易度・形式・分野のみで生成する。
 
     Supported placeholders in templates:
-      {subject}, {difficulty}, {num_questions}, {doc_snippets}, {rag_summary}, {chunk_count}
-    New placeholders added here:
-      {difficulty_score} (0..1), {difficulty_level} (1..5), {trickiness} (0..1), {difficulty_details}
+      {subject}, {difficulty}, {num_questions}
     """
     _ensure_templates()
     tpl = TEMPLATES.get(req.template_id)
     if not tpl:
         return JSONResponse({'error': 'template not found'}, status_code=404)
     prompt = tpl.get('prompt', '')
+    req.rag_inject = False
 
     # base context
     ctx = {
@@ -3613,42 +3612,49 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             'CircuiTikZ が利用可能。\\begin{circuitikz}...\\end{circuitikz} で電気回路図を描く。\n'
             '素子: 抵抗 to[R,l=$R$], コンデンサ to[C,l=$C$], インダクタ to[L,l=$L$], '
             '電圧源 to[V,l=$V$] / to[sV,l=$v$], 電流源 to[I,l=$I$], ダイオード to[D]。\n'
+            '電池: to[battery1,l=$E$]（長線が+極、短線が−極）。\n'
             '配線は -- で接続し、ノードラベルは node[above]{ラベル} で付ける。\n\n'
-            '【回路図の厳密な座標計算ルール — 必ず守ること】\n'
-            '1. ★閉回路の保証★: 回路は必ず閉じたループを形成すること。\n'
-            '   最後の配線の終点座標は、始点の座標と正確に一致しなければならない。\n'
-            '2. 正確な座標を使い、各配線パスの (始点) to[素子] (終点) で始点と終点を明記。\n'
-            '3. 配線例（閉回路の直列RLC回路）:\n'
-            '   \\draw (0,0) to[V,l=$E$] (0,3)  % 左辺: 上昇\n'
-            '         to[R,l=$R$] (3,3)          % 上辺: 右へ\n'
-            '         to[C,l=$C$] (3,0)          % 右辺: 下降\n'
-            '         -- (0,0);                   % 下辺: 始点に戻る（閉回路完成）\n'
-            '4. 並列回路は分岐点の座標を明確にし、各枝の上端・下端座標を一致させる。\n'
-            '5. 接地記号: node[ground]{} を使用する場合も座標を明記。\n'
-            '6. 描画前にまず座標一覧をコメントで書く:\n'
-            '   % ノード座標: A=(0,0), B=(0,3), C=(3,3), D=(3,0)\n'
-            '   % パス: A→B (電圧源), B→C (抵抗), C→D (コンデンサ), D→A (配線)\n'
-            '7. 座標が矩形ならば y座標・x座標がそれぞれ揃っているか確認:\n'
-            '   左辺は x=0 で統一、右辺は x=3 で統一、上辺は y=3 で統一、下辺は y=0 で統一。\n\n'
-            '【★★ 素子内部の導線貫通を防止する描画順序ルール — 最重要 ★★】\n'
-            '並列回路など、母線（水平/垂直の配線）と素子枝が交差する回路では\n'
-            '素子の内部を導線が貫通して表示される問題が発生する。\n'
-            '以下のルールを厳守すること:\n\n'
-            'W1. 素子の描画順序に注意し、素子を含む枝を後から描画する。\n'
-            'W2. ★描画順序★: 母線（素子を含まない配線）を先に描画し、\n'
-            '    素子を含む枝を後から描画する。後から描画した素子の白背景が\n'
-            '    先に描画した母線の線を隠すため、導線貫通が起きない。\n'
-            'W3. 並列回路の正しい描画手順:\n'
-            '   % Step 1: 母線（単純配線）を先に描画\n'
-            '   \\draw (0,3.2) -- (8,3.2);          % 上側母線\n'
-            '   \\draw (0,0)   -- (8,0);             % 下側母線\n'
-            '   % Step 2: 素子枝を後から描画（白背景で母線を隠す）\n'
-            '   \\draw (0,0) to[sV,l_=$v(t)$] (0,3.2);  % 電源\n'
-            '   \\draw (2.6,3.2) to[R,l_=$R$] (2.6,0);  % 抵抗\n'
-            '   \\draw (5.0,3.2) to[L,l_=$L$] (5.0,0);  % コイル\n'
-            '   \\draw (7.4,3.2) to[C,l_=$C$] (7.4,0);  % コンデンサ\n'
-            'W4. 直列回路では1本の \\draw パスで全素子を連続接続してよいが、\n'
-            '    並列回路では必ず枝ごとに別の \\draw コマンドに分割すること。\n'
+            '【★★★ 描画方向ルール — 反時計回り・左上始点・一筆書き ★★★】\n'
+            'D1. ★始点は必ず左上★ (例: 左上を (0,3) とする矩形ループ)。\n'
+            'D2. ★反時計回り★ (counter-clockwise) に進む:\n'
+            '    左上 → 左下 → 右下 → 右上 → 左上（下・右・上・左の順）。\n'
+            'D3. ★直列回路は一筆書き★: 1本の \\draw パスで矩形を一周し、\n'
+            '    最後に -- (始点) で閉ループを完成させる。途中で \\draw を切らない。\n'
+            'D4. ★電源は左辺に配置★: 左上から左下へ下降する辺に置く。\n'
+            '    \\draw (0,3) to[battery1,l=$E$] (0,0) ...\n'
+            '    この向きで描けば長線(+)が上・短線(−)が下に来て、正しい標準向きとなる。\n'
+            '    invert は左辺を下から上に描く場合のみ使う。逆向きにしない。\n'
+            'D5. 一筆書きが原理的に不可能な場合（並列回路など）のみ \\draw を分割する。\n\n'
+            '【素子描画の必須ルール — 余計な導線を生成しない】\n'
+            'E1. ★1素子=1区間★: 素子は必ず `(始点) to[素子] (終点)` の形で書く。\n'
+            '    始点・終点は隣接素子と共有する接続ノードの座標とし、\n'
+            '    素子の前後に余分な `--` 配線を入れない。\n'
+            '    悪い例: (0,0) -- (1,0) to[R] (2,0) -- (3,0)  ← 前後の --は不要\n'
+            '    良い例: (0,0) to[R] (3,0)                     ← to[R] が自動で足を出す\n'
+            'E2. 素子区間の長さは 1.5〜2.0 単位を目安に取る（短すぎると記号が潰れる）。\n'
+            'E3. 素子の中点（記号本体）に他の配線を交差させないこと。\n\n'
+            '【回路図の厳密な座標ルール】\n'
+            'C1. ★閉回路の保証★: 最後の配線の終点座標は、始点の座標と正確に一致すること。\n'
+            'C2. 矩形ループなら左辺 x=0、右辺 x=W、上辺 y=H、下辺 y=0 に揃える。\n'
+            'C3. 描画前にコメントで座標一覧を書く:\n'
+            '    % ノード: 左上 A=(0,3), 左下 B=(0,0), 右下 C=(3,0), 右上 D=(3,3)\n'
+            '    % 反時計回り経路: A→B (電源,下降), B→C (下辺,右), C→D (右辺,上昇), D→A (上辺,左)\n'
+            'C4. 接地記号: node[ground]{} の座標も明記。\n\n'
+            '【★★ 並列回路: 素子内部の導線貫通を防止する描画順序 ★★】\n'
+            'P1. 並列回路は一筆書きできないので、複数の \\draw に分割する。\n'
+            'P2. ★描画順序★: 母線（素子を含まない配線）を先に描画し、\n'
+            '    素子枝を後から描画する。後から描画した素子の白背景が\n'
+            '    先に描画した母線の線を隠し、導線貫通を防ぐ。\n'
+            'P3. 並列回路の正しい描画（反時計回り・左上始点）:\n'
+            '   % Step 1: 外周（電源含む）を反時計回りに一筆書き\n'
+            '   \\draw (0,3) to[battery1,l=$E$] (0,0)   % 左辺: 下降, +上 −下\n'
+            '         -- (8,0)                            % 下辺: 右へ\n'
+            '         -- (8,3)                            % 右辺: 上昇\n'
+            '         -- (0,3);                           % 上辺: 始点に戻る\n'
+            '   % Step 2: 並列素子枝を後から描画（白背景で母線を隠す）\n'
+            '   \\draw (2.6,3) to[R,l_=$R$] (2.6,0);    % 抵抗\n'
+            '   \\draw (5.0,3) to[L,l_=$L$] (5.0,0);    % コイル\n'
+            'P4. 分岐点に接続ドットを付ける場合は node[circ]{} を素子枝の端に置く。\n'
         ),
     },
     'pgfplots': {
@@ -5746,24 +5752,26 @@ P7. 定滑車の支持構造を描く: 天井・壁・台からの支柱 \draw[t
   \node[right] at (0.45,2.4) {$k$};
 \end{tikzpicture}
 
-【電磁気: 直列回路（circuitikz）】
+【電磁気: 直列回路（circuitikz）— 反時計回り・左上始点・一筆書き】
 \begin{circuitikz}[scale=0.9,>=stealth]
-  \draw (0,0) to[battery1,l_={$E$},invert] (0,2.8)
-    to[short] (1.5,2.8)
-    to[R,l={$R_1$}] (3.0,2.8)
-    to[R,l={$R_2$}] (4.5,2.8)
-    to[short] (4.5,0)
-    to[short] (0,0);
+  % ノード: A=(0,2.8) 左上, B=(0,0) 左下, C=(4.5,0) 右下, D=(4.5,2.8) 右上
+  % 経路: A→B (電池,下降) → C (下辺,右) → D (右辺,上昇) → A (上辺,左)
+  \draw (0,2.8) to[battery1,l=$E$] (0,0)      % 左辺: 下降（+上,−下）
+    to[R,l=$R_1$] (4.5,0)                      % 下辺: 抵抗1
+    to[R,l=$R_2$] (4.5,2.8)                    % 右辺: 抵抗2（上昇）
+    -- (0,2.8);                                 % 上辺: 始点に戻る
 \end{circuitikz}
 
-【電磁気: 並列回路（circuitikz）】
+【電磁気: 並列回路（circuitikz）— 反時計回り・外周一筆＋素子枝】
 \begin{circuitikz}[scale=0.85,>=stealth]
-  \draw (0,0) to[battery1,l_={$E$},invert] (0,3.0)
-    to[short] (4.5,3.0)
-    to[short] (4.5,0)
-    to[short] (0,0);
-  \draw (1.5,3.0) to[R,l={$R_1$}] (1.5,0);
-  \draw (3.0,3.0) to[R,l={$R_2$}] (3.0,0);
+  % Step 1: 外周（電源含む）を反時計回りに一筆書き
+  \draw (0,3.0) to[battery1,l=$E$] (0,0)      % 左辺: 下降（+上,−下）
+    -- (4.5,0)                                  % 下辺: 右へ
+    -- (4.5,3.0)                                % 右辺: 上昇
+    -- (0,3.0);                                 % 上辺: 始点に戻る
+  % Step 2: 並列素子枝を後から描画（白背景で母線を隠す）
+  \draw (1.5,3.0) to[R,l=$R_1$] (1.5,0);
+  \draw (3.0,3.0) to[R,l=$R_2$] (3.0,0);
 \end{circuitikz}
 
 【熱力学: P-V グラフ】
@@ -6983,41 +6991,8 @@ async def practice_render_prompt(req: PracticeGenerateRequest = Body(...)):
         req.subject, req.topics or [], req.difficulty, req.num_questions
     )
 
-    # RAG: DB から参考問題を取得
+    # RAG/参照機能は撤去済み — 難易度・形式・分野のみで生成する
     user_prompt_parts = []
-    try:
-        conn = connect_db()
-        cur = conn.cursor()
-        _is_sq = getattr(conn, '_is_sqlite', False)
-        topics = req.topics or []
-        if topics:
-            placeholders = ','.join(['%s'] * len(topics))
-            sql = (
-                f"SELECT stem, topic, difficulty FROM problems "
-                f"WHERE (subject = %s OR subject LIKE %s) AND topic IN ({placeholders}) "
-                f"AND stem IS NOT NULL AND stem != '' "
-                f"ORDER BY {'id DESC' if _is_sq else 'created_at DESC'} LIMIT %s"
-            )
-            cur.execute(sql, (req.subject, req.subject + '%', *topics, 10))
-        else:
-            sql = (
-                "SELECT stem, topic, difficulty FROM problems "
-                "WHERE (subject = %s OR subject LIKE %s) "
-                "AND stem IS NOT NULL AND stem != '' "
-                f"ORDER BY {'id DESC' if _is_sq else 'created_at DESC'} LIMIT %s"
-            )
-            cur.execute(sql, (req.subject, req.subject + '%', 10))
-        rows = cur.fetchall()
-        cur.close()
-        conn.close()
-        if rows:
-            user_prompt_parts.append('【参考: 過去の類似問題（出題の参考にしてください）】')
-            for r in rows[:5]:
-                snippet = (r[0] or '')[:400]
-                user_prompt_parts.append(f'- [{r[1] or "不明"}] {snippet}')
-            user_prompt_parts.append('')
-    except Exception as e:
-        logger.warning('Practice prompt RAG failed (non-fatal): %s', e)
 
     topic_str = '、'.join(req.topics) if req.topics else '全分野'
     user_prompt_parts.append(
