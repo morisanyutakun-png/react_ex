@@ -17,7 +17,7 @@ import {
   Icons,
   MobileNavLinks,
 } from '@/components/ui';
-import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, MODEL_TIERS, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
+import { SUBJECTS, SUBJECT_TOPICS, DIFFICULTIES, QUESTION_FORMATS, ANSWER_STYLES, MODEL_TIERS, difficultyLabel, buildTemplatePrompt, buildTemplateId } from '@/lib/constants';
 import { LatexText } from '@/components/LatexRenderer';
 
 /* ── ウィザードステップ定義（9ステップ） ── */
@@ -632,6 +632,7 @@ export default function UserModePage() {
   const [latexPresets, setLatexPresets] = useState([]);
   const [latexPreset, setLatexPreset] = useState('exam');
   const [questionFormat, setQuestionFormat] = useState('standard');
+  const [answerStyle, setAnswerStyle] = useState('symbolic');  // 工学系は文字式回答がデフォルト
   const [includeDiagramPerQuestion, setIncludeDiagramPerQuestion] = useState(false);
   const [customRequest, setCustomRequest] = useState('');
   const [modelTier, setModelTier] = useState('auto');  // 'auto' | 'lite' | 'standard' | 'premium'
@@ -860,6 +861,7 @@ export default function UserModePage() {
         latex_preset: latexPreset,
         extra_packages: extraPackages,
         question_format: questionFormat,
+        answer_style: answerStyle,
         sub_topic: theme || undefined,
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         diagram_realism: diagramRealism,
@@ -921,6 +923,7 @@ export default function UserModePage() {
         subject: subject || '',
         field: field || '',
         question_format: questionFormat,
+        answer_style: answerStyle,
         sub_topic: theme || '',
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         diagram_realism: diagramRealism,
@@ -1020,6 +1023,7 @@ export default function UserModePage() {
         latex_preset: latexPreset,
         extra_packages: extraPackages,
         question_format: questionFormat,
+        answer_style: answerStyle,
         sub_topic: theme || undefined,
         include_diagram_per_question: extraPackages.includes('tikz') && includeDiagramPerQuestion,
         diagram_realism: diagramRealism,
@@ -1179,6 +1183,7 @@ export default function UserModePage() {
     setBaseFilterQuery('');
     setMatchedProblems([]);
     setQuestionFormat('standard');
+    setAnswerStyle('symbolic');
     setIncludeDiagramPerQuestion(false);
     setCustomRequest('');
     setBaseMode('skip');
@@ -1860,6 +1865,110 @@ export default function UserModePage() {
       {/* ═══════ Step 2: 問題数・ベース問題 ═══════ */}
       {step === 2 && (
         <div className="space-y-5 wizard-section-enter">
+          {/* テンプレート詳細設定（上書き） */}
+          <div className="card-glossy">
+            <div className="p-5 relative z-10">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="icon-glossy w-10 h-10 text-white" style={{ background: 'linear-gradient(145deg, #0ea5e9 0%, #2563eb 100%)' }}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-[15px] font-bold text-[#1d1d1f] tracking-tight">テンプレート詳細設定</h3>
+                  <p className="text-[11px] text-[#515154]">分野・テーマを今回の生成だけ上書きできます（任意）</p>
+                </div>
+                <span className="ml-auto px-2.5 py-1 bg-[#e0f2fe] text-[#0369a1] rounded-full text-[10px] font-bold border border-[#bae6fd]">上書き</span>
+              </div>
+
+              {/* 現在の教科表示 */}
+              {subject && (
+                <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-[#fff5f7] rounded-xl border border-black/5">
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${getSubjectColor(subject).bg} text-white`}>
+                    <SubjectIcon type={subject} className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-[10px] text-[#aeaeb2] uppercase tracking-wider font-bold">教科</div>
+                    <div className="text-[13px] font-bold text-[#1d1d1f]">{subject}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* 分野 上書き */}
+              <div className="mb-3">
+                <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-1.5">
+                  分野
+                  <span className="text-[10px] font-normal text-[#aeaeb2] ml-1 normal-case tracking-normal">（任意・テンプレ既定値から変更可能）</span>
+                </label>
+                {SUBJECT_TOPICS[subject]?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setField('')}
+                      className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-all duration-200 ${
+                        !field ? 'bg-[#0ea5e9] text-white border-transparent shadow-sm' : 'bg-white text-[#515154] border-black/10 hover:border-[#0ea5e9]'
+                      }`}
+                    >
+                      すべて
+                    </button>
+                    {SUBJECT_TOPICS[subject].slice(0, 12).map((f) => (
+                      <button key={f} type="button"
+                        onClick={() => setField(field === f ? '' : f)}
+                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-all duration-200 ${
+                          field === f ? 'bg-[#0ea5e9] text-white border-transparent shadow-sm' : 'bg-white text-[#515154] border-black/10 hover:border-[#0ea5e9]'
+                        }`}>
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={field}
+                  onChange={(e) => setField(e.target.value)}
+                  placeholder="候補から選択 or 自由入力（例: 直流回路）"
+                  className="w-full px-3 py-2 text-[12px] border border-black/10 bg-white rounded-xl
+                    focus:outline-none focus:border-[#0ea5e9] focus:ring-2 focus:ring-sky-100
+                    placeholder:text-[#aeaeb2] transition-all"
+                />
+              </div>
+
+              {/* テーマ / サブトピック */}
+              <div>
+                <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-1.5">
+                  テーマ・サブトピック
+                  <span className="text-[10px] font-normal text-[#aeaeb2] ml-1 normal-case tracking-normal">（任意・分野をさらに絞る）</span>
+                </label>
+                <input
+                  type="text"
+                  value={theme}
+                  onChange={(e) => setTheme(e.target.value)}
+                  placeholder="例: テブナンの定理、共振周波数、二分探索の計算量"
+                  className="w-full px-3 py-2 text-[12px] border border-black/10 bg-white rounded-xl
+                    focus:outline-none focus:border-[#0ea5e9] focus:ring-2 focus:ring-sky-100
+                    placeholder:text-[#aeaeb2] transition-all"
+                />
+                {theme && (
+                  <button
+                    onClick={() => setTheme('')}
+                    className="mt-1.5 text-[10px] text-[#aeaeb2] hover:text-[#1d1d1f] transition-colors"
+                  >
+                    クリア
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-3 flex items-start gap-2 px-3 py-2 bg-[#f0f9ff] rounded-xl border border-[#bae6fd]/40">
+                <svg className="w-3.5 h-3.5 text-[#0369a1] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                <p className="text-[10px] text-[#0369a1] leading-relaxed">
+                  ここで変更しても保存中のテンプレートは編集されません。今回の生成のみに適用されます。
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* 問題数カード */}
           <div className="card-glossy">
             <div className="p-5 relative z-10">
@@ -2761,6 +2870,33 @@ export default function UserModePage() {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* 解答スタイル切替（工学系は文字式デフォルト） */}
+              <div className="mt-4 pt-4 border-t border-black/8">
+                <div className="flex items-center gap-2 mb-2">
+                  <h4 className="text-[12px] font-bold text-[#1d1d1f]">解答スタイル</h4>
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#e0f2fe] text-[#0369a1] font-bold">工学系: 文字式推奨</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {ANSWER_STYLES.map((sty) => {
+                    const active = answerStyle === sty.value;
+                    return (
+                      <button
+                        key={sty.value}
+                        onClick={() => setAnswerStyle(sty.value)}
+                        className={`px-2 py-2 rounded-xl text-center transition-all duration-300 active:scale-[0.97] ${
+                          active ? 'bg-[#e0f2fe] border-2 border-[#0ea5e9]/40' : 'bg-white/60 border-2 border-transparent hover:border-[#bae6fd]'
+                        }`}
+                      >
+                        <div className="text-[12px] font-bold text-[#1d1d1f]">{sty.label}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-[#515154] mt-1.5">
+                  {ANSWER_STYLES.find(s => s.value === answerStyle)?.description}
+                </p>
               </div>
             </div>
           </div>

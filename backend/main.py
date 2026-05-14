@@ -1685,6 +1685,8 @@ class RenderTemplateRequest(BaseModel):
     extra_packages: Optional[List[str]] = []
     # Question format: 'standard' | 'fill_in_blank' | 'choice' | 'true_false'
     question_format: Optional[str] = 'standard'
+    # Answer style: 'symbolic' (default, 文字式) | 'numeric' (数値) | 'mixed' (混合)
+    answer_style: Optional[str] = 'symbolic'
     # Sub-topic / theme (maps to DB subtopic column)
     sub_topic: Optional[str] = None
     # Physics: include a TikZ diagram for each major question
@@ -2156,6 +2158,41 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
     # If this render is for user-mode (frontend end-users), ensure we add a
     # strict LaTeX output instruction so downstream LLMs emit a complete,
     # compilable LaTeX document. Do NOT add this for development-mode renders.
+    # --- 解答スタイル指示の注入（文字式 / 数値 / 混合） ---
+    try:
+        _answer_style = (getattr(req, 'answer_style', None) or 'symbolic').lower()
+        if _answer_style not in ('symbolic', 'numeric', 'mixed'):
+            _answer_style = 'symbolic'
+        if _answer_style == 'symbolic':
+            _style_block = (
+                "\n\n【★ 解答スタイル: 文字式（デフォルト） ★】\n"
+                "・物理量を表す変数（$E, R_1, R_2, V, I, \\omega, m, g$ など）は\n"
+                "  具体的な数値を与えず、★記号のまま★ で問題に登場させる。\n"
+                "・解答は ★文字式（記号の代数演算結果）★ で表現させる。\n"
+                "  例: $I = \\dfrac{E}{R_1 + R_2}$, $V_n = \\dfrac{R_n}{R_1 + R_2} E$\n"
+                "・最終形は約分・通分済みの既約な形にし、解説で物理的意味に触れる。\n"
+                "・例外: 物理定数や有効数字指定がある場合のみ数値計算を含めてよい。\n"
+            )
+        elif _answer_style == 'numeric':
+            _style_block = (
+                "\n\n【★ 解答スタイル: 数値 ★】\n"
+                "・物理量に具体的な数値を与え、数値計算の結果を答えさせる。\n"
+                "・有効数字 2〜3 桁、単位付きで答える。\n"
+                "・計算過程の各段階の数値を明示する。\n"
+            )
+        else:  # mixed
+            _style_block = (
+                "\n\n【★ 解答スタイル: 混合 ★】\n"
+                "・前半の小問では文字式で一般解を導出。\n"
+                "・後半の小問で具体的な数値を与え、数値結果を確認させる。\n"
+                "・文字式 → 数値代入の流れを明示する。\n"
+            )
+        if isinstance(prompt, str):
+            prompt = prompt + _style_block
+        ctx['answer_style'] = _answer_style
+    except Exception:
+        pass
+
     try:
         if getattr(req, 'user_mode', False):
             # Avoid duplicating if template already contains an explicit \documentclass
@@ -3637,14 +3674,27 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '配線は -- で接続し、ノードラベルは node[above]{ラベル} で付ける。\n\n'
             '【★★★ 最重要原則: 単一閉ループは「必ず1本の \\draw で反時計回り一筆書き」 ★★★】\n'
             '回路が単一閉ループ（外周を一周すれば全素子を通る構造）であれば、\n'
-            '直列・コンデンサ＋スイッチ・RLC・電源＋抵抗など形によらず、\n'
-            '★例外なく★ 1本の \\draw で矩形を反時計回りに一周して描く。\n'
-            '★絶対にやってはいけない描き方★:\n'
-            '  ✗ 上辺・下辺の長い母線を先に引いてから、その内側に縦素子を後から描く\n'
-            '    → 母線の線が素子記号の白背景を通り抜けて見え、貫通バグになる\n'
+            '直列・コンデンサ＋スイッチ・RLC・電源＋抵抗 N 個・スイッチ＋素子 など形によらず、\n'
+            '★例外なく★ 1本の \\draw で矩形を反時計回りに一周して描く。\n\n'
+            '★絶対にやってはいけない描き方（実際に発生したバグ例）★:\n'
+            '  ✗ 上辺に \\draw (0,H) -- (W,H); の長い母線を先に引いてから、\n'
+            '    その途中に \\draw (a,H) to[R] (b,H); を後から差し込む\n'
+            '    → 後で描いた抵抗の脚と先に描いた母線が二重線/斜め線になり貫通バグ\n'
+            '  ✗ 電池の左右の配線を別 \\draw で書く（例: \\draw (0,3)--(0,2.8); と \\draw (0,1)--(0,0);）\n'
+            '    → 電池記号の上下に余分な短いセグメントが現れ、斜めに繋がって見える\n'
             '  ✗ \\draw を辺ごと（上辺・下辺・左辺・右辺）に4本に分けて描く\n'
+            '  ✗ V1, V2 等の電圧ラベルを表示するために V1=(x1,y1)→(x2,y2) と独立した直線を引く\n'
+            '    → 抵抗の上を斜めに走る線が現れ、回路の意味が崩壊する\n'
             '  ✗ 素子の前後に余分な -- 配線セグメントを足す\n'
-            '★必ずやること★: 単一閉ループは下記の D1〜D6 を満たす1本の \\draw に書くこと。\n\n'
+            '  ✗ to[battery1] や to[V] のあとに、わざわざ to[short] で配線を継ぐ（不要）\n\n'
+            '★必ずやること★:\n'
+            '  ① 単一閉ループは下記 D1〜D6 を満たす ★1本の \\draw★ に書く（\\draw 文を分けない）\n'
+            '  ② 直列に N 個の抵抗を並べる場合も、★1本の \\draw に N 個の to[R] を連続★ させる。\n'
+            '     例: \\draw (0,H) to[battery1,l=$E$] (0,0) to[R,l=$R_1$] (W/2,0) to[R,l=$R_2$] (W,0) -- (W,H) -- (0,H);\n'
+            '  ③ 電圧 V_1, V_2 などのラベルは ★既存の to[R,l=$R_n$,v=$V_n$]★ または\n'
+            '     ★\\draw[brace] や node[above] で添える★ だけ。★絶対に独立した \\draw 直線を引かない★。\n'
+            '  ④ 電流 I は \\draw 内で i^>=$I$ や i_=$I$ オプションを使うか、\n'
+            '     \\node[draw=none] と \\draw[->] で別途矢印を1本だけ描く。\n\n'
             '【描画方向ルール — 反時計回り・左上始点・一筆書き】\n'
             'D1. ★始点は必ず左上★ (左上を (0,H) とする矩形ループ。H は 2.5〜3.5)。\n'
             'D2. ★反時計回り★ (counter-clockwise) に進む:\n'
@@ -3673,6 +3723,17 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '        to[C,l_=$C_2$] (4,3)                % 右辺: C2 で上昇\n'
             '        to[opening switch,l_=$S$] (0,3);    % 上辺: スイッチで左進、閉ループ\n'
             '\\end{circuitikz}\n\n'
+            '【★ 直列 N 抵抗＋電池の正しい例（V_1,V_2,...,I を素子オプションで表示） ★】\n'
+            '\\begin{circuitikz}[scale=0.95,>=stealth]\n'
+            '  \\draw (0,3) to[battery1,l_=$E$] (0,0)\n'
+            '        -- (1,0)\n'
+            '        to[R,l=$R_1$,v=$V_1$,i>^=$I$] (3.5,0)  % v= で電圧矢印、i>^= で電流矢印\n'
+            '        to[R,l=$R_2$,v=$V_2$] (6,0)\n'
+            '        -- (6,3)\n'
+            '        -- (0,3);\n'
+            '\\end{circuitikz}\n'
+            '★ ポイント ★: V_1, V_2 を表示するために独立した \\draw[->] 線を引かない。\n'
+            '   to[R,...,v=$V_n$] オプションが自動で電圧矢印を描く。電流 I は i>^=$I$。\n\n'
             '【素子描画ルール — 余計な導線を生成しない】\n'
             'E1. ★1素子=1区間★: 素子は `(始点) to[素子] (終点)` の形で書く。\n'
             '    始点・終点は矩形ループの角の座標とし、素子の前後に余分な -- を入れない。\n'
@@ -5814,6 +5875,20 @@ P7. 定滑車の支持構造を描く: 天井・壁・台からの支柱 \draw[t
     -- (0,2.8);                                 % 上辺: 始点に戻る
 \end{circuitikz}
 
+【電磁気: 直列2抵抗＋電池（V_1,V_2,I 表示）— 1本の \draw で完結する正しい書き方】
+\begin{circuitikz}[scale=0.95,>=stealth]
+  % ★絶対ルール: \draw は1本のみ。V_1,V_2 ラベルは to[R,...,v=...] に組込み、独立直線を引かない
+  \draw (0,3) to[battery1,l_=$E$] (0,0)              % 左辺: 電池で下降
+    -- (1,0)                                          % 下辺左の配線
+    to[R,l=$R_1$,v=$V_1$,i>^=$I$] (3.5,0)             % 下辺: R1（V_1, I 同時表示）
+    to[R,l=$R_2$,v=$V_2$] (6,0)                       % 下辺: R2（V_2 同時表示）
+    -- (6,3)                                          % 右辺上昇
+    -- (0,3);                                          % 上辺で始点に戻る
+\end{circuitikz}
+% NOTE: v=$V_1$ オプションが to[R,...] 内で電圧矢印とラベルを自動描画する。
+%       電流矢印は i>^=$I$ または i^>=$I$ オプションで素子上に重ねる。
+%       絶対に「V_1 を表示するために独立した \draw[->] (x,y)--(x,y) node{$V_1$}」を書かない。
+
 【電磁気: コンデンサ2つ＋スイッチ（circuitikz）— 単一閉ループ・一筆書き】
 \begin{circuitikz}[scale=0.9,>=stealth]
   % ノード: 左上(0,3) → 左下(0,0) → 右下(4,0) → 右上(4,3) → 左上(0,3)
@@ -6095,6 +6170,26 @@ F4. 関数グラフは domain=a:b, samples=80 以上で描画
     return f"""あなたは工学系教育（電気電子・情報・機械系を横断する物理・数学・回路・制御・通信・信号処理・アルゴリズム・応用情報など）の問題作成エキスパートです。
 大学工学部の演習問題・院試・電験・応用情報技術者試験・基本情報技術者試験・技術士など、工学系の実問題と同等の品質で
 練習問題を作成してください。図表・回路図・ブロック線図・フローチャート・数式が必要な場合は積極的に活用してください。
+
+【★★★ 解答スタイル — 文字式回答をデフォルトとする ★★★】
+A1. ★原則★: 物理量を表す変数（$E$, $R_1$, $R_2$, $V$, $I$, $L$, $C$, $\\omega$, $m$, $g$ など）は
+    ★具体的な数値を与えず、記号のまま★ で問題を提示し、解答は ★文字式（記号の組合せ）で表現★ させる。
+    例: 「$E = 12\\,\\mathrm{{V}}$, $R_1 = 2\\,\\Omega$」のように数値を与えるのではなく、
+        「起電力 $E$ の電池に抵抗 $R_1, R_2$ を直列接続する」と記号で与え、解答は
+        $I = \\dfrac{{E}}{{R_1 + R_2}}$, $V_1 = \\dfrac{{R_1}}{{R_1 + R_2}}E$ のように文字式で表す。
+A2. ★例外（数値で答えさせるべきケース）★: 以下のいずれかに該当する場合のみ数値を与える。
+    - 応用情報・基本情報の選択式問題で数値計算が問われる場合
+    - 物理定数（光速 $c$, 素電荷 $e$, プランク定数 $h$ 等）が必要な計算
+    - 「具体的な数値例で確認」など教育目的が明示された問題
+    - 問題本文に「数値で答えよ」「有効数字○桁で求めよ」と指示する場合
+A3. 文字式回答時の最終形は ★既約な形★ にする:
+    - 分数は通分・約分済み
+    - 共通因子はくくり出す
+    - 単位を付けない（文字式は無次元の代数式として扱う）
+A4. 解答の最終行には ★簡潔な答えの要約★ を必ず置く（例: 「∴ $I = E/(R_1+R_2)$」）。
+A5. ★解説では文字式の物理的意味を必ず言及★ する
+    （例: 「合成抵抗 $R_1+R_2$ が分母にあるのは、直列ではキルヒホッフの電圧則により
+       電源電圧が両抵抗で分け合われるため」など）。
 
 【生成条件】
 - 科目: {subject}

@@ -248,13 +248,36 @@ export const QUESTION_FORMATS = [
 ];
 
 /**
+ * 解答スタイルの定義（工学系では文字式回答がデフォルト）
+ */
+export const ANSWER_STYLES = [
+  {
+    value: 'symbolic',
+    label: '文字式',
+    description: '物理量を記号($E, R, V, I$ など)のまま扱い、文字式で答えさせる（デフォルト）',
+    isDefault: true,
+  },
+  {
+    value: 'numeric',
+    label: '数値',
+    description: '具体的な数値を与え、数値計算の結果を答えさせる',
+  },
+  {
+    value: 'mixed',
+    label: '混合',
+    description: '一部は文字式、一部は数値代入で確認させる',
+  },
+];
+
+/**
  * テンプレート追加用のプロンプト本文を自動生成
  */
 export function buildTemplatePrompt(subject, field, options = {}) {
-  const { questionFormat, theme } = options;
+  const { questionFormat, answerStyle = 'symbolic', theme } = options;
   const label = field ? `${subject}（${field}）` : subject;
   const formatDef = QUESTION_FORMATS.find(f => f.value === questionFormat);
   const formatLabel = formatDef ? formatDef.label : null;
+  const answerDef = ANSWER_STYLES.find(a => a.value === answerStyle) || ANSWER_STYLES[0];
 
   const lines = [
     '科目: {subject}',
@@ -263,6 +286,7 @@ export function buildTemplatePrompt(subject, field, options = {}) {
     '難易度: {difficulty}',
     '出題数: {num_questions}',
     formatLabel ? `問題形式: ${formatLabel}` : null,
+    `解答スタイル: ${answerDef.label}`,
     '',
     '指示:',
     `以下の条件で${label}の問題を出題してください。`,
@@ -273,6 +297,37 @@ export function buildTemplatePrompt(subject, field, options = {}) {
     '- 問題数は {num_questions} 問とする',
     '- 難易度は「{difficulty}」レベルに合わせること',
   ];
+
+  // 解答スタイル別の追加指示
+  if (answerStyle === 'symbolic') {
+    lines.push(
+      '',
+      '【解答スタイル: 文字式（デフォルト・工学系の基本）】',
+      '- 物理量を表す変数は ★具体的な数値を与えず記号のまま★ で問題に登場させる',
+      '  例: $E$ [V], $R_1, R_2$ [Ω], $\\omega$ [rad/s], $m$ [kg], $g$ [m/s²]',
+      '- 解答は ★文字式（記号の代数演算結果）★ で表現させる',
+      '  例: $I = \\dfrac{E}{R_1 + R_2}$,  $V_1 = \\dfrac{R_1}{R_1 + R_2} E$',
+      '- 最終形は約分・通分済みの既約な形にする',
+      '- 解説では文字式の物理的意味（なぜその形になるか）に必ず触れる',
+    );
+  } else if (answerStyle === 'numeric') {
+    lines.push(
+      '',
+      '【解答スタイル: 数値】',
+      '- 物理量に具体的な数値を与え、数値計算の結果を答えさせる',
+      '- 計算過程を省略せず、各段階の数値を明示する',
+      '- 有効数字 2〜3 桁で答え、単位を必ず付ける',
+      '- 物理定数が必要な場合は問題文に明記する',
+    );
+  } else if (answerStyle === 'mixed') {
+    lines.push(
+      '',
+      '【解答スタイル: 混合】',
+      '- 前半の小問では文字式で一般解を導出',
+      '- 後半の小問で具体的な数値を与え、数値結果を確認させる',
+      '- 文字式 → 数値代入の流れを明示する',
+    );
+  }
 
   // 問題形式別の追加指示
   if (questionFormat === 'fill_in_blank') {
