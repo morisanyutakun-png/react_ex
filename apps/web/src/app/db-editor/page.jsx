@@ -1067,7 +1067,11 @@ function InlineAddForm({ schema, pk, table, data, onChange, onSubmit, onCancel, 
     }
   };
 
-  const subjectOptions = ['物理', '数学', '電気回路', '応用情報'];
+  const subjectOptions = [
+    '物理', '数学', '電気回路', '電子回路', '電磁気学',
+    '制御工学', '信号処理', '通信工学', 'ディジタル回路',
+    'アルゴリズム', 'プログラミング', '応用情報',
+  ];
   const topicOptions = data.subject ? (SUBJECT_TOPICS[data.subject] || []) : [];
 
   const hasPriority = data.subject && data.stem;

@@ -314,9 +314,49 @@ export default function UserModePage() {
           <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
         </svg>
       ),
-      '電気回路': ( // 回路図（抵抗・電池）
+      '電気回路': ( // 抵抗パターン
         <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 12h3l1-3 2 6 2-6 2 6 1-3h7" /><circle cx="20" cy="6" r="1.2" /><circle cx="20" cy="18" r="1.2" />
+        </svg>
+      ),
+      '電子回路': ( // トランジスタ
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="6" /><path d="M9 12h3" /><path d="M12 7v3" /><path d="M12 14v3" /><path d="M14.5 10l4-3" /><path d="M14.5 14l4 3" />
+        </svg>
+      ),
+      '電磁気学': ( // 磁束・コイル
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 12c0-3 2-5 4-5s4 2 4 5-2 5-4 5-4-2-4-5z" /><path d="M12 7c0-3 2-5 4-5" /><path d="M12 17c0 3 2 5 4 5" /><path d="M18 4l2 2" /><path d="M18 20l2-2" />
+        </svg>
+      ),
+      '制御工学': ( // ブロック線図
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="9" width="6" height="6" rx="1" /><rect x="15" y="9" width="6" height="6" rx="1" /><path d="M9 12h6" /><path d="M21 12h2" /><path d="M1 12h2" />
+        </svg>
+      ),
+      '信号処理': ( // 波形
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12c2 0 2-6 4-6s2 12 4 12 2-12 4-12 2 6 4 6 2-3 2-3" />
+        </svg>
+      ),
+      '通信工学': ( // 電波塔
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12a7 7 0 0114 0" /><path d="M8 12a4 4 0 018 0" /><circle cx="12" cy="12" r="1" fill="currentColor" /><path d="M12 13v8" /><path d="M9 21h6" />
+        </svg>
+      ),
+      'ディジタル回路': ( // AND ゲート
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 6v12h6a6 6 0 000-12z" /><path d="M2 9h4" /><path d="M2 15h4" /><path d="M18 12h4" />
+        </svg>
+      ),
+      'アルゴリズム': ( // フローチャート
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="3" width="6" height="4" rx="1" /><path d="M12 7v4" /><rect x="4" y="11" width="16" height="4" rx="1" /><path d="M12 15v3" /><circle cx="12" cy="20" r="2" />
+        </svg>
+      ),
+      'プログラミング': ( // ブラケット
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 6L3 12l5 6" /><path d="M16 6l5 6-5 6" /><path d="M14 4l-4 16" />
         </svg>
       ),
       '国語': ( // 筆（ブラシ）
@@ -354,6 +394,14 @@ export default function UserModePage() {
     '情報': { bg: 'from-[#ff9966] to-[#ff8050]', light: '#ff9966', icon: '情報', bgLight: 'bg-[#ff9966]', text: 'text-[#ff8050]', border: 'border-[#ffd1b5]' },
     '応用情報': { bg: 'from-[#ff9966] to-[#ff8050]', light: '#ff9966', icon: '応用情報', bgLight: 'bg-[#ff9966]', text: 'text-[#ff8050]', border: 'border-[#ffd1b5]' },
     '電気回路': { bg: 'from-[#0ea5e9] to-[#2563eb]', light: '#0ea5e9', icon: '電気回路', bgLight: 'bg-[#e0f2fe]', text: 'text-[#2563eb]', border: 'border-[#bae6fd]' },
+    '電子回路': { bg: 'from-[#06b6d4] to-[#0891b2]', light: '#06b6d4', icon: '電子回路', bgLight: 'bg-[#cffafe]', text: 'text-[#0891b2]', border: 'border-[#a5f3fc]' },
+    '電磁気学': { bg: 'from-[#6366f1] to-[#4338ca]', light: '#6366f1', icon: '電磁気学', bgLight: 'bg-[#e0e7ff]', text: 'text-[#4338ca]', border: 'border-[#c7d2fe]' },
+    '制御工学': { bg: 'from-[#8b5cf6] to-[#6d28d9]', light: '#8b5cf6', icon: '制御工学', bgLight: 'bg-[#ede9fe]', text: 'text-[#6d28d9]', border: 'border-[#ddd6fe]' },
+    '信号処理': { bg: 'from-[#a855f7] to-[#7e22ce]', light: '#a855f7', icon: '信号処理', bgLight: 'bg-[#f3e8ff]', text: 'text-[#7e22ce]', border: 'border-[#e9d5ff]' },
+    '通信工学': { bg: 'from-[#ec4899] to-[#be185d]', light: '#ec4899', icon: '通信工学', bgLight: 'bg-[#fce7f3]', text: 'text-[#be185d]', border: 'border-[#fbcfe8]' },
+    'ディジタル回路': { bg: 'from-[#14b8a6] to-[#0f766e]', light: '#14b8a6', icon: 'ディジタル回路', bgLight: 'bg-[#ccfbf1]', text: 'text-[#0f766e]', border: 'border-[#99f6e4]' },
+    'アルゴリズム': { bg: 'from-[#10b981] to-[#047857]', light: '#10b981', icon: 'アルゴリズム', bgLight: 'bg-[#d1fae5]', text: 'text-[#047857]', border: 'border-[#a7f3d0]' },
+    'プログラミング': { bg: 'from-[#22c55e] to-[#15803d]', light: '#22c55e', icon: 'プログラミング', bgLight: 'bg-[#dcfce7]', text: 'text-[#15803d]', border: 'border-[#bbf7d0]' },
     '国語': { bg: 'from-[#ff375f] to-[#ff2d55]', light: '#ff375f', icon: '国語', bgLight: 'bg-[#ff375f]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
     '社会': { bg: 'from-[#ff9500] to-[#c25e00]', light: '#ff9500', icon: '社会', bgLight: 'bg-[#ff9500]', text: 'text-[#c25e00]', border: 'border-[#ffd1b5]' },
     '地学': { bg: 'from-[#ff9966] to-[#0d9488]', light: '#ff9966', icon: '地学', bgLight: 'bg-[#ff9966]', text: 'text-[#ff9966]', border: 'border-[#ff9966]' },

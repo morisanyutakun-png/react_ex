@@ -337,8 +337,8 @@ export default function HomePage() {
               },
               {
                 kicker: 'Coverage',
-                title: '工学4科目',
-                body: '物理・数学・電気回路・応用情報。基礎から技術士・院試レベルまで6段階。',
+                title: '工学系を横断',
+                body: '電気電子・情報・機械系の主要分野を網羅。基礎から技術士・院試レベルまで6段階。',
                 gradient: 'linear-gradient(135deg, #ff9966 0%, #ff5c7c 100%)',
                 accent: '#ffffff',
                 icon: (
@@ -428,17 +428,17 @@ export default function HomePage() {
               <span className="chapter-name">Coverage</span>
             </div>
             <h2 className="editorial-heading">
-              工学系の、すべての領域。
+              工学系を、横断的に。
             </h2>
-            <p className="editorial-sub">基礎から技術士・院試レベルまで、6段階の難易度で。</p>
+            <p className="editorial-sub">電気電子・情報・機械系の主要分野を、基礎から院試レベルまで6段階で。</p>
           </div>
 
           <div className="coverage-grid editorial-shell-wide">
             {[
-              { jp: '物理', en: 'Physics', desc: '力学・電磁気・熱力学・波動・解析力学・流体', tone: '#ff375f' },
-              { jp: '数学', en: 'Mathematics', desc: '微積・線形代数・微分方程式・フーリエ・ラプラス', tone: '#ff5c7c' },
-              { jp: '電気回路', en: 'Circuits', desc: '直流・交流・過渡応答・三相・オペアンプ・論理回路', tone: '#0ea5e9' },
-              { jp: '応用情報', en: 'Applied IT', desc: 'アルゴ・DB・ネットワーク・セキュリティ・OS', tone: '#ff9966' },
+              { jp: '物理 / 数学', en: 'Physics & Math', desc: '力学・電磁気・微積・線形代数・微分方程式・フーリエ・ラプラス', tone: '#ff375f' },
+              { jp: '電気・電子', en: 'EE / Electronics', desc: '電気回路・電子回路・電磁気学・ディジタル回路', tone: '#0ea5e9' },
+              { jp: '制御・通信', en: 'Control & Comm.', desc: '制御工学・信号処理・通信工学・FFT・変調', tone: '#22d3ee' },
+              { jp: '情報', en: 'Informatics', desc: 'アルゴリズム・プログラミング・応用情報・DB・ネットワーク', tone: '#ff9966' },
             ].map(({ jp, en, desc, tone }, i) => (
               <div key={jp} className="coverage-card scroll-reveal" style={{ transitionDelay: `${i * 80}ms` }}>
                 <div className="coverage-tone-bar" style={{ background: tone }} />

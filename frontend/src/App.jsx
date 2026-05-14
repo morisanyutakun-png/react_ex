@@ -144,7 +144,7 @@ function getTodayMotivation() {
    Onboarding
    ──────────────────────────────────────────── */
 const ONBOARDING_SLIDES = [
-  { emoji: '🔥', title: '工学を究めるのは、\n圧倒的な演習量。', desc: 'AIが物理・数学・電気回路・応用情報の類題を瞬時に生成。工学系の演習を無限に。' },
+  { emoji: '🔥', title: '工学を究めるのは、\n圧倒的な演習量。', desc: 'AIが物理・数学・電気/電子回路・制御・信号処理・通信・ディジタル回路・アルゴリズム・応用情報など工学系の類題を瞬時に生成。' },
   { emoji: '📊', title: '努力を「見える化」する', desc: '学習量・連続日数・到達レベルをすべて記録。成長を数字で実感し、スクショでシェアしよう。' },
   { emoji: '📝', title: 'かんたん4ステップ', desc: '1. パターンを選ぶ → 2. 問題数を設定 → 3. AIに依頼 → 4. PDF完成！\n最短30秒で類題が手に入る。' },
   { emoji: '🚀', title: '今日から差をつけろ。', desc: '合格する人は、今日始める人。\nまずは1問、類題を作ってみよう。' },
@@ -719,7 +719,7 @@ export default function App() {
             {step === 1 && (
               <div className="card anim-fade-up mobile-card">
                 <div className="card-header mobile-card-header"><span className="card-emoji">⚛️</span><div className="card-title">出題パターンを選ぶ</div><div className="card-desc mobile-card-desc">得意分野を伸ばす？ 苦手を潰す？ 戦略的に選べ。</div></div>
-                <div className="physics-hero-banner"><div className="physics-hero-content"><div className="physics-hero-title">⚛️ 工学系の類題生成</div><div className="physics-hero-subtitle">物理・数学・電気回路・応用情報</div></div><div className="physics-hero-pills"><span>力学</span><span>電磁気</span><span>交流回路</span><span>アルゴリズム</span></div></div>
+                <div className="physics-hero-banner"><div className="physics-hero-content"><div className="physics-hero-title">⚛️ 工学系の類題生成</div><div className="physics-hero-subtitle">電気電子・情報・機械系を横断</div></div><div className="physics-hero-pills"><span>力学</span><span>電磁気</span><span>交流回路</span><span>制御</span><span>信号処理</span><span>アルゴリズム</span></div></div>
                 <div className="tip mobile-tip-compact"><span className="tip-icon">💡</span><div>苦手分野から攻めるのが合格への近道。5問以上で定着率UP</div></div>
                 <div className="pattern-grid">
                   {[...templates].sort((a,b) => {const aP=(a.metadata?.subject||'').includes('物理')?-1:0;const bP=(b.metadata?.subject||'').includes('物理')?-1:0;return aP-bP}).map(t => {

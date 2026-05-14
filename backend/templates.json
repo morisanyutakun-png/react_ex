@@ -108,5 +108,137 @@
       "is_stem": true,
       "auto_generated": false
     }
+  },
+  "電子回路_トランジスタ増幅": {
+    "name": "電子回路（トランジスタ増幅） テンプレート",
+    "description": "バイポーラ/MOSFET 増幅回路（CE/CS・バイアス・小信号解析）の問題を生成",
+    "prompt": "科目: {subject}\n分野: トランジスタ増幅回路\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で電子回路（トランジスタ増幅）の問題を出題してください。\nバイポーラ/MOSFET のバイアス計算・小信号等価回路・電圧/電流利得・入出力インピーダンス・周波数特性のいずれかを扱う。\n\n- 回路図は CircuiTikZ。素子の貫通禁止、反時計回り一筆書き\n- 小信号等価回路図と元の回路図を並べて示す場合は2つの \\begin{circuitikz} で\n- h パラメータまたは hybrid-π モデルを明示\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "電子回路",
+      "field": "トランジスタ増幅",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "電子回路_オペアンプ": {
+    "name": "電子回路（オペアンプ） テンプレート",
+    "description": "オペアンプ応用回路（反転・非反転・差動・積分・微分）の問題を生成",
+    "prompt": "科目: {subject}\n分野: オペアンプ\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で電子回路（オペアンプ）の問題を出題してください。\n反転増幅・非反転増幅・差動増幅・積分回路・微分回路・加算回路・コンパレータのいずれかを扱う。\n\n- 回路図は CircuiTikZ で to[op amp] を使用\n- 仮想短絡（バーチャルショート）・仮想接地の概念を明示\n- 入出力電圧の関係式を導出する\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "電子回路",
+      "field": "オペアンプ",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "電磁気学_マクスウェル": {
+    "name": "電磁気学（マクスウェル方程式） テンプレート",
+    "description": "電磁気学のマクスウェル方程式・電磁波・ガウス・アンペールの法則の問題を生成",
+    "prompt": "科目: {subject}\n分野: 電磁気学\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で電磁気学の問題を出題してください。\nガウスの法則・アンペール/マクスウェル-アンペールの法則・ファラデーの法則・マクスウェル方程式・電磁波の伝搬のいずれかを扱う。\n\n- ベクトル微分演算子（\\nabla, \\nabla\\cdot, \\nabla\\times）を活用\n- 円柱対称・球対称の積分計算は座標系を明示\n- 必要なら TikZ で電気力線・磁束を図示\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "電磁気学",
+      "field": "マクスウェル方程式",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "制御工学_伝達関数": {
+    "name": "制御工学（伝達関数・安定性） テンプレート",
+    "description": "ラプラス変換・伝達関数・極/零点・ボード線図・安定性判別の問題を生成",
+    "prompt": "科目: {subject}\n分野: 伝達関数と安定性\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で制御工学（伝達関数）の問題を出題してください。\nラプラス変換・伝達関数導出・極/零点・ステップ応答・ボード線図・ナイキスト線図・ラウス/フルビッツ安定判別のいずれかを扱う。\n\n- ブロック線図は TikZ で、四角ブロック \\node[draw]{G(s)} と矢印で\n- PGFPlots でボード線図（ゲイン・位相）を必要に応じて描く\n- 伝達関数 G(s)=N(s)/D(s) を明示し、極を求める\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "制御工学",
+      "field": "伝達関数",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "制御工学_PID": {
+    "name": "制御工学（PID制御・状態空間） テンプレート",
+    "description": "PID制御・チューニング・状態空間表現・可制御性/可観測性の問題を生成",
+    "prompt": "科目: {subject}\n分野: PID制御・状態空間\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で制御工学（PID・状態空間）の問題を出題してください。\nPID 制御則（比例・積分・微分ゲイン）・Ziegler-Nichols 法・状態方程式・可制御性/可観測性行列・状態フィードバックのいずれかを扱う。\n\n- 状態空間表現 \\dot{x}=Ax+Bu, y=Cx+Du を明示\n- 行列計算は \\begin{pmatrix} を使用\n- ブロック線図は TikZ で\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "制御工学",
+      "field": "PID制御",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "信号処理_フーリエ": {
+    "name": "信号処理（フーリエ変換・DFT） テンプレート",
+    "description": "フーリエ級数・フーリエ変換・DFT・FFT・スペクトル解析の問題を生成",
+    "prompt": "科目: {subject}\n分野: フーリエ解析\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で信号処理（フーリエ）の問題を出題してください。\nフーリエ級数展開・フーリエ変換・DFT・FFT・サンプリング定理・畳み込み定理のいずれかを扱う。\n\n- 周波数スペクトルは PGFPlots で離散的な棒グラフ\n- 周期信号と非周期信号の区別を明示\n- ω=2πf の関係を意識\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "信号処理",
+      "field": "フーリエ解析",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "信号処理_ディジタルフィルタ": {
+    "name": "信号処理（ディジタルフィルタ・z変換） テンプレート",
+    "description": "z変換・FIR/IIR フィルタ・伝達関数・極/零点・周波数応答の問題を生成",
+    "prompt": "科目: {subject}\n分野: ディジタルフィルタ\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で信号処理（ディジタルフィルタ）の問題を出題してください。\nz変換・FIR フィルタ・IIR フィルタ・差分方程式・伝達関数 H(z)・極/零点配置・周波数応答 H(e^{jω}) のいずれかを扱う。\n\n- フィルタ構造のブロック図は TikZ で（z^{-1} ブロックと加算ノード）\n- 単位円と極/零点プロットは TikZ で\n- 安定性条件（極が単位円内）を明示\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "信号処理",
+      "field": "ディジタルフィルタ",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "通信工学_変調": {
+    "name": "通信工学（変調方式） テンプレート",
+    "description": "AM・FM・PSK・QAM など変調方式とスペクトルの問題を生成",
+    "prompt": "科目: {subject}\n分野: 変調方式\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で通信工学（変調）の問題を出題してください。\nAM/FM/PM・PSK/QAM/FSK・帯域幅・SNR・信号点配置・誤り率（BER）のいずれかを扱う。\n\n- 変調信号の時間波形は PGFPlots で\n- 信号点配置図（コンスタレーション）は TikZ で\n- 変調指数 m, 周波数偏移 Δf を明示\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "通信工学",
+      "field": "変調方式",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "通信工学_情報理論": {
+    "name": "通信工学（情報理論） テンプレート",
+    "description": "エントロピー・通信路容量・符号化（ハフマン・ハミング）の問題を生成",
+    "prompt": "科目: {subject}\n分野: 情報理論\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件で通信工学（情報理論）の問題を出題してください。\nエントロピー H(X)・条件付きエントロピー・相互情報量・通信路容量 C・ハフマン符号・ハミング距離・誤り訂正符号のいずれかを扱う。\n\n- log は底2（bit 単位）を基本とし、必要なら自然対数も併用\n- 符号木は TikZ の forest パッケージで\n- 通信路図はノードと矢印で（遷移確率を矢印上に）\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "通信工学",
+      "field": "情報理論",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "ディジタル回路_組合せ論理": {
+    "name": "ディジタル回路（組合せ論理） テンプレート",
+    "description": "論理代数・カルノー図・組合せ論理回路（加算器・MUX）の問題を生成",
+    "prompt": "科目: {subject}\n分野: 組合せ論理回路\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件でディジタル回路（組合せ論理）の問題を出題してください。\nブール代数の簡単化・カルノー図・加算器（半加算・全加算）・デコーダ・マルチプレクサ・パリティ回路のいずれかを扱う。\n\n- 論理ゲートは CircuiTikZ の to[american and port] / to[american or port] / to[american not port]\n- 真理値表は \\begin{tabular} で整形\n- カルノー図は \\begin{tabular} で 2x4 / 4x4 形式\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "ディジタル回路",
+      "field": "組合せ論理",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "ディジタル回路_順序論理": {
+    "name": "ディジタル回路（順序論理・FSM） テンプレート",
+    "description": "フリップフロップ・カウンタ・状態遷移図・FSM 設計の問題を生成",
+    "prompt": "科目: {subject}\n分野: 順序論理回路\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件でディジタル回路（順序論理）の問題を出題してください。\nD/JK/T フリップフロップ・同期/非同期カウンタ・シフトレジスタ・有限状態機械（Mealy/Moore）のいずれかを扱う。\n\n- 状態遷移図は TikZ の automata ライブラリで（円ノード + 矢印 + ラベル）\n- タイミングチャートは TikZ で（クロック・入力・出力の波形）\n- 状態テーブルは \\begin{tabular} で\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "ディジタル回路",
+      "field": "順序論理",
+      "is_stem": true,
+      "auto_generated": false
+    }
+  },
+  "プログラミング_基礎": {
+    "name": "プログラミング（基礎） テンプレート",
+    "description": "変数・制御構造・関数・再帰など、プログラミング基礎の問題を生成",
+    "prompt": "科目: {subject}\n分野: プログラミング基礎\n難易度: {difficulty}\n出題数: {num_questions}\n\n指示:\n以下の条件でプログラミング（基礎）の問題を出題してください。\n変数と型・制御構造（if/for/while）・関数定義・再帰・配列/リスト操作のいずれかを扱う。\n\n- コードは verbatim または listings 環境で記述\n- 言語は Python または C を基本とする\n- 実行結果やトレースを示す問題が望ましい\n- 問題と解答・解説を必ず含めること\n- 問題数は {num_questions} 問\n- 難易度は「{difficulty}」レベル",
+    "metadata": {
+      "subject": "プログラミング",
+      "field": "基礎",
+      "is_stem": true,
+      "auto_generated": false
+    }
   }
 }

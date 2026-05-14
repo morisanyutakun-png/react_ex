@@ -430,6 +430,75 @@ def create_row(request: Request, table: str, payload: RowCreateRequest):
             pass
 
 
+@router.post("/clear")
+def clear_db(request: Request, include_templates: bool = False, confirm: str = ""):
+    """DB をクリアする（problems・annotations・rag_runs 等のユーザコンテンツを全削除）。
+
+    安全のため、クエリパラメータ `confirm=YES` を必須にする。
+    `include_templates=true` を指定すると templates / latex_presets / fields も削除。
+    """
+    if confirm != "YES":
+        raise HTTPException(
+            status_code=400,
+            detail="confirm=YES を付けて呼び出してください (例: POST /api/db/clear?confirm=YES)",
+        )
+
+    USER_CONTENT_TABLES = [
+        'annotations', 'generation_evals', 'generation_runs',
+        'rag_runs', 'embeddings', 'artifacts', 'problems',
+    ]
+    CONFIG_TABLES = ['templates', 'latex_presets', 'fields']
+    targets = list(USER_CONTENT_TABLES)
+    if include_templates:
+        targets += CONFIG_TABLES
+
+    conn = connect_db()
+    is_sqlite = getattr(conn, '_is_sqlite', False)
+    result = {'cleared': [], 'skipped': [], 'failed': []}
+    try:
+        cur = conn.cursor()
+        for tbl in targets:
+            # テーブル存在チェック
+            try:
+                if is_sqlite:
+                    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (tbl,))
+                else:
+                    cur.execute("SELECT 1 FROM information_schema.tables WHERE table_name=%s", (tbl,))
+                if not cur.fetchone():
+                    result['skipped'].append({'table': tbl, 'reason': 'not_exist'})
+                    continue
+                cur.execute(f"SELECT COUNT(*) FROM {tbl}")
+                before = int((cur.fetchone() or [0])[0])
+                if before == 0:
+                    result['skipped'].append({'table': tbl, 'reason': 'empty'})
+                    continue
+                if is_sqlite:
+                    cur.execute(f"DELETE FROM {tbl}")
+                else:
+                    cur.execute(f"TRUNCATE TABLE {tbl} RESTART IDENTITY CASCADE")
+                result['cleared'].append({'table': tbl, 'deleted': before})
+            except Exception as e:
+                result['failed'].append({'table': tbl, 'error': str(e)})
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+        conn.commit()
+        cur.close()
+        return {'status': 'ok', **result}
+    except Exception as e:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise HTTPException(status_code=500, detail=f"clear failed: {e}")
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
 @router.delete("/{table}/rows/{row_id}")
 def delete_row(request: Request, table: str, row_id: str):
     """行削除"""
@@ -474,8 +543,10 @@ SMART_FIELDS = {
     "problems": {
         "required": [
             {"name": "subject", "label": "教科", "type": "select",
-             "options": ["物理", "数学", "電気回路", "応用情報"],
-             "help": "問題の教科を選択（工学系4科目）"},
+             "options": ["物理", "数学", "電気回路", "電子回路", "電磁気学",
+                         "制御工学", "信号処理", "通信工学", "ディジタル回路",
+                         "アルゴリズム", "プログラミング", "応用情報"],
+             "help": "問題の教科を選択（工学系科目）"},
             {"name": "topic", "label": "分野", "type": "dependent_select",
              "depends_on": "subject",
              "help": "教科に応じた分野を選択（カスタム入力も可）"},
