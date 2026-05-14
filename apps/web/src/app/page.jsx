@@ -231,9 +231,6 @@ export default function HomePage() {
                   </svg>
                 </span>
               </Link>
-              <Link href="/search" className="btn-editorial-ghost">
-                サンプルを見る
-              </Link>
             </div>
 
             {/* spec strip */}
@@ -340,8 +337,8 @@ export default function HomePage() {
               },
               {
                 kicker: 'Coverage',
-                title: '4分野完備',
-                body: '力学・電磁気・波動・熱力学。共通テストから東大二次まで6段階。',
+                title: '工学4科目',
+                body: '物理・数学・電気回路・応用情報。基礎から技術士・院試レベルまで6段階。',
                 gradient: 'linear-gradient(135deg, #ff9966 0%, #ff5c7c 100%)',
                 accent: '#ffffff',
                 icon: (
@@ -431,17 +428,17 @@ export default function HomePage() {
               <span className="chapter-name">Coverage</span>
             </div>
             <h2 className="editorial-heading">
-              物理の、すべての分野。
+              工学系の、すべての領域。
             </h2>
-            <p className="editorial-sub">共通テスト〜東大二次まで、6段階の難易度で。</p>
+            <p className="editorial-sub">基礎から技術士・院試レベルまで、6段階の難易度で。</p>
           </div>
 
           <div className="coverage-grid editorial-shell-wide">
             {[
-              { jp: '力学', en: 'Mechanics', desc: '運動方程式・保存則・衝突・円運動・万有引力', tone: '#ff375f' },
-              { jp: '電磁気', en: 'Electromagnetism', desc: 'クーロン力・回路・電磁誘導・交流・コンデンサー', tone: '#ff5c7c' },
-              { jp: '波動', en: 'Waves', desc: 'ドップラー・干渉・回折・レンズ・光波', tone: '#ff8094' },
-              { jp: '熱力学', en: 'Thermodynamics', desc: '気体の法則・熱サイクル・状態変化', tone: '#ff9966' },
+              { jp: '物理', en: 'Physics', desc: '力学・電磁気・熱力学・波動・解析力学・流体', tone: '#ff375f' },
+              { jp: '数学', en: 'Mathematics', desc: '微積・線形代数・微分方程式・フーリエ・ラプラス', tone: '#ff5c7c' },
+              { jp: '電気回路', en: 'Circuits', desc: '直流・交流・過渡応答・三相・オペアンプ・論理回路', tone: '#0ea5e9' },
+              { jp: '応用情報', en: 'Applied IT', desc: 'アルゴ・DB・ネットワーク・セキュリティ・OS', tone: '#ff9966' },
             ].map(({ jp, en, desc, tone }, i) => (
               <div key={jp} className="coverage-card scroll-reveal" style={{ transitionDelay: `${i * 80}ms` }}>
                 <div className="coverage-tone-bar" style={{ background: tone }} />
@@ -503,7 +500,6 @@ export default function HomePage() {
 
             <div className="tool-row mt-7">
               {[
-                { href: '/search', label: '問題をさがす', desc: '登録済み過去問をキーワード検索', },
                 { href: '/help', label: 'はじめてガイド', desc: '使い方・ワークフロー・用語集', },
                 { href: '/settings', label: '設定', desc: 'ブランドカラー・表示名の調整', },
               ].map(({ href, label, desc }) => (

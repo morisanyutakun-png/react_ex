@@ -360,7 +360,12 @@ def make_generation_prompt_with_context(stem: str, num: int = 5, request_id: str
         request_id = str(uuid.uuid4())
 
     # Determine if subject is STEM (needs math-specific LaTeX instructions)
-    _stem_keywords = {'数学', '物理', '化学', '生物', '情報', '理科', '微分', '積分', '関数', '方程式', '確率', '統計', 'math', 'physics', 'chemistry'}
+    # 工学系特化: 物理・数学・電気回路・応用情報
+    _stem_keywords = {'物理', '数学', '電気回路', '応用情報', '情報',
+                      '微分', '積分', '関数', '方程式', '確率', '統計',
+                      '線形代数', '行列', 'ベクトル', '回路', '交流', '直流',
+                      'アルゴリズム', 'データベース', 'ネットワーク',
+                      'math', 'physics', 'electrical', 'circuit', 'engineering'}
     _combined = ((subject or '') + ' ' + (stem or '')[:300]).lower()
     is_stem = any(kw in _combined for kw in _stem_keywords) if _combined.strip() else True
 

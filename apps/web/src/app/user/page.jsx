@@ -309,6 +309,16 @@ export default function UserModePage() {
           <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
         </svg>
       ),
+      '応用情報': ( // ターミナル/コード
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" />
+        </svg>
+      ),
+      '電気回路': ( // 回路図（抵抗・電池）
+        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 12h3l1-3 2 6 2-6 2 6 1-3h7" /><circle cx="20" cy="6" r="1.2" /><circle cx="20" cy="18" r="1.2" />
+        </svg>
+      ),
       '国語': ( // 筆（ブラシ）
         <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 2l4 4-9.5 9.5a4 4 0 01-2 1.1L6 18l1.4-4.5a4 4 0 011.1-2L18 2z" /><path d="M6 18v4h4" />
@@ -342,6 +352,8 @@ export default function UserModePage() {
     '英語': { bg: 'from-[#ff9966] to-[#c25e00]', light: '#ff9966', icon: '英語', bgLight: 'bg-[#ff9966]', text: 'text-[#c25e00]', border: 'border-[#ffd1b5]' },
     '生物': { bg: 'from-[#ff9966] to-[#ff8094]', light: '#ff9966', icon: '生物', bgLight: 'bg-[#fff5f7]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
     '情報': { bg: 'from-[#ff9966] to-[#ff8050]', light: '#ff9966', icon: '情報', bgLight: 'bg-[#ff9966]', text: 'text-[#ff8050]', border: 'border-[#ffd1b5]' },
+    '応用情報': { bg: 'from-[#ff9966] to-[#ff8050]', light: '#ff9966', icon: '応用情報', bgLight: 'bg-[#ff9966]', text: 'text-[#ff8050]', border: 'border-[#ffd1b5]' },
+    '電気回路': { bg: 'from-[#0ea5e9] to-[#2563eb]', light: '#0ea5e9', icon: '電気回路', bgLight: 'bg-[#e0f2fe]', text: 'text-[#2563eb]', border: 'border-[#bae6fd]' },
     '国語': { bg: 'from-[#ff375f] to-[#ff2d55]', light: '#ff375f', icon: '国語', bgLight: 'bg-[#ff375f]', text: 'text-[#ff2d55]', border: 'border-[#ffd1d9]' },
     '社会': { bg: 'from-[#ff9500] to-[#c25e00]', light: '#ff9500', icon: '社会', bgLight: 'bg-[#ff9500]', text: 'text-[#c25e00]', border: 'border-[#ffd1b5]' },
     '地学': { bg: 'from-[#ff9966] to-[#0d9488]', light: '#ff9966', icon: '地学', bgLight: 'bg-[#ff9966]', text: 'text-[#ff9966]', border: 'border-[#ff9966]' },

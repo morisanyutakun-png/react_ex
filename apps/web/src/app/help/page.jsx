@@ -50,20 +50,6 @@ function IcoTune() {
   );
 }
 
-function IcoSearch() {
-  return (
-    <svg className="w-10 h-10" viewBox="0 0 36 36" fill="none">
-      <rect x="6" y="4" width="16" height="20" rx="2.5" fill="white" stroke="#ff5c7c" strokeWidth="1.5"/>
-      <line x1="10" y1="10" x2="18" y2="10" stroke="#ff5c7c" strokeWidth="1" opacity=".4" strokeLinecap="round"/>
-      <line x1="10" y1="13" x2="16" y2="13" stroke="#ff5c7c" strokeWidth="1" opacity=".3" strokeLinecap="round"/>
-      <line x1="10" y1="16" x2="17" y2="16" stroke="#ff5c7c" strokeWidth="1" opacity=".25" strokeLinecap="round"/>
-      <circle cx="25" cy="22" r="7" stroke="url(#hSe1)" strokeWidth="2" fill="white" fillOpacity=".8"/>
-      <line x1="30" y1="27" x2="34" y2="31" stroke="url(#hSe1)" strokeWidth="2.5" strokeLinecap="round"/>
-      <defs><linearGradient id="hSe1" x1="18" y1="15" x2="34" y2="31"><stop stopColor="#ff8094"/><stop offset="1" stopColor="#ffb3c0"/></linearGradient></defs>
-    </svg>
-  );
-}
-
 function IcoDb() {
   return (
     <svg className="w-10 h-10" viewBox="0 0 36 36" fill="none">
@@ -148,7 +134,7 @@ function DiagramCreateWizard() {
         ))}
       </div>
       <div className="space-y-1.5">
-        {['数学 — 微分積分', '物理 — 力学', '化学 — 有機化学'].map((t, i) => (
+        {['物理 — 力学', '数学 — 微分積分', '電気回路 — 交流回路'].map((t, i) => (
           <div key={i} className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border text-[10px] font-semibold
             ${i === 0 ? 'border-[#ff375f]/30 bg-[#fff5f7] text-[#1d1d1f]' : 'border-black/8 text-[#515154]'}`}>
             <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${i === 0 ? 'border-[#ff375f]' : 'border-[#d1d1d6]'}`}>
@@ -186,28 +172,6 @@ function DiagramTunePage() {
           </div>
         ))}
       </div>
-    </ScreenFrame>
-  );
-}
-
-function DiagramSearchPage() {
-  return (
-    <ScreenFrame title="問題を検索" color="#ff8094">
-      <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl bg-[#fff5f7] border border-black/8 mb-2.5">
-        <svg className="w-3.5 h-3.5 text-[#aeaeb2]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <span className="text-[9px] text-[#aeaeb2]">キーワードを入力...</span>
-      </div>
-      <div className="flex gap-1 mb-2.5 flex-wrap">
-        {['数学', '★3', '微積分'].map((f, i) => (
-          <span key={i} className="px-2 py-0.5 rounded-full text-[8px] font-bold bg-[#ffe4ea]/50 text-[#515154] border border-black/8">{f}</span>
-        ))}
-      </div>
-      {[1, 2].map((r) => (
-        <div key={r} className="flex items-start gap-2 p-2 rounded-lg border border-black/8 mb-1.5 bg-white/60">
-          <div className="text-[8px] font-bold text-[#515154] bg-[#ffe4ea]/50 px-1.5 py-0.5 rounded">#{r}</div>
-          <div className="flex-1"><div className="h-1.5 w-3/4 bg-[#e5e5ea] rounded-full mb-1" /><div className="h-1.5 w-1/2 bg-[#e5e5ea] rounded-full" /></div>
-        </div>
-      ))}
     </ScreenFrame>
   );
 }
@@ -359,7 +323,7 @@ const FAQ_DATA = [
     category: '基本', color: '#1d1d1f', icon: '◎',
     items: [
       { q: 'テンプレートがない場合は？', a: '「問題をつくる」ページ下部から新規追加できます。教科・分野・難易度を設定するだけでOKです。' },
-      { q: 'どの教科に対応している？', a: '数学・物理・化学・英語・生物・情報の6教科。カスタムテンプレートで他教科も設定できます。' },
+      { q: 'どの教科に対応している？', a: '工学系特化: 物理・数学・電気回路・応用情報の4科目。カスタムテンプレートで他工学分野も設定できます。' },
       { q: '何度でも再生成できる？', a: 'はい。同じ設定で「生成」を押すたび、毎回異なるバリエーションが作成されます。' },
       { q: '出題形式は選べる？', a: '記述式・穴埋め・選択肢(4択)・○×の4種類から選択可能です。' },
     ],
@@ -524,7 +488,6 @@ export default function HelpPage() {
                   {[
                     { icon: <IcoCreate />, label: '問題をつくる', href: '/user', color: '#1d1d1f' },
                     { icon: <IcoTune />,   label: '品質を高める', href: '/dev', color: '#3a3a3c' },
-                    { icon: <IcoSearch />, label: '問題を検索',   href: '/search', color: '#515154' },
                     { icon: <IcoDb />,     label: 'データ管理',   href: '/db-editor', color: '#3a3a3c' },
                   ].map((item) => (
                     <Link key={item.href} href={item.href}
@@ -594,19 +557,6 @@ export default function HelpPage() {
             tips={[
               'プリセット「バランス」が最初はおすすめ',
               '評価を重ねるほど、好みに合った問題が生まれます',
-            ]}
-          />
-
-          <FeatureSection id="search" icon={<IcoSearch />} title="問題を検索" subtitle="キーワードとフィルターで過去問をかんたん検索" color="#ff8094" href="/search"
-            diagram={<DiagramSearchPage />}
-            steps={[
-              { title: 'キーワード入力', desc: '検索バーにキーワードを入力。科目・分野を横断検索。' },
-              { title: 'フィルターで絞込み', desc: '科目・分野・難易度のプルダウンで結果を絞り込み。' },
-              { title: '詳細確認 → 類題生成', desc: 'カード展開で詳細表示。ボタン一つでAI類題生成も可能。' },
-            ]}
-            tips={[
-              'キーワードなしでフィルターだけの検索もできます',
-              '検索結果から直接 類題を生成できて便利です',
             ]}
           />
 

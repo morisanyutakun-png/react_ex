@@ -474,8 +474,8 @@ SMART_FIELDS = {
     "problems": {
         "required": [
             {"name": "subject", "label": "教科", "type": "select",
-             "options": ["数学", "英語", "国語", "理科", "社会", "物理", "化学", "生物", "地学", "情報"],
-             "help": "問題の教科を選択"},
+             "options": ["物理", "数学", "電気回路", "応用情報"],
+             "help": "問題の教科を選択（工学系4科目）"},
             {"name": "topic", "label": "分野", "type": "dependent_select",
              "depends_on": "subject",
              "help": "教科に応じた分野を選択（カスタム入力も可）"},

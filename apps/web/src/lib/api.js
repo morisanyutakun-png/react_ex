@@ -596,33 +596,34 @@ export const DIAGRAM_PACKAGE_DEFS = [
     hint: '物理化学の軌道論に',
   },
 
-  /* ═══════ 生体・医学図 ═══════ */
-  {
-    id: 'tikz-network',
-    name: '生体ネットワーク',
-    label: 'ネットワーク',
-    icon: '🕸️',
-    category: 'medical',
-    description: '生体ネットワーク・代謝経路・相互作用ネットワークを描画します',
-    hint: 'シグナル伝達や代謝経路に',
-  },
+  /* ═══════ ネットワーク・回路・アルゴリズム ═══════ */
   {
     id: 'circuitikz',
     name: '電気回路図',
     label: '回路図',
     icon: '⚡',
+    category: 'circuit',
+    description: '電気回路（直流・交流・過渡・論理回路）の図を描画します',
+    hint: '電気回路・電子工学の問題に',
+    recommended: true,
+  },
+  {
+    id: 'tikz-network',
+    name: 'ネットワーク図',
+    label: 'ネットワーク',
+    icon: '🕸️',
     category: 'medical',
-    description: '回路図を描画。医療機器回路・ME機器の図にも便利',
-    hint: '物理の電気回路・医療機器に',
+    description: 'コンピュータネットワーク・グラフ・相互作用ネットワークを描画します',
+    hint: '応用情報（ネットワーク）の問題に',
   },
   {
     id: 'algorithm2e',
-    name: 'アルゴリズム図',
+    name: 'アルゴリズム擬似コード',
     label: 'アルゴリズム',
     icon: '📋',
     category: 'medical',
-    description: '医療フローチャート・診断アルゴリズムを擬似コード形式で記述します',
-    hint: '臨床判断アルゴリズムに',
+    description: 'アルゴリズムを擬似コード形式で記述します（応用情報・データ構造）',
+    hint: 'アルゴリズム・データ構造の問題に',
   },
 
   /* ═══════ 統計・論文用 ═══════ */
@@ -694,64 +695,66 @@ export const DIAGRAM_PACKAGE_DEFS = [
   },
 ];
 
-/* ── カテゴリ定義 ── */
+/* ── カテゴリ定義（工学系特化） ── */
 export const PACKAGE_CATEGORIES = [
   { id: 'diagram', name: '図描画（ベース）', icon: '✏️', description: 'TikZ・グラフ・樹形図' },
-  { id: 'molbio', name: '分子生物学', icon: '🧬', description: 'DNA配列・系統図・家系図' },
-  { id: 'chem', name: '化学・生化学', icon: '⚗️', description: '構造式・化学反応式・軌道図' },
-  { id: 'medical', name: '生体・医学図', icon: '🏥', description: 'ネットワーク・回路・アルゴリズム' },
-  { id: 'stats', name: '統計・論文用', icon: '📏', description: '単位・美しい表・データ' },
+  { id: 'circuit', name: '電気回路', icon: '⚡', description: '回路図・素子・信号' },
+  { id: 'medical', name: 'ネットワーク・アルゴリズム', icon: '🔗', description: 'ネットワーク・アルゴリズム・フローチャート' },
+  { id: 'stats', name: '計測・論文用', icon: '📏', description: 'SI単位・美しい表・データ' },
   { id: 'layout', name: '図配置・コード', icon: '🖼️', description: '図の並列・コード・表' },
 ];
 
 /* ═══════ プリセットバンドル（ワンクリックで複数パッケージを一括選択） ═══════ */
 export const PACKAGE_PRESETS = [
   {
-    id: 'math_physics',
-    name: '数学・物理',
+    id: 'engineering',
+    name: '物理・数学',
     icon: '📐',
-    subtitle: '図形・グラフ・回路・3D',
-    description: '力学・電磁気・関数グラフ・空間図形など理数系の図を網羅',
-    packages: ['tikz', 'pgfplots', 'circuitikz', 'tikz-3dplot', 'forest'],
+    subtitle: '力学・グラフ・空間図形・3D',
+    description: '物理（力学・電磁気・波動）・数学（関数・空間図形・統計）の図を網羅',
+    packages: ['tikz', 'pgfplots', 'tikz-3dplot', 'forest'],
     color: '#3b82f6',
     gradient: 'from-blue-500/10 to-indigo-500/10',
     borderActive: 'border-blue-500/40',
     illustration: `  F↑  ──→v
   │╲  ○
   │  ╲   📈 y=f(x)
-  ◇──→ ⚡回路`,
+  ──── 3D空間`,
   },
   {
-    id: 'biology',
-    name: '生物・遺伝',
-    icon: '🧬',
-    subtitle: 'DNA・家系図・代謝経路',
-    description: '分子生物学・遺伝学・生態系ネットワークのリアルな図解',
-    packages: ['tikz', 'pgfmolbio', 'texshade', 'genealogytree', 'tikz-network'],
+    id: 'circuit',
+    name: '電気回路',
+    icon: '⚡',
+    subtitle: '回路図・素子・信号',
+    description: '直流・交流・過渡応答・論理回路など電気電子工学の回路図に最適化',
+    packages: ['tikz', 'circuitikz', 'pgfplots', 'siunitx'],
+    color: '#0ea5e9',
+    gradient: 'from-sky-500/10 to-blue-500/10',
+    borderActive: 'border-sky-500/40',
+    illustration: `  ──[R]──[L]──
+  │         │
+  E       [C]
+  │         │
+  ─────────`,
+  },
+  {
+    id: 'informatics',
+    name: '応用情報',
+    icon: '💻',
+    subtitle: 'フローチャート・E-R図・コード',
+    description: 'アルゴリズム・データベース・ネットワーク図・コードリスト用',
+    packages: ['tikz', 'listings', 'forest', 'tikz-network'],
     color: '#10b981',
     gradient: 'from-emerald-500/10 to-teal-500/10',
     borderActive: 'border-emerald-500/40',
-    illustration: `  🧬 ATGCGA...
-  ♂──♀ 家系図
-  A──B──C 経路`,
-  },
-  {
-    id: 'chemistry',
-    name: '化学',
-    icon: '⚗️',
-    subtitle: '構造式・反応式・軌道図',
-    description: '有機化学・無機化学・物理化学の構造式や反応を美しく描画',
-    packages: ['tikz', 'chemfig', 'mhchem', 'chemmacros', 'modiagram', 'chemformula'],
-    color: '#f59e0b',
-    gradient: 'from-amber-500/10 to-orange-500/10',
-    borderActive: 'border-amber-500/40',
-    illustration: `  H─C═C─H 構造式
-  2H₂+O₂→2H₂O
-  σ ── π 軌道`,
+    illustration: `  ┌─┐ ┌─┐
+  │A│→│B│
+  └─┘ └─┘
+  💻 code listing`,
   },
   {
     id: 'document',
-    name: '論文・レポート',
+    name: 'レポート・論文',
     icon: '📊',
     subtitle: '表・単位・コード・図配置',
     description: '学術論文品質の表・SI単位・ソースコード・図の並列配置',

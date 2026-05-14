@@ -46,18 +46,21 @@ _build_latex_instructions = namespace['_build_latex_instructions']
 _build_llm_system_prompt = namespace['_build_llm_system_prompt']
 
 def test_subject_classification():
-    """Test _is_stem_subject correctly classifies subjects."""
-    # STEM subjects
-    assert _is_stem_subject('数学', '') == True, 'math -> STEM'
+    """Test _is_stem_subject correctly classifies subjects (engineering-focused)."""
+    # STEM subjects (工学系特化)
     assert _is_stem_subject('物理', '') == True, 'physics -> STEM'
-    assert _is_stem_subject('化学', '') == True, 'chemistry -> STEM'
-    assert _is_stem_subject('情報', '') == True, 'info -> STEM'
+    assert _is_stem_subject('数学', '') == True, 'math -> STEM'
+    assert _is_stem_subject('電気回路', '') == True, 'circuit -> STEM'
+    assert _is_stem_subject('応用情報', '') == True, 'applied-info -> STEM'
+    assert _is_stem_subject('情報', '') == True, 'info -> STEM (legacy)'
     assert _is_stem_subject('数学IA', '') == True, 'math1A -> STEM'
 
-    # Non-STEM subjects
+    # Non-STEM subjects (工学特化により除外された科目)
     assert _is_stem_subject('英語', '') == False, 'english -> non-STEM'
     assert _is_stem_subject('国語', '') == False, 'japanese -> non-STEM'
     assert _is_stem_subject('社会', '') == False, 'social -> non-STEM'
+    assert _is_stem_subject('化学', '') == False, 'chemistry -> non-STEM (engineering-focused)'
+    assert _is_stem_subject('生物', '') == False, 'biology -> non-STEM (engineering-focused)'
     assert _is_stem_subject('日本史', '') == False, 'history -> non-STEM'
     assert _is_stem_subject('古文', '') == False, 'classical -> non-STEM'
 

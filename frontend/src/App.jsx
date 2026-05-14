@@ -144,7 +144,7 @@ function getTodayMotivation() {
    Onboarding
    ──────────────────────────────────────────── */
 const ONBOARDING_SLIDES = [
-  { emoji: '🔥', title: '受験を制するのは、\n圧倒的な演習量。', desc: 'AIが物理・数学・英語の類題を瞬時に生成。あらゆる分野を無限に演習できます。' },
+  { emoji: '🔥', title: '工学を究めるのは、\n圧倒的な演習量。', desc: 'AIが物理・数学・電気回路・応用情報の類題を瞬時に生成。工学系の演習を無限に。' },
   { emoji: '📊', title: '努力を「見える化」する', desc: '学習量・連続日数・到達レベルをすべて記録。成長を数字で実感し、スクショでシェアしよう。' },
   { emoji: '📝', title: 'かんたん4ステップ', desc: '1. パターンを選ぶ → 2. 問題数を設定 → 3. AIに依頼 → 4. PDF完成！\n最短30秒で類題が手に入る。' },
   { emoji: '🚀', title: '今日から差をつけろ。', desc: '合格する人は、今日始める人。\nまずは1問、類題を作ってみよう。' },
@@ -235,7 +235,7 @@ function ShareableCard({ stats, level }) {
           <div className="shareable-stat"><div className="shareable-stat-value">{formatTime(stats.totalTimeSeconds)}</div><div className="shareable-stat-label">総学習</div></div>
         </div>
         <div className="shareable-motivation">{getTodayMotivation()}</div>
-        <div className="shareable-footer">#物理AI #受験勉強 #努力の証明</div>
+        <div className="shareable-footer">#工学演習 #物理 #電気回路 #応用情報</div>
       </div>
     </div>
   )
@@ -472,7 +472,7 @@ export default function App() {
                 <circle cx="50" cy="50" r="7" fill="currentColor" stroke="none"/><ellipse cx="50" cy="50" rx="42" ry="16"/><ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(60 50 50)"/><ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(-60 50 50)"/>
               </svg>
             </div>
-            <div><div className="logo-text">物理AI</div><div className="logo-sub">受験生のための類題生成</div></div>
+            <div><div className="logo-text">工学AI</div><div className="logo-sub">工学系のための類題生成</div></div>
           </div>
           <div className="header-actions">
             <div className="header-xp-badge"><span>{level.emoji}</span><span className="header-xp-rank">{level.rank}</span><span className="header-xp-val">{stats.xp} XP</span></div>
@@ -486,7 +486,7 @@ export default function App() {
       <div className="mobile-top-bar mobile-only">
         <div className="mobile-top-inner">
           {screen === 'home' ? (
-            <div className="mobile-top-home"><span className="mobile-top-logo">⚛️ 物理AI</span><div className="mobile-top-xp"><span>{level.emoji}</span><span>{stats.xp} XP</span></div></div>
+            <div className="mobile-top-home"><span className="mobile-top-logo">⚛️ 工学AI</span><div className="mobile-top-xp"><span>{level.emoji}</span><span>{stats.xp} XP</span></div></div>
           ) : (
             <div className="mobile-top-title">{screen === 'history' ? '生成履歴' : screen === 'settings' ? '設定' : screen === 'legal' ? (legalTab === 'terms' ? '利用規約' : 'プライバシーポリシー') : screen === 'practice' ? (STEPS[step - 1]?.label || '演習') : ''}</div>
           )}
@@ -508,7 +508,7 @@ export default function App() {
               <div className="home-hero-bg" />
               <div className="home-hero-content">
                 <div className="home-hero-badge">⚛️ 物理特化AI</div>
-                <div className="home-hero-greeting">{new Date().getHours() < 12 ? 'おはよう' : new Date().getHours() < 18 ? 'こんにちは' : 'おつかれさま'}、受験生。</div>
+                <div className="home-hero-greeting">{new Date().getHours() < 12 ? 'おはよう' : new Date().getHours() < 18 ? 'こんにちは' : 'おつかれさま'}、エンジニア。</div>
                 <div className="home-hero-motivation">{getTodayMotivation()}</div>
                 <button className="btn btn-hero" onClick={startPractice}><Ico.Play /> 今すぐ物理を解く</button>
               </div>
@@ -685,7 +685,7 @@ export default function App() {
             <div className="field" style={{marginBottom:20}}><label className="field-label">データ管理</label><button className="btn btn-outline btn-block" style={{marginBottom:8}} onClick={() => { if(window.confirm('学習データをリセットしますか？')) { setStats(DEFAULT_STATS); saveStats(DEFAULT_STATS); notify('リセットしました','info') } }}>学習データをリセット</button></div>
             <div className="settings-divider" />
             <div className="field" style={{marginBottom:20}}><label className="field-label">その他</label><button className="btn btn-outline btn-block" style={{marginBottom:8}} onClick={() => { setScreen('legal'); setLegalTab('terms') }}><Ico.Shield /> 利用規約</button><button className="btn btn-outline btn-block" style={{marginBottom:8}} onClick={() => { setScreen('legal'); setLegalTab('privacy') }}><Ico.Shield /> プライバシーポリシー</button><button className="btn btn-outline btn-block" onClick={() => setShowOnboarding(true)}>チュートリアルを再表示</button></div>
-            <div className="settings-app-info"><div className="settings-app-version">⚛️ 物理AI v2.0</div><div className="field-hint">受験生のための類題生成AI</div></div>
+            <div className="settings-app-info"><div className="settings-app-version">⚛️ 工学AI v2.0</div><div className="field-hint">工学系のための類題生成AI</div></div>
             <div className="mobile-sticky-action"><button className="btn btn-primary btn-block btn-lg" onClick={() => setScreen('home')}><Ico.ArrowLeft /> ホームに戻る</button></div>
           </div>
         )}
@@ -719,7 +719,7 @@ export default function App() {
             {step === 1 && (
               <div className="card anim-fade-up mobile-card">
                 <div className="card-header mobile-card-header"><span className="card-emoji">⚛️</span><div className="card-title">出題パターンを選ぶ</div><div className="card-desc mobile-card-desc">得意分野を伸ばす？ 苦手を潰す？ 戦略的に選べ。</div></div>
-                <div className="physics-hero-banner"><div className="physics-hero-content"><div className="physics-hero-title">⚛️ 物理の類題生成</div><div className="physics-hero-subtitle">受験生の武器になる</div></div><div className="physics-hero-pills"><span>力学</span><span>電磁気</span><span>波動</span><span>熱力学</span></div></div>
+                <div className="physics-hero-banner"><div className="physics-hero-content"><div className="physics-hero-title">⚛️ 工学系の類題生成</div><div className="physics-hero-subtitle">物理・数学・電気回路・応用情報</div></div><div className="physics-hero-pills"><span>力学</span><span>電磁気</span><span>交流回路</span><span>アルゴリズム</span></div></div>
                 <div className="tip mobile-tip-compact"><span className="tip-icon">💡</span><div>苦手分野から攻めるのが合格への近道。5問以上で定着率UP</div></div>
                 <div className="pattern-grid">
                   {[...templates].sort((a,b) => {const aP=(a.metadata?.subject||'').includes('物理')?-1:0;const bP=(b.metadata?.subject||'').includes('物理')?-1:0;return aP-bP}).map(t => {
