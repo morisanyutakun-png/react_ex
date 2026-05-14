@@ -2680,7 +2680,8 @@ def api_render_template(req: RenderTemplateRequest = Body(...)):
 
 @app.get('/api/templates')
 def api_list_templates():
-    """Return available templates. Reloads from disk to pick up edits without restart."""
+    """Return available templates. Reloads from DB (Neon/SQLite) on each call.
+    JSON 由来のフォールバックは廃止済み — DB が空ならテンプレートも空で返る。"""
     try:
         _load_templates()
     except Exception:
@@ -10489,14 +10490,13 @@ def api_get_pdf_page_svg(token: str, page_num: int):
 
 # Template loader
 def _load_templates():
-    """Load templates from DB (PostgreSQL) first, then fallback to templates.json.
+    """Load templates from DB (Neon PostgreSQL / SQLite). Single source of truth.
 
-    DB storage ensures templates survive deploys on Render.
+    JSON フォールバックは廃止（揮発性のシード混入を防ぐため）。
+    DB から取得できなかった場合は空辞書を返す。
     """
     global TEMPLATES
     TEMPLATES = {}
-
-    # --- Try DB first (SQLite and PostgreSQL) ---
     try:
         conn = connect_db()
         cur = conn.cursor()
@@ -10522,53 +10522,23 @@ def _load_templates():
             }
         cur.close()
         conn.close()
-        if TEMPLATES:
-            return TEMPLATES
     except Exception as e:
-        logger.warning('Failed to load templates from DB, falling back to JSON: %s', e)
-
-    # --- Fallback: load from JSON file ---
-    cand_paths = [os.path.join(THIS_DIR, 'templates.json'), os.path.join(PROJECT_ROOT, 'backend', 'templates.json')]
-    for p in cand_paths:
-        try:
-            if not os.path.exists(p):
-                continue
-            s = open(p, 'r', encoding='utf-8').read()
-            try:
-                data = json.loads(s)
-                if isinstance(data, dict):
-                    TEMPLATES = data
-                    return TEMPLATES
-            except Exception:
-                objs = re.findall(r"\{[\s\S]*?\}(?=\s*\{|\s*$)", s)
-                for o in objs:
-                    try:
-                        d = json.loads(o)
-                        if isinstance(d, dict):
-                            TEMPLATES.update(d)
-                    except Exception:
-                        continue
-                if TEMPLATES:
-                    return TEMPLATES
-        except Exception:
-            continue
-    TEMPLATES = {}
+        logger.warning('Failed to load templates from DB: %s', e)
+        TEMPLATES = {}
     return TEMPLATES
 
 
-def _seed_templates_to_db():
-    """On startup, import templates.json into DB if templates table is empty.
+def _ensure_templates_table():
+    """templates テーブルを保証するのみ（JSON からの自動シードは行わない）。
 
-    Works for both SQLite (dev) and PostgreSQL (prod).
+    Neon/PostgreSQL ではマイグレーション 008 が走らないことがあるので、
+    `CREATE TABLE IF NOT EXISTS` で冪等にテーブルを用意する。
+    テンプレートの実体は UI から作成して DB に保存することを前提とする。
     """
     try:
         conn = connect_db()
         is_sqlite = getattr(conn, '_is_sqlite', False)
         cur = conn.cursor()
-
-        # Ensure templates table exists regardless of DB type.
-        # Migration 008 may not have been applied to Neon/PostgreSQL (it's only
-        # auto-applied in Docker via docker-entrypoint-initdb.d).
         if is_sqlite:
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS templates (
@@ -10599,53 +10569,10 @@ def _seed_templates_to_db():
                 CREATE INDEX IF NOT EXISTS idx_templates_active ON templates(is_active)
             """)
         conn.commit()
-
-        cur.execute("SELECT COUNT(*) FROM templates")
-        count = cur.fetchone()[0]
-        if count > 0:
-            cur.close()
-            conn.close()
-            return
-        # Load from JSON
-        json_path = os.path.join(THIS_DIR, 'templates.json')
-        if not os.path.exists(json_path):
-            json_path = os.path.join(PROJECT_ROOT, 'backend', 'templates.json')
-        if not os.path.exists(json_path):
-            cur.close()
-            conn.close()
-            return
-        with open(json_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        for tid, tdata in data.items():
-            if is_sqlite:
-                cur.execute("""
-                    INSERT OR IGNORE INTO templates (id, name, description, prompt, metadata)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (
-                    tid,
-                    tdata.get('name', ''),
-                    tdata.get('description', ''),
-                    tdata.get('prompt', ''),
-                    json.dumps(tdata.get('metadata', {}), ensure_ascii=False),
-                ))
-            else:
-                cur.execute("""
-                    INSERT INTO templates (id, name, description, prompt, metadata)
-                    VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (id) DO NOTHING
-                """, (
-                    tid,
-                    tdata.get('name', ''),
-                    tdata.get('description', ''),
-                    tdata.get('prompt', ''),
-                    json.dumps(tdata.get('metadata', {}), ensure_ascii=False),
-                ))
-        conn.commit()
         cur.close()
         conn.close()
-        logger.info('Seeded %d templates from JSON to DB', len(data))
     except Exception as e:
-        logger.warning('Failed to seed templates to DB: %s', e)
+        logger.warning('Failed to ensure templates table: %s', e)
 
 # Load templates lazily on first request or at startup event
 # (NOT at import time — avoids DB connections during module load which can
@@ -10658,7 +10585,7 @@ def _ensure_templates():
         return
     _templates_loaded = True
     try:
-        _seed_templates_to_db()
+        _ensure_templates_table()
     except Exception:
         pass
     try:
@@ -10759,36 +10686,18 @@ def api_save_template(req: TemplateSaveRequest = Body(...)):
         except Exception as e:
             logger.warning('Failed to save template to DB: %s', e)
 
-        # --- Also save to JSON file as backup ---
-        tpls = _load_templates() or {}
-        tpls = dict(tpls)
-        entry = tpls.get(req.id, {}) if isinstance(tpls.get(req.id), dict) else {}
-        if req.name is not None:
-            entry['name'] = req.name
-        if req.description is not None:
-            entry['description'] = req.description
-        if req.prompt is not None:
-            entry['prompt'] = req.prompt
-        if req.metadata is not None:
-            entry['metadata'] = req.metadata
-        tpls[req.id] = entry
-
-        target = os.path.join(THIS_DIR, 'templates.json')
+        # DB のみを正とする (JSON 書き戻しは廃止)。
+        # in-memory キャッシュは _load_templates() で再構築する。
+        if not db_saved:
+            return _dev_error_response(
+                'failed_to_save_template_to_db',
+                Exception('DB への保存に失敗しました'),
+                status_code=500,
+            )
         try:
-            if os.path.exists(target):
-                bak = target + '.bak'
-                shutil.copyfile(target, bak)
+            _load_templates()
         except Exception:
-            logger.exception('Failed to backup templates.json')
-        try:
-            with open(target, 'w', encoding='utf-8') as f:
-                json.dump(tpls, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.exception('Failed to write templates.json')
-            if not db_saved:
-                return _dev_error_response('failed_to_write_templates', e, status_code=500)
-
-        globals()['TEMPLATES'] = tpls
+            pass
         return JSONResponse({'saved': True, 'id': req.id, 'db_saved': db_saved})
     except Exception as e:
         logger.exception('failed to save template')
@@ -10797,18 +10706,14 @@ def api_save_template(req: TemplateSaveRequest = Body(...)):
 
 @app.delete('/api/template/{template_id}')
 def api_delete_template(template_id: str):
-    """Delete a template by ID from DB and JSON file."""
+    """Delete a template by ID from the DB (Neon/SQLite)."""
     if not template_id:
         return JSONResponse({'error': 'invalid_id'}, status_code=400)
     db_deleted = False
     try:
         conn = connect_db()
-        is_sqlite = getattr(conn, '_is_sqlite', False)
         cur = conn.cursor()
-        if is_sqlite:
-            cur.execute("DELETE FROM templates WHERE id = %s", (template_id,))
-        else:
-            cur.execute("DELETE FROM templates WHERE id = %s", (template_id,))
+        cur.execute("DELETE FROM templates WHERE id = %s", (template_id,))
         conn.commit()
         cur.close()
         conn.close()
@@ -10816,20 +10721,7 @@ def api_delete_template(template_id: str):
     except Exception as e:
         logger.warning('Failed to delete template from DB: %s', e)
 
-    # Also remove from JSON file
-    try:
-        target = os.path.join(THIS_DIR, 'templates.json')
-        if os.path.exists(target):
-            with open(target, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            if template_id in data:
-                del data[template_id]
-                with open(target, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        logger.warning('Failed to remove template from JSON: %s', e)
-
-    # Update in-memory cache
+    # in-memory キャッシュも反映
     tpls = globals().get('TEMPLATES') or {}
     if template_id in tpls:
         del tpls[template_id]
