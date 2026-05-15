@@ -6309,6 +6309,12 @@ A4. 解答の最終行には ★簡潔な答えの要約★ を必ず置く（�
 A5. ★解説では文字式の物理的意味を必ず言及★ する
     （例: 「合成抵抗 $R_1+R_2$ が分母にあるのは、直列ではキルヒホッフの電圧則により
        電源電圧が両抵抗で分け合われるため」など）。
+A6. ★最終解答の強調は \\textcolor{{red}}{{\\mathbf{{…}}}} を使う。\\boxed{{...}} は絶対禁止★。
+    ★悪い例★: \\[ \\boxed{{I = \\dfrac{{E}}{{R_1+R_2}}}} \\]
+    ★良い例（display math）★: \\[ \\therefore\\ \\textcolor{{red}}{{\\mathbf{{I = \\dfrac{{E}}{{R_1+R_2}}}}}} \\]
+    ★良い例（inline math）★: 答えは ${{\\color{{red}}\\mathbf{{V = IR}}}}$ である。
+    \\fbox, \\colorbox, tcolorbox なども枠囲み目的では使わない（文字色＋太字だけで強調する）。
+    \\textbf は ★text モードで使う場合のみ★（文章中で「重要」など）。数式中は必ず \\mathbf。
 
 【生成条件】
 - 科目: {subject}
@@ -9063,6 +9069,50 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 return ''.join(result)
 
             tex = _audit_frac_braces(tex)
+
+            # 7e-2) ★ \boxed{...} → 赤太字 自動変換 ★
+            #     ユーザ仕様: 最終解答は赤太字で強調し、四角枠は使わない。
+            #     \boxed は常に math-mode の構文（\[...\] や $...$ 内）で使われるため、
+            #     置換先は math-mode safe な \textcolor{red}{\mathbf{...}} を採用する。
+            #     これにより $ の入れ子による LaTeX エラーを防止する。
+            def _replace_boxed_with_red_bold(tex_str):
+                """Replace all \\boxed{...} occurrences with math-mode-safe red bold.
+                ネストした {} は深さカウントで対応。
+                """
+                result = []
+                i = 0
+                pat_token = '\\boxed{'
+                while i < len(tex_str):
+                    if tex_str.startswith(pat_token, i):
+                        depth = 1
+                        j = i + len(pat_token)
+                        while j < len(tex_str) and depth > 0:
+                            ch = tex_str[j]
+                            if ch == '\\' and j + 1 < len(tex_str):
+                                j += 2  # skip escaped char
+                                continue
+                            if ch == '{':
+                                depth += 1
+                            elif ch == '}':
+                                depth -= 1
+                                if depth == 0:
+                                    break
+                            j += 1
+                        if depth == 0:
+                            inner = tex_str[i + len(pat_token):j]
+                            # math-mode safe: \textcolor{red}{\mathbf{...}}
+                            # （\boxed は math-mode のため、出力も math-mode で完結させる）
+                            result.append('\\textcolor{red}{\\mathbf{' + inner + '}}')
+                            i = j + 1
+                            continue
+                    result.append(tex_str[i])
+                    i += 1
+                return ''.join(result)
+
+            try:
+                tex = _replace_boxed_with_red_bold(tex)
+            except Exception as _e:
+                logger.warning('boxed → red bold rewrite skipped: %s', _e)
 
             # 7f) ★ CircuiTikZ closed-loop fixer ★
             #     Detect circuitikz environments and ensure paths form closed loops.
