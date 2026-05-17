@@ -275,6 +275,86 @@ class TestCircuiTikZClosedLoop:
         assert result.count('(5.5,0)') == 1
 
 
+class TestCircuiTikZAxisParallelEnforcement:
+    """Tests that diagonal wires/elements are auto-converted to L-shape (axis-parallel)."""
+
+    @staticmethod
+    def _force_segments(tex_str):
+        env_pat = r'(\\begin\{circuitikz\}(?:\[.*?\])?)([\s\S]*?)(\\end\{circuitikz\})'
+        seg_pat = re.compile(
+            r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)\s*--\s*'
+            r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)'
+        )
+
+        def fix_env(m):
+            b = m.group(2)
+            def rep(s):
+                x1, y1, x2, y2 = s.groups()
+                fx, fy, lx, ly = float(x1), float(y1), float(x2), float(y2)
+                if abs(fx - lx) > 0.01 and abs(fy - ly) > 0.01:
+                    return f'({x1},{y1}) -- ({x1},{y2}) -- ({x2},{y2})'
+                return s.group(0)
+            for _ in range(10):
+                nb = seg_pat.sub(rep, b)
+                if nb == b:
+                    break
+                b = nb
+            return m.group(1) + b + m.group(3)
+        return re.sub(env_pat, fix_env, tex_str, flags=re.S)
+
+    @staticmethod
+    def _force_elements(tex_str):
+        env_pat = r'(\\begin\{circuitikz\}(?:\[.*?\])?)([\s\S]*?)(\\end\{circuitikz\})'
+        elem_pat = re.compile(
+            r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)\s*'
+            r'(to\s*\[[^\]]*\])\s*'
+            r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)'
+        )
+
+        def fix_env(m):
+            b = m.group(2)
+            def rep(e):
+                x1, y1, to_block, x2, y2 = e.group(1), e.group(2), e.group(3), e.group(4), e.group(5)
+                fx, fy, lx, ly = float(x1), float(y1), float(x2), float(y2)
+                dx, dy = abs(fx - lx), abs(fy - ly)
+                if dx > 0.01 and dy > 0.01:
+                    if dx >= dy:
+                        return f'({x1},{y1}) {to_block} ({x2},{y1}) -- ({x2},{y2})'
+                    return f'({x1},{y1}) -- ({x1},{y2}) {to_block} ({x2},{y2})'
+                return e.group(0)
+            for _ in range(10):
+                nb = elem_pat.sub(rep, b)
+                if nb == b:
+                    break
+                b = nb
+            return m.group(1) + b + m.group(3)
+        return re.sub(env_pat, fix_env, tex_str, flags=re.S)
+
+    def test_diagonal_wire_becomes_lshape(self):
+        tex = '\\begin{circuitikz}\\draw (0,0) -- (3,3);\\end{circuitikz}'
+        result = self._force_segments(tex)
+        assert '(0,0) -- (0,3) -- (3,3)' in result
+
+    def test_diagonal_resistor_horizontal(self):
+        """Diagonal to[R] with |dx| > |dy| → horizontal element + L-shape wire."""
+        tex = '\\begin{circuitikz}\\draw (4,0) to[R,l=$R_3$] (8,3);\\end{circuitikz}'
+        result = self._force_elements(tex)
+        # dx=4, dy=3 → horizontal element: (4,0) to[R] (8,0) -- (8,3)
+        assert '(4,0) to[R,l=$R_3$] (8,0) -- (8,3)' in result
+
+    def test_diagonal_resistor_vertical(self):
+        """Diagonal to[R] with |dy| > |dx| → vertical element + L-shape wire."""
+        tex = '\\begin{circuitikz}\\draw (4,0) to[R,l=$R_3$] (5,8);\\end{circuitikz}'
+        result = self._force_elements(tex)
+        # dx=1, dy=8 → vertical element: (4,0) -- (4,8) to[R] (5,8)
+        assert '(4,0) -- (4,8) to[R,l=$R_3$] (5,8)' in result
+
+    def test_axis_parallel_unchanged(self):
+        tex = '\\begin{circuitikz}\\draw (0,3) -- (4,3) -- (4,0);\\end{circuitikz}'
+        result = self._force_segments(tex)
+        assert result == tex
+
+
 class TestTikZCoordinateClosure:
     """Tests for auto-closing TikZ polygon paths."""
 

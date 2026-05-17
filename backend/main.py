@@ -9277,6 +9277,110 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
 
             tex = _fix_circuitikz_closed_loops(tex)
 
+            # 7f-1b) ★ CircuiTikZ 斜め配線 → L字経路 強制変換 ★
+            #     circuitikz 環境内の \draw 中で
+            #     (x1,y1) -- (x2,y2) が x1≠x2 かつ y1≠y2 なら斜め線。
+            #     これを (x1,y1) -- (x1,y2) -- (x2,y2) の L字に置換する。
+            #     loop-closer は path 全体の閉じ忘れのみ対応するため、
+            #     LLM が明示的に対角線を引いた場合（X字パターン）は別途処理が必要。
+            def _force_axis_parallel_segments(tex_str):
+                env_pattern = r'(\\begin\{circuitikz\}(?:\[.*?\])?)([\s\S]*?)(\\end\{circuitikz\})'
+                seg_pattern = re.compile(
+                    r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)\s*--\s*'
+                    r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)'
+                )
+
+                def _fix_env(m):
+                    begin = m.group(1)
+                    body = m.group(2)
+                    end = m.group(3)
+
+                    def _replace_seg(sm):
+                        x1, y1, x2, y2 = sm.group(1), sm.group(2), sm.group(3), sm.group(4)
+                        try:
+                            fx, fy = float(x1), float(y1)
+                            lx, ly = float(x2), float(y2)
+                        except (ValueError, IndexError):
+                            return sm.group(0)
+                        if abs(fx - lx) > 0.01 and abs(fy - ly) > 0.01:
+                            # ★L字経路に変換: (x1,y1) -- (x1,y2) -- (x2,y2) ★
+                            # 中間点を (x1, y2) とすることで、まず縦方向に動いてから横方向。
+                            return f'({x1},{y1}) -- ({x1},{y2}) -- ({x2},{y2})'
+                        return sm.group(0)
+
+                    # 反復適用: 一度の置換で新しい --セグメントが追加されるが、
+                    # 新セグメントは構造上 軸平行なので追加置換は不要。
+                    # ただし安全のため複数回スキャンする。
+                    for _ in range(10):
+                        new_body = seg_pattern.sub(_replace_seg, body)
+                        if new_body == body:
+                            break
+                        body = new_body
+
+                    return begin + body + end
+
+                return re.sub(env_pattern, _fix_env, tex_str, flags=re.S)
+
+            try:
+                tex = _force_axis_parallel_segments(tex)
+            except Exception as _e:
+                logger.warning('axis-parallel enforcement skipped: %s', _e)
+
+            # 7f-1c) ★ CircuiTikZ 斜め素子 (to[R] 等) → 軸平行に変換 ★
+            #     (x1,y1) to[R,...] (x2,y2) で x1≠x2 かつ y1≠y2 の場合、素子が斜めになる。
+            #     |dx| >= |dy| なら水平素子に: (x1,y1) to[R,...] (x2,y1) -- (x2,y2)
+            #     |dx| <  |dy| なら垂直素子に: (x1,y1) -- (x1,y2) to[R,...] (x2,y2)
+            def _force_axis_parallel_elements(tex_str):
+                env_pattern = r'(\\begin\{circuitikz\}(?:\[.*?\])?)([\s\S]*?)(\\end\{circuitikz\})'
+                elem_pattern = re.compile(
+                    r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)\s*'
+                    r'(to\s*\[[^\]]*\])\s*'
+                    r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)'
+                )
+
+                def _fix_env(m):
+                    begin = m.group(1)
+                    body = m.group(2)
+                    end = m.group(3)
+
+                    def _replace_elem(em):
+                        x1, y1 = em.group(1), em.group(2)
+                        to_block = em.group(3)
+                        x2, y2 = em.group(4), em.group(5)
+                        try:
+                            fx, fy = float(x1), float(y1)
+                            lx, ly = float(x2), float(y2)
+                        except (ValueError, IndexError):
+                            return em.group(0)
+                        dx = abs(fx - lx)
+                        dy = abs(fy - ly)
+                        if dx > 0.01 and dy > 0.01:
+                            if dx >= dy:
+                                # 水平素子: (x1,y1) to[X] (x2,y1) -- (x2,y2)
+                                return (
+                                    f'({x1},{y1}) {to_block} ({x2},{y1}) -- ({x2},{y2})'
+                                )
+                            else:
+                                # 垂直素子: (x1,y1) -- (x1,y2) to[X] (x2,y2)
+                                return (
+                                    f'({x1},{y1}) -- ({x1},{y2}) {to_block} ({x2},{y2})'
+                                )
+                        return em.group(0)
+
+                    for _ in range(10):
+                        new_body = elem_pattern.sub(_replace_elem, body)
+                        if new_body == body:
+                            break
+                        body = new_body
+                    return begin + body + end
+
+                return re.sub(env_pattern, _fix_env, tex_str, flags=re.S)
+
+            try:
+                tex = _force_axis_parallel_elements(tex)
+            except Exception as _e:
+                logger.warning('axis-parallel element enforcement skipped: %s', _e)
+
             # 7f-2) ★ CircuiTikZ bipoles/fill=white remover ★
             #     bipoles/fill was removed in circuitikz 1.x+. Remove any
             #     \ctikzset{bipoles/fill=white} lines to prevent pgfkeys errors.
