@@ -43,8 +43,16 @@ def _fix_circuitikz_closed_loops(tex_str):
             has_circuit_elements = bool(re.search(r'to\s*\[', draw_cmd))
             if not has_circuit_elements:
                 return draw_cmd
-            if abs(fx - lx) > 0.01 or abs(fy - ly) > 0.01:
+            dx = abs(fx - lx) > 0.01
+            dy = abs(fy - ly) > 0.01
+            if dx and dy:
+                # L-shape close to avoid diagonal
+                close_str = f' -- ({last[0]},{first[1]}) -- ({first[0]},{first[1]})'
+            elif dx or dy:
                 close_str = f' -- ({first[0]},{first[1]})'
+            else:
+                close_str = ''
+            if close_str:
                 idx = draw_cmd.rfind(';')
                 if idx >= 0:
                     draw_cmd = draw_cmd[:idx] + close_str + draw_cmd[idx:]
@@ -238,12 +246,33 @@ class TestCircuiTikZClosedLoop:
             '\\end{circuitikz}'
         )
         result = _fix_circuitikz_closed_loops(tex)
-        # First draw: (0,0) → (3,3), has to[V], open → should close with -- (0,0)
-        # Second draw: (3,3) → (0,0), already closes (last coord is (0,0) and first is (3,3))
-        # The second draw has to[R] and last coord differs from first → close
-        # Actually second draw first=(3,3) last=(0,0), differ, has to[R] → should close
-        # Both should be handled appropriately
         assert '\\draw' in result
+
+    def test_diagonal_close_becomes_lshape(self):
+        """When end and start differ in both x and y, the closer must use L-shape
+        (axis-parallel) instead of drawing a diagonal line."""
+        tex = (
+            '\\begin{circuitikz}\n'
+            '\\draw (0,0) to[battery1,l=$E$] (0,3) to[R,l=$R$] (5.5,3);\n'
+            '\\end{circuitikz}'
+        )
+        result = _fix_circuitikz_closed_loops(tex)
+        # Must close via intermediate corner (5.5,0) — not direct diagonal (0,0)
+        assert '-- (5.5,0) -- (0,0)' in result, \
+            f'Expected L-shape close, got: {result}'
+
+    def test_axis_parallel_close_stays_single_segment(self):
+        """When only x (or only y) differs at the end, a single -- close is enough."""
+        tex = (
+            '\\begin{circuitikz}\n'
+            '\\draw (0,0) to[battery1,l=$E$] (0,3) to[R,l=$R$] (5.5,3) -- (5.5,0);\n'
+            '\\end{circuitikz}'
+        )
+        result = _fix_circuitikz_closed_loops(tex)
+        # End (5.5,0), Start (0,0): y same → single -- (0,0) close, no intermediate.
+        assert '-- (5.5,0) -- (0,0)' in result
+        # And it should NOT contain a duplicate intermediate corner
+        assert result.count('(5.5,0)') == 1
 
 
 class TestTikZCoordinateClosure:

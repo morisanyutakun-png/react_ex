@@ -3757,6 +3757,22 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '    既存の to[] オプションだけでラベル位置は十分制御できる。\n'
             '    \\node at (x,y) {ラベル}; を素子の周辺に手動で置く必要はない。\n'
             '\n'
+            'A10. ★直流電池は必ず to[battery1,l=$E$] を使う★。代替記号の使用は禁止。\n'
+            '     ✗ 禁止: to[V,l=$E$] / to[american voltage source] / to[bat] (←存在しない)\n'
+            '     ✗ 禁止: \\draw 手描きで電池記号を作る\n'
+            '     ✗ 禁止: to[battery1] のあとに \\node {$+$}, \\node {$-$} で極性を補足する\n'
+            '          → to[battery1] は長線(+)/短線(−) で極性を自動表示するため重複\n'
+            '     交流源は to[sV,l=$e(t)$]、複数セル電池は to[battery2,l=$E$]。\n'
+            '\n'
+            'A11. ★斜め配線の禁止徹底★ — 異なる x かつ異なる y の点を結ぶ場合の必須手順:\n'
+            '     悪い例（斜め線が出る）:\n'
+            '       \\draw (0,0) -- (5,3);   ← (0,0) から (5,3) へ直接 → 斜め線\n'
+            '     良い例（L字経路で2セグメント）:\n'
+            '       \\draw (0,0) -- (5,0) -- (5,3);   ← 横→縦の L 字\n'
+            '       \\draw (0,0) -- (0,3) -- (5,3);   ← 縦→横の L 字\n'
+            '     一筆書きの中でも同じ。to[X] の前後で異なる軸方向の点に飛ぶ場合は\n'
+            '     必ず中間に角ノードを 1 つ入れて L 字で繋ぐ。\n'
+            '\n'
             '======================================================================\n'
             '【テンプレート S】単一閉ループ／直列回路 — 1本の \\draw で一筆書き\n'
             '======================================================================\n'
@@ -3780,6 +3796,34 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '    -- (0,3)\n'
             '    to[battery1,l=$E$] (0,0);\n'
             '\\end{circuitikz}\n'
+            '\n'
+            '★ RL過渡応答回路（E + スイッチS + R + L 直列） — 1本の \\draw で一筆書き ★\n'
+            '% スクリーンショット問題のような直列回路は ★必ず1本の \\draw★ で書く。\n'
+            '% 電池は to[battery1]、スイッチは to[switch] or to[opening switch]、\n'
+            '% 全部つないだ後、配線で始点に戻る。途中で \\draw を切ったり斜め線を引いたりしない。\n'
+            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
+            '  \\draw (0,0)\n'
+            '    to[battery1,l_=$E$] (0,3)                       % 左辺: 電池（上昇、+上−下）\n'
+            '    to[switch,l_=$S$] (1.5,3)                       % 上辺左: スイッチ\n'
+            '    to[R,l=$R$,v=$V_R$,i>^=$I$] (3.5,3)             % 上辺中: R\n'
+            '    to[L,l=$L$,v=$V_L$] (5.5,3)                     % 上辺右: L\n'
+            '    -- (5.5,0)                                       % 右辺下降（配線のみ、軸平行）\n'
+            '    -- (0,0);                                        % 下辺戻り（配線のみ、軸平行）\n'
+            '\\end{circuitikz}\n'
+            '★ ポイント ★:\n'
+            '  - \\draw は1本のみ。E → S → R → L → 配線 → 始点 を連続して書く。\n'
+            '  - 始点 (0,0) に戻る経路は L 字で書く: (5.5,3) → (5.5,0) → (0,0)。\n'
+            '    ★絶対に (5.5,3) → (0,0) と直接結ばない★（斜め線になる）。\n'
+            '  - 電流 I は R の to[] 内に i>^=$I$ で組込む。独立 \\draw[->] 禁止。\n'
+            '  - V_R, V_L は to[] 内に v=$V_R$, v=$V_L$ で組込む。\n'
+            '  - スイッチを開く問題なら to[switch] を to[opening switch] に変える。\n'
+            '\n'
+            '★ NG例 — 実際に発生した失敗 ★\n'
+            '✗ \\draw (0,0) -- (5.5,3);  ← 始点と終点を直接結んで斜め線になる\n'
+            '✗ to[V,l=$E$] で電池を描く ← V は一般電圧源（円記号）、battery1 ではない\n'
+            '✗ \\node[left] at (0,2.5) {$+$}; \\node[left] at (0,0.5) {$-$};\n'
+            '   ← to[battery1] が自動で長線/短線で極性を示すので手動±は冗長\n'
+            '✗ \\draw を E, S, R, L で4本に分ける ← 単一閉ループは1本の \\draw で\n'
             '\n'
             '======================================================================\n'
             '【テンプレート P】純粋並列回路 — 母線2本 + 並列枝 N 本\n'
@@ -9202,11 +9246,25 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                         if not has_circuit_elements:
                             return draw_cmd
 
-                        # If first and last are different, the circuit is open — close it
-                        if abs(fx - lx) > 0.01 or abs(fy - ly) > 0.01:
-                            # Insert -- (first_x, first_y) before the semicolon
+                        # If first and last are different, the circuit is open — close it.
+                        # ★軸平行で閉じる (L字経路)★
+                        # 終点と始点の x,y が両方異なる場合、直接 -- すると斜め線になる。
+                        # 中間点 (lx, fy) または (fx, ly) を経由して L 字で閉じる。
+                        dx = abs(fx - lx) > 0.01
+                        dy = abs(fy - ly) > 0.01
+                        if dx and dy:
+                            # 両方異なる → L 字経路: (lx,ly) -- (lx,fy) -- (fx,fy)
+                            close_str = (
+                                f' -- ({first[0]},{last[1]})'  # 一旦 y を始点に揃える（注意: 縦に動かす）
+                                if False else  # 実際は (lx, fy) 経由がより自然（矩形の角）
+                                f' -- ({last[0]},{first[1]}) -- ({first[0]},{first[1]})'
+                            )
+                        elif dx or dy:
+                            # 片方だけ異なる → 1セグメントで直行可能（軸平行のまま）
                             close_str = f' -- ({first[0]},{first[1]})'
-                            # Find the last semicolon
+                        else:
+                            close_str = ''
+                        if close_str:
                             idx = draw_cmd.rfind(';')
                             if idx >= 0:
                                 draw_cmd = draw_cmd[:idx] + close_str + draw_cmd[idx:]
@@ -9277,16 +9335,14 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     for fw, hw in fullwidth_map.items():
                         body = body.replace(fw, hw)
 
-                    # (d) 電池記号がない環境で +/- の孤児ノードがあれば削除
-                    has_battery = bool(re.search(
-                        r'to\[(?:battery1|battery2|V|sV|battery)\b', body
-                    ))
-                    if not has_battery:
-                        # \node[...] {$+$} や \node ... {$-$} を削除
-                        body = re.sub(
-                            r'\\node\b[^{;]*\{\s*\$?\s*[+\-−]\s*\$?\s*\}\s*;?\s*',
-                            '', body
-                        )
+                    # (d) ★ circuitikz 環境では手動の +/- 極性記号は常に冗長 ★
+                    #     to[battery1] は長線/短線で極性を自動表示、to[C,v=$V$] も同様。
+                    #     よって circuitikz 環境内の手動 \node {$+$} / \node {$-$} は
+                    #     電池の有無に関わらず削除する（重複/孤児どちらも除去）。
+                    body = re.sub(
+                        r'\\node\b[^{;]*\{\s*\$?\s*[+\-−﹣－＋]\s*\$?\s*\}\s*;?\s*',
+                        '', body
+                    )
 
                     # (e) ★ circuitikz 環境内の手動 \draw ... rectangle ... を削除 ★
                     #     これは A8 違反（素子を矩形で描画）の典型。
