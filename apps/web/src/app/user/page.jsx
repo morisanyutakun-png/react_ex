@@ -1315,7 +1315,7 @@ export default function UserModePage() {
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            {usage.unlocked ? '無制限' : `残り ${usage.remaining}/${usage.limit} 回（1回最大3問）`}
+            {usage.unlocked ? '無制限' : `残り ${usage.remaining}/${usage.limit} 回`}
           </div>
           {!usage.unlocked && (
             <button
@@ -1987,7 +1987,7 @@ export default function UserModePage() {
               {/* 問題数 */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <NumberField label="問題数（最大3問）" value={numQuestions} onChange={setNumQuestions} min={1} max={3} />
+                  <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} />
                 </div>
                 <div>
                   <NumberField label="参照する過去問数" value={topK} onChange={setTopK} min={1} max={20} />
@@ -3460,7 +3460,7 @@ export default function UserModePage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <NumberField label="問題数（最大3問）" value={numQuestions} onChange={setNumQuestions} min={1} max={3} />
+                <NumberField label="問題数" value={numQuestions} onChange={setNumQuestions} min={1} />
                 <NumberField label="参照する過去問の数" value={topK} onChange={setTopK} min={1} max={20} />
               </div>
             </div>

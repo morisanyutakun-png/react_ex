@@ -5243,7 +5243,7 @@ class LlmGenerateRequest(BaseModel):
     field: Optional[str] = ''
     # Question format: 'standard' | 'fill_in_blank' | 'choice' | 'true_false'
     question_format: Optional[str] = 'standard'
-    # Number of questions to generate (used for cost control)
+    # Number of questions to generate
     num_questions: Optional[int] = 3
     # Sub-topic / theme (maps to DB subtopic column)
     sub_topic: Optional[str] = None
@@ -5553,14 +5553,7 @@ async def generate_with_llm(req: LlmGenerateRequest = Body(...)):
     if not req.prompt or not req.prompt.strip():
         raise HTTPException(status_code=400, detail='prompt is required')
 
-    # ── 問題数制限 ──
-    max_questions_limit = int(os.getenv('MAX_QUESTIONS_PER_GENERATION', '3'))
     req_num_questions = getattr(req, 'num_questions', None) or 3
-    if req_num_questions > max_questions_limit:
-        return JSONResponse({
-            'error': f'1回の生成で作成できる問題数は最大{max_questions_limit}問です。',
-            'max_questions': max_questions_limit,
-        }, status_code=400)
 
     # ── AI 使用回数制限チェック ──
     user_id = req.user_id
@@ -7389,9 +7382,6 @@ async def _run_practice_job(job_id: str, openai_key: str, openai_model: str,
 @app.post('/api/practice/prompt')
 async def practice_render_prompt(req: PracticeGenerateRequest = Body(...)):
     """手動モード用: プロンプトのみを返す（LLM呼び出しなし）。ゲストでも利用可能。"""
-    max_q = int(os.getenv('MAX_QUESTIONS_PER_GENERATION', '3'))
-    if req.num_questions > max_q:
-        req.num_questions = max_q
     system_prompt = _build_practice_system_prompt(
         req.subject, req.topics or [], req.difficulty, req.num_questions
     )
@@ -7560,11 +7550,6 @@ async def practice_generate(req: PracticeGenerateRequest = Body(...)):
             'error': f'AI生成の無料利用上限（{usage_info["limit"]}回）に達しました。',
             'usage': usage_info,
         }, status_code=429)
-
-    # 問題数上限
-    max_q = int(os.getenv('MAX_QUESTIONS_PER_GENERATION', '3'))
-    if req.num_questions > max_q:
-        req.num_questions = max_q
 
     # モデル解決
     openai_model, resolved_tier = _resolve_model(req.model_tier or 'auto', req.subject)
