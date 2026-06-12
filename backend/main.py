@@ -527,6 +527,44 @@ def _unescape_latex(latex: str) -> str:
     return s
 
 
+def _split_chained_wire_draws(latex: str) -> str:
+    """暴走対処(安全な正規化): 純粋な座標ポリラインの \\draw を1線分ずつに分割する。
+
+    例: \\draw[edge] (0,0)--(0,2)--(3,2)--(3,0); を
+        \\draw[edge] (0,0)--(0,2); \\draw[edge] (0,2)--(3,2); \\draw[edge] (3,2)--(3,0);
+    に分割する。描画結果は完全に同一(視覚的に無変化)で、回路配線の連結を機械的に解消する。
+
+    安全策: パスが「(数値,数値)--(数値,数値)--…」だけで構成される場合のみ対象とする。
+    cycle / plot / arc / circle / rectangle / node / controls / ++ / 単位付き座標 等を
+    1つでも含む \\draw は一切触らない(図形・曲線・相対座標を壊さないため)。
+    """
+    if not isinstance(latex, str) or '--' not in latex:
+        return latex
+
+    # \draw[...]? に続き、座標ペアを -- で2個以上つないで ; で終わるものだけにマッチ
+    pat = re.compile(
+        r'\\draw(?P<opt>\[[^\]]*\])?\s*'
+        r'(?P<path>\(\s*-?\d*\.?\d+\s*,\s*-?\d*\.?\d+\s*\)'
+        r'(?:\s*--\s*\(\s*-?\d*\.?\d+\s*,\s*-?\d*\.?\d+\s*\)){2,})\s*;'
+    )
+
+    def _repl(m):
+        opt = m.group('opt') or ''
+        path = m.group('path')
+        pts = re.findall(r'\(\s*-?\d*\.?\d+\s*,\s*-?\d*\.?\d+\s*\)', path)
+        if len(pts) < 3:
+            return m.group(0)  # 2点(1線分)はそのまま
+        segs = []
+        for a, b in zip(pts, pts[1:]):
+            segs.append(f'\\draw{opt} {a}--{b};')
+        return ' '.join(segs)
+
+    try:
+        return pat.sub(_repl, latex)
+    except Exception:
+        return latex
+
+
 def _repair_latex_nesting(latex: str) -> str:
     """LLM出力のLaTeXネスト崩れを自動修復する。
 
@@ -4426,6 +4464,22 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \draw[->,line width=0.5pt] (0,0)--(0,4.0) node[above,font=\tiny]{#2};#3
 \end{tikzpicture}}
 
+% ── 回路部品(配線の上に重ねる不透明スタンプ。中心(x,y)をワイヤ上に置くだけ) ──
+% 使い方: まず閉ループの配線を独立した \draw 線分で描き、その上に部品を中心座標で置く。
+% こうすると座標が多少ずれても部品が「浮く」「向きが逆」が原理的に起きない。
+% 抵抗(水平): \Rbox{中心x}{中心y}{ラベル}
+\newcommand{\Rbox}[3]{\draw[fill=white,edge] (#1-0.55,#2-0.20) rectangle (#1+0.55,#2+0.20);\node[above=2pt]at(#1,#2+0.20){#3};}
+% スイッチ(水平・開いた状態): \SWopen{中心x}{中心y}{ラベル}。接点は必ずワイヤ上、可動片は斜め上
+\newcommand{\SWopen}[3]{\fill[white](#1-0.5,#2-0.16)rectangle(#1+0.5,#2+0.34);\draw[edge](#1-0.5,#2)--(#1-0.4,#2);\draw[edge](#1+0.4,#2)--(#1+0.5,#2);\draw[contact dot](#1-0.4,#2)circle(0.045);\draw[contact dot](#1+0.4,#2)circle(0.045);\draw[edge](#1-0.4,#2)--(#1+0.22,#2+0.30);\node[above=2pt]at(#1,#2+0.30){#3};}
+% スイッチ(水平・閉じた状態): \SWclosed{中心x}{中心y}{ラベル}
+\newcommand{\SWclosed}[3]{\fill[white](#1-0.5,#2-0.16)rectangle(#1+0.5,#2+0.30);\draw[edge](#1-0.5,#2)--(#1+0.5,#2);\draw[contact dot](#1-0.4,#2)circle(0.045);\draw[contact dot](#1+0.4,#2)circle(0.045);\node[above=2pt]at(#1,#2+0.20){#3};}
+% コンデンサー(水平・直列): \Ccap{中心x}{中心y}{ラベル}
+\newcommand{\Ccap}[3]{\fill[white](#1-0.22,#2-0.36)rectangle(#1+0.22,#2+0.36);\draw[edge](#1-0.22,#2)--(#1-0.07,#2);\draw[plate](#1-0.07,#2-0.30)--(#1-0.07,#2+0.30);\draw[plate](#1+0.07,#2-0.30)--(#1+0.07,#2+0.30);\draw[edge](#1+0.07,#2)--(#1+0.22,#2);\node[above=4pt]at(#1,#2+0.30){#3};}
+% 電池・電源(垂直・直列): \Vbatt{中心x}{中心y}{ラベル}。長板=上=+ で向き固定、ラベルは左
+\newcommand{\Vbatt}[3]{\fill[white](#1-0.30,#2-0.34)rectangle(#1+0.30,#2+0.34);\draw[edge](#1,#2+0.34)--(#1,#2+0.12);\draw[plate](#1-0.26,#2+0.12)--(#1+0.26,#2+0.12);\draw[edgethin](#1-0.12,#2-0.06)--(#1+0.12,#2-0.06);\draw[edge](#1,#2-0.06)--(#1,#2-0.34);\node[left]at(#1-0.32,#2){#3};}
+% 抵抗(垂直): \RboxV{中心x}{中心y}{ラベル}
+\newcommand{\RboxV}[3]{\draw[fill=white,edge] (#1-0.20,#2-0.55) rectangle (#1+0.20,#2+0.55);\node[right=2pt]at(#1+0.20,#2){#3};}
+
 % マークシート1行(横長丸番号 ―・1〜9・0)
 \newcommand{\bubbles}{%
   \begin{tikzpicture}[baseline=-0.55ex]
@@ -4586,25 +4640,37 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - ラベルの重なりを避け、矢印は velarr/forcearr で統一する。
 - ボールや三角形など「物体の輪郭」だけは -- cycle で閉じてよい。ただし配線(導線)には cycle を使わない(下記)。
 
-=== 回路図・配線の作図ルール(最重要・厳守) ===
-回路の導線で斜めの線が出る不具合を防ぐため、必ず次に従うこと:
-- 導線は (a)--(b)--(c)--(d) のように1本の \\draw に連結しないこと。
-  必ず「1線分につき1つの \\draw」とし、各文を ; で区切って独立させる。
-- 回路の閉路を --cycle で閉じないこと(角に斜め線が出る原因になる)。
-- すべての導線は水平または垂直のみ。斜めの導線は禁止。角は同一座標を共有する別々の水平/垂直線分でつなぐ。
-- 各線分の端点座標を厳密に一致させ、段差・隙間・はみ出しをなくす。
-  【悪い例(禁止)】
-    \\draw[edgethin] (0,0)--(0,2.3)--(1.05,2.3); % 連結はNG
-    \\draw[edgethin] (0,0)--(0,2.3)--(5.35,2.3)--(5.35,0)--cycle; % cycleもNG
-  【良い例(これに倣う)】
-    \\draw[edgethin] (0,0)--(0,2.3);
-    \\draw[edgethin] (0,2.3)--(1.05,2.3);
-    \\draw[edgethin] (2.65,2.3)--(4.20,2.3);
-    \\draw[edgethin] (4.50,2.3)--(5.35,2.3);
-    \\draw[edgethin] (5.35,2.3)--(5.35,0);
-    \\draw[edgethin] (5.35,0)--(0,0);
-- 抵抗は \\draw[edge] (x1,y) rectangle (x2,y2);、コンデンサー/電源/極板は plate スタイルの独立した \\draw で描く。
-- 素子やスイッチは導線の途中に配置し、ラベルは node[above]/[left]/[right] で線と重ならせない。
+=== 回路図の作図ルール(最重要・厳守) ===
+回路は「①閉ループの配線を独立線分で描く → ②その上に部品マクロを中心座標で置く」の2段階で描く。
+これにより部品が「浮く」「電源の向きが逆」「スイッチが線から外れる」事故が原理的に起きない。
+- ①配線: 閉ループを必ず「1線分=1つの \\draw、各文を ; で区切る」で描く。連結( (a)--(b)--(c) )も --cycle も禁止。
+  すべて水平または垂直のみ。端点座標を厳密に一致させる。
+- ②部品: 抵抗・スイッチ・コンデンサー・電源は、自前で線を引かず必ず提供済みマクロを使う。
+  中心座標を①の配線(ワイヤ)上に置くだけでよい。マクロが白塗りで下の線を隠し、正しい向きで描く。
+    \\Rbox{{x}}{{y}}{{$R$}}        … 水平な抵抗(箱)
+    \\Ccap{{x}}{{y}}{{$C$}}        … 水平・直列のコンデンサー
+    \\SWopen{{x}}{{y}}{{S}}        … 開いたスイッチ(閉なら \\SWclosed)
+    \\Vbatt{{x}}{{y}}{{$E$}}       … 垂直な電源(長板=上=+ で向き固定)
+    \\RboxV{{x}}{{y}}{{$R$}}       … 垂直な抵抗
+- 標準的な直列RC回路の完全な例(これに倣う):
+    \\begin{{tikzpicture}}[x=1cm,y=1cm]
+    \\draw[edge] (0,0)--(0,2.2);
+    \\draw[edge] (0,2.2)--(5.4,2.2);
+    \\draw[edge] (5.4,2.2)--(5.4,0);
+    \\draw[edge] (5.4,0)--(0,0);
+    \\Vbatt{{0}}{{1.1}}{{$E$}}
+    \\Rbox{{1.6}}{{2.2}}{{$R$}}
+    \\SWopen{{3.0}}{{2.2}}{{S}}
+    \\Ccap{{4.4}}{{2.2}}{{$C$}}
+    \\end{{tikzpicture}}
+
+=== ラベルの重なり防止(厳守) ===
+- 図中ラベルは対象から十分離し(目安0.3以上)、node[above]/[below]/[left]/[right] と =Npt で位置を明示する。
+- 一様磁場の格子記号(\\odot や \\times を並べたもの)の上には、装置名や P/Q 等のラベルを置かない。
+  ラベルは格子(fieldzone)の外側に出し、対象の端子付近に短く付ける。
+- 装置名(記録タイマー・音さ・スクリーン等)の長い文字列は図の外周に置き、本体の線や他のラベルと重ねない。
+  隣り合うラベルどうしが重なりそうなら、片方を上、もう片方を下にずらす。
+- 棒・導体など細い対象の端点ラベル(P, Q 等)は、対象の左右どちらか一方の外側に、格子記号と重ならない位置に置く。
 {custom_block}
 === 完遂ルール(最重要・絶対厳守) ===
 - 模試1回分(問題・マークシート・自己採点欄・解答解説のすべて)を、省略せず最後まで完成させること。
@@ -8724,6 +8790,11 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                         pass
                 try:
                     only = _repair_latex_nesting(only)
+                except Exception:
+                    pass
+                # 暴走対処: 連結された回路配線の \draw を1線分ずつに分割(安全・視覚的に無変化)
+                try:
+                    only = _split_chained_wire_draws(only)
                 except Exception:
                     pass
                 body_lines = [only]
