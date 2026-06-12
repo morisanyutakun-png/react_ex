@@ -34,7 +34,7 @@ export default function MockExamPage() {
   const [roundNo, setRoundNo] = useState(1);
   const [difficulty, setDifficulty] = useState(DIFFICULTY_OPTIONS[0]);
   const [theme, setTheme] = useState('');
-  const [numAnswers, setNumAnswers] = useState(22);
+  const [numAnswers, setNumAnswers] = useState(28);
   const [customReq, setCustomReq] = useState('');
 
   // ── 生成物 ──
@@ -94,7 +94,12 @@ export default function MockExamPage() {
     setWorking(true);
     setStatus('模試PDFを生成中…（図が多い場合は時間がかかります）');
     try {
-      const data = await generatePdf(llmOutput, `共通テスト予想模試 第${roundNo}回 物理`);
+      // AIが分割出力した際の継続マーカーや、貼り付け時に混入しがちなコードフェンスを除去
+      const cleaned = llmOutput
+        .replace(/%%%\s*CONTINUE\s*%%%/gi, '')
+        .replace(/^```[a-zA-Z]*\s*$/gm, '')
+        .trim();
+      const data = await generatePdf(cleaned, `共通テスト予想模試 第${roundNo}回 物理`);
       if (data?.pdf_url) {
         setPdfUrl(data.pdf_url);
         setStep(3);
@@ -181,9 +186,9 @@ export default function MockExamPage() {
             />
 
             <div>
-              <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-2">解答番号の総数（目安）</label>
-              <NumberField value={numAnswers} onChange={setNumAnswers} min={10} max={36} />
-              <p className="mt-1.5 text-[12px] text-[#86868b]">物理は概ね 22〜28。マークシート・自己採点欄の行数の目安になります。</p>
+              <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-2">解答番号の総数（本番並み）</label>
+              <NumberField value={numAnswers} onChange={setNumAnswers} min={26} max={32} />
+              <p className="mt-1.5 text-[12px] text-[#86868b]">本番の物理は概ね28問。大問I〜IVに小問をしっかり配置し、約{numAnswers}問・1回分をまるごと作成します。</p>
             </div>
 
             <TextArea
@@ -238,6 +243,9 @@ export default function MockExamPage() {
             subtitle="\\documentclass から \\end{document} までをそのまま貼り付け"
             icon={<Icons.File className="w-4 h-4" />}
           >
+            <p className="mb-3 text-[12px] text-[#86868b] leading-relaxed">
+              約28問・1回分をまるごと生成します。もし途中で切れて末尾が <code className="px-1 rounded bg-[#fff5f7] text-[#ff2d55]">%%% CONTINUE %%%</code> で終わっていたら、AIに「続き」と送り、返ってきた続きをこの下に貼り足してください（マーカーは自動で除去されます）。
+            </p>
             <TextArea
               value={llmOutput}
               onChange={setLlmOutput}

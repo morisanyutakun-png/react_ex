@@ -4402,13 +4402,15 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \setlength{\labelsep}{0.5em}\setlength{\itemindent}{0pt}\small}}{\end{list}\end{minipage}\par\vskip0.3\baselineskip}
 \newcommand{\oi}[1]{\item[#1]}
 % 各回の表紙
+% 縦の空きは \par\vspace で入れる(\\[5mm] 形式は \\ と [ の間に空白が入ると
+% [5mm] が文字として表示される不具合があるため使わない)
 \newcommand{\settitle}[2]{%
   \clearpage\thispagestyle{empty}%
   \null\vspace*{26mm}
   \begin{center}
-    {\Huge\bfseries 第#1回\ 予想問題}\\[5mm]
-    {\LARGE 物\hspace{0.6em}理}\\[7mm]
-    \rule{0.62\linewidth}{0.8pt}\\[4mm]
+    {\Huge\bfseries 第#1回\ 予想問題}\par\vspace{5mm}
+    {\LARGE 物\hspace{0.6em}理}\par\vspace{7mm}
+    \rule{0.62\linewidth}{0.8pt}\par\vspace{4mm}
     \begin{minipage}{0.82\linewidth}\normalsize\setlength{\parskip}{0.5em}
     #2
     \end{minipage}
@@ -4469,7 +4471,8 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
     """
     subject = (req.subject or '物理').strip()
     round_no = int(req.round_no or 1)
-    num_answers = max(5, min(40, int(req.num_answers or 22)))
+    # 本番の共通テスト物理は概ね解答番号28前後。模試として手応えを出すため既定28、最低でも26を要求する。
+    num_answers = max(20, min(36, int(req.num_answers or 28)))
     difficulty = (req.difficulty or '').strip() or '標準的な受験生の平均点が55〜65点になる難易度。後半に70点超をねらう考察問題を配置。'
 
     theme = (req.theme or '').strip()
@@ -4503,7 +4506,13 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - 第1問: 小問集合(複数分野を横断する独立小問。各5点程度)。
 - 第2問〜第4問: 探究活動・実験考察・文章読解型を中心に、誘導に沿って解く構成。
   会話文(太郎・花子など)・測定データの表・グラフ選択・組合せ選択(ア・イを表から選ぶ)を適度に織り込む。
-- 解答番号は文書全体で通し番号(1〜{num_answers} 目安)。各空欄は \\mb{{n}} で表示。
+- 解答番号は文書全体で通し番号。本番同等のボリュームを必須とし、合計 {num_answers} 個(最低26個)とすること。各空欄は \\mb{{n}} で表示。
+- 設問数の目安(本番準拠・必ずこの規模を満たす):
+    第1問 … 問1〜問5(解答番号 1〜5 を網羅)
+    第2問 … 問1〜問7(解答番号 6〜12 程度)
+    第3問 … 問1〜問8(解答番号 13〜20 程度。A・Bの二部構成にしてもよい)
+    第4問 … 問1〜問8(解答番号 21〜{num_answers})
+  ※小問を間引いて短くしないこと。各大問は上記の問数を必ず満たすこと。
 - 難易度方針: {difficulty}
 {theme_block}
 === 必ず含める構成要素(この順に、すべて1つの文書内に) ===
@@ -4530,14 +4539,48 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - 表・数式・図が紙面(B5)からはみ出さないよう、\\small・\\dfrac・\\renewcommand{{\\arraystretch}} を適切に使う。
 - 数値・単位は $\\mathrm{{m/s}}$ 等で正しく組む。
 - \\settitle の表紙と注意事項・解答解説の双方に、本書が非公式の予想問題である旨を明記する。
+- ★改行幅指定 \\\\[5mm] のような「\\\\ の直後に [長さ]」は使わない(\\\\ と [ の間に空白/改行が入ると [5mm] が文字として表示される不具合の原因)。
+  縦の空きは \\vspace{{5mm}} や \\par で入れること。表内の改行 \\\\ は配点表・選択肢表などでそのまま使ってよい(直後に [..] を付けない)。
+- 表紙は必ず提供済みの \\settitle マクロを使う(自前で \\Huge 等を並べて再現しない)。注意事項本文は \\settitle の第2引数に \\par 区切りで書く。
 
 === 図(TikZ)の精度ルール ===
-- 描画前に主要座標をコメントで計算・検算する。閉じた図形は -- cycle で閉じる。
+- 描画前に主要座標をコメントで計算・検算する。
 - グラフは samples=60 以上で滑らかに。図のスケールは問題文の数値と比率を一致させる。
 - 物体が面に乗る場合は底辺 y 座標 = 面 y 座標(隙間を作らない)。
 - 三角比: cos30=0.866, sin30=0.5, cos60=0.5, sin60=0.866。
 - ラベルの重なりを避け、矢印は velarr/forcearr で統一する。
+- ボールや三角形など「物体の輪郭」だけは -- cycle で閉じてよい。ただし配線(導線)には cycle を使わない(下記)。
+
+=== 回路図・配線の作図ルール(最重要・厳守) ===
+回路の導線で斜めの線が出る不具合を防ぐため、必ず次に従うこと:
+- 導線は (a)--(b)--(c)--(d) のように1本の \\draw に連結しないこと。
+  必ず「1線分につき1つの \\draw」とし、各文を ; で区切って独立させる。
+- 回路の閉路を --cycle で閉じないこと(角に斜め線が出る原因になる)。
+- すべての導線は水平または垂直のみ。斜めの導線は禁止。角は同一座標を共有する別々の水平/垂直線分でつなぐ。
+- 各線分の端点座標を厳密に一致させ、段差・隙間・はみ出しをなくす。
+  【悪い例(禁止)】
+    \\draw[edgethin] (0,0)--(0,2.3)--(1.05,2.3); % 連結はNG
+    \\draw[edgethin] (0,0)--(0,2.3)--(5.35,2.3)--(5.35,0)--cycle; % cycleもNG
+  【良い例(これに倣う)】
+    \\draw[edgethin] (0,0)--(0,2.3);
+    \\draw[edgethin] (0,2.3)--(1.05,2.3);
+    \\draw[edgethin] (2.65,2.3)--(4.20,2.3);
+    \\draw[edgethin] (4.50,2.3)--(5.35,2.3);
+    \\draw[edgethin] (5.35,2.3)--(5.35,0);
+    \\draw[edgethin] (5.35,0)--(0,0);
+- 抵抗は \\draw[edge] (x1,y) rectangle (x2,y2);、コンデンサー/電源/極板は plate スタイルの独立した \\draw で描く。
+- 素子やスイッチは導線の途中に配置し、ラベルは node[above]/[left]/[right] で線と重ならせない。
 {custom_block}
+=== 完遂ルール(最重要・絶対厳守) ===
+- 模試1回分(問題・マークシート・自己採点欄・解答解説のすべて)を、省略せず最後まで完成させること。
+- 「(以下同様)」「(略)」「ここに問題を追加」等のプレースホルダや手抜きは一切禁止。全 {num_answers} 問を実際に作問する。
+- 解答・解説も全問分を必ず書く(配点表の正解 + 各問の解説)。配点の合計はちょうど100点。
+- マークシート・自己採点欄・配点表の行数は、実際の解答番号数({num_answers}個)と完全に一致させる。
+- 途中で出力を打ち切らない。最後の \\end{{document}} まで必ず出力する。
+- 量が多くて1回の応答に収まらない場合のみ、応答の最後を必ず「%%% CONTINUE %%%」で終え、
+  次の応答は前回の続き(同じLaTeXの続き)からプレーンに出力する。preamble や既出部分を再掲しないこと。
+  ※ただし可能な限り1回の応答で \\end{{document}} まで出し切ることを最優先とする。
+
 === 出力形式(厳守) ===
 - 出力は \\documentclass から始まり \\end{{document}} で終わる、完全な1つの LaTeX 文書のみ。
 - preamble(下記テンプレート)は一字一句改変しない。新しいマクロ定義の追加は最小限に留める。
