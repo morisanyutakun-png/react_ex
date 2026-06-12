@@ -4285,6 +4285,285 @@ def api_template_render(req: RenderTemplateRequest = Body(...)):
     return api_render_template(req)
 
 
+# ════════════════════════════════════════════════════════════════════
+#  共通テスト模試作成モード (Mock Exam Mode) — additive専用機能
+#  既存の問題作成モード(/api/template_render 等)には一切影響しない独立エンドポイント。
+#  共通テスト風の紙面感を確実に再現するため、検証済みの LaTeX プリアンブル＋マクロを
+#  「改変禁止スケルトン」として AI に渡し、本文だけを埋めさせる方式を採る。
+#  出力された完全な LaTeX 文書はそのまま既存の /api/generate_pdf でコンパイルできる
+#  (generate_pdf は ltjsarticle を検出して lualatex / クラウド xelatex で処理する)。
+# ════════════════════════════════════════════════════════════════════
+
+# 共通テスト物理 模試用の正準プリアンブル＋マクロ群。
+# 参考の「共通テスト物理 予想問題集」の体裁(明朝・B5・マークシート・自己採点欄・
+# 大問見出し・解答番号枠・選択肢グリッド)を再現する。AI はこの定義を改変せず使う。
+_MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsarticle}
+\usepackage[top=16mm,bottom=20mm,left=18mm,right=18mm,headheight=20pt,headsep=5mm,includehead]{geometry}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,patterns,decorations.pathmorphing,shapes.geometric,shadings,fadings}
+\usepackage[table]{xcolor}
+\usepackage{fancyhdr}
+\usepackage{array,booktabs}
+\usepackage{enumitem}
+\usepackage{lastpage}
+\usepackage{needspace}
+
+\definecolor{accent}{RGB}{0,0,0}
+\definecolor{shade}{RGB}{236,236,236}
+\definecolor{markfill}{RGB}{222,222,222}
+\definecolor{linegray}{RGB}{80,80,80}
+% ── 図の線種・塗り(共通テスト風の素朴で精密な作図) ──
+\tikzset{
+  contact dot/.style={circle,fill=black,draw=black,inner sep=1.1pt},
+  coil spring/.style={decorate,decoration={coil,aspect=0.55,segment length=4pt,amplitude=2.2pt},line width=0.9pt},
+  edge/.style={draw=black,line width=1pt,line join=round},
+  edgethin/.style={draw=black,line width=0.55pt},
+  rail/.style={line width=1.3pt,line cap=round},
+  guide/.style={line width=0.4pt,dash pattern=on 2.4pt off 1.8pt,black!55},
+  ray/.style={line width=0.45pt,black!72},
+  rayc/.style={line width=1.3pt},
+  dim/.style={line width=0.45pt,{Stealth[length=4.2pt]}-{Stealth[length=4.2pt]}},
+  velarr/.style={line width=0.9pt,-{Stealth[length=6pt,width=4.6pt]}},
+  forcearr/.style={line width=1.5pt,-{Stealth[length=8pt,width=6.6pt]}},
+  box3d/.style={draw=black,line width=1pt,top color=white,bottom color=black!26},
+  rodcyl/.style={draw=black,line width=0.9pt,left color=black!10,right color=black!48,middle color=white},
+  screenbd/.style={draw=black,line width=0.8pt,left color=black!5,right color=black!32},
+  fieldzone/.style={draw=black!28,line width=0.4pt,fill=black!7},
+  plate/.style={line width=2.4pt,line cap=round},
+}
+% 立体的な小ブロック(左下基準・正面/上面/側面)
+\newcommand{\block}[2]{\begin{scope}[shift={(#1,#2)}]
+  \filldraw[edge,fill=black!26] (0.70,0)--(0.90,0.20)--(0.90,0.70)--(0.70,0.50)--cycle;
+  \filldraw[edge,fill=black!11] (0,0.50)--(0.70,0.50)--(0.90,0.70)--(0.20,0.70)--cycle;
+  \shadedraw[edge,top color=white,bottom color=black!22] (0,0) rectangle (0.70,0.50);
+\end{scope}}
+% 球(中心(#1,#2)半径#3)
+\newcommand{\ballobj}[3]{%
+  \shade[ball color=black!18] (#1,#2) circle (#3);
+  \draw[edgethin] (#1,#2) circle (#3);}
+% 固定地面(ハッチング＋太い基準線) #1=x1 #2=x2 #3=y
+\newcommand{\groundstrip}[3]{%
+  \fill[pattern=north east lines,pattern color=black!85] (#1,#3-0.30) rectangle (#2,#3);
+  \draw[rail] (#1,#3)--(#2,#3);}
+
+% ヘッダーの灰色見出しタブ(本試験の親指インデックス風)
+\newcommand{\butsutab}{{\setlength{\fboxsep}{0pt}\colorbox{black!22}{\rule{0pt}{4.6mm}\hspace{7.5mm}}}}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyheadoffset[RO,LE]{10mm}
+\fancyhead[RO]{\normalsize 物\hspace{0.5em}理\hspace{3.5mm}\butsutab}
+\fancyhead[LE]{\butsutab\hspace{3.5mm}\normalsize 物\hspace{0.5em}理}
+\fancyfoot[C]{\normalsize ―\hspace{0.6em}\thepage\hspace{0.6em}―}
+\renewcommand{\headrulewidth}{0pt}
+
+% 全角幅(luatexja の \zw が無ければ em で代用)
+\newlength{\zwx}
+\ifdefined\zw \setlength{\zwx}{1\zw}\else \setlength{\zwx}{1em}\fi
+\setlength{\parindent}{1\zwx}
+\setlength{\parskip}{0pt}
+\renewcommand{\baselinestretch}{1.12}
+
+% 解答番号ボックス(白地・太枠・横長・サンセリフ数字)
+\newcommand{\mb}[1]{%
+  \tikz[baseline=-0.7ex]{\node[draw=black,line width=1pt,fill=white,
+    rectangle,inner xsep=5pt,inner ysep=1.4pt,minimum width=8mm,
+    minimum height=4.4mm,font=\sffamily]{#1};}}
+% 配点表示(行末右寄せ)
+\newcommand{\hai}[1]{\hfill\mbox{\normalsize（配点\hspace{0.4em}#1）}}
+\newcommand{\pt}[1]{\hspace*{\fill}{\small\mbox{[#1]}}}
+\newcommand{\dd}{\mathrm{d}}
+% 大問見出し(改ページ・「第 N 問」・小問は行末配点)
+\newcommand{\daimon}[2]{\clearpage%
+  \noindent{\large\textbf{第\hspace{0.2em}#1\hspace{0.2em}問}}\hspace{1.4em}{\normalsize #2}\par\nobreak\vskip0.6\baselineskip}
+% 設問見出し(ぶら下げ・「問 N」)
+\newcommand{\toi}[1]{\par\addvspace{1.5\baselineskip}\needspace{0.72\textheight}%
+  \noindent\hangindent=3\zwx\hangafter=1%
+  \hspace*{1\zwx}\textbf{問\hspace{0.3em}#1}\hspace{0.6em}\ignorespaces}
+% 選択肢グリッド(固定間隔・丸番号と中身)。\begin{sentaku}[列数] … 各選択肢は \op{\cn{丸数字}}{中身}
+\newcommand{\op}[2]{#1\hspace{0.5em}#2}
+\newcommand{\cn}[1]{\tikz[baseline=-0.5ex]{\node[draw=black,ellipse,line width=0.4pt,%
+  inner sep=0pt,minimum width=3.5mm,minimum height=4.7mm,%
+  font=\sffamily\fontsize{8}{8}\selectfont]{#1};}}
+\newenvironment{sentaku}[1][3]{%
+  \par\nopagebreak\vskip0.45\baselineskip\nopagebreak
+  \setlength{\tabcolsep}{1.7\zwx}\renewcommand{\arraystretch}{1.5}%
+  \begin{center}\small\begin{tabular}[t]{*{#1}{l}}}{%
+  \end{tabular}\end{center}\vskip-0.05\baselineskip}
+% 文字指定の注記
+\newcommand{\given}[1]{\par\vskip0.3\baselineskip\noindent\hspace*{2\zwx}{\small #1}\par}
+% リード文(場面転換)
+\newcommand{\lead}[1]{\par\vskip0.6\baselineskip #1\par}
+% 長文選択肢(1行1文)。\begin{optlist} … \oi{\cn{丸数字}} 本文
+\newenvironment{optlist}{\par\nopagebreak\vskip0.45\baselineskip\nopagebreak
+  \noindent\begin{minipage}{\linewidth}%
+  \begin{list}{}{\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}\setlength{\parsep}{0pt}%
+  \setlength{\itemsep}{0.42\baselineskip}\setlength{\leftmargin}{3\zwx}\setlength{\labelwidth}{1.5\zwx}%
+  \setlength{\labelsep}{0.5em}\setlength{\itemindent}{0pt}\small}}{\end{list}\end{minipage}\par\vskip0.3\baselineskip}
+\newcommand{\oi}[1]{\item[#1]}
+% 各回の表紙
+\newcommand{\settitle}[2]{%
+  \clearpage\thispagestyle{empty}%
+  \null\vspace*{26mm}
+  \begin{center}
+    {\Huge\bfseries 第#1回\ 予想問題}\\[5mm]
+    {\LARGE 物\hspace{0.6em}理}\\[7mm]
+    \rule{0.62\linewidth}{0.8pt}\\[4mm]
+    \begin{minipage}{0.82\linewidth}\normalsize\setlength{\parskip}{0.5em}
+    #2
+    \end{minipage}
+  \end{center}\vfill}
+% 解答・解説の大問見出し
+\newcommand{\soldai}[2]{\bigskip\noindent{\large\textbf{第#1問}}\hspace{1em}{\normalsize #2}\par\smallskip}
+
+% マークシート1行(横長丸番号 ―・1〜9・0)
+\newcommand{\bubbles}{%
+  \begin{tikzpicture}[baseline=-0.55ex]
+    \foreach \d [count=\i from 0] in {$-$,1,2,3,4,5,6,7,8,9,0}{
+      \node[draw,line width=0.3pt,ellipse,minimum width=5.4mm,minimum height=3.2mm,
+            inner sep=0pt,font=\tiny] at ({\i*0.62},0) {\d};
+    }
+  \end{tikzpicture}}
+\newcommand{\msrow}[1]{#1 & \bubbles \\ \hline}
+% 縦長丸番号(本試のマークシート様式)
+\newcommand{\bubblesT}{%
+  \begin{tikzpicture}[baseline=-0.55ex]
+    \foreach \d [count=\i from 0] in {$-$,1,2,3,4,5,6,7,8,9,0}{
+      \node[draw,line width=0.3pt,ellipse,minimum width=3.5mm,minimum height=5.0mm,
+            inner sep=0pt,font=\fontsize{6.5}{6.5}\selectfont] at ({\i*0.62},0) {\d};
+    }
+  \end{tikzpicture}}
+\newcommand{\msrowT}[1]{#1 & \bubblesT \\ \hline}
+% コンパクト縦長(2列マークシート用)
+\newcommand{\bubblesTc}{%
+  \begin{tikzpicture}[baseline=-0.55ex]
+    \foreach \d [count=\i from 0] in {$-$,1,2,3,4,5,6,7,8,9,0}{
+      \node[draw,line width=0.3pt,ellipse,minimum width=3.0mm,minimum height=4.4mm,
+            inner sep=0pt,font=\fontsize{6}{6}\selectfont] at ({\i*0.50},0) {\d};
+    }
+  \end{tikzpicture}}
+\newcommand{\msrowTT}[2]{#1 & \bubblesTc & #2 & \bubblesTc \\ \hline}
+"""
+
+
+class MockExamPromptRequest(BaseModel):
+    """共通テスト模試作成モードの入力(最小構成)。"""
+    subject: Optional[str] = '物理'
+    # 模試タイトルに使う回数 (例: 1 → 「第1回 予想問題」)
+    round_no: Optional[int] = 1
+    # 難易度の方針(平均点の目安など自由記述)。空ならデフォルト方針。
+    difficulty: Optional[str] = ''
+    # 出題テーマ・分野の希望(任意・自由記述)
+    theme: Optional[str] = ''
+    # ユーザーからの追加要望(任意・自由記述, 最大400字)
+    custom_request: Optional[str] = ''
+    # 解答番号の総数(表紙・マークシート生成の目安)。物理は概ね 22〜28。
+    num_answers: Optional[int] = 22
+
+
+def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
+    """共通テスト模試用の AI プロンプトを組み立てる。
+
+    既存の user_mode プロンプトのロジック(スケルトン提示＋構造ルール＋図精度ルール)は
+    踏襲しつつ、共通テスト特有の体裁・構成・採点様式に最適化した別系統のプロンプト。
+    """
+    subject = (req.subject or '物理').strip()
+    round_no = int(req.round_no or 1)
+    num_answers = max(5, min(40, int(req.num_answers or 22)))
+    difficulty = (req.difficulty or '').strip() or '標準的な受験生の平均点が55〜65点になる難易度。後半に70点超をねらう考察問題を配置。'
+
+    theme = (req.theme or '').strip()
+    theme_block = ''
+    if theme:
+        # 軽いサニタイズ(プロンプトインジェクション対策)
+        _t = re.sub(r'(ignore|forget|disregard|override)\s+(all|previous|above|system)', '', theme[:300], flags=re.IGNORECASE)
+        _t = re.sub(r'<[^>]+>', '', _t).strip()
+        if _t:
+            theme_block = f"- 出題テーマ・分野の希望: {_t}\n"
+
+    custom = (req.custom_request or '').strip()
+    custom_block = ''
+    if custom:
+        _c = re.sub(r'(ignore|forget|disregard|override)\s+(all|previous|above|system)', '', custom[:400], flags=re.IGNORECASE)
+        _c = re.sub(r'<[^>]+>', '', _c)
+        _c = re.sub(r'```.*?```', '', _c, flags=re.DOTALL).strip()
+        if _c:
+            custom_block = f"\n【ユーザーからの追加要望(可能な範囲で反映)】\n{_c}\n"
+
+    spec = f"""あなたは大学入学共通テスト形式の模擬試験を作成する、経験豊富なプロの問題作成者です。
+過去問の出題傾向を踏まえ、緻密で本番さながらの「{subject} 予想模試(1回分)」を作成します。
+
+出力は、後述の【LaTeXテンプレート】の preamble を一切改変せずに用い、\\begin{{document}} 以降の
+本文だけを埋めて、\\documentclass から \\end{{document}} までの完全な1つの LaTeX 文書とすること。
+
+=== 出題仕様 ===
+- 科目: {subject}
+- タイトル: 第{round_no}回 予想問題
+- 構成: 大問 I〜IV の4題。各大問25点、合計100点満点。解答時間60分。
+- 第1問: 小問集合(複数分野を横断する独立小問。各5点程度)。
+- 第2問〜第4問: 探究活動・実験考察・文章読解型を中心に、誘導に沿って解く構成。
+  会話文(太郎・花子など)・測定データの表・グラフ選択・組合せ選択(ア・イを表から選ぶ)を適度に織り込む。
+- 解答番号は文書全体で通し番号(1〜{num_answers} 目安)。各空欄は \\mb{{n}} で表示。
+- 難易度方針: {difficulty}
+{theme_block}
+=== 必ず含める構成要素(この順に、すべて1つの文書内に) ===
+1. 表紙: \\settitle{{{round_no}}}{{注意事項テキスト}} を使う。注意事項は本物の共通テスト風に
+   「解答時間60分」「大問I〜IVの4題・各25点・合計100点」「マークは1つだけ塗る」「符号つきは先頭の−も塗る」
+   「有効数字の指定に従う」「重力加速度の大きさを g とする」「本書は独自作成の非公式予想問題であり大学入試センター公式ではない」
+   等を \\par 区切りで列挙する。
+2. 問題本文: \\daimon{{1}}{{…}} 〜 \\daimon{{4}}{{…}} の4大問。各設問は \\toi{{1}} … で始める。
+3. マークシート: \\section*{{第{round_no}回 マークシート}} の下に表で生成。
+   1段組なら \\msrowT、2段組なら \\msrowTT を使い、全解答番号(1〜{num_answers})を網羅する。
+4. 自己採点欄: 番号・配点・自分の解答・得点の列をもつ表。合計欄(/100)を付ける。
+5. 解答・解説: \\section*{{第{round_no}回 解答・解説}} → まず「配点表(正解一覧)」の表、
+   続いて \\soldai{{1}}{{大問名}} ごとに各問の正解(\\cn{{n}})・配点・簡潔な解説。配点の合計が100点になること。
+
+=== 紙面・体裁ルール(共通テストらしさの要) ===
+- フォントは明朝体(ltjsarticle の既定)。詰め気味の問題冊子らしい紙面にする。
+- 大問見出しは \\daimon、設問は \\toi、配点は行末に \\hai{{25}}。
+- 解答番号は必ず四角枠 \\mb{{n}}。選択肢の丸番号は \\cn{{n}}。
+- 短い選択肢グリッドは sentaku 環境(\\begin{{sentaku}}[列数] … \\op{{\\cn{{1}}}}{{中身}} & … )。
+  長文選択肢は optlist 環境(\\oi{{\\cn{{1}}}} 本文)。
+- 「ア・イ」を選ぶ組合せ問題は tabular の表で選択肢を整理する(\\cn を行頭に)。
+- 図は TikZ 中心。提供済みスタイル(edge, rail, velarr, forcearr, fieldzone, ballobj, groundstrip 等)を活用。
+- すべての図でラベルが線・物体と重ならないよう node[above]/[right] 等で位置を明示し、座標は計算して検算する。
+- 表・数式・図が紙面(B5)からはみ出さないよう、\\small・\\dfrac・\\renewcommand{{\\arraystretch}} を適切に使う。
+- 数値・単位は $\\mathrm{{m/s}}$ 等で正しく組む。
+- \\settitle の表紙と注意事項・解答解説の双方に、本書が非公式の予想問題である旨を明記する。
+
+=== 図(TikZ)の精度ルール ===
+- 描画前に主要座標をコメントで計算・検算する。閉じた図形は -- cycle で閉じる。
+- グラフは samples=60 以上で滑らかに。図のスケールは問題文の数値と比率を一致させる。
+- 物体が面に乗る場合は底辺 y 座標 = 面 y 座標(隙間を作らない)。
+- 三角比: cos30=0.866, sin30=0.5, cos60=0.5, sin60=0.866。
+- ラベルの重なりを避け、矢印は velarr/forcearr で統一する。
+{custom_block}
+=== 出力形式(厳守) ===
+- 出力は \\documentclass から始まり \\end{{document}} で終わる、完全な1つの LaTeX 文書のみ。
+- preamble(下記テンプレート)は一字一句改変しない。新しいマクロ定義の追加は最小限に留める。
+- 説明文・前置き・コードフェンス(```)は一切付けない。最初の文字は必ず \\documentclass。
+
+=== LaTeXテンプレート(この preamble をそのまま文書の冒頭に置くこと) ===
+"""
+    return spec + _MOCK_EXAM_PHYSICS_PREAMBLE + "\n\\begin{document}\n% ↑↑↑ 上の preamble は改変せず使用。ここから下に本文(表紙→問題→マークシート→自己採点欄→解答解説)を生成する。\n\\end{document}\n"
+
+
+@app.post('/api/mock_exam/prompt')
+def api_mock_exam_prompt(req: MockExamPromptRequest = Body(...)):
+    """共通テスト模試作成モード専用: AI へ渡す指示文(プロンプト)を生成する。
+
+    返り値の指示文を ChatGPT/Claude 等に投げて得た完全な LaTeX 文書を、
+    既存の /api/generate_pdf にそのまま渡せばコンパイルできる。
+    """
+    try:
+        prompt = _build_mock_exam_prompt(req)
+        return JSONResponse({'rendered_prompt': prompt, 'rendered': prompt, 'mode': 'mock_exam'})
+    except Exception as e:
+        if 'logger' in globals():
+            logger.error(f"mock_exam prompt build failed: {e}")
+        return _dev_error_response('failed to build mock exam prompt', e, status_code=500)
+
+
 class ReindexRequest(BaseModel):
     doc_id: str
 

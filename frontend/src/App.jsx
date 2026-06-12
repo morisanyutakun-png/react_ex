@@ -282,6 +282,157 @@ function useSessionTimer(isActive) {
 function formatTimer(s) { return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}` }
 
 /* ════════════════════════════════════════════
+   共通テスト模試作成モード (Mock Exam Mode)
+   ── 既存の演習ウィザードとは独立した自己完結コンポーネント。
+      状態を内部に閉じ込め、/api/mock_exam/prompt と既存の
+      /api/generate_pdf のみを呼ぶ。
+   ════════════════════════════════════════════ */
+function MockExamScreen({ notify, isMobile, onHome }) {
+  const [phase, setPhase] = useState(1)            // 1:設定 2:AI依頼 3:完成
+  const [roundNo, setRoundNo] = useState(1)
+  const [difficulty, setDifficulty] = useState('標準（平均55〜65点想定）')
+  const [theme, setTheme] = useState('')
+  const [customReq, setCustomReq] = useState('')
+  const [numAnswers, setNumAnswers] = useState(22)
+  const [prompt, setPrompt] = useState('')
+  const [llmOutput, setLlmOutput] = useState('')
+  const [pdfUrl, setPdfUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [loadingMsg, setLoadingMsg] = useState('')
+
+  const buildPrompt = async () => {
+    setLoading(true); setLoadingMsg('共通テスト模試の指示文を作成中...')
+    try {
+      const body = {
+        subject: '物理',
+        round_no: Number(roundNo) || 1,
+        difficulty,
+        theme,
+        custom_request: customReq,
+        num_answers: Number(numAnswers) || 22,
+      }
+      const r = await fetch('/api/mock_exam/prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const d = await r.json()
+      if (r.ok) {
+        setPrompt(d.rendered_prompt || d.rendered || '')
+        setPhase(2)
+        notify('指示文を生成しました', 'success')
+      } else notify('エラー: ' + (d.detail || r.statusText), 'error')
+    } catch { notify('通信エラー', 'error') }
+    setLoading(false)
+  }
+
+  const copyPrompt = async () => { try { await navigator.clipboard.writeText(prompt); notify('コピーしました', 'success') } catch { notify('コピー失敗', 'error') } }
+
+  const buildPdf = async () => {
+    if (!llmOutput.trim()) return notify('AIが出力したLaTeXを貼り付けてください', 'error')
+    setLoading(true); setLoadingMsg('模試PDFを生成中...')
+    try {
+      const r = await fetch('/api/generate_pdf', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ latex: llmOutput, title: `共通テスト予想模試 第${roundNo}回 物理`, return_url: true }),
+      })
+      if (r.ok) {
+        const d = await r.json().catch(() => null)
+        const url = d?.pdf_url || URL.createObjectURL(await r.blob())
+        setPdfUrl(url); setPhase(3); notify('模試PDFを生成しました', 'success')
+      } else { const d = await r.json().catch(() => null); notify('PDF生成失敗: ' + (d?.detail || d?.error || ''), 'error') }
+    } catch { notify('PDF生成エラー', 'error') }
+    setLoading(false)
+  }
+
+  const reset = () => { setPhase(1); setPrompt(''); setLlmOutput(''); setPdfUrl('') }
+
+  return (
+    <>
+      {loading && <LoadingOverlay text={loadingMsg} />}
+
+      {/* PHASE 1: 設定 */}
+      {phase === 1 && (
+        <div className="card anim-fade-up mobile-card">
+          <div className="card-header mobile-card-header"><span className="card-emoji">📊</span><div className="card-title">共通テスト模試作成モード</div><div className="card-desc mobile-card-desc">本番さながらの共通テスト風 模試PDF（問題冊子・マークシート・自己採点欄・解答解説）を作成します。</div></div>
+          <div className="tip mobile-tip-compact"><span className="tip-icon">⚛️</span><div>初期対応科目：<strong>物理</strong>。大問I〜IVの4題・各25点・合計100点・60分の構成で生成します。</div></div>
+          <div className="field" style={{marginBottom:18}}>
+            <label className="field-label">回数（タイトル）</label>
+            <div className="num-questions-selector">{[1,2,3,4,5].map(n => <button key={n} className={`num-btn ${Number(roundNo)===n?'active':''}`} onClick={() => setRoundNo(n)}>第{n}回</button>)}</div>
+          </div>
+          <div className="field" style={{marginBottom:18}}>
+            <label className="field-label">難易度の方針</label>
+            <input className="input" value={difficulty} onChange={e => setDifficulty(e.target.value)} placeholder="例: 標準（平均55〜65点想定）" />
+          </div>
+          <div className="field" style={{marginBottom:18}}>
+            <label className="field-label">出題テーマ・分野（任意）</label>
+            <input className="input" value={theme} onChange={e => setTheme(e.target.value)} placeholder="例: 力学・波動・電磁気・原子をバランスよく / 探究活動を多めに" />
+          </div>
+          <div className="field" style={{marginBottom:18}}>
+            <label className="field-label">解答番号の総数（目安）</label>
+            <div className="num-questions-selector">{[22,24,26,28].map(n => <button key={n} className={`num-btn ${Number(numAnswers)===n?'active':''}`} onClick={() => setNumAnswers(n)}>{n}</button>)}</div>
+          </div>
+          <div className="field" style={{marginBottom:18}}>
+            <label className="field-label">追加要望（任意）</label>
+            <textarea className="input" style={{minHeight:72}} value={customReq} onChange={e => setCustomReq(e.target.value)} placeholder="例: 第2問は気柱共鳴の探究にしてほしい など" />
+          </div>
+          <div className="mobile-sticky-action">
+            <button className="btn btn-primary btn-block btn-lg" onClick={buildPrompt} disabled={loading}><Ico.Zap /> 指示文を作成</button>
+            <button className="btn btn-outline btn-block" onClick={onHome}><Ico.ArrowLeft /> ホームに戻る</button>
+          </div>
+        </div>
+      )}
+
+      {/* PHASE 2: AI依頼 → 出力貼り付け */}
+      {phase === 2 && (
+        <div className="card anim-fade-up mobile-card">
+          <div className="card-header mobile-card-header"><span className="card-emoji">🤖</span><div className="card-title">AIに依頼 → 結果を貼り付け</div><div className="card-desc mobile-card-desc">指示文をコピーしてChatGPT/Claudeに送り、出力された完全なLaTeXを貼り付けてください。</div></div>
+          <div className="mobile-section">
+            <div className="mobile-section-label"><span className="mobile-section-badge">A</span>指示文をコピーしてAIに送信</div>
+            <div className="mobile-action-group">
+              <button className="btn btn-primary btn-block btn-lg" onClick={copyPrompt}><Ico.Copy /> 指示文をコピー</button>
+              <div className="mobile-ai-links"><a href="https://chat.openai.com/" target="_blank" rel="noreferrer" className="mobile-ai-link"><Ico.ExternalLink /> ChatGPT</a><a href="https://claude.ai/" target="_blank" rel="noreferrer" className="mobile-ai-link"><Ico.ExternalLink /> Claude</a></div>
+            </div>
+            <div className="prompt-preview anim-fade-up" style={{maxHeight:220,overflow:'auto'}}>{prompt}</div>
+          </div>
+          <div className="mobile-divider" />
+          <div className="mobile-section">
+            <div className="mobile-section-label"><span className="mobile-section-badge mobile-section-badge-b">B</span>AIの出力（LaTeX）を貼り付け</div>
+            <div className="field"><textarea className="input manual-textarea" placeholder={"\\documentclass[b5paper,11pt,twoside]{ltjsarticle}\n...\n\\end{document}"} value={llmOutput} onChange={e => setLlmOutput(e.target.value)} />{llmOutput.trim() && <div className="latex-validation-hints"><span className={llmOutput.includes('\\documentclass')?'hint-ok':'hint-warn'}>{llmOutput.includes('\\documentclass')?'✅':'⚠️'} documentclass</span><span className={llmOutput.includes('\\end{document}')?'hint-ok':'hint-warn'}>{llmOutput.includes('\\end{document}')?'✅':'⚠️'} end</span></div>}</div>
+          </div>
+          <div className="mobile-sticky-action">
+            <button className="btn btn-success btn-block btn-lg" onClick={buildPdf} disabled={loading || !llmOutput.trim()}><Ico.Zap /> 模試PDFを生成する</button>
+            <button className="btn btn-outline btn-block" onClick={() => setPhase(1)}><Ico.ArrowLeft /> 設定に戻る</button>
+          </div>
+        </div>
+      )}
+
+      {/* PHASE 3: 完成 */}
+      {phase === 3 && (
+        <div className="card anim-fade-up mobile-card">
+          <div className="completion-hero">
+            <div className="success-icon"><Ico.Check s={36} /></div>
+            <div className="completion-title">模試が完成しました！</div>
+            <div className="completion-subtitle">共通テスト予想模試 第{roundNo}回 物理</div>
+          </div>
+          {pdfUrl ? (
+            <>
+              <a href={pdfUrl} target="_blank" rel="noreferrer" className="btn btn-primary btn-block btn-lg" style={{marginBottom:8}}><Ico.ExternalLink /> 模試PDFを別タブで開く</a>
+              {!isMobile && (
+                <div className="pdf-embed-wrapper">
+                  <div className="pdf-embed-label"><span className="pdf-embed-label-dot" /><span>模試PDF プレビュー</span></div>
+                  <iframe src={`${pdfUrl}#toolbar=0&navpanes=0&view=FitV`} className="pdf-embed-frame" title="模試PDF" />
+                </div>
+              )}
+            </>
+          ) : <div className="pdf-mode-hint">PDFがありません</div>}
+          <div className="mobile-sticky-action">
+            <button className="btn btn-primary btn-block btn-lg" onClick={reset}><Ico.RotateCcw /> 続けて作成する</button>
+            <button className="btn btn-outline btn-block" onClick={onHome}><Ico.Home /> ホームに戻る</button>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+/* ════════════════════════════════════════════
    Main App
    ════════════════════════════════════════════ */
 const PRESET_EMOJI = { exam: '📝', worksheet: '📋', flashcard: '🃏', mock_exam: '📊', report: '📖', simple: '✏️', default: '📄' }
@@ -488,7 +639,7 @@ export default function App() {
           {screen === 'home' ? (
             <div className="mobile-top-home"><span className="mobile-top-logo">⚛️ 工学AI</span><div className="mobile-top-xp"><span>{level.emoji}</span><span>{stats.xp} XP</span></div></div>
           ) : (
-            <div className="mobile-top-title">{screen === 'history' ? '生成履歴' : screen === 'settings' ? '設定' : screen === 'legal' ? (legalTab === 'terms' ? '利用規約' : 'プライバシーポリシー') : screen === 'practice' ? (STEPS[step - 1]?.label || '演習') : ''}</div>
+            <div className="mobile-top-title">{screen === 'history' ? '生成履歴' : screen === 'settings' ? '設定' : screen === 'legal' ? (legalTab === 'terms' ? '利用規約' : 'プライバシーポリシー') : screen === 'mock' ? '共通テスト模試作成' : screen === 'practice' ? (STEPS[step - 1]?.label || '演習') : ''}</div>
           )}
           {screen === 'practice' && (
             <>
@@ -556,6 +707,15 @@ export default function App() {
               <div className="physics-topic-pills" style={{marginTop:16}}>
                 <span>⚡ 力学</span><span>🧲 電磁気</span><span>🌊 波動</span><span>🔥 熱力学</span><span>🔬 原子</span>
               </div>
+            </div>
+
+            {/* 共通テスト模試作成モードへの導線 */}
+            <div className="home-quick-links" style={{marginTop:4}}>
+              <button className="home-quick-link-btn" onClick={() => setScreen('mock')}>
+                <span className="home-quick-link-icon">📊</span>
+                <span className="home-quick-link-text">共通テスト模試を作成する（物理）</span>
+                <span className="home-quick-link-arrow">→</span>
+              </button>
             </div>
 
             <div className="streak-card">
@@ -955,6 +1115,11 @@ export default function App() {
             )}
           </>
         )}
+
+        {/* ══ 共通テスト模試作成モード ══ */}
+        {screen === 'mock' && (
+          <MockExamScreen notify={notify} isMobile={isMobile} onHome={() => setScreen('home')} />
+        )}
       </div>
 
       {/* ── Help FAB ── */}
@@ -964,6 +1129,7 @@ export default function App() {
       <nav className="mobile-bottom-nav mobile-only">
         <button className={`mobile-nav-item ${screen==='home'?'active':''}`} onClick={() => setScreen('home')}><span className="mobile-nav-icon">🏠</span><span className="mobile-nav-label">HOME</span></button>
         <button className={`mobile-nav-item ${screen==='practice'?'active':''}`} onClick={startPractice}><span className="mobile-nav-icon">📝</span><span className="mobile-nav-label">演習</span></button>
+        <button className={`mobile-nav-item ${screen==='mock'?'active':''}`} onClick={() => setScreen('mock')}><span className="mobile-nav-icon">📊</span><span className="mobile-nav-label">模試</span></button>
         <button className={`mobile-nav-item ${screen==='history'?'active':''}`} onClick={() => { setScreen('history'); setHistory(loadHistory()) }}><span className="mobile-nav-icon">🕐</span><span className="mobile-nav-label">履歴</span></button>
         <button className={`mobile-nav-item ${screen==='settings'||screen==='legal'?'active':''}`} onClick={() => setScreen('settings')}><span className="mobile-nav-icon">⚙️</span><span className="mobile-nav-label">設定</span></button>
         <button className="mobile-nav-item" onClick={() => setShowHelp(true)}><span className="mobile-nav-icon">❓</span><span className="mobile-nav-label">ヘルプ</span></button>
