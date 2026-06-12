@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export const NAV_ITEMS = [
   { href: '/',          label: 'ホーム',   icon: <Icons.Home className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Home className="w-[21px] h-[21px]" /> },
   { href: '/user',      label: 'つくる',   icon: <Icons.User className="w-[14px] h-[14px]" />, mobileIcon: <Icons.User className="w-[21px] h-[21px]" /> },
+  { href: '/mock',      label: '模試',     icon: <Icons.Chart className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Chart className="w-[21px] h-[21px]" /> },
   { href: '/help',      label: 'ヘルプ',   icon: <Icons.Book className="w-[14px] h-[14px]" />, mobileIcon: <Icons.Book className="w-[21px] h-[21px]" /> },
 ];
 

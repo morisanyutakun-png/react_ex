@@ -210,11 +210,21 @@ export async function fetchLatexPresets() {
 
 // ── PDF ────────────────────────────────────────────
 
-export async function generatePdf(latex) {
+export async function generatePdf(latex, title = 'Generated') {
   return apiFetch('/api/generate_pdf', {
     method: 'POST',
-    body: JSON.stringify({ latex, title: 'Generated', return_url: true }),
+    body: JSON.stringify({ latex, title, return_url: true }),
     timeout: 90000,
+  });
+}
+
+// ── 共通テスト模試作成モード ──────────────────────
+// 模試専用の指示文(プロンプト)を生成する。返り値の rendered_prompt を AI に投げ、
+// 得た完全な LaTeX を generatePdf に渡せばコンパイルできる。
+export async function generateMockExamPrompt(params) {
+  return apiFetch('/api/mock_exam/prompt', {
+    method: 'POST',
+    body: JSON.stringify(params),
   });
 }
 
