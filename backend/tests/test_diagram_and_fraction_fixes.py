@@ -29,7 +29,8 @@ def _fix_circuitikz_closed_loops(tex_str):
         def _fix_draw(dm):
             draw_cmd = dm.group(1)
             coords = re.findall(r'\(([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\)', draw_cmd)
-            if len(coords) < 2:
+            # segmented方針: 4+ coords でのみ閉じる
+            if len(coords) < 4:
                 return draw_cmd
             first = coords[0]
             last = coords[-1]
@@ -248,31 +249,55 @@ class TestCircuiTikZClosedLoop:
         result = _fix_circuitikz_closed_loops(tex)
         assert '\\draw' in result
 
-    def test_diagonal_close_becomes_lshape(self):
-        """When end and start differ in both x and y, the closer must use L-shape
-        (axis-parallel) instead of drawing a diagonal line."""
+    def test_diagonal_close_becomes_lshape_4coord(self):
+        """When end and start differ in both x and y, the closer uses L-shape.
+        Requires 4+ coords (segmented policy: 2-3 coord paths are not closed)."""
         tex = (
             '\\begin{circuitikz}\n'
-            '\\draw (0,0) to[battery1,l=$E$] (0,3) to[R,l=$R$] (5.5,3);\n'
+            '\\draw (0,0) to[V,l=$E$] (0,3) to[R,l=$R$] (3,3) to[C,l=$C$] (5,1);\n'
             '\\end{circuitikz}'
         )
         result = _fix_circuitikz_closed_loops(tex)
-        # Must close via intermediate corner (5.5,0) — not direct diagonal (0,0)
-        assert '-- (5.5,0) -- (0,0)' in result, \
+        # Must close via intermediate corner (5,0) → L-shape, not diagonal
+        assert '-- (5,0) -- (0,0)' in result, \
             f'Expected L-shape close, got: {result}'
 
-    def test_axis_parallel_close_stays_single_segment(self):
-        """When only x (or only y) differs at the end, a single -- close is enough."""
+    def test_axis_parallel_close_stays_single_segment_4coord(self):
+        """When only x differs at the end, a single -- close is enough (4+ coords required)."""
         tex = (
             '\\begin{circuitikz}\n'
-            '\\draw (0,0) to[battery1,l=$E$] (0,3) to[R,l=$R$] (5.5,3) -- (5.5,0);\n'
+            '\\draw (0,0) to[V,l=$E$] (0,3) to[R,l=$R$] (3,3) -- (3,0);\n'
             '\\end{circuitikz}'
         )
         result = _fix_circuitikz_closed_loops(tex)
-        # End (5.5,0), Start (0,0): y same → single -- (0,0) close, no intermediate.
-        assert '-- (5.5,0) -- (0,0)' in result
-        # And it should NOT contain a duplicate intermediate corner
-        assert result.count('(5.5,0)') == 1
+        # End (3,0), Start (0,0): y same → single -- (0,0) close
+        assert '-- (3,0) -- (0,0)' in result
+
+    def test_segmented_two_coord_path_not_closed(self):
+        """Single-segment \\draw must NOT be auto-closed (would create short-circuit).
+        Critical for segmented style where each \\draw = 1 element only."""
+        tex = (
+            '\\begin{circuitikz}\n'
+            '\\draw (1,2) to[C,l=$C_1$] (1,0);\n'
+            '\\end{circuitikz}'
+        )
+        result = _fix_circuitikz_closed_loops(tex)
+        # Must NOT add any closing wire to a 2-coord capacitor segment
+        # (otherwise it shorts across the cap)
+        assert '\\draw (1,2) to[C,l=$C_1$] (1,0);' in result
+        # No extra "-- (1,2)" appended
+        assert result.count('-- (1,2)') == 0
+
+    def test_segmented_three_coord_path_not_closed(self):
+        """L-shape wire (3 coords) must NOT be auto-closed."""
+        tex = (
+            '\\begin{circuitikz}\n'
+            '\\draw (0,0) to[R,l=$R$] (3,0) -- (3,3);\n'
+            '\\end{circuitikz}'
+        )
+        result = _fix_circuitikz_closed_loops(tex)
+        # 3-coord L-shape path is not closed
+        assert '-- (0,0)' not in result
 
 
 class TestCircuiTikZAxisParallelEnforcement:
@@ -353,6 +378,74 @@ class TestCircuiTikZAxisParallelEnforcement:
         tex = '\\begin{circuitikz}\\draw (0,3) -- (4,3) -- (4,0);\\end{circuitikz}'
         result = self._force_segments(tex)
         assert result == tex
+
+
+class TestCircuiTikZChainSplitter:
+    """Tests that chained \\draw statements get split into segmented form."""
+
+    @staticmethod
+    def _split(tex_str):
+        env_pattern = r'(\\begin\{circuitikz\}(?:\[.*?\])?)([\s\S]*?)(\\end\{circuitikz\})'
+        draw_pattern = re.compile(r'\\draw\b(\[[^\]]*\])?([^;]*);')
+        token_pattern = re.compile(
+            r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)'
+            r'|(to\s*\[[^\]]*\])'
+            r'|(--)'
+        )
+
+        def _split_one(m):
+            opts = m.group(1) or ''
+            body = m.group(2)
+            tokens = []
+            for tm in token_pattern.finditer(body):
+                if tm.group(1) is not None and tm.group(2) is not None:
+                    tokens.append(('coord', f'({tm.group(1)},{tm.group(2)})'))
+                elif tm.group(3) is not None:
+                    tokens.append(('to', tm.group(3)))
+                elif tm.group(4) is not None:
+                    tokens.append(('wire', '--'))
+            segments = []
+            i = 0
+            while i + 2 < len(tokens):
+                t1, t2, t3 = tokens[i], tokens[i+1], tokens[i+2]
+                if t1[0] == 'coord' and t2[0] in ('wire', 'to') and t3[0] == 'coord':
+                    segments.append((t1[1], t2[1], t3[1]))
+                    i += 2
+                else:
+                    return m.group(0)
+            if len(segments) <= 1:
+                return m.group(0)
+            return '\n  '.join(f'\\draw{opts} {c1} {conn} {c2};' for c1, conn, c2 in segments)
+
+        def _fix_env(em):
+            return em.group(1) + draw_pattern.sub(_split_one, em.group(2)) + em.group(3)
+        return re.sub(env_pattern, _fix_env, tex_str, flags=re.S)
+
+    def test_one_stroke_chained_gets_split(self):
+        tex = (
+            '\\begin{circuitikz}\n'
+            '\\draw (0,0) to[battery1,l=$E$] (0,3) -- (4,3) '
+            'to[R,l=$R$] (4,0) -- (0,0);\n'
+            '\\end{circuitikz}'
+        )
+        result = self._split(tex)
+        # 4セグメントに分割されたことを確認
+        assert result.count('\\draw') == 4
+        assert '(0,0) to[battery1,l=$E$] (0,3)' in result
+        assert '(0,3) -- (4,3)' in result
+        assert '(4,3) to[R,l=$R$] (4,0)' in result
+        assert '(4,0) -- (0,0)' in result
+
+    def test_single_segment_draws_unchanged(self):
+        tex = (
+            '\\begin{circuitikz}\n'
+            '\\draw (0,0) to[C,l=$C$] (4,0);\n'
+            '\\draw (4,0) -- (4,3);\n'
+            '\\end{circuitikz}'
+        )
+        result = self._split(tex)
+        # 既に segmented なので変化なし
+        assert result.count('\\draw') == 2
 
 
 class TestTikZCoordinateClosure:

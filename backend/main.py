@@ -3669,9 +3669,30 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
         ),
         'prompt_hint': (
             '======================================================================\n'
-            'CircuiTikZ 電気回路図 — 必読ガイド\n'
+            'CircuiTikZ 電気回路図 — 必読ガイド (★1 \\draw = 1セグメント方針★)\n'
             '======================================================================\n'
             '\\begin{circuitikz}[scale=1.0,>=stealth] ... \\end{circuitikz} で記述。\n'
+            '\n'
+            '★★★★★★ 最重要原則: 1つの \\draw は1つのセグメントだけ含む ★★★★★★\n'
+            '\n'
+            '1セグメント = `(始点) -- (終点)` または `(始点) to[素子,...] (終点)`\n'
+            '★絶対に1つの \\draw に複数セグメントを連鎖させない★。各セグメントを `;` で区切って\n'
+            '別々の \\draw に分割する。これは一筆書きの斜め線バグを根絶するための鉄則。\n'
+            '\n'
+            '【良い例 — segmented】\n'
+            '\\draw (0,0) to[battery1,l=$E$] (0,3);   % 1セグメント\n'
+            '\\draw (0,3) -- (4,3);                    % 1セグメント\n'
+            '\\draw (4,3) to[R,l=$R$] (4,0);           % 1セグメント\n'
+            '\\draw (4,0) -- (0,0);                    % 1セグメント\n'
+            '\n'
+            '【悪い例 — chained (★禁止★ — 斜め線・閉じ忘れの温床)】\n'
+            '✗ \\draw (0,0) to[battery1,l=$E$] (0,3) -- (4,3) to[R,l=$R$] (4,0) -- (0,0);\n'
+            '\n'
+            '【L字配線も分割する】\n'
+            '横→縦の L 字経路は ★2つの \\draw★ にする:\n'
+            '  \\draw (0,0) -- (4,0);   % 横\n'
+            '  \\draw (4,0) -- (4,3);   % 縦\n'
+            '★絶対に 1 \\draw で (0,0) -- (4,0) -- (4,3) と連鎖しない★\n'
             '\n'
             '【素子の基本構文】\n'
             '  to[R,l=$R$]            % 抵抗\n'
@@ -3691,22 +3712,81 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '  *-*          両端に接続ドット\n'
             '\n'
             '======================================================================\n'
+            '【テンプレート S】直列回路 (segmented)\n'
+            '======================================================================\n'
+            'RLC 直列（電源 + R + L + C を直列接続）:\n'
+            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
+            '  \\draw (0,0) to[battery1,l=$E$] (0,3);    % 左辺: 電池\n'
+            '  \\draw (0,3) to[R,l=$R$] (3,3);           % 上辺左: R 水平\n'
+            '  \\draw (3,3) to[L,l=$L$] (6,3);           % 上辺右: L 水平\n'
+            '  \\draw (6,3) -- (6,0);                    % 右辺配線\n'
+            '  \\draw (6,0) to[C,l=$C$] (3,0);           % 下辺右: C 水平\n'
+            '  \\draw (3,0) -- (0,0);                    % 下辺左戻り\n'
+            '\\end{circuitikz}\n'
+            '\n'
+            'RL過渡応答（E + スイッチ S + R + L 直列）:\n'
+            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
+            '  \\draw (0,0) to[battery1,l=$E$] (0,3);          % 左辺: 電池\n'
+            '  \\draw (0,3) to[switch,l_=$S$] (1.5,3);          % 上辺: スイッチ\n'
+            '  \\draw (1.5,3) to[R,l=$R$,v=$V_R$,i>^=$I$] (3.5,3); % 上辺: R\n'
+            '  \\draw (3.5,3) to[L,l=$L$,v=$V_L$] (5.5,3);     % 上辺: L\n'
+            '  \\draw (5.5,3) -- (5.5,0);                       % 右辺配線\n'
+            '  \\draw (5.5,0) -- (0,0);                         % 下辺戻り\n'
+            '\\end{circuitikz}\n'
+            '\n'
+            '======================================================================\n'
+            '【テンプレート P】純粋並列回路 (segmented)\n'
+            '======================================================================\n'
+            '電源 + R || L || C 並列:\n'
+            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
+            '  \\draw (0,0) -- (6,0);                    % 下母線\n'
+            '  \\draw (0,3) -- (6,3);                    % 上母線\n'
+            '  \\draw (0,3) to[sV,l_=$E$] (0,0);         % 並列枝1: 電源\n'
+            '  \\draw (2,3) to[R,l=$R$] (2,0);           % 並列枝2: R\n'
+            '  \\draw (4,3) to[L,l_=$L$] (4,0);          % 並列枝3: L\n'
+            '  \\draw (6,3) to[C,l_=$C$] (6,0);          % 並列枝4: C\n'
+            '\\end{circuitikz}\n'
+            '\n'
+            'コンデンサ並列 + スイッチ（電池切り離し済み）:\n'
+            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
+            '  \\draw (0,2) -- (1.5,2);                  % 上母線左\n'
+            '  \\draw (1.5,2) to[opening switch,l_=$S$] (2.5,2);\n'
+            '  \\draw (2.5,2) -- (4,2);                  % 上母線右\n'
+            '  \\draw (0,0) -- (4,0);                    % 下母線\n'
+            '  \\draw (1,2) to[C,l=$C_1$,v=$V_1$] (1,0); % 並列枝1\n'
+            '  \\draw (3,2) to[C,l=$C_2$,v=$V_2$] (3,0); % 並列枝2\n'
+            '\\end{circuitikz}\n'
+            '\n'
+            '======================================================================\n'
+            '【テンプレート SP】直列＋並列 混合 (segmented)\n'
+            '======================================================================\n'
+            '電池 E + r + R_1 直列、その先に R_2 || R_3 並列:\n'
+            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
+            '  \\draw (0,0) to[battery1,l=$E$] (0,3);                  % 左辺: 電池\n'
+            '  \\draw (0,3) to[R,l=$r$] (1.5,3);                       % 上辺: 内部抵抗 r\n'
+            '  \\draw (1.5,3) to[R,l=$R_1$,i>^=$I$] (3.5,3);           % 上辺: R_1\n'
+            '  \\draw (3.5,3) -- (5.5,3);                              % 上辺右: 並列上母線\n'
+            '  \\draw (3.5,3) to[R,l=$R_2$,i>^=$I_2$] (3.5,0);          % 並列枝1: R_2\n'
+            '  \\draw (5.5,3) to[R,l=$R_3$,i>^=$I_3$] (5.5,0);          % 並列枝2: R_3\n'
+            '  \\draw (3.5,0) -- (5.5,0);                              % 並列下母線\n'
+            '  \\draw (3.5,0) -- (0,0);                                % 下辺戻り\n'
+            '\\end{circuitikz}\n'
+            '\n'
+            '======================================================================\n'
             'STEP 0: 描画前に必ず「トポロジー判定」を行う\n'
             '======================================================================\n'
             '回路の構造を3種に分類してから描く。判定ミスは図の崩壊に直結する。\n'
             '\n'
-            '  ◆ Type-S（単一閉ループ／直列）:\n'
-            '    全素子が1周の経路上に並ぶ。電池＋RLC直列、電池＋抵抗N個直列など。\n'
-            '    → ★1本の \\draw で反時計回り一筆書き★（後述【テンプレート S】）\n'
+            '  ◆ Type-S（直列）: 全素子が1周の経路上に並ぶ。電池＋RLC直列、電池＋抵抗N個直列など。\n'
+            '    → ★segmented方針: 各素子・各配線を別 \\draw で★（上記【テンプレート S】）\n'
             '\n'
-            '  ◆ Type-P（純粋並列）:\n'
-            '    上下2本の母線間に N 本の素子枝が並ぶ。電源も母線間の1枝として配置。\n'
-            '    → ★母線2本 + 並列枝 N 本を別 \\draw で★（後述【テンプレート P】）\n'
+            '  ◆ Type-P（純粋並列）: 上下2本の母線間に N 本の素子枝が並ぶ。電源も母線間の1枝。\n'
+            '    → ★segmented方針: 母線2本 + 並列枝 N 本 をすべて別 \\draw★（上記【テンプレート P】）\n'
             '\n'
             '  ◆ Type-SP（直列＋並列の混合）:\n'
             '    直列部の先に並列部がある。例: 「電池に R_1 を直列、その後 R_2 と R_3 を並列」\n'
-            '    → ★コの字外周 + 並列枝N本 を別 \\draw で★（後述【テンプレート SP】）\n'
-            '    ★Type-S として単一矩形に押し込んではいけない★（並列が直列化する）\n'
+            '    → ★segmented方針: 直列部の各素子・並列枝の各素子・全配線をすべて別 \\draw★\n'
+            '    ★並列素子を矩形の隣接辺に置くと直列化するので注意★（後述）\n'
             '\n'
             '======================================================================\n'
             '絶対原則（毎回必ず順守）\n'
@@ -3765,139 +3845,20 @@ DIAGRAM_PACKAGES: Dict[str, Dict[str, str]] = {
             '     交流源は to[sV,l=$e(t)$]、複数セル電池は to[battery2,l=$E$]。\n'
             '\n'
             'A11. ★斜め配線の禁止徹底★ — 異なる x かつ異なる y の点を結ぶ場合の必須手順:\n'
+            '     ★segmented方針では各 \\draw が1セグメントなので、L字を ★2つの \\draw★ に分ける★。\n'
             '     悪い例（斜め線が出る）:\n'
-            '       \\draw (0,0) -- (5,3);   ← (0,0) から (5,3) へ直接 → 斜め線\n'
-            '     良い例（L字経路で2セグメント）:\n'
-            '       \\draw (0,0) -- (5,0) -- (5,3);   ← 横→縦の L 字\n'
-            '       \\draw (0,0) -- (0,3) -- (5,3);   ← 縦→横の L 字\n'
-            '     一筆書きの中でも同じ。to[X] の前後で異なる軸方向の点に飛ぶ場合は\n'
-            '     必ず中間に角ノードを 1 つ入れて L 字で繋ぐ。\n'
+            '       \\draw (0,0) -- (5,3);   ← 直接 → 斜め線（禁止）\n'
+            '     悪い例（連鎖して書く — segmented 違反）:\n'
+            '       \\draw (0,0) -- (5,0) -- (5,3);   ← 1 \\draw に2セグメント連鎖は禁止\n'
+            '     良い例（segmented L字 — 2つの \\draw に分割）:\n'
+            '       \\draw (0,0) -- (5,0);\n'
+            '       \\draw (5,0) -- (5,3);\n'
             '\n'
-            '======================================================================\n'
-            '【テンプレート S】単一閉ループ／直列回路 — 1本の \\draw で一筆書き\n'
-            '======================================================================\n'
-            '反時計回りに (0,0) → (W,0) → (W,H) → (0,H) → (0,0) の順で巡る。\n'
+            'A12. ★1 \\draw = 1 セグメント★ を必ず守る。各 \\draw は `;` で終わる。\n'
+            '     1 セグメント = `(p1) -- (p2)` または `(p1) to[X,...] (p2)` の形のみ。\n'
+            '     1 \\draw に複数の to[X] や複数の -- を連鎖させない。\n'
+            '     連鎖は LLM 出力で斜め線や閉じ忘れの温床となる。\n'
             '\n'
-            '★ RLC 直列回路の標準形 ★\n'
-            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
-            '  \\draw (0,0)\n'
-            '    to[C,l=$C$] (4,0)             % 下辺: C で右進\n'
-            '    to[L,l=$L$] (4,3)             % 右辺: L で上昇\n'
-            '    to[R,l=$R$] (0,3)             % 上辺: R で左進\n'
-            '    to[battery1,l=$E$] (0,0);     % 左辺: 電池で下降、閉ループ\n'
-            '\\end{circuitikz}\n'
-            '\n'
-            '★ 直列 N 抵抗＋電池（V_1,V_2,I 表示） ★\n'
-            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
-            '  \\draw (0,0)\n'
-            '    to[R,l=$R_1$,v=$V_1$,i>^=$I$] (3,0)\n'
-            '    to[R,l=$R_2$,v=$V_2$]         (6,0)\n'
-            '    -- (6,3)\n'
-            '    -- (0,3)\n'
-            '    to[battery1,l=$E$] (0,0);\n'
-            '\\end{circuitikz}\n'
-            '\n'
-            '★ RL過渡応答回路（E + スイッチS + R + L 直列） — 1本の \\draw で一筆書き ★\n'
-            '% スクリーンショット問題のような直列回路は ★必ず1本の \\draw★ で書く。\n'
-            '% 電池は to[battery1]、スイッチは to[switch] or to[opening switch]、\n'
-            '% 全部つないだ後、配線で始点に戻る。途中で \\draw を切ったり斜め線を引いたりしない。\n'
-            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
-            '  \\draw (0,0)\n'
-            '    to[battery1,l_=$E$] (0,3)                       % 左辺: 電池（上昇、+上−下）\n'
-            '    to[switch,l_=$S$] (1.5,3)                       % 上辺左: スイッチ\n'
-            '    to[R,l=$R$,v=$V_R$,i>^=$I$] (3.5,3)             % 上辺中: R\n'
-            '    to[L,l=$L$,v=$V_L$] (5.5,3)                     % 上辺右: L\n'
-            '    -- (5.5,0)                                       % 右辺下降（配線のみ、軸平行）\n'
-            '    -- (0,0);                                        % 下辺戻り（配線のみ、軸平行）\n'
-            '\\end{circuitikz}\n'
-            '★ ポイント ★:\n'
-            '  - \\draw は1本のみ。E → S → R → L → 配線 → 始点 を連続して書く。\n'
-            '  - 始点 (0,0) に戻る経路は L 字で書く: (5.5,3) → (5.5,0) → (0,0)。\n'
-            '    ★絶対に (5.5,3) → (0,0) と直接結ばない★（斜め線になる）。\n'
-            '  - 電流 I は R の to[] 内に i>^=$I$ で組込む。独立 \\draw[->] 禁止。\n'
-            '  - V_R, V_L は to[] 内に v=$V_R$, v=$V_L$ で組込む。\n'
-            '  - スイッチを開く問題なら to[switch] を to[opening switch] に変える。\n'
-            '\n'
-            '★ NG例 — 実際に発生した失敗 ★\n'
-            '✗ \\draw (0,0) -- (5.5,3);  ← 始点と終点を直接結んで斜め線になる\n'
-            '✗ to[V,l=$E$] で電池を描く ← V は一般電圧源（円記号）、battery1 ではない\n'
-            '✗ \\node[left] at (0,2.5) {$+$}; \\node[left] at (0,0.5) {$-$};\n'
-            '   ← to[battery1] が自動で長線/短線で極性を示すので手動±は冗長\n'
-            '✗ \\draw を E, S, R, L で4本に分ける ← 単一閉ループは1本の \\draw で\n'
-            '\n'
-            '======================================================================\n'
-            '【テンプレート P】純粋並列回路 — 母線2本 + 並列枝 N 本\n'
-            '======================================================================\n'
-            'P1. 上下に水平母線を1本ずつ。\\draw (0,H) -- (W,H); \\draw (0,0) -- (W,0);\n'
-            'P2. 並列枝は1枝1本の \\draw、両端の x を ★必ず一致★ させる（縦に）。\n'
-            'P3. 電源も並列枝の1つとして左端に配置。\n'
-            '\n'
-            '★ RLC 並列回路（AC源 + R + L + C） ★\n'
-            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
-            '  % 上母線（電流 I の矢印を組込む）\n'
-            '  \\draw (0,3) to[short,i^=$I$] (6,3);\n'
-            '  % 下母線\n'
-            '  \\draw (0,0) -- (6,0);\n'
-            '  % 並列枝（縦・両端 x 一致）\n'
-            '  \\draw (0,3)   to[sV,l_=$E$]              (0,0);\n'
-            '  \\draw (2,3)   to[R,l=$R$]                (2,0);\n'
-            '  \\draw (4,3)   to[L,l_=$L$,i^=$I_L$]      (4,0);\n'
-            '  \\draw (6,3)   to[C,l_=$C$,i^=$I_C$]      (6,0);\n'
-            '\\end{circuitikz}\n'
-            '\n'
-            '★ コンデンサ並列＋スイッチ（電池切り離し済み） ★\n'
-            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
-            '  \\draw (0,2) -- (1.5,2) to[opening switch,l_=$S$] (2.5,2) -- (4,2);\n'
-            '  \\draw (0,0) -- (4,0);\n'
-            '  \\draw (1,2) to[C,l=$C_1$] (1,0);\n'
-            '  \\draw (3,2) to[C,l=$C_2$] (3,0);\n'
-            '  \\node[left] at (0,2) {$A$};\n'
-            '  \\node[left] at (0,0) {$B$};\n'
-            '\\end{circuitikz}\n'
-            '\n'
-            '★ コンデンサ並列＋極性表示＋スイッチ（電圧 V_1, V_2, V_f を矢印で表示） ★\n'
-            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
-            '  % 上母線にスイッチ S\n'
-            '  \\draw (0,2) -- (1.5,2) to[opening switch,l_=$S$] (2.5,2) -- (4,2);\n'
-            '  \\draw (0,0) -- (4,0);\n'
-            '  % ★極性は v= オプションで自動表示★（+/− テキストの手動配置は禁止）\n'
-            '  \\draw (1,2) to[C,l=$C_1$,v=$V_1$] (1,0);\n'
-            '  \\draw (3,2) to[C,l=$C_2$,v=$V_2$] (3,0);\n'
-            '\\end{circuitikz}\n'
-            '\n'
-            '★★★ NG例（実際に発生した失敗パターン — 絶対に真似しない） ★★★\n'
-            '✗ \\draw (0,0) rectangle (4,2);                  % ← 矩形でコンデンサを表現\n'
-            '✗ \\node at (1,1) {$+$}; \\node at (1.5,1) {$-$};  % ← 手動で極性テキスト配置\n'
-            '✗ \\node[above] at (1,2.2) {$C_1$};               % ← 素子ラベルを手動配置\n'
-            '   → 上記は全て「コンデンサっぽく見える矩形」を描画するだけで、本物の to[C] 記号ではない。\n'
-            '✓ 正しくは1行だけ:\n'
-            '   \\draw (1,2) to[C,l=$C_1$,v=$V_1$] (1,0);\n'
-            '   これでコンデンサ記号（平行2本線）と ラベル $C_1$ と 極性付き電圧矢印 $V_1$ が\n'
-            '   全て自動的に正しく描画される。\n'
-            '\n'
-            '======================================================================\n'
-            '【テンプレート SP】直列＋並列 混合（電池+r+R_1 直列、R_2||R_3 並列）\n'
-            '======================================================================\n'
-            'SP1. 全体は「コの字外周 + 縦並列枝」。\\draw は4本前後に分ける。\n'
-            'SP2. 直列部は上辺に並べる。電池は左辺（縦）。下辺は配線のみで戻る。\n'
-            'SP3. 並列枝は ★右側に縦に配置★。各並列枝は別 \\draw、両端の x を一致。\n'
-            'SP4. 電流矢印 I, I_2, I_3 は各素子の i>^=$X$ オプションで組込む。\n'
-            '\n'
-            '★ 標準形 ★\n'
-            '\\begin{circuitikz}[scale=1.0,>=stealth]\n'
-            '  % 上辺: E+ → r → R_1 → 並列上端\n'
-            '  \\draw (0,3) to[R,l=$r$] (1.5,3)\n'
-            '              to[R,l=$R_1$,i>^=$I$] (3.5,3)\n'
-            '              -- (5.5,3);\n'
-            '  % 下辺: 並列下端 → E−（直線で左へ）\n'
-            '  \\draw (5.5,0) -- (0,0);\n'
-            '  % 左辺: 電池 E\n'
-            '  \\draw (0,0) to[battery1,l_=$E$] (0,3);\n'
-            '  % 並列枝1: R_2（x=4）\n'
-            '  \\draw (4,3) node[circ]{} to[R,l=$R_2$,i>^=$I_2$] (4,0) node[circ]{};\n'
-            '  % 並列枝2: R_3（x=5.5）\n'
-            '  \\draw (5.5,3) to[R,l=$R_3$,i>^=$I_3$] (5.5,0);\n'
-            '\\end{circuitikz}\n'
             '\n'
             '======================================================================\n'
             '【コンパイル安定性チェック — 出力前に必ず確認】\n'
@@ -9212,11 +9173,13 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                         draw_cmd = dm.group(1)
                         # Extract all coordinates (x,y) from the draw command
                         coords = re.findall(r'\(([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\)', draw_cmd)
-                        if len(coords) < 2:
+                        # ★segmented方針★: 1 \draw = 1 segment (2 coords) は閉じない。
+                        # 3 coords は L字配線、まだ閉じない。
+                        # 4+ coords の場合のみ「閉じ忘れた多角形」とみなして閉じる。
+                        if len(coords) < 4:
                             return draw_cmd
                         first = coords[0]
                         last = coords[-1]
-                        # Check if the path already closes (last coord == first coord or has 'cycle')
                         if 'cycle' in draw_cmd:
                             return draw_cmd
                         try:
@@ -9261,6 +9224,71 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 return re.sub(pattern, _fix_env, tex_str, flags=re.S)
 
             tex = _fix_circuitikz_closed_loops(tex)
+
+            # 7f-0) ★ CircuiTikZ chain-splitter ★
+            #     segmented 方針: 1 \draw に複数セグメント連鎖 (例: (a) to[R] (b) -- (c) to[L] (d))
+            #     が含まれる場合、各セグメントを別々の \draw に分割する。
+            #     これにより一筆書き由来の斜め線・閉じ忘れバグを完全に排除する。
+            def _split_chained_draws(tex_str):
+                env_pattern = r'(\\begin\{circuitikz\}(?:\[.*?\])?)([\s\S]*?)(\\end\{circuitikz\})'
+
+                # 1 \draw 全体（;まで）を捕捉。
+                draw_pattern = re.compile(r'\\draw\b(\[[^\]]*\])?([^;]*);')
+
+                # path 内の (coord) と connector (-- or to[...]) を順に拾うトークナイザ
+                token_pattern = re.compile(
+                    r'\(\s*([+-]?[\d.]+)\s*,\s*([+-]?[\d.]+)\s*\)'
+                    r'|(to\s*\[[^\]]*\])'
+                    r'|(--)'
+                )
+
+                def _split_one(m):
+                    opts = m.group(1) or ''
+                    body = m.group(2)
+                    tokens = []
+                    for tm in token_pattern.finditer(body):
+                        if tm.group(1) is not None and tm.group(2) is not None:
+                            tokens.append(('coord', f'({tm.group(1)},{tm.group(2)})'))
+                        elif tm.group(3) is not None:
+                            tokens.append(('to', tm.group(3)))
+                        elif tm.group(4) is not None:
+                            tokens.append(('wire', '--'))
+
+                    # segments = [(coord1, connector, coord2), ...] を構築
+                    segments = []
+                    i = 0
+                    while i + 2 < len(tokens):
+                        t1, t2, t3 = tokens[i], tokens[i+1], tokens[i+2]
+                        if t1[0] == 'coord' and t2[0] in ('wire', 'to') and t3[0] == 'coord':
+                            segments.append((t1[1], t2[1], t3[1]))
+                            i += 2  # 次セグメントの始点 = 現セグメントの終点
+                        else:
+                            # 想定外の並び — 安全のため元の \draw に戻す
+                            return m.group(0)
+
+                    if len(segments) <= 1:
+                        return m.group(0)  # 既に segmented (1セグメント以下)
+
+                    # 各セグメントを別 \draw に分割
+                    parts = []
+                    for c1, conn, c2 in segments:
+                        sep = ' ' if conn == '--' else ' '
+                        parts.append(f'\\draw{opts} {c1} {conn} {c2};')
+                    return '\n  '.join(parts)
+
+                def _fix_env(em):
+                    begin = em.group(1)
+                    body = em.group(2)
+                    end = em.group(3)
+                    body = draw_pattern.sub(_split_one, body)
+                    return begin + body + end
+
+                return re.sub(env_pattern, _fix_env, tex_str, flags=re.S)
+
+            try:
+                tex = _split_chained_draws(tex)
+            except Exception as _e:
+                logger.warning('chain splitter skipped: %s', _e)
 
             # 7f-1b) ★ CircuiTikZ 斜め配線 → L字経路 強制変換 ★
             #     circuitikz 環境内の \draw 中で
