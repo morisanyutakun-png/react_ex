@@ -4418,6 +4418,14 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 % 解答・解説の大問見出し
 \newcommand{\soldai}[2]{\bigskip\noindent{\large\textbf{第#1問}}\hspace{1em}{\normalsize #2}\par\smallskip}
 
+% グラフ選択肢用の小座標枠(B5の3列に収まる寸法)。#1=横軸ラベル #2=縦軸ラベル #3=描画内容
+% 使い方: \cn{1}\,\gframe{$t$}{$v$}{\draw[line width=0.8pt](0,0)--(4.6,3.4);}
+% 3列に並べるときは表を \setlength{\tabcolsep}{4pt} で囲むこと。
+\newcommand{\gframe}[3]{\begin{tikzpicture}[x=0.40cm,y=0.40cm,baseline=0]
+  \draw[->,line width=0.5pt] (0,0)--(5.2,0) node[right,font=\tiny]{#1};
+  \draw[->,line width=0.5pt] (0,0)--(0,4.0) node[above,font=\tiny]{#2};#3
+\end{tikzpicture}}
+
 % マークシート1行(横長丸番号 ―・1〜9・0)
 \newcommand{\bubbles}{%
   \begin{tikzpicture}[baseline=-0.55ex]
@@ -4522,7 +4530,16 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
    等を \\par 区切りで列挙する。
 2. 問題本文: \\daimon{{1}}{{…}} 〜 \\daimon{{4}}{{…}} の4大問。各設問は \\toi{{1}} … で始める。
 3. マークシート: \\section*{{第{round_no}回 マークシート}} の下に表で生成。
-   1段組なら \\msrowT、2段組なら \\msrowTT を使い、全解答番号(1〜{num_answers})を網羅する。
+   ★必ず「単列(2列の表)」で作る。2段組の \\msrowTT はB5幅に収まらないので使用禁止。
+   次の形を厳守(全解答番号 1〜{num_answers} を \\msrowT で1行ずつ):
+     \\begin{{center}}\\small
+     \\renewcommand{{\\arraystretch}}{{1.35}}
+     \\begin{{tabular}}{{|c|c|}}
+     \\hline
+     解答番号 & マーク欄 \\\\ \\hline
+     \\msrowT{{1}}\\msrowT{{2}}\\msrowT{{3}} … \\msrowT{{{num_answers}}}
+     \\end{{tabular}}
+     \\end{{center}}
 4. 自己採点欄: 番号・配点・自分の解答・得点の列をもつ表。合計欄(/100)を付ける。
 5. 解答・解説: \\section*{{第{round_no}回 解答・解説}} → まず「配点表(正解一覧)」の表、
    続いて \\soldai{{1}}{{大問名}} ごとに各問の正解(\\cn{{n}})・配点・簡潔な解説。配点の合計が100点になること。
@@ -4534,8 +4551,26 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - 短い選択肢グリッドは sentaku 環境(\\begin{{sentaku}}[列数] … \\op{{\\cn{{1}}}}{{中身}} & … )。
   長文選択肢は optlist 環境(\\oi{{\\cn{{1}}}} 本文)。
 - 「ア・イ」を選ぶ組合せ問題は tabular の表で選択肢を整理する(\\cn を行頭に)。
-- 図は TikZ 中心。提供済みスタイル(edge, rail, velarr, forcearr, fieldzone, ballobj, groundstrip 等)を活用。
+- 図は TikZ 中心。提供済みスタイル(edge, rail, velarr, forcearr, fieldzone, ballobj, groundstrip, rodcyl, screenbd, plate 等)を活用。
 - すべての図でラベルが線・物体と重ならないよう node[above]/[right] 等で位置を明示し、座標は計算して検算する。
+
+=== 図の量・グラフ選択(本番に近づける要・厳守) ===
+- 本番同様、図を豊富に入れる。文書全体で図を最低8個(目安8〜12個)。
+- 各大問に最低1つ、装置図・概念図を描く。探究/実験テーマでは測定の概念図(おんさと気柱、二重スリット、レール上の台車、回路など)を必ず図示する。
+- ★グラフを選ぶ問題は、文章の選択肢(「原点を通り上に凸の曲線」等)で済ませない。
+  必ず TikZ で実際に小グラフを6個(または選択肢数)描き、提供済みの \\gframe を使って選択肢にする。
+  例(3列・\\tabcolsep を詰める):
+    \\begin{{center}}\\setlength{{\\tabcolsep}}{{4pt}}
+    \\begin{{tabular}}{{ccc}}
+    \\cn{{1}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt](0,0)--(4.6,3.4);}}
+    & \\cn{{2}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt](0,1.3)--(4.6,3.8);}}
+    & \\cn{{3}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt,smooth,samples=40,domain=0:4.3]plot(\\x,{{0.18*\\x*\\x}});}}\\\\[2.4em]
+    \\cn{{4}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt,smooth,samples=40,domain=0:4.5]plot(\\x,{{1.7*sqrt(\\x)}});}}
+    & \\cn{{5}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt](0,2.3)--(4.6,2.3);}}
+    & \\cn{{6}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt](0,3.4)--(4.6,0.6);}}
+    \\end{{tabular}}\\end{{center}}
+  v-t グラフ、I-V グラフ、x-t、N-t(放射性崩壊)、波形などの選択はこの方式で描くこと。
+- 表(データ表・選択肢表・マークシート・配点表)の各行末は必ず \\\\ で改行する($\\\\$ を省略しない)。
 - 表・数式・図が紙面(B5)からはみ出さないよう、\\small・\\dfrac・\\renewcommand{{\\arraystretch}} を適切に使う。
 - 数値・単位は $\\mathrm{{m/s}}$ 等で正しく組む。
 - \\settitle の表紙と注意事項・解答解説の双方に、本書が非公式の予想問題である旨を明記する。
