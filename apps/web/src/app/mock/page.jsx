@@ -34,7 +34,7 @@ export default function MockExamPage() {
   const [roundNo, setRoundNo] = useState(1);
   const [difficulty, setDifficulty] = useState(DIFFICULTY_OPTIONS[0]);
   const [theme, setTheme] = useState('');
-  const [numAnswers, setNumAnswers] = useState(28);
+  const [numAnswers, setNumAnswers] = useState(30);
   const [customReq, setCustomReq] = useState('');
 
   // ── 生成物 ──
@@ -74,7 +74,7 @@ export default function MockExamPage() {
         difficulty,
         theme,
         custom_request: customReq,
-        num_answers: Number(numAnswers) || 22,
+        num_answers: Number(numAnswers) || 30,
       });
       const p = data.rendered_prompt || data.rendered || '';
       setPrompt(p);
@@ -187,8 +187,8 @@ export default function MockExamPage() {
 
             <div>
               <label className="block text-[11px] font-bold text-[#515154] uppercase tracking-wider mb-2">解答番号の総数（本番並み）</label>
-              <NumberField value={numAnswers} onChange={setNumAnswers} min={26} max={32} />
-              <p className="mt-1.5 text-[12px] text-[#86868b]">本番の物理は概ね28問。大問I〜IVに小問をしっかり配置し、約{numAnswers}問・1回分をまるごと作成します。</p>
+              <NumberField value={numAnswers} onChange={setNumAnswers} min={28} max={34} />
+              <p className="mt-1.5 text-[12px] text-[#86868b]">本番並みのボリューム。問題冊子だけで約28〜32ページ、解答数 約{numAnswers}問。考察(思考力)問題も含めて1回分をまるごと作成します。</p>
             </div>
 
             <TextArea
@@ -244,7 +244,7 @@ export default function MockExamPage() {
             icon={<Icons.File className="w-4 h-4" />}
           >
             <p className="mb-3 text-[12px] text-[#86868b] leading-relaxed">
-              約28問・1回分をまるごと生成します。もし途中で切れて末尾が <code className="px-1 rounded bg-[#fff5f7] text-[#ff2d55]">%%% CONTINUE %%%</code> で終わっていたら、AIに「続き」と送り、返ってきた続きをこの下に貼り足してください（マーカーは自動で除去されます）。
+              約30問・問題冊子だけで約30ページの本格的な1回分を生成します。もし途中で切れて末尾が <code className="px-1 rounded bg-[#fff5f7] text-[#ff2d55]">%%% CONTINUE %%%</code> で終わっていたら、AIに「続き」と送り、返ってきた続きをこの下に貼り足してください（マーカーは自動で除去されます）。
             </p>
             <TextArea
               value={llmOutput}
