@@ -489,7 +489,13 @@ def _unescape_latex(latex: str) -> str:
     # Track whether we find evidence of JSON double-escaping:
     # literal '\\n' (two chars: backslash + n that is NOT a LaTeX command)
     # or literal '\\r\\n' in the string.
-    found_escaped_newlines = ('\\r\\n' in s or '\\n' in s)
+    # NOTE: 単に '\\n' を含むかで判定すると、LaTeX の \node / \newcommand / \noindent 等
+    # (バックスラッシュ+n) を JSON エスケープと誤認し、正規の改行 \\command を \command に
+    # 潰してしまう。実際にエスケープされた改行(英字が続かない \n / \r\n)が、本物の改行より
+    # 多い場合のみ JSON エスケープとみなす。
+    _real_nl = s.count('\n')
+    _esc_nl = len(re.findall(r'\\r\\n', s)) + len(re.findall(r'\\n(?![a-zA-Z])', s))
+    found_escaped_newlines = _esc_nl > 0 and _esc_nl >= max(1, _real_nl)
     # quick heuristics: if we see literal \n or \r\n sequences, convert them
     # NOTE: we deliberately DO NOT convert "\\t" -> real tab here because
     # sequences like "\textbf" can be misinterpreted as "\\t" + "extbf"
@@ -524,6 +530,29 @@ def _unescape_latex(latex: str) -> str:
     # break control sequences when adjacent to backslash sequences.
     if '\t' in s:
         s = s.replace('\t', ' ')
+    return s
+
+
+def _fix_broken_row_breaks(latex: str) -> str:
+    """暴走対処: 行末の改行 \\\\ が単一 \\ に潰れた場合の修復。
+
+    LLMが表の行末 \\\\ を1本の \\ で出力すると、\\hline を持つ表(マークシート・
+    自己採点欄・配点表など)が「Misplaced \\noalign」等で壊れ、それ以降(解説まで)が
+    出力されない。ここでは「孤立した \\ (= \\word でも既存の \\\\ でもない単独の \\)」が
+    \\hline / \\end{tabular|array} の直前に空白だけ挟んで現れる場合に \\\\ へ補う。
+
+    安全策: 直後が英字(\\word)や別の \\(既存の \\\\)である場合は触らない。
+    """
+    if not isinstance(latex, str) or '\\' not in latex:
+        return latex
+    s = latex
+    try:
+        # 「\ (空白) \hline」→「\\ (空白) \hline」
+        s = re.sub(r'(?<!\\)\\(?![\\a-zA-Z])(\s*)(\\hline)', r'\\\\\1\2', s)
+        # 「\ (空白) \end{tabular|array}」→「\\ …」
+        s = re.sub(r'(?<!\\)\\(?![\\a-zA-Z])(\s*)(\\end\{(?:tabular|array)\})', r'\\\\\1\2', s)
+    except Exception:
+        return latex
     return s
 
 
@@ -4483,8 +4512,28 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 % \cn{1}\,\dotrow{0.3,1.0,1.7,2.4,3.1,3.8} のように tabular のセルに入れて使う。
 \newcommand{\dotrow}[1]{\begin{tikzpicture}[x=0.30cm,y=0.30cm,baseline=0]
   \draw[edgethin] (0,0)--(6.6,0);
-  \foreach \px in {#1}{\fill (\px,0) circle (0.07);}
+  \foreach \dpx in {#1}{\fill (\dpx,0) circle (0.07);}
 \end{tikzpicture}}
+
+% ── 滑車・台車・おもり(自前で描かず、これらを使うと接触・向きが自然になる) ──
+% 滑車(中心x,y,半径r)：白塗りの輪+軸。ロープは「上の接点で受け，横で下りる」前提
+\newcommand{\pulley}[3]{\draw[edge,fill=white] (#1,#2) circle (#3);\fill (#1,#2) circle (0.045);\draw[edgethin] (#1,#2+#3)--(#1,#2+#3+0.4);}
+% 台車(中心x・レール高さyにのせる・ラベル)：車体+レール上の2輪(輪が必ず面に接する)
+\newcommand{\cart}[3]{\draw[box3d] (#1-0.55,#2+0.20) rectangle (#1+0.55,#2+0.70);\draw[edgethin,fill=white] (#1-0.33,#2+0.20) circle (0.10);\draw[edgethin,fill=white] (#1+0.33,#2+0.20) circle (0.10);\node[above=2pt] at (#1,#2+0.70){#3};}
+% 吊り下げおもり(上端中心x,y,ラベル)
+\newcommand{\weightbox}[3]{\draw[edge,fill=black!15] (#1-0.24,#2-0.5) rectangle (#1+0.24,#2);\node[right=3pt] at (#1+0.24,#2-0.25){#3};}
+% 台車+滑車+ロープ+おもり一式：レール高さ#1,台車x#2,滑車x#3,半径#4,おもり落下量#5
+% ロープは台車→滑車の頂点(接点)→1/4周→右側を鉛直に下りる、と自動で正しく描かれる。
+\newcommand{\cartpulley}[5]{%
+  \pgfmathsetmacro{\cprY}{#1+0.50}\pgfmathsetmacro{\cppy}{\cprY-#4}%
+  \cart{#2}{#1}{台車}%
+  \pulley{#3}{\cppy}{#4}%
+  \draw[edge] (#2+0.55,\cprY)--(#3,\cprY);%
+  \draw[edge] (#3,\cprY) arc(90:0:#4);%
+  \pgfmathsetmacro{\cpwy}{\cppy-#5}%
+  \draw[edge] (#3+#4,\cppy)--(#3+#4,\cpwy);%
+  \weightbox{#3+#4}{\cpwy}{おもり}%
+}
 
 % マークシート1行(横長丸番号 ―・1〜9・0)
 \newcommand{\bubbles}{%
@@ -4669,6 +4718,16 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
     \\SWopen{{3.0}}{{2.2}}{{S}}
     \\Ccap{{4.4}}{{2.2}}{{$C$}}
     \\end{{tikzpicture}}
+
+=== 力学の装置図(滑車・台車・おもり・厳守) ===
+- 滑車・台車・吊りおもりは自前で線を引かず、提供済みマクロを使う(接触・向き・ロープの掛かりが自然になる)。
+    \\pulley{{x}}{{y}}{{r}} … 滑車の輪(白塗り+軸)。ロープは「上の接点で受け，横で鉛直に下りる」。
+    \\cart{{x}}{{y}}{{台車}} … レール高さ y にのせた台車(2輪が必ず面に接する)。
+    \\weightbox{{x}}{{y}}{{おもり}} … 吊り下げおもり。
+    \\cartpulley{{レール高さ}}{{台車x}}{{滑車x}}{{半径}}{{おもり落下量}} … 台車+滑車+ロープ+おもりを一括で正しく描く。
+  例: \\groundstrip{{-0.2}}{{4.6}}{{0}} の上に \\cartpulley{{0}}{{1.2}}{{4.0}}{{0.32}}{{1.4}}
+- ロープは必ず滑車の輪に「接して」掛ける。輪の中心を貫いたり、空中で途切れさせたりしない。
+- 物体・台車・球は必ず面(床・斜面・レール)に接して描く(隙間や食い込みを作らない)。\\groundstrip / \\cart / \\ballobj を使う。
 
 === ラベルの重なり防止(厳守) ===
 - 図中ラベルは対象から十分離し(目安0.3以上)、node[above]/[below]/[left]/[right] と =Npt で位置を明示する。
@@ -8831,6 +8890,11 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 # 暴走対処: 連結された回路配線の \draw を1線分ずつに分割(安全・視覚的に無変化)
                 try:
                     only = _split_chained_wire_draws(only)
+                except Exception:
+                    pass
+                # 暴走対処: 表の行末 \\ が単一 \ に潰れた場合を補修(マークシート/解説の消失を防ぐ)
+                try:
+                    only = _fix_broken_row_breaks(only)
                 except Exception:
                     pass
                 body_lines = [only]
