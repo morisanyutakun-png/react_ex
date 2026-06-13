@@ -4519,7 +4519,7 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 % 滑車(中心x,y,半径r)：白塗りの輪+軸。ロープは「上の接点で受け，横で下りる」前提
 \newcommand{\pulley}[3]{\draw[edge,fill=white] (#1,#2) circle (#3);\fill (#1,#2) circle (0.045);\draw[edgethin] (#1,#2+#3)--(#1,#2+#3+0.4);}
 % 台車(中心x・レール高さyにのせる・ラベル)：車体+レール上の2輪(輪が必ず面に接する)
-\newcommand{\cart}[3]{\draw[box3d] (#1-0.55,#2+0.20) rectangle (#1+0.55,#2+0.70);\draw[edgethin,fill=white] (#1-0.33,#2+0.20) circle (0.10);\draw[edgethin,fill=white] (#1+0.33,#2+0.20) circle (0.10);\node[above=2pt] at (#1,#2+0.70){#3};}
+\newcommand{\cart}[3]{\draw[box3d] (#1-0.55,#2+0.20) rectangle (#1+0.55,#2+0.66);\draw[edgethin,fill=white] (#1-0.33,#2+0.10) circle (0.10);\draw[edgethin,fill=white] (#1+0.33,#2+0.10) circle (0.10);\node[above=1pt] at (#1,#2+0.66){#3};}
 % 吊り下げおもり(上端中心x,y,ラベル)
 \newcommand{\weightbox}[3]{\draw[edge,fill=black!15] (#1-0.24,#2-0.5) rectangle (#1+0.24,#2);\node[right=3pt] at (#1+0.24,#2-0.25){#3};}
 % 台車+滑車+ロープ+おもり一式：レール高さ#1,台車x#2,滑車x#3,半径#4,おもり落下量#5
@@ -4534,6 +4534,42 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \draw[edge] (#3+#4,\cppy)--(#3+#4,\cpwy);%
   \weightbox{#3+#4}{\cpwy}{おもり}%
 }
+% ── 「場面まるごと」マクロ(手描き禁止・これを1回呼ぶだけで接触/ラベルが正しく出る) ──
+% 壁＋ばね＋台車(床に接触): \springcart{壁x}{床y}{台車中心x}
+\newcommand{\springcart}[3]{%
+\draw[edge,fill=black!18] (#1,#2) rectangle (#1+0.18,#2+1.25);
+\draw[coil spring] (#1+0.18,#2+0.36)--(#3-0.55,#2+0.36);
+\cart{#3}{#2}{}%
+\node[above=1pt,font=\small] at (#3,#2+0.66){$m$};
+\node[left=2pt,font=\small] at (#1,#2+1.0){壁};}
+% 磁場中のレール＋導体棒(固定レイアウト)。#1=導体棒のx(0.9〜4.5) #2=磁場記号(\odot=表向き/\times=裏向き)
+% ドットはレール内側に並べ、不透明な導体棒(rodcyl)が上に重なって隠す。l寸法・ラベルは領域の外。
+\newcommand{\railrod}[2]{%
+\fill[fieldzone] (0.4,0.5) rectangle (5.2,2.2);
+\foreach \rrx in {0.9,1.5,2.1,2.7,3.3,3.9,4.5}{\foreach \rry in {0.85,1.35,1.85}{\node[font=\footnotesize] at (\rrx,\rry){#2};}}
+\draw[rail] (0.4,0.5)--(5.2,0.5);
+\draw[rail] (0.4,2.2)--(5.2,2.2);
+\draw[rodcyl] (#1-0.08,0.44) rectangle (#1+0.08,2.26);
+\draw[velarr] (#1+0.30,1.35)--(#1+1.25,1.35) node[midway,above=2pt,font=\small]{$v$};
+\draw[dim] (-0.05,0.5)--(-0.05,2.2) node[midway,left=2pt,font=\small]{$l$};
+\node[above=3pt,font=\small] at (#1,2.2){導体棒};
+\node[below=3pt,font=\small] at (2.8,0.5){磁束密度 $B$};}
+% 二重スリット(固定レイアウト)。入射光は斜め上から入れて d 寸法・矢印と重ねない。引数なし。
+\newcommand{\dslit}{%
+\draw[screenbd] (0.9,-1.25) rectangle (1.05,1.25);
+\fill[white] (0.88,0.12) rectangle (1.07,0.28);
+\fill[white] (0.88,-0.28) rectangle (1.07,-0.12);
+\draw[screenbd] (6.0,-1.45) rectangle (6.15,1.45);
+\draw[rayc,-{Stealth[length=5pt]}] (-0.35,0.95)--(0.93,0.22);
+\node[left=1pt,font=\small] at (-0.30,0.95){単色光};
+\draw[ray] (1.07,0.20)--(6.0,0.85);
+\draw[ray] (1.07,-0.20)--(6.0,0.85);
+\draw[guide] (1.07,0)--(6.0,0);
+\draw[dim] (0.66,-0.20)--(0.66,0.20) node[midway,left=2pt,font=\small]{$d$};
+\draw[dim] (1.05,-1.7)--(6.0,-1.7) node[midway,below=2pt,font=\small]{$D$};
+\node[above=2pt,font=\small] at (1.0,1.25){二重スリット};
+\node[above=2pt,font=\small] at (6.07,1.45){スクリーン};
+\node[right=2pt,font=\small] at (6.15,0.85){明線};}
 
 % マークシート1行(横長丸番号 ―・1〜9・0)
 \newcommand{\bubbles}{%
@@ -4746,15 +4782,18 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
     \\Ccap{{4.4}}{{2.2}}{{$C$}}
     \\end{{tikzpicture}}
 
-=== 力学の装置図(滑車・台車・おもり・厳守) ===
-- 滑車・台車・吊りおもりは自前で線を引かず、提供済みマクロを使う(接触・向き・ロープの掛かりが自然になる)。
-    \\pulley{{x}}{{y}}{{r}} … 滑車の輪(白塗り+軸)。ロープは「上の接点で受け，横で鉛直に下りる」。
-    \\cart{{x}}{{y}}{{台車}} … レール高さ y にのせた台車(2輪が必ず面に接する)。
-    \\weightbox{{x}}{{y}}{{おもり}} … 吊り下げおもり。
-    \\cartpulley{{レール高さ}}{{台車x}}{{滑車x}}{{半径}}{{おもり落下量}} … 台車+滑車+ロープ+おもりを一括で正しく描く。
-  例: \\groundstrip{{-0.2}}{{4.6}}{{0}} の上に \\cartpulley{{0}}{{1.2}}{{4.0}}{{0.32}}{{1.4}}
-- ロープは必ず滑車の輪に「接して」掛ける。輪の中心を貫いたり、空中で途切れさせたりしない。
-- 物体・台車・球は必ず面(床・斜面・レール)に接して描く(隙間や食い込みを作らない)。\\groundstrip / \\cart / \\ballobj を使う。
+=== 定番の装置図は「場面まるごとマクロ」を必ず使う(最重要・手描き厳禁) ===
+次の定番場面は、自前で線を組み立てず、必ず下の一括マクロを1回呼ぶだけで描く。
+これらは接触・向き・ロープの掛かり・ラベル位置・場の格子とラベルの非重なりが検証済みで、座標がずれても破綻しない。
+  ・台車＋滑車＋おもり: \\groundstrip{{-0.2}}{{5.3}}{{0}} の上に \\cartpulley{{0}}{{台車x}}{{滑車x}}{{半径(0.32目安)}}{{おもり落下量}}
+  ・壁＋ばね＋台車: \\groundstrip の上に \\springcart{{壁x}}{{床y}}{{台車x}}  (必要なら別途 \\dim で x_0 等を付す)
+  ・磁場中のレール＋導体棒: \\railrod{{導体棒x(0.9〜4.5)}}{{\\odot または \\times}}  (l・v・導体棒・磁束密度B のラベルは内蔵)
+  ・二重スリット(光の干渉): \\dslit  (引数なし。単色光・d・D・明線・スクリーンのラベルは内蔵)
+- これらの一括マクロを呼んだら、その上に同じ装置の線やラベル(記録タイマーの箱・余分な矢印・重複ラベル等)を「重ねて描かない」。必要な要素はマクロに内蔵済み。
+- 単独部品が必要なときのみ \\pulley / \\cart / \\weightbox / \\Rbox / \\Ccap / \\Vbatt / \\SWopen / \\SWclosed を使う。
+  ・\\cart{{x}}{{レール高さy}}{{ラベル}} … 2輪が必ず面 y に接する(浮かせない)。ロープは滑車の輪に接して掛け、輪の中心を貫かない・空中で途切れさせない。
+- 物体・台車・球は必ず面(床・斜面・レール)に接して描く(隙間も食い込みも禁止)。床は \\groundstrip、球は \\ballobj。
+- 上記にない場面を自前で描く場合も、面の y 座標と物体の底の y 座標を厳密に一致させ、ラベルは線・矢印・格子記号に重ねない。
 
 === ラベルの重なり防止(厳守) ===
 - 図中ラベルは対象から十分離し(目安0.3以上)、node[above]/[below]/[left]/[right] と =Npt で位置を明示する。
