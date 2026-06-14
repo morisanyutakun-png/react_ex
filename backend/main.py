@@ -4713,6 +4713,33 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \node[font=\small] at (22:0.96){$\theta$};
   \node[font=\small] at (0.62,-0.32){投げ出し点};
 }
+% ── 弦の定常波(両端固定)。#1=腹の数(=倍振動の次数 n)。節・腹・長さ L を内蔵 ──
+% 両端 x=0,6 を固定端(節)とし、節は n+1 個・腹は n 個。ラベルは弦の上下に振り分けて重ねない。
+% 検算: 半波長 = 6/n。節は x=6k/n (k=0..n)。振幅0.42、中心線 y=0.9。
+\newcommand{\stringwave}[1]{%
+  \draw[edge] (0,0)--(0,1.8);                                    % 左の固定支柱
+  \draw[edge] (6,0)--(6,1.8);                                    % 右の固定支柱
+  \draw[edgethin] (0,0.9)--(6,0.9);                              % 弦の静止位置(中心線)
+  \draw[line width=0.9pt,smooth,samples=120,domain=0:6]
+    plot(\x,{0.9+0.42*sin(#1*30*\x)});                           % 定常波(上の包絡)
+  \draw[guide,smooth,samples=120,domain=0:6]
+    plot(\x,{0.9-0.42*sin(#1*30*\x)});                           % 下の包絡(破線)
+  \foreach \k in {0,...,#1}{\fill ({6*\k/#1},0.9) circle (0.045);}% 節(●)
+  \draw[dim] (0,-0.05)--(6,-0.05) node[midway,below=2pt,font=\small]{$L$};
+}
+% ── 水平投射(台の縁から水平に打ち出す)。引数なし(代表図) ──
+% 台上面 y=2.2・床 y=0。初速 v は水平(縁の高さ)。落下高さ h を左に寸法表示。
+% 軌道は y=2.2-k x^2(水平投射なので初速は接線=水平で自動的に一致)。答えの寸法は描かない。
+\newcommand{\projectilehoriz}{%
+  \fill[pattern=north east lines,pattern color=black!75] (-0.3,-0.16) rectangle (6.2,0);
+  \draw[rail] (-0.3,0)--(6.2,0);                                 % 床
+  \draw[edge,fill=black!8] (0.4,0) rectangle (1.9,2.2);          % 台
+  \node[font=\small] at (1.15,1.1){台};
+  \ballon{1.9}{2.2}{0.12}                                        % 小球(台の縁・上面に接地)
+  \draw[velarr] (2.08,2.32)--(3.05,2.32) node[midway,above=2pt,font=\small]{$v$};
+  \draw[guide,smooth,samples=80,domain=0:3.3] plot({1.9+\x},{2.2-0.20*\x*\x});
+  \draw[dim] (0.15,0)--(0.15,2.2) node[midway,left=2pt,font=\small]{$h$};
+}
 
 % マークシート1行(横長丸番号 ―・1〜9・0)
 \newcommand{\bubbles}{%
@@ -4874,6 +4901,10 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
     \\end{{tabular}}\\end{{center}}
   v-t グラフ、I-V グラフ、x-t、N-t(放射性崩壊)、波形などの選択はこの方式で描くこと。
 - 表(データ表・選択肢表・マークシート・配点表)の各行末は必ず \\\\ で改行する($\\\\$ を省略しない)。
+  ★★★ 行末の改行は必ず「バックスラッシュ2本 \\\\」で書く。1本の \\ で行を終えない(1本だと改行にならず、
+  直後の \\hline が「Misplaced \\noalign」エラーを起こして第II問以降・マークシート・解答解説が
+  すべて出力されなくなる)。sentaku・optlist・enumerate・tabular のどの行も例外なく \\\\ で終える。
+  罫線は \\\\ の次の行に \\hline を単独で置くか、半角空白を入れて \\\\ \\hline と書く(\\\\hline と密着させない)。
 - 表・数式・図が紙面(B5)からはみ出さないよう、\\small・\\dfrac・\\renewcommand{{\\arraystretch}} を適切に使う。
 - 数値・単位は必ず「平らなスラッシュ表記」で組む: $\\mathrm{{m/s}}$、$\\mathrm{{m/s^2}}$、$\\mathrm{{kg}}$ のように書く。
   ★単位を分数で組むの禁止: \\dfrac{{m}}{{s^2}} や \\frac{{\\mathrm{{m}}}}{{\\mathrm{{s}}}} のように m を s の上に積む書き方はしない(共通テストは単位を横一列のスラッシュで書く)。
@@ -4965,6 +4996,9 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
   ・斜方投射(放物運動): \\projectile  (引数なし。放物線の軌道・投げ出し点・角 θ・初速 v0 のベクトルを内蔵。
        ★v0 の矢印は軌道の接線方向に厳密に一致して描かれる。投射の図を自前で描かず必ずこれを使う。
        最高点の高さ・到達距離など答えになる寸法は描かれない。)
+  ・水平投射(台の縁から水平に打ち出す): \\projectilehoriz  (引数なし。台・床・水平な初速 v・落下高さ h・破線軌道を内蔵。)
+  ・弦の定常波(両端固定): \\stringwave{{腹の数 n}}  (例 \\stringwave{{3}} で3倍振動。節●・上下の包絡線・長さ L を内蔵。
+       基本振動は \\stringwave{{1}}、2倍振動は \\stringwave{{2}}。弦の図を自前で描かない。)
 - これらの一括マクロを呼んだら、その上に同じ装置の線やラベル(記録タイマーの箱・余分な矢印・重複ラベル等)を「重ねて描かない」。必要な要素はマクロに内蔵済み。
 - 単独部品が必要なときのみ \\pulley / \\cart / \\weightbox / \\Rbox / \\Ccap / \\Vbatt / \\SWopen / \\SWclosed を使う。
   ・\\cart{{x}}{{レール高さy}}{{ラベル}} … 2輪が必ず面 y に接する(浮かせない)。ロープは滑車の輪に接して掛け、輪の中心を貫かない・空中で途切れさせない。
