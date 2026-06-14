@@ -7618,7 +7618,7 @@ def _build_practice_latex(problems: list, subject: str, difficulty: str, mode: s
             r'\tikzset{',
             r'  every picture/.style={line width=3pt},',
             r'  every node/.style={font=\small},',
-            r'  >=Stealth[length=5mm,width=3.5mm],',
+            r'  >={Stealth[length=5mm,width=3.5mm]},',
             # 名前付き太さスタイルを再定義（PyMuPDF filled-path変換でも視認可能な太さ）
             r'  thin/.style={line width=2pt},',
             r'  semithick/.style={line width=2.5pt},',
@@ -11156,7 +11156,7 @@ def _build_tikz_standalone(tikz_code: str, with_cjk: bool = False) -> str:
         "3d,perspective,shapes}\n"
         "\\usepackage[siunitx]{circuitikz}\n"
         "\\tikzset{\n"
-        "  >=Stealth[length=5mm,width=3.5mm],\n"
+        "  >={Stealth[length=5mm,width=3.5mm]},\n"
         "  every picture/.style={line width=3pt},\n"
         "  thin/.style={line width=2pt},\n"
         "  semithick/.style={line width=2.5pt},\n"
