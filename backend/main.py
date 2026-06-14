@@ -469,6 +469,43 @@ def _collapse_internal_newlines(latex: str) -> str:
     return s
 
 
+# 単位を分数で積んだ表記(\dfrac{m}{s^2} 等)を、平らなスラッシュ表記
+# (\mathrm{m/s^2})へ直す。共通テストは単位を横一列で書くため。
+# 物理量の分数(v^2/2\mu g, m/(M+m) など)を壊さないよう、
+#   ・直前が「数値」または細空白(\, \;)・~・} で、値の単位として付いている
+#   ・分子/分母が単位文字のみ(演算子 + - = やギリシャ文字・入れ子の{}を含まない)
+# の両方を満たす分数だけを変換する(極めて保守的)。
+_UNIT_ATOM = r'(?:[A-Za-z](?:\^\s*\{?\d+\}?)?)'
+_UNIT_BLOCK_RE = re.compile(rf'^\s*{_UNIT_ATOM}(?:\s*\\cdot\s*{_UNIT_ATOM}|\s*{_UNIT_ATOM})*\s*$')
+_UNIT_FRAC_RE = re.compile(
+    r'(?P<pre>\d|\\,|\\;|\\:|~|\})\s*\\[dt]?frac\s*'
+    r'\{(?P<num>[^{}]*)\}\s*\{(?P<den>[^{}]*)\}'
+)
+
+
+def _flatten_unit_fractions(latex: str) -> str:
+    if not isinstance(latex, str) or 'frac' not in latex:
+        return latex
+
+    def _is_unit(s: str) -> bool:
+        if not s or not s.strip():
+            return False
+        # 演算子・ギリシャ文字・別のコマンドを含むものは物理量とみなして除外
+        if re.search(r'[+\-=]|\\(?!cdot\b)[A-Za-z]', s):
+            return False
+        return bool(_UNIT_BLOCK_RE.match(s))
+
+    def _repl(m: 're.Match') -> str:
+        num, den = m.group('num'), m.group('den')
+        if _is_unit(num) and _is_unit(den):
+            num_c = re.sub(r'\s+', '', num)
+            den_c = re.sub(r'\s+', '', den)
+            return f"{m.group('pre')}\\mathrm{{{num_c}/{den_c}}}"
+        return m.group(0)
+
+    return _UNIT_FRAC_RE.sub(_repl, latex)
+
+
 def _unescape_latex(latex: str) -> str:
     """Heuristic unescape for LaTeX-like strings that were JSON-escaped
 
@@ -554,6 +591,33 @@ def _fix_broken_row_breaks(latex: str) -> str:
     except Exception:
         return latex
     return s
+
+
+# 表の罫線コマンドの「バックスラッシュ欠落」を補修する安全網。
+# LLM が行末改行 \\ に罫線 \hline を密着させて書くとき、しばしば
+# \\\hline(= 改行 \\ + 罫線 \hline、正しい)を \\hline(= 改行 \\ + ただの文字列
+# "hline")へ簡約してしまう。後者は LaTeX では「行末改行のあとに hline という文字を
+# 植字する」意味になり、共通テスト模試の選択肢表の各行頭に "hline" が露出する事故になる。
+# ここでは「ちょうど2本のバックスラッシュ(行末改行)＋(空白)＋罫線語(先頭の \ が無い)」
+# だけを検出し、欠けた \ を補って \\ \rule の形に正規化する。
+#   壊れ:  \\hline / \\ hline / \\hdashline / \\cline{1-2}  → 直し: \\ \hline 等
+# 既に正しい \\ \hline(空白形) や \\\hline(密着3本)には一切触れない。
+_RULE_WORDS = r'(?:hline|hdashline|toprule|midrule|bottomrule|cline|cmidrule)'
+_GLUED_RULE_RE = re.compile(r'(?<!\\)\\\\(\s*)(' + _RULE_WORDS + r')\b')
+
+
+def _fix_glued_hline(latex: str) -> str:
+    """行末改行 \\\\ に密着した罫線語のバックスラッシュ欠落(\\\\hline 等)を補修する。
+
+    \\\\hline / \\\\ hline → \\\\ \\hline。選択肢表の行頭に "hline" が文字として
+    現れる事故を防ぐ。正しい \\\\ \\hline・\\\\\\hline は変更しない(安全)。
+    """
+    if not isinstance(latex, str) or '\\\\' not in latex:
+        return latex
+    try:
+        return _GLUED_RULE_RE.sub(r'\\\\ \\\2', latex)
+    except Exception:
+        return latex
 
 
 def _split_chained_wire_draws(latex: str) -> str:
@@ -4527,17 +4591,35 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \newcommand{\cart}[3]{\draw[box3d] (#1-0.55,#2+0.20) rectangle (#1+0.55,#2+0.66);\draw[edgethin,fill=white] (#1-0.33,#2+0.10) circle (0.10);\draw[edgethin,fill=white] (#1+0.33,#2+0.10) circle (0.10);\node[above=1pt] at (#1,#2+0.66){#3};}
 % 吊り下げおもり(上端中心x,y,ラベル)
 \newcommand{\weightbox}[3]{\draw[edge,fill=black!15] (#1-0.24,#2-0.5) rectangle (#1+0.24,#2);\node[right=3pt] at (#1+0.24,#2-0.25){#3};}
-% 台車+滑車+ロープ+おもり一式：レール高さ#1,台車x#2,滑車x#3,半径#4,おもり落下量#5
-% ロープは台車→滑車の頂点(接点)→1/4周→右側を鉛直に下りる、と自動で正しく描かれる。
-\newcommand{\cartpulley}[5]{%
-  \pgfmathsetmacro{\cprY}{#1+0.50}\pgfmathsetmacro{\cppy}{\cprY-#4}%
-  \cart{#2}{#1}{台車}%
-  \pulley{#3}{\cppy}{#4}%
-  \draw[edge] (#2+0.55,\cprY)--(#3,\cprY);%
-  \draw[edge] (#3,\cprY) arc(90:0:#4);%
-  \pgfmathsetmacro{\cpwy}{\cppy-#5}%
-  \draw[edge] (#3+#4,\cppy)--(#3+#4,\cpwy);%
-  \weightbox{#3+#4}{\cpwy}{おもり}%
+% 台車＋滑車＋おもり 一式(引数なし・固定レイアウト)。
+% 机の天板(y=0)の上に台車をのせ、机の右縁に張り出した腕で滑車を支持し、
+% ロープが滑車の頂点→1/4周→右側を下り、机の外側でおもりが宙吊りになる。
+% 滑車が「浮く」・おもりが床に「めり込む」・ラベルが重なる、を原理的に防ぐ。
+% ★これ1回を呼ぶだけ。\groundstrip や 質量ラベル等を上から重ねて描かないこと。
+\newcommand{\cartpulley}{%
+  % 机: 天板上面 y=0・左端 x=0.1・右縁 x=4.4(縁が「崖」の役割)
+  \fill[black!8] (0.1,-0.14) rectangle (4.4,0);
+  \draw[edge] (0.1,0)--(4.4,0);                 % 天板上面(台車のレール面)
+  \draw[edge] (0.1,-0.14)--(4.4,-0.14);         % 天板下面
+  \draw[edge] (4.4,0)--(4.4,-0.14);             % 右縁
+  \draw[edge] (0.6,-0.14)--(0.6,-1.7);          % 左脚
+  \draw[edge] (3.95,-0.14)--(3.95,-1.7);        % 右脚
+  \draw[rail] (-0.15,-1.7)--(4.6,-1.7);         % 床(机の下のみ)
+  \fill[pattern=north east lines,pattern color=black!75] (-0.15,-1.86) rectangle (4.6,-1.7);
+  % 台車(天板 y=0 に車輪が接地)。ラベルは1つだけ(重なり防止)
+  \cart{2.0}{0}{}%
+  \node[above=1pt,font=\small] at (2.0,0.66){台車\,$M$};
+  % 滑車: 天板右縁から張り出した腕で支持。頂点をロープ高さ 0.45 に合わせる
+  \draw[edge] (4.4,0)--(4.78,0);                % 支持の腕(縁の外へ)
+  \draw[edge] (4.78,0)--(4.78,0.11);            % 軸への短い支柱
+  \draw[edge,fill=white] (4.78,0.11) circle (0.34);
+  \fill (4.78,0.11) circle (0.045);             % 軸
+  % ロープ: 台車右(2.55,0.45)→頂点(4.78,0.45)→1/4周→右側(5.12,0.11)→下→おもり
+  \draw[edge] (2.55,0.45)--(4.78,0.45);
+  \draw[edge] (4.78,0.45) arc (90:0:0.34);
+  \draw[edge] (5.12,0.11)--(5.12,-0.85);
+  \draw[edge,fill=black!15] (4.88,-1.30) rectangle (5.36,-0.85);  % おもり(机の外で宙吊り)
+  \node[right=3pt,font=\small] at (5.36,-1.07){おもり\,$m$};
 }
 % ── 「場面まるごと」マクロ(手描き禁止・これを1回呼ぶだけで接触/ラベルが正しく出る) ──
 % 壁＋ばね＋台車(床に接触): \springcart{壁x}{床y}{台車中心x}
@@ -4575,6 +4657,62 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \node[above=2pt,font=\small] at (1.0,1.25){二重スリット};
 \node[above=2pt,font=\small] at (6.07,1.45){スクリーン};
 \node[right=2pt,font=\small] at (6.15,0.85){明線};}
+% ── 屈折・全反射(界面・法線・入射/屈折光・角 i,r の弧つき)。#1=上の媒質名 #2=下の媒質名 ──
+% 光は下の媒質(#2)から上の媒質(#1)へ進む(例: \refraction{空気}{水})。
+% 入射角 i は下側・屈折角 r は上側に必ず弧で表示する(角ラベルが点だけにならない)。
+\newcommand{\refraction}[2]{%
+  \fill[black!6] (-2.0,-1.5) rectangle (2.0,0);            % 下の媒質を薄く塗る
+  \draw[edge] (-2.0,0)--(2.0,0);                            % 界面
+  \draw[guide] (0,-1.5)--(0,1.5);                            % 法線(破線)
+  \draw[rayc,-{Stealth[length=5pt]}] (-1.19,-1.42)--(0,0);  % 入射光(下・左下→原点, i≈40°)
+  \draw[rayc,-{Stealth[length=5pt]}] (0,0)--(1.35,0.95);    % 屈折光(上・原点→右上, r≈55°)
+  \draw[edgethin] (230:0.5) arc (230:270:0.5);              % 入射角 i の弧(下)
+  \draw[edgethin] (35:0.52) arc (35:90:0.52);               % 屈折角 r の弧(上)
+  \node[font=\small] at (250:0.74){$i$};
+  \node[font=\small] at (62:0.76){$r$};
+  \node[font=\small] at (-1.6,0.42){#1};                    % 上の媒質
+  \node[font=\small] at (-1.6,-0.42){#2};                   % 下の媒質
+}
+% ── 気柱共鳴(共鳴管)。おんさを開口端の真上に置き、下向き矢印で音を入れる。引数なし(代表図) ──
+% 管口=上端(開)、下に水面、その間が空気柱 L。L 寸法・管口・水面・おんさのラベルは内蔵。
+\newcommand{\resonancetube}{%
+  \draw[edge] (2.0,2.7)--(2.0,0)--(2.6,0)--(2.6,2.7);      % U字の管(上端は開)
+  \fill[black!12] (2.0,0) rectangle (2.6,0.7);             % 水(下部)
+  \draw[edgethin] (2.0,0.7)--(2.6,0.7);                     % 水面
+  \draw[dim] (2.85,0.7)--(2.85,2.7) node[midway,right=2pt,font=\small]{$L$};  % 空気柱 L(右)
+  \draw[edge] (2.18,3.62)--(2.18,3.12);                     % おんさ 左の枝
+  \draw[edge] (2.42,3.62)--(2.42,3.12);                     % おんさ 右の枝
+  \draw[edge] (2.18,3.12) arc (180:360:0.12);              % U字の底
+  \draw[edge] (2.30,3.00)--(2.30,2.86);                     % 柄
+  \draw[velarr] (2.30,2.82)--(2.30,2.55);                  % 音を管内へ(下向き)
+  \node[left=2pt,font=\small] at (2.06,3.42){おんさ};
+  \node[left=2pt,font=\small] at (2.0,2.6){管口};
+  \node[left=2pt,font=\small] at (2.0,0.7){水面};
+}
+% ── 放射性崩壊の直前(静止した原子核)。崩壊後のベクトルは描かない(向き・大小が答えのため) ──
+\newcommand{\nucleusrest}{%
+  \shade[ball color=black!20] (0,0) circle (0.55);
+  \draw[edgethin] (0,0) circle (0.55);
+  \foreach \nx/\ny in {-0.18/0.12, 0.16/0.18, 0.05/-0.16, -0.12/-0.18, 0.22/-0.04}{%
+    \fill[black!55] (\nx,\ny) circle (0.05);}                % 核子(模式)
+  \node[font=\footnotesize] at (0,0.92){崩壊前(静止)};
+  \node[font=\small] at (0,-0.95){放射性原子核};
+}
+% ── 斜方投射(放物線軌道＋接線方向の初速ベクトル＋角θの弧)。引数なし(代表図) ──
+% 投げ出し点(0,0)から角 θ=40° で投射。軌道は y = x*tanθ - k*x^2(初期傾き=tanθ)で
+% 描くので、角 θ で引いた初速 v0 の矢印は軌道の接線に厳密に一致する(浮かない・ずれない)。
+% 検算: tan40=0.839, cos40=0.766, sin40=0.643, k=0.1678 → x=5 で y=0(着地), 頂点 x=2.5。
+% ★最高点の高さ・水平到達距離など「答えになる寸法」は描かない(ヒント禁止)。
+\newcommand{\projectile}{%
+  \draw[edge] (-0.3,0)--(5.4,0);                                  % 水平面(地面)
+  \draw[guide,smooth,samples=80,domain=0:5]
+    plot(\x,{0.839*\x-0.1678*\x*\x});                             % 放物線軌道(概念・破線)
+  \draw[velarr] (0,0)--(1.034,0.868)
+    node[above=1pt,font=\small]{$v_0$};                           % 初速(=接線方向, 40°)
+  \draw[edgethin] (0.72,0) arc (0:40:0.72);                       % 角 θ の弧
+  \node[font=\small] at (22:0.96){$\theta$};
+  \node[font=\small] at (0.62,-0.32){投げ出し点};
+}
 
 % マークシート1行(横長丸番号 ―・1〜9・0)
 \newcommand{\bubbles}{%
@@ -4737,7 +4875,9 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
   v-t グラフ、I-V グラフ、x-t、N-t(放射性崩壊)、波形などの選択はこの方式で描くこと。
 - 表(データ表・選択肢表・マークシート・配点表)の各行末は必ず \\\\ で改行する($\\\\$ を省略しない)。
 - 表・数式・図が紙面(B5)からはみ出さないよう、\\small・\\dfrac・\\renewcommand{{\\arraystretch}} を適切に使う。
-- 数値・単位は $\\mathrm{{m/s}}$ 等で正しく組む。
+- 数値・単位は必ず「平らなスラッシュ表記」で組む: $\\mathrm{{m/s}}$、$\\mathrm{{m/s^2}}$、$\\mathrm{{kg}}$ のように書く。
+  ★単位を分数で組むの禁止: \\dfrac{{m}}{{s^2}} や \\frac{{\\mathrm{{m}}}}{{\\mathrm{{s}}}} のように m を s の上に積む書き方はしない(共通テストは単位を横一列のスラッシュで書く)。
+  例: 重力加速度は $g = 9.8\\,\\mathrm{{m/s^2}}$、速さは $v = 0.80\\,\\mathrm{{m/s}}$。数値と単位の間は $\\,$ で区切る。
 - \\settitle の表紙と注意事項・解答解説の双方に、本書が非公式の予想問題である旨を明記する。
 - ★改行幅指定 \\\\[5mm] のような「\\\\ の直後に [長さ]」は使わない(\\\\ と [ の間に空白/改行が入ると [5mm] が文字として表示される不具合の原因)。
   縦の空きは \\vspace{{5mm}} や \\par で入れること。表内の改行 \\\\ は配点表・選択肢表などでそのまま使ってよい(直後に [..] を付けない)。
@@ -4768,10 +4908,14 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
     \\begin{{center}}\\small\\renewcommand{{\\arraystretch}}{{1.4}}
     \\begin{{tabular}}{{|c|c|c|}}
     \\hline
-    & ア & イ \\\\\\hline
-    \\cn{{1}} & $\\mu mg$ & $\\dfrac{{v_0^2}}{{2\\mu g}}$ \\\\\\hline
+    & ア & イ \\\\ \\hline
+    \\cn{{1}} & $\\mu mg$ & $\\dfrac{{v_0^2}}{{2\\mu g}}$ \\\\ \\hline
     … (6行) …
     \\end{{tabular}}\\end{{center}}
+  ★罫線の書き方(厳守・最重要): 行末改行 \\\\ と罫線 \\hline は必ず空白で離して「\\\\ \\hline」と書く。
+    「\\\\hline」(改行に hline を密着)とは絶対に書かない — これは LaTeX では「改行のあとに hline という
+    文字を植字する」意味になり、表の各行頭に "hline" という文字が露出して紙面が壊れる。
+    \\hline を次の行に単独で置くか、直前に必ず半角空白を入れること。
 - 探究の大問は、実験の背景・目的・手順の説明＋会話文(太郎・花子)＋測定データの表＋グラフ選択を厚く入れ、誘導に沿って解かせる。
 - 図は最小限の情報だけ(力の矢印や答えになる注釈は描かない)・接地は上記マクロ・ラベルは重ねない、を徹底し、紙面の密度と精密さを本番並みにする。
 
@@ -4809,10 +4953,18 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 === 定番の装置図は「場面まるごとマクロ」を必ず使う(最重要・手描き厳禁) ===
 次の定番場面は、自前で線を組み立てず、必ず下の一括マクロを1回呼ぶだけで描く。
 これらは接触・向き・ロープの掛かり・ラベル位置・場の格子とラベルの非重なりが検証済みで、座標がずれても破綻しない。
-  ・台車＋滑車＋おもり: \\groundstrip{{-0.2}}{{5.3}}{{0}} の上に \\cartpulley{{0}}{{台車x}}{{滑車x}}{{半径(0.32目安)}}{{おもり落下量}}
+  ・台車＋滑車＋おもり: \\cartpulley  (引数なし。机・台車M・机の縁に支持した滑車・ロープ・机の外で宙吊りのおもりm・床まで内蔵)
+       ★\\cartpulley は単独で呼ぶ。\\groundstrip を下に敷かない／質量ラベル(質量 M, おもり m 等)を上から重ねて描かない。
+       滑車を空中に浮かせず、おもりを床にめり込ませないため、滑車は必ずこのマクロで机の縁に取り付ける(崖・机の縁が支えになる)。
   ・壁＋ばね＋台車: \\groundstrip の上に \\springcart{{壁x}}{{床y}}{{台車x}}  (必要なら別途 \\dim で x_0 等を付す)
   ・磁場中のレール＋導体棒: \\railrod{{導体棒x(0.9〜4.5)}}{{\\odot または \\times}}  (l・v・導体棒・磁束密度B のラベルは内蔵)
   ・二重スリット(光の干渉): \\dslit  (引数なし。単色光・d・D・明線・スクリーンのラベルは内蔵)
+  ・気柱共鳴(おんさと共鳴管): \\resonancetube  (引数なし。おんさは必ず開口端の真上に置かれ、下向き矢印で音が管へ入る。管口・水面・空気柱 L のラベルは内蔵。おんさを管の横に描かない)
+  ・光の屈折・全反射: \\refraction{{上の媒質名}}{{下の媒質名}}  (例 \\refraction{{空気}}{{水}}。界面・法線・入射光・屈折光に加え、入射角 i と屈折角 r を必ず弧で表示する。i・r を点や文字だけで済ませない)
+  ・放射性崩壊の直前: \\nucleusrest  (引数なし。静止した原子核のみ。崩壊後の粒子・速度・運動量の矢印は描かない)
+  ・斜方投射(放物運動): \\projectile  (引数なし。放物線の軌道・投げ出し点・角 θ・初速 v0 のベクトルを内蔵。
+       ★v0 の矢印は軌道の接線方向に厳密に一致して描かれる。投射の図を自前で描かず必ずこれを使う。
+       最高点の高さ・到達距離など答えになる寸法は描かれない。)
 - これらの一括マクロを呼んだら、その上に同じ装置の線やラベル(記録タイマーの箱・余分な矢印・重複ラベル等)を「重ねて描かない」。必要な要素はマクロに内蔵済み。
 - 単独部品が必要なときのみ \\pulley / \\cart / \\weightbox / \\Rbox / \\Ccap / \\Vbatt / \\SWopen / \\SWclosed を使う。
   ・\\cart{{x}}{{レール高さy}}{{ラベル}} … 2輪が必ず面 y に接する(浮かせない)。ロープは滑車の輪に接して掛け、輪の中心を貫かない・空中で途切れさせない。
@@ -8956,8 +9108,14 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     pass
                 # 練習モード（_build_practice_latex）の出力は _sanitize_practice_text で
                 # 既にブラケット変換・サニタイズ済みなので、追加の変換は最小限にする
+                # (＝「作るモード」には手を加えない)
                 _is_practice_doc = bool(re.search(r'\\newenvironment\{problembox\}', only))
                 if not _is_practice_doc:
+                    # 単位の分数組版(\dfrac{m}{s^2} 等)を平らなスラッシュ表記に直す(模試モード等)
+                    try:
+                        only = _flatten_unit_fractions(only)
+                    except Exception:
+                        pass
                     try:
                         only = _fix_left_right_delimiters(only)
                     except Exception:
@@ -8988,6 +9146,13 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     only = _fix_broken_row_breaks(only)
                 except Exception:
                     pass
+                # 暴走対処(模試のみ): 行末改行に密着した罫線語の \ 欠落(\\hline 等)を補修。
+                # 選択肢表の行頭に "hline" が文字露出する事故を防ぐ。作るモードには適用しない。
+                if not _is_practice_doc:
+                    try:
+                        only = _fix_glued_hline(only)
+                    except Exception:
+                        pass
                 body_lines = [only]
             elif isinstance(only, str) and ("\n" in only or re.search(r"\\section|\\textbf", only)):
                 # Normalize bracketed math within multi-line blobs and collapse
