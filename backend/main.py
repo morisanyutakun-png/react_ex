@@ -445,12 +445,14 @@ def _collapse_internal_newlines(latex: str) -> str:
         return m.group(0)[0] + inner2 + m.group(0)[-1]
 
     try:
-        # $...$
-        s = re.sub(r"\$(.*?)\$", lambda m: '$' + m.group(1).replace('\n', ' ') + '$', s, flags=re.S)
-        # \(...\)
-        s = re.sub(r"\\\((.*?)\\\)", lambda m: '\\(' + m.group(1).replace('\n', ' ') + '\\)', s, flags=re.S)
-        # \[...\]
-        s = re.sub(r"\\\[(.*?)\\\]", lambda m: '\\[' + m.group(1).replace('\n', ' ') + '\\]', s, flags=re.S)
+        # $...$  (エスケープされた \$ は対象外)
+        s = re.sub(r"(?<!\\)\$(.*?)(?<!\\)\$", lambda m: '$' + m.group(1).replace('\n', ' ') + '$', s, flags=re.S)
+        # \(...\)  (\\( = 行末改行+括弧は対象外)
+        s = re.sub(r"(?<!\\)\\\((.*?)(?<!\\)\\\)", lambda m: '\\(' + m.group(1).replace('\n', ' ') + '\\)', s, flags=re.S)
+        # \[...\]  ※ \\[ (行末改行 \\ + 角括弧)は表示数式の開始 \[ ではないので除外する。
+        #   除外しないと、preamble コメント中の \\[5mm] 等の \[ が誤って表示数式の開始と
+        #   みなされ、本文最初の \] まで(= preamble 全体)の改行を潰して \begin{document} が壊れる。
+        s = re.sub(r"(?<!\\)\\\[(.*?)(?<!\\)\\\]", lambda m: '\\[' + m.group(1).replace('\n', ' ') + '\\]', s, flags=re.S)
     except Exception:
         pass
 
@@ -4575,8 +4577,8 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \newcommand{\oi}[1]{\par\vskip0.4\baselineskip\noindent
   \hangindent=2.6\zwx\hangafter=1\hspace*{1\zwx}#1\hspace{0.4em}\ignorespaces}
 % 各回の表紙
-% 縦の空きは \par\vspace で入れる(\\[5mm] 形式は \\ と [ の間に空白が入ると
-% [5mm] が文字として表示される不具合があるため使わない)
+% 縦の空きは \par\vspace で入れる(「\\」の直後に [寸法] を続ける書き方は、間に
+% 空白/改行が入ると寸法が文字として表示される不具合の原因になるため使わない)
 \newcommand{\settitle}[2]{%
   \clearpage\thispagestyle{empty}%
   \null\vspace*{26mm}
