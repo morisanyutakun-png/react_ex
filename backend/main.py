@@ -4555,7 +4555,7 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 % 選択肢グリッド。sentaku 環境の中に \op{\cn{丸数字}}{中身} を並べるだけ(区切り記号 & や 改行 は不要)。
 % ★sentaku は表ではなく「流し込み段落」。& や 行末改行 が来てもサニタイザが空白に置換するため、
 %   alignment エラー(Misplaced crcr 等)を原理的に起こさない。列数の任意引数は無視する。
-\newcommand{\opsep}[1][0pt]{\hspace{0.9em plus 0.6em minus 0.3em}}
+\newcommand{\opsep}[1][0pt]{\hspace{2.6em plus 1.2em minus 0.5em}}
 \newcommand{\op}[2]{\leavevmode\mbox{#1\hspace{0.4em}#2}\opsep}
 \newcommand{\cn}[1]{\tikz[baseline=-0.5ex]{\node[draw=black,ellipse,line width=0.4pt,%
   inner sep=0pt,minimum width=3.5mm,minimum height=4.7mm,%
@@ -4564,8 +4564,8 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 % サニタイザが空白に置換するため alignment エラーにならない。任意引数(列数)は無視。
 \newenvironment{sentaku}[1][0]{%
   \par\nopagebreak\vskip0.4\baselineskip\nopagebreak
-  \small\noindent\hspace*{1\zwx}\ignorespaces}{%
-  \par\vskip0.2\baselineskip}
+  \begin{center}\small\ignorespaces}{%
+  \unskip\end{center}\vskip-0.05\baselineskip}
 % 文字指定の注記
 \newcommand{\given}[1]{\par\vskip0.3\baselineskip\noindent\hspace*{2\zwx}{\small #1}\par}
 % リード文(場面転換)
@@ -4871,6 +4871,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - 第1問=小問集合(分野横断の独立小問)。第2〜4問=探究/実験考察/読解型で、会話文(太郎・花子)・実験の背景目的手順の説明・測定データ表・グラフ選択・「ア・イを表から選ぶ」組合せを必ず織り込む。
 - 解答番号は通し番号で計 {num_answers} 個(最低28)。各空欄は \\mb{{n}}。設問数の目安: 第1問=問1〜6(番号1〜6)、第2問=問1〜7(7〜13)、第3問=問1〜8(14〜21)、第4問=問1〜7(22〜{num_answers})。第3・4問はA・Bの二部構成可。
 - 考察(思考力)問題を第2〜4問に各2問以上: ①実験法/装置/近似を使う理由・妥当性 ②グラフ・データの傾き/切片/面積の物理的意味 ③条件を変えた時の定性予測・誤差・測定の工夫 ④2つの場面/素子の比較・多段推論。選択肢に「もっともらしい誤答(よくある勘違い)」を混ぜ、単純消去で解けなくする。
+- ★選択肢の数: 各設問の選択肢は原則 \\textbf{{6個}}(\\cn{{1}}〜\\cn{{6}})にする。5個以下にしない。グラフ・図・打点・波形の選択肢も6個、組合せ表(ア・イ等)も6行、長文選択肢(optlist)も6肢を基本とする。数値選択肢は、正解＋もっともらしい誤答(係数違い・符号違い・2倍/半分・単位取り違え 等)で6個に満たす。本番のように6個並べて初めて消去法を封じられる。
 - 難易度: {difficulty}
 {theme_block}
 === 本番のリアルさ・分量(共通テスト感を出す要・最重要) ===
@@ -10754,7 +10755,24 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             # ── Local LaTeX compilation ──
             try:
                 logger.info('Running LaTeX engine: %s on %s', engine_name, tex_path)
-                subprocess.run([engine_name, '-interaction=nonstopmode', '-halt-on-error', '-output-directory', td, tex_path], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+                # 堅牢化: -halt-on-error を付けない。1つの設問の LaTeX エラーで文書全体が
+                # 途中で打ち切られ、マークシート・解答解説が欠落するのを防ぐ。
+                # nonstopmode はエラーを記録しつつ最後まで組版を続けるので、軽微なエラーが
+                # あっても全ページ(全大問+マークシート+解答解説)を含む PDF が得られる。
+                # 相互参照(\ref/lastpage 等)のため2回流す。戻り値ではなく PDF の有無で判定する。
+                _last = None
+                for _pass in range(2):
+                    _last = subprocess.run([engine_name, '-interaction=nonstopmode', '-output-directory', td, tex_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=60)
+                # PDF が1枚も出なかった場合のみ失敗扱い(=cloud フォールバックへ)
+                if not os.path.exists(pdf_path) and not any(p.endswith('.pdf') for p in os.listdir(td)):
+                    raise subprocess.CalledProcessError(_last.returncode if _last else 1, engine_name, output=(_last.stdout if _last else b''), stderr=(_last.stderr if _last else b''))
+                # PDF は得られた。エラーがログにあれば診断用に記録するが、成功として扱う。
+                if _last is not None and _last.returncode != 0:
+                    _olog = (_last.stdout or b'').decode('utf-8', errors='ignore')
+                    for _l in _olog.split('\n'):
+                        if _l.startswith('!'):
+                            logger.warning('LaTeX recoverable error (PDF still produced): %s', _l.strip())
+                            break
                 logger.info('LaTeX engine finished; checking PDF at %s', pdf_path)
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as e:
                 out = getattr(e, 'stdout', b'') or b''
