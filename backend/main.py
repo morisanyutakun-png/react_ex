@@ -4468,6 +4468,8 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \usepackage[table]{xcolor}
 \usepackage{fancyhdr}
 \usepackage{array,booktabs}
+\usepackage{cellspace}
+\setlength\cellspacetoplimit{4pt}\setlength\cellspacebottomlimit{4pt}
 \usepackage{enumitem}
 \usepackage{lastpage}
 \usepackage{needspace}
@@ -4568,6 +4570,13 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \newcommand{\given}[1]{\par\vskip0.3\baselineskip\noindent\hspace*{2\zwx}{\small #1}\par}
 % リード文(場面転換)
 \newcommand{\lead}[1]{\par\vskip0.6\baselineskip #1\par}
+% 会話文の1発言(本番同様のぶら下げ。1字下げで始まり、発話のかぎは本文頭に揃える)
+% 例: \serifu{太郎：最初の高さ $h$ を大きくすると…} を生徒の発言ごとに1つずつ書く。
+\newcommand{\serifu}[1]{\par\noindent\hangindent=3.5\zwx\hangafter=1\hspace*{1\zwx}#1\par}
+% 文章Ａ・Ｂの見出し(本番風。ラベルを左に出し、本文は近づけてからぶら下げる)
+% 例: \bun{A} 物質量 n の理想気体… のように、A/B を渡して直後に本文を続ける。
+\newcommand{\bun}[1]{\par\addvspace{0.8\baselineskip}\noindent\hangindent=1.9\zwx\hangafter=1%
+  \textbf{#1}\hspace{1\zwx}\ignorespaces}
 % 長文選択肢(1行1文)。optlist 環境の中で各選択肢を \oi で書く。
 % ★\oi は2つの書き方を両方許容する(どちらでも正しくぶら下げ表示):
 %     \oi{\cn{1}} 本文        (丸番号だけ波括弧に入れ、本文は外)
@@ -4864,6 +4873,15 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - 考察(思考力)問題を第2〜4問に各2問以上: ①実験法/装置/近似を使う理由・妥当性 ②グラフ・データの傾き/切片/面積の物理的意味 ③条件を変えた時の定性予測・誤差・測定の工夫 ④2つの場面/素子の比較・多段推論。選択肢に「もっともらしい誤答(よくある勘違い)」を混ぜ、単純消去で解けなくする。
 - 難易度: {difficulty}
 {theme_block}
+=== 本番のリアルさ・分量(共通テスト感を出す要・最重要) ===
+本物の共通テスト物理に匹敵する「読ませる量・密度」にする。短い問題文を並べただけにしない。
+- ★第2〜4問は「リード文(状況設定)」を厚く書く: 各大問の冒頭に \\lead{{…}} で2〜4文の段落を2〜3個。実験の目的・装置・手順・着目点・近似の意味まで丁寧に説明する(本番のリード文は10行以上になることが多い)。
+- ★会話文を必ず入れる: \\serifu{{太郎：…}} \\serifu{{花子：…}} を1発言1コマンドで、各大問に2〜4往復。会話で「なぜその測定をするか」「どの量に着目するか」「どんな近似・工夫をするか」を語らせ、後続の設問へ自然につなぐ。
+- ★第3・4問は本番同様に「文章A・文章B」の二部構成を基本にする: \\bun{{A}} 本文… / \\bun{{B}} 本文… の形で、A・Bで別テーマ(例: A=電磁誘導, B=原子)を扱う。各部に図・データ表・設問を持たせる。
+- ★各設問の文も短く切らない: 与えられた条件・量の定義・状況を1〜3文で丁寧に述べてから問う(本番の設問は3〜6行)。記号は必ず本文で定義してから使う。
+- ★測定データ表を各大問に1〜2個。表から傾き・切片・差を読み取らせる問題を入れる。表は cellspace 対応の Sc 列(例: tabular{{|Sc|Sc|Sc|}})で縦の余白を持たせると本番らしい。
+- ★図は各大問に1〜3個、文書全体で最低10個。装置図・概念図・グラフ選択肢を本番並みに入れる。図は「状況が一目で伝わる」具体性を持たせる(後述の図ルール)。
+- 分量の目安: 問題本文(表紙の次〜第IV問末)で約20〜32ページ。空白で水増しせず、リード文・会話文・データ表・図・厚い設問文で満たす。
 === 構成(この順に1文書内) ===
 1.表紙: \\settitle{{{round_no}}}{{ ←ここ(第2引数)に注意事項の本文すべてを \\par 区切りで入れる }}。
    ★第2引数に「注意事項」という語だけを入れてはいけない。注意事項本文を波括弧の中に全部書く。本文を \\settitle の外(本文側)に書かない。
@@ -4891,6 +4909,8 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 
 === 図(TikZ)共通 ===
 - 描画前に主要座標をコメントで計算・検算。グラフは samples=60 以上で滑らかに、スケールは問題の数値と比率を一致。三角比 cos30=sin60=0.866, sin30=cos60=0.5。物体の輪郭だけ --cycle 可・配線(導線)には不可。提供スタイル(edge,rail,velarr,forcearr,fieldzone,groundstrip,rodcyl,screenbd,plate 等)を活用。
+- ★図のリアルさ(本番並みに): 提供マクロで足りる場面はマクロを使う。マクロに無い固有の場面(円すい振り子・熱量混合・ドップラー・斜面+レール・球面鏡/レンズ結像・荷電粒子の円運動・光電効果の装置 等)は、自前 TikZ で具体的に作図してよい。その際も接触・ラベル非重なり・ヒント禁止のルールを厳守し、容器・媒質は薄い網掛け(fieldzone)、面はハッチング、寸法は dim、与えられた量の記号と座標軸・正方向を添えて「状況が一目で分かる」密度にする。\\caption は使わず図の下に \\node で「図 1」等の番号を置く。
+- ★立体・陰影で本番の質感を出す: ばね=coil spring、棒=rodcyl、箱=box3d、球=\\ballon/\\ballobj、スクリーン=screenbd、磁場領域=fieldzone+\\odot/\\times の格子。線の太さは主線 edge・補助線 edgethin/guide で使い分ける。
 - ★ヒント禁止(最重要): 答え・解法の手がかりは図に描かない。描かない=力の矢印とその式ラベル(摩擦 $\\mu mg$・重力 $mg$・$mg\\sin\\theta$・張力 $T$・$BIl$ 等)、まさに問うている分力/補助角/補助線、崩壊後・衝突後など結果の速度/運動量ベクトル、求める量(停止距離・最高点等)の寸法。描いてよい=物体/装置の配置と形状・面壁床斜面・回路/光学系のレイアウト、与えられた記号のみ($v,\\theta,m,L,d,D$、$B$ の向き 等)、座標軸・正方向・与えられた寸法。迷ったら描かない。
   例: 摩擦の停止距離→物体と初速 $v$ だけ($\\mu mg$ 矢印を描かない)。斜面→斜面・物体・$\\theta$ だけ($mg\\sin\\theta$ 不可)。崩壊→静止核だけ(崩壊後の2矢印不可)。磁場中の導体棒→棒・$\\odot/\\times$・$v$・$l$ だけ(起電力/ローレンツ力不可)。
 
@@ -4939,7 +4959,8 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
   表紙 \\settitle / 大問 \\daimon / 設問 \\toi / 配点 \\hai / 解答番号枠 \\mb / 丸番号 \\cn /
   短い選択肢 sentaku(中に \\op{{\\cn{{1}}}}{{…}} を並べるだけ。区切りの & や行末 \\\\ は書かない) /
   長文選択肢 optlist(各肢は \\oi{{\\cn{{1}}}} 本文… のように書く。本文は \\oi の波括弧の外でも中でもよい) /
-  リード文・会話文 \\lead{{…}} / 解説見出し \\soldai / マークシート行 \\msrowT / グラフ枠 \\gframe / 打点 \\dotrow /
+  リード文 \\lead{{…}} / 会話文の1発言 \\serifu{{太郎：…}} / 文章A・B見出し \\bun{{A}}本文… / 解説見出し \\soldai / マークシート行 \\msrowT / グラフ枠 \\gframe / 打点 \\dotrow /
+  組合せ表は cellspace の Sc 列が使える(例: \\begin{{tabular}}{{|Sc|Sc|Sc|}} … セルに上下余白が付き本番らしくなる) /
   図マクロ \\groundstrip \\ballon \\boxon \\block \\cart \\cartpulley \\springcart \\railrod \\dslit \\resonancetube \\refraction \\nucleusrest \\projectile \\projectilehoriz \\stringwave \\Rbox \\Ccap \\SWopen \\SWclosed \\Vbatt \\RboxV \\pulley \\weightbox 。
   TikZ スタイル edge,rail,velarr,forcearr,fieldzone,guide,ray,dim,box3d,rodcyl,screenbd,plate も定義済み。
 - 全 {num_answers} 問を最後まで作問し、解説も全問分書く。マークシート・自己採点欄・配点表の行数は {num_answers} と完全一致。配点合計はちょうど100。途中で打ち切らない。
