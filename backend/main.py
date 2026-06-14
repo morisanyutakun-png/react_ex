@@ -4892,14 +4892,19 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
     & ア & イ \\\\ \\hline
     \\cn{{1}} & $\\mu mg$ & $\\dfrac{{v_0^2}}{{2\\mu g}}$ \\\\ \\hline … (6行) … \\end{{tabular}}\\end{{center}}
 {custom_block}
-=== 完遂・出力(絶対厳守) ===
-- 最後の \\end{{document}} まで省略せず出力し、途中で打ち切らない。マークシート・自己採点欄・配点表の行数は解答番号数({num_answers})と完全一致。配点合計はちょうど100。
-- 1応答に収まらない時のみ末尾を「%%% CONTINUE %%%」で終え、次応答は続きからプレーンに出す(preamble・既出部を再掲しない)。可能な限り1応答で出し切る。
-- 出力は \\documentclass で始まり \\end{{document}} で終わる完全な1文書のみ。preamble は一字一句改変しない(新マクロ追加は最小限)。前置き・説明・コードフェンス(```)を付けず、最初の文字は必ず \\documentclass。
-
-=== LaTeXテンプレート(この preamble をそのまま文書の冒頭に置く) ===
+=== 出力形式(最重要・絶対厳守) ===
+★出力は「本文のみ」。\\documentclass・preamble(\\usepackage や \\newcommand 等の定義)・\\begin{{document}}・\\end{{document}} は一切書かない。表紙 \\settitle{{...}}{{...}} から始め、解答・解説で終える(最初の文字は \\settitle)。preamble はシステム側で自動的に前置きされるので、絶対に書かない・再掲しない。
+- ★下記のマクロ・環境はすべて定義済み。「使うだけ」で、定義(\\newcommand/\\usepackage)を書かない・再定義しない。新しい \\newcommand は原則追加しない(どうしても必要な時のみ本文冒頭で最小限)。
+  表紙 \\settitle / 大問 \\daimon / 設問 \\toi / 配点 \\hai / 解答番号枠 \\mb / 丸番号 \\cn /
+  短い選択肢 sentaku(中身は \\op{{\\cn{{1}}}}{{…}}) / 長文選択肢 optlist(\\oi{{\\cn{{1}}}} 本文) /
+  リード文・会話文 \\lead{{…}} / 解説見出し \\soldai / マークシート行 \\msrowT / グラフ枠 \\gframe / 打点 \\dotrow /
+  図マクロ \\groundstrip \\ballon \\boxon \\block \\cart \\cartpulley \\springcart \\railrod \\dslit \\resonancetube \\refraction \\nucleusrest \\projectile \\projectilehoriz \\stringwave \\Rbox \\Ccap \\SWopen \\SWclosed \\Vbatt \\RboxV \\pulley \\weightbox 。
+  TikZ スタイル edge,rail,velarr,forcearr,fieldzone,guide,ray,dim,box3d,rodcyl,screenbd,plate も定義済み。
+- 全 {num_answers} 問を最後まで作問し、解説も全問分書く。マークシート・自己採点欄・配点表の行数は {num_answers} と完全一致。配点合計はちょうど100。途中で打ち切らない。
+- 1応答に収まらない時のみ末尾を「%%% CONTINUE %%%」で終え、次応答は続きからプレーンに出す(既出部を再掲しない)。可能な限り1応答で出し切る。
+- 説明・前置き・コードフェンス(```)を付けない。最初の文字は必ず \\settitle。
 """
-    return spec + _MOCK_EXAM_PHYSICS_PREAMBLE + "\n\\begin{document}\n% ↑↑↑ 上の preamble は改変せず使用。ここから下に本文(表紙→問題→マークシート→自己採点欄→解答解説)を生成する。\n\\end{document}\n"
+    return spec
 
 
 @app.post('/api/mock_exam/prompt')
@@ -8967,6 +8972,19 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             only = generated[0].get('latex','')
             try:
                 only = _unescape_latex(only)
+            except Exception:
+                pass
+            # 模試モード(body-only運用): AIが preamble 無しの本文だけを返した場合に、
+            # 正準の模試 preamble を自動で前置きする。これで貼り付けプロンプトを短く保て、
+            # preamble が AI に再生成・改変される事故(\\→\ 崩れ等)も原理的に消える。
+            # 判定: \documentclass が無く、模試専用マクロ(\settitle/\daimon/\msrowT/\toi)を含む。
+            try:
+                if (isinstance(only, str) and '\\documentclass' not in only
+                        and re.search(r'\\settitle|\\daimon\b|\\msrowT|\\toi\b', only)):
+                    _body = only.strip()
+                    _body = re.sub(r'^\s*\\begin\{document\}', '', _body)
+                    _body = re.sub(r'\\end\{document\}\s*$', '', _body)
+                    only = _MOCK_EXAM_PHYSICS_PREAMBLE + "\n\\begin{document}\n" + _body.strip() + "\n\\end{document}\n"
             except Exception:
                 pass
             has_document = isinstance(only, str) and re.search(r"\\documentclass|\\begin\{document\}", only)
