@@ -620,6 +620,36 @@ def _fix_glued_hline(latex: str) -> str:
         return latex
 
 
+# sentaku 環境は「流し込み段落」なので、内部に表用の区切り & や行末 \\ があると
+# 「Misplaced alignment tab / \crcr」で文書全体のコンパイルが途中停止する。
+# AI は sentaku を & 区切りで書いたり区切り無しで書いたりと不安定なため、
+# sentaku ブロック内に限って & と \\(+[寸法])を空白へ置換し、どちらの書き方でも通す。
+# 通常の tabular(ア・イ組合せ表など)の & は対象外(sentaku の中だけを見る)。
+_SENTAKU_BLOCK_RE = re.compile(r'(\\begin\{sentaku\}(?:\[[^\]]*\])?)(.*?)(\\end\{sentaku\})', re.S)
+
+
+def _strip_sentaku_separators(latex: str) -> str:
+    """\\begin{sentaku}…\\end{sentaku} の内部にある表用区切り(& と \\\\)を空白に変える。"""
+    if not isinstance(latex, str) or '\\begin{sentaku}' not in latex:
+        return latex
+
+    def _repl(m: 're.Match') -> str:
+        # コメント(%)行にある \begin{sentaku} は環境ではないので対象外にする
+        s = m.string
+        line_start = s.rfind('\n', 0, m.start(1)) + 1
+        prefix = s[line_start:m.start(1)]
+        if '%' in re.sub(r'\\%', '', prefix):
+            return m.group(0)
+        inner = re.sub(r'\\\\(\[[^\]]*\])?', ' ', m.group(2))  # \\ と \\[..] を空白へ
+        inner = inner.replace('&', ' ')                          # 残った & を空白へ
+        return m.group(1) + inner + m.group(3)
+
+    try:
+        return _SENTAKU_BLOCK_RE.sub(_repl, latex)
+    except Exception:
+        return latex
+
+
 def _split_chained_wire_draws(latex: str) -> str:
     """暴走対処(安全な正規化): 純粋な座標ポリラインの \\draw を1線分ずつに分割する。
 
@@ -4510,33 +4540,40 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \newcommand{\pt}[1]{\hspace*{\fill}{\small\mbox{[#1]}}}
 \newcommand{\dd}{\mathrm{d}}
 % 大問見出し(改ページ・「第 N 問」・小問は行末配点)
-\newcommand{\daimon}[2]{\clearpage%
-  \noindent{\large\textbf{第\hspace{0.2em}#1\hspace{0.2em}問}}\hspace{1.4em}{\normalsize #2}\par\nobreak\vskip0.6\baselineskip}
+% 大問見出し。番号を渡し、見出し語は同じ行にそのまま続けて書く(\daimon{1} 小問集合 \hai{25})。
+% \daimon{1}{小問集合} のように見出しを{}で囲んでも同じ結果になる(波括弧は透過)。
+\newcommand{\daimon}[1]{\clearpage\par%
+  \noindent{\large\textbf{第\hspace{0.2em}#1\hspace{0.2em}問}}\hspace{1.2em}\normalsize\ignorespaces}
 % 設問見出し(ぶら下げ・「問 N」)
 \newcommand{\toi}[1]{\par\addvspace{1.5\baselineskip}\needspace{0.72\textheight}%
   \noindent\hangindent=3\zwx\hangafter=1%
   \hspace*{1\zwx}\textbf{問\hspace{0.3em}#1}\hspace{0.6em}\ignorespaces}
-% 選択肢グリッド(固定間隔・丸番号と中身)。\begin{sentaku}[列数] … 各選択肢は \op{\cn{丸数字}}{中身}
-\newcommand{\op}[2]{#1\hspace{0.5em}#2}
+% 選択肢グリッド。sentaku 環境の中に \op{\cn{丸数字}}{中身} を並べるだけ(区切り記号 & や 改行 は不要)。
+% ★sentaku は表ではなく「流し込み段落」。& や 行末改行 が来てもサニタイザが空白に置換するため、
+%   alignment エラー(Misplaced crcr 等)を原理的に起こさない。列数の任意引数は無視する。
+\newcommand{\opsep}[1][0pt]{\hspace{0.9em plus 0.6em minus 0.3em}}
+\newcommand{\op}[2]{\leavevmode\mbox{#1\hspace{0.4em}#2}\opsep}
 \newcommand{\cn}[1]{\tikz[baseline=-0.5ex]{\node[draw=black,ellipse,line width=0.4pt,%
   inner sep=0pt,minimum width=3.5mm,minimum height=4.7mm,%
   font=\sffamily\fontsize{8}{8}\selectfont]{#1};}}
-\newenvironment{sentaku}[1][3]{%
-  \par\nopagebreak\vskip0.45\baselineskip\nopagebreak
-  \setlength{\tabcolsep}{1.7\zwx}\renewcommand{\arraystretch}{1.5}%
-  \begin{center}\small\begin{tabular}[t]{*{#1}{l}}}{%
-  \end{tabular}\end{center}\vskip-0.05\baselineskip}
+% 流し込み段落。\op が自分で間隔を空けるので区切り記号は不要。万一 & や \\ が残っても
+% サニタイザが空白に置換するため alignment エラーにならない。任意引数(列数)は無視。
+\newenvironment{sentaku}[1][0]{%
+  \par\nopagebreak\vskip0.4\baselineskip\nopagebreak
+  \small\noindent\hspace*{1\zwx}\ignorespaces}{%
+  \par\vskip0.2\baselineskip}
 % 文字指定の注記
 \newcommand{\given}[1]{\par\vskip0.3\baselineskip\noindent\hspace*{2\zwx}{\small #1}\par}
 % リード文(場面転換)
 \newcommand{\lead}[1]{\par\vskip0.6\baselineskip #1\par}
-% 長文選択肢(1行1文)。\begin{optlist} … \oi{\cn{丸数字}} 本文
-\newenvironment{optlist}{\par\nopagebreak\vskip0.45\baselineskip\nopagebreak
-  \noindent\begin{minipage}{\linewidth}%
-  \begin{list}{}{\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}\setlength{\parsep}{0pt}%
-  \setlength{\itemsep}{0.42\baselineskip}\setlength{\leftmargin}{3\zwx}\setlength{\labelwidth}{1.5\zwx}%
-  \setlength{\labelsep}{0.5em}\setlength{\itemindent}{0pt}\small}}{\end{list}\end{minipage}\par\vskip0.3\baselineskip}
-\newcommand{\oi}[1]{\item[#1]}
+% 長文選択肢(1行1文)。optlist 環境の中で各選択肢を \oi で書く。
+% ★\oi は2つの書き方を両方許容する(どちらでも正しくぶら下げ表示):
+%     \oi{\cn{1}} 本文        (丸番号だけ波括弧に入れ、本文は外)
+%     \oi{\cn{1} 本文}        (丸番号と本文をまとめて波括弧に入れる)
+\newenvironment{optlist}{\par\nopagebreak\vskip0.3\baselineskip\nopagebreak\small}{%
+  \par\vskip0.2\baselineskip}
+\newcommand{\oi}[1]{\par\vskip0.4\baselineskip\noindent
+  \hangindent=2.6\zwx\hangafter=1\hspace*{1\zwx}#1\hspace{0.4em}\ignorespaces}
 % 各回の表紙
 % 縦の空きは \par\vspace で入れる(\\[5mm] 形式は \\ と [ の間に空白が入ると
 % [5mm] が文字として表示される不具合があるため使わない)
@@ -4826,8 +4863,10 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - 難易度: {difficulty}
 {theme_block}
 === 構成(この順に1文書内) ===
-1.表紙: \\settitle{{{round_no}}}{{注意事項}}。注意事項は \\par 区切りで「60分」「I〜IV各25点計100点」「マークは1つだけ塗る」「符号は先頭の − も塗る」「有効数字の指定に従う」「重力加速度 g」「本書は独自作成の非公式予想問題であり大学入試センター公式でない」等を列挙(自前で \\Huge 等を並べず必ず \\settitle を使う)。
-2.本文: \\daimon{{1}}〜\\daimon{{4}}、各設問は \\toi{{n}}、配点は大問見出し行末に \\hai{{25}}。
+1.表紙: \\settitle{{{round_no}}}{{ ←ここ(第2引数)に注意事項の本文すべてを \\par 区切りで入れる }}。
+   ★第2引数に「注意事項」という語だけを入れてはいけない。注意事項本文を波括弧の中に全部書く。本文を \\settitle の外(本文側)に書かない。
+   例: \\settitle{{{round_no}}}{{この冊子は「{subject} 第{round_no}回 予想問題」である。\\par 解答時間は60分。\\par 大問I〜IVの4題、各25点、計100点。\\par マークは1つだけ塗る。\\par 符号は先頭の − も塗る。\\par 有効数字の指定に従う。\\par 重力加速度 $g=9.8,\\mathrm{{m/s^2}}$。\\par 本書は独自作成の非公式予想問題であり大学入試センター公式でない。}}
+2.本文: 大問見出しは \\daimon{{番号}} の後に見出し語と \\hai{{25}} を同じ行に続けて書く(例: \\daimon{{1}} 小問集合 \\hai{{25}})。各設問は \\toi{{n}} で始める。
 3.マークシート: \\section*{{第{round_no}回 マークシート}}。★単列(2列の表)で、全番号 1〜{num_answers} を \\msrowT で1行ずつ(2段組の \\msrowTT はB5幅超で禁止):
     \\begin{{center}}\\small\\renewcommand{{\\arraystretch}}{{1.35}}
     \\begin{{tabular}}{{|c|c|}}
@@ -4896,7 +4935,8 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 ★出力は「本文のみ」。\\documentclass・preamble(\\usepackage や \\newcommand 等の定義)・\\begin{{document}}・\\end{{document}} は一切書かない。表紙 \\settitle{{...}}{{...}} から始め、解答・解説で終える(最初の文字は \\settitle)。preamble はシステム側で自動的に前置きされるので、絶対に書かない・再掲しない。
 - ★下記のマクロ・環境はすべて定義済み。「使うだけ」で、定義(\\newcommand/\\usepackage)を書かない・再定義しない。新しい \\newcommand は原則追加しない(どうしても必要な時のみ本文冒頭で最小限)。
   表紙 \\settitle / 大問 \\daimon / 設問 \\toi / 配点 \\hai / 解答番号枠 \\mb / 丸番号 \\cn /
-  短い選択肢 sentaku(中身は \\op{{\\cn{{1}}}}{{…}}) / 長文選択肢 optlist(\\oi{{\\cn{{1}}}} 本文) /
+  短い選択肢 sentaku(中に \\op{{\\cn{{1}}}}{{…}} を並べるだけ。区切りの & や行末 \\\\ は書かない) /
+  長文選択肢 optlist(各肢は \\oi{{\\cn{{1}}}} 本文… のように書く。本文は \\oi の波括弧の外でも中でもよい) /
   リード文・会話文 \\lead{{…}} / 解説見出し \\soldai / マークシート行 \\msrowT / グラフ枠 \\gframe / 打点 \\dotrow /
   図マクロ \\groundstrip \\ballon \\boxon \\block \\cart \\cartpulley \\springcart \\railrod \\dslit \\resonancetube \\refraction \\nucleusrest \\projectile \\projectilehoriz \\stringwave \\Rbox \\Ccap \\SWopen \\SWclosed \\Vbatt \\RboxV \\pulley \\weightbox 。
   TikZ スタイル edge,rail,velarr,forcearr,fieldzone,guide,ray,dim,box3d,rodcyl,screenbd,plate も定義済み。
@@ -8982,8 +9022,17 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 if (isinstance(only, str) and '\\documentclass' not in only
                         and re.search(r'\\settitle|\\daimon\b|\\msrowT|\\toi\b', only)):
                     _body = only.strip()
-                    _body = re.sub(r'^\s*\\begin\{document\}', '', _body)
-                    _body = re.sub(r'\\end\{document\}\s*$', '', _body)
+                    # ``` / ```latex のコードフェンスを除去
+                    _body = re.sub(r'^```[A-Za-z]*[ \t]*\r?\n?', '', _body)
+                    _body = re.sub(r'\r?\n?```\s*$', '', _body).strip()
+                    # 表紙より前に紛れ込んだ前置き(説明文・残った preamble 断片)を落とす。
+                    # 本文は \settitle から始まる前提。先頭付近に \settitle があればそこから採る。
+                    _m = re.search(r'\\settitle', _body)
+                    if _m and 0 < _m.start() < 600:
+                        _body = _body[_m.start():]
+                    # 紛れ込んだ \documentclass / \usepackage 行と \begin|end{document} を全除去
+                    _body = re.sub(r'(?m)^[ \t]*\\(?:documentclass|usepackage|RequirePackage)\b[^\n]*\n?', '', _body)
+                    _body = re.sub(r'\\(?:begin|end)\{document\}', '', _body)
                     only = _MOCK_EXAM_PHYSICS_PREAMBLE + "\n\\begin{document}\n" + _body.strip() + "\n\\end{document}\n"
             except Exception:
                 pass
@@ -9041,6 +9090,12 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 if not _is_practice_doc:
                     try:
                         only = _fix_glued_hline(only)
+                    except Exception:
+                        pass
+                    # 暴走対処(模試のみ): sentaku 内の表区切り & / \\ を空白化し、
+                    # 「Misplaced \crcr」等での途中停止を防ぐ。
+                    try:
+                        only = _strip_sentaku_separators(only)
                     except Exception:
                         pass
                 body_lines = [only]
