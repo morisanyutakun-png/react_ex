@@ -595,6 +595,40 @@ def _fix_broken_row_breaks(latex: str) -> str:
     return s
 
 
+# tabular/array 環境の内側で、行末に潰れた単一 \ (= 改行 \\ のはずが \ になったもの)を補修する。
+# 罫線(\hline)を持たない選択肢グリッド(\dotrow/\gframe の {ccc} 表など)では
+# 「… \dotrow{...} \」が行末に来るが、\hline も \end{tabular} も直後に無いため
+# _fix_broken_row_breaks では拾えない。これを env 単位で見て、行末の孤立 \ を \\ に直す。
+_TABULAR_ENV_RE = re.compile(
+    r'(\\begin\{(?:tabular|array)\}(?:\[[^\]]*\])?\s*\{[^{}]*\})(.*?)(\\end\{(?:tabular|array)\})',
+    re.S,
+)
+# 行末(改行直前)にある孤立した \ (\\ でも \word でもない)を捕捉。末尾空白は許容。
+_LINE_END_SINGLE_BS_RE = re.compile(r'(?<!\\)\\(?![\\a-zA-Z])[ \t]*(?=\r?\n)')
+
+
+def _fix_table_row_breaks(latex: str) -> str:
+    """tabular/array 内で、行末に潰れた単一 \\ を \\\\ に補修する(罫線の有無によらない)。
+
+    モデルが行末の改行 \\\\ を1本の \\ で出力すると、\\hline を持たない選択肢グリッド
+    (\\dotrow/\\gframe の {ccc} 表)で「Extra alignment tab(列あふれ)」が起き、
+    最初の壊れた表より後ろ(以降の大問・マークシート・解答解説)が出力されない。
+    ここでは tabular/array の中身だけを対象に、行末の孤立 \\ を \\\\ へ正規化する。
+    """
+    if not isinstance(latex, str) or '\\begin{tabular}' not in latex and '\\begin{array}' not in latex:
+        return latex
+
+    def _repl_env(m: 're.Match') -> str:
+        head, body, tail = m.group(1), m.group(2), m.group(3)
+        body = _LINE_END_SINGLE_BS_RE.sub(r'\\\\', body)
+        return head + body + tail
+
+    try:
+        return _TABULAR_ENV_RE.sub(_repl_env, latex)
+    except Exception:
+        return latex
+
+
 # 表の罫線コマンドの「バックスラッシュ欠落」を補修する安全網。
 # LLM が行末改行 \\ に罫線 \hline を密着させて書くとき、しばしば
 # \\\hline(= 改行 \\ + 罫線 \hline、正しい)を \\hline(= 改行 \\ + ただの文字列
@@ -690,36 +724,55 @@ def _split_chained_wire_draws(latex: str) -> str:
         return latex
 
 
-# 自身で tikzpicture を開閉する「完結マクロ」(模試 preamble で定義)。
-# AI がこれらを誤って \begin{tikzpicture}…\end{tikzpicture} で囲むと「二重 picture」で
-# コンパイルが致命的に壊れるため、外側の余分な tikzpicture を機械的に剥がす。
+# 模試 preamble で定義した「場面まるごとマクロ」。これらは tikzpicture を開かないので、
+# 必ず \begin{tikzpicture}…\end{tikzpicture} の中で呼ばれる必要がある。
+# (AI は通常その形で出力する。)裸で(picture の外で)呼ばれた場合は、そのままだと
+# \draw/\fill 等が picture 外で展開され、図ではなく生のコードが紙面に流れてしまうため、
+# サニタイザで個別に tikzpicture で包む。
 _SCENE_MACRO_NAMES = (
     'cartpulley', 'springcart', 'railrod', 'dslit', 'resonancetube',
     'refraction', 'nucleusrest', 'projectilehoriz', 'projectile', 'stringwave',
 )
-# 内容が「完結マクロ1個(＋任意の引数)」だけの tikzpicture を捕捉する。
-_DOUBLEWRAP_SCENE_RE = re.compile(
-    r'\\begin\{tikzpicture\}(?:\[[^\]]*\])?\s*'
-    r'(\\(?:' + '|'.join(_SCENE_MACRO_NAMES) + r')(?![a-zA-Z])'
-    r'(?:\s*(?:\{[^{}]*\}|\[[^\]]*\]))*)\s*'
-    r'\\end\{tikzpicture\}',
-    re.S,
+# 場面マクロ呼び出し(＋任意の {…}/[…] 引数列)を捕捉する。
+_SCENE_CALL_RE = re.compile(
+    r'\\(?:' + '|'.join(_SCENE_MACRO_NAMES) + r')(?![a-zA-Z])'
+    r'(?:[ \t]*(?:\{[^{}]*\}|\[[^\]]*\]))*'
 )
+_TIKZ_BEGIN = '\\begin{tikzpicture}'
+_TIKZ_END = '\\end{tikzpicture}'
 
 
-def _unwrap_doublewrapped_scene_macros(latex: str) -> str:
-    """完結マクロ(\\projectilehoriz 等)を囲む余分な \\begin{tikzpicture} を剥がす。
+def _wrap_bare_scene_macros(latex: str) -> str:
+    """tikzpicture の外で裸呼びされた場面マクロを tikzpicture で包む。
 
-    これらのマクロは自分で tikzpicture を開閉するため、AI が外側で更に
-    \\begin{tikzpicture}…\\end{tikzpicture} で囲むと二重 picture になり
-    "Single ampersand..." や "package pgf Error: ... already inside" 等で
-    文書全体が途中停止する。内容が完結マクロ1個だけの tikzpicture を、
-    そのマクロ呼び出しだけに置き換える(描画結果は同一)。
+    場面マクロ(\\projectilehoriz 等)は preamble 内で tikzpicture を開かない。
+    AI が \\begin{tikzpicture}…場面マクロ…図番号 \\node…\\end{tikzpicture} の形で
+    出すぶんには正しい(picture 内に1個だけ tikzpicture を持つ)。しかし稀に
+    \\begin{center}\\projectilehoriz\\end{center} のように picture 外で裸呼びすると、
+    \\draw/\\fill が picture 外で実行され「生のコードが紙面に露出」する。ここでは
+    各場面マクロ呼び出しが tikzpicture の内側にあるかを前方の begin/end の数で判定し、
+    外側にあるものだけを \\begin{tikzpicture}[…]…\\end{tikzpicture} で包む。
     """
-    if not isinstance(latex, str) or '\\begin{tikzpicture}' not in latex:
+    if not isinstance(latex, str) or '\\' not in latex:
         return latex
     try:
-        return _DOUBLEWRAP_SCENE_RE.sub(lambda m: m.group(1), latex)
+        out = []
+        last = 0
+        for m in _SCENE_CALL_RE.finditer(latex):
+            prefix = latex[:m.start()]
+            # この位置が tikzpicture の内側か(begin の数 > end の数)を判定
+            inside = prefix.count(_TIKZ_BEGIN) > prefix.count(_TIKZ_END)
+            out.append(latex[last:m.start()])
+            if inside:
+                out.append(m.group(0))  # picture 内 → そのまま
+            else:
+                out.append(
+                    _TIKZ_BEGIN + '[x=1cm,y=1cm,>=Stealth]\n'
+                    + m.group(0) + '\n' + _TIKZ_END
+                )
+            last = m.end()
+        out.append(latex[last:])
+        return ''.join(out)
     except Exception:
         return latex
 
@@ -4680,7 +4733,7 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 % ロープが滑車の頂点→1/4周→右側を下り、机の外側でおもりが宙吊りになる。
 % 滑車が「浮く」・おもりが床に「めり込む」・ラベルが重なる、を原理的に防ぐ。
 % ★これ1回を呼ぶだけ。\groundstrip や 質量ラベル等を上から重ねて描かないこと。
-\newcommand{\cartpulley}{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\cartpulley}{%
   % 机: 天板上面 y=0・左端 x=0.1・右縁 x=4.4(縁が「崖」の役割)
   \fill[black!8] (0.1,-0.14) rectangle (4.4,0);
   \draw[edge] (0.1,0)--(4.4,0);                 % 天板上面(台車のレール面)
@@ -4704,22 +4757,21 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \draw[edge] (5.12,0.11)--(5.12,-0.85);
   \draw[edge,fill=black!15] (4.88,-1.30) rectangle (5.36,-0.85);  % おもり(机の外で宙吊り)
   \node[right=3pt,font=\small] at (5.36,-1.07){おもり\,$m$};
-\end{tikzpicture}}
+}
 % ── 「場面まるごと」マクロ(手描き禁止・これを1回呼ぶだけで接触/ラベルが正しく出る) ──
-% ★これらは自身で tikzpicture を開閉する「完結マクロ」。\begin{center}…\end{center} に
-%   直接置く(\begin{tikzpicture} で囲まない=二重 picture でコンパイルが壊れる)。
+% ★これらは tikzpicture を開かない。必ず \begin{tikzpicture}[x=1cm,y=1cm,>=Stealth] …
+%   \end{tikzpicture} の中で呼ぶ(図番号の \node 図N も同じ picture 内に置く)。
+%   裸で呼ばれた場合はサニタイザ側で自動的に tikzpicture で包む。
 % 壁＋ばね＋台車(床に接触): \springcart{壁x}{床y}{台車中心x}
-\newcommand{\springcart}[3]{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
-\fill[pattern=north east lines,pattern color=black!75] (#1,#2-0.30) rectangle (#3+0.9,#2);
-\draw[rail] (#1,#2)--(#3+0.9,#2);
+\newcommand{\springcart}[3]{%
 \draw[edge,fill=black!18] (#1,#2) rectangle (#1+0.18,#2+1.25);
 \draw[coil spring] (#1+0.18,#2+0.36)--(#3-0.55,#2+0.36);
 \cart{#3}{#2}{}%
 \node[above=1pt,font=\small] at (#3,#2+0.66){$m$};
-\node[left=2pt,font=\small] at (#1,#2+1.0){壁};\end{tikzpicture}}
+\node[left=2pt,font=\small] at (#1,#2+1.0){壁};}
 % 磁場中のレール＋導体棒(固定レイアウト)。#1=導体棒のx(0.9〜4.5) #2=磁場記号(\odot=表向き/\times=裏向き)
 % ドットはレール内側に並べ、不透明な導体棒(rodcyl)が上に重なって隠す。l寸法・ラベルは領域の外。
-\newcommand{\railrod}[2]{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\railrod}[2]{%
 \fill[fieldzone] (0.4,0.5) rectangle (5.2,2.2);
 \foreach \rrx in {0.9,1.5,2.1,2.7,3.3,3.9,4.5}{\foreach \rry in {0.85,1.35,1.85}{\node[font=\footnotesize] at (\rrx,\rry){\ensuremath{#2}};}}
 \draw[rail] (0.4,0.5)--(5.2,0.5);
@@ -4728,9 +4780,9 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \draw[velarr] (#1+0.30,1.35)--(#1+1.25,1.35) node[midway,above=2pt,font=\small]{$v$};
 \draw[dim] (-0.05,0.5)--(-0.05,2.2) node[midway,left=2pt,font=\small]{$l$};
 \node[above=3pt,font=\small] at (#1,2.2){導体棒};
-\node[below=3pt,font=\small] at (2.8,0.5){磁束密度 $B$};\end{tikzpicture}}
+\node[below=3pt,font=\small] at (2.8,0.5){磁束密度 $B$};}
 % 二重スリット(固定レイアウト)。入射光は斜め上から入れて d 寸法・矢印と重ねない。引数なし。
-\newcommand{\dslit}{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\dslit}{%
 \draw[screenbd] (0.9,-1.25) rectangle (1.05,1.25);
 \fill[white] (0.88,0.12) rectangle (1.07,0.28);
 \fill[white] (0.88,-0.28) rectangle (1.07,-0.12);
@@ -4744,11 +4796,11 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \draw[dim] (1.05,-1.7)--(6.0,-1.7) node[midway,below=2pt,font=\small]{$D$};
 \node[above=2pt,font=\small] at (1.0,1.25){二重スリット};
 \node[above=2pt,font=\small] at (6.07,1.45){スクリーン};
-\node[right=2pt,font=\small] at (6.15,0.85){明線};\end{tikzpicture}}
+\node[right=2pt,font=\small] at (6.15,0.85){明線};}
 % ── 屈折・全反射(界面・法線・入射/屈折光・角 i,r の弧つき)。#1=上の媒質名 #2=下の媒質名 ──
 % 光は下の媒質(#2)から上の媒質(#1)へ進む(例: \refraction{空気}{水})。
 % 入射角 i は下側・屈折角 r は上側に必ず弧で表示する(角ラベルが点だけにならない)。
-\newcommand{\refraction}[2]{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\refraction}[2]{%
   \fill[black!6] (-2.0,-1.5) rectangle (2.0,0);            % 下の媒質を薄く塗る
   \draw[edge] (-2.0,0)--(2.0,0);                            % 界面
   \draw[guide] (0,-1.5)--(0,1.5);                            % 法線(破線)
@@ -4760,10 +4812,10 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \node[font=\small] at (62:0.76){$r$};
   \node[font=\small] at (-1.6,0.42){#1};                    % 上の媒質
   \node[font=\small] at (-1.6,-0.42){#2};                   % 下の媒質
-\end{tikzpicture}}
+}
 % ── 気柱共鳴(共鳴管)。おんさを開口端の真上に置き、下向き矢印で音を入れる。引数なし(代表図) ──
 % 管口=上端(開)、下に水面、その間が空気柱 L。L 寸法・管口・水面・おんさのラベルは内蔵。
-\newcommand{\resonancetube}{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\resonancetube}{%
   \draw[edge] (2.0,2.7)--(2.0,0)--(2.6,0)--(2.6,2.7);      % U字の管(上端は開)
   \fill[black!12] (2.0,0) rectangle (2.6,0.7);             % 水(下部)
   \draw[edgethin] (2.0,0.7)--(2.6,0.7);                     % 水面
@@ -4776,22 +4828,22 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \node[left=2pt,font=\small] at (2.06,3.42){おんさ};
   \node[left=2pt,font=\small] at (2.0,2.6){管口};
   \node[left=2pt,font=\small] at (2.0,0.7){水面};
-\end{tikzpicture}}
+}
 % ── 放射性崩壊の直前(静止した原子核)。崩壊後のベクトルは描かない(向き・大小が答えのため) ──
-\newcommand{\nucleusrest}{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\nucleusrest}{%
   \shade[ball color=black!20] (0,0) circle (0.55);
   \draw[edgethin] (0,0) circle (0.55);
   \foreach \nx/\ny in {-0.18/0.12, 0.16/0.18, 0.05/-0.16, -0.12/-0.18, 0.22/-0.04}{%
     \fill[black!55] (\nx,\ny) circle (0.05);}                % 核子(模式)
   \node[font=\footnotesize] at (0,0.92){崩壊前(静止)};
   \node[font=\small] at (0,-0.95){放射性原子核};
-\end{tikzpicture}}
+}
 % ── 斜方投射(放物線軌道＋接線方向の初速ベクトル＋角θの弧)。引数なし(代表図) ──
 % 投げ出し点(0,0)から角 θ=40° で投射。軌道は y = x*tanθ - k*x^2(初期傾き=tanθ)で
 % 描くので、角 θ で引いた初速 v0 の矢印は軌道の接線に厳密に一致する(浮かない・ずれない)。
 % 検算: tan40=0.839, cos40=0.766, sin40=0.643, k=0.1678 → x=5 で y=0(着地), 頂点 x=2.5。
 % ★最高点の高さ・水平到達距離など「答えになる寸法」は描かない(ヒント禁止)。
-\newcommand{\projectile}{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\projectile}{%
   \draw[edge] (-0.3,0)--(5.4,0);                                  % 水平面(地面)
   \draw[guide,smooth,samples=80,domain=0:5]
     plot(\x,{0.839*\x-0.1678*\x*\x});                             % 放物線軌道(概念・破線)
@@ -4800,11 +4852,11 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \draw[edgethin] (0.72,0) arc (0:40:0.72);                       % 角 θ の弧
   \node[font=\small] at (22:0.96){$\theta$};
   \node[font=\small] at (0.62,-0.32){投げ出し点};
-\end{tikzpicture}}
+}
 % ── 弦の定常波(両端固定)。#1=腹の数(=倍振動の次数 n)。節・腹・長さ L を内蔵 ──
 % 両端 x=0,6 を固定端(節)とし、節は n+1 個・腹は n 個。ラベルは弦の上下に振り分けて重ねない。
 % 検算: 半波長 = 6/n。節は x=6k/n (k=0..n)。振幅0.42、中心線 y=0.9。
-\newcommand{\stringwave}[1]{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\stringwave}[1]{%
   \draw[edge] (0,0)--(0,1.8);                                    % 左の固定支柱
   \draw[edge] (6,0)--(6,1.8);                                    % 右の固定支柱
   \draw[edgethin] (0,0.9)--(6,0.9);                              % 弦の静止位置(中心線)
@@ -4814,11 +4866,11 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
     plot(\x,{0.9-0.42*sin(#1*30*\x)});                           % 下の包絡(破線)
   \foreach \k in {0,...,#1}{\fill ({6*\k/#1},0.9) circle (0.045);}% 節(●)
   \draw[dim] (0,-0.05)--(6,-0.05) node[midway,below=2pt,font=\small]{$L$};
-\end{tikzpicture}}
+}
 % ── 水平投射(台の縁から水平に打ち出す)。引数なし(代表図) ──
 % 台上面 y=2.2・床 y=0。初速 v は水平(縁の高さ)。落下高さ h を左に寸法表示。
 % 軌道は y=2.2-k x^2(水平投射なので初速は接線=水平で自動的に一致)。答えの寸法は描かない。
-\newcommand{\projectilehoriz}{\begin{tikzpicture}[x=1cm,y=1cm,>=Stealth]%
+\newcommand{\projectilehoriz}{%
   \fill[pattern=north east lines,pattern color=black!75] (-0.3,-0.16) rectangle (6.2,0);
   \draw[rail] (-0.3,0)--(6.2,0);                                 % 床
   \draw[edge,fill=black!8] (0.4,0) rectangle (1.9,2.2);          % 台
@@ -4827,7 +4879,7 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
   \draw[velarr] (2.08,2.32)--(3.05,2.32) node[midway,above=2pt,font=\small]{$v$};
   \draw[guide,smooth,samples=80,domain=0:3.3] plot({1.9+\x},{2.2-0.20*\x*\x});
   \draw[dim] (0.15,0)--(0.15,2.2) node[midway,left=2pt,font=\small]{$h$};
-\end{tikzpicture}}
+}
 
 % マークシート1行(横長丸番号 ―・1〜9・0)
 \newcommand{\bubbles}{%
@@ -4974,14 +5026,16 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 
 === 定番装置は「場面まるごとマクロ」を1回呼ぶ(手描き厳禁) ===
 接触・向き・ロープの掛かり・ラベル位置が検証済みで、座標がずれても破綻しない。呼んだら上に同じ装置の線やラベルを重ねない(必要要素は内蔵済み)。
-★★これらの「場面まるごとマクロ」は\\textbf{{自分で tikzpicture を開閉する完結マクロ}}である。\\textbf{{必ず \\begin{{center}} … \\end{{center}} の中に裸で1個だけ置く}}。\\textbf{{絶対に \\begin{{tikzpicture}}…\\end{{tikzpicture}} で囲まない}}(囲むと二重 picture になり、その図から後ろが全部コンパイル不能=紙面が消える)。図番号「図 1」を付けたい時は \\begin{{center}} の中でマクロの直後に別行で \\par を入れ \\footnotesize で書く(マクロ内に番号を足さない)。
-★★下記の場面では、生の \\fill/\\draw/\\node を多数並べて自作してはいけない。必ず対応マクロ1個を呼ぶ。特に台車-滑車は \\cartpulley を使う(自作すると図が崩れ、生のLaTeXコードがそのまま紙面に露出する事故が起きる)。「自前TikZで作図してよい」のは、下に該当マクロが\\textbf{{無い}}場面に限り、その場合は必ず \\begin{{tikzpicture}}[x=1cm,y=1cm,>=Stealth] … \\end{{tikzpicture}} で自分で囲む。
-  使い方の例(★この形以外で書かない):
-    \\begin{{center}}\\projectilehoriz\\end{{center}}
-    \\begin{{center}}\\stringwave{{3}}\\end{{center}}
-    \\begin{{center}}\\railrod{{3.2}}{{\\times}}\\end{{center}}
+★★これらの場面マクロも単独部品も\\textbf{{すべて、必ず1つの \\begin{{tikzpicture}}[x=1cm,y=1cm,>=Stealth] … \\end{{tikzpicture}} の内側で呼ぶ}}(マクロ自身は tikzpicture を開かない)。図番号「図 1」の \\node も\\textbf{{同じ tikzpicture の中}}に置く。★\\textbf{{tikzpicture を入れ子にしない}}(1つの図に \\begin{{tikzpicture}} は1回だけ)。全体を \\begin{{center}} … \\end{{center}} で挟む。標準形(★この形で書く):
+    \\begin{{center}}
+    \\begin{{tikzpicture}}[x=1cm,y=1cm,>=Stealth]
+    \\stringwave{{3}}
+    \\node[below=8pt] at (3.0,-0.85) {{図 1}};
+    \\end{{tikzpicture}}
+    \\end{{center}}
+★★下記の場面では、生の \\fill/\\draw/\\node を多数並べて自作してはいけない。必ず対応マクロ1個を呼ぶ。特に台車-滑車は \\cartpulley を使う(自作すると図が崩れ、生のLaTeXコードがそのまま紙面に露出する事故が起きる)。「自前TikZで作図してよい」のは、下に該当マクロが\\textbf{{無い}}場面に限る(その場合も同じく \\begin{{tikzpicture}}…\\end{{tikzpicture}} を1回だけ開いてその中に描く)。
   ・台車＋滑車＋おもり: \\cartpulley(引数なし。机・台車M・縁に支持した滑車・ロープ・宙吊りおもりm・床を内蔵。\\groundstrip を下に敷かない/質量ラベルを重ねない)
-  ・壁＋ばね＋台車: \\springcart{{壁x}}{{床y}}{{台車x}}(壁・ばね・台車・床のハッチングまで内蔵。例 \\springcart{{0}}{{0}}{{3.8}})
+  ・壁＋ばね＋台車: \\springcart{{壁x}}{{床y}}{{台車x}}(壁・ばね・台車を内蔵。床のハッチングは別途 \\groundstrip{{x1}}{{x2}}{{床y}} を同じ picture 内で先に置く。例 \\groundstrip{{-0.2}}{{6}}{{0}} の後に \\springcart{{0.2}}{{0}}{{3.7}})
   ・磁場中レール＋導体棒: \\railrod{{導体棒x(0.9〜4.5)}}{{\\odot か \\times}}(l・v・導体棒・磁束密度B のラベル内蔵)
   ・二重スリット: \\dslit(単色光・d・D・明線・スクリーンのラベル内蔵)
   ・気柱共鳴: \\resonancetube(おんさを開口端の真上に置き下向き矢印で音入射。管口・水面・空気柱L 内蔵。おんさを管の横に描かない)
@@ -4990,7 +5044,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
   ・斜方投射: \\projectile(放物線軌道・投げ出し点・角θ・初速v0 を内蔵。★v0 矢印は軌道の接線方向に厳密一致。答えの寸法は描かれない)
   ・水平投射: \\projectilehoriz(台・床・水平な初速v・落下高さh・破線軌道を内蔵)
   ・弦の定常波(両端固定): \\stringwave{{腹の数n}}(例 \\stringwave{{3}}=3倍振動。節●・上下の包絡線・長さL 内蔵)
-単独部品(\\pulley/\\cart/\\weightbox/\\ballon/\\boxon/\\groundstrip/\\Rbox/\\Ccap/\\Vbatt 等)を使う時は、それらは完結マクロではないので\\textbf{{必ず自分で \\begin{{tikzpicture}}…\\end{{tikzpicture}} を開いてその中で}}使う。面のy座標と物体の底のy座標を一致させ、ラベルを線・矢印・格子記号に重ねない。
+単独部品(\\pulley/\\cart/\\weightbox/\\ballon/\\boxon/\\groundstrip/\\Rbox/\\Ccap/\\Vbatt 等)も同じ tikzpicture 内で使う。面のy座標と物体の底のy座標を一致させ、ラベルを線・矢印・格子記号に重ねない。
 
 === 選択肢が「図の集合」のとき(グラフ・打点・波形) ===
 1つの巨大な tikzpicture に詰め込まない(ラベルがずれる・ページ途中で割れる)。各選択肢を独立した小 tikz にし、tabular のセルに「\\cn{{n}}\\,(図)」で並べ、1つの table/center にまとめ各 \\cn を図の直前に置く(図とラベルを別ページに分けない)。グラフは \\gframe、記録テープの打点は \\dotrow を使う。
@@ -9153,15 +9207,21 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     only = _split_chained_wire_draws(only)
                 except Exception:
                     pass
-                # 暴走対処: 完結マクロ(\projectilehoriz 等)を囲む余分な tikzpicture を剥がす
-                # (二重 picture でのコンパイル停止を防ぐ。描画結果は同一)
+                # 暴走対処: tikzpicture の外で裸呼びされた場面マクロを picture で包む
+                # (生のTikZコードが紙面に露出するのを防ぐ。picture 内のものは無変更)
                 try:
-                    only = _unwrap_doublewrapped_scene_macros(only)
+                    only = _wrap_bare_scene_macros(only)
                 except Exception:
                     pass
                 # 暴走対処: 表の行末 \\ が単一 \ に潰れた場合を補修(マークシート/解説の消失を防ぐ)
                 try:
                     only = _fix_broken_row_breaks(only)
+                except Exception:
+                    pass
+                # 暴走対処: 罫線を持たない選択肢グリッド({ccc} の \dotrow/\gframe 表)でも
+                # 行末の潰れた単一 \ を \\ に補修(列あふれでの途中停止を防ぐ)
+                try:
+                    only = _fix_table_row_breaks(only)
                 except Exception:
                     pass
                 # 暴走対処(模試のみ): 行末改行に密着した罫線語の \ 欠落(\\hline 等)を補修。
