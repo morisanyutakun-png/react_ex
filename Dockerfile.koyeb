@@ -9,9 +9,9 @@ WORKDIR /app
 # Install minimal system deps only.
 # texlive is omitted — set CLOUD_LATEX_ONLY=1 at runtime to use cloud LaTeX
 # (latex.ytotech.com) instead of local xelatex, avoiding OOM on free tier.
+# build-essential / libpq-dev は不要(依存はすべて manylinux wheel で入り、
+# psycopg2-binary は libpq を同梱)。apt を最小化してビルドを高速化する。
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
     poppler-utils \
     pdf2svg \
     && rm -rf /var/lib/apt/lists/*
@@ -28,8 +28,10 @@ EXPOSE 8000
 
 WORKDIR /app/backend
 
-# Run alembic migrations (non-fatal: if DB connection fails, still start the server)
+# Run alembic migrations (non-fatal: if DB connection fails/hangs, still start the server)
+# - timeout 90: DB が遅い/到達不能でも 90 秒で切り上げてサーバを起動する
+#   (これが無いと起動がハングし、ヘルスチェックが通らずデプロイが「終わらない」)
 # --workers 1: single worker to minimize memory on free tier
 # NOTE: do NOT use --preload with UvicornWorker (known compatibility issues)
 # Koyeb injects $PORT automatically; fall back to 8000 for local testing.
-CMD ["sh", "-c", "alembic upgrade head || echo 'WARN: alembic migration skipped'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 1 --timeout 300"]
+CMD ["sh", "-c", "timeout 90 alembic upgrade head || echo 'WARN: alembic migration skipped/timed out'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 300"]

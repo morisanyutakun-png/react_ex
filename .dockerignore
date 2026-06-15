@@ -1,0 +1,58 @@
+# ── Docker build context allowlist-ish ignore ──
+# Koyeb/Docker はビルドコンテキスト(リポジトリ全体)をビルダーへ送る。
+# .venv や .git, frontend, apps 等を送ると 2GB 超になりデプロイが極端に遅くなる。
+# Dockerfile.koyeb が実際に必要とするのは backend/ と workers/ だけ。
+
+# Python 仮想環境(最大の肥大要因: torch 等で ~1GB)
+.venv/
+**/.venv/
+venv/
+**/venv/
+env/
+
+# バージョン管理・CI
+.git/
+.github/
+.gitignore
+
+# フロントエンド(バックエンドのイメージには不要)
+frontend/
+apps/
+node_modules/
+**/node_modules/
+
+# キャッシュ・コンパイル済み
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+.pytest_cache/
+**/.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# データ・成果物(ランタイムに不要・S3 等で管理)
+data/
+db/
+*.pdf
+*.tex
+*.log
+*.sqlite
+*.sqlite3
+eval_last_results.json
+
+# ローカル環境・秘密情報(Secrets は Koyeb 側で注入)
+.env
+.env.*
+!.env.example
+
+# OS / エディタ
+.DS_Store
+**/.DS_Store
+.vscode/
+.idea/
+
+# Docker / インフラ定義(イメージ内には不要)
+docker-compose.yml
+Dockerfile.*
+*.md
+scripts/
