@@ -4468,8 +4468,6 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \usepackage[table]{xcolor}
 \usepackage{fancyhdr}
 \usepackage{array,booktabs}
-\usepackage{cellspace}
-\setlength\cellspacetoplimit{4pt}\setlength\cellspacebottomlimit{4pt}
 \usepackage{enumitem}
 \usepackage{lastpage}
 \usepackage{needspace}
@@ -4880,7 +4878,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - ★会話文を必ず入れる: \\serifu{{太郎：…}} \\serifu{{花子：…}} を1発言1コマンドで、各大問に2〜4往復。会話で「なぜその測定をするか」「どの量に着目するか」「どんな近似・工夫をするか」を語らせ、後続の設問へ自然につなぐ。
 - ★第3・4問は本番同様に「文章A・文章B」の二部構成を基本にする: \\bun{{A}} 本文… / \\bun{{B}} 本文… の形で、A・Bで別テーマ(例: A=電磁誘導, B=原子)を扱う。各部に図・データ表・設問を持たせる。
 - ★各設問の文も短く切らない: 与えられた条件・量の定義・状況を1〜3文で丁寧に述べてから問う(本番の設問は3〜6行)。記号は必ず本文で定義してから使う。
-- ★測定データ表を各大問に1〜2個。表から傾き・切片・差を読み取らせる問題を入れる。表は cellspace 対応の Sc 列(例: tabular{{|Sc|Sc|Sc|}})で縦の余白を持たせると本番らしい。
+- ★測定データ表を各大問に1〜2個。表から傾き・切片・差を読み取らせる問題を入れる。表は \\renewcommand{{\\arraystretch}}{{1.3}} で行に縦の余白を持たせると本番らしい(列指定は通常の c/l/p。Sc 等の特殊列は使わない)。
 - ★図は各大問に1〜3個、文書全体で最低10個。装置図・概念図・グラフ選択肢を本番並みに入れる。図は「状況が一目で伝わる」具体性を持たせる(後述の図ルール)。
 - 分量の目安: 問題本文(表紙の次〜第IV問末)で約20〜32ページ。空白で水増しせず、リード文・会話文・データ表・図・厚い設問文で満たす。
 === 構成(この順に1文書内) ===
@@ -4904,6 +4902,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 === 体裁・組版 ===
 - フォントは明朝(ltjsarticle 既定)。詰め気味の問題冊子らしい紙面。解答番号は四角枠 \\mb{{n}}、選択肢丸番号は \\cn{{n}}。
 - 短い選択肢は sentaku 環境(\\op{{\\cn{{1}}}}{{中身}})、長文選択肢は optlist(\\oi{{\\cn{{1}}}} 本文)、「ア・イ」組合せは tabular(\\cn を行頭・ア列イ列)。
+- ★★組合せ表(ア・イ等)が右にはみ出さない(オーバーフル厳禁): セルが\\textbf{{文章}}(語句・説明文)の列は必ず固定幅の \\textbf{{p列}} にする。例: \\begin{{tabular}}{{|c|p{{4.2cm}}|p{{4.2cm}}|}} のように、丸番号列は c、文章列は p{{4.2cm}} 程度。\\textbf{{p列の合計幅は11cm以下}}に収める(B5本文幅は約15.5cm。罫線・列間で余裕を見て p の合計を11cm以下)。セルが\\textbf{{数式や短い語のみ}}なら c/l でよいが、長い文を c/l 列に入れると改行されず必ずはみ出す。文章が長すぎて表に収まらないときは tabular をやめ optlist(6肢)にする。全体を \\small で組む。
 - 数値と単位は「平らなスラッシュ」表記: $\\mathrm{{m/s}}$, $\\mathrm{{m/s^2}}$, $\\mathrm{{kg}}$。★単位を分数で積むの禁止(\\dfrac{{m}}{{s^2}} 等は不可)。数値と単位の間は $\\,$。
 - ★★★ 行末改行は必ず「バックスラッシュ2本 \\\\」で書く。1本の \\ で行を終えない(改行にならず、直後の \\hline が「Misplaced \\noalign」を起こして第II問以降・マークシート・解説が全て消える)。sentaku・optlist・tabular のどの行も例外なく \\\\ で終える。罫線は \\\\ の次の行に \\hline を単独で置くか「\\\\ \\hline」と半角空白で離す(\\\\hline と密着させない=行頭に文字 "hline" が露出して紙面が壊れる)。
 - \\\\[5mm] のような「\\\\ の直後に[長さ]」は禁止。縦の空きは \\vspace や \\par で入れる。表・数式・図がB5からはみ出さないよう \\small・\\dfrac・\\renewcommand{{\\arraystretch}} を使う。
@@ -4931,6 +4930,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 
 === 定番装置は「場面まるごとマクロ」を1回呼ぶ(手描き厳禁) ===
 接触・向き・ロープの掛かり・ラベル位置が検証済みで、座標がずれても破綻しない。呼んだら上に同じ装置の線やラベルを重ねない(必要要素は内蔵済み)。
+★★下記の場面では、生の \\fill/\\draw/\\node を多数並べて自作してはいけない。必ず対応マクロ1個を呼ぶ。特に台車-滑車は \\cartpulley を使う(自作すると図が崩れ、生のLaTeXコードがそのまま紙面に露出する事故が起きる)。「自前TikZで作図してよい」のは、下に該当マクロが\\textbf{{無い}}場面に限る。
   ・台車＋滑車＋おもり: \\cartpulley(引数なし。机・台車M・縁に支持した滑車・ロープ・宙吊りおもりm・床を内蔵。\\groundstrip を下に敷かない/質量ラベルを重ねない)
   ・壁＋ばね＋台車: \\springcart{{壁x}}{{床y}}{{台車x}}(\\groundstrip の上に置く)
   ・磁場中レール＋導体棒: \\railrod{{導体棒x(0.9〜4.5)}}{{\\odot か \\times}}(l・v・導体棒・磁束密度B のラベル内蔵)
@@ -4961,7 +4961,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
   短い選択肢 sentaku(中に \\op{{\\cn{{1}}}}{{…}} を並べるだけ。区切りの & や行末 \\\\ は書かない) /
   長文選択肢 optlist(各肢は \\oi{{\\cn{{1}}}} 本文… のように書く。本文は \\oi の波括弧の外でも中でもよい) /
   リード文 \\lead{{…}} / 会話文の1発言 \\serifu{{太郎：…}} / 文章A・B見出し \\bun{{A}}本文… / 解説見出し \\soldai / マークシート行 \\msrowT / グラフ枠 \\gframe / 打点 \\dotrow /
-  組合せ表は cellspace の Sc 列が使える(例: \\begin{{tabular}}{{|Sc|Sc|Sc|}} … セルに上下余白が付き本番らしくなる) /
+  組合せ表は通常の tabular。短いセルは c/l、文章セルは p{{4.2cm}} 等の固定幅(Sc 等の特殊列は使わない)。行間は \\renewcommand{{\\arraystretch}}{{1.3}} /
   図マクロ \\groundstrip \\ballon \\boxon \\block \\cart \\cartpulley \\springcart \\railrod \\dslit \\resonancetube \\refraction \\nucleusrest \\projectile \\projectilehoriz \\stringwave \\Rbox \\Ccap \\SWopen \\SWclosed \\Vbatt \\RboxV \\pulley \\weightbox 。
   TikZ スタイル edge,rail,velarr,forcearr,fieldzone,guide,ray,dim,box3d,rodcyl,screenbd,plate も定義済み。
 - 全 {num_answers} 問を最後まで作問し、解説も全問分書く。マークシート・自己採点欄・配点表の行数は {num_answers} と完全一致。配点合計はちょうど100。途中で打ち切らない。
