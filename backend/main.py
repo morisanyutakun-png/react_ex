@@ -777,6 +777,99 @@ def _wrap_bare_scene_macros(latex: str) -> str:
         return latex
 
 
+# ── クラウドコンパイル失敗時のログ解析・図の自動回避 ───────────────────────
+def _ytotech_log_text(resp) -> str:
+    """latex.ytotech.com の失敗レスポンスから TeX ログ本文を取り出す。
+
+    成功時は PDF。失敗時は JSON {"error":..., "log_files":{"__main_document__.log": "..."}}。
+    log_files があればその本文、無ければ resp.text を返す。
+    """
+    try:
+        j = resp.json()
+        if isinstance(j, dict):
+            lf = j.get('log_files') or {}
+            if isinstance(lf, dict) and lf:
+                for k in ('__main_document__.log', 'output.log', 'main.log'):
+                    if k in lf and isinstance(lf[k], str):
+                        return lf[k]
+                # それ以外は最初の文字列値
+                for v in lf.values():
+                    if isinstance(v, str):
+                        return v
+    except Exception:
+        pass
+    try:
+        return resp.text or ''
+    except Exception:
+        return ''
+
+
+def _extract_latex_error_summary(log_text: str, max_blocks: int = 6) -> str:
+    """TeX ログから '! ...' エラーと直後の文脈(l.NN を含む)を抜き出して要約する。"""
+    if not isinstance(log_text, str) or not log_text:
+        return ''
+    lines = log_text.splitlines()
+    blocks = []
+    for i, ln in enumerate(lines):
+        if ln.startswith('!'):
+            # エラー行＋直後8行(通常ここに l.NN と該当ソースが出る)
+            blocks.append('\n'.join(lines[i:i + 9]).rstrip())
+            if len(blocks) >= max_blocks:
+                break
+    return '\n--- 次のエラー ---\n'.join(blocks)
+
+
+def _error_source_lines(log_text: str) -> list:
+    """ログ中の 'l.NN' の NN(エラーが検出されたソース行)を出現順に返す。"""
+    if not isinstance(log_text, str):
+        return []
+    try:
+        return [int(m.group(1)) for m in re.finditer(r'(?m)^l\.(\d+)\b', log_text)]
+    except Exception:
+        return []
+
+
+# 図の作図エラー時に差し込むプレースホルダ(枠だけ。本文の流れは保つ)
+_TIKZ_PLACEHOLDER = r'\fbox{\rule{0pt}{2.4em}\hspace{1em}図は省略（作図エラー）\hspace{1em}}'
+
+
+def _neutralize_failing_tikz(tex: str, error_lines: list):
+    """error_lines が指す行を含む \\begin{tikzpicture}…\\end{tikzpicture} を
+    プレースホルダに置換する。(置換後テキスト, 置換した図の数) を返す。
+
+    クラウド xelatex は1つの作図エラーで文書全体を落とすため、壊れた図だけを
+    枠に差し替えて再コンパイルすることで、模試全体(他の問題・解答解説・マークシート)
+    が必ず出力されるようにする安全網。
+    """
+    if not isinstance(tex, str) or not error_lines:
+        return tex, 0
+    try:
+        lines = tex.split('\n')
+        # tikzpicture の (開始行, 終了行) を 1-based で収集(入れ子はスタックで内側優先)
+        spans = []
+        stack = []
+        for idx, ln in enumerate(lines, start=1):
+            if '\\begin{tikzpicture}' in ln:
+                stack.append(idx)
+            if '\\end{tikzpicture}' in ln and stack:
+                b = stack.pop()
+                spans.append((b, idx))
+        # エラー行を含む span を対象に
+        targets = set()
+        for el in error_lines:
+            for (b, e) in spans:
+                if b <= el <= e:
+                    targets.add((b, e))
+        if not targets:
+            return tex, 0
+        # 行番号がずれないよう後ろから置換
+        for (b, e) in sorted(targets, reverse=True):
+            lines[b - 1:e] = [_TIKZ_PLACEHOLDER]
+        return '\n'.join(lines), len(targets)
+    except Exception:
+        return tex, 0
+
+
 def _repair_latex_nesting(latex: str) -> str:
     """LLM出力のLaTeXネスト崩れを自動修復する。
 
@@ -10845,27 +10938,49 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             body_tex = _transform_for_cloud_xelatex(body_tex)
             # Always use xelatex for cloud (ltjsarticle is already transformed above)
             _cloud_compiler = 'xelatex'
+            # ★堅牢化: 1つの作図(tikz)エラーで模試全体が落ちないよう、失敗したら
+            #   ログの l.NN が指す図だけをプレースホルダに差し替えて最大数回リトライする。
+            #   図以外の原因(数式・表など)で直せない場合は、実際の '! ...' エラーを
+            #   要約して返す(従来は先頭1000字=前文だけで本当のエラーが見えなかった)。
+            last_log = ''
             try:
-                cloud_resp = requests.post(
-                    'https://latex.ytotech.com/builds/sync',
-                    json={
-                        'compiler': _cloud_compiler,
-                        'resources': [{'main': True, 'content': body_tex}],
-                    },
-                    timeout=60,
-                )
-                if cloud_resp.status_code in (200, 201) and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
-                    with open(pdf_path, 'wb') as pf:
-                        pf.write(cloud_resp.content)
-                    logger.info('Cloud LaTeX compilation succeeded (%d bytes)', len(cloud_resp.content))
-                    return None  # signal success – pdf_path is now populated
-                else:
-                    cloud_err = cloud_resp.text[:1000] if cloud_resp.text else 'empty response'
-                    logger.error('Cloud LaTeX failed: status=%s body=%s', cloud_resp.status_code, cloud_err)
+                for _attempt in range(4):
+                    cloud_resp = requests.post(
+                        'https://latex.ytotech.com/builds/sync',
+                        json={
+                            'compiler': _cloud_compiler,
+                            'resources': [{'main': True, 'content': body_tex}],
+                        },
+                        timeout=60,
+                    )
+                    if cloud_resp.status_code in (200, 201) and cloud_resp.headers.get('Content-Type', '').startswith('application/pdf'):
+                        with open(pdf_path, 'wb') as pf:
+                            pf.write(cloud_resp.content)
+                        logger.info('Cloud LaTeX compilation succeeded (%d bytes, attempt %d)', len(cloud_resp.content), _attempt + 1)
+                        return None  # signal success – pdf_path is now populated
+                    # 失敗: ログを取り出し、壊れた図を特定して回避を試みる
+                    last_log = _ytotech_log_text(cloud_resp)
+                    err_lines = _error_source_lines(last_log)
+                    new_tex, n_fixed = _neutralize_failing_tikz(body_tex, err_lines)
+                    if n_fixed > 0:
+                        logger.warning('Cloud LaTeX failed; neutralized %d failing tikzpicture(s) and retrying (attempt %d)', n_fixed, _attempt + 1)
+                        body_tex = new_tex
+                        continue
+                    # 図では直せない → 実エラーを要約して返す
+                    summary = _extract_latex_error_summary(last_log)
+                    detail = summary or (last_log[-1500:] if last_log else (cloud_resp.text[:1500] if cloud_resp.text else 'empty response'))
+                    logger.error('Cloud LaTeX failed (status=%s); error summary:\n%s', cloud_resp.status_code, detail)
                     return JSONResponse(
-                        {'error': 'cloud_latex_failed', 'detail': cloud_err},
+                        {'error': 'cloud_latex_failed', 'detail': detail},
                         status_code=500,
                     )
+                # リトライ上限に到達(図を差し替えても直らなかった)
+                summary = _extract_latex_error_summary(last_log)
+                return JSONResponse(
+                    {'error': 'cloud_latex_failed',
+                     'detail': (summary or last_log[-1500:] or 'コンパイルに繰り返し失敗しました')},
+                    status_code=500,
+                )
             except Exception as cloud_exc:
                 logger.exception('Cloud LaTeX request failed')
                 return JSONResponse(
