@@ -629,6 +629,63 @@ def _fix_table_row_breaks(latex: str) -> str:
         return latex
 
 
+# 選択肢グリッド({ccc} の \gframe/\dotrow 表など)で、行送りの「\\[2.4em]」が
+# バックスラッシュ欠落で「\[2.4em]」や裸の「[2.4em]」に化けると、
+#  ・「[2.4em]」が本文として露出する
+#  ・行が切れず {ccc} の列あふれでグラフが飛び出す
+# という事故になる。tabular/array の中身に限り、これらを正しい行送り \\[寸法] に戻す。
+_LEN = r'\d+(?:\.\d+)?(?:em|ex|pt|cm|mm|in)'
+# 単一 \[寸法] → \\[寸法](欠けた1本を補う)。表示数式 \[...\] は中身が寸法のみなので衝突しない。
+_SINGLE_BS_DIM_RE = re.compile(r'(?<!\\)\\\[\s*(' + _LEN + r')\s*\]')
+# 裸の [寸法](両方のバックスラッシュが消えた)→ \\[寸法]
+_BARE_DIM_RE = re.compile(r'(?<![\\\w])\[\s*(' + _LEN + r')\s*\]')
+
+
+def _fix_grid_row_spacing(latex: str) -> str:
+    """tabular/array 内の壊れた行送り「\\[寸法]」(= \\[2.4em] 等)を復元する。"""
+    if not isinstance(latex, str) or '[' not in latex:
+        return latex
+
+    def _repl_env(m: 're.Match') -> str:
+        head, body, tail = m.group(1), m.group(2), m.group(3)
+        body = _SINGLE_BS_DIM_RE.sub(r'\\\\[\1]', body)
+        body = _BARE_DIM_RE.sub(r'\\\\[\1]', body)
+        return head + body + tail
+
+    try:
+        return _TABULAR_ENV_RE.sub(_repl_env, latex)
+    except Exception:
+        return latex
+
+
+# 解答番号枠 \mb{n} が選択肢ブロック(sentaku/optlist/グラフ表)の「後ろ」に取り残されると、
+# 紙面では選択肢の下に四角だけが浮いて不自然になる。本来は設問文の文末(「…選べ。」の直後)に
+# インラインで置くべきなので、ブロック直後に孤立した \mb{n} をブロックの直前へ移動する
+# (移動先で直前の設問文に続き、改行は空白扱いになってインライン表示になる)。
+# 「(任意の図ブロック)＋選択肢ブロック」の直後に来る \mb{n} を捕捉する。図ブロックは
+# 設問内のものに限る(\toi をまたがない)ので、\mb は設問文の文末へ移動して必ずインラインになる。
+_TRAILING_MB_RE = re.compile(
+    r'((?:\\begin\{center\}(?:(?!\\toi\b).)*?\\end\{center\}\s*)?'
+    r'\\begin\{(sentaku|optlist)\}(?:(?!\\toi\b).)*?\\end\{\2\})'
+    r'[ \t]*\r?\n?[ \t]*(\\mb\{\d+\})',
+    re.S,
+)
+
+
+def _inline_answer_boxes(latex: str) -> str:
+    """選択肢ブロック(＋直前の図)の後ろに置かれた \\mb{n} を、設問文の文末へ移す。
+
+    移動先は「図や選択肢の前」=設問の指示文(「…選べ。」)の直後になるので、改行が空白扱いに
+    なり解答番号枠がインライン表示になる(選択肢の下に四角だけ浮く不自然さを解消)。
+    """
+    if not isinstance(latex, str) or '\\mb{' not in latex:
+        return latex
+    try:
+        return _TRAILING_MB_RE.sub(lambda m: m.group(3) + '\n' + m.group(1), latex)
+    except Exception:
+        return latex
+
+
 # 表の罫線コマンドの「バックスラッシュ欠落」を補修する安全網。
 # LLM が行末改行 \\ に罫線 \hline を密着させて書くとき、しばしば
 # \\\hline(= 改行 \\ + 罫線 \hline、正しい)を \\hline(= 改行 \\ + ただの文字列
@@ -4802,9 +4859,13 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 % グラフ選択肢用の小座標枠(B5の3列に収まる寸法)。#1=横軸ラベル #2=縦軸ラベル #3=描画内容
 % 使い方: \cn{1}\,\gframe{$t$}{$v$}{\draw[line width=0.8pt](0,0)--(4.6,3.4);}
 % 3列に並べるときは表を \setlength{\tabcolsep}{4pt} で囲むこと。
+% グラフ選択肢の小枠。プロット(#3)はクリップ領域に閉じ込めるので、式が大きくても枠外に
+% はみ出さない(選択肢グリッドが崩れて曲線が飛び出す事故を原理的に防ぐ)。軸とラベルは
+% クリップの外で先に描く。
 \newcommand{\gframe}[3]{\begin{tikzpicture}[x=0.40cm,y=0.40cm,baseline=0]
   \draw[->,line width=0.5pt] (0,0)--(5.2,0) node[right,font=\tiny]{#1};
-  \draw[->,line width=0.5pt] (0,0)--(0,4.0) node[above,font=\tiny]{#2};#3
+  \draw[->,line width=0.5pt] (0,0)--(0,4.0) node[above,font=\tiny]{#2};
+  \begin{scope}\clip (-0.1,-0.1) rectangle (5.0,4.1);#3\end{scope}
 \end{tikzpicture}}
 
 % ── 回路部品(配線の上に重ねる不透明スタンプ。中心(x,y)をワイヤ上に置くだけ) ──
@@ -5105,6 +5166,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 
 === 体裁・組版 ===
 - フォントは明朝(ltjsarticle 既定)。詰め気味の問題冊子らしい紙面。解答番号は四角枠 \\mb{{n}}、選択肢丸番号は \\cn{{n}}。
+- ★\\mb{{n}} は\\textbf{{設問の指示文の文末(「…一つ選べ。」の直後)にインラインで}}置く。図や選択肢(sentaku/optlist/グラフ表)の\\textbf{{後ろに単独で置かない}}(選択肢の下に四角だけ浮いて不自然になる)。例: 「…のうちから一つ選べ。\\mb{{1}}」と書いてから図・選択肢を続ける。
 - 短い選択肢は sentaku 環境(\\op{{\\cn{{1}}}}{{中身}})、長文選択肢は optlist(\\oi{{\\cn{{1}}}} 本文)、「ア・イ」組合せは tabular(\\cn を行頭・ア列イ列)。
 - ★★組合せ表(ア・イ等)が右にはみ出さない(オーバーフル厳禁): セルが\\textbf{{文章}}(語句・説明文)の列は必ず固定幅の \\textbf{{p列}} にする。例: \\begin{{tabular}}{{|c|p{{4.2cm}}|p{{4.2cm}}|}} のように、丸番号列は c、文章列は p{{4.2cm}} 程度。\\textbf{{p列の合計幅は11cm以下}}に収める(B5本文幅は約15.5cm。罫線・列間で余裕を見て p の合計を11cm以下)。セルが\\textbf{{数式や短い語のみ}}なら c/l でよいが、長い文を c/l 列に入れると改行されず必ずはみ出す。文章が長すぎて表に収まらないときは tabular をやめ optlist(6肢)にする。全体を \\small で組む。
 - 数値と単位は「平らなスラッシュ」表記: $\\mathrm{{m/s}}$, $\\mathrm{{m/s^2}}$, $\\mathrm{{kg}}$。★単位を分数で積むの禁止(\\dfrac{{m}}{{s^2}} 等は不可)。数値と単位の間は $\\,$。
@@ -5156,6 +5218,8 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 
 === 選択肢が「図の集合」のとき(グラフ・打点・波形) ===
 1つの巨大な tikzpicture に詰め込まない(ラベルがずれる・ページ途中で割れる)。各選択肢を独立した小 tikz にし、tabular のセルに「\\cn{{n}}\\,(図)」で並べ、1つの table/center にまとめ各 \\cn を図の直前に置く(図とラベルを別ページに分けない)。グラフは \\gframe、記録テープの打点は \\dotrow を使う。
+★\\gframe のグラフは枠内(横 0〜5.0・縦 0〜4.0)に収める。直線は端点を $(0,a)$〜$(4.6,b)$($a,b$ は 0.3〜3.8)に、曲線 plot は定義域内で y が約 0〜3.8 に収まる係数にする(例 $0.16\\x^2$ を domain 0:4.5)。枠外にはみ出す式(係数が大きすぎる/負に飛ぶ)を書かない。
+★2段グリッドの行送りは必ず \\\\(バックスラッシュ2本)で書く。間隔を空けたいときは \\\\[2.4em] の形(\\\\ に密着して [2.4em])で書き、[2.4em] を単独で置かない。
   グラフ例(3列): \\begin{{center}}\\setlength{{\\tabcolsep}}{{4pt}}\\begin{{tabular}}{{ccc}}
     \\cn{{1}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt](0,0)--(4.6,3.4);}} & \\cn{{2}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt](0,1.3)--(4.6,3.8);}} & \\cn{{3}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt,smooth,samples=60,domain=0:4.3]plot(\\x,{{0.18*\\x*\\x}});}} \\\\[2.4em]
     \\cn{{4}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt,smooth,samples=60,domain=0:4.5]plot(\\x,{{1.7*sqrt(\\x)}});}} & \\cn{{5}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt](0,2.3)--(4.6,2.3);}} & \\cn{{6}}\\,\\gframe{{$t$}}{{$v$}}{{\\draw[line width=0.8pt](0,3.4)--(4.6,0.6);}} \\end{{tabular}}\\end{{center}}
@@ -9347,6 +9411,17 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                 # 行末の潰れた単一 \ を \\ に補修(列あふれでの途中停止を防ぐ)
                 try:
                     only = _fix_table_row_breaks(only)
+                except Exception:
+                    pass
+                # 整形: 選択肢グリッドの壊れた行送り \\[2.4em] → 正しい行送りに復元
+                # ([2.4em] の文字露出・グラフのはみ出しを防ぐ)
+                try:
+                    only = _fix_grid_row_spacing(only)
+                except Exception:
+                    pass
+                # 整形: 選択肢ブロック直後に浮いた解答番号枠 \mb{n} を設問文の文末へインライン化
+                try:
+                    only = _inline_answer_boxes(only)
                 except Exception:
                     pass
                 # 暴走対処(模試のみ): 行末改行に密着した罫線語の \ 欠落(\\hline 等)を補修。
