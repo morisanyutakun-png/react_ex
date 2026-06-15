@@ -756,13 +756,28 @@ def _wrap_bare_scene_macros(latex: str) -> str:
     if not isinstance(latex, str) or '\\' not in latex:
         return latex
     try:
+        # ★プリアンブルは絶対に触らない。\newcommand{\cartpulley}{…} 等の「定義」内に
+        #   現れる場面マクロ名を「裸呼び」と誤認して包むと、preamble が
+        #   \newcommand{\begin{tikzpicture}…} に化けて全体が壊れる。
+        #   そこで \begin{document} 以降(=本文)だけを対象にする。
+        marker = '\\begin{document}'
+        mpos = latex.find(marker)
+        if mpos == -1:
+            head, body, body_off = '', latex, 0
+        else:
+            body_off = mpos + len(marker)
+            head, body = latex[:body_off], latex[body_off:]
+
         out = []
         last = 0
-        for m in _SCENE_CALL_RE.finditer(latex):
-            prefix = latex[:m.start()]
-            # この位置が tikzpicture の内側か(begin の数 > end の数)を判定
+        for m in _SCENE_CALL_RE.finditer(body):
+            # 念のため、定義(\newcommand 等)の直後に来る名前は対象外にする二重防御
+            pre = body[max(0, m.start() - 40):m.start()]
+            if re.search(r'\\(?:re)?newcommand\s*\{?\s*$|\\providecommand\s*\{?\s*$|\\def\s*$', pre):
+                continue
+            prefix = body[:m.start()]
             inside = prefix.count(_TIKZ_BEGIN) > prefix.count(_TIKZ_END)
-            out.append(latex[last:m.start()])
+            out.append(body[last:m.start()])
             if inside:
                 out.append(m.group(0))  # picture 内 → そのまま
             else:
@@ -771,8 +786,8 @@ def _wrap_bare_scene_macros(latex: str) -> str:
                     + m.group(0) + '\n' + _TIKZ_END
                 )
             last = m.end()
-        out.append(latex[last:])
-        return ''.join(out)
+        out.append(body[last:])
+        return head + ''.join(out)
     except Exception:
         return latex
 
