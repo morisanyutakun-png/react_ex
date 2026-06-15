@@ -29,11 +29,11 @@ EXPOSE 8000
 
 WORKDIR /app/backend
 
-# Run alembic migrations (non-fatal: if DB connection fails/hangs, still start the server)
-# - timeout 90: DB が遅い/到達不能でも 90 秒で切り上げてサーバを起動する
-#   (これが無いと起動がハングし、ヘルスチェックが通らずデプロイが「終わらない」)
-# --workers 1: single worker to minimize memory on free tier
-# NOTE: do NOT use --preload with UvicornWorker (known compatibility issues)
-# Koyeb はこのサービスをポート 8000 に転送する設定なので、8000 に固定でバインドする
-# (既知の正常デプロイと同一。ポート不一致でヘルスチェックが通らない事故を避ける)。
-CMD ["sh", "-c", "timeout 90 alembic upgrade head || echo 'WARN: alembic migration skipped/timed out'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 1 --timeout 300"]
+# マイグレーションは「バックグラウンド」で流し、Web サーバは即起動する。
+# 理由: 無料DB(Neon等)はスリープからの初回接続に数〜十数秒かかり、これを起動の
+# クリティカルパスに置くとヘルスチェックが通らず provisioning が長引く。
+# alembic を & で背後に回し、gunicorn を即 exec して /health を最速で 200 にする。
+# (スキーマは通常すでに head なので背後実行は実質 no-op。新規DBでも数秒で追従する。)
+# --workers 1: free tier のメモリ節約。--preload は UvicornWorker と相性が悪いので使わない。
+# Koyeb はこのサービスをポート 8000 に転送する設定なので 8000 に固定バインドする。
+CMD ["sh", "-c", "(timeout 60 alembic upgrade head || echo 'WARN: alembic skipped/timed out') & exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 1 --timeout 300"]

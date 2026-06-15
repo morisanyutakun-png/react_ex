@@ -5513,25 +5513,42 @@ def upload_json_raw(payload_raw: dict = Body(...)):
 
 @app.on_event('startup')
 def _startup_reindex_on_start():
-    """Optional startup hook: if REINDEX_ON_START is set (comma-separated doc_ids),
-    attempt to reindex them into STORE. This runs synchronously during startup; keep list short.
-    """
-    # Load templates on first startup (moved from module-level to avoid boot timeout)
-    _ensure_templates()
+    """起動フック。DB 接続を伴う処理は「バックグラウンドスレッド」で実行する。
 
-    env = os.environ.get('REINDEX_ON_START')
-    if not env:
-        return
-    doc_ids = [d.strip() for d in env.split(',') if d.strip()]
-    if not doc_ids:
-        return
-    logger.info('REINDEX_ON_START: warming up %d docs', len(doc_ids))
-    for did in doc_ids:
+    ★クリティカルパスに DB 接続を置かない:
+      無料DB(Neon等)はスリープ復帰の初回接続に数〜十数秒かかる。これを起動時に
+      同期実行すると、ヘルスチェック(/health)が通るまでが遅くなり provisioning が
+      長引く。テンプレ表の用意(冪等)や任意の再インデックスは健全性に必須ではないため、
+      別スレッドに逃がして起動を即完了させ、/health を最速で 200 にする。
+    """
+    def _warm():
+        # テンプレ表を保証(CREATE TABLE IF NOT EXISTS。通常は既に存在し no-op)
         try:
-            r = _reindex_doc_from_db(did)
-            logger.info('Reindexed %s -> %s chunks', did, r.get('chunks'))
+            _ensure_templates()
         except Exception:
-            logger.exception('Failed to reindex on startup: %s', did)
+            logger.exception('startup: _ensure_templates failed (non-fatal)')
+
+        env = os.environ.get('REINDEX_ON_START')
+        if not env:
+            return
+        doc_ids = [d.strip() for d in env.split(',') if d.strip()]
+        if not doc_ids:
+            return
+        logger.info('REINDEX_ON_START: warming up %d docs', len(doc_ids))
+        for did in doc_ids:
+            try:
+                r = _reindex_doc_from_db(did)
+                logger.info('Reindexed %s -> %s chunks', did, r.get('chunks'))
+            except Exception:
+                logger.exception('Failed to reindex on startup: %s', did)
+
+    try:
+        import threading
+        threading.Thread(target=_warm, name='startup-warm', daemon=True).start()
+    except Exception:
+        # スレッド生成に失敗した場合のみ同期フォールバック(従来挙動)
+        logger.exception('startup: could not spawn warm thread; running inline')
+        _warm()
 
 
 @app.get("/api/ask")
