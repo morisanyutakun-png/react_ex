@@ -713,29 +713,90 @@ def _fix_glued_hline(latex: str) -> str:
         return latex
 
 
-# sentaku 環境は「流し込み段落」なので、内部に表用の区切り & や行末 \\ があると
-# 「Misplaced alignment tab / \crcr」で文書全体のコンパイルが途中停止する。
-# AI は sentaku を & 区切りで書いたり区切り無しで書いたりと不安定なため、
-# sentaku ブロック内に限って & と \\(+[寸法])を空白へ置換し、どちらの書き方でも通す。
-# 通常の tabular(ア・イ組合せ表など)の & は対象外(sentaku の中だけを見る)。
+# sentaku は「固定列の格子(tabular)」。AI は \op{\cn{n}}{中身} を並べるだけでよく、
+# 区切り & も行末 \\ も書かなくてよい。ここで \op 項目を解析し、項目数と幅に応じて
+# 最適な列数の格子に整形して & と \\ を入れ直す(本番同様の整った2〜4列に揃う)。
+# AI が書いた既存の & / \\ は無視して項目だけを取り出すので、どんな書き方でも安定する。
 _SENTAKU_BLOCK_RE = re.compile(r'(\\begin\{sentaku\}(?:\[[^\]]*\])?)(.*?)(\\end\{sentaku\})', re.S)
 
 
-def _strip_sentaku_separators(latex: str) -> str:
-    """\\begin{sentaku}…\\end{sentaku} の内部にある表用区切り(& と \\\\)を空白に変える。"""
+def _parse_op_items(body: str):
+    """body 中の \\op{A}{B} を波括弧対応で取り出し [(A,B), …] を返す。"""
+    items = []
+    i, n = 0, len(body)
+    while True:
+        j = body.find('\\op', i)
+        if j == -1:
+            break
+        k = j + 3
+        # \op の直後の {A}{B} を波括弧バランスで読む
+        groups = []
+        while len(groups) < 2:
+            while k < n and body[k] in ' \t\r\n':
+                k += 1
+            if k >= n or body[k] != '{':
+                break
+            depth, start = 0, k
+            while k < n:
+                c = body[k]
+                if c == '{':
+                    depth += 1
+                elif c == '}':
+                    depth -= 1
+                    if depth == 0:
+                        k += 1
+                        break
+                k += 1
+            groups.append(body[start + 1:k - 1])
+        if len(groups) == 2:
+            items.append((groups[0].strip(), groups[1].strip()))
+            i = k
+        else:
+            i = j + 3
+    return items
+
+
+def _choose_sentaku_cols(items):
+    """項目の数と幅から、本番らしく揃う列数を選ぶ(2〜4列、行をできるだけ均等に)。"""
+    import math
+    n = len(items)
+    bodies = [b for _, b in items]
+    maxlen = max((len(b) for b in bodies), default=0)
+    has_disp_frac = any(('\\dfrac{' in b) or ('\\frac{' in b) for b in bodies)
+    if has_disp_frac or maxlen > 16:
+        maxcols = 2
+    elif maxlen > 9:
+        maxcols = 3
+    else:
+        maxcols = 4
+    maxcols = min(maxcols, n) if n else 1
+    if maxcols < 1:
+        maxcols = 1
+    rows = math.ceil(n / maxcols)
+    return max(1, math.ceil(n / rows))
+
+
+def _format_sentaku_grid(latex: str) -> str:
+    """sentaku を、\\op 項目から最適列数の整った格子へ自動整形する。"""
     if not isinstance(latex, str) or '\\begin{sentaku}' not in latex:
         return latex
 
     def _repl(m: 're.Match') -> str:
-        # コメント(%)行にある \begin{sentaku} は環境ではないので対象外にする
         s = m.string
         line_start = s.rfind('\n', 0, m.start(1)) + 1
         prefix = s[line_start:m.start(1)]
-        if '%' in re.sub(r'\\%', '', prefix):
+        if '%' in re.sub(r'\\%', '', prefix):  # コメント中は対象外
             return m.group(0)
-        inner = re.sub(r'\\\\(\[[^\]]*\])?', ' ', m.group(2))  # \\ と \\[..] を空白へ
-        inner = inner.replace('&', ' ')                          # 残った & を空白へ
-        return m.group(1) + inner + m.group(3)
+        items = _parse_op_items(m.group(2))
+        if not items:
+            # 念のため: \op が無ければ従来通り区切りだけ無害化
+            inner = re.sub(r'\\\\(\[[^\]]*\])?', ' ', m.group(2)).replace('&', ' ')
+            return m.group(1) + inner + m.group(3)
+        ncols = _choose_sentaku_cols(items)
+        cells = ['\\op{%s}{%s}' % (a, b) for a, b in items]
+        rows = [' & '.join(cells[i:i + ncols]) for i in range(0, len(cells), ncols)]
+        grid = ' \\\\\n'.join(rows)
+        return '\\begin{sentaku}[%d]\n%s\n\\end{sentaku}' % (ncols, grid)
 
     try:
         return _SENTAKU_BLOCK_RE.sub(_repl, latex)
@@ -4720,9 +4781,15 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \usepackage[table]{xcolor}
 \usepackage{fancyhdr}
 \usepackage{array,booktabs}
+\usepackage{cellspace}
+\setlength\cellspacetoplimit{4pt}\setlength\cellspacebottomlimit{4pt}
 \usepackage{enumitem}
 \usepackage{lastpage}
 \usepackage{needspace}
+% 回路図はきれいに自動配線できる circuitikz を使う(手描きや簡易スタンプより本番らしい)。
+% ★siunitx オプションは付けない(cellspace の Sc 列内の \cn(tikz)と衝突するため)。
+\usepackage[european]{circuitikz}
+\ctikzset{bipoles/length=0.9cm,resistors/scale=0.8,capacitors/scale=0.9,sources/scale=0.85}
 
 \definecolor{accent}{RGB}{0,0,0}
 \definecolor{shade}{RGB}{236,236,236}
@@ -4802,24 +4869,25 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 % 各設問の前に確保する縦スペース \probneed は可変(本試の密度に寄せるため既定は控えめ)。
 % 小問集合のように「図＋6択」を1ページに収めたい大問では本文側で
 %   \setlength{\probneed}{0.5\textheight} のように一時的に大きくしてよい。
-\newlength{\probneed}\setlength{\probneed}{0.22\textheight}
-\newcommand{\toi}[1]{\par\addvspace{1.5\baselineskip}\needspace{\probneed}%
+\newlength{\probneed}\setlength{\probneed}{0.16\textheight}
+\newcommand{\toi}[1]{\par\addvspace{1.0\baselineskip}\needspace{\probneed}%
   \noindent\hangindent=3\zwx\hangafter=1%
   \hspace*{1\zwx}\textbf{問\hspace{0.3em}#1}\hspace{0.6em}\ignorespaces}
-% 選択肢グリッド。sentaku 環境の中に \op{\cn{丸数字}}{中身} を並べるだけ(区切り記号 & や 改行 は不要)。
-% ★sentaku は表ではなく「流し込み段落」。& や 行末改行 が来てもサニタイザが空白に置換するため、
-%   alignment エラー(Misplaced crcr 等)を原理的に起こさない。列数の任意引数は無視する。
-\newcommand{\opsep}[1][0pt]{\hspace{2.6em plus 1.2em minus 0.5em}}
-\newcommand{\op}[2]{\leavevmode\mbox{#1\hspace{0.4em}#2}\opsep}
+% 選択肢グリッド。sentaku 環境の中に \op{\cn{丸数字}}{中身} を「並べるだけ」でよい。
+% ★区切り記号 & や 行末 \\ は書かなくてよい。アプリ側のサニタイザ(_format_sentaku_grid)が
+%   \op の項目数と幅を見て最適な列数の格子に自動整形し、本番同様にきれいに揃える。
+%   (列数の任意引数 [n] はサニタイザが付け直すので、AI が指定しなくてよい。)
+\newcommand{\opsep}[1][0pt]{}
+\newcommand{\op}[2]{#1\hspace{0.5em}#2}
 \newcommand{\cn}[1]{\tikz[baseline=-0.5ex]{\node[draw=black,ellipse,line width=0.4pt,%
   inner sep=0pt,minimum width=3.5mm,minimum height=4.7mm,%
   font=\sffamily\fontsize{8}{8}\selectfont]{#1};}}
-% 流し込み段落。\op が自分で間隔を空けるので区切り記号は不要。万一 & や \\ が残っても
-% サニタイザが空白に置換するため alignment エラーにならない。任意引数(列数)は無視。
-\newenvironment{sentaku}[1][0]{%
+% 固定列の格子(本番の選択肢様式)。\op をセルに、\\ で行送り。サニタイザが & と \\ を入れる。
+\newenvironment{sentaku}[1][3]{%
   \par\nopagebreak\vskip0.4\baselineskip\nopagebreak
-  \begin{center}\small\ignorespaces}{%
-  \unskip\end{center}\vskip-0.05\baselineskip}
+  \setlength{\tabcolsep}{1.5\zwx}\renewcommand{\arraystretch}{1.5}%
+  \begin{center}\small\begin{tabular}[t]{*{#1}{c}}}{%
+  \end{tabular}\end{center}\vskip-0.05\baselineskip}
 % 文字指定の注記
 \newcommand{\given}[1]{\par\vskip0.3\baselineskip\noindent\hspace*{2\zwx}{\small #1}\par}
 % リード文(場面転換)
@@ -5143,7 +5211,8 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - ★会話文を必ず入れる: \\serifu{{太郎：…}} \\serifu{{花子：…}} を1発言1コマンドで、各大問に2〜4往復。会話で「なぜその測定をするか」「どの量に着目するか」「どんな近似・工夫をするか」を語らせ、後続の設問へ自然につなぐ。
 - ★第3・4問は本番同様に「文章A・文章B」の二部構成を基本にする: \\bun{{A}} 本文… / \\bun{{B}} 本文… の形で、A・Bで別テーマ(例: A=電磁誘導, B=原子)を扱う。各部に図・データ表・設問を持たせる。
 - ★各設問の文も短く切らない: 与えられた条件・量の定義・状況を1〜3文で丁寧に述べてから問う(本番の設問は3〜6行)。記号は必ず本文で定義してから使う。
-- ★測定データ表を各大問に1〜2個。表から傾き・切片・差を読み取らせる問題を入れる。表は \\renewcommand{{\\arraystretch}}{{1.3}} で行に縦の余白を持たせると本番らしい(列指定は通常の c/l/p。Sc 等の特殊列は使わない)。
+- ★測定データ表を各大問に1〜2個。表から傾き・切片・差を読み取らせる問題を入れる。表は \\renewcommand{{\\arraystretch}}{{1.3}} で行に縦の余白を持たせると本番らしい(列指定は c/l/p、数式中心の組合せ表は Sc 列でもよい)。
+- ★第1問(小問集合)も詰まった紙面にする: 各小問は図や式を出す前に\\textbf{{1〜2文の状況説明}}(条件・着目点)を添え、選択肢まで含めて1問が短くなりすぎないようにする。スカスカの余白を作らない。
 - ★図は各大問に1〜3個、文書全体で最低10個。装置図・概念図・グラフ選択肢を本番並みに入れる。図は「状況が一目で伝わる」具体性を持たせる(後述の図ルール)。
 - 分量の目安: 問題本文(表紙の次〜第IV問末)で約20〜32ページ。空白で水増しせず、リード文・会話文・データ表・図・厚い設問文で満たす。
 === 構成(この順に1文書内) ===
@@ -5167,8 +5236,8 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 === 体裁・組版 ===
 - フォントは明朝(ltjsarticle 既定)。詰め気味の問題冊子らしい紙面。解答番号は四角枠 \\mb{{n}}、選択肢丸番号は \\cn{{n}}。
 - ★\\mb{{n}} は\\textbf{{設問の指示文の文末(「…一つ選べ。」の直後)にインラインで}}置く。図や選択肢(sentaku/optlist/グラフ表)の\\textbf{{後ろに単独で置かない}}(選択肢の下に四角だけ浮いて不自然になる)。例: 「…のうちから一つ選べ。\\mb{{1}}」と書いてから図・選択肢を続ける。
-- 短い選択肢は sentaku 環境(\\op{{\\cn{{1}}}}{{中身}})、長文選択肢は optlist(\\oi{{\\cn{{1}}}} 本文)、「ア・イ」組合せは tabular(\\cn を行頭・ア列イ列)。
-- ★★組合せ表(ア・イ等)が右にはみ出さない(オーバーフル厳禁): セルが\\textbf{{文章}}(語句・説明文)の列は必ず固定幅の \\textbf{{p列}} にする。例: \\begin{{tabular}}{{|c|p{{4.2cm}}|p{{4.2cm}}|}} のように、丸番号列は c、文章列は p{{4.2cm}} 程度。\\textbf{{p列の合計幅は11cm以下}}に収める(B5本文幅は約15.5cm。罫線・列間で余裕を見て p の合計を11cm以下)。セルが\\textbf{{数式や短い語のみ}}なら c/l でよいが、長い文を c/l 列に入れると改行されず必ずはみ出す。文章が長すぎて表に収まらないときは tabular をやめ optlist(6肢)にする。全体を \\small で組む。
+- 短い選択肢は sentaku 環境。中に \\op{{\\cn{{1}}}}{{中身}} を\\textbf{{ただ並べるだけ}}でよい(区切りの & も行末 \\\\ も列数 [n] も書かない。アプリが項目数と幅から最適な列数の格子に自動整形する)。長文選択肢は optlist(\\oi{{\\cn{{1}}}} 本文)。「ア・イ」組合せは tabular(\\cn を行頭・ア列イ列)。
+- ★★組合せ表(ア・イ等)が右にはみ出さない(オーバーフル厳禁): セルが\\textbf{{数式や短い語のみ}}なら \\textbf{{Sc列}}(縦中央そろえ。例 \\begin{{tabular}}{{|Sc|Sc|Sc|}})を使ってよい。セルが\\textbf{{文章}}(語句・説明文)の列は必ず固定幅の \\textbf{{p列}}(例 \\begin{{tabular}}{{|c|p{{4.5cm}}|p{{4.5cm}}|}}、p列の合計は11cm以下)にする。長い文を c/Sc 列に入れると改行されずはみ出すので、その場合は p列か、収まらなければ optlist(6肢)にする。全体を \\small で組む。
 - 数値と単位は「平らなスラッシュ」表記: $\\mathrm{{m/s}}$, $\\mathrm{{m/s^2}}$, $\\mathrm{{kg}}$。★単位を分数で積むの禁止(\\dfrac{{m}}{{s^2}} 等は不可)。数値と単位の間は $\\,$。
 - ★★★ 行末改行は必ず「バックスラッシュ2本 \\\\」で書く。1本の \\ で行を終えない(改行にならず、直後の \\hline が「Misplaced \\noalign」を起こして第II問以降・マークシート・解説が全て消える)。sentaku・optlist・tabular のどの行も例外なく \\\\ で終える。罫線は \\\\ の次の行に \\hline を単独で置くか「\\\\ \\hline」と半角空白で離す(\\\\hline と密着させない=行頭に文字 "hline" が露出して紙面が壊れる)。
 - \\\\[5mm] のような「\\\\ の直後に[長さ]」は禁止。縦の空きは \\vspace や \\par で入れる。表・数式・図がB5からはみ出さないよう \\small・\\dfrac・\\renewcommand{{\\arraystretch}} を使う。
@@ -5187,12 +5256,14 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 - ラベルは対象から離し(目安0.3以上)、node[above]/[below]/[left]/[right] と =Npt で位置を明示。矢印のラベルは矢の中ほどの脇か先端の少し先に置き、線の真上に重ねない。近い2つは一方を above・他方を below に分ける。
 - 角(θ)の弧とラベルは線分の内側に小さく描く。寸法線(dim)のラベルは中点の外側(below/left)。装置名(記録タイマー・音さ・スクリーン等)の長い文字は図の外周に置く。一様磁場の格子(\\odot/\\times の並び)の上に装置名や P/Q 等を置かない(格子の外、端子付近に短く)。どうしても近接する時は \\, や最小 font(\\footnotesize/\\small)で逃がす。
 
-=== 回路図(2段階で描く・厳守) ===
-①配線=閉ループを「1線分=1つの \\draw、; 区切り、水平/垂直のみ、端点座標を厳密に一致」で描く(連結 (a)--(b)--(c) も --cycle も禁止)。②部品=自前で線を引かず、中心座標を配線上に置くだけ: \\Rbox{{x}}{{y}}{{$R$}}(水平抵抗)・\\Ccap(直列コンデンサー)・\\SWopen/\\SWclosed(スイッチ)・\\Vbatt(垂直電源・長板=上=+)・\\RboxV(垂直抵抗)。例(直列RC):
-    \\begin{{tikzpicture}}[x=1cm,y=1cm]
-    \\draw[edge] (0,0)--(0,2.2); \\draw[edge] (0,2.2)--(5.4,2.2); \\draw[edge] (5.4,2.2)--(5.4,0); \\draw[edge] (5.4,0)--(0,0);
-    \\Vbatt{{0}}{{1.1}}{{$E$}} \\Rbox{{1.6}}{{2.2}}{{$R$}} \\SWopen{{3.0}}{{2.2}}{{S}} \\Ccap{{4.4}}{{2.2}}{{$C$}}
-    \\end{{tikzpicture}}
+=== 回路図は circuitikz を使う(手描き・スタンプ禁止) ===
+回路は \\begin{{circuitikz}} … \\end{{circuitikz}} で描く。閉ループを to[部品,l=ラベル] でつなぐだけできれいに自動配線される(座標合わせ不要)。部品: 電池 battery1、抵抗 R、コンデンサー C、スイッチ switch、電球/抵抗負荷 R、電圧計 voltmeter、電流計 ammeter、ダイオード D。ラベルは l=$…$、向き指定は i>_=、_=で下側。例(直列RC):
+    \\begin{{center}}
+    \\begin{{circuitikz}}[scale=1.0]
+    \\draw (0,0) to[battery1,l=$E$] (0,2) to[R,l=$R$] (2.5,2) to[switch,l=S] (4.5,2) to[C,l=$C$] (4.5,0) -- (0,0);
+    \\end{{circuitikz}}
+    \\end{{center}}
+  並列は分岐点から to[…] を2本に分ける。例(R1,R2 並列): \\draw (0,0) to[battery1,l=$E$] (0,2) -- (1,2); \\draw (1,2) to[R,l=$R_1$] (4,2); \\draw (1,1) to[R,l=$R_2$] (4,1); \\draw (1,2)--(1,1); \\draw (4,2)--(4,1)--(4,0)--(0,0); のように、まず幹線、次に各枝を to[R] で描く。図番号「図 N」は circuitikz の外(\\begin{{center}} 内)で \\par の後に小さく置く。
 
 === 定番装置は「場面まるごとマクロ」を1回呼ぶ(手描き厳禁) ===
 接触・向き・ロープの掛かり・ラベル位置が検証済みで、座標がずれても破綻しない。呼んだら上に同じ装置の線やラベルを重ねない(必要要素は内蔵済み)。
@@ -5236,8 +5307,9 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
   短い選択肢 sentaku(中に \\op{{\\cn{{1}}}}{{…}} を並べるだけ。区切りの & や行末 \\\\ は書かない) /
   長文選択肢 optlist(各肢は \\oi{{\\cn{{1}}}} 本文… のように書く。本文は \\oi の波括弧の外でも中でもよい) /
   リード文 \\lead{{…}} / 会話文の1発言 \\serifu{{太郎：…}} / 文章A・B見出し \\bun{{A}}本文… / 解説見出し \\soldai / マークシート行 \\msrowT / グラフ枠 \\gframe / 打点 \\dotrow /
-  組合せ表は通常の tabular。短いセルは c/l、文章セルは p{{4.2cm}} 等の固定幅(Sc 等の特殊列は使わない)。行間は \\renewcommand{{\\arraystretch}}{{1.3}} /
-  図マクロ \\groundstrip \\ballon \\boxon \\block \\cart \\cartpulley \\springcart \\railrod \\dslit \\resonancetube \\refraction \\nucleusrest \\projectile \\projectilehoriz \\stringwave \\Rbox \\Ccap \\SWopen \\SWclosed \\Vbatt \\RboxV \\pulley \\weightbox 。
+  組合せ表は通常の tabular。短い/数式セルは c/l/Sc、文章セルは p{{4.5cm}} 等の固定幅。行間は \\renewcommand{{\\arraystretch}}{{1.3}} /
+  回路は circuitikz(\\begin{{circuitikz}} … to[battery1/R/C/switch/voltmeter,l=$…$] …)/
+  図マクロ \\groundstrip \\ballon \\boxon \\block \\cart \\cartpulley \\springcart \\railrod \\dslit \\resonancetube \\refraction \\nucleusrest \\projectile \\projectilehoriz \\stringwave \\pulley \\weightbox 。
   TikZ スタイル edge,rail,velarr,forcearr,fieldzone,guide,ray,dim,box3d,rodcyl,screenbd,plate も定義済み。
 - 全 {num_answers} 問を最後まで作問し、解説も全問分書く。マークシート・自己採点欄・配点表の行数は {num_answers} と完全一致。配点合計はちょうど100。途中で打ち切らない。
 - 1応答に収まらない時のみ末尾を「%%% CONTINUE %%%」で終え、次応答は続きからプレーンに出す(既出部を再掲しない)。可能な限り1応答で出し切る。
@@ -9431,10 +9503,10 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                         only = _fix_glued_hline(only)
                     except Exception:
                         pass
-                    # 暴走対処(模試のみ): sentaku 内の表区切り & / \\ を空白化し、
-                    # 「Misplaced \crcr」等での途中停止を防ぐ。
+                    # 整形(模試のみ): sentaku の \op 項目を最適列数の格子へ自動整形。
+                    # 区切りの有無によらず本番らしく揃い、列あふれや 2+1 等の不格好な改行を防ぐ。
                     try:
-                        only = _strip_sentaku_separators(only)
+                        only = _format_sentaku_grid(only)
                     except Exception:
                         pass
                 body_lines = [only]
