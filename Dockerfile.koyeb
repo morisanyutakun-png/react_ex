@@ -16,9 +16,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pdf2svg \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies (lightweight, no sentence-transformers/torch)
-COPY backend/requirements-render.txt /app/backend/requirements-render.txt
-RUN pip install --no-cache-dir -r /app/backend/requirements-render.txt
+# Install Python dependencies (lightweight: no sentence-transformers/torch/scikit-learn)
+# requirements-koyeb.txt は scikit-learn(+scipy)も外してビルドを高速化・確実化する。
+COPY backend/requirements-koyeb.txt /app/backend/requirements-koyeb.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements-koyeb.txt
 
 # Copy backend + workers (both needed at runtime)
 COPY backend/ /app/backend/
@@ -33,5 +34,6 @@ WORKDIR /app/backend
 #   (これが無いと起動がハングし、ヘルスチェックが通らずデプロイが「終わらない」)
 # --workers 1: single worker to minimize memory on free tier
 # NOTE: do NOT use --preload with UvicornWorker (known compatibility issues)
-# Koyeb injects $PORT automatically; fall back to 8000 for local testing.
-CMD ["sh", "-c", "timeout 90 alembic upgrade head || echo 'WARN: alembic migration skipped/timed out'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --workers 1 --timeout 300"]
+# Koyeb はこのサービスをポート 8000 に転送する設定なので、8000 に固定でバインドする
+# (既知の正常デプロイと同一。ポート不一致でヘルスチェックが通らない事故を避ける)。
+CMD ["sh", "-c", "timeout 90 alembic upgrade head || echo 'WARN: alembic migration skipped/timed out'; exec gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 1 --timeout 300"]

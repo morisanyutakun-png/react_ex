@@ -1,0 +1,21 @@
+# Koyeb Free 向けの最小依存。ビルドを速く・確実にするため、
+# 重い scikit-learn(+ scipy ~37MB)を外す。
+# - TF-IDF 検索は retrieve_with_profile 側で「scikit-learn 不在なら難易度ベースの
+#   ランキングへ自動フォールバック」するため、外しても 500 にはならない
+#   (本番のベクトル検索は Postgres/pgvector を使用)。
+# - numpy は _zscore 等の主経路で必須なので残す。
+# - sentence-transformers(+ torch ~1.5GB)は元から不採用。
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+pypdf
+PyMuPDF
+numpy
+requests
+psycopg2-binary
+sqlalchemy>=2.0
+alembic
+jsonschema
+httpx
+gunicorn
