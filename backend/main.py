@@ -850,6 +850,69 @@ def _externalize_fig_captions(latex: str) -> str:
         return latex
 
 
+# マークシートは \msrowT を縦に全番号(28〜30行)並べると1ページの版面高を超え、
+# 最終行がフッタ(ページ番号)に被る。番号を左右2列に折り返した \msrowTT 表に組み替え、
+# 行数を半分にして版面に確実に収める(本試のマークシートも2列様式)。
+_MARKSHEET_TABULAR_RE = re.compile(
+    r'\\begin\{tabular\}\{[^}]*\}(.*?)\\end\{tabular\}', re.S)
+
+
+def _split_marksheet_two_col(latex: str) -> str:
+    if not isinstance(latex, str) or '\\msrowT{' not in latex:
+        return latex
+
+    def _repl(m: 're.Match') -> str:
+        body = m.group(1)
+        nums = re.findall(r'\\msrowT\{([^}]*)\}', body)
+        # \msrowT を含まない表(自己採点欄・配点表など)や、短い表はそのまま。
+        if len(nums) < 17:
+            return m.group(0)
+        half = (len(nums) + 1) // 2
+        left, right = nums[:half], nums[half:]
+        rows = []
+        for i in range(half):
+            a = left[i]
+            if i < len(right):
+                rows.append('\\msrowTT{%s}{%s}' % (a, right[i]))
+            else:
+                # 奇数個の余り: 右側は空欄(マーク欄も空)で4セルを保つ
+                rows.append('%s & \\bubblesTc & & \\\\ \\hline' % a)
+        return (
+            '\\setlength{\\tabcolsep}{3pt}\n'
+            '\\begin{tabular}{|c|c|c|c|}\n\\hline\n'
+            '解答番号 & マーク欄 & 解答番号 & マーク欄 \\\\ \\hline\n'
+            + '\n'.join(rows) + '\n\\end{tabular}'
+        )
+
+    try:
+        # 全 tabular を走査(msrowT を持つ表だけを _repl が2列化。count 制限はしない)。
+        return _MARKSHEET_TABULAR_RE.sub(_repl, latex)
+    except Exception:
+        return latex
+
+
+def _space_before_dialogue(latex: str) -> str:
+    """会話文(\\serifu)の連続ブロックの直前に1行ぶんの空きを入れて読みやすくする。
+    リード文(地の文)と会話の境目を視覚的に分け、本試の体裁に近づける。
+    連続する \\serifu の最初の1つだけに空きを足す(発言間は詰めたまま)。"""
+    if not isinstance(latex, str) or '\\serifu' not in latex:
+        return latex
+    try:
+        lines = latex.split('\n')
+        out = []
+        prev_serifu = False
+        for ln in lines:
+            is_serifu = ln.lstrip().startswith('\\serifu')
+            if is_serifu and not prev_serifu:
+                out.append('\\addvspace{0.7\\baselineskip}')
+            out.append(ln)
+            if ln.strip():
+                prev_serifu = is_serifu
+        return '\n'.join(out)
+    except Exception:
+        return latex
+
+
 def _split_chained_wire_draws(latex: str) -> str:
     """暴走対処(安全な正規化): 純粋な座標ポリラインの \\draw を1線分ずつに分割する。
 
@@ -4889,6 +4952,9 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \fancyhead[LE]{\butsutab\hspace{3.5mm}\normalsize 物\hspace{0.5em}理}
 \fancyfoot[C]{\normalsize ―\hspace{0.6em}\thepage\hspace{0.6em}―}
 \renewcommand{\headrulewidth}{0pt}
+% 行分割の最終手段の伸縮量。和文長文選択肢(optlist)等が右マージンを僅かに超える
+% (Overfull \hbox)のを防ぐ。版面からはみ出さず詰めて折り返す。
+\setlength{\emergencystretch}{3em}
 
 % 全角幅(luatexja の \zw が無ければ em で代用)
 \newlength{\zwx}
@@ -5063,7 +5129,7 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \draw[rail] (0.4,0.5)--(5.2,0.5);
 \draw[rail] (0.4,2.2)--(5.2,2.2);
 \draw[rodcyl] (#1-0.08,0.44) rectangle (#1+0.08,2.26);
-\draw[velarr] (#1+0.30,1.35)--(#1+1.25,1.35) node[midway,above=2pt,font=\small]{$v$};
+\draw[velarr] (#1+0.30,1.10)--(#1+1.25,1.10) node[midway,fill=white,inner sep=1pt,font=\small]{$v$};
 \draw[dim] (-0.05,0.5)--(-0.05,2.2) node[midway,left=2pt,font=\small]{$l$};
 \node[above=3pt,font=\small] at (#1,2.2){導体棒};
 \node[below=3pt,font=\small] at (2.8,0.5){磁束密度 $B$};}
@@ -5189,8 +5255,8 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \newcommand{\bubblesTc}{%
   \begin{tikzpicture}[baseline=-0.55ex]
     \foreach \d [count=\i from 0] in {$-$,1,2,3,4,5,6,7,8,9,0}{
-      \node[draw,line width=0.3pt,ellipse,minimum width=3.0mm,minimum height=4.4mm,
-            inner sep=0pt,font=\fontsize{6}{6}\selectfont] at ({\i*0.50},0) {\d};
+      \node[draw,line width=0.3pt,ellipse,minimum width=2.7mm,minimum height=4.4mm,
+            inner sep=0pt,font=\fontsize{6}{6}\selectfont] at ({\i*0.42},0) {\d};
     }
   \end{tikzpicture}}
 \newcommand{\msrowTT}[2]{#1 & \bubblesTc & #2 & \bubblesTc \\ \hline}
@@ -9562,6 +9628,17 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     # 図の直後の \zucap{…} へ外出しし、作図内容とのラベル被りを防ぐ。
                     try:
                         only = _externalize_fig_captions(only)
+                    except Exception:
+                        pass
+                    # 整形(模試のみ): 全番号を縦1列に並べたマークシートを左右2列に折り返し、
+                    # 版面高超過(最終行がページ番号に被る)を防ぐ。
+                    try:
+                        only = _split_marksheet_two_col(only)
+                    except Exception:
+                        pass
+                    # 整形(模試のみ): 会話文ブロックの直前に空きを入れ、地の文と会話を分ける。
+                    try:
+                        only = _space_before_dialogue(only)
                     except Exception:
                         pass
                 body_lines = [only]
