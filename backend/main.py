@@ -756,6 +756,15 @@ def _parse_op_items(body: str):
     return items
 
 
+def _sentaku_textlen(b: str) -> int:
+    """選択肢本文の「文章としての長さ」。数式($…$)・コマンド・記号は除いて文字数を数える。
+    短い数式/数値は0に近く、日本語の文・句は長くなる(長文判定で optlist へ振り分ける)。"""
+    t = re.sub(r'\$[^$]*\$', '', b)        # インライン数式を除去
+    t = re.sub(r'\\[a-zA-Z]+', '', t)       # コマンドを除去
+    t = re.sub(r'[{}\s,]', '', t)            # 括弧・空白・カンマを除去
+    return len(t)
+
+
 def _choose_sentaku_cols(items):
     """項目の数と幅から、本番らしく揃う列数を選ぶ(2〜4列、行をできるだけ均等に)。"""
     import math
@@ -792,6 +801,11 @@ def _format_sentaku_grid(latex: str) -> str:
             # 念のため: \op が無ければ従来通り区切りだけ無害化
             inner = re.sub(r'\\\\(\[[^\]]*\])?', ' ', m.group(2)).replace('&', ' ')
             return m.group(1) + inner + m.group(3)
+        # ★長い文章の選択肢は固定列の格子では右にあふれる。文(本文の長さ)が長い項目が
+        #   1つでもあれば、縦1列の optlist(ぶら下げ・自動折返し)に変換する。
+        if any(_sentaku_textlen(b) > 16 for _, b in items):
+            lines = ['\\oi{%s} %s' % (a, b) for a, b in items]
+            return '\\begin{optlist}\n' + '\n'.join(lines) + '\n\\end{optlist}'
         ncols = _choose_sentaku_cols(items)
         cells = ['\\op{%s}{%s}' % (a, b) for a, b in items]
         rows = [' & '.join(cells[i:i + ncols]) for i in range(0, len(cells), ncols)]
@@ -800,6 +814,38 @@ def _format_sentaku_grid(latex: str) -> str:
 
     try:
         return _SENTAKU_BLOCK_RE.sub(_repl, latex)
+    except Exception:
+        return latex
+
+
+# 図番号「図 N」を tikzpicture の中に \node で置くと作図内容と被りやすい。
+# tikzpicture 内の「図…」だけのキャプション node を取り除き、図の直後へ \zucap{図…} として
+# 外出しする(必ず図の下に重なり無く出る)。
+_TIKZPIC_RE = re.compile(
+    r'(\\begin\{(tikzpicture|circuitikz)\}(?:\[[^\]]*\])?)(.*?)(\\end\{\2\})', re.S)
+_FIG_CAP_NODE_RE = re.compile(
+    r'\\node\b\s*(?:\[[^\]]*\])?\s*at\s*\([^()]*\)\s*\{(図[^{}]*)\}\s*;'
+)
+
+
+def _externalize_fig_captions(latex: str) -> str:
+    """tikzpicture 内の「図 N…」キャプション node を図の直後の \\zucap{…} へ移す。"""
+    if not isinstance(latex, str) or '図' not in latex:
+        return latex
+    if '\\begin{tikzpicture}' not in latex and '\\begin{circuitikz}' not in latex:
+        return latex
+
+    def _repl_pic(m: 're.Match') -> str:
+        head, body, tail = m.group(1), m.group(3), m.group(4)
+        caps = _FIG_CAP_NODE_RE.findall(body)
+        if not caps:
+            return m.group(0)
+        newbody = _FIG_CAP_NODE_RE.sub('', body)
+        cap = caps[-1].strip()  # 最後の「図…」をキャプションとして採用
+        return head + newbody + tail + '\n\\zucap{%s}' % cap
+
+    try:
+        return _TIKZPIC_RE.sub(_repl_pic, latex)
     except Exception:
         return latex
 
@@ -4860,6 +4906,9 @@ _MOCK_EXAM_PHYSICS_PREAMBLE = r"""\documentclass[b5paper,11pt,twoside]{ltjsartic
 \newcommand{\hai}[1]{\hfill\mbox{\normalsize（配点\hspace{0.4em}#1）}}
 \newcommand{\pt}[1]{\hspace*{\fill}{\small\mbox{[#1]}}}
 \newcommand{\dd}{\mathrm{d}}
+% 図番号キャプション。図(tikzpicture/circuitikz)の「下」に必ず重なり無く出す。
+% 図の中に \node で「図 N」を置くと作図内容と被るので、これを図の直後に置く。
+\newcommand{\zucap}[1]{\par\nopagebreak\addvspace{3pt}\nopagebreak\centerline{\footnotesize #1}\addvspace{2pt}}
 % 大問見出し(改ページ・「第 N 問」・小問は行末配点)
 % 大問見出し。番号を渡し、見出し語は同じ行にそのまま続けて書く(\daimon{1} 小問集合 \hai{25})。
 % \daimon{1}{小問集合} のように見出しを{}で囲んでも同じ結果になる(波括弧は透過)。
@@ -5244,7 +5293,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
 
 === 図(TikZ)共通 ===
 - 描画前に主要座標をコメントで計算・検算。グラフは samples=60 以上で滑らかに、スケールは問題の数値と比率を一致。三角比 cos30=sin60=0.866, sin30=cos60=0.5。物体の輪郭だけ --cycle 可・配線(導線)には不可。提供スタイル(edge,rail,velarr,forcearr,fieldzone,groundstrip,rodcyl,screenbd,plate 等)を活用。
-- ★図のリアルさ(本番並みに): 提供マクロで足りる場面はマクロを使う。マクロに無い固有の場面(円すい振り子・熱量混合・ドップラー・斜面+レール・球面鏡/レンズ結像・荷電粒子の円運動・光電効果の装置 等)は、自前 TikZ で具体的に作図してよい。その際も接触・ラベル非重なり・ヒント禁止のルールを厳守し、容器・媒質は薄い網掛け(fieldzone)、面はハッチング、寸法は dim、与えられた量の記号と座標軸・正方向を添えて「状況が一目で分かる」密度にする。\\caption は使わず図の下に \\node で「図 1」等の番号を置く。
+- ★図のリアルさ(本番並みに): 提供マクロで足りる場面はマクロを使う。マクロに無い固有の場面(円すい振り子・熱量混合・ドップラー・斜面+レール・球面鏡/レンズ結像・荷電粒子の円運動・光電効果の装置 等)は、自前 TikZ で具体的に作図してよい。その際も接触・ラベル非重なり・ヒント禁止のルールを厳守し、容器・媒質は薄い網掛け(fieldzone)、面はハッチング、寸法は dim、与えられた量の記号と座標軸・正方向を添えて「状況が一目で分かる」密度にする。★図番号は \\caption も図中の \\node も使わず、図環境の直後(\\end{{tikzpicture}}・\\end{{circuitikz}} の後)に \\zucap{{図 1 ○○}} で書く(アプリが図の真下に重なり無く中央配置する。図の中に番号を置くと作図と被るので禁止)。
 - ★立体・陰影で本番の質感を出す: ばね=coil spring、棒=rodcyl、箱=box3d、球=\\ballon/\\ballobj、スクリーン=screenbd、磁場領域=fieldzone+\\odot/\\times の格子。線の太さは主線 edge・補助線 edgethin/guide で使い分ける。
 - ★ヒント禁止(最重要): 答え・解法の手がかりは図に描かない。描かない=力の矢印とその式ラベル(摩擦 $\\mu mg$・重力 $mg$・$mg\\sin\\theta$・張力 $T$・$BIl$ 等)、まさに問うている分力/補助角/補助線、崩壊後・衝突後など結果の速度/運動量ベクトル、求める量(停止距離・最高点等)の寸法。描いてよい=物体/装置の配置と形状・面壁床斜面・回路/光学系のレイアウト、与えられた記号のみ($v,\\theta,m,L,d,D$、$B$ の向き 等)、座標軸・正方向・与えられた寸法。迷ったら描かない。
   例: 摩擦の停止距離→物体と初速 $v$ だけ($\\mu mg$ 矢印を描かない)。斜面→斜面・物体・$\\theta$ だけ($mg\\sin\\theta$ 不可)。崩壊→静止核だけ(崩壊後の2矢印不可)。磁場中の導体棒→棒・$\\odot/\\times$・$v$・$l$ だけ(起電力/ローレンツ力不可)。
@@ -5263,16 +5312,16 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
     \\draw (0,0) to[battery1,l=$E$] (0,2) to[R,l=$R$] (2.5,2) to[switch,l=S] (4.5,2) to[C,l=$C$] (4.5,0) -- (0,0);
     \\end{{circuitikz}}
     \\end{{center}}
-  並列は分岐点から to[…] を2本に分ける。例(R1,R2 並列): \\draw (0,0) to[battery1,l=$E$] (0,2) -- (1,2); \\draw (1,2) to[R,l=$R_1$] (4,2); \\draw (1,1) to[R,l=$R_2$] (4,1); \\draw (1,2)--(1,1); \\draw (4,2)--(4,1)--(4,0)--(0,0); のように、まず幹線、次に各枝を to[R] で描く。図番号「図 N」は circuitikz の外(\\begin{{center}} 内)で \\par の後に小さく置く。
+  並列は分岐点から to[…] を2本に分ける。例(R1,R2 並列): \\draw (0,0) to[battery1,l=$E$] (0,2) -- (1,2); \\draw (1,2) to[R,l=$R_1$] (4,2); \\draw (1,1) to[R,l=$R_2$] (4,1); \\draw (1,2)--(1,1); \\draw (4,2)--(4,1)--(4,0)--(0,0); のように、まず幹線、次に各枝を to[R] で描く。図番号は \\end{{circuitikz}} の直後に \\zucap{{図 N ○○}} で置く(circuitikz の中に \\node で置かない)。
 
 === 定番装置は「場面まるごとマクロ」を1回呼ぶ(手描き厳禁) ===
 接触・向き・ロープの掛かり・ラベル位置が検証済みで、座標がずれても破綻しない。呼んだら上に同じ装置の線やラベルを重ねない(必要要素は内蔵済み)。
-★★これらの場面マクロも単独部品も\\textbf{{すべて、必ず1つの \\begin{{tikzpicture}}[x=1cm,y=1cm,>=Stealth] … \\end{{tikzpicture}} の内側で呼ぶ}}(マクロ自身は tikzpicture を開かない)。図番号「図 1」の \\node も\\textbf{{同じ tikzpicture の中}}に置く。★\\textbf{{tikzpicture を入れ子にしない}}(1つの図に \\begin{{tikzpicture}} は1回だけ)。全体を \\begin{{center}} … \\end{{center}} で挟む。標準形(★この形で書く):
+★★これらの場面マクロも単独部品も\\textbf{{すべて、必ず1つの \\begin{{tikzpicture}}[x=1cm,y=1cm,>=Stealth] … \\end{{tikzpicture}} の内側で呼ぶ}}(マクロ自身は tikzpicture を開かない)。★\\textbf{{tikzpicture を入れ子にしない}}(1つの図に \\begin{{tikzpicture}} は1回だけ)。全体を \\begin{{center}} … \\end{{center}} で挟み、図番号は \\end{{tikzpicture}} の\\textbf{{直後}}に \\zucap{{図 1 ○○}} で置く(図の中に \\node で番号を置かない)。標準形(★この形で書く):
     \\begin{{center}}
     \\begin{{tikzpicture}}[x=1cm,y=1cm,>=Stealth]
     \\stringwave{{3}}
-    \\node[below=8pt] at (3.0,-0.85) {{図 1}};
     \\end{{tikzpicture}}
+    \\zucap{{図 1 弦の定常波}}
     \\end{{center}}
 ★★下記の場面では、生の \\fill/\\draw/\\node を多数並べて自作してはいけない。必ず対応マクロ1個を呼ぶ。特に台車-滑車は \\cartpulley を使う(自作すると図が崩れ、生のLaTeXコードがそのまま紙面に露出する事故が起きる)。「自前TikZで作図してよい」のは、下に該当マクロが\\textbf{{無い}}場面に限る(その場合も同じく \\begin{{tikzpicture}}…\\end{{tikzpicture}} を1回だけ開いてその中に描く)。
   ・台車＋滑車＋おもり: \\cartpulley(引数なし。机・台車M・縁に支持した滑車・ロープ・宙吊りおもりm・床を内蔵。\\groundstrip を下に敷かない/質量ラベルを重ねない)
@@ -5306,7 +5355,7 @@ def _build_mock_exam_prompt(req: 'MockExamPromptRequest') -> str:
   表紙 \\settitle / 大問 \\daimon / 設問 \\toi / 配点 \\hai / 解答番号枠 \\mb / 丸番号 \\cn /
   短い選択肢 sentaku(中に \\op{{\\cn{{1}}}}{{…}} を並べるだけ。区切りの & や行末 \\\\ は書かない) /
   長文選択肢 optlist(各肢は \\oi{{\\cn{{1}}}} 本文… のように書く。本文は \\oi の波括弧の外でも中でもよい) /
-  リード文 \\lead{{…}} / 会話文の1発言 \\serifu{{太郎：…}} / 文章A・B見出し \\bun{{A}}本文… / 解説見出し \\soldai / マークシート行 \\msrowT / グラフ枠 \\gframe / 打点 \\dotrow /
+  リード文 \\lead{{…}} / 会話文の1発言 \\serifu{{太郎：…}} / 文章A・B見出し \\bun{{A}}本文… / 解説見出し \\soldai / マークシート行 \\msrowT / グラフ枠 \\gframe / 打点 \\dotrow / 図番号 \\zucap{{図 1 ○○}}(図環境の直後に置く) /
   組合せ表は通常の tabular。短い/数式セルは c/l/Sc、文章セルは p{{4.5cm}} 等の固定幅。行間は \\renewcommand{{\\arraystretch}}{{1.3}} /
   回路は circuitikz(\\begin{{circuitikz}} … to[battery1/R/C/switch/voltmeter,l=$…$] …)/
   図マクロ \\groundstrip \\ballon \\boxon \\block \\cart \\cartpulley \\springcart \\railrod \\dslit \\resonancetube \\refraction \\nucleusrest \\projectile \\projectilehoriz \\stringwave \\pulley \\weightbox 。
@@ -9507,6 +9556,12 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
                     # 区切りの有無によらず本番らしく揃い、列あふれや 2+1 等の不格好な改行を防ぐ。
                     try:
                         only = _format_sentaku_grid(only)
+                    except Exception:
+                        pass
+                    # 整形(模試のみ): 図(tikzpicture)内に \node で置かれた「図 N」キャプションを
+                    # 図の直後の \zucap{…} へ外出しし、作図内容とのラベル被りを防ぐ。
+                    try:
+                        only = _externalize_fig_captions(only)
                     except Exception:
                         pass
                 body_lines = [only]
