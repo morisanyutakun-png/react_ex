@@ -10218,7 +10218,12 @@ def generate_pdf(payload: dict = Body(...), background: BackgroundTasks = None):
             tex = re.sub(r'\\dfrac\{(\w+)/(\w+)\}(?!\s*\{)', r'\\dfrac{\1}{\2}', tex)
             #  b3) \frac with only one brace group (missing second): \frac{a} → \frac{a}{1}
             #      Only when followed by whitespace/newline/end, not by {
-            tex = re.sub(r'\\frac\{([^}]+)\}\s*(?=[^{\\]|$)', r'\\frac{\1}{1}', tex)
+            #      ★分子に入れ子の波括弧を含む場合([^}]+ が \sqrt{...} 等の途中で
+            #        止まってしまい、\frac{\sqrt{x}}{y} を \frac{\sqrt{x}{1}}{y} に
+            #        壊す)を避けるため、分子は波括弧を含まない単純式に限定する。
+            #        入れ子分数・根号入り分子の分母補完は後段 7c (_fix_nested_fractions)
+            #        が括弧の対応を取って正しく処理する。
+            tex = re.sub(r'\\frac\{([^{}]+)\}\s*(?=[^{\\]|$)', r'\\frac{\1}{1}', tex)
             #  b4) Bare \frac without any braces followed by expressions: \frac ab → \frac{a}{b}
             tex = re.sub(r'\\frac\s+(\{[^}]+\}|[A-Za-z0-9])\s*(\{[^}]+\}|[A-Za-z0-9])', 
                          lambda m: '\\frac' + (m.group(1) if m.group(1).startswith('{') else '{'+m.group(1)+'}') + (m.group(2) if m.group(2).startswith('{') else '{'+m.group(2)+'}'), tex)
